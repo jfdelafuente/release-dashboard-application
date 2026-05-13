@@ -121,14 +121,18 @@ def convert_single_file(csv_file, output_path=None, error_path=None):
     # Determinar rutas de salida
     if output_path is None:
         # Si no se especifica -o, usar data/output/ por defecto
+        # Agregar sufijo -massive para identificar el tipo de datos
+        output_filename = f"{csv_file.stem}-massive.json"
         if DEFAULT_OUTPUT_DIR.exists():
-            output_path = DEFAULT_OUTPUT_DIR / csv_file.with_suffix('.json').name
+            output_path = DEFAULT_OUTPUT_DIR / output_filename
         else:
-            output_path = csv_file.with_suffix('.json')
+            output_path = csv_file.parent / output_filename
     else:
         output_path = Path(output_path)
         if output_path.is_dir():
-            output_path = output_path / csv_file.with_suffix('.json').name
+            # Agregar sufijo -massive si se especifica solo directorio
+            output_filename = f"{csv_file.stem}-massive.json"
+            output_path = output_path / output_filename
 
     # Determinar ruta de errores
     if error_path is None:
@@ -329,6 +333,21 @@ Ejemplos:
             if Path(error_path).exists():
                 print(f"\n{Colors.BOLD}Archivo: {error_path.name}{Colors.ENDC}")
                 show_error_summary(error_path)
+
+    # Build index.json for Dashboard Hub
+    print()
+    print_info("Generando index.json para Dashboard Hub...")
+    try:
+        # Import the build_index function
+        sys.path.insert(0, str(Path(__file__).parent))
+        from build_index import build_index
+
+        if build_index(str(DEFAULT_OUTPUT_DIR)):
+            print_success(f"Index actualizado: {DEFAULT_OUTPUT_DIR / 'index.json'}")
+        else:
+            print_warning("No se pudo generar index.json")
+    except Exception as e:
+        print_warning(f"Error al generar index.json: {e}")
 
     print()
     print_info("Para más información, consulta: specs/001-csv-to-json-workflow/quickstart.md")
