@@ -136,12 +136,29 @@ class CsvToJsonConverter:
         return is_valid, errors
 
     def _write_json_output(self, output_path: str) -> None:
-        """Write valid records to JSON file."""
+        """Write valid records to JSON file with metadata."""
         output_file = Path(output_path)
         output_file.parent.mkdir(parents=True, exist_ok=True)
 
+        # Determine type based on filename
+        # Files with "-massive" suffix are Massive Incidents
+        # Files with "-postmortem" suffix are Postmortem data
+        filename = output_file.stem  # Get filename without extension
+        data_type = "massive" if "-massive" in filename else "unknown"
+
+        # Create output structure with metadata
+        output_data = {
+            "_metadata": {
+                "type": data_type,
+                "version": "1.0",
+                "created": datetime.now().isoformat(),
+                "record_count": len(self.valid_records)
+            },
+            "data": self.valid_records
+        }
+
         with open(output_file, 'w', encoding='utf-8') as f:
-            json.dump(self.valid_records, f, ensure_ascii=False, indent=2)
+            json.dump(output_data, f, ensure_ascii=False, indent=2)
 
     def _write_error_report(self, error_report_path: str) -> None:
         """Write error report to JSON file."""

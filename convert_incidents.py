@@ -121,14 +121,18 @@ def convert_single_file(csv_file, output_path=None, error_path=None):
     # Determinar rutas de salida
     if output_path is None:
         # Si no se especifica -o, usar data/output/ por defecto
+        # Agregar sufijo -massive para identificar el tipo de datos
+        output_filename = f"{csv_file.stem}-massive.json"
         if DEFAULT_OUTPUT_DIR.exists():
-            output_path = DEFAULT_OUTPUT_DIR / csv_file.with_suffix('.json').name
+            output_path = DEFAULT_OUTPUT_DIR / output_filename
         else:
-            output_path = csv_file.with_suffix('.json')
+            output_path = csv_file.parent / output_filename
     else:
         output_path = Path(output_path)
         if output_path.is_dir():
-            output_path = output_path / csv_file.with_suffix('.json').name
+            # Agregar sufijo -massive si se especifica solo directorio
+            output_filename = f"{csv_file.stem}-massive.json"
+            output_path = output_path / output_filename
 
     # Determinar ruta de errores
     if error_path is None:

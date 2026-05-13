@@ -130,9 +130,29 @@ async function loadLatestJSON() {
         const data = await dataResponse.json();
         hubState.dataSource = latestFile.name;
 
-        console.log(`Successfully loaded ${Array.isArray(data) ? data.length : 1} incidents from ${latestFile.name}`);
+        // Handle both old format (array) and new format (with metadata)
+        let incidents;
+        if (Array.isArray(data)) {
+            // Old format: direct array of incidents
+            incidents = data;
+        } else if (data._metadata && data.data) {
+            // New format: object with metadata and data
+            const metadata = data._metadata;
 
-        return Array.isArray(data) ? data : [data];
+            // Validate that this is a massive incidents file
+            if (metadata.type !== 'massive') {
+                throw new Error(`Archivo no válido: esperado tipo 'massive', recibido '${metadata.type}'`);
+            }
+
+            incidents = data.data;
+            console.log(`Metadata: type=${metadata.type}, version=${metadata.version}, records=${metadata.record_count}`);
+        } else {
+            throw new Error('Formato de JSON no reconocido');
+        }
+
+        console.log(`Successfully loaded ${incidents.length} incidents from ${latestFile.name}`);
+
+        return incidents;
 
     } catch (error) {
         console.error('Error loading JSON:', error);
