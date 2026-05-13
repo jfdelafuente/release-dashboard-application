@@ -1565,9 +1565,18 @@
                 const reader = new FileReader();
                 reader.onload = function(e) {
                     try {
-                        allIncidents = JSON.parse(e.target.result);
-                        if (!Array.isArray(allIncidents)) {
-                            throw new Error('JSON must be an array');
+                        const parsedData = JSON.parse(e.target.result);
+
+                        // Handle both old format (array) and new format (with metadata)
+                        if (Array.isArray(parsedData)) {
+                            // Old format: direct array of incidents
+                            allIncidents = parsedData;
+                        } else if (parsedData._metadata && parsedData.data) {
+                            // New format: object with metadata and data
+                            allIncidents = parsedData.data;
+                            console.log(`Loaded data: type=${parsedData._metadata.type}, records=${parsedData._metadata.record_count}`);
+                        } else {
+                            throw new Error('Formato de JSON no reconocido. Debe ser un array o un objeto con estructura {_metadata, data}');
                         }
                         uploadScreen.classList.add('hidden');
                         dashboardScreen.classList.add('visible');
