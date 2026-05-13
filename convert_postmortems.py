@@ -277,7 +277,9 @@ def convert_single_file(csv_file, output_path=None, error_path=None):
 
 def build_index_for_hub(output_dir=None):
     """
-    Genera index.json para Dashboard Hub.
+    Actualiza solo la sección 'postmortem' en index.json para Dashboard Hub.
+
+    Mantiene la sección 'massive' sin cambios si existe.
 
     Args:
         output_dir: Directorio a indexar (por defecto data/output/)
@@ -299,57 +301,66 @@ def build_index_for_hub(output_dir=None):
         print_warning(f"Path no es un directorio: {output_dir}")
         return False
 
-    # Buscar todos los JSONs con sufijo -postmortem (excluyendo index.json)
+    # Leer index.json existente (si existe)
+    index_file = output_path / 'index.json'
+    existing_index = {}
+
+    if index_file.exists():
+        try:
+            with open(index_file, 'r', encoding='utf-8') as f:
+                existing_index = json.load(f)
+        except Exception as e:
+            print_warning(f"No se pudo leer index.json existente: {e}")
+            existing_index = {}
+
+    # Buscar todos los JSONs con sufijo -postmortem
     postmortem_files = sorted(
-        [p for p in output_path.glob('*-postmortem.json') if p.name != 'index.json'],
+        [p for p in output_path.glob('*-postmortem.json')],
         key=lambda p: p.stat().st_mtime,
         reverse=True  # Más recientes primero
     )
 
-    # Buscar todos los JSONs con sufijo -massive (incidencias masivas)
-    massive_files = sorted(
-        [p for p in output_path.glob('*-massive.json') if p.name != 'index.json'],
-        key=lambda p: p.stat().st_mtime,
-        reverse=True
-    )
-
-    # Combinar y ordenar
-    all_json_files = postmortem_files + massive_files
-
-    if not all_json_files:
-        print_warning(f"No se encontraron archivos JSON en {output_dir}")
-        index = []
+    if postmortem_files:
+        print_info(f"Encontrados {len(postmortem_files)} archivo(s) postmortem")
     else:
-        print_info(f"Encontrados {len(postmortem_files)} archivo(s) postmortem + {len(massive_files)} masivos")
+        print_warning(f"No se encontraron archivos postmortem en {output_dir}")
 
-    # Construir índice con metadatos
-    index = []
-    for file_path in all_json_files:
+    # Construir índice postmortem
+    postmortem_index = {
+        'type': 'postmortem',
+        'updated': datetime.now().isoformat() + 'Z',
+        'count': len(postmortem_files),
+        'files': []
+    }
+
+    for file_path in postmortem_files:
         stat = file_path.stat()
-
-        # Detectar tipo de archivo
-        if '-postmortem.json' in file_path.name:
-            file_type = 'postmortem'
-        elif '-massive.json' in file_path.name:
-            file_type = 'massive'
-        else:
-            file_type = 'unknown'
-
         file_info = {
             'name': file_path.name,
-            'type': file_type,
             'size': stat.st_size,
             'modified': datetime.fromtimestamp(stat.st_mtime).isoformat(),
             'path': f"data/output/{file_path.name}"
         }
-        index.append(file_info)
-        print(f"  • {file_path.name} ({file_type}, {format_size(stat.st_size)})")
+        postmortem_index['files'].append(file_info)
+        print(f"  • {file_path.name} ({format_size(stat.st_size)})")
 
-    # Escribir index.json
-    index_file = output_path / 'index.json'
+    # Actualizar solo la sección postmortem, mantener massive intacta
+    full_index = existing_index if isinstance(existing_index, dict) else {}
+    full_index['postmortem'] = postmortem_index
+
+    # Preservar sección massive si existe
+    if 'massive' not in full_index and isinstance(existing_index, dict):
+        full_index['massive'] = existing_index.get('massive', {
+            'type': 'massive',
+            'updated': None,
+            'count': 0,
+            'files': []
+        })
+
+    # Escribir index.json actualizado
     try:
         with open(index_file, 'w', encoding='utf-8') as f:
-            json.dump(index, f, indent=2, ensure_ascii=False)
+            json.dump(full_index, f, indent=2, ensure_ascii=False)
         print_success(f"Index actualizado: {index_file}")
         return True
 

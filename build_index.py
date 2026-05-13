@@ -23,7 +23,9 @@ if sys.platform == 'win32':
 
 def build_index(output_dir='data/output'):
     """
-    Build index.json listing all JSON files in output_dir.
+    Actualiza solo la sección 'massive' en index.json para Dashboard Hub.
+
+    Mantiene la sección 'postmortem' sin cambios si existe.
 
     Args:
         output_dir: Directory path to scan for JSON files
@@ -42,37 +44,66 @@ def build_index(output_dir='data/output'):
         print(f"❌ Error: Path is not a directory: {output_dir}")
         return False
 
-    # Find all JSON files (excluding index.json itself)
-    json_files = sorted(
-        [p for p in output_path.glob('*.json') if p.name != 'index.json'],
+    # Leer index.json existente (si existe)
+    index_file = output_path / 'index.json'
+    existing_index = {}
+
+    if index_file.exists():
+        try:
+            with open(index_file, 'r', encoding='utf-8') as f:
+                existing_index = json.load(f)
+        except Exception as e:
+            print(f"⚠️  Warning: Could not read existing index.json: {e}")
+            existing_index = {}
+
+    # Find all JSON files with -massive suffix (excluding index.json)
+    massive_files = sorted(
+        [p for p in output_path.glob('*-massive.json')],
         key=lambda p: p.stat().st_mtime,
         reverse=True  # Newest first
     )
 
-    if not json_files:
-        print(f"⚠️  Warning: No JSON files found in {output_dir}")
-        # Still create empty index
-        index = []
+    if not massive_files:
+        print(f"⚠️  Warning: No massive JSON files found in {output_dir}")
     else:
-        print(f"✓ Found {len(json_files)} JSON file(s)")
+        print(f"✓ Found {len(massive_files)} massive file(s)")
 
-    # Build index with file metadata
-    index = []
-    for file_path in json_files:
+    # Build massive index with file metadata
+    massive_index = {
+        'type': 'massive',
+        'updated': datetime.now().isoformat() + 'Z',
+        'count': len(massive_files),
+        'files': []
+    }
+
+    for file_path in massive_files:
         stat = file_path.stat()
         file_info = {
             'name': file_path.name,
             'size': stat.st_size,
-            'modified': datetime.fromtimestamp(stat.st_mtime).isoformat()
+            'modified': datetime.fromtimestamp(stat.st_mtime).isoformat(),
+            'path': f"data/output/{file_path.name}"
         }
-        index.append(file_info)
+        massive_index['files'].append(file_info)
         print(f"  • {file_path.name} ({stat.st_size:,} bytes, {file_info['modified']})")
 
+    # Actualizar solo la sección massive, mantener postmortem intacta
+    full_index = existing_index if isinstance(existing_index, dict) else {}
+    full_index['massive'] = massive_index
+
+    # Preservar sección postmortem si existe
+    if 'postmortem' not in full_index and isinstance(existing_index, dict):
+        full_index['postmortem'] = existing_index.get('postmortem', {
+            'type': 'postmortem',
+            'updated': None,
+            'count': 0,
+            'files': []
+        })
+
     # Write index.json
-    index_file = output_path / 'index.json'
     try:
         with open(index_file, 'w', encoding='utf-8') as f:
-            json.dump(index, f, indent=2, ensure_ascii=False)
+            json.dump(full_index, f, indent=2, ensure_ascii=False)
         print(f"\n✅ Successfully created: {index_file}")
         return True
 
