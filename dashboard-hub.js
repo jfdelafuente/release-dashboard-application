@@ -471,7 +471,16 @@ function createKPICardElement(kpi) {
     // Value
     const value = document.createElement('div');
     value.className = 'kpi-value';
-    value.textContent = formatNumber(kpi.value);
+
+    // Format value appropriately based on whether it's an integer or decimal
+    let formattedValue = kpi.value;
+    if (!Number.isInteger(kpi.value)) {
+        formattedValue = kpi.value.toFixed(1);
+    } else {
+        formattedValue = formatNumber(kpi.value);
+    }
+
+    value.textContent = formattedValue;
 
     content.appendChild(label);
     content.appendChild(value);
@@ -540,6 +549,13 @@ function getTrendIcon(direction) {
  * Format large numbers with commas
  */
 function formatNumber(num) {
+    // Handle decimal numbers (for percentages and averages)
+    if (!Number.isInteger(num)) {
+        // For decimals, limit to 1 decimal place
+        return num.toFixed(1);
+    }
+
+    // For integers, add thousand separators
     return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 }
 
