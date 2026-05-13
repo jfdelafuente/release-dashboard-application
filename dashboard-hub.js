@@ -39,7 +39,7 @@ async function initHub() {
         showLoading();
 
         // Load latest JSON file
-        const incidents = await loadLatestJSON();
+        const { incidents, metadata } = await loadLatestJSON();
 
         if (!incidents || incidents.length === 0) {
             showError('No hay datos disponibles. Por favor cargue archivos JSON en data/output/');
@@ -48,10 +48,11 @@ async function initHub() {
 
         // Store in global state
         hubState.allIncidents = incidents;
+        hubState.metadata = metadata;
         hubState.lastUpdated = new Date();
 
         // Extract KPIs
-        const kpis = extractKPIs(incidents);
+        const kpis = extractKPIs(incidents, metadata);
 
         // Render the hub
         renderHub(kpis);
@@ -132,12 +133,14 @@ async function loadLatestJSON() {
 
         // Handle both old format (array) and new format (with metadata)
         let incidents;
+        let metadata = null;
+
         if (Array.isArray(data)) {
             // Old format: direct array of incidents
             incidents = data;
         } else if (data._metadata && data.data) {
             // New format: object with metadata and data
-            const metadata = data._metadata;
+            metadata = data._metadata;
 
             // Validate that this is a massive incidents file
             if (metadata.type !== 'massive') {
@@ -146,13 +149,16 @@ async function loadLatestJSON() {
 
             incidents = data.data;
             console.log(`Metadata: type=${metadata.type}, version=${metadata.version}, records=${metadata.record_count}`);
+            if (metadata.kpis) {
+                console.log(`KPIs pre-calculated: total=${metadata.kpis.total}, pending=${metadata.kpis.pending}`);
+            }
         } else {
             throw new Error('Formato de JSON no reconocido');
         }
 
         console.log(`Successfully loaded ${incidents.length} incidents from ${latestFile.name}`);
 
-        return incidents;
+        return { incidents, metadata };
 
     } catch (error) {
         console.error('Error loading JSON:', error);
@@ -173,18 +179,71 @@ async function loadLatestJSON() {
 /**
  * Extract KPI metrics from incident data
  */
-function extractKPIs(incidents) {
+function extractKPIs(incidents, metadata) {
     return {
-        massiveIncidents: extractMassiveIncidentsKPIs(incidents),
+        massiveIncidents: extractMassiveIncidentsKPIs(incidents, metadata),
         postmortem: extractPostmortemKPIs(incidents)
     };
 }
 
 /**
  * Extract Massive Incidents KPIs
- * Uses same logic as Massive Incidents Dashboard for consistency
+ * Reads pre-calculated KPIs from JSON metadata (calculated during CSV conversion)
  */
-function extractMassiveIncidentsKPIs(incidents) {
+function extractMassiveIncidentsKPIs(incidents, metadata) {
+    // If KPIs are already calculated in metadata, use those
+    if (metadata && metadata.kpis) {
+        const kpis = metadata.kpis;
+        return [
+            createKPICard(
+                'total-incidents',
+                'Total de Incidencias',
+                kpis.total,
+                'incidencias'
+            ),
+            createKPICard(
+                'pending-incidents',
+                'Incidencias Pendientes',
+                kpis.pending,
+                'pendientes'
+            ),
+            createKPICard(
+                'trend-7-day',
+                'Tendencia 7 días',
+                Math.abs(kpis.trend_7d),
+                '%',
+                {
+                    percentage: kpis.trend_7d,
+                    direction: getTrendDirection(kpis.trend_7d),
+                    period: '7 días'
+                }
+            ),
+            createKPICard(
+                'trend-15-day',
+                'Tendencia 15 días',
+                Math.abs(kpis.trend_15d),
+                '%',
+                {
+                    percentage: kpis.trend_15d,
+                    direction: getTrendDirection(kpis.trend_15d),
+                    period: '15 días'
+                }
+            ),
+            createKPICard(
+                'trend-30-day',
+                'Tendencia 30 días',
+                Math.abs(kpis.trend_30d),
+                '%',
+                {
+                    percentage: kpis.trend_30d,
+                    direction: getTrendDirection(kpis.trend_30d),
+                    period: '30 días'
+                }
+            )
+        ];
+    }
+
+    // Fallback: Calculate KPIs from incidents if not in metadata (backward compatibility)
     if (!incidents || incidents.length === 0) {
         return [];
     }
