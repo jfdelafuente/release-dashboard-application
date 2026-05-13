@@ -75,6 +75,7 @@ def normalize_datetime(date_str: str) -> str:
     Handles data quality issues:
     - Removes AM/PM indicators if hour is in 24-hour format (>12)
     - Normalizes mixed formats gracefully
+    - Converts single-digit hours (0:mm, 1:mm) to zero-padded format (00:mm, 01:mm)
 
     Args:
         date_str: Date string from CSV
@@ -93,6 +94,10 @@ def normalize_datetime(date_str: str) -> str:
     # Normalize: remove extra spaces
     normalized = re.sub(r'\s+', ' ', date_str)
 
+    # Normalize single-digit hours to zero-padded format (e.g., "0:46" → "00:46", "1:30" → "01:30")
+    # Match patterns like "d/m/yyyy h:mm" and convert to "d/m/yyyy hh:mm"
+    normalized = re.sub(r'(\d{1,2}/\d{1,2}/\d{4})\s+(\d):', r'\1 0\2:', normalized)
+
     # First, try 24-hour format without AM/PM
     try:
         dt = datetime.strptime(normalized, "%d/%m/%Y %H:%M")
@@ -101,14 +106,14 @@ def normalize_datetime(date_str: str) -> str:
         pass
 
     # If that fails, try removing AM/PM indicators and retry
-    # (handles mixed format like "15:36 a" which should be "15:36")
-    # But only if the time is in 24-hour range (>12) - otherwise it might be a 12-hour time with AM/PM
+    # (handles mixed format like "15:36 a" which should be "15:36" or "0:46 a" which should be "00:46")
     normalized_no_ampm = re.sub(r'\s+[aApP][mM]?\s*$', '', normalized)
     if normalized_no_ampm != normalized:
         try:
             dt = datetime.strptime(normalized_no_ampm, "%d/%m/%Y %H:%M")
-            # Only accept if it's truly a 24-hour format (hour > 12)
-            if dt.hour > 12:
+            # Accept 24-hour format (hour > 12) or hour 0 (which is midnight/00:00)
+            # Hour 0 with "a" suffix likely means "0:46 a" = "00:46 AM" (midnight)
+            if dt.hour > 12 or dt.hour == 0:
                 return dt.strftime("%d/%m/%Y %H:%M")
         except ValueError:
             pass
