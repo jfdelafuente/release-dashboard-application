@@ -710,13 +710,13 @@
                     <table id="incidentTable">
                         <thead>
                             <tr>
-                                <th style="cursor: pointer;" onclick="sortTable('Código Incidencia')">Código ⇅</th>
-                                <th style="cursor: pointer;" onclick="sortTable('Descripción problema')">Descripción ⇅</th>
-                                <th style="cursor: pointer;" onclick="sortTable('Status')">Estado ⇅</th>
-                                <th style="cursor: pointer;" onclick="sortTable('Impacto Remedy')">Impacto ⇅</th>
-                                <th style="cursor: pointer;" onclick="sortTable('Sistema')">Sistema ⇅</th>
+                                <th style="cursor: pointer;" onclick="sortTable('ID de incidencia')">Código ⇅</th>
+                                <th style="cursor: pointer;" onclick="sortTable('Descripción')">Descripción ⇅</th>
+                                <th style="cursor: pointer;" onclick="sortTable('Estatus')">Estado ⇅</th>
+                                <th style="cursor: pointer;" onclick="sortTable('Impacto')">Impacto ⇅</th>
+                                <th style="cursor: pointer;" onclick="sortTable('Grupo asignado')">Sistema ⇅</th>
                                 <th style="cursor: pointer;" onclick="sortTable('Despliegue')">Despliegue ⇅</th>
-                                <th style="cursor: pointer;" onclick="sortTable('Tipo solucion')">Solución ⇅</th>
+                                <th style="cursor: pointer;" onclick="sortTable('Motivo de estado')">Solución ⇅</th>
                             </tr>
                         </thead>
                         <tbody id="tableBody">
@@ -768,7 +768,7 @@
 
         // Status color mapping
         const statusColorMap = {
-            'cerrada': '#10b981',      // Verde
+            'cerrado': '#10b981',      // Verde
             'resuelto': '#06b6d4',     // Cyan
             'abierta': '#f97316',      // Naranja oscuro
             'en progreso': '#fb923c',  // Naranja medio
@@ -824,26 +824,26 @@
 
             const total = allIncidents.length;
             const closed = allIncidents.filter(i => {
-                const status = (getIncidentValue(i, 'Status') || '').toLowerCase();
-                return status.includes('cerrada');
+                const status = (getIncidentValue(i, 'Estatus') || '').toLowerCase();
+                return status.includes('cerrado');
             }).length;
             const closedPercent = total > 0 ? Math.round((closed / total) * 100) : 0;
 
-            // Calculate PAP metrics
+            // Calculate PAP metrics (Cerrado + Resuelto)
             const papIncidents = allIncidents.filter(i => getIncidentValue(i, 'Despliegue') === 'PAP');
-            const papClosed = papIncidents.filter(i => {
-                const status = (getIncidentValue(i, 'Status') || '').toLowerCase();
-                return status.includes('cerrada');
+            const papResolved = papIncidents.filter(i => {
+                const status = (getIncidentValue(i, 'Estatus') || '').toLowerCase();
+                return status.includes('cerrado') || status.includes('resuelto');
             }).length;
-            const papPercent = papIncidents.length > 0 ? Math.round((papClosed / papIncidents.length) * 100) : 0;
+            const papPercent = papIncidents.length > 0 ? Math.round((papResolved / papIncidents.length) * 100) : 0;
 
-            // Calculate MESA metrics
+            // Calculate MESA metrics (Cerrado + Resuelto)
             const mesaIncidents = allIncidents.filter(i => getIncidentValue(i, 'Despliegue') === 'MESA');
-            const mesaClosed = mesaIncidents.filter(i => {
-                const status = (getIncidentValue(i, 'Status') || '').toLowerCase();
-                return status.includes('cerrada');
+            const mesaResolved = mesaIncidents.filter(i => {
+                const status = (getIncidentValue(i, 'Estatus') || '').toLowerCase();
+                return status.includes('cerrado') || status.includes('resuelto');
             }).length;
-            const mesaPercent = mesaIncidents.length > 0 ? Math.round((mesaClosed / mesaIncidents.length) * 100) : 0;
+            const mesaPercent = mesaIncidents.length > 0 ? Math.round((mesaResolved / mesaIncidents.length) * 100) : 0;
 
             // Update global KPIs
             document.getElementById('globalTotal').textContent = total;
@@ -865,7 +865,7 @@
         }
 
         function createSystemChart() {
-            const data = countField('Sistema');
+            const data = countField('Grupo asignado');
             const sorted = Object.entries(data)
                 .sort((a, b) => b[1] - a[1])
                 .slice(0, 10);
@@ -942,7 +942,7 @@
 
             // Count entries by opening date
             allIncidents.forEach(incident => {
-                const dateStr = getIncidentValue(incident, 'Fecha Apertura');
+                const dateStr = getIncidentValue(incident, 'Fecha de envío');
                 if (!dateStr) return;
 
                 const dateObj = parseDate(dateStr);
@@ -957,12 +957,12 @@
 
             // Count resolutions (closed OR resolved incidents) by resolution date (Fecha Prevista)
             allIncidents.forEach(incident => {
-                const status = (getIncidentValue(incident, 'Status') || '').toLowerCase();
-                const isSolved = status.includes('cerrada') || status.includes('resuelto');
+                const status = (getIncidentValue(incident, 'Estatus') || '').toLowerCase();
+                const isSolved = status.includes('cerrado') || status.includes('resuelto');
 
                 if (isSolved) {
                     // Use resolution date (Fecha Prevista)
-                    const dateStr = getIncidentValue(incident, 'Fecha Prevista');
+                    const dateStr = getIncidentValue(incident, 'Fecha de última resolución');
 
                     if (dateStr) {
                         const dateObj = parseDate(dateStr);
@@ -1003,7 +1003,7 @@
             let absoluteMaxDate = null;
 
             allIncidents.forEach(incident => {
-                const dateStr = getIncidentValue(incident, 'Fecha Apertura');
+                const dateStr = getIncidentValue(incident, 'Fecha de envío');
                 if (dateStr) {
                     const dateObj = parseDate(dateStr);
                     if (dateObj) {
@@ -1186,14 +1186,14 @@
             const dateMapOpen = {};
             const statusList = []; // To keep track of unique statuses
 
-            // Count open incidents by opening date and status (Status != Cerrada y Status != Resuelto)
+            // Count open incidents by opening date and status (Status != Cerrado y Status != Resuelto)
             allIncidents.forEach(incident => {
-                const status = getIncidentValue(incident, 'Status') || 'Unknown';
+                const status = getIncidentValue(incident, 'Estatus') || 'Unknown';
                 const statusLower = status.toLowerCase();
-                const isOpen = !statusLower.includes('cerrada') && !statusLower.includes('resuelto');
+                const isOpen = !statusLower.includes('cerrado') && !statusLower.includes('resuelto');
 
                 if (isOpen) {
-                    const dateStr = getIncidentValue(incident, 'Fecha Apertura');
+                    const dateStr = getIncidentValue(incident, 'Fecha de envío');
                     if (!dateStr) return;
 
                     const dateObj = parseDate(dateStr);
@@ -1269,7 +1269,7 @@
                 let absoluteMaxDateOpen = null;
 
                 allIncidents.forEach(incident => {
-                    const dateStr = getIncidentValue(incident, 'Fecha Apertura');
+                    const dateStr = getIncidentValue(incident, 'Fecha de envío');
                     if (dateStr) {
                         const dateObj = parseDate(dateStr);
                         if (dateObj) {
@@ -1407,7 +1407,7 @@
 
         function populateFilterSelects() {
             // Populate Estado filter
-            const estados = [...new Set(allIncidents.map(i => getIncidentValue(i, 'Status')).filter(s => s && s !== ''))].sort();
+            const estados = [...new Set(allIncidents.map(i => getIncidentValue(i, 'Estatus')).filter(s => s && s !== ''))].sort();
             const statusSelect = document.getElementById('filterStatus');
             // Clear existing options except the first "Todos"
             while (statusSelect.options.length > 1) {
@@ -1431,7 +1431,7 @@
             });
 
             // Populate Impacto filter
-            const impactos = [...new Set(allIncidents.map(i => getIncidentValue(i, 'Impacto Remedy')).filter(i => i && i !== ''))].sort();
+            const impactos = [...new Set(allIncidents.map(i => getIncidentValue(i, 'Impacto')).filter(i => i && i !== ''))].sort();
             const impactSelect = document.getElementById('filterImpacto');
             impactos.forEach(imp => {
                 const option = document.createElement('option');
@@ -1447,9 +1447,9 @@
             const impactFilter = document.getElementById('filterImpacto').value.toLowerCase();
 
             filteredIncidents = allIncidents.filter(incident => {
-                const status = (getIncidentValue(incident, 'Status') || '').toLowerCase();
+                const status = (getIncidentValue(incident, 'Estatus') || '').toLowerCase();
                 const despliegue = (getIncidentValue(incident, 'Despliegue') || '').toLowerCase();
-                const impacto = (getIncidentValue(incident, 'Impacto Remedy') || '').toLowerCase();
+                const impacto = (getIncidentValue(incident, 'Impacto') || '').toLowerCase();
 
                 const statusMatch = !statusFilter || status === statusFilter;
                 const deployMatch = !deployFilter || despliegue === deployFilter;
@@ -1494,23 +1494,23 @@
             // Mostrar registros filtrados
             filteredIncidents.forEach(incident => {
                 const row = document.createElement('tr');
-                const status = getStatusText(getIncidentValue(incident, 'Status'));
-                const statusClass = getStatusClass(getIncidentValue(incident, 'Status'));
-                const impactClass = getImpactClass(getIncidentValue(incident, 'Impacto Remedy'));
+                const status = getStatusText(getIncidentValue(incident, 'Estatus'));
+                const statusClass = getStatusClass(getIncidentValue(incident, 'Estatus'));
+                const impactClass = getImpactClass(getIncidentValue(incident, 'Impacto'));
 
-                const codigoIncidencia = getIncidentValue(incident, 'Código Incidencia') || '-';
+                const codigoIncidencia = getIncidentValue(incident, 'ID de incidencia') || '-';
                 const codigoLink = codigoIncidencia !== '-'
                     ? `<a href="https://soptmc.si.orange.es/MonTMC/epsilon/remedyC/${codigoIncidencia}" target="_blank" style="color: #fb923c; text-decoration: none; font-weight: 700; cursor: pointer;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">${codigoIncidencia}</a>`
                     : '-';
 
                 row.innerHTML = `
                     <td>${codigoLink}</td>
-                    <td>${(getIncidentValue(incident, 'Descripción problema') || '-').substring(0, 35)}...</td>
+                    <td>${(getIncidentValue(incident, 'Descripción') || '-').substring(0, 35)}...</td>
                     <td><span class="status-badge ${statusClass}">${status}</span></td>
-                    <td><span class="impact-badge ${impactClass}">${getIncidentValue(incident, 'Impacto Remedy') || '-'}</span></td>
-                    <td>${(getIncidentValue(incident, 'Sistema') || '-').substring(0, 20)}</td>
+                    <td><span class="impact-badge ${impactClass}">${getIncidentValue(incident, 'Impacto') || '-'}</span></td>
+                    <td>${(getIncidentValue(incident, 'Grupo asignado') || '-').substring(0, 20)}</td>
                     <td>${getIncidentValue(incident, 'Despliegue') || '-'}</td>
-                    <td>${(getIncidentValue(incident, 'Tipo solucion') || '-').substring(0, 15)}</td>
+                    <td>${(getIncidentValue(incident, 'Motivo de estado') || '-').substring(0, 15)}</td>
                 `;
                 tbody.appendChild(row);
             });
