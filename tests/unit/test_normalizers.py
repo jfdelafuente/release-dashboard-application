@@ -45,11 +45,13 @@ class TestNormalization:
 
     def test_normalize_datetime_valid(self):
         """Test datetime normalization with valid format."""
+        # 8:14 AM converts to 08:14 in 24-hour format
         result = normalize_datetime("02/01/2026 8:14 AM")
-        assert result == "02/01/2026 8:14 AM"
+        assert result == "02/01/2026 08:14"
 
+        # 11:59 PM converts to 23:59 in 24-hour format
         result = normalize_datetime("31/12/2026 11:59 PM")
-        assert result == "31/12/2026 11:59 PM"
+        assert result == "31/12/2026 23:59"
 
     def test_normalize_datetime_invalid(self):
         """Test datetime normalization with invalid format."""

@@ -102,11 +102,14 @@ def normalize_datetime(date_str: str) -> str:
 
     # If that fails, try removing AM/PM indicators and retry
     # (handles mixed format like "15:36 a" which should be "15:36")
+    # But only if the time is in 24-hour range (>12) - otherwise it might be a 12-hour time with AM/PM
     normalized_no_ampm = re.sub(r'\s+[aApP][mM]?\s*$', '', normalized)
     if normalized_no_ampm != normalized:
         try:
             dt = datetime.strptime(normalized_no_ampm, "%d/%m/%Y %H:%M")
-            return dt.strftime("%d/%m/%Y %H:%M")
+            # Only accept if it's truly a 24-hour format (hour > 12)
+            if dt.hour > 12:
+                return dt.strftime("%d/%m/%Y %H:%M")
         except ValueError:
             pass
 
