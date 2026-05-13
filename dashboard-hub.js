@@ -442,56 +442,86 @@ function renderHub(kpiData) {
 }
 
 /**
- * Create a KPI card DOM element
+ * Create a KPI card DOM element matching Massive Incidents Dashboard style
  */
 function createKPICardElement(kpi) {
     const card = document.createElement('div');
     card.className = 'kpi-card';
     card.setAttribute('data-metric', kpi.id);
 
-    // Header with label
-    const header = document.createElement('div');
-    header.className = 'kpi-header';
+    // Add trend class if applicable
+    if (kpi.trend) {
+        card.classList.add(`trend-${kpi.trend.direction}`);
+    }
 
-    const label = document.createElement('h3');
-    label.className = 'kpi-label';
-    label.textContent = kpi.label;
-    header.appendChild(label);
+    // Icon
+    const icon = document.createElement('div');
+    icon.className = 'kpi-icon';
+    icon.textContent = getKPIIcon(kpi.id);
 
-    // Content
+    // Content container
     const content = document.createElement('div');
     content.className = 'kpi-content';
 
+    // Label
+    const label = document.createElement('div');
+    label.className = 'kpi-label';
+    label.textContent = kpi.label;
+
     // Value
-    const valueDiv = document.createElement('div');
-    valueDiv.className = 'kpi-value';
-    valueDiv.textContent = formatNumber(kpi.value);
+    const value = document.createElement('div');
+    value.className = 'kpi-value';
+    value.textContent = formatNumber(kpi.value);
+
+    content.appendChild(label);
+    content.appendChild(value);
 
     // Trend if present
-    let trendHTML = '';
     if (kpi.trend) {
-        const trendClass = `trend-${kpi.trend.direction}`;
-        const trendIcon = getTrendIcon(kpi.trend.direction);
-        const trendSign = kpi.trend.percentage >= 0 ? '+' : '';
+        const trendDiv = document.createElement('div');
+        trendDiv.className = `kpi-trend trend-${kpi.trend.direction}`;
 
-        trendHTML = `
-            <div class="kpi-trend ${trendClass}">
-                <span class="trend-icon">${trendIcon}</span>
-                <span class="trend-percentage">${trendSign}${kpi.trend.percentage.toFixed(1)}%</span>
-                <span class="kpi-trend-period">${kpi.trend.period}</span>
-            </div>
-        `;
+        const trendIcon = document.createElement('span');
+        trendIcon.className = 'trend-icon';
+        trendIcon.textContent = getTrendIcon(kpi.trend.direction);
+
+        const trendPercentage = document.createElement('span');
+        trendPercentage.className = 'trend-percentage';
+        const trendSign = kpi.trend.percentage >= 0 ? '+' : '';
+        trendPercentage.textContent = `${trendSign}${kpi.trend.percentage.toFixed(1)}%`;
+
+        const trendPeriod = document.createElement('span');
+        trendPeriod.className = 'kpi-trend-period';
+        trendPeriod.textContent = kpi.trend.period;
+
+        trendDiv.appendChild(trendIcon);
+        trendDiv.appendChild(trendPercentage);
+        trendDiv.appendChild(trendPeriod);
+        content.appendChild(trendDiv);
     }
 
-    content.innerHTML = `
-        ${trendHTML}
-        <div>${valueDiv.outerHTML}</div>
-    `;
-
-    card.appendChild(header);
+    card.appendChild(icon);
     card.appendChild(content);
 
     return card;
+}
+
+/**
+ * Get appropriate icon for KPI metric
+ */
+function getKPIIcon(metricId) {
+    const icons = {
+        'total-incidents': '📌',
+        'pending-incidents': '⏳',
+        'trend-7-day': '📈',
+        'trend-15-day': '📊',
+        'trend-30-day': '📉',
+        'total-postmortems': '📋',
+        'critical-urgency': '⚠️',
+        'massive-impact': '💥',
+        'unresolved-items': '❌'
+    };
+    return icons[metricId] || '📊';
 }
 
 /**
