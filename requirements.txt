@@ -1,0 +1,8 @@
+# CSV to JSON Workflow - Dependencies
+
+# Testing
+pytest>=7.0.0
+pytest-cov>=4.0.0
+
+# No external dependencies for main code - using Python stdlib only
+# csv, json, pathlib, datetime, re all available in Python 3.6+
