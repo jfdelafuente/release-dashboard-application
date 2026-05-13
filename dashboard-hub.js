@@ -375,6 +375,7 @@ function getIncidentFieldValue(incident, fieldName) {
 /**
  * Extract Postmortem Dashboard KPIs
  * Calculates KPIs that match postmortem-dashboard.html
+ * Only used if file type is 'postmortem' and has Despliegue field
  */
 function extractPostmortemKPIs(incidents, metadata) {
     if (!incidents || incidents.length === 0) {
@@ -382,6 +383,17 @@ function extractPostmortemKPIs(incidents, metadata) {
     }
 
     const totalRecords = incidents.length;
+    const fileType = metadata?.type || 'unknown';
+
+    console.log(`[KPI DEBUG] File type: ${fileType}, Records: ${totalRecords}`);
+
+    // Check if this is actually postmortem data with Despliegue field
+    const hasDespliegue = incidents.some(i => getIncidentFieldValue(i, 'Despliegue'));
+
+    if (!hasDespliegue && fileType !== 'postmortem') {
+        console.log(`[KPI DEBUG] No Despliegue field found and file type is '${fileType}'. Returning empty KPIs.`);
+        return [];
+    }
 
     // Calculate percentages
     const closedCount = incidents.filter(i => {
@@ -412,32 +424,38 @@ function extractPostmortemKPIs(incidents, metadata) {
 
     console.log(`[KPI DEBUG] MESA Total: ${mesaIncidents.length}, Resuelto: ${mesaResolved}, % Resueltas Mesa: ${mesaPercent}%`);
 
-    return [
-        createKPICard(
-            'total-postmortem-incidents',
-            'Total Incidencias',
-            totalRecords,
-            'incidencias'
-        ),
-        createKPICard(
-            'postmortem-closed-percent',
-            '% Cerradas',
-            closedPercent,
-            '%'
-        ),
-        createKPICard(
-            'postmortem-pap-resolved',
-            '% Resueltas PaP',
-            papPercent,
-            '%'
-        ),
-        createKPICard(
-            'postmortem-mesa-resolved',
-            '% Resueltas Mesa',
-            mesaPercent,
-            '%'
-        )
-    ];
+    // Only show postmortem KPIs if we have Despliegue data
+    if (papIncidents.length > 0 || mesaIncidents.length > 0) {
+        return [
+            createKPICard(
+                'total-postmortem-incidents',
+                'Total Incidencias',
+                totalRecords,
+                'incidencias'
+            ),
+            createKPICard(
+                'postmortem-closed-percent',
+                '% Cerradas',
+                closedPercent,
+                '%'
+            ),
+            createKPICard(
+                'postmortem-pap-resolved',
+                '% Resueltas PaP',
+                papPercent,
+                '%'
+            ),
+            createKPICard(
+                'postmortem-mesa-resolved',
+                '% Resueltas Mesa',
+                mesaPercent,
+                '%'
+            )
+        ];
+    }
+
+    // Fallback if no Despliegue data found
+    return [];
 }
 
 /* ============================================================================
