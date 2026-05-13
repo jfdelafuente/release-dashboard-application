@@ -200,7 +200,7 @@ async function loadLatestJSON() {
 function extractKPIs(incidents, metadata) {
     return {
         massiveIncidents: extractMassiveIncidentsKPIs(incidents, metadata),
-        postmortem: extractPostmortemKPIs(incidents)
+        postmortem: extractPostmortemKPIs(incidents, metadata)
     };
 }
 
@@ -354,59 +354,60 @@ function extractMassiveIncidentsKPIs(incidents, metadata) {
  * Extract Postmortem Dashboard KPIs
  * Note: Currently using incident data; connect to postmortem data when available
  */
-function extractPostmortemKPIs(incidents) {
+function extractPostmortemKPIs(incidents, metadata) {
     if (!incidents || incidents.length === 0) {
         return [];
     }
 
-    // For now, create summary statistics from incident data
-    // When postmortem data is available, this should extract from that instead
-
     const totalRecords = incidents.length;
-    const byUrgencia = {};
-    const byImpacto = {};
 
-    incidents.forEach(incident => {
-        // Count by urgency
-        const urgencia = incident['Urgencia'] || 'Desconocida';
-        byUrgencia[urgencia] = (byUrgencia[urgencia] || 0) + 1;
+    // Calculate percentages
+    const closedCount = incidents.filter(i => {
+        const status = (i['Estatus'] || '').toLowerCase();
+        return status.includes('cerrado');
+    }).length;
+    const closedPercent = totalRecords > 0 ? Math.round((closedCount / totalRecords) * 100) : 0;
 
-        // Count by impact
-        const impacto = incident['Impacto'] || 'Desconocida';
-        byImpacto[impacto] = (byImpacto[impacto] || 0) + 1;
-    });
+    // Calculate PAP metrics (Cerrado + Resuelto)
+    const papIncidents = incidents.filter(i => i['Despliegue'] === 'PAP');
+    const papResolved = papIncidents.filter(i => {
+        const status = (i['Estatus'] || '').toLowerCase();
+        return status.includes('cerrado') || status.includes('resuelto');
+    }).length;
+    const papPercent = papIncidents.length > 0 ? Math.round((papResolved / papIncidents.length) * 100) : 0;
 
-    // Find most critical urgency
-    const criticalCount = byUrgencia['Crítica'] || 0;
-    const highCount = byUrgencia['Alta'] || 0;
-
-    // Find most impactful incidents
-    const massiveImpactCount = byImpacto['Masiva'] || 0;
+    // Calculate MESA metrics (Cerrado + Resuelto)
+    const mesaIncidents = incidents.filter(i => i['Despliegue'] === 'MESA');
+    const mesaResolved = mesaIncidents.filter(i => {
+        const status = (i['Estatus'] || '').toLowerCase();
+        return status.includes('cerrado') || status.includes('resuelto');
+    }).length;
+    const mesaPercent = mesaIncidents.length > 0 ? Math.round((mesaResolved / mesaIncidents.length) * 100) : 0;
 
     return [
         createKPICard(
-            'total-postmortems',
-            'Total de Registros',
+            'total-postmortem-incidents',
+            'Total Incidencias',
             totalRecords,
-            'registros'
-        ),
-        createKPICard(
-            'critical-urgency',
-            'Criticidad Alta/Crítica',
-            criticalCount + highCount,
             'incidencias'
         ),
         createKPICard(
-            'massive-impact',
-            'Impacto Masivo',
-            massiveImpactCount,
-            'incidencias'
+            'postmortem-closed-percent',
+            '% Cerradas',
+            closedPercent,
+            '%'
         ),
         createKPICard(
-            'unresolved-items',
-            'Elementos Pendientes',
-            incidents.filter(i => !CLOSED_STATUSES.includes(i['Estatus'])).length,
-            'pendientes'
+            'postmortem-pap-resolved',
+            '% Resueltas PaP',
+            papPercent,
+            '%'
+        ),
+        createKPICard(
+            'postmortem-mesa-resolved',
+            '% Resueltas Mesa',
+            mesaPercent,
+            '%'
         )
     ];
 }
