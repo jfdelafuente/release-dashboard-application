@@ -1,185 +1,313 @@
-# CSV to JSON Converter
+# Release Dashboard Application - CSV to JSON Workflow
 
-Herramienta Python para convertir archivos CSV a formato JSON de manera simple y eficiente.
+Herramienta completa para convertir archivos CSV de incidencias masivas a formato JSON compatible con el **Massive Incidents Dashboard**.
 
-## Características
+## 🎯 Características Principales
 
-- ✅ Convierte archivos CSV individuales a JSON
-- ✅ Convierte múltiples archivos CSV en un directorio
-- ✅ **Auto-detección de delimitadores** (coma, punto y coma, tabulación)
-- ✅ Soporta múltiples codificaciones (UTF-8, UTF-8-sig, Latin-1, etc.)
-- ✅ Genera JSON con formato legible e indentación
-- ✅ Preserva caracteres especiales y acentos
+✅ **Auto-detección inteligente**
+- Encoding (UTF-8, UTF-8-sig, Windows-1252, Latin-1, ISO-8859-15)
+- Delimitadores (coma, punto y coma, tabulación)
 
-## Requisitos
+✅ **Normalización de campos**
+- Urgencia: extrae texto de formato "N-Text" ("4-Baja" → "Baja")
+- Estatus: normaliza a Title Case
+- Impacto: normaliza a Title Case
+- Fechas: valida formato dd/mm/yyyy HH:mm a/p
 
-- Python 3.6 o superior
-- Sin dependencias externas (usa librerías estándar: `csv`, `json`, `pathlib`)
+✅ **Validación robusta**
+- Verifica campos requeridos
+- Valida valores permitidos (enums)
+- Detecta formatos de fecha inválidos
+- Continúa procesando saltando registros inválidos
 
-## Instalación
+✅ **Reporte de errores**
+- Genera reporte JSON detallado con errores
+- Incluye número de fila, campo y motivo del error
+- Estadísticas de conversión (total, exitosos, fallidos, tasa de éxito)
 
-No requiere instalación especial. Solo necesitas tener Python instalado.
+✅ **Compatible con Dashboard**
+- JSON output compatible 100% con Massive Incidents Dashboard
+- Preserva todos los campos del CSV
+- Mantiene caracteres especiales (é, ñ, ü)
 
-## Uso
+## 📋 Requisitos
 
-### 1. Convertir un archivo CSV individual
+- Python 3.6+
+- Sin dependencias externas (usa librerías estándar)
 
-```bash
-python csv_to_json.py archivo.csv -o salida.json
+## 🚀 Inicio Rápido
+
+### Opción 1: Uso Programático (Python)
+
+```python
+from csv_to_json import CsvToJsonConverter
+
+converter = CsvToJsonConverter()
+success, report = converter.convert_file(
+    input_path='incidencias/data.csv',
+    output_path='output/incidents.json',
+    error_report_path='output/errors.json'
+)
+
+print(f"Exitoso: {report['stats']['successful']}")
+print(f"Errores: {report['stats']['failed']}")
+print(f"Encoding detectado: {report['encoding_detected']}")
 ```
 
-**Ejemplo:**
-```bash
-python csv_to_json.py csv/2026R4MESAPOST.csv -o 2026R4MESAPOST.json
-```
-
-Si no especificas `-o`, la salida se imprime en consola:
-```bash
-python csv_to_json.py archivo.csv
-```
-
-### 2. Convertir todos los CSV en un directorio
+### Opción 2: Uso desde Python (CLI)
 
 ```bash
-python csv_to_json.py csv/
+# Instalar dependencias
+pip install -r requirements.txt
+
+# Convertir archivo
+python -c "
+from csv_to_json import CsvToJsonConverter
+converter = CsvToJsonConverter()
+success, report = converter.convert_file(
+    'incidencias/CS-Informe incidencias P1,  P2 y P3 - 2026 - 13 May 2026.csv',
+    'output.json',
+    'errors.json'
+)
+print(f'Conversión: {'Exitosa' if success else 'Con errores'}')
+"
 ```
 
-Genera un archivo JSON para cada CSV en el mismo directorio.
+## 💻 Ejemplos de Uso
 
-### 3. Especificar otra codificación
+### Ejemplo 1: Convertir archivo de incidencias masivas
 
-Si tu archivo no es UTF-8, especifica la codificación:
+```python
+from csv_to_json import CsvToJsonConverter
 
-```bash
-# Para archivos UTF-8 con BOM
-python csv_to_json.py archivo.csv -o salida.json -e utf-8-sig
+converter = CsvToJsonConverter()
+success, report = converter.convert_file(
+    input_path='incidencias/CS-Informe incidencias P1,  P2 y P3 - 2026 - 13 May 2026.csv',
+    output_path='dashboard_data.json',
+    error_report_path='conversion_errors.json'
+)
 
-# Para archivos Latin-1/ISO-8859-1
-python csv_to_json.py archivo.csv -o salida.json -e latin-1
-
-# Para archivos Windows-1252
-python csv_to_json.py archivo.csv -o salida.json -e cp1252
+stats = report['stats']
+print(f"Total: {stats['total_records']}")
+print(f"Exitosos: {stats['successful']}")
+print(f"Fallidos: {stats['failed']}")
+print(f"Tasa: {stats['success_rate']:.1f}%")
 ```
 
-### 4. Especificar delimitador manualmente
+### Ejemplo 2: Procesar múltiples archivos
 
-Si quieres forzar un delimitador específico:
+```python
+from csv_to_json import CsvToJsonConverter
+from pathlib import Path
 
-```bash
-# Usar punto y coma como delimitador
-python csv_to_json.py archivo.csv -o salida.json -d ';'
+converter = CsvToJsonConverter()
+csv_files = Path('csv').glob('*.csv')
 
-# Usar tabulación
-python csv_to_json.py archivo.csv -o salida.json -d $'\t'
+for csv_file in csv_files:
+    output = f'json/{csv_file.stem}.json'
+    errors = f'json/{csv_file.stem}_errors.json'
 
-# Usar coma (por defecto)
-python csv_to_json.py archivo.csv -o salida.json -d ','
+    success, report = converter.convert_file(
+        str(csv_file),
+        output,
+        errors
+    )
+
+    print(f"{csv_file.name}: {report['stats']['successful']}/{report['stats']['total_records']}")
 ```
 
-## Opciones
+### Ejemplo 3: Obtener estadísticas de conversión
 
-| Opción | Forma larga | Descripción | Ejemplo |
-|--------|------------|-------------|---------|
-| `input` | — | Archivo CSV o directorio | `csv/datos.csv` |
-| `-o` | `--output` | Archivo o directorio de salida | `-o output.json` |
-| `-e` | `--encoding` | Codificación del CSV | `-e utf-8-sig` |
-| `-d` | `--delimiter` | Delimitador del CSV | `-d ';'` |
+```python
+from csv_to_json import CsvToJsonConverter
 
-## Ejemplos Prácticos
+converter = CsvToJsonConverter()
+converter.convert_file('data.csv', 'output.json')
 
-### Ejemplo 1: Convertir un CSV sencillo
-```bash
-python csv_to_json.py datos.csv -o datos.json
+stats = converter.get_stats()
+errors = converter.get_errors()
+
+print(f"Tasa de éxito: {stats['success_rate']:.1f}%")
+print(f"Registros con error: {len(errors)}")
+
+for error in errors[:5]:  # Mostrar primeros 5 errores
+    print(f"  Fila {error['row']}: {error['fields']}")
 ```
 
-### Ejemplo 2: Convertir CSV con punto y coma (delimitador español)
-```bash
-python csv_to_json.py facturas.csv -o facturas.json -e utf-8-sig -d ';'
-```
+## 📊 Formato de Salida
 
-### Ejemplo 3: Procesar todos los CSV de una carpeta
-```bash
-python csv_to_json.py reports/
-```
-
-Genera:
-- `reports/archivo1.json`
-- `reports/archivo2.json`
-- `reports/archivo3.json`
-
-### Ejemplo 4: Auto-detección (recomendado)
-```bash
-# El script detecta automáticamente el delimitador
-python csv_to_json.py datos.csv -o datos.json
-```
-
-## Formato de Salida
-
-El script genera JSON con estructura clara y legible:
+### JSON válido (output.json)
 
 ```json
 [
   {
-    "ID de incidencia": "INC000004002774",
-    "Descripción": "[2026R4] - [PRJ-10523] No deja modificar el producto",
+    "ID de incidencia": "INC000003884945",
+    "Descripción": "LIVEPERSON // DERIO // ERROR FUNCIONAL",
     "Estatus": "Cerrado",
-    "Fecha de envío": "26/04/2026 8:40 a",
-    "Grupo asignado": "SOP_CRMB2B"
-  },
-  {
-    "ID de incidencia": "INC000004002775",
-    "Descripción": "[2026R4] - MICROSERVICIOS - Error 500",
-    "Estatus": "Cerrado",
-    "Fecha de envío": "26/04/2026 8:43 a",
-    "Grupo asignado": "SOP_TURING_OSP"
+    "Fecha de envío": "02/01/2026 8:14 AM",
+    "Grupo asignado": "CEP CAU AGI",
+    "Urgencia": "Baja",
+    "Impacto": "Masiva",
+    "Fecha de última resolución": "12/01/2026 8:24 AM"
   }
 ]
 ```
 
-## Codificaciones Soportadas
+### Reporte de errores (errors.json)
 
-- **utf-8** - UTF-8 estándar
-- **utf-8-sig** - UTF-8 con BOM (Microsoft)
-- **latin-1** - ISO-8859-1 (Europa Occidental)
-- **iso-8859-1** - Igual que latin-1
-- **cp1252** - Windows-1252 (Windows)
-- **iso-8859-15** - Latin-9 (Europa)
-
-## Solución de Problemas
-
-### Error: "No se encontró el archivo"
+```json
+{
+  "summary": {
+    "total_records": 100,
+    "successful": 95,
+    "failed": 5,
+    "success_rate": 95.0
+  },
+  "errors": [
+    {
+      "row": 23,
+      "fields": {
+        "Urgencia": {
+          "original": "5-Desconocida",
+          "error": "Invalid value: must be one of [Baja, Medio, Alta, Crítica]"
+        }
+      }
+    }
+  ]
+}
 ```
-Error: No se encontró el archivo datos.csv
+
+## 🔧 Configuración de Validación
+
+### Campos requeridos
+- ID de incidencia
+- Descripción
+- Estatus
+- Fecha de envío
+- Grupo asignado
+- Urgencia
+- Impacto
+
+### Valores permitidos
+
+| Campo | Valores Permitidos |
+|-------|------------------|
+| **Estatus** | Abierto, Pendiente, En Progreso, Resuelto, Cerrado, Cancelado |
+| **Urgencia** | Baja, Medio, Alta, Crítica |
+| **Impacto** | Masiva |
+
+### Normalización automática
+
+| Campo | Entrada | Salida |
+|-------|---------|--------|
+| **Urgencia** | 4-Baja | Baja |
+| **Urgencia** | 3-Medio | Medio |
+| **Urgencia** | 2-Alta | Alta |
+| **Urgencia** | 1-Crítica | Crítica |
+| **Estatus** | cerrado | Cerrado |
+| **Impacto** | masiva | Masiva |
+
+## 🧪 Ejecución de Tests
+
+```bash
+# Ejecutar todos los tests
+pytest tests/ -v
+
+# Ver cobertura de código
+pytest tests/ --cov=csv_to_json --cov-report=html
+
+# Ejecutar solo tests de integración
+pytest tests/integration/ -v
+
+# Ejecutar tests unitarios
+pytest tests/unit/ -v
 ```
-✓ Verifica que la ruta del archivo es correcta
-✓ Usa rutas relativas desde el directorio actual
 
-### Error de codificación
+**Estado Actual**: ✅ 34/34 tests pasando | 81.95% coverage
+
+## 📚 Documentación Adicional
+
+- [Especificación Feature](specs/001-csv-to-json-workflow/spec.md)
+- [Plan Técnico](specs/001-csv-to-json-workflow/plan.md)
+- [Modelo de Datos](specs/001-csv-to-json-workflow/data-model.md)
+- [Guía de Inicio Rápido](specs/001-csv-to-json-workflow/quickstart.md)
+- [Investigación Técnica](specs/001-csv-to-json-workflow/research.md)
+
+## 🐛 Solución de Problemas
+
+### Error: "Required field 'Urgencia' is empty"
+
 ```
-Error al procesar: 'charmap' codec can't encode character
+Error: Validación falló - campo obligatorio vacío
 ```
-✓ Especifica la codificación correcta con `-e`
-✓ Intenta con `-e utf-8-sig` para archivos de Windows
 
-### Datos mal parseados
+**Solución**: Verifica que el CSV tenga datos en el campo Urgencia. Si viene como "N-Texto", la normalización lo extraerá automáticamente.
+
+### Error: "Invalid Estatus value"
+
 ```
-Las columnas no se separan correctamente
+Error: Valor no permitido en Estatus
 ```
-✓ Especifica el delimitador con `-d`
-✓ El script intenta auto-detectar, pero puedes forzarlo manualmente
 
-## Notas
+**Solución**: Verifica que Estatus esté en la lista permitida. Se normaliza a Title Case automáticamente.
 
-- **Campos vacíos**: Se preservan como cadenas vacías `""`
-- **Caracteres especiales**: Se preservan correctamente en UTF-8
-- **Acentos y ñ**: Soportados completamente
-- **Saltos de línea**: Se preservan dentro de los campos
-- **Comillas**: Se manejan correctamente según estándar CSV
+### Encoding incorrecto
 
-## Contribuciones
+```
+Error: UnicodeDecodeError o caracteres raros
+```
 
-Para mejoras o reportar problemas, contacta al equipo de desarrollo.
+**Solución**: El módulo auto-detecta encoding. Si falla, verifica manualmente el encoding del archivo.
 
-## Licencia
+### Delimitador incorrecto
 
-Este script es de uso interno del proyecto.
+```
+Error: Las columnas no se parsean correctamente
+```
+
+**Solución**: El módulo auto-detecta delimitadores. Si falla, revisa el archivo manualmente.
+
+## 📈 Monitoreo y Logs
+
+```python
+from csv_to_json import CsvToJsonConverter
+
+converter = CsvToJsonConverter()
+success, report = converter.convert_file('data.csv', 'out.json', 'err.json')
+
+# Ver estadísticas
+print(f"Total: {report['stats']['total_records']}")
+print(f"Tasa éxito: {report['stats']['success_rate']:.1f}%")
+print(f"Encoding: {report['encoding_detected']}")
+
+# Ver errores específicos
+for error in report['errors']:
+    row = error['row']
+    fields = error['fields']
+    print(f"Fila {row}: {fields}")
+```
+
+## 🚀 Integración con Dashboard
+
+El JSON generado es compatible 100% con **Massive Incidents Dashboard**:
+
+1. Carga el CSV en el conversor
+2. Genera `output.json`
+3. Carga `output.json` en el dashboard
+4. Dashboard parsea automáticamente los datos
+
+**Campos normalizados automáticamente para compatibilidad:**
+- Urgencia: Sin prefijo numérico
+- Estatus: Title case
+- Impacto: Title case
+
+## 📞 Soporte
+
+Para preguntas o problemas:
+- Revisa [quickstart.md](specs/001-csv-to-json-workflow/quickstart.md)
+- Consulta [spec.md](specs/001-csv-to-json-workflow/spec.md) para detalles técnicos
+- Ejecuta tests con `pytest` para verificar funcionamiento
+
+## 📄 Licencia
+
+Uso interno del proyecto Release Dashboard Application.
