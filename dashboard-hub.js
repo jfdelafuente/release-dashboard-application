@@ -198,11 +198,41 @@ async function loadLatestJSON() {
 
 /**
  * Extract KPI metrics from incident data
+ * Routes to appropriate KPI extraction based on file type and data structure
  */
 function extractKPIs(incidents, metadata) {
+    const fileType = metadata?.type || 'unknown';
+    const hasKPIsMetadata = metadata && metadata.kpis;
+    const hasDespliegue = incidents && incidents.length > 0 &&
+        incidents.some(i => getIncidentFieldValue(i, 'Despliegue'));
+
+    console.log(`[extractKPIs] File type: ${fileType}, Has KPIs metadata: ${!!hasKPIsMetadata}, Has Despliegue: ${hasDespliegue}`);
+
+    // Decide which KPIs to extract
+    let massiveIncidentsKPIs = [];
+    let postmortemKPIs = [];
+
+    // Always try to extract massive KPIs if we have metadata.kpis
+    if (hasKPIsMetadata) {
+        console.log(`[extractKPIs] Extracting Massive KPIs from metadata`);
+        massiveIncidentsKPIs = extractMassiveIncidentsKPIs(incidents, metadata);
+    }
+
+    // Extract postmortem KPIs if we have Despliegue field
+    if (hasDespliegue) {
+        console.log(`[extractKPIs] Extracting Postmortem KPIs from Despliegue field`);
+        postmortemKPIs = extractPostmortemKPIs(incidents, metadata);
+    }
+
+    // Fallback: if no metadata KPIs but no Despliegue either, try massive KPI calculation
+    if (!hasKPIsMetadata && !hasDespliegue && incidents && incidents.length > 0) {
+        console.log(`[extractKPIs] Fallback: calculating Massive KPIs from incidents data`);
+        massiveIncidentsKPIs = extractMassiveIncidentsKPIs(incidents, metadata);
+    }
+
     return {
-        massiveIncidents: extractMassiveIncidentsKPIs(incidents, metadata),
-        postmortem: extractPostmortemKPIs(incidents, metadata)
+        massiveIncidents: massiveIncidentsKPIs,
+        postmortem: postmortemKPIs
     };
 }
 
