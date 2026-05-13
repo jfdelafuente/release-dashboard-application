@@ -182,6 +182,7 @@ function extractKPIs(incidents) {
 
 /**
  * Extract Massive Incidents KPIs
+ * Uses same logic as Massive Incidents Dashboard for consistency
  */
 function extractMassiveIncidentsKPIs(incidents) {
     if (!incidents || incidents.length === 0) {
@@ -192,13 +193,15 @@ function extractMassiveIncidentsKPIs(incidents) {
     const totalIncidents = incidents.length;
 
     // Pending incidents (not closed/resolved/cancelled)
+    // Using same logic as Massive Incidents Dashboard: check if status INCLUDES these words
     const pendingIncidents = incidents.filter(incident => {
-        const estatus = (incident['Estatus'] || '').toLowerCase().trim();
-        return !CLOSED_STATUSES.some(s => s.toLowerCase() === estatus);
+        const status = (incident['Estatus'] || '').toLowerCase();
+        // Use .includes() like Massive Incidents Dashboard
+        return !status.includes('cerrado') && !status.includes('resuelto') && !status.includes('cancelado');
     });
     const pendingCount = pendingIncidents.length;
 
-    // Calculate backlog trends
+    // Calculate backlog trends from pending incidents over time
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
@@ -211,7 +214,7 @@ function extractMassiveIncidentsKPIs(incidents) {
     const thirtyDaysAgo = new Date(today);
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-    // Count pending at different dates
+    // Count pending incidents at different dates
     const pendingSevenDaysAgo = countPendingAtDate(incidents, sevenDaysAgo);
     const pendingFifteenDaysAgo = countPendingAtDate(incidents, fifteenDaysAgo);
     const pendingThirtyDaysAgo = countPendingAtDate(incidents, thirtyDaysAgo);
