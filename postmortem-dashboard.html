@@ -1,0 +1,1571 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Incident PostMortem Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #f0f4f8;
+            color: #1f2937;
+        }
+
+        /* Upload Screen */
+        .upload-screen {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .upload-screen.hidden {
+            display: none;
+        }
+
+        .upload-card {
+            background: white;
+            border: 2px dashed #cbd5e1;
+            border-radius: 16px;
+            padding: 80px 60px;
+            max-width: 550px;
+            width: 100%;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+        }
+
+        .upload-card:hover,
+        .upload-card.drag-over {
+            border-color: #fb923c;
+            background-color: #f0f9ff;
+            box-shadow: 0 20px 25px rgba(251, 146, 60, 0.15);
+            transform: translateY(-2px);
+        }
+
+        .upload-icon {
+            font-size: 64px;
+            margin-bottom: 24px;
+            display: block;
+            animation: bounce 2s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
+        }
+
+        .upload-heading {
+            font-size: 28px;
+            font-weight: 800;
+            color: #1f2937;
+            margin-bottom: 12px;
+            letter-spacing: -0.5px;
+        }
+
+        .upload-description {
+            font-size: 15px;
+            color: #6b7280;
+            margin-bottom: 32px;
+            line-height: 1.6;
+        }
+
+        .upload-btn {
+            background: linear-gradient(135deg, #fb923c 0%, #fed7aa 100%);
+            color: white;
+            border: none;
+            padding: 14px 36px;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .upload-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 24px rgba(37, 99, 235, 0.4);
+        }
+
+        #fileInput {
+            position: absolute;
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        /* Dashboard */
+        .dashboard-screen {
+            display: none;
+            animation: fadeIn 0.6s ease;
+        }
+
+        .dashboard-screen.visible {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        /* Header */
+        .header {
+            background: white;
+            padding: 20px 40px;
+            text-align: center;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .eyebrow {
+            display: inline-block;
+            background: rgba(251, 146, 60, 0.1);
+            color: #fb923c;
+            padding: 6px 16px;
+            border-radius: 24px;
+            font-size: 10px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            margin-bottom: 8px;
+        }
+
+        .header h1 {
+            font-size: 32px;
+            font-weight: 800;
+            margin-bottom: 6px;
+            letter-spacing: -0.5px;
+        }
+
+        .header h1 .accent {
+            color: #fb923c;
+        }
+
+        .header p {
+            font-size: 13px;
+            color: #6b7280;
+            margin-bottom: 12px;
+        }
+
+        .gradient-divider {
+            height: 3px;
+            width: 50px;
+            background: linear-gradient(90deg, #fb923c 0%, #fed7aa 100%);
+            margin: 0 auto;
+            border-radius: 2px;
+        }
+
+        /* Main Container */
+        .dashboard-main {
+            padding: 48px 40px;
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        .controls-row {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 40px;
+            flex-wrap: wrap;
+        }
+
+        .record-pill {
+            background: rgba(251, 146, 60, 0.1);
+            color: #fb923c;
+            padding: 8px 18px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            animation: slideInLeft 0.5s ease;
+        }
+
+        .live-dot {
+            width: 8px;
+            height: 8px;
+            background: #fb923c;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+
+        @keyframes slideInLeft {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .reset-btn {
+            background: white;
+            color: #fb923c;
+            border: 2px solid #fb923c;
+            padding: 10px 22px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .reset-btn:hover {
+            background: #f0f9ff;
+            transform: translateY(-2px);
+        }
+
+        /* KPI Grid */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 24px;
+            margin-bottom: 48px;
+        }
+
+        .kpi-card {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 16px;
+            padding: 32px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border-left: 5px solid;
+            animation: fadeUpStagger 0.6s ease backwards;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .kpi-card:hover {
+            box-shadow: 0 16px 32px rgba(0, 0, 0, 0.12);
+            transform: translateY(-6px);
+        }
+
+        .kpi-card:nth-child(1) {
+            border-left-color: #fb923c;
+            animation-delay: 0.1s;
+        }
+
+        .kpi-card:nth-child(2) {
+            border-left-color: #fed7aa;
+            animation-delay: 0.2s;
+        }
+
+        .kpi-card:nth-child(3) {
+            border-left-color: #f97316;
+            animation-delay: 0.3s;
+        }
+
+        .kpi-card:nth-child(4) {
+            border-left-color: #fb923c;
+            animation-delay: 0.4s;
+        }
+
+        @keyframes fadeUpStagger {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .kpi-icon {
+            font-size: 40px;
+            opacity: 0.3;
+        }
+
+        .kpi-content {
+            flex: 1;
+        }
+
+        .kpi-value {
+            font-size: 32px;
+            font-weight: 800;
+            line-height: 1;
+            margin-bottom: 4px;
+        }
+
+        .kpi-label {
+            font-size: 12px;
+            color: #6b7280;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .kpi-card:nth-child(1) .kpi-value { color: #fb923c; }
+        .kpi-card:nth-child(2) .kpi-value { color: #fed7aa; }
+        .kpi-card:nth-child(3) .kpi-value { color: #f97316; }
+        .kpi-card:nth-child(4) .kpi-value { color: #fb923c; }
+
+        /* Sections */
+        .section-title {
+            font-size: 18px;
+            font-weight: 800;
+            color: #1f2937;
+            margin: 48px 0 24px 0;
+            letter-spacing: -0.3px;
+        }
+
+        .row-2col {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 32px;
+            margin-bottom: 32px;
+        }
+
+        .row-3col {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+            gap: 32px;
+            margin-bottom: 32px;
+        }
+
+        .row-1col {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 32px;
+            margin-bottom: 32px;
+        }
+
+        .card {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 16px;
+            padding: 32px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            animation: fadeUpStagger 0.6s ease backwards;
+        }
+
+        .card:hover {
+            box-shadow: 0 16px 32px rgba(0, 0, 0, 0.12);
+            transform: translateY(-6px);
+        }
+
+        .row-2col .card:nth-child(1) { animation-delay: 0.5s; }
+        .row-2col .card:nth-child(2) { animation-delay: 0.6s; }
+        .row-3col .card:nth-child(1) { animation-delay: 0.5s; }
+        .row-3col .card:nth-child(2) { animation-delay: 0.6s; }
+        .row-3col .card:nth-child(3) { animation-delay: 0.7s; }
+        .row-1col .card { animation-delay: 0.8s; }
+
+        .card h3 {
+            font-size: 16px;
+            font-weight: 700;
+            color: #1f2937;
+            margin-bottom: 24px;
+        }
+
+        .chart-container {
+            min-height: 350px;
+        }
+
+        /* Table */
+        .table-container {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+        }
+
+        table thead {
+            background: linear-gradient(90deg, #f97316 0%, #fb923c 100%);
+            border-bottom: 3px solid #c2410c;
+        }
+
+        table th {
+            padding: 14px 12px;
+            text-align: left;
+            font-weight: 800;
+            color: #ffffff;
+            text-transform: uppercase;
+            font-size: 11px;
+            letter-spacing: 0.8px;
+        }
+
+        table td {
+            padding: 12px;
+            border-bottom: 1px solid #f0e6d6;
+        }
+
+        table tbody tr {
+            transition: all 0.2s ease;
+        }
+
+        table tbody tr:nth-child(odd) {
+            background: #fefdf9;
+        }
+
+        table tbody tr:nth-child(even) {
+            background: #ffffff;
+        }
+
+        table tbody tr:hover {
+            background: #fef3e2;
+            box-shadow: inset 0 0 12px rgba(251, 146, 60, 0.1);
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            border: 1px solid;
+        }
+
+        /* Status badges - Dynamic colors for each status */
+        .status-cerrada { background: #10b981; color: #ffffff; border-color: #059669; }
+        .status-resuelto { background: #06b6d4; color: #ffffff; border-color: #0891b2; }
+        .status-abierta { background: #f97316; color: #ffffff; border-color: #d85f0a; }
+        .status-en-progreso { background: #fb923c; color: #ffffff; border-color: #e67e27; }
+        .status-pendiente { background: #fed7aa; color: #92400e; border-color: #fcc88e; }
+        .status-en-espera { background: #fbbf24; color: #78350f; border-color: #f59e0b; }
+        .status-rechazada { background: #ef4444; color: #ffffff; border-color: #dc2626; }
+        .status-cancelada { background: #8b5cf6; color: #ffffff; border-color: #7c3aed; }
+        .status-default { background: #9ca3af; color: #ffffff; border-color: #6b7280; }
+
+        .impact-badge {
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 700;
+            border: 1px solid;
+        }
+
+        /* Impact badges - Dynamic colors for each impact level */
+        .impact-crítico,
+        .impact-1 { background: #c2410c; color: #ffffff; border-color: #a03709; }
+
+        .impact-alto,
+        .impact-2 { background: #fb923c; color: #ffffff; border-color: #e67e27; }
+
+        .impact-medio,
+        .impact-3 { background: #fed7aa; color: #92400e; border-color: #fcc88e; }
+
+        .impact-bajo,
+        .impact-4 { background: #fbbf24; color: #78350f; border-color: #f59e0b; }
+
+        .impact-mínimo,
+        .impact-5 { background: #10b981; color: #ffffff; border-color: #059669; }
+
+        .impact-default { background: #9ca3af; color: #ffffff; border-color: #6b7280; }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 40px 20px;
+            border-top: 1px solid #e2e8f0;
+            color: #6b7280;
+            font-size: 12px;
+            background: white;
+            margin-top: 48px;
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .row-2col, .row-3col {
+                grid-template-columns: 1fr;
+            }
+
+            .kpi-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .header {
+                padding: 40px 24px;
+            }
+
+            .header h1 {
+                font-size: 36px;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .kpi-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .dashboard-main {
+                padding: 24px 16px;
+            }
+
+            .header {
+                padding: 32px 16px;
+            }
+
+            .upload-card {
+                padding: 48px 24px;
+            }
+
+            .header h1 {
+                font-size: 28px;
+            }
+
+            table {
+                font-size: 10px;
+            }
+
+            table th, table td {
+                padding: 8px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Upload Screen -->
+    <div class="upload-screen" id="uploadScreen">
+        <div class="upload-card" id="uploadCard">
+            <span class="upload-icon">📋</span>
+            <h2 class="upload-heading">PostMortem Dashboard</h2>
+            <p class="upload-description">
+                Carga tu archivo JSON con datos de PostMortem.<br>
+                <small>Drag & drop o haz clic para seleccionar</small>
+            </p>
+            <button class="upload-btn" id="uploadBtn">Choose File</button>
+            <input type="file" id="fileInput" accept=".json" />
+        </div>
+    </div>
+
+    <!-- Dashboard Screen -->
+    <div class="dashboard-screen" id="dashboardScreen">
+        <!-- Header -->
+        <div class="header">
+            <div class="eyebrow">PostMortem Dashboard</div>
+            <h1>Incident <span class="accent">Performance</span></h1>
+            <p>Análisis detallado de incidencias y PostMortem Release</p>
+            <div class="gradient-divider"></div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="dashboard-main">
+            <!-- Controls -->
+            <div class="controls-row">
+                <div class="record-pill">
+                    <span class="live-dot"></span>
+                    <span id="recordCount">0 registros</span>
+                </div>
+                <button class="reset-btn" id="resetBtn">↻ Upload New File</button>
+            </div>
+
+            <!-- Global KPIs -->
+            <div class="kpi-grid">
+                <div class="kpi-card">
+                    <span class="kpi-icon">📋</span>
+                    <div class="kpi-content">
+                        <div class="kpi-value" id="globalTotal">0</div>
+                        <div class="kpi-label">Total Incidencias</div>
+                    </div>
+                </div>
+                <div class="kpi-card">
+                    <span class="kpi-icon">✓</span>
+                    <div class="kpi-content">
+                        <div class="kpi-value" id="globalClosed">0%</div>
+                        <div class="kpi-label">% Cerradas</div>
+                    </div>
+                </div>
+                <div class="kpi-card">
+                    <span class="kpi-icon">🚀</span>
+                    <div class="kpi-content">
+                        <div class="kpi-value" id="papResolved">0%</div>
+                        <div class="kpi-label">% Resueltas PaP</div>
+                    </div>
+                </div>
+                <div class="kpi-card">
+                    <span class="kpi-icon">📦</span>
+                    <div class="kpi-content">
+                        <div class="kpi-value" id="mesaResolved">0%</div>
+                        <div class="kpi-label">% Resueltas Mesa</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Evolution Chart -->
+            <div class="section-title">Evolución Diaria de Incidencias Operativas</div>
+            <div class="row-1col">
+                <div class="card">
+                    <h3>Entradas, Resoluciones y Backlog</h3>
+                    <div id="evolutionChart" class="chart-container" style="min-height: 450px;"></div>
+                </div>
+            </div>
+
+            <!-- Open Incidents Chart -->
+            <div class="section-title">Incidencias Abiertas por Día y Backlog</div>
+            <div class="row-1col">
+                <div class="card">
+                    <h3>Incidencias No Cerradas y Backlog Acumulado</h3>
+                    <div id="openIncidentsChart" class="chart-container" style="min-height: 450px;"></div>
+                </div>
+            </div>
+
+            <!-- Distribution Section -->
+            <div class="section-title">Análisis de Distribución</div>
+            <div class="row-3col">
+                <div class="card">
+                    <h3>Por Sistema</h3>
+                    <div id="systemChart" class="chart-container"></div>
+                </div>
+            </div>
+
+            <!-- Debug Table for Open Incidents -->
+
+            <!-- Details Table -->
+            <div class="section-title">Detalles de Incidencias</div>
+            <div class="card">
+                <h3>Registro Completo</h3>
+
+                <!-- Filters -->
+                <div style="margin-bottom: 24px; display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px;">
+                    <div>
+                        <label style="font-size: 12px; font-weight: 600; color: #6b7280; text-transform: uppercase; display: block; margin-bottom: 6px;">Estado</label>
+                        <select id="filterStatus" style="width: 100%; padding: 8px; border: 1px solid #e2e8f0; border-radius: 6px; font-family: 'Poppins', sans-serif; font-size: 13px;">
+                            <option value="">Todos</option>
+                            <option value="cerrada">Cerrada</option>
+                            <option value="abierta">Abierta</option>
+                            <option value="pendiente">Pendiente</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="font-size: 12px; font-weight: 600; color: #6b7280; text-transform: uppercase; display: block; margin-bottom: 6px;">Despliegue</label>
+                        <select id="filterDespliegue" style="width: 100%; padding: 8px; border: 1px solid #e2e8f0; border-radius: 6px; font-family: 'Poppins', sans-serif; font-size: 13px;">
+                            <option value="">Todos</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="font-size: 12px; font-weight: 600; color: #6b7280; text-transform: uppercase; display: block; margin-bottom: 6px;">Impacto</label>
+                        <select id="filterImpacto" style="width: 100%; padding: 8px; border: 1px solid #e2e8f0; border-radius: 6px; font-family: 'Poppins', sans-serif; font-size: 13px;">
+                            <option value="">Todos</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Table -->
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                    <span style="font-size: 12px; color: #6b7280;"><span id="filteredCount">0</span> registros mostrados</span>
+                </div>
+
+                <div class="table-container">
+                    <table id="incidentTable">
+                        <thead>
+                            <tr>
+                                <th style="cursor: pointer;" onclick="sortTable('Código Incidencia')">Código ⇅</th>
+                                <th style="cursor: pointer;" onclick="sortTable('Descripción problema')">Descripción ⇅</th>
+                                <th style="cursor: pointer;" onclick="sortTable('Status')">Estado ⇅</th>
+                                <th style="cursor: pointer;" onclick="sortTable('Impacto Remedy')">Impacto ⇅</th>
+                                <th style="cursor: pointer;" onclick="sortTable('Sistema')">Sistema ⇅</th>
+                                <th style="cursor: pointer;" onclick="sortTable('Despliegue')">Despliegue ⇅</th>
+                                <th style="cursor: pointer;" onclick="sortTable('Tipo solucion')">Solución ⇅</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <p>PostMortem Release Dashboard • Powered by Plotly.js • <span id="footerCount">0</span> incidents loaded</p>
+        </div>
+    </div>
+
+    <script>
+        let allIncidents = [];
+        let filteredIncidents = [];
+        let sortColumn = '';
+        let sortDirection = 'asc';
+        let globalBacklogData = null; // Store backlog data to reuse across charts
+
+        // Get value handling BOM and field name variations
+        function getIncidentValue(incident, fieldName) {
+            // Try direct access
+            if (incident[fieldName]) return incident[fieldName];
+
+            // Try without BOM (remove special characters)
+            const cleanedName = fieldName.replace(/[\uFEFF\u200B\u200C\u200D]/g, '');
+            if (incident[cleanedName]) return incident[cleanedName];
+
+            // Search for key containing the field name (case-insensitive)
+            const key = Object.keys(incident).find(k =>
+                k.toLowerCase().includes(fieldName.toLowerCase()) ||
+                k.replace(/[\uFEFF\u200B\u200C\u200D]/g, '').toLowerCase() === cleanedName.toLowerCase()
+            );
+            return key ? incident[key] : '';
+        }
+
+        // Utility Functions
+        function countField(fieldName) {
+            const counts = {};
+            allIncidents.forEach(incident => {
+                const value = getIncidentValue(incident, fieldName) || 'Unknown';
+                counts[value] = (counts[value] || 0) + 1;
+            });
+            return counts;
+        }
+
+        // Status color mapping
+        const statusColorMap = {
+            'cerrada': '#10b981',      // Verde
+            'resuelto': '#06b6d4',     // Cyan
+            'abierta': '#f97316',      // Naranja oscuro
+            'en progreso': '#fb923c',  // Naranja medio
+            'pendiente': '#fed7aa',    // Naranja claro
+            'en espera': '#fbbf24',    // Ámbar
+            'rechazada': '#ef4444',    // Rojo
+            'cancelada': '#8b5cf6'     // Púrpura
+        };
+
+        function getStatusClass(status) {
+            const s = (status || '').toLowerCase();
+            // Check for exact matches or includes
+            for (const [key, color] of Object.entries(statusColorMap)) {
+                if (s.includes(key)) {
+                    return `status-${key.replace(/\s+/g, '-')}`;
+                }
+            }
+            return 'status-default';
+        }
+
+        function getStatusText(status) {
+            return status || 'Unknown';
+        }
+
+        // Impact color mapping
+        const impactColorMap = {
+            'crítico': '#c2410c',      // Naranja oscuro
+            '1': '#c2410c',            // Crítico (nivel 1)
+            'alto': '#fb923c',         // Naranja medio
+            '2': '#fb923c',            // Alto (nivel 2)
+            'medio': '#fed7aa',        // Naranja claro
+            '3': '#fed7aa',            // Medio (nivel 3)
+            'bajo': '#fbbf24',         // Ámbar
+            '4': '#fbbf24',            // Bajo (nivel 4)
+            'mínimo': '#10b981',       // Verde
+            '5': '#10b981'             // Mínimo (nivel 5)
+        };
+
+        function getImpactClass(impact) {
+            if (!impact) return 'impact-default';
+            const s = (impact || '').toLowerCase();
+            // Check for exact matches or includes
+            for (const [key, color] of Object.entries(impactColorMap)) {
+                if (s.includes(key)) {
+                    return `impact-${key.replace(/\s+/g, '-')}`;
+                }
+            }
+            return 'impact-default';
+        }
+
+        function analyzeData() {
+            if (allIncidents.length === 0) return;
+
+            const total = allIncidents.length;
+            const closed = allIncidents.filter(i => {
+                const status = (getIncidentValue(i, 'Status') || '').toLowerCase();
+                return status.includes('cerrada');
+            }).length;
+            const closedPercent = total > 0 ? Math.round((closed / total) * 100) : 0;
+
+            // Calculate PAP metrics
+            const papIncidents = allIncidents.filter(i => getIncidentValue(i, 'Despliegue') === 'PAP');
+            const papClosed = papIncidents.filter(i => {
+                const status = (getIncidentValue(i, 'Status') || '').toLowerCase();
+                return status.includes('cerrada');
+            }).length;
+            const papPercent = papIncidents.length > 0 ? Math.round((papClosed / papIncidents.length) * 100) : 0;
+
+            // Calculate MESA metrics
+            const mesaIncidents = allIncidents.filter(i => getIncidentValue(i, 'Despliegue') === 'MESA');
+            const mesaClosed = mesaIncidents.filter(i => {
+                const status = (getIncidentValue(i, 'Status') || '').toLowerCase();
+                return status.includes('cerrada');
+            }).length;
+            const mesaPercent = mesaIncidents.length > 0 ? Math.round((mesaClosed / mesaIncidents.length) * 100) : 0;
+
+            // Update global KPIs
+            document.getElementById('globalTotal').textContent = total;
+            document.getElementById('globalClosed').textContent = closedPercent + '%';
+            document.getElementById('papResolved').textContent = papPercent + '%';
+            document.getElementById('mesaResolved').textContent = mesaPercent + '%';
+            document.getElementById('recordCount').textContent = total + ' registros';
+            document.getElementById('footerCount').textContent = total;
+
+            // Initialize table filters
+            populateFilterSelects();
+            filteredIncidents = [...allIncidents];
+            populateTable();
+
+            // Create charts
+            createEvolutionChart();
+            createOpenIncidentsChart();
+            createSystemChart();
+        }
+
+        function createSystemChart() {
+            const data = countField('Sistema');
+            const sorted = Object.entries(data)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 10);
+
+            const trace = {
+                y: sorted.map(d => d[0]),
+                x: sorted.map(d => d[1]),
+                type: 'bar',
+                orientation: 'h',
+                marker: { color: '#fb923c' },
+                hovertemplate: '<b>%{y}</b><br>%{x} incidencias<extra></extra>'
+            };
+
+            const layout = {
+                responsive: true,
+                font: { family: 'Poppins, sans-serif', size: 11, color: '#6b7280' },
+                paper_bgcolor: 'transparent',
+                plot_bgcolor: 'transparent',
+                hovermode: 'x unified',
+                margin: { l: 180, r: 70, t: 40, b: 40 },
+                xaxis: {
+                    showgrid: true,
+                    gridcolor: '#e2e8f0',
+                    showline: true,
+                    linewidth: 1,
+                    linecolor: '#e2e8f0'
+                },
+                yaxis: {
+                    showgrid: false,
+                    showline: true,
+                    linewidth: 1,
+                    linecolor: '#e2e8f0'
+                },
+                legend: {
+                    x: 0.02,
+                    y: 0.98,
+                    bgcolor: 'rgba(255, 255, 255, 0.9)',
+                    bordercolor: '#e2e8f0',
+                    borderwidth: 1,
+                    font: { size: 11 }
+                }
+            };
+
+            Plotly.newPlot('systemChart', [trace], layout, { responsive: true, displayModeBar: false });
+        }
+
+        function createEvolutionChart() {
+            // Helper function to parse date (formato "26-abr", "27-abr", etc.)
+            function parseDate(dateStr) {
+                if (!dateStr) return null;
+
+                const months = {
+                    'ene': 0, 'feb': 1, 'mar': 2, 'abr': 3, 'may': 4, 'jun': 5,
+                    'jul': 6, 'ago': 7, 'sep': 8, 'oct': 9, 'nov': 10, 'dic': 11
+                };
+
+                const parts = dateStr.toLowerCase().split('-');
+                if (parts.length !== 2) return null;
+
+                const day = parseInt(parts[0]);
+                const monthStr = parts[1].trim();
+                const month = months[monthStr];
+
+                if (isNaN(day) || month === undefined) return null;
+
+                // Asumir año 2026 si no hay especificado
+                const year = 2026;
+                return new Date(year, month, day);
+            }
+
+            // Process data by date
+            const dailyData = {};
+            const dateMap = {}; // Map to keep original date string for display
+
+            // Count entries by opening date
+            allIncidents.forEach(incident => {
+                const dateStr = getIncidentValue(incident, 'Fecha Apertura');
+                if (!dateStr) return;
+
+                const dateObj = parseDate(dateStr);
+                const dateKey = dateObj ? dateObj.toISOString().split('T')[0] : dateStr;
+
+                if (!dailyData[dateKey]) {
+                    dailyData[dateKey] = { entries: 0, resolutions: 0, dateObj: dateObj };
+                    dateMap[dateKey] = dateStr;
+                }
+                dailyData[dateKey].entries++;
+            });
+
+            // Count resolutions (closed OR resolved incidents) by resolution date (Fecha Prevista)
+            allIncidents.forEach(incident => {
+                const status = (getIncidentValue(incident, 'Status') || '').toLowerCase();
+                const isSolved = status.includes('cerrada') || status.includes('resuelto');
+
+                if (isSolved) {
+                    // Use resolution date (Fecha Prevista)
+                    const dateStr = getIncidentValue(incident, 'Fecha Prevista');
+
+                    if (dateStr) {
+                        const dateObj = parseDate(dateStr);
+                        const dateKey = dateObj ? dateObj.toISOString().split('T')[0] : dateStr;
+
+                        // Inicializar si no existe
+                        if (!dailyData[dateKey]) {
+                            dailyData[dateKey] = {
+                                entries: 0,
+                                resolutions: 0,
+                                dateObj: dateObj
+                            };
+                            dateMap[dateKey] = dateStr;
+                        }
+
+                        dailyData[dateKey].resolutions++;
+                    }
+                }
+            });
+
+            // Sort dates chronologically
+            const sortedDates = Object.keys(dailyData).sort((a, b) => {
+                const dateA = dailyData[a].dateObj || new Date(a);
+                const dateB = dailyData[b].dateObj || new Date(b);
+                return dateA - dateB;
+            });
+
+            // Initialize arrays
+            const dates = [];
+            const entries = [];
+            const resolutions = [];
+            const backlog = [];
+            const debugData = [];
+
+            // Generate all dates between min and max (including missing dates)
+            // Find absolute min and max dates from all incidents
+            let absoluteMinDate = null;
+            let absoluteMaxDate = null;
+
+            allIncidents.forEach(incident => {
+                const dateStr = getIncidentValue(incident, 'Fecha Apertura');
+                if (dateStr) {
+                    const dateObj = parseDate(dateStr);
+                    if (dateObj) {
+                        if (!absoluteMinDate || dateObj < absoluteMinDate) {
+                            absoluteMinDate = dateObj;
+                        }
+                        if (!absoluteMaxDate || dateObj > absoluteMaxDate) {
+                            absoluteMaxDate = dateObj;
+                        }
+                    }
+                }
+            });
+
+            if (absoluteMinDate && absoluteMaxDate) {
+                const minDate = absoluteMinDate;
+                const maxDate = absoluteMaxDate;
+
+                const allDatesInRange = [];
+                let currentDate = new Date(minDate);
+
+                while (currentDate <= maxDate) {
+                    const dateKey = currentDate.toISOString().split('T')[0];
+                    allDatesInRange.push(dateKey);
+                    currentDate.setDate(currentDate.getDate() + 1);
+                }
+
+                let backlogPrevious = 0; // Backlog inicial = 0
+
+                allDatesInRange.forEach(dateKey => {
+                    // Get data for this date or use 0 if no data exists
+                    let displayDate;
+                    let entradas = 0;
+                    let solucionadas = 0;
+
+                    if (dailyData[dateKey]) {
+                        displayDate = dateMap[dateKey];
+                        entradas = dailyData[dateKey].entries;
+                        solucionadas = dailyData[dateKey].resolutions;
+                    } else {
+                        // Convert ISO date to display format (e.g., "26-abr")
+                        const dateObj = new Date(dateKey);
+                        const monthNames = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+                        displayDate = `${dateObj.getDate()}-${monthNames[dateObj.getMonth()]}`;
+                    }
+
+                    // Aplicar fórmula: Backlog(N) = Backlog(N-1) + Entradas - Solucionadas
+                    const backlogActual = backlogPrevious + entradas - solucionadas;
+                    backlogPrevious = backlogActual;
+
+                    dates.push(displayDate);
+                    entries.push(entradas);
+                    resolutions.push(solucionadas);
+                    backlog.push(Math.max(0, backlogActual));
+
+                    // Store debug data
+                    debugData.push({
+                        fecha: displayDate,
+                        entradas: entradas,
+                        solucionadas: solucionadas,
+                        backlog: Math.max(0, backlogActual)
+                    });
+                });
+            }
+
+            // Create traces
+            const entriesTrace = {
+                x: dates,
+                y: entries,
+                name: 'Entradas Diarias',
+                type: 'bar',
+                marker: { color: '#fed7aa' },
+                yaxis: 'y',
+                hovertemplate: '<b>%{x}</b><br>Entradas: %{y}<extra></extra>'
+            };
+
+            const resolutionsTrace = {
+                x: dates,
+                y: resolutions,
+                name: 'Resoluciones Diarias',
+                type: 'bar',
+                marker: { color: '#fb923c' },
+                yaxis: 'y',
+                hovertemplate: '<b>%{x}</b><br>Resueltas: %{y}<extra></extra>'
+            };
+
+            const backlogTrace = {
+                x: dates,
+                y: backlog,
+                name: 'Backlog Acumulado',
+                type: 'scatter',
+                mode: 'lines+markers',
+                line: { color: '#c2410c', width: 3 },
+                marker: { size: 8, color: '#c2410c' },
+                yaxis: 'y2',
+                hovertemplate: '<b>%{x}</b><br>Backlog: %{y}<extra></extra>'
+            };
+
+            const layout = {
+                responsive: true,
+                font: { family: 'Poppins, sans-serif', size: 11, color: '#6b7280' },
+                paper_bgcolor: 'transparent',
+                plot_bgcolor: 'transparent',
+                hovermode: 'x unified',
+                margin: { l: 70, r: 70, t: 40, b: 80 },
+                xaxis: {
+                    title: { text: 'Fecha de Apertura', font: { size: 12, color: '#6b7280' } },
+                    showgrid: true,
+                    gridcolor: '#e2e8f0',
+                    tickangle: -45,
+                    showline: true,
+                    linewidth: 1,
+                    linecolor: '#e2e8f0'
+                },
+                yaxis: {
+                    title: { text: 'Entradas y Resoluciones (Volumen)', font: { size: 12, color: '#6b7280' } },
+                    showgrid: true,
+                    gridcolor: '#e2e8f0',
+                    showline: true,
+                    linewidth: 1,
+                    linecolor: '#e2e8f0',
+                    zeroline: false
+                },
+                yaxis2: {
+                    title: { text: 'Backlog Acumulado', font: { size: 12, color: '#6b7280' } },
+                    overlaying: 'y',
+                    side: 'right',
+                    showgrid: false,
+                    showline: true,
+                    linewidth: 1,
+                    linecolor: '#e2e8f0',
+                    zeroline: false
+                },
+                legend: {
+                    x: 0.02,
+                    y: 0.98,
+                    bgcolor: 'rgba(255, 255, 255, 0.9)',
+                    bordercolor: '#e2e8f0',
+                    borderwidth: 1,
+                    font: { size: 11 }
+                }
+            };
+
+            Plotly.newPlot('evolutionChart', [entriesTrace, resolutionsTrace, backlogTrace], layout, {
+                responsive: true,
+                displayModeBar: false
+            });
+
+            // Store backlog data for reuse in other charts
+            globalBacklogData = {
+                dates: dates,
+                backlog: backlog
+            };
+        }
+
+        function createOpenIncidentsChart() {
+            // Helper function to parse date
+            function parseDate(dateStr) {
+                if (!dateStr) return null;
+
+                const months = {
+                    'ene': 0, 'feb': 1, 'mar': 2, 'abr': 3, 'may': 4, 'jun': 5,
+                    'jul': 6, 'ago': 7, 'sep': 8, 'oct': 9, 'nov': 10, 'dic': 11
+                };
+
+                const parts = dateStr.toLowerCase().split('-');
+                if (parts.length !== 2) return null;
+
+                const day = parseInt(parts[0]);
+                const monthStr = parts[1].trim();
+                const month = months[monthStr];
+
+                if (isNaN(day) || month === undefined) return null;
+
+                const year = 2026;
+                return new Date(year, month, day);
+            }
+
+            // Process data by date and status
+            const dailyOpenData = {};
+            const dateMapOpen = {};
+            const statusList = []; // To keep track of unique statuses
+
+            // Count open incidents by opening date and status (Status != Cerrada y Status != Resuelto)
+            allIncidents.forEach(incident => {
+                const status = getIncidentValue(incident, 'Status') || 'Unknown';
+                const statusLower = status.toLowerCase();
+                const isOpen = !statusLower.includes('cerrada') && !statusLower.includes('resuelto');
+
+                if (isOpen) {
+                    const dateStr = getIncidentValue(incident, 'Fecha Apertura');
+                    if (!dateStr) return;
+
+                    const dateObj = parseDate(dateStr);
+                    const dateKey = dateObj ? dateObj.toISOString().split('T')[0] : dateStr;
+
+                    if (!dailyOpenData[dateKey]) {
+                        dailyOpenData[dateKey] = {
+                            byStatus: {},
+                            openCount: 0,
+                            dateObj: dateObj
+                        };
+                        dateMapOpen[dateKey] = dateStr;
+                    }
+
+                    if (!dailyOpenData[dateKey].byStatus[status]) {
+                        dailyOpenData[dateKey].byStatus[status] = 0;
+                        if (!statusList.includes(status)) {
+                            statusList.push(status);
+                        }
+                    }
+
+                    dailyOpenData[dateKey].byStatus[status]++;
+                    dailyOpenData[dateKey].openCount++;
+                }
+            });
+
+            // Sort dates chronologically
+            const sortedDatesOpen = Object.keys(dailyOpenData).sort((a, b) => {
+                const dateA = dailyOpenData[a].dateObj || new Date(a);
+                const dateB = dailyOpenData[b].dateObj || new Date(b);
+                return dateA - dateB;
+            });
+
+            // Initialize arrays
+            const datesOpen = [];
+            const statusData = {}; // Will hold data for each status
+            let backlogOpen = [];
+
+            // Create empty arrays for each status
+            statusList.forEach(status => {
+                statusData[status] = [];
+            });
+
+            // Use global backlog data from first chart if available
+            if (globalBacklogData && globalBacklogData.dates && globalBacklogData.backlog) {
+                datesOpen.push(...globalBacklogData.dates);
+                backlogOpen = [...globalBacklogData.backlog];
+
+                // Populate status data for each date in the global dates array
+                globalBacklogData.dates.forEach((date, idx) => {
+                    // Find matching date key for this date string
+                    let dateKey = null;
+
+                    for (const key in dailyOpenData) {
+                        const displayDate = dateMapOpen[key];
+                        if (displayDate === date) {
+                            dateKey = key;
+                            break;
+                        }
+                    }
+
+                    statusList.forEach(status => {
+                        const count = dateKey && dailyOpenData[dateKey] && dailyOpenData[dateKey].byStatus[status]
+                            ? dailyOpenData[dateKey].byStatus[status]
+                            : 0;
+                        statusData[status].push(count);
+                    });
+                });
+            } else {
+                // Fallback if global backlog data is not available (shouldn't happen)
+                // Generate all dates between min and max
+                let absoluteMinDateOpen = null;
+                let absoluteMaxDateOpen = null;
+
+                allIncidents.forEach(incident => {
+                    const dateStr = getIncidentValue(incident, 'Fecha Apertura');
+                    if (dateStr) {
+                        const dateObj = parseDate(dateStr);
+                        if (dateObj) {
+                            if (!absoluteMinDateOpen || dateObj < absoluteMinDateOpen) {
+                                absoluteMinDateOpen = dateObj;
+                            }
+                            if (!absoluteMaxDateOpen || dateObj > absoluteMaxDateOpen) {
+                                absoluteMaxDateOpen = dateObj;
+                            }
+                        }
+                    }
+                });
+
+                if (absoluteMinDateOpen && absoluteMaxDateOpen) {
+                    const minDate = absoluteMinDateOpen;
+                    const maxDate = absoluteMaxDateOpen;
+
+                    const allDatesInRange = [];
+                    let currentDate = new Date(minDate);
+
+                    while (currentDate <= maxDate) {
+                        const dateKey = currentDate.toISOString().split('T')[0];
+                        allDatesInRange.push(dateKey);
+                        currentDate.setDate(currentDate.getDate() + 1);
+                    }
+
+                    let backlogPrevious = 0;
+
+                    allDatesInRange.forEach(dateKey => {
+                        let displayDate;
+
+                        if (dailyOpenData[dateKey]) {
+                            displayDate = dateMapOpen[dateKey];
+                        } else {
+                            const dateObj = new Date(dateKey);
+                            const monthNames = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+                            displayDate = `${dateObj.getDate()}-${monthNames[dateObj.getMonth()]}`;
+                        }
+
+                        datesOpen.push(displayDate);
+
+                        let totalOpen = 0;
+                        statusList.forEach(status => {
+                            const count = dailyOpenData[dateKey] && dailyOpenData[dateKey].byStatus[status] ? dailyOpenData[dateKey].byStatus[status] : 0;
+                            statusData[status].push(count);
+                            totalOpen += count;
+                        });
+
+                        const backlogActual = backlogPrevious + totalOpen;
+                        backlogPrevious = backlogActual;
+                        backlogOpen.push(backlogActual);
+                    });
+                }
+            }
+
+            // Create stacked bar traces for each status
+            const colors = ['#f97316', '#fb923c', '#fed7aa', '#fca5a5', '#fecaca', '#fee2e2', '#fef2f2'];
+            const openCountTraces = statusList.map((status, idx) => ({
+                x: datesOpen,
+                y: statusData[status],
+                name: status,
+                type: 'bar',
+                marker: { color: colors[idx % colors.length] },
+                stackgroup: 'incidencias', // Stack bars vertically
+                yaxis: 'y',
+                hovertemplate: '<b>%{x}</b><br>' + status + ': %{y}<extra></extra>'
+            }));
+
+            const backlogTraceOpen = {
+                x: datesOpen,
+                y: backlogOpen,
+                name: 'Backlog Acumulado',
+                type: 'scatter',
+                mode: 'lines+markers',
+                line: { color: '#c2410c', width: 3 },
+                marker: { size: 8, color: '#c2410c' },
+                yaxis: 'y2',
+                hovertemplate: '<b>%{x}</b><br>Backlog: %{y}<extra></extra>'
+            };
+
+            // Combine all traces (stacked bars + backlog line)
+            const allOpenTraces = [...openCountTraces, backlogTraceOpen];
+
+            const layout = {
+                responsive: true,
+                barmode: 'stack',
+                font: { family: 'Poppins, sans-serif', size: 11, color: '#6b7280' },
+                paper_bgcolor: 'transparent',
+                plot_bgcolor: 'transparent',
+                hovermode: 'x unified',
+                margin: { l: 70, r: 70, t: 40, b: 80 },
+                xaxis: {
+                    title: { text: 'Fecha de Apertura', font: { size: 12, color: '#6b7280' } },
+                    showgrid: true,
+                    gridcolor: '#e2e8f0',
+                    tickangle: -45,
+                    showline: true,
+                    linewidth: 1,
+                    linecolor: '#e2e8f0'
+                },
+                yaxis: {
+                    title: { text: 'Incidencias No Cerradas', font: { size: 12, color: '#6b7280' } },
+                    showgrid: true,
+                    gridcolor: '#e2e8f0',
+                    showline: true,
+                    linewidth: 1,
+                    linecolor: '#e2e8f0',
+                    zeroline: false
+                },
+                yaxis2: {
+                    title: { text: 'Backlog Acumulado', font: { size: 12, color: '#6b7280' } },
+                    overlaying: 'y',
+                    side: 'right',
+                    showgrid: false,
+                    showline: true,
+                    linewidth: 1,
+                    linecolor: '#e2e8f0',
+                    zeroline: false
+                },
+                legend: {
+                    x: 0.02,
+                    y: 0.98,
+                    bgcolor: 'rgba(255, 255, 255, 0.9)',
+                    bordercolor: '#e2e8f0',
+                    borderwidth: 1,
+                    font: { size: 11 }
+                }
+            };
+
+            Plotly.newPlot('openIncidentsChart', allOpenTraces, layout, {
+                responsive: true,
+                displayModeBar: false
+            });
+        }
+
+        function populateFilterSelects() {
+            // Populate Estado filter
+            const estados = [...new Set(allIncidents.map(i => getIncidentValue(i, 'Status')).filter(s => s && s !== ''))].sort();
+            const statusSelect = document.getElementById('filterStatus');
+            // Clear existing options except the first "Todos"
+            while (statusSelect.options.length > 1) {
+                statusSelect.remove(1);
+            }
+            estados.forEach(est => {
+                const option = document.createElement('option');
+                option.value = est.toLowerCase();
+                option.textContent = est;
+                statusSelect.appendChild(option);
+            });
+
+            // Populate Despliegue filter
+            const despliegues = [...new Set(allIncidents.map(i => getIncidentValue(i, 'Despliegue')).filter(d => d && d !== ''))].sort();
+            const deploySelect = document.getElementById('filterDespliegue');
+            despliegues.forEach(dep => {
+                const option = document.createElement('option');
+                option.value = dep.toLowerCase();
+                option.textContent = dep;
+                deploySelect.appendChild(option);
+            });
+
+            // Populate Impacto filter
+            const impactos = [...new Set(allIncidents.map(i => getIncidentValue(i, 'Impacto Remedy')).filter(i => i && i !== ''))].sort();
+            const impactSelect = document.getElementById('filterImpacto');
+            impactos.forEach(imp => {
+                const option = document.createElement('option');
+                option.value = imp.toLowerCase();
+                option.textContent = imp;
+                impactSelect.appendChild(option);
+            });
+        }
+
+        function filterTable() {
+            const statusFilter = document.getElementById('filterStatus').value.toLowerCase();
+            const deployFilter = document.getElementById('filterDespliegue').value.toLowerCase();
+            const impactFilter = document.getElementById('filterImpacto').value.toLowerCase();
+
+            filteredIncidents = allIncidents.filter(incident => {
+                const status = (getIncidentValue(incident, 'Status') || '').toLowerCase();
+                const despliegue = (getIncidentValue(incident, 'Despliegue') || '').toLowerCase();
+                const impacto = (getIncidentValue(incident, 'Impacto Remedy') || '').toLowerCase();
+
+                const statusMatch = !statusFilter || status === statusFilter;
+                const deployMatch = !deployFilter || despliegue === deployFilter;
+                const impactMatch = !impactFilter || impacto === impactFilter;
+
+                return statusMatch && deployMatch && impactMatch;
+            });
+
+            // Apply sorting
+            if (sortColumn) {
+                filteredIncidents.sort((a, b) => {
+                    let aVal = a[sortColumn] || '';
+                    let bVal = b[sortColumn] || '';
+                    aVal = aVal.toString().toLowerCase();
+                    bVal = bVal.toString().toLowerCase();
+
+                    if (sortDirection === 'asc') {
+                        return aVal.localeCompare(bVal);
+                    } else {
+                        return bVal.localeCompare(aVal);
+                    }
+                });
+            }
+
+            populateTable();
+        }
+
+        function sortTable(column) {
+            if (sortColumn === column) {
+                sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+            } else {
+                sortColumn = column;
+                sortDirection = 'asc';
+            }
+            filterTable();
+        }
+
+        function populateTable() {
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = '';
+
+            // Mostrar registros filtrados
+            filteredIncidents.forEach(incident => {
+                const row = document.createElement('tr');
+                const status = getStatusText(getIncidentValue(incident, 'Status'));
+                const statusClass = getStatusClass(getIncidentValue(incident, 'Status'));
+                const impactClass = getImpactClass(getIncidentValue(incident, 'Impacto Remedy'));
+
+                const codigoIncidencia = getIncidentValue(incident, 'Código Incidencia') || '-';
+                const codigoLink = codigoIncidencia !== '-'
+                    ? `<a href="https://soptmc.si.orange.es/MonTMC/epsilon/remedyC/${codigoIncidencia}" target="_blank" style="color: #fb923c; text-decoration: none; font-weight: 700; cursor: pointer;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">${codigoIncidencia}</a>`
+                    : '-';
+
+                row.innerHTML = `
+                    <td>${codigoLink}</td>
+                    <td>${(getIncidentValue(incident, 'Descripción problema') || '-').substring(0, 35)}...</td>
+                    <td><span class="status-badge ${statusClass}">${status}</span></td>
+                    <td><span class="impact-badge ${impactClass}">${getIncidentValue(incident, 'Impacto Remedy') || '-'}</span></td>
+                    <td>${(getIncidentValue(incident, 'Sistema') || '-').substring(0, 20)}</td>
+                    <td>${getIncidentValue(incident, 'Despliegue') || '-'}</td>
+                    <td>${(getIncidentValue(incident, 'Tipo solucion') || '-').substring(0, 15)}</td>
+                `;
+                tbody.appendChild(row);
+            });
+
+            // Update record count
+            document.getElementById('filteredCount').textContent = filteredIncidents.length;
+        }
+
+        // File Handling
+        document.addEventListener('DOMContentLoaded', function() {
+            const uploadScreen = document.getElementById('uploadScreen');
+            const dashboardScreen = document.getElementById('dashboardScreen');
+            const uploadCard = document.getElementById('uploadCard');
+            const uploadBtn = document.getElementById('uploadBtn');
+            const fileInput = document.getElementById('fileInput');
+            const resetBtn = document.getElementById('resetBtn');
+
+            uploadBtn.onclick = function(e) {
+                e.preventDefault();
+                fileInput.click();
+            };
+
+            fileInput.addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (file) loadFile(file);
+            });
+
+            uploadCard.addEventListener('dragover', function(e) {
+                e.preventDefault();
+                uploadCard.classList.add('drag-over');
+            });
+
+            uploadCard.addEventListener('dragleave', function() {
+                uploadCard.classList.remove('drag-over');
+            });
+
+            uploadCard.addEventListener('drop', function(e) {
+                e.preventDefault();
+                uploadCard.classList.remove('drag-over');
+                const file = e.dataTransfer.files[0];
+                if (file) loadFile(file);
+            });
+
+            resetBtn.addEventListener('click', function() {
+                uploadScreen.classList.remove('hidden');
+                dashboardScreen.classList.remove('visible');
+                fileInput.value = '';
+                allIncidents = [];
+            });
+
+            function loadFile(file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        allIncidents = JSON.parse(e.target.result);
+                        if (!Array.isArray(allIncidents)) {
+                            throw new Error('JSON must be an array');
+                        }
+                        uploadScreen.classList.add('hidden');
+                        dashboardScreen.classList.add('visible');
+                        setTimeout(() => {
+                            analyzeData();
+                            // Add filter event listeners after data is loaded
+                            document.getElementById('filterStatus').addEventListener('change', filterTable);
+                            document.getElementById('filterDespliegue').addEventListener('change', filterTable);
+                            document.getElementById('filterImpacto').addEventListener('change', filterTable);
+                        }, 100);
+                    } catch (error) {
+                        alert('Error: ' + error.message);
+                    }
+                };
+                reader.readAsText(file);
+            }
+        });
+
+        window.addEventListener('resize', function() {
+            if (allIncidents.length > 0) {
+                Plotly.Plots.resize('evolutionChart');
+                Plotly.Plots.resize('openIncidentsChart');
+                Plotly.Plots.resize('systemChart');
+            }
+        });
+    </script>
+</body>
+</html>
