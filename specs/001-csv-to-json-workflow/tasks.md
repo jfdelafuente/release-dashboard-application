@@ -150,17 +150,17 @@ As an analyst, I need the conversion workflow to automatically detect the encodi
 
 ---
 
-- [ ] T027 [US2] Integrate encoding detection into converter: `csv_to_json/converter.py` - Read file bytes, detect encoding before parsing
+- [X] T027 [US2] Integrate encoding detection into converter: `csv_to_json/converter.py` - Read file bytes, detect encoding before parsing
 
-- [ ] T028 [US2] Integrate delimiter detection into converter: `csv_to_json/converter.py` - Read sample lines, detect delimiter before CSV parsing
+- [X] T028 [US2] Integrate delimiter detection into converter: `csv_to_json/converter.py` - Read sample lines, detect delimiter before CSV parsing
 
-- [ ] T029 [US2] Add encoding/delimiter to error messages: `csv_to_json/converter.py` - Log detected encoding and delimiter for debugging
+- [X] T029 [US2] Add encoding/delimiter to error messages: `csv_to_json/converter.py` - Log detected encoding and delimiter for debugging
 
-- [ ] T030 [US2] Write integration test for encoding detection: `tests/integration/test_converter_e2e.py` - Test with UTF-8, UTF-8-sig, Windows-1252, Latin-1 encoded files
+- [ ] T030 [US2-TEST] **PRIORITY 1** Write integration test for encoding detection: `tests/integration/test_converter_e2e.py` - Test with UTF-8, UTF-8-sig, Windows-1252, Latin-1 encoded files
 
-- [ ] T031 [US2] Write integration test for delimiter detection: `tests/integration/test_converter_e2e.py` - Test with comma, semicolon, tab delimited files
+- [X] T031 [US2] Write integration test for delimiter detection: `tests/integration/test_converter_e2e.py` - Test with comma, semicolon, tab delimited files (auto-detection working)
 
-- [ ] T032 [US2] Test special character preservation: `tests/integration/test_converter_e2e.py` - Verify é, ñ, ü, emojis preserved in output JSON
+- [ ] T032 [US2-TEST] **PRIORITY 1** Test special character preservation: `tests/integration/test_converter_e2e.py` - Verify é, ñ, ü, emojis preserved in output JSON
 
 ---
 
@@ -183,21 +183,21 @@ As an analyst, I need the workflow to handle large CSV files and provide clear e
 
 ---
 
-- [ ] T033 [US3] Implement error collection: `csv_to_json/converter.py` - Accumulate errors for each failed record without stopping processing
+- [X] T033 [US3] Implement error collection: `csv_to_json/converter.py` - Accumulate errors for each failed record without stopping processing
 
-- [ ] T034 [US3] Implement error report generation: `csv_to_json/converter.py` - Format errors as JSON per json-output-schema.md with summary stats
+- [X] T034 [US3] Implement error report generation: `csv_to_json/converter.py` - Format errors as JSON per json-output-schema.md with summary stats
 
-- [ ] T035 [US3] Write error messages: `csv_to_json/converter.py` - Create user-friendly error messages (no stack traces) per quickstart.md "Common Pitfalls"
+- [X] T035 [US3] Write error messages: `csv_to_json/converter.py` - Create user-friendly error messages (no stack traces) per quickstart.md "Common Pitfalls"
 
-- [ ] T036 [US3] Implement error report output: `csv_to_json/converter.py` - Write conversion-error-report.json alongside converted-incidents.json
+- [X] T036 [US3] Implement error report output: `csv_to_json/converter.py` - Write conversion-error-report.json alongside converted-incidents.json (as *_errors.json)
 
-- [ ] T037 [US3] [P] Write unit tests for error handling: `tests/unit/test_validators.py` - Test error message formatting for each validation rule
+- [ ] T037 [US3-TEST] **PRIORITY 2** Write unit tests for error handling: `tests/unit/test_validators.py` - Test error message formatting for each validation rule
 
-- [ ] T038 [US3] Write integration test for mixed valid/invalid records: `tests/integration/test_converter_e2e.py` - Convert file with 50% valid, 50% invalid records
+- [ ] T038 [US3-TEST] **PRIORITY 2** Write integration test for mixed valid/invalid records: `tests/integration/test_converter_e2e.py` - Convert file with 50% valid, 50% invalid records
 
-- [ ] T039 [US3] Write integration test for large files: `tests/integration/test_converter_e2e.py` - Generate 1000+ record CSV, verify <5 second conversion, check error report accuracy
+- [ ] T039 [US3-TEST] **PRIORITY 3** Write integration test for large files: `tests/integration/test_converter_e2e.py` - Generate 1000+ record CSV, verify <5 second conversion, check error report accuracy
 
-- [ ] T040 [US3] Test performance with edge cases: `tests/integration/test_converter_e2e.py` - Test with maximum field lengths, special characters, etc.
+- [ ] T040 [US3-TEST] **PRIORITY 3** Test performance with edge cases: `tests/integration/test_converter_e2e.py` - Test with maximum field lengths, special characters, etc.
 
 ---
 
@@ -292,15 +292,15 @@ Total: ~1-2 weeks with 3 developers
 
 ## Task Checklist Summary
 
-| Phase | Task Count | Stories | Notes |
-|-------|-----------|---------|-------|
-| Phase 1: Setup | 7 | None | Foundation; blocks everything |
-| Phase 2: Foundational | 10 | None | Core infrastructure; blocks all stories |
-| Phase 3: US1 | 9 | P1 | Basic conversion; provides MVP value |
-| Phase 4: US2 | 6 | P2 | Auto-detection; can parallel with US1 after Phase 2 |
-| Phase 5: US3 | 8 | P3 | Error handling; can parallel with US1+US2 after Phase 2 |
-| Phase 6: Polish | 10 | None | Finishing touches; blocks deployment |
-| **TOTAL** | **50** | 3 | ~2-3 weeks depending on team size |
+| Phase | Task Count | Completed | Testing | Notes |
+|-------|-----------|-----------|---------|-------|
+| Phase 1: Setup | 7 | 7 (100%) | - | ✅ Foundation complete |
+| Phase 2: Foundational | 10 | 10 (100%) | - | ✅ Core infrastructure complete |
+| Phase 3: US1 | 9 | 9 (100%) | - | ✅ Basic conversion working (100%) |
+| Phase 4: US2 | 6 | 4 (67%) | 2 pending | Implementation ✅ / Tests ⏳ |
+| Phase 5: US3 | 8 | 4 (50%) | 4 pending | Implementation ✅ / Tests ⏳ |
+| Phase 6: Polish | 10 | 10 (100%) | - | ✅ Documentation & coverage complete |
+| **TOTAL** | **50** | **44 (88%)** | **6 tests** | **Remaining: 6 integration/unit tests** |
 
 ## User Story Priorities & Dependencies
 
@@ -324,7 +324,29 @@ MVP delivers: Analysts can convert well-formed CSV files to JSON, load in dashbo
 
 ---
 
-**Status**: ✅ TASKS COMPLETE - 50 tasks across 3 user stories, ready for implementation
+**Status**: 🎯 88% COMPLETE - 44/50 tasks done. **Remaining: 6 critical integration tests**
 
-**Generated**: 2026-05-13
-**Next Command**: Select one user story or MVP scope, begin with Phase 1 setup tasks, then Phase 2 foundational tasks
+**Completed Implementation**:
+- ✅ Phase 1: Setup (7/7)
+- ✅ Phase 2: Foundational (10/10)
+- ✅ Phase 3: US1 - Basic conversion (9/9)
+- ✅ Phase 4: US2 - Auto-detection (4/6) [Implementation done, 2 tests pending]
+- ✅ Phase 5: US3 - Error handling (4/8) [Implementation done, 4 tests pending]
+- ✅ Phase 6: Polish (10/10)
+
+**Pending Tests (PRIORITY ORDERED)**:
+
+**PRIORITY 1 - Critical for Quality Assurance** (2 tests):
+- [ ] T030: Encoding detection integration test (UTF-8, UTF-8-sig, Windows-1252, Latin-1)
+- [ ] T032: Special character preservation test (é, ñ, ü, emojis)
+
+**PRIORITY 2 - Error Handling Tests** (2 tests):
+- [ ] T037: Unit tests for error message formatting
+- [ ] T038: Integration test for mixed valid/invalid records
+
+**PRIORITY 3 - Performance & Edge Cases** (2 tests):
+- [ ] T039: Large file integration test (1000+ records, verify <5 sec)
+- [ ] T040: Performance with edge cases (max field lengths, special chars)
+
+**Generated**: 2026-05-13 | **Updated**: 2026-05-13
+**Next**: Implement Priority 1 tests (encoding detection & character preservation)
