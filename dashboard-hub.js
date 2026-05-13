@@ -160,15 +160,17 @@ async function loadLatestJSON() {
             // New format: object with metadata and data
             metadata = data._metadata;
 
-            // Validate that this is a massive incidents file
-            if (metadata.type !== 'massive') {
-                throw new Error(`Archivo no válido: esperado tipo 'massive', recibido '${metadata.type}'`);
+            // Accept both massive and postmortem file types
+            const fileType = metadata.type || 'unknown';
+            if (!['massive', 'postmortem'].includes(fileType)) {
+                throw new Error(`Archivo no válido: esperado tipo 'massive' o 'postmortem', recibido '${fileType}'`);
             }
 
             incidents = data.data;
             console.log(`Metadata: type=${metadata.type}, version=${metadata.version}, records=${metadata.record_count}`);
             if (metadata.kpis) {
-                console.log(`KPIs pre-calculated: total=${metadata.kpis.total}, pending=${metadata.kpis.pending}`);
+                console.log(`KPIs pre-calculated: total=${metadata.kpis.total}`);
+                console.log(`KPIs by_estatus:`, JSON.stringify(metadata.kpis.by_estatus || {}));
             }
         } else {
             throw new Error('Formato de JSON no reconocido');
@@ -351,8 +353,28 @@ function extractMassiveIncidentsKPIs(incidents, metadata) {
 }
 
 /**
+ * Helper function to safely get field value from incident record
+ * Handles BOM and field name variations
+ */
+function getIncidentFieldValue(incident, fieldName) {
+    // Try direct access
+    if (incident[fieldName]) return incident[fieldName];
+
+    // Try without BOM (remove special characters)
+    const cleanedName = fieldName.replace(/[\uFEFF\u200B\u200C\u200D]/g, '');
+    if (incident[cleanedName]) return incident[cleanedName];
+
+    // Search for key containing the field name (case-insensitive)
+    const key = Object.keys(incident).find(k =>
+        k.toLowerCase().includes(fieldName.toLowerCase()) ||
+        k.replace(/[\uFEFF\u200B\u200C\u200D]/g, '').toLowerCase() === cleanedName.toLowerCase()
+    );
+    return key ? incident[key] : '';
+}
+
+/**
  * Extract Postmortem Dashboard KPIs
- * Note: Currently using incident data; connect to postmortem data when available
+ * Calculates KPIs that match postmortem-dashboard.html
  */
 function extractPostmortemKPIs(incidents, metadata) {
     if (!incidents || incidents.length === 0) {
@@ -363,26 +385,32 @@ function extractPostmortemKPIs(incidents, metadata) {
 
     // Calculate percentages
     const closedCount = incidents.filter(i => {
-        const status = (i['Estatus'] || '').toLowerCase();
+        const status = (getIncidentFieldValue(i, 'Estatus') || '').toLowerCase();
         return status.includes('cerrado');
     }).length;
     const closedPercent = totalRecords > 0 ? Math.round((closedCount / totalRecords) * 100) : 0;
 
+    console.log(`[KPI DEBUG] Total: ${totalRecords}, Cerrado: ${closedCount}, % Cerradas: ${closedPercent}%`);
+
     // Calculate PAP metrics (Cerrado + Resuelto)
-    const papIncidents = incidents.filter(i => i['Despliegue'] === 'PAP');
+    const papIncidents = incidents.filter(i => getIncidentFieldValue(i, 'Despliegue') === 'PAP');
     const papResolved = papIncidents.filter(i => {
-        const status = (i['Estatus'] || '').toLowerCase();
+        const status = (getIncidentFieldValue(i, 'Estatus') || '').toLowerCase();
         return status.includes('cerrado') || status.includes('resuelto');
     }).length;
     const papPercent = papIncidents.length > 0 ? Math.round((papResolved / papIncidents.length) * 100) : 0;
 
+    console.log(`[KPI DEBUG] PAP Total: ${papIncidents.length}, Resuelto: ${papResolved}, % Resueltas PaP: ${papPercent}%`);
+
     // Calculate MESA metrics (Cerrado + Resuelto)
-    const mesaIncidents = incidents.filter(i => i['Despliegue'] === 'MESA');
+    const mesaIncidents = incidents.filter(i => getIncidentFieldValue(i, 'Despliegue') === 'MESA');
     const mesaResolved = mesaIncidents.filter(i => {
-        const status = (i['Estatus'] || '').toLowerCase();
+        const status = (getIncidentFieldValue(i, 'Estatus') || '').toLowerCase();
         return status.includes('cerrado') || status.includes('resuelto');
     }).length;
     const mesaPercent = mesaIncidents.length > 0 ? Math.round((mesaResolved / mesaIncidents.length) * 100) : 0;
+
+    console.log(`[KPI DEBUG] MESA Total: ${mesaIncidents.length}, Resuelto: ${mesaResolved}, % Resueltas Mesa: ${mesaPercent}%`);
 
     return [
         createKPICard(
