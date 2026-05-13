@@ -101,6 +101,8 @@ function showContent() {
 /**
  * Load the latest JSON file from data/output/ directory
  * Auto-detects the most recent file by timestamp using index.json
+ *
+ * Supports both old format (array) and new format (object with sections)
  */
 async function loadLatestJSON() {
     try {
@@ -111,9 +113,25 @@ async function loadLatestJSON() {
             throw new Error('No se encontró el archivo index.json en data/output/');
         }
 
-        const fileList = await indexResponse.json();
+        const indexData = await indexResponse.json();
 
-        if (!Array.isArray(fileList) || fileList.length === 0) {
+        // Handle both formats:
+        // Old format: [{ name, ... }, { name, ... }]
+        // New format: { massive: { files: [...] }, postmortem: { files: [...] } }
+        let fileList = [];
+
+        if (Array.isArray(indexData)) {
+            // Old format: direct array
+            fileList = indexData;
+        } else if (typeof indexData === 'object' && indexData.massive && indexData.massive.files) {
+            // New format: extract from massive section (prioritize massive incidents for Dashboard Hub)
+            fileList = indexData.massive.files;
+            console.log(`New index format detected: found ${fileList.length} massive incident file(s)`);
+        } else {
+            throw new Error('Formato de index.json no reconocido. Esperado: array o objeto con secciones');
+        }
+
+        if (!fileList || fileList.length === 0) {
             throw new Error('No hay archivos JSON disponibles en data/output/');
         }
 
