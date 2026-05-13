@@ -1423,6 +1423,10 @@
             // Populate Despliegue filter
             const despliegues = [...new Set(allIncidents.map(i => getIncidentValue(i, 'Despliegue')).filter(d => d && d !== ''))].sort();
             const deploySelect = document.getElementById('filterDespliegue');
+            // Clear existing options except the first "Todos"
+            while (deploySelect.options.length > 1) {
+                deploySelect.remove(1);
+            }
             despliegues.forEach(dep => {
                 const option = document.createElement('option');
                 option.value = dep.toLowerCase();
@@ -1433,6 +1437,10 @@
             // Populate Impacto filter
             const impactos = [...new Set(allIncidents.map(i => getIncidentValue(i, 'Impacto')).filter(i => i && i !== ''))].sort();
             const impactSelect = document.getElementById('filterImpacto');
+            // Clear existing options except the first "Todos"
+            while (impactSelect.options.length > 1) {
+                impactSelect.remove(1);
+            }
             impactos.forEach(imp => {
                 const option = document.createElement('option');
                 option.value = imp.toLowerCase();
