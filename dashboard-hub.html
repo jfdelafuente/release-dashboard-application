@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Dashboard Hub - Unified access point for incident dashboards">
+    <title>Dashboard Hub - System Status</title>
+    <link rel="stylesheet" href="dashboard-hub.css">
+</head>
+<body>
+    <nav class="hub-navigation">
+        <div class="nav-brand">Dashboard Hub</div>
+        <ul class="nav-links">
+            <li><a href="postmortem-dashboard.html" class="nav-item">Postmortem Dashboard</a></li>
+            <li><a href="massive-incidents-dashboard.html" class="nav-item">Massive Incidents Dashboard</a></li>
+        </ul>
+    </nav>
+
+    <main class="hub-container">
+        <header class="hub-header">
+            <h1>System Status Dashboard Hub</h1>
+            <p class="subtitle">Unified view of incident and postmortem metrics</p>
+        </header>
+
+        <div id="loading-state" class="loading-indicator" style="display: none;">
+            <div class="spinner"></div>
+            <p>Loading latest data...</p>
+        </div>
+
+        <div id="error-state" class="error-message" style="display: none;">
+            <p id="error-text"></p>
+        </div>
+
+        <div id="content-state" class="kpi-summary" style="display: none;">
+            <section class="dashboard-kpis massive-incidents">
+                <h2>Massive Incidents Dashboard</h2>
+                <div class="kpi-grid" id="massive-incidents-kpis"></div>
+            </section>
+
+            <section class="dashboard-kpis postmortem">
+                <h2>Postmortem Dashboard</h2>
+                <div class="kpi-grid" id="postmortem-kpis"></div>
+            </section>
+        </div>
+
+        <footer class="hub-footer">
+            <p>Data last updated: <span id="last-updated">--:--</span></p>
+        </footer>
+    </main>
+
+    <script src="dashboard-hub.js"></script>
+</body>
+</html>
