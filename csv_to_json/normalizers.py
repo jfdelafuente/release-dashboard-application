@@ -67,13 +67,20 @@ def normalize_datetime(date_str: str) -> str:
     """
     Validate and normalize datetime string.
 
-    Preserves format from CSV ("dd/mm/yyyy HH:mm AM/PM").
+    Accepts flexible formats:
+    - dd/mm/yyyy HH:mm (24-hour format)
+    - dd/mm/yyyy HH:mm AM/PM (12-hour format, case-insensitive)
+    - dd/mm/yyyy HH:mm a/p (12-hour format shorthand, case-insensitive)
+
+    Handles data quality issues:
+    - Removes AM/PM indicators if hour is in 24-hour format (>12)
+    - Normalizes mixed formats gracefully
 
     Args:
         date_str: Date string from CSV
 
     Returns:
-        Normalized (validated) date string
+        Normalized date string in dd/mm/yyyy HH:mm format
 
     Raises:
         ValueError: If date cannot be parsed
@@ -81,12 +88,49 @@ def normalize_datetime(date_str: str) -> str:
     if not date_str:
         raise ValueError("Date string is empty")
 
+    date_str = date_str.strip()
+
+    # Normalize: remove extra spaces
+    normalized = re.sub(r'\s+', ' ', date_str)
+
+    # First, try 24-hour format without AM/PM
     try:
-        # Parse the date
-        dt = datetime.strptime(date_str.strip(), DATE_FORMAT)
-        # Return in original format (preserved exactly)
-        return date_str.strip()
-    except ValueError as e:
-        raise ValueError(
-            f"Invalid date format: '{date_str}'. Expected dd/mm/yyyy HH:mm AM/PM"
-        )
+        dt = datetime.strptime(normalized, "%d/%m/%Y %H:%M")
+        return dt.strftime("%d/%m/%Y %H:%M")
+    except ValueError:
+        pass
+
+    # If that fails, try removing AM/PM indicators and retry
+    # (handles mixed format like "15:36 a" which should be "15:36")
+    normalized_no_ampm = re.sub(r'\s+[aApP][mM]?\s*$', '', normalized)
+    if normalized_no_ampm != normalized:
+        try:
+            dt = datetime.strptime(normalized_no_ampm, "%d/%m/%Y %H:%M")
+            return dt.strftime("%d/%m/%Y %H:%M")
+        except ValueError:
+            pass
+
+    # If still failing, try with proper 12-hour format
+    # Convert to uppercase and normalize a/p to AM/PM
+    normalized_upper = normalized.upper()
+    normalized_upper = re.sub(r'\s+A\s*$', ' AM', normalized_upper)
+    normalized_upper = re.sub(r'\s+P\s*$', ' PM', normalized_upper)
+
+    # Try 12-hour format patterns
+    formats_12h = [
+        "%d/%m/%Y %I:%M %p",   # with space before AM/PM
+        "%d/%m/%Y %I:%M%p",    # without space before AM/PM
+    ]
+
+    for fmt in formats_12h:
+        try:
+            dt = datetime.strptime(normalized_upper, fmt)
+            # Convert to 24-hour format
+            return dt.strftime("%d/%m/%Y %H:%M")
+        except ValueError:
+            continue
+
+    # If all formats fail, raise error
+    raise ValueError(
+        f"Invalid date format: '{date_str}'. Expected dd/mm/yyyy HH:mm"
+    )

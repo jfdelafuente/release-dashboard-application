@@ -31,7 +31,7 @@ specs/001-csv-to-json-workflow/
 
 ## Data Files
 
-**Example CSV**: `incidencias/CS-Informe incidencias P1,  P2 y P3 - 2026 - 13 May 2026.csv`
+**Example CSV**: `data/input/CS-Informe incidencias P1,  P2 y P3 - 2026 - 13 May 2026.csv`
 - 50+ real incident records
 - Already contains the exact format you'll handle
 - Use this for testing/validation
@@ -130,7 +130,7 @@ Output Files
 ### Phase 3: Integration & Polish (Week 2-3)
 
 - [ ] Write integration tests against real CSV file (in `tests/integration/`)
-- [ ] Test with incidencias/CS-Informe*.csv (ensure 100% pass rate for well-formed records)
+- [ ] Test with data/input/CS-Informe*.csv (ensure 100% pass rate for well-formed records)
 - [ ] Generate error report for test file with intentional errors
 - [ ] Test encoding variants (UTF-8-sig, Windows-1252, Latin-1)
 - [ ] Test delimiter variants (comma, semicolon, tab)
@@ -176,7 +176,7 @@ Output Files
 - **Input Schema**: [contracts/csv-input-schema.md](contracts/csv-input-schema.md) - CSV field definitions
 - **Output Schema**: [contracts/json-output-schema.md](contracts/json-output-schema.md) - JSON structure
 - **Research Findings**: [research.md](research.md) - Technology decisions
-- **Example Data**: `incidencias/CS-Informe incidencias P1,  P2 y P3 - 2026 - 13 May 2026.csv`
+- **Example Data**: `data/input/CS-Informe incidencias P1,  P2 y P3 - 2026 - 13 May 2026.csv`
 
 ## Testing Quick Start
 
@@ -199,7 +199,7 @@ pytest tests/ --cov=csv_to_json --cov-report=html
 ### Test Against Real Data
 ```bash
 python -m csv_to_json.converter \
-  input=incidencias/CS-Informe*.csv \
+  input=data/input/CS-Informe*.csv \
   output=converted.json \
   errors=errors.json
 ```

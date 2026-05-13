@@ -20,53 +20,53 @@ REM Abrir CMD (símbolo del sistema)
 REM Luego ejecutar:
 
 REM Convertir archivo específico
-convert_incidents.bat incidencias/datos.csv
+convert_incidents.bat data/input/datos.csv
 
 REM Convertir archivo con espacios en el nombre
-convert_incidents.bat "incidencias/datos con espacios.csv"
+convert_incidents.bat "data/input/datos con espacios.csv"
 
 REM Convertir con directorio de salida
-convert_incidents.bat incidencias/datos.csv -o output/
+convert_incidents.bat data/input/datos.csv -o data/output/
 
 REM Convertir directorio completo
-convert_incidents.bat csv/
+convert_incidents.bat data/input/
 
 REM Ver reporte de errores después
-convert_incidents.bat incidencias/datos.csv --show-errors
+convert_incidents.bat data/input/datos.csv --show-errors
 ```
 
 **Opción 2: Directamente con Python (si hay problemas con el batch)**
 ```powershell
 # PowerShell
-python convert_incidents.py "incidencias/datos.csv"
-python convert_incidents.py "incidencias/archivo con espacios.csv" -o output/
+python convert_incidents.py "data/input/datos.csv"
+python convert_incidents.py "data/input/archivo con espacios.csv" -o data/output/
 
 # CMD
-python convert_incidents.py incidencias/datos.csv
-python convert_incidents.py "incidencias/archivo con espacios.csv" -o output/
+python convert_incidents.py data/input/datos.csv
+python convert_incidents.py "data/input/archivo con espacios.csv" -o data/output/
 ```
 
 ### En Linux/Mac
 
 ```bash
 # Convertir archivo específico
-./convert_incidents.sh incidencias/datos.csv
+./convert_incidents.sh data/input/datos.csv
 
 # Convertir con directorio de salida
-./convert_incidents.sh incidencias/datos.csv -o output/
+./convert_incidents.sh data/input/datos.csv -o data/output/
 
 # Convertir directorio completo
-./convert_incidents.sh csv/
+./convert_incidents.sh data/input/
 
 # Ver reporte de errores después
-./convert_incidents.sh incidencias/datos.csv --show-errors
+./convert_incidents.sh data/input/datos.csv --show-errors
 ```
 
 ### Directamente con Python (todas las plataformas)
 
 ```bash
-python convert_incidents.py incidencias/datos.csv
-python convert_incidents.py csv/ -o output/ -e output/
+python convert_incidents.py data/input/datos.csv
+python convert_incidents.py data/input/ -o data/output/ -e data/errors/
 ```
 
 ## 📖 Ejemplos Prácticos
@@ -75,10 +75,10 @@ python convert_incidents.py csv/ -o output/ -e output/
 
 ```bash
 # Windows
-convert_incidents.bat "incidencias/CS-Informe incidencias P1,  P2 y P3 - 2026 - 13 May 2026.csv"
+convert_incidents.bat "data/input/CS-Informe incidencias P1,  P2 y P3 - 2026 - 13 May 2026.csv"
 
 # Linux/Mac
-./convert_incidents.sh "incidencias/CS-Informe incidencias P1,  P2 y P3 - 2026 - 13 May 2026.csv"
+./convert_incidents.sh "data/input/CS-Informe incidencias P1,  P2 y P3 - 2026 - 13 May 2026.csv"
 ```
 
 **Salida esperada**:
@@ -112,10 +112,10 @@ convert_incidents.bat "incidencias/CS-Informe incidencias P1,  P2 y P3 - 2026 - 
 
 ```bash
 # Windows
-convert_incidents.bat csv/ -o output/ -e output/ --show-errors
+convert_incidents.bat data/input/ -o data/output/ -e data/errors/ --show-errors
 
 # Linux/Mac
-./convert_incidents.sh csv/ -o output/ -e output/ --show-errors
+./convert_incidents.sh data/input/ -o data/output/ -e data/errors/ --show-errors
 ```
 
 **Salida esperada con errores**:
@@ -134,8 +134,8 @@ convert_incidents.bat csv/ -o output/ -e output/ --show-errors
   Fallidos: 3
   Tasa éxito: 96.4%
   Encoding: utf-8
-✓ JSON guardado: output/2026R4MESAPOST.json
-⚠ Errores reportados: output/2026R4MESAPOST_errors.json (3 registros)
+✓ JSON guardado: data/output/2026R4MESAPOST.json
+⚠ Errores reportados: data/errors/2026R4MESAPOST_errors.json (3 registros)
 
 [2/3]
 ℹ Procesando: 2026R4POSTMORTEM.csv
@@ -172,7 +172,7 @@ Especifica el archivo o directorio de salida para el JSON.
 convert_incidents.bat datos.csv -o incidents.json
 
 # Directorio (usa mismo nombre del CSV)
-convert_incidents.bat datos.csv -o output/
+convert_incidents.bat datos.csv -o data/output/
 ```
 
 ### `-e, --errors`
@@ -183,7 +183,7 @@ Especifica archivo o directorio para el reporte de errores.
 convert_incidents.bat datos.csv -e errors.json
 
 # Directorio (usa nombre automático)
-convert_incidents.bat datos.csv -e output/
+convert_incidents.bat datos.csv -e data/errors/
 ```
 
 ### `--show-errors`
@@ -288,19 +288,19 @@ convert_incidents.bat --help
 ```batch
 REM Abre CMD (símbolo del sistema) en lugar de PowerShell
 REM Luego ejecuta:
-convert_incidents.bat "incidencias/datos.csv"
+convert_incidents.bat "data/input/datos.csv"
 ```
 
 2. **Opción B**: Usar comillas dobles en PowerShell
 ```powershell
 # PowerShell
-python convert_incidents.py "incidencias/datos.csv"
+python convert_incidents.py "data/input/datos.csv"
 ```
 
 3. **Opción C**: Usar Python directamente
 ```batch
 REM Omite el batch file y usa Python directamente
-python convert_incidents.py "incidencias/archivo con espacios.csv" -o output/
+python convert_incidents.py "data/input/archivo con espacios.csv" -o data/output/
 ```
 
 ### Error: "Python no encontrado"
@@ -322,11 +322,11 @@ brew install python3           # Mac
 
 ```bash
 # Verifica que el archivo existe
-dir incidencias/          # Windows
-ls incidencias/          # Linux/Mac
+dir data/input/          # Windows
+ls data/input/          # Linux/Mac
 
 # Usa ruta correcta
-convert_incidents.bat incidencias/datos.csv
+convert_incidents.bat data/input/datos.csv
 ```
 
 ### Error: "Invalid Estatus value"
@@ -356,14 +356,14 @@ Asegúrate que todos los campos requeridos tengan datos:
 
 ```
 1. Preparar archivos CSV
-   └─ Colocar en directorio (ej: csv/)
+   └─ Colocar en directorio (ej: data/input/)
 
 2. Ejecutar conversión
-   └─ convert_incidents.bat csv/ -o output/ -e output/
+   └─ convert_incidents.bat data/input/ -o data/output/ -e data/errors/
 
 3. Revisar resultados
-   ├─ output/archivo.json (datos válidos)
-   └─ output/archivo_errors.json (registros con error)
+   ├─ data/output/archivo.json (datos válidos)
+   └─ data/errors/archivo_errors.json (registros con error)
 
 4. Cargar en Dashboard
    ├─ Abrir Massive Incidents Dashboard
@@ -371,7 +371,7 @@ Asegúrate que todos los campos requeridos tengan datos:
    └─ Verificar datos
 
 5. (Opcional) Revisar errores
-   └─ convert_incidents.bat csv/ --show-errors
+   └─ convert_incidents.bat data/input/ --show-errors
 ```
 
 ## 📞 Soporte

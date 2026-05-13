@@ -21,6 +21,8 @@ ALLOWED_VALUES = {
         "Abierto",
         "Pendiente",
         "En Progreso",
+        "En Curso",
+        "Asignado",
         "Resuelto",
         "Cerrado",
         "Cancelado"

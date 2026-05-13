@@ -22,10 +22,10 @@ if "%1"=="" (
     echo [INFO] Uso: convert_incidents.bat archivo.csv [opciones]
     echo.
     echo Ejemplos:
-    echo   convert_incidents.bat incidencias/datos.csv
-    echo   convert_incidents.bat "incidencias/archivo con espacios.csv"
-    echo   convert_incidents.bat incidencias/ -o output/
-    echo   convert_incidents.bat datos.csv --help
+    echo   convert_incidents.bat data/input/datos.csv
+    echo   convert_incidents.bat "data/input/archivo con espacios.csv"
+    echo   convert_incidents.bat data/input/ -o data/output/
+    echo   convert_incidents.bat data/input/datos.csv --help
     echo.
     exit /b 1
 )

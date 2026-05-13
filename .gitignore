@@ -51,6 +51,10 @@ venv.bak/
 # Data Directories
 csv/
 incidencias/
+datos/
+data/
+output/
+archive/
 
 # Temporary Files
 *.tmp

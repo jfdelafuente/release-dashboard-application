@@ -7,16 +7,16 @@ con el Massive Incidents Dashboard con validación y normalización automática.
 
 Uso:
     # Convertir archivo específico
-    python convert_incidents.py incidencias/datos.csv
+    python convert_incidents.py data/input/datos.csv
 
     # Convertir y especificar salida
-    python convert_incidents.py incidencias/datos.csv -o output/incidents.json
+    python convert_incidents.py data/input/datos.csv -o data/output/incidents.json
 
     # Convertir con reporte de errores
-    python convert_incidents.py incidencias/datos.csv -e output/errors.json
+    python convert_incidents.py data/input/datos.csv -e data/errors/errors.json
 
     # Convertir todos los CSV en un directorio
-    python convert_incidents.py incidencias/ -o output/
+    python convert_incidents.py data/input/ -o data/output/
 
     # Ver help
     python convert_incidents.py --help
@@ -28,6 +28,18 @@ import sys
 from pathlib import Path
 from datetime import datetime
 from csv_to_json import CsvToJsonConverter
+
+
+# Configuración de rutas por defecto
+DATA_ROOT = Path("data")
+DEFAULT_OUTPUT_DIR = DATA_ROOT / "output"
+DEFAULT_ERROR_DIR = DATA_ROOT / "errors"
+
+# Backward compatibility fallback
+if not DEFAULT_OUTPUT_DIR.exists():
+    if Path("datos/json").exists():
+        DEFAULT_OUTPUT_DIR = Path("datos/json")
+        DEFAULT_ERROR_DIR = Path("datos/errors")
 
 
 class Colors:
@@ -108,14 +120,23 @@ def convert_single_file(csv_file, output_path=None, error_path=None):
 
     # Determinar rutas de salida
     if output_path is None:
-        output_path = csv_file.with_suffix('.json')
+        # Si no se especifica -o, usar data/output/ por defecto
+        if DEFAULT_OUTPUT_DIR.exists():
+            output_path = DEFAULT_OUTPUT_DIR / csv_file.with_suffix('.json').name
+        else:
+            output_path = csv_file.with_suffix('.json')
     else:
         output_path = Path(output_path)
         if output_path.is_dir():
             output_path = output_path / csv_file.with_suffix('.json').name
 
-    if error_path is None and output_path:
-        error_path = output_path.parent / f"{output_path.stem}_errors.json"
+    # Determinar ruta de errores
+    if error_path is None:
+        # Si no se especifica -e, usar DEFAULT_ERROR_DIR por defecto
+        if DEFAULT_ERROR_DIR.exists():
+            error_path = DEFAULT_ERROR_DIR / f"{csv_file.stem}_errors.json"
+        else:
+            error_path = output_path.parent / f"{output_path.stem}_errors.json"
     elif error_path and Path(error_path).is_dir():
         error_path = Path(error_path) / f"{csv_file.stem}_errors.json"
 
@@ -202,16 +223,16 @@ def main():
         epilog="""
 Ejemplos:
   # Convertir archivo específico
-  python convert_incidents.py incidencias/datos.csv
+  python convert_incidents.py data/input/datos.csv
 
   # Convertir y especificar directorio de salida
-  python convert_incidents.py incidencias/datos.csv -o output/
+  python convert_incidents.py data/input/datos.csv -o data/output/
 
   # Convertir todos los CSV en un directorio
-  python convert_incidents.py csv/
+  python convert_incidents.py data/input/
 
   # Ver resumen de errores
-  python convert_incidents.py incidencias/datos.csv --show-errors
+  python convert_incidents.py data/input/datos.csv --show-errors
         """
     )
 
@@ -222,13 +243,13 @@ Ejemplos:
 
     parser.add_argument(
         '-o', '--output',
-        help='Archivo o directorio de salida JSON (default: mismo nombre del CSV)',
+        help='Archivo o directorio de salida JSON (default: data/output/)',
         default=None
     )
 
     parser.add_argument(
         '-e', '--errors',
-        help='Archivo o directorio para reporte de errores',
+        help='Archivo o directorio para reporte de errores (default: data/errors/)',
         default=None
     )
 

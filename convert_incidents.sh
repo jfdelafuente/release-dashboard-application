@@ -28,9 +28,9 @@ if [ $# -eq 0 ]; then
     echo -e "${YELLOW}[Info] Uso: ./convert_incidents.sh archivo.csv [opciones]${NC}"
     echo ""
     echo "Ejemplos:"
-    echo "  ./convert_incidents.sh incidencias/datos.csv"
-    echo "  ./convert_incidents.sh incidencias/ -o output/"
-    echo "  ./convert_incidents.sh datos.csv --help"
+    echo "  ./convert_incidents.sh data/input/datos.csv"
+    echo "  ./convert_incidents.sh data/input/ -o data/output/"
+    echo "  ./convert_incidents.sh data/input/datos.csv --help"
     echo ""
     exit 1
 fi

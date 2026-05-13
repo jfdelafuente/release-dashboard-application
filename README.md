@@ -6,10 +6,10 @@ Herramienta completa para convertir archivos CSV de incidencias masivas a format
 
 ```bash
 # Windows
-convert_incidents.bat "incidencias/datos.csv"
+convert_incidents.bat "data/input/datos.csv"
 
 # Linux/Mac
-./convert_incidents.sh "incidencias/datos.csv"
+./convert_incidents.sh "data/input/datos.csv"
 ```
 
 **¡Eso es todo!** El JSON se genera automáticamente con validación, normalización y reporte de errores.
@@ -76,21 +76,21 @@ Scripts listos para ejecutar (recomendado para la mayoría de usuarios):
 
 #### Windows
 ```batch
-convert_incidents.bat incidencias/datos.csv
+convert_incidents.bat data/input/datos.csv
 ```
 
 #### Linux/Mac
 ```bash
-./convert_incidents.sh incidencias/datos.csv
+./convert_incidents.sh data/input/datos.csv
 ```
 
 #### Con opciones personalizadas
 ```bash
 # Especificar directorio de salida
-convert_incidents.bat incidencias/ -o output/ -e output/
+convert_incidents.bat data/input/ -o data/output/ -e data/errors/
 
 # Ver resumen de errores
-convert_incidents.bat datos.csv --show-errors
+convert_incidents.bat data/input/datos.csv --show-errors
 ```
 
 **¿Qué hacen los scripts?**
@@ -111,9 +111,9 @@ from csv_to_json import CsvToJsonConverter
 
 converter = CsvToJsonConverter()
 success, report = converter.convert_file(
-    input_path='incidencias/data.csv',
-    output_path='output/incidents.json',
-    error_report_path='output/errors.json'
+    input_path='data/input/data.csv',
+    output_path='data/output/incidents.json',
+    error_report_path='data/errors/errors.json'
 )
 
 print(f"Exitoso: {report['stats']['successful']}")
@@ -132,9 +132,9 @@ from csv_to_json import CsvToJsonConverter
 
 converter = CsvToJsonConverter()
 success, report = converter.convert_file(
-    input_path='incidencias/CS-Informe incidencias P1,  P2 y P3 - 2026 - 13 May 2026.csv',
-    output_path='dashboard_data.json',
-    error_report_path='conversion_errors.json'
+    input_path='data/input/CS-Informe incidencias P1,  P2 y P3 - 2026 - 13 May 2026.csv',
+    output_path='data/output/dashboard_data.json',
+    error_report_path='data/errors/conversion_errors.json'
 )
 
 stats = report['stats']
@@ -151,11 +151,11 @@ from csv_to_json import CsvToJsonConverter
 from pathlib import Path
 
 converter = CsvToJsonConverter()
-csv_files = Path('csv').glob('*.csv')
+csv_files = Path('data/input').glob('*.csv')
 
 for csv_file in csv_files:
-    output = f'json/{csv_file.stem}.json'
-    errors = f'json/{csv_file.stem}_errors.json'
+    output = f'data/output/{csv_file.stem}.json'
+    errors = f'data/errors/{csv_file.stem}_errors.json'
 
     success, report = converter.convert_file(
         str(csv_file),
