@@ -2,6 +2,20 @@
 
 Herramienta completa para convertir archivos CSV de incidencias masivas a formato JSON compatible con el **Massive Incidents Dashboard**.
 
+## ⚡ Manera Más Rápida (30 segundos)
+
+```bash
+# Windows
+convert_incidents.bat "incidencias/datos.csv"
+
+# Linux/Mac
+./convert_incidents.sh "incidencias/datos.csv"
+```
+
+**¡Eso es todo!** El JSON se genera automáticamente con validación, normalización y reporte de errores.
+
+→ **[Más detalles y opciones](CONVERTER_USAGE.md)**
+
 ## 🎯 Características Principales
 
 ✅ **Auto-detección inteligente**
@@ -35,9 +49,62 @@ Herramienta completa para convertir archivos CSV de incidencias masivas a format
 - Python 3.6+
 - Sin dependencias externas (usa librerías estándar)
 
+## 📦 Archivos de Script
+
+Scripts listos para ejecutar (recomendado para la mayoría de usuarios):
+
+| Archivo | Descripción | Uso |
+|---------|-------------|-----|
+| `convert_incidents.py` | Script principal en Python | `python convert_incidents.py archivo.csv` |
+| `convert_incidents.bat` | Wrapper para Windows | `convert_incidents.bat archivo.csv` |
+| `convert_incidents.sh` | Wrapper para Linux/Mac | `./convert_incidents.sh archivo.csv` |
+
+**Características de los scripts:**
+- ✅ Interfaz amigable con colores
+- ✅ Procesamiento individual o por lotes
+- ✅ Estadísticas detalladas
+- ✅ Reporte de errores JSON
+- ✅ Detección automática de encoding/delimitadores
+
+**→ [Guía completa de scripts](CONVERTER_USAGE.md)**
+
 ## 🚀 Inicio Rápido
 
-### Opción 1: Uso Programático (Python)
+### ⭐ Opción 1: Scripts Listos para Usar (RECOMENDADO)
+
+**Los scripts hacen todo automáticamente - mejor opción para usuarios finales**
+
+#### Windows
+```batch
+convert_incidents.bat incidencias/datos.csv
+```
+
+#### Linux/Mac
+```bash
+./convert_incidents.sh incidencias/datos.csv
+```
+
+#### Con opciones personalizadas
+```bash
+# Especificar directorio de salida
+convert_incidents.bat incidencias/ -o output/ -e output/
+
+# Ver resumen de errores
+convert_incidents.bat datos.csv --show-errors
+```
+
+**¿Qué hacen los scripts?**
+- ✅ Detectan encoding automáticamente
+- ✅ Procesan archivos individuales o directorios completos
+- ✅ Generan JSON y reporte de errores
+- ✅ Muestran estadísticas (total, exitosos, fallidos, tasa de éxito)
+- ✅ Colores y progreso en consola
+
+**Documentación completa**: [CONVERTER_USAGE.md](CONVERTER_USAGE.md)
+
+---
+
+### Opción 2: Uso Programático (Python)
 
 ```python
 from csv_to_json import CsvToJsonConverter
@@ -54,24 +121,7 @@ print(f"Errores: {report['stats']['failed']}")
 print(f"Encoding detectado: {report['encoding_detected']}")
 ```
 
-### Opción 2: Uso desde Python (CLI)
-
-```bash
-# Instalar dependencias
-pip install -r requirements.txt
-
-# Convertir archivo
-python -c "
-from csv_to_json import CsvToJsonConverter
-converter = CsvToJsonConverter()
-success, report = converter.convert_file(
-    'incidencias/CS-Informe incidencias P1,  P2 y P3 - 2026 - 13 May 2026.csv',
-    'output.json',
-    'errors.json'
-)
-print(f'Conversión: {'Exitosa' if success else 'Con errores'}')
-"
-```
+### Opción 3: Uso desde Python (CLI avanzada)
 
 ## 💻 Ejemplos de Uso
 
