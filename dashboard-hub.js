@@ -99,10 +99,11 @@ function showContent() {
    ============================================================================ */
 
 /**
- * Load the latest JSON file from data/output/ directory
- * Auto-detects the most recent file by timestamp using index.json
+ * Load the latest JSON files from data/output/ directory
+ * Auto-detects and loads both massive and postmortem files using index.json
  *
  * Supports both old format (array) and new format (object with sections)
+ * Combines data from all available file types
  */
 async function loadLatestJSON() {
     try {
@@ -115,70 +116,75 @@ async function loadLatestJSON() {
 
         const indexData = await indexResponse.json();
 
-        // Handle both formats:
-        // Old format: [{ name, ... }, { name, ... }]
-        // New format: { massive: { files: [...] }, postmortem: { files: [...] } }
-        let fileList = [];
+        // Collect all files from both sections
+        let allFiles = [];
+        let massiveFiles = [];
+        let postmortemFiles = [];
 
         if (Array.isArray(indexData)) {
             // Old format: direct array
-            fileList = indexData;
-        } else if (typeof indexData === 'object' && indexData.massive && indexData.massive.files) {
-            // New format: extract from massive section (prioritize massive incidents for Dashboard Hub)
-            fileList = indexData.massive.files;
-            console.log(`New index format detected: found ${fileList.length} massive incident file(s)`);
+            allFiles = indexData;
+            console.log(`Old index format detected: found ${allFiles.length} file(s)`);
+        } else if (typeof indexData === 'object') {
+            // New format: extract from both sections
+            if (indexData.massive && indexData.massive.files) {
+                massiveFiles = indexData.massive.files;
+                allFiles.push(...massiveFiles);
+                console.log(`Found ${massiveFiles.length} massive incident file(s)`);
+            }
+            if (indexData.postmortem && indexData.postmortem.files) {
+                postmortemFiles = indexData.postmortem.files;
+                allFiles.push(...postmortemFiles);
+                console.log(`Found ${postmortemFiles.length} postmortem file(s)`);
+            }
+            console.log(`New index format detected: found ${allFiles.length} total file(s)`);
         } else {
             throw new Error('Formato de index.json no reconocido. Esperado: array o objeto con secciones');
         }
 
-        if (!fileList || fileList.length === 0) {
+        if (!allFiles || allFiles.length === 0) {
             throw new Error('No hay archivos JSON disponibles en data/output/');
         }
 
-        // Sort by date descending to get latest first (already sorted in index.json)
-        const latestFile = fileList[0];
+        // Load the latest file from each type
+        let allIncidents = [];
+        let allMetadata = null;
 
-        console.log(`Loading latest JSON file: ${latestFile.name}`);
-
-        const dataResponse = await fetch(`${DATA_OUTPUT_DIR}${latestFile.name}`);
-
-        if (!dataResponse.ok) {
-            throw new Error(`No se puede cargar el archivo: ${latestFile.name}`);
+        // Load latest massive file if available
+        if (massiveFiles.length > 0) {
+            const massiveFile = massiveFiles[0];
+            console.log(`Loading massive incidents from: ${massiveFile.name}`);
+            const massiveData = await loadAndParseJSON(massiveFile.name);
+            if (massiveData.incidents && massiveData.incidents.length > 0) {
+                allIncidents.push(...massiveData.incidents);
+                // Use massive metadata as primary
+                if (massiveData.metadata) {
+                    allMetadata = massiveData.metadata;
+                }
+            }
         }
 
-        const data = await dataResponse.json();
-        hubState.dataSource = latestFile.name;
-
-        // Handle both old format (array) and new format (with metadata)
-        let incidents;
-        let metadata = null;
-
-        if (Array.isArray(data)) {
-            // Old format: direct array of incidents
-            incidents = data;
-        } else if (data._metadata && data.data) {
-            // New format: object with metadata and data
-            metadata = data._metadata;
-
-            // Accept both massive and postmortem file types
-            const fileType = metadata.type || 'unknown';
-            if (!['massive', 'postmortem'].includes(fileType)) {
-                throw new Error(`Archivo no válido: esperado tipo 'massive' o 'postmortem', recibido '${fileType}'`);
+        // Load latest postmortem file if available
+        if (postmortemFiles.length > 0) {
+            const postmortemFile = postmortemFiles[0];
+            console.log(`Loading postmortem data from: ${postmortemFile.name}`);
+            const postmortemData = await loadAndParseJSON(postmortemFile.name);
+            if (postmortemData.incidents && postmortemData.incidents.length > 0) {
+                allIncidents.push(...postmortemData.incidents);
+                // If no massive metadata, use postmortem metadata
+                if (!allMetadata && postmortemData.metadata) {
+                    allMetadata = postmortemData.metadata;
+                }
             }
-
-            incidents = data.data;
-            console.log(`Metadata: type=${metadata.type}, version=${metadata.version}, records=${metadata.record_count}`);
-            if (metadata.kpis) {
-                console.log(`KPIs pre-calculated: total=${metadata.kpis.total}`);
-                console.log(`KPIs by_estatus:`, JSON.stringify(metadata.kpis.by_estatus || {}));
-            }
-        } else {
-            throw new Error('Formato de JSON no reconocido');
         }
 
-        console.log(`Successfully loaded ${incidents.length} incidents from ${latestFile.name}`);
+        if (allIncidents.length === 0) {
+            throw new Error('No se pudieron cargar datos de los archivos JSON');
+        }
 
-        return { incidents, metadata };
+        console.log(`Successfully loaded ${allIncidents.length} total incidents`);
+
+        return { incidents: allIncidents, metadata: allMetadata };
 
     } catch (error) {
         console.error('Error loading JSON:', error);
@@ -190,6 +196,47 @@ async function loadLatestJSON() {
         }
         throw error;
     }
+}
+
+/**
+ * Helper function to load and parse a single JSON file
+ */
+async function loadAndParseJSON(filename) {
+    const dataResponse = await fetch(`${DATA_OUTPUT_DIR}${filename}`);
+
+    if (!dataResponse.ok) {
+        throw new Error(`No se puede cargar el archivo: ${filename}`);
+    }
+
+    const data = await dataResponse.json();
+    hubState.dataSource = filename;
+
+    let incidents;
+    let metadata = null;
+
+    if (Array.isArray(data)) {
+        // Old format: direct array of incidents
+        incidents = data;
+    } else if (data._metadata && data.data) {
+        // New format: object with metadata and data
+        metadata = data._metadata;
+
+        // Accept both massive and postmortem file types
+        const fileType = metadata.type || 'unknown';
+        if (!['massive', 'postmortem'].includes(fileType)) {
+            throw new Error(`Archivo no válido: esperado tipo 'massive' o 'postmortem', recibido '${fileType}'`);
+        }
+
+        incidents = data.data;
+        console.log(`Loaded ${fileType}: ${incidents.length} incidents, version=${metadata.version}`);
+        if (metadata.kpis) {
+            console.log(`KPIs pre-calculated: total=${metadata.kpis.total}`);
+        }
+    } else {
+        throw new Error('Formato de JSON no reconocido');
+    }
+
+    return { incidents, metadata };
 }
 
 /* ============================================================================
