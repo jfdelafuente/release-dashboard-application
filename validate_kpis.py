@@ -56,12 +56,12 @@ def calculate_kpis(incidents):
     # Using same logic as Massive Incidents Dashboard: check if status INCLUDES these words
     pending_incidents = [
         i for i in incidents
-        if (i.get('Estatus', '').lower().strip() not in ['cerrado', 'resuelto', 'cancelado'])
+        if (i.get('Estatus', '').lower() not in ['cerrado', 'resuelto', 'cancelado'])
     ]
     pending_count = len(pending_incidents)
 
     print(f"Total incidencias: {total_incidents}")
-    print(f"Incidencias pendientes: {pending_count}")
+    print(f"Incidencias pendientes (HOY): {pending_count}")
 
     # Calculate trends
     today = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
