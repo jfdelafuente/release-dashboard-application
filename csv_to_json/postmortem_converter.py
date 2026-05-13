@@ -309,7 +309,8 @@ class PostmortemConverter:
                 self.stats['successful'] / self.stats['total_records'] * 100
             )
 
-        # Derive Despliegue for valid records
+        # Derive Despliegue for valid records BEFORE generating JSON
+        # (KPIs need to include Despliegue counts)
         despliegue_map = derivateDespliegue(self.valid_records)
         for record in self.valid_records:
             record_id = record.data.get('ID de incidencia')

@@ -451,24 +451,62 @@ function getIncidentFieldValue(incident, fieldName) {
 
 /**
  * Extract Postmortem Dashboard KPIs
- * Calculates KPIs that match postmortem-dashboard.html
- * Only used if file type is 'postmortem' and has Despliegue field
+ * Reads pre-calculated KPIs from metadata (calculated during CSV conversion)
+ * Falls back to calculation if metadata doesn't have dashboard_hub section
  */
 function extractPostmortemKPIs(incidents, metadata) {
     if (!incidents || incidents.length === 0) {
         return [];
     }
 
-    const totalRecords = incidents.length;
     const fileType = metadata?.type || 'unknown';
 
-    console.log(`[KPI DEBUG] File type: ${fileType}, Records: ${totalRecords}`);
+    console.log(`[extractPostmortemKPIs] File type: ${fileType}`);
+
+    // Try to read pre-calculated KPIs from metadata first
+    if (metadata && metadata.dashboard_hub) {
+        console.log(`[extractPostmortemKPIs] Using pre-calculated KPIs from metadata`);
+        const kpis = metadata.dashboard_hub;
+
+        return [
+            createKPICard(
+                'total-postmortem-incidents',
+                'Total Incidencias',
+                kpis.total_incidencias || 0,
+                'incidencias'
+            ),
+            createKPICard(
+                'postmortem-closed-percent',
+                '% Cerradas',
+                kpis.cerradas_percent || 0,
+                '%'
+            ),
+            createKPICard(
+                'postmortem-pap-resolved',
+                '% Resueltas PaP',
+                kpis.pap_resueltas_percent || 0,
+                '%'
+            ),
+            createKPICard(
+                'postmortem-mesa-resolved',
+                '% Resueltas Mesa',
+                kpis.mesa_resueltas_percent || 0,
+                '%'
+            )
+        ];
+    }
+
+    // Fallback: Calculate KPIs from incidents data
+    // (for backward compatibility with old JSON files without dashboard_hub metadata)
+    console.log(`[extractPostmortemKPIs] Falling back to calculating KPIs from incidents data`);
+
+    const totalRecords = incidents.length;
 
     // Check if this is actually postmortem data with Despliegue field
     const hasDespliegue = incidents.some(i => getIncidentFieldValue(i, 'Despliegue'));
 
     if (!hasDespliegue && fileType !== 'postmortem') {
-        console.log(`[KPI DEBUG] No Despliegue field found and file type is '${fileType}'. Returning empty KPIs.`);
+        console.log(`[extractPostmortemKPIs] No Despliegue field found and file type is '${fileType}'. Returning empty KPIs.`);
         return [];
     }
 
@@ -479,8 +517,6 @@ function extractPostmortemKPIs(incidents, metadata) {
     }).length;
     const closedPercent = totalRecords > 0 ? Math.round((closedCount / totalRecords) * 100) : 0;
 
-    console.log(`[KPI DEBUG] Total: ${totalRecords}, Cerrado: ${closedCount}, % Cerradas: ${closedPercent}%`);
-
     // Calculate PAP metrics (Cerrado + Resuelto)
     const papIncidents = incidents.filter(i => getIncidentFieldValue(i, 'Despliegue') === 'PAP');
     const papResolved = papIncidents.filter(i => {
@@ -488,8 +524,6 @@ function extractPostmortemKPIs(incidents, metadata) {
         return status.includes('cerrado') || status.includes('resuelto');
     }).length;
     const papPercent = papIncidents.length > 0 ? Math.round((papResolved / papIncidents.length) * 100) : 0;
-
-    console.log(`[KPI DEBUG] PAP Total: ${papIncidents.length}, Resuelto: ${papResolved}, % Resueltas PaP: ${papPercent}%`);
 
     // Calculate MESA metrics (Cerrado + Resuelto)
     const mesaIncidents = incidents.filter(i => getIncidentFieldValue(i, 'Despliegue') === 'MESA');
@@ -499,7 +533,7 @@ function extractPostmortemKPIs(incidents, metadata) {
     }).length;
     const mesaPercent = mesaIncidents.length > 0 ? Math.round((mesaResolved / mesaIncidents.length) * 100) : 0;
 
-    console.log(`[KPI DEBUG] MESA Total: ${mesaIncidents.length}, Resuelto: ${mesaResolved}, % Resueltas Mesa: ${mesaPercent}%`);
+    console.log(`[extractPostmortemKPIs] Calculated - Total: ${totalRecords}, % Cerradas: ${closedPercent}%, % PAP: ${papPercent}%, % MESA: ${mesaPercent}%`);
 
     // Only show postmortem KPIs if we have Despliegue data
     if (papIncidents.length > 0 || mesaIncidents.length > 0) {

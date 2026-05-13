@@ -61,7 +61,11 @@ class PostmortemRecord:
 
 
 class PostmortemKPIMetrics:
-    """Aggregated statistics calculated during conversion."""
+    """Aggregated statistics calculated during conversion.
+
+    Includes both basic metrics (by_estatus, by_urgencia, by_impacto)
+    and Dashboard Hub specific metrics (cerradas%, resueltas PAP%, resueltas MESA%).
+    """
 
     def __init__(self):
         self.total = 0
@@ -69,13 +73,34 @@ class PostmortemKPIMetrics:
         self.by_urgencia: Dict[str, int] = {}
         self.by_impacto: Dict[str, int] = {}
 
+        # Dashboard Hub KPIs (for postmortem dashboard)
+        self.cerradas_count = 0  # Count of Cerrado status
+        self.pap_total = 0  # Count of PAP despliegue
+        self.pap_resueltas = 0  # Count of PAP with Cerrado or Resuelto
+        self.mesa_total = 0  # Count of MESA despliegue
+        self.mesa_resueltas = 0  # Count of MESA with Cerrado or Resuelto
+
     def to_dict(self) -> Dict[str, Any]:
         """Convert KPI metrics to output dictionary."""
+        # Calculate percentages
+        cerradas_percent = round((self.cerradas_count / self.total * 100)) if self.total > 0 else 0
+        pap_percent = round((self.pap_resueltas / self.pap_total * 100)) if self.pap_total > 0 else 0
+        mesa_percent = round((self.mesa_resueltas / self.mesa_total * 100)) if self.mesa_total > 0 else 0
+
         return {
             'total': self.total,
             'by_estatus': self.by_estatus,
             'by_urgencia': self.by_urgencia,
-            'by_impacto': self.by_impacto
+            'by_impacto': self.by_impacto,
+            # Dashboard Hub KPIs
+            'dashboard_hub': {
+                'total_incidencias': self.total,
+                'cerradas_percent': cerradas_percent,
+                'pap_resueltas_percent': pap_percent,
+                'mesa_resueltas_percent': mesa_percent,
+                'pap_total': self.pap_total,
+                'mesa_total': self.mesa_total
+            }
         }
 
     def add_record(self, record: PostmortemRecord):
@@ -87,6 +112,10 @@ class PostmortemKPIMetrics:
         if estatus:
             self.by_estatus[estatus] = self.by_estatus.get(estatus, 0) + 1
 
+            # Count cerradas for Dashboard Hub
+            if 'cerrado' in estatus.lower():
+                self.cerradas_count += 1
+
         # By Urgencia
         urgencia = record.data.get('Urgencia', 'Unknown')
         if urgencia:
@@ -96,6 +125,19 @@ class PostmortemKPIMetrics:
         impacto = record.data.get('Impacto', 'Unknown')
         if impacto:
             self.by_impacto[impacto] = self.by_impacto.get(impacto, 0) + 1
+
+        # Dashboard Hub KPIs (Despliegue-based)
+        despliegue = record.data.get('Despliegue', '')
+        if despliegue == 'PAP':
+            self.pap_total += 1
+            # Count as resueltas if status is Cerrado or Resuelto
+            if estatus and ('cerrado' in estatus.lower() or 'resuelto' in estatus.lower()):
+                self.pap_resueltas += 1
+        elif despliegue == 'MESA':
+            self.mesa_total += 1
+            # Count as resueltas if status is Cerrado or Resuelto
+            if estatus and ('cerrado' in estatus.lower() or 'resuelto' in estatus.lower()):
+                self.mesa_resueltas += 1
 
 
 class ConversionMetadata:
