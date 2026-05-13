@@ -322,6 +322,38 @@ El script `csv_to_json.py` anterior era un conversor simple sin validación ni n
 - Normalización de campos (especialmente Urgencia)
 - Reporte de errores para depuración
 
+## Características en Desarrollo
+
+<!-- SPECKIT START: Active feature implementation plans -->
+
+### Feature: Postmortem CSV to JSON Converter (004-postmortem-converter)
+
+**Status**: Planning Phase Complete (Spec ✅ | Research ✅ | Data Model ✅ | Quickstart ✅)
+
+**Plan Reference**: [specs/004-postmortem-converter/plan.md](specs/004-postmortem-converter/plan.md)
+
+**Objective**: Create validation and normalization script to convert postmortem CSV data to JSON format compatible with Postmortem Dashboard and Dashboard Hub auto-load system.
+
+**Key Features**:
+- Auto-detect CSV encoding (UTF-8, UTF-8-sig, Windows-1252, Latin-1, ISO-8859-15)
+- Auto-detect delimiter (comma, semicolon, tab)
+- Normalize 13 postmortem fields (Spanish names preserved)
+- **Derive Despliegue field**: oldest date = PAP, others = MESA
+- Pre-calculate KPIs: total, by_status, by_urgency, by_impact
+- Generate error report for invalid records
+- Output JSON with `-postmortem` suffix for Dashboard Hub discovery
+- <5 second conversion for 1000+ record files
+
+**Related Documentation**:
+- Specification: [specs/004-postmortem-converter/spec.md](specs/004-postmortem-converter/spec.md)
+- Research decisions: [specs/004-postmortem-converter/research.md](specs/004-postmortem-converter/research.md)
+- Data model: [specs/004-postmortem-converter/data-model.md](specs/004-postmortem-converter/data-model.md)
+- Testing guide: [specs/004-postmortem-converter/quickstart.md](specs/004-postmortem-converter/quickstart.md)
+
+**Next Step**: Run `/speckit-tasks` to generate task breakdown and implementation checklist
+
+<!-- SPECKIT END -->
+
 ## Idioma de Comunicación
 
 - 🇪🇸 **Todas las conversaciones deben ser en español**. Esta es la lengua preferida para toda la comunicación con Claude.
