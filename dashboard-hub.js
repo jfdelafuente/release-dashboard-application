@@ -99,47 +99,47 @@ function showContent() {
 
 /**
  * Load the latest JSON file from data/output/ directory
- * Auto-detects the most recent file by timestamp
+ * Auto-detects the most recent file by timestamp using index.json
  */
 async function loadLatestJSON() {
     try {
-        // Check if data/output/ directory exists by trying to fetch a dummy path
-        const response = await fetch(`${DATA_OUTPUT_DIR}.`);
+        // Fetch the index.json file that lists all available JSON files
+        const indexResponse = await fetch(`${DATA_OUTPUT_DIR}index.json`);
 
-        // If fetch works, try to get file list (this is a fallback for CORS issues)
-        // Since we can't directly list directory in browser, we'll try common patterns
-
-        // Try to fetch files - in production, you'd want an API endpoint
-        // For now, we'll return an empty array and let error handling show the message
-
-        // Attempt to load from data/output/ using a pattern match
-        // This is a simplified approach - in real deployment, use an API endpoint
-        const fileListResponse = await fetch(`${DATA_OUTPUT_DIR}index.json`)
-            .catch(() => null);
-
-        if (fileListResponse && fileListResponse.ok) {
-            const fileList = await fileListResponse.json();
-            if (Array.isArray(fileList) && fileList.length > 0) {
-                // Sort by date descending to get latest first
-                const latestFile = fileList
-                    .sort((a, b) => new Date(b.modified) - new Date(a.modified))[0];
-
-                const dataResponse = await fetch(`${DATA_OUTPUT_DIR}${latestFile.name}`);
-                if (dataResponse.ok) {
-                    const data = await dataResponse.json();
-                    hubState.dataSource = latestFile.name;
-                    return Array.isArray(data) ? data : [data];
-                }
-            }
+        if (!indexResponse.ok) {
+            throw new Error('No se encontró el archivo index.json en data/output/');
         }
 
-        // Fallback: Try to load from a known pattern
-        // This would require the deployment to provide a way to list files
-        // For development, you can manually load from a specific file
-        throw new Error('No se encontraron archivos JSON en data/output/. Por favor asegúrese de que los archivos CSV han sido convertidos a JSON.');
+        const fileList = await indexResponse.json();
+
+        if (!Array.isArray(fileList) || fileList.length === 0) {
+            throw new Error('No hay archivos JSON disponibles en data/output/');
+        }
+
+        // Sort by date descending to get latest first (already sorted in index.json)
+        const latestFile = fileList[0];
+
+        console.log(`Loading latest JSON file: ${latestFile.name}`);
+
+        const dataResponse = await fetch(`${DATA_OUTPUT_DIR}${latestFile.name}`);
+
+        if (!dataResponse.ok) {
+            throw new Error(`No se puede cargar el archivo: ${latestFile.name}`);
+        }
+
+        const data = await dataResponse.json();
+        hubState.dataSource = latestFile.name;
+
+        console.log(`Successfully loaded ${Array.isArray(data) ? data.length : 1} incidents from ${latestFile.name}`);
+
+        return Array.isArray(data) ? data : [data];
 
     } catch (error) {
-        if (error.message.includes('Failed to fetch')) {
+        console.error('Error loading JSON:', error);
+
+        if (error.message.includes('index.json')) {
+            throw new Error('No se encontraron archivos JSON en data/output/. Por favor asegúrese de que los archivos CSV han sido convertidos a JSON y ejecute: python build_index.py en data/output/');
+        } else if (error.message.includes('Failed to fetch')) {
             throw new Error('No se puede acceder al directorio data/output/. Verifique que el directorio existe y contiene archivos JSON.');
         }
         throw error;

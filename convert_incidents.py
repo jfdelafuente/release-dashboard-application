@@ -330,6 +330,21 @@ Ejemplos:
                 print(f"\n{Colors.BOLD}Archivo: {error_path.name}{Colors.ENDC}")
                 show_error_summary(error_path)
 
+    # Build index.json for Dashboard Hub
+    print()
+    print_info("Generando index.json para Dashboard Hub...")
+    try:
+        # Import the build_index function
+        sys.path.insert(0, str(Path(__file__).parent))
+        from build_index import build_index
+
+        if build_index(str(DEFAULT_OUTPUT_DIR)):
+            print_success(f"Index actualizado: {DEFAULT_OUTPUT_DIR / 'index.json'}")
+        else:
+            print_warning("No se pudo generar index.json")
+    except Exception as e:
+        print_warning(f"Error al generar index.json: {e}")
+
     print()
     print_info("Para más información, consulta: specs/001-csv-to-json-workflow/quickstart.md")
     print()
