@@ -2,222 +2,499 @@
 """
 Postmortem CSV to JSON Converter CLI.
 
-Converts postmortem CSV files to JSON format compatible with Postmortem Dashboard.
+Convierte archivos CSV de postmortem al formato JSON compatible con
+Postmortem Dashboard y Dashboard Hub con validación y normalización automática.
 
 Features:
-- Auto-detects CSV encoding and delimiter
-- Normalizes field names and data types
-- Calculates KPIs and includes in metadata
-- Outputs with -postmortem suffix for Dashboard Hub auto-discovery
-- Generates detailed error reports for invalid records
-- Supports batch processing of multiple files
+- Detección automática de encoding y delimitador
+- Normalización de nombres de campos y tipos de datos
+- Cálculo de KPIs incluidos en metadatos
+- Output con sufijo -postmortem para auto-descubrimiento en Dashboard Hub
+- Generación de reportes de errores detallados
+- Soporte para procesamiento batch de múltiples archivos
+- Auto-actualización de index.json para Dashboard Hub
 
-Usage:
-    Single file:
-        python convert_postmortems.py data/input/postmortem.csv
+Uso:
+    # Convertir archivo específico
+    python convert_postmortems.py data/input/postmortem.csv
 
-    With explicit output:
-        python convert_postmortems.py data/input/postmortem.csv -o data/output/custom-output.json
+    # Convertir con output explícito
+    python convert_postmortems.py data/input/postmortem.csv -o custom-output.json
 
-    Batch mode (process all CSVs in directory):
-        python convert_postmortems.py data/input/ -b
+    # Batch mode (procesa todos los CSV en directorio)
+    python convert_postmortems.py data/input/ -b
 
-    With error report:
-        python convert_postmortems.py data/input/postmortem.csv -e data/errors/report.json
+    # Con reporte de errores
+    python convert_postmortems.py data/input/postmortem.csv -e report.json
+
+    # Ver help
+    python convert_postmortems.py --help
 """
 
 import argparse
 import sys
+import json
 from pathlib import Path
+from datetime import datetime
 from csv_to_json.postmortem_converter import PostmortemConverter
+
+
+# Configuración de rutas por defecto
+DATA_ROOT = Path("data")
+DEFAULT_OUTPUT_DIR = DATA_ROOT / "output"
+DEFAULT_ERROR_DIR = DATA_ROOT / "errors"
+
+# Backward compatibility fallback
+if not DEFAULT_OUTPUT_DIR.exists():
+    if Path("datos/json").exists():
+        DEFAULT_OUTPUT_DIR = Path("datos/json")
+        DEFAULT_ERROR_DIR = Path("datos/errors")
+
+
+class Colors:
+    """Códigos de color ANSI para output en consola."""
+    HEADER = '\033[95m'
+    BLUE = '\033[94m'
+    CYAN = '\033[96m'
+    GREEN = '\033[92m'
+    YELLOW = '\033[93m'
+    RED = '\033[91m'
+    ENDC = '\033[0m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
+
+
+def print_header(text):
+    """Imprime un encabezado formateado."""
+    print(f"\n{Colors.BOLD}{Colors.HEADER}{'='*70}{Colors.ENDC}")
+    print(f"{Colors.BOLD}{Colors.HEADER}{text:^70}{Colors.ENDC}")
+    print(f"{Colors.BOLD}{Colors.HEADER}{'='*70}{Colors.ENDC}\n")
+
+
+def print_success(text):
+    """Imprime mensaje de éxito."""
+    print(f"{Colors.GREEN}[OK] {text}{Colors.ENDC}")
+
+
+def print_error(text):
+    """Imprime mensaje de error."""
+    print(f"{Colors.RED}[ERROR] {text}{Colors.ENDC}")
+
+
+def print_info(text):
+    """Imprime mensaje informativo."""
+    print(f"{Colors.CYAN}[INFO] {text}{Colors.ENDC}")
+
+
+def print_warning(text):
+    """Imprime mensaje de advertencia."""
+    print(f"{Colors.YELLOW}[WARN] {text}{Colors.ENDC}")
+
+
+def format_size(bytes):
+    """Convierte bytes a formato legible."""
+    for unit in ['B', 'KB', 'MB', 'GB']:
+        if bytes < 1024:
+            return f"{bytes:.1f}{unit}"
+        bytes /= 1024
+    return f"{bytes:.1f}TB"
+
+
+def get_csv_files(path):
+    """Obtiene lista de archivos CSV del path (archivo o directorio)."""
+    path = Path(path)
+
+    if path.is_file():
+        if path.suffix.lower() == '.csv':
+            return [path]
+        else:
+            print_error(f"El archivo {path} no es un CSV")
+            return []
+
+    elif path.is_dir():
+        csv_files = sorted(path.glob('*.csv'))
+        if not csv_files:
+            print_warning(f"No se encontraron archivos CSV en {path}")
+        return csv_files
+
+    else:
+        print_error(f"Path no válido: {path}")
+        return []
 
 
 def get_output_path(input_path: Path, output_dir: Path = None) -> Path:
     """
-    Generate output path with -postmortem suffix.
+    Genera ruta de output con sufijo -postmortem.
 
     Args:
-        input_path: Input CSV file path
-        output_dir: Output directory (defaults to data/output/)
+        input_path: Ruta del archivo CSV de entrada
+        output_dir: Directorio de salida (por defecto data/output/)
 
     Returns:
-        Output JSON file path with -postmortem suffix
+        Ruta del archivo JSON de salida con sufijo -postmortem
     """
     if output_dir is None:
-        output_dir = Path("data") / "output"
+        output_dir = DEFAULT_OUTPUT_DIR
 
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    # Extract base name without extension
+    # Extraer nombre base sin extensión
     base_name = input_path.stem
 
-    # Add -postmortem suffix
+    # Agregar sufijo -postmortem
     output_filename = f"{base_name}-postmortem.json"
     return output_dir / output_filename
 
 
 def get_error_report_path(output_path: Path, error_dir: Path = None) -> Path:
     """
-    Generate error report path based on output filename.
+    Genera ruta de reporte de errores basada en el nombre del output.
 
     Args:
-        output_path: Output JSON file path
-        error_dir: Error directory (defaults to data/errors/)
+        output_path: Ruta del archivo JSON de salida
+        error_dir: Directorio de errores (por defecto data/errors/)
 
     Returns:
-        Error report JSON file path
+        Ruta del archivo de reporte de errores
     """
     if error_dir is None:
-        error_dir = Path("data") / "errors"
+        error_dir = DEFAULT_ERROR_DIR
 
     error_dir.mkdir(parents=True, exist_ok=True)
 
-    # Use same base name as output with _errors suffix
+    # Usar mismo nombre base que output con sufijo _errors
     error_filename = f"{output_path.stem}_errors.json"
     return error_dir / error_filename
 
 
-def convert_single_file(input_path: Path, output_path: Path = None, error_path: Path = None) -> bool:
-    """
-    Convert a single postmortem CSV to JSON.
+def show_error_summary(error_path):
+    """Muestra resumen de errores."""
+    try:
+        with open(error_path, 'r', encoding='utf-8') as f:
+            report = json.load(f)
 
-    Args:
-        input_path: Path to input CSV file
-        output_path: Path for output JSON (auto-generated if not specified)
-        error_path: Path for error report (auto-generated if not specified)
+        summary = report.get('summary', {})
+        if summary.get('failed', 0) == 0:
+            print_success("No hay errores reportados")
+            return
 
-    Returns:
-        True if conversion successful (no invalid records), False otherwise
-    """
-    if not input_path.exists():
-        print(f"ERROR: Input file not found: {input_path}")
+        print(f"\n{Colors.BOLD}Resumen de Errores:{Colors.ENDC}")
+        print(f"  Total: {summary.get('total_records', 0)}")
+        print(f"  Exitosos: {summary.get('successful', 0)}")
+        print(f"  Fallidos: {summary.get('failed', 0)}")
+        print(f"  Tasa: {summary.get('success_rate', 0):.1f}%")
+
+        errors = report.get('errors', [])
+        if errors and len(errors) <= 5:
+            print(f"\n{Colors.BOLD}Errores encontrados:{Colors.ENDC}\n")
+            for i, error in enumerate(errors, 1):
+                row = error.get('row')
+                record_id = error.get('record_id', 'N/A')
+                issues = error.get('issues', [])
+                print(f"{Colors.YELLOW}Error {i} (Fila {row}, ID: {record_id}):{Colors.ENDC}")
+                for issue in issues:
+                    print(f"  • {issue}")
+                print()
+        elif len(errors) > 5:
+            print(f"\n{Colors.BOLD}Primeros 5 errores:{Colors.ENDC}\n")
+            for i, error in enumerate(errors[:5], 1):
+                row = error.get('row')
+                record_id = error.get('record_id', 'N/A')
+                print(f"{Colors.YELLOW}Error {i} (Fila {row}, ID: {record_id}){Colors.ENDC}")
+            print(f"... y {len(errors) - 5} errores más")
+
+    except Exception as e:
+        print_warning(f"No se pudo leer reporte de errores: {e}")
+
+
+def convert_single_file(csv_file, output_path=None, error_path=None):
+    """Convierte un archivo CSV individual."""
+    print_info(f"Procesando: {csv_file.name}")
+    print_info(f"Tamaño: {format_size(csv_file.stat().st_size)}")
+
+    # Determinar rutas de salida
+    if output_path is None:
+        # Si no se especifica -o, usar DEFAULT_OUTPUT_DIR por defecto
+        output_filename = f"{csv_file.stem}-postmortem.json"
+        output_path = DEFAULT_OUTPUT_DIR / output_filename
+    else:
+        output_path = Path(output_path)
+        if output_path.is_dir():
+            # Agregar sufijo -postmortem si se especifica solo directorio
+            output_filename = f"{csv_file.stem}-postmortem.json"
+            output_path = output_path / output_filename
+
+    # Determinar ruta de errores
+    if error_path is None:
+        # Si no se especifica -e, usar DEFAULT_ERROR_DIR por defecto
+        error_path = DEFAULT_ERROR_DIR / f"{csv_file.stem}-postmortem_errors.json"
+    elif error_path and Path(error_path).is_dir():
+        error_path = Path(error_path) / f"{csv_file.stem}-postmortem_errors.json"
+
+    # Crear directorios si es necesario
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    if error_path:
+        Path(error_path).parent.mkdir(parents=True, exist_ok=True)
+
+    # Convertir
+    try:
+        converter = PostmortemConverter()
+        success, report = converter.convert_file(
+            str(csv_file),
+            str(output_path),
+            str(error_path) if error_path else None
+        )
+
+        # Mostrar resultados
+        stats = report['stats']
+        print(f"  {Colors.BLUE}Total registros:{Colors.ENDC} {stats['total_records']}")
+        print(f"  {Colors.GREEN}Exitosos:{Colors.ENDC} {stats['successful']}")
+
+        if stats['failed'] > 0:
+            print(f"  {Colors.YELLOW}Fallidos:{Colors.ENDC} {stats['failed']}")
+
+        print(f"  {Colors.CYAN}Tasa éxito:{Colors.ENDC} {stats['success_rate']:.1f}%")
+        print(f"  {Colors.BLUE}Encoding:{Colors.ENDC} {report['encoding_detected']}")
+
+        # Verificar archivos generados
+        if output_path.exists():
+            print_success(f"JSON guardado: {output_path}")
+            print(f"         Tamaño: {format_size(output_path.stat().st_size)}")
+        else:
+            print_error(f"No se generó: {output_path}")
+            return False
+
+        if error_path and Path(error_path).exists():
+            error_count = stats['failed']
+            print_warning(f"Errores reportados: {error_path} ({error_count} registros)")
+
+        return success
+
+    except Exception as e:
+        print_error(f"Error en conversión: {e}")
         return False
 
-    # Generate output path if not specified
-    if output_path is None:
-        output_path = get_output_path(input_path)
 
-    # Generate error path if not specified
-    if error_path is None:
-        error_path = get_error_report_path(output_path)
-
-    print(f"\nConverting: {input_path}")
-    print(f"  Output:   {output_path}")
-    print(f"  Errors:   {error_path}")
-
-    converter = PostmortemConverter()
-    success, report = converter.convert_file(
-        str(input_path),
-        str(output_path),
-        str(error_path)
-    )
-
-    # Report results
-    stats = report['stats']
-    print(f"  Result:   {stats['successful']}/{stats['total_records']} records converted")
-    print(f"  Success:  {stats['success_rate']:.1f}%")
-    print(f"  Encoding: {report['encoding_detected']}")
-
-    if not success:
-        print(f"  WARNING: {stats['failed']} records failed validation")
-        print(f"  ERROR:   {error_path}")
-
-    return success
-
-
-def convert_batch(input_dir: Path, output_dir: Path = None, error_dir: Path = None) -> tuple:
+def build_index_for_hub(output_dir=None):
     """
-    Convert all CSV files in a directory.
+    Genera index.json para Dashboard Hub.
 
     Args:
-        input_dir: Directory containing CSV files
-        output_dir: Output directory for JSON files
-        error_dir: Error directory for error reports
+        output_dir: Directorio a indexar (por defecto data/output/)
 
     Returns:
-        Tuple of (total_files, successful_conversions)
+        bool: True si éxito, False si fallo
     """
-    if not input_dir.is_dir():
-        print(f"ERROR: Input directory not found: {input_dir}")
-        return 0, 0
+    if output_dir is None:
+        output_dir = DEFAULT_OUTPUT_DIR
 
-    csv_files = list(input_dir.glob("*.csv"))
-    if not csv_files:
-        print(f"WARNING: No CSV files found in {input_dir}")
-        return 0, 0
+    output_path = Path(output_dir)
 
-    print(f"\nBatch converting {len(csv_files)} CSV files from {input_dir}")
+    # Verificar directorio
+    if not output_path.exists():
+        print_warning(f"Directorio no existe: {output_dir}")
+        return False
 
-    successful = 0
-    for csv_file in csv_files:
-        output_path = get_output_path(csv_file, output_dir)
-        error_path = get_error_report_path(output_path, error_dir)
+    if not output_path.is_dir():
+        print_warning(f"Path no es un directorio: {output_dir}")
+        return False
 
-        if convert_single_file(csv_file, output_path, error_path):
-            successful += 1
+    # Buscar todos los JSONs con sufijo -postmortem (excluyendo index.json)
+    postmortem_files = sorted(
+        [p for p in output_path.glob('*-postmortem.json') if p.name != 'index.json'],
+        key=lambda p: p.stat().st_mtime,
+        reverse=True  # Más recientes primero
+    )
 
-    print(f"\n{successful}/{len(csv_files)} files converted successfully")
-    return len(csv_files), successful
+    # Buscar todos los JSONs con sufijo -massive (incidencias masivas)
+    massive_files = sorted(
+        [p for p in output_path.glob('*-massive.json') if p.name != 'index.json'],
+        key=lambda p: p.stat().st_mtime,
+        reverse=True
+    )
+
+    # Combinar y ordenar
+    all_json_files = postmortem_files + massive_files
+
+    if not all_json_files:
+        print_warning(f"No se encontraron archivos JSON en {output_dir}")
+        index = []
+    else:
+        print_info(f"Encontrados {len(postmortem_files)} archivo(s) postmortem + {len(massive_files)} masivos")
+
+    # Construir índice con metadatos
+    index = []
+    for file_path in all_json_files:
+        stat = file_path.stat()
+
+        # Detectar tipo de archivo
+        if '-postmortem.json' in file_path.name:
+            file_type = 'postmortem'
+        elif '-massive.json' in file_path.name:
+            file_type = 'massive'
+        else:
+            file_type = 'unknown'
+
+        file_info = {
+            'name': file_path.name,
+            'type': file_type,
+            'size': stat.st_size,
+            'modified': datetime.fromtimestamp(stat.st_mtime).isoformat(),
+            'path': f"data/output/{file_path.name}"
+        }
+        index.append(file_info)
+        print(f"  • {file_path.name} ({file_type}, {format_size(stat.st_size)})")
+
+    # Escribir index.json
+    index_file = output_path / 'index.json'
+    try:
+        with open(index_file, 'w', encoding='utf-8') as f:
+            json.dump(index, f, indent=2, ensure_ascii=False)
+        print_success(f"Index actualizado: {index_file}")
+        return True
+
+    except IOError as e:
+        print_error(f"Error escribiendo index.json: {e}")
+        return False
 
 
 def main():
-    """Parse arguments and execute conversion."""
+    """Función principal."""
     parser = argparse.ArgumentParser(
-        description="Convert postmortem CSV files to JSON format",
+        description='Convierte CSV de postmortem a JSON para Dashboard Postmortem',
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
-Examples:
-  # Single file (output to data/output/ with -postmortem suffix)
+Ejemplos:
+  # Convertir archivo específico
   python convert_postmortems.py data/input/postmortem.csv
 
-  # Batch mode (convert all CSVs in directory)
+  # Batch mode (convierte todos los CSV en directorio)
   python convert_postmortems.py data/input/ -b
 
-  # Custom output location
-  python convert_postmortems.py data/input/postmortem.csv -o custom_output.json
+  # Convertir con directorio de salida personalizado
+  python convert_postmortems.py data/input/postmortem.csv -o data/output/
 
-  # With error report location
-  python convert_postmortems.py data/input/postmortem.csv -e custom_errors.json
-
-  # Batch with custom directories
+  # Batch con directorios personalizados
   python convert_postmortems.py data/input/ -b -o data/output/ -e data/errors/
+
+  # Ver resumen de errores
+  python convert_postmortems.py data/input/postmortem.csv --show-errors
         """
     )
 
     parser.add_argument(
-        "input",
-        help="Input CSV file or directory (for batch mode)"
+        'input',
+        help='Archivo CSV o directorio con archivos CSV'
     )
+
     parser.add_argument(
-        "-b", "--batch",
-        action="store_true",
-        help="Batch mode: process all CSV files in input directory"
+        '-b', '--batch',
+        action='store_true',
+        help='Batch mode: procesa todos los CSV en directorio de entrada'
     )
+
     parser.add_argument(
-        "-o", "--output",
-        help="Output JSON file path (default: data/output/<filename>-postmortem.json)"
+        '-o', '--output',
+        help='Directorio o archivo de salida JSON (default: data/output/)',
+        default=None
     )
+
     parser.add_argument(
-        "-e", "--errors",
-        help="Error report path (default: data/errors/<filename>_errors.json)"
+        '-e', '--errors',
+        help='Directorio o archivo para reporte de errores (default: data/errors/)',
+        default=None
+    )
+
+    parser.add_argument(
+        '--show-errors',
+        action='store_true',
+        help='Mostrar resumen de errores después de la conversión'
+    )
+
+    parser.add_argument(
+        '-v', '--verbose',
+        action='store_true',
+        help='Output más detallado'
     )
 
     args = parser.parse_args()
 
-    input_path = Path(args.input)
-    output_path = Path(args.output) if args.output else None
-    error_path = Path(args.errors) if args.errors else None
+    # Banner
+    print_header("Postmortem Converter - CSV to JSON")
 
-    try:
-        if args.batch:
-            total, successful = convert_batch(input_path, output_path, error_path)
-            sys.exit(0 if successful == total else 1)
+    # Validar input
+    input_path = Path(args.input)
+    if not input_path.exists():
+        print_error(f"Path no encontrado: {args.input}")
+        return 1
+
+    # Obtener archivos CSV
+    csv_files = get_csv_files(input_path)
+    if not csv_files:
+        return 1
+
+    print_info(f"Encontrados {len(csv_files)} archivo(s) CSV para procesar\n")
+
+    # Procesar cada archivo
+    total_success = True
+    error_paths = []
+
+    for i, csv_file in enumerate(csv_files, 1):
+        print(f"{Colors.BOLD}[{i}/{len(csv_files)}]{Colors.ENDC}")
+
+        # Determinar rutas de salida y error
+        if args.batch or len(csv_files) > 1:
+            output_dir = Path(args.output) if args.output else DEFAULT_OUTPUT_DIR
+            error_dir = Path(args.errors) if args.errors else DEFAULT_ERROR_DIR
+            output_path = get_output_path(csv_file, output_dir)
+            error_path = get_error_report_path(output_path, error_dir)
         else:
-            success = convert_single_file(input_path, output_path, error_path)
-            sys.exit(0 if success else 1)
+            output_path = Path(args.output) if args.output else None
+            error_path = Path(args.errors) if args.errors else None
+
+        success = convert_single_file(csv_file, output_path, error_path)
+
+        if not success:
+            total_success = False
+
+        # Guardar ruta de errores para mostrar después
+        if error_path:
+            error_paths.append(error_path)
+
+        if i < len(csv_files):
+            print()
+
+    # Mostrar resumen final
+    print_header("Resumen de Conversión")
+
+    if total_success:
+        print_success(f"Conversión completada sin errores fatales")
+    else:
+        print_warning(f"Conversión completada con algunos registros inválidos")
+
+    # Mostrar errores si está solicitado
+    if args.show_errors:
+        for error_path in error_paths:
+            if Path(error_path).exists():
+                print(f"\n{Colors.BOLD}Archivo: {error_path.name}{Colors.ENDC}")
+                show_error_summary(error_path)
+
+    # Build index.json for Dashboard Hub
+    print()
+    print_info("Generando index.json para Dashboard Hub...")
+    try:
+        if build_index_for_hub(str(DEFAULT_OUTPUT_DIR)):
+            print_success(f"Index actualizado para Dashboard Hub")
+        else:
+            print_warning("No se pudo generar index.json")
     except Exception as e:
-        print(f"ERROR: {e}", file=sys.stderr)
-        sys.exit(1)
+        print_warning(f"Error al generar index.json: {e}")
+
+    print()
+    print_info("Para más información, consulta: POSTMORTEM_CONVERTER.md")
+    print()
+
+    return 0 if total_success else 1
 
 
 if __name__ == "__main__":
