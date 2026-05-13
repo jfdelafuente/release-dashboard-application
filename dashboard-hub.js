@@ -354,6 +354,9 @@ function createKPICard(id, label, value, unit = '', trend = null) {
 
 /**
  * Count incidents with pending status at a given date
+ * Uses SAME logic as Massive Incidents Dashboard:
+ * - Count incidents that were OPEN on the target date
+ * - Incident is open if: opened before target date AND (not closed OR closed after target date)
  */
 function countPendingAtDate(incidents, targetDate) {
     return incidents.filter(incident => {
@@ -363,14 +366,28 @@ function countPendingAtDate(incidents, targetDate) {
         const incidentDate = parseDate(dateStr);
         if (!incidentDate) return false;
 
-        // Only count if incident was opened before or on target date
+        // Only count if incident was opened on or before target date
         if (incidentDate > targetDate) return false;
 
-        // Check if incident was still pending on target date
-        // For simplicity, we'll count incidents that were opened before target date
-        // In production, would need resolution date to know exact status at that time
-        const estatus = (incident['Estatus'] || '').toLowerCase().trim();
-        return !CLOSED_STATUSES.some(s => s.toLowerCase() === estatus);
+        // Check if incident was still open on target date
+        const status = (incident['Estatus'] || '').toLowerCase();
+
+        // If status is closed, check if it was closed AFTER target date
+        if (status.includes('cerrado') || status.includes('resuelto') || status.includes('cancelado')) {
+            const resolveStr = incident['Fecha de última resolución'];
+            if (resolveStr) {
+                const resolveDate = parseDate(resolveStr);
+                if (resolveDate) {
+                    // Incident was still open on target date if resolved AFTER target date
+                    return resolveDate > targetDate;
+                }
+            }
+            // No resolution date found, assume it was closed
+            return false;
+        }
+
+        // Status is not closed, so incident was open on target date
+        return true;
     }).length;
 }
 
