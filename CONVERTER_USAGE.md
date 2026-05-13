@@ -12,11 +12,18 @@ Scripts listos para ejecutar la conversión de archivos CSV de incidencias masiv
 
 ## 🎯 Inicio Rápido
 
-### En Windows
+### En Windows (CMD o PowerShell)
 
+**Opción 1: Desde CMD (recomendado)**
 ```batch
+REM Abrir CMD (símbolo del sistema)
+REM Luego ejecutar:
+
 REM Convertir archivo específico
 convert_incidents.bat incidencias/datos.csv
+
+REM Convertir archivo con espacios en el nombre
+convert_incidents.bat "incidencias/datos con espacios.csv"
 
 REM Convertir con directorio de salida
 convert_incidents.bat incidencias/datos.csv -o output/
@@ -26,6 +33,17 @@ convert_incidents.bat csv/
 
 REM Ver reporte de errores después
 convert_incidents.bat incidencias/datos.csv --show-errors
+```
+
+**Opción 2: Directamente con Python (si hay problemas con el batch)**
+```powershell
+# PowerShell
+python convert_incidents.py "incidencias/datos.csv"
+python convert_incidents.py "incidencias/archivo con espacios.csv" -o output/
+
+# CMD
+python convert_incidents.py incidencias/datos.csv
+python convert_incidents.py "incidencias/archivo con espacios.csv" -o output/
 ```
 
 ### En Linux/Mac
@@ -259,6 +277,31 @@ convert_incidents.bat --help
 - Resumen final de conversión
 
 ## 🐛 Solución de Problemas
+
+### Error en Windows: "No se esperaba..." o caracteres no reconocidos
+
+**Causa**: PowerShell interpreta los argumentos de forma diferente a CMD.
+
+**Soluciones**:
+
+1. **Opción A**: Ejecutar desde CMD (recomendado)
+```batch
+REM Abre CMD (símbolo del sistema) en lugar de PowerShell
+REM Luego ejecuta:
+convert_incidents.bat "incidencias/datos.csv"
+```
+
+2. **Opción B**: Usar comillas dobles en PowerShell
+```powershell
+# PowerShell
+python convert_incidents.py "incidencias/datos.csv"
+```
+
+3. **Opción C**: Usar Python directamente
+```batch
+REM Omite el batch file y usa Python directamente
+python convert_incidents.py "incidencias/archivo con espacios.csv" -o output/
+```
 
 ### Error: "Python no encontrado"
 
