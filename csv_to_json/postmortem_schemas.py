@@ -215,43 +215,56 @@ def derivateDespliegue(records: List[PostmortemRecord]) -> Dict[str, str]:
     Derive Despliegue field for each record based on oldest date.
 
     Returns dict mapping record ID to Despliegue value (PAP or MESA).
-    - PAP: Record with oldest date across all three date fields
+    - PAP: ALL records with the oldest date (first day)
     - MESA: All other records
     """
     despliegue_map = {}
-    min_date = None
-    min_record_id = None
+    min_date_tuple = None  # Store as (YYYY, MM, DD) for correct comparison
 
-    # Find record with oldest date
+    # First pass: Find the oldest date
     for record in records:
-        record_id = record.data.get('ID de incidencia')
-
-        dates = []
         for date_field in ['Fecha de envío', 'Fecha de notificación', 'Fecha de última resolución']:
             date_str = record.data.get(date_field)
             if date_str:
-                parsed_date = parsePostmortemDate(date_str)
+                parsed_date = parsePostmortemDate(date_str)  # Returns DD/MM/YYYY
                 if parsed_date:
-                    dates.append(parsed_date)
+                    # Convert DD/MM/YYYY to (YYYY, MM, DD) tuple for correct comparison
+                    parts = parsed_date.split('/')
+                    if len(parts) == 3:
+                        date_tuple = (int(parts[2]), int(parts[1]), int(parts[0]))  # YYYY, MM, DD
+                        if min_date_tuple is None or date_tuple < min_date_tuple:
+                            min_date_tuple = date_tuple
 
-        # Find minimum date in this record
-        if dates:
-            record_min = min(dates)
-            if min_date is None or record_min < min_date:
-                min_date = record_min
-                min_record_id = record_id
+    # Second pass: Assign Despliegue values
+    if min_date_tuple:
+        for record in records:
+            record_id = record.data.get('ID de incidencia')
 
-    # Assign Despliegue values
-    for record in records:
-        record_id = record.data.get('ID de incidencia')
-        if record_id == min_record_id and min_record_id is not None:
-            despliegue_map[record_id] = 'PAP'
-        else:
-            despliegue_map[record_id] = 'MESA'
+            # Find oldest date in this record
+            record_min_date = None
+            for date_field in ['Fecha de envío', 'Fecha de notificación', 'Fecha de última resolución']:
+                date_str = record.data.get(date_field)
+                if date_str:
+                    parsed_date = parsePostmortemDate(date_str)
+                    if parsed_date:
+                        parts = parsed_date.split('/')
+                        if len(parts) == 3:
+                            date_tuple = (int(parts[2]), int(parts[1]), int(parts[0]))
+                            if record_min_date is None or date_tuple < record_min_date:
+                                record_min_date = date_tuple
 
-    # Handle case where no dates were parseable (all get MESA except first)
-    if min_record_id is None and records:
-        first_record_id = records[0].data.get('ID de incidencia')
-        despliegue_map[first_record_id] = 'PAP'
+            # Compare only YYYY-MM-DD (without time)
+            if record_min_date and record_min_date[:3] == min_date_tuple[:3]:
+                despliegue_map[record_id] = 'PAP'
+            else:
+                despliegue_map[record_id] = 'MESA'
+    else:
+        # Handle case where no dates were parseable (all get MESA except first)
+        for i, record in enumerate(records):
+            record_id = record.data.get('ID de incidencia')
+            if i == 0:
+                despliegue_map[record_id] = 'PAP'
+            else:
+                despliegue_map[record_id] = 'MESA'
 
     return despliegue_map
