@@ -1095,6 +1095,7 @@
                 type: 'bar',
                 marker: { color: '#fed7aa' },
                 yaxis: 'y',
+                stackgroup: '1',
                 hovertemplate: '<b>%{x}</b><br>Entradas: %{y}<extra></extra>'
             };
 
@@ -1105,6 +1106,7 @@
                 type: 'bar',
                 marker: { color: '#fb923c' },
                 yaxis: 'y',
+                stackgroup: '1',
                 hovertemplate: '<b>%{x}</b><br>Resueltas: %{y}<extra></extra>'
             };
 
@@ -1122,6 +1124,7 @@
 
             const layout = {
                 responsive: true,
+                barmode: 'stack',
                 font: { family: 'Poppins, sans-serif', size: 11, color: '#6b7280' },
                 paper_bgcolor: 'transparent',
                 plot_bgcolor: 'transparent',
