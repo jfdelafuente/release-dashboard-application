@@ -1,300 +1,219 @@
-# Deployment Guide
+# Deployment Guide: Safe Production Deployments
 
-Complete guide for deploying Release Dashboard Application to different environments.
+Complete step-by-step procedures for safe, auditable deployments with rollback capability.
 
-## Deployment Architecture
+---
 
-```
-Development (Local)
-  └─ .env file (git-ignored)
-     └─ Python venv + local dependencies
+## Quick Reference
 
-Staging (GitHub Actions)
-  └─ GitHub Secrets (environment variables)
-     └─ Auto-deploy on main merge
-     └─ Full health checks
-
-Production (GitHub Actions)
-  └─ GitHub Secrets (environment variables)
-     └─ Manual approval required
-     └─ Audit logging
-     └─ Rollback capability
-```
-
-## Environment Variables
-
-### Development (.env file)
-
-Copy template and configure:
+**Staging** (automatic on main merge):
 ```bash
-cp config/.env.example .env
+# No action needed - CI/CD handles it
 ```
 
-See [config/.env.development](../config/.env.development) for development defaults.
-
-### Staging & Production (GitHub Secrets)
-
-Set in GitHub repository settings → Secrets:
-- `APP_ENV`: `staging` or `production`
-- `DATABASE_URL`: Connection string (if using database)
-- `LOG_LEVEL`: `warning` (production) or `info` (staging)
-- `DEBUG`: `False` (never `True` in prod)
-
-**WARNING**: Never hardcode production secrets in repository. Use GitHub Secrets exclusively.
-
-## Local Deployment (Development)
-
-### Step 1: Configure Environment
-
+**Production** (manual):
 ```bash
-cp config/.env.example .env
-# Edit .env with your development settings
+./scripts/deploy/deploy.sh production
 ```
 
-### Step 2: Install Dependencies
-
+**Rollback** (if needed):
 ```bash
-python -m venv venv
-source venv/bin/activate  # or venv\Scripts\activate
-pip install -r requirements.txt
+./scripts/deploy/rollback.sh production
 ```
 
-### Step 3: Start Application
+---
 
-```bash
-python -m http.server 8000
+## Pre-Deployment Checklist
+
+✅ **Code**:
+- [ ] Tests pass: `pytest tests/ --cov --cov-fail-under=80`
+- [ ] PR reviewed and approved
+- [ ] Merged to `main` branch
+- [ ] VERSION updated
+
+✅ **Infrastructure**:
+- [ ] SSH access verified
+- [ ] Disk space available (> 5GB)
+- [ ] Previous deployment stable
+
+---
+
+## Deployment Stages
+
+### 1. Pre-Deployment Checks
+- Runs full test suite
+- Enforces 80%+ coverage
+- Verifies git status
+- Creates backup
+
+### 2. Artifact Creation
+```
+dist/release-dashboard-{version}-{timestamp}.tar.gz
 ```
 
-Visit: http://localhost:8000
+### 3. Deployment
+- Upload to VPS via SSH
+- Extract and deploy
+- Install dependencies
 
-## Staging Deployment
+### 4. Health Checks
+- Python environment
+- Converter functionality
+- Dashboard files
+- HTTP endpoints
 
-Staging deploys **automatically** on every merge to `main`:
+---
 
-1. **Create pull request** with your changes
-2. **Pass CI/CD checks**:
-   - All tests pass (pytest)
-   - Code quality (flake8, pylint)
-   - Coverage ≥ 80%
-3. **Get approved** and merge to main
-4. **GitHub Actions** automatically deploys to staging
+## How to Deploy
 
-Monitor staging deployment:
-- GitHub Actions tab → see workflow execution
-- Check staging environment (URL provided in deployment logs)
+### Staging (Automatic)
 
-## Production Deployment
+Merge PR to `main` → CI/CD runs tests → Auto-deploys to staging
 
-Production requires **manual approval**:
+Monitor:
+- GitHub Actions tab
+- logs/deployments/deployment-staging-*.log
 
-### Pre-Deployment Checklist
-
-- [ ] Code merged to main
-- [ ] All tests passing (≥80% coverage)
-- [ ] Code reviewed and approved
-- [ ] CHANGELOG.md updated
-- [ ] VERSION file updated with new semantic version
-- [ ] Release notes prepared
-
-### Deployment Steps
-
-1. **Navigate to GitHub Actions**:
-   - Go to "Actions" tab
-   - Select "Deploy" workflow
-   - Click "Run workflow"
-
-2. **Select deployment parameters**:
-   - Environment: `production`
-   - Version: (should match VERSION file)
-
-3. **Review pre-deployment checks**:
-   - Database migrations (if needed)
-   - Configuration compatibility
-   - Backup creation
-
-4. **Approve deployment**:
-   - Wait for approval prompt
-   - Review changes and impact
-   - Approve if everything looks good
-
-5. **Monitor deployment**:
-   - GitHub Actions shows real-time progress
-   - Deployment logs display start/end time
-   - Health checks verify success
-
-6. **Post-deployment validation**:
-   - Verify application responding (HTTP 200)
-   - Test critical features
-   - Monitor error rates
-   - Notify team of completion
-
-### Rollback Procedure
-
-If deployment fails or causes issues:
+### Production (Manual)
 
 ```bash
-# Automatic rollback (if health checks fail)
-# System automatically reverts to previous version
-
-# Manual rollback (if issue detected post-deployment)
-./scripts/deploy/rollback.sh <previous-version>
+./scripts/deploy/deploy.sh production
 ```
 
-Examples:
+Script will:
+1. Run pre-checks (tests, coverage)
+2. Create artifact
+3. Backup current
+4. Deploy to VPS
+5. Run post-checks
+6. Log everything
+
+---
+
+## Rollback
+
+**Automatic**: Triggers if health checks fail post-deployment
+
+**Manual**:
 ```bash
-./scripts/deploy/rollback.sh 0.1.0  # Rollback to v0.1.0
-./scripts/deploy/rollback.sh        # Rollback to previous version
+./scripts/deploy/rollback.sh production
 ```
 
-**Rollback time**: < 5 minutes from decision to previous version running
+Restores previous version from backup.
 
-## Version Management
+---
 
-### Semantic Versioning
+## Logs
 
-Format: `MAJOR.MINOR.PATCH`
+Automatically created:
 
-- **MAJOR**: Breaking changes (e.g., 1.0.0 → 2.0.0)
-- **MINOR**: New features, backward compatible (e.g., 0.1.0 → 0.2.0)
-- **PATCH**: Bug fixes only (e.g., 0.1.0 → 0.1.1)
+```
+logs/deployments/
+├── deployment-{env}-{timestamp}.log     # Detailed log
+└── DEPLOYMENT-RECORDS.log               # Master audit trail
+```
 
-### Updating Version
+Query examples:
+```bash
+# All production deployments
+grep "Environment:     production" logs/deployments/DEPLOYMENT-RECORDS.log
 
-1. Edit [VERSION](../VERSION) file:
-   ```
-   0.2.0
-   ```
+# Failed deployments
+grep "Status:          FAILED" logs/deployments/DEPLOYMENT-RECORDS.log
+```
 
-2. Update [CHANGELOG.md](../CHANGELOG.md) with release notes
+---
 
-3. Commit changes:
-   ```bash
-   git commit -m "chore: bump version to 0.2.0"
-   ```
+## Production Readiness Checklist
 
-4. Create git tag:
-   ```bash
-   git tag v0.2.0
-   git push origin v0.2.0
-   ```
+**Use this checklist before your first production deployment to ensure all systems are configured correctly.**
 
-## Deployment Logging
+### Infrastructure Setup
+- [ ] VPS provisioned and accessible via SSH
+- [ ] Nginx configured to serve static files from `/var/www/release-dashboard/static/`
+- [ ] Python 3.6+ installed on VPS
+- [ ] Firewall rules allow HTTP (80) and HTTPS (443)
+- [ ] SSL certificate installed (if using HTTPS)
+- [ ] SSH key authentication configured (no password login)
+- [ ] Disk space available: ≥10GB for application and data
 
-All deployments are logged with:
-- Timestamp (ISO8601 format)
-- Version deployed
-- Deployer (GitHub Actions automation or user)
-- Status (success, rolled_back, failed)
-- Duration
-- Error details (if failed)
+### Code & Configuration
+- [ ] VERSION file created with semantic version (e.g., 0.2.0)
+- [ ] Git repository initialized and main branch protected
+- [ ] GitHub Secrets configured (SSH_PRIVATE_KEY, PRODUCTION_HOST, PRODUCTION_USER, PRODUCTION_PORT)
+- [ ] .env.example created with all required variables
+- [ ] .env protected in .gitignore (never commit secrets)
+- [ ] requirements.txt and requirements-dev.txt up to date
 
-Access logs:
-- GitHub Actions artifacts
-- CloudWatch (if using AWS)
-- Sentry (if configured for error tracking)
+### Testing & Quality Gates
+- [ ] All unit tests pass: `pytest tests/ --cov --cov-fail-under=80`
+- [ ] Code coverage ≥80%
+- [ ] Linting passes: `flake8`, `black`, no syntax errors
+- [ ] pre-commit hooks installed (optional but recommended)
+- [ ] pytest.ini configured with coverage thresholds
 
-## Health Checks
+### Deployment Scripts
+- [ ] scripts/deploy/deploy.sh is executable and can be run from project root
+- [ ] scripts/deploy/rollback.sh is executable
+- [ ] scripts/health-check.sh is executable
+- [ ] scripts/bin/convert_incidents.sh and convert_postmortems.sh are executable
+- [ ] All scripts have correct file permissions (755)
 
-Post-deployment health checks verify:
+### GitHub Actions CI/CD
+- [ ] .github/workflows/tests.yml validates on every PR
+- [ ] .github/workflows/lint.yml validates code style
+- [ ] .github/workflows/deploy.yml can deploy to staging/production
+- [ ] Branch protection enabled on `main` (requires 1+ approval)
+- [ ] Status checks configured (test, lint required before merge)
+- [ ] GitHub Actions logs accessible and comprehensible
 
-1. **Application responding**:
-   - HTTP 200 on main endpoint
-   - Response time < 2 seconds
+### Documentation
+- [ ] docs/QUICKSTART.md complete and tested (should take <30 min)
+- [ ] docs/DEPLOYMENT.md complete with all procedures
+- [ ] docs/VERSION-MANAGEMENT.md explains versioning policy
+- [ ] SECURITY.md documents secret handling
+- [ ] CONTRIBUTING.md explains development process
+- [ ] README.md points to all key documentation
 
-2. **Core functionality**:
-   - CSV converter can execute
-   - Dashboard loads with sample data
-   - API endpoints respond correctly
+### Monitoring & Logging
+- [ ] logs/deployments/ directory created and writable
+- [ ] Deployment logs are being recorded (DEPLOYMENT-RECORDS.log)
+- [ ] Health checks produce readable output
+- [ ] Monitoring dashboard configured (optional but recommended)
+- [ ] Alert system configured for failed deployments (optional)
 
-3. **Environment configuration**:
-   - All required environment variables set
-   - Database connections working (if applicable)
-   - External services reachable
+### Data Management
+- [ ] data/input/ directory exists and is writable
+- [ ] data/output/ directory exists and is writable
+- [ ] data/errors/ directory exists and is writable
+- [ ] data/ is protected in .gitignore (no accidental commits)
+- [ ] Dashboard can auto-load JSON from data/output/index.json
+- [ ] Backup strategy documented (30-day retention in backups/)
 
-## Monitoring & Alerts
+### Rollback Capability
+- [ ] Rollback script tested in staging
+- [ ] Previous version backups are available and valid
+- [ ] Rollback duration is <5 minutes
+- [ ] Health checks verify rollback success
+- [ ] Team knows how to initiate rollback if needed
 
-After deployment, monitor:
+### Post-Deployment
+- [ ] All dashboards load correctly
+- [ ] KPIs display real-time data
+- [ ] CSV conversion works end-to-end
+- [ ] Health checks show all green
+- [ ] Logs are being written to deployment records
+- [ ] Team notified of deployment completion
 
-- **Error rate**: Should return to baseline within 5 minutes
-- **Performance**: Response times should be < 2 seconds
-- **Availability**: All critical endpoints should respond
-- **Logs**: Check for errors or warnings in deployment logs
+### Final Sign-Off
+- [ ] All checklist items completed
+- [ ] First production deployment executed successfully
+- [ ] Rollback tested and working
+- [ ] Team trained on deployment procedures
+- [ ] Incident response procedure documented
 
-Configure alerts for:
-- Deployment failures
-- High error rates post-deployment
-- Performance degradation
-- Health check failures
-
-## Troubleshooting
-
-### Deployment Fails
-
-1. Check GitHub Actions logs for error details
-2. Verify all tests pass locally: `pytest tests/ -v --cov=src`
-3. Verify environment variables are set in GitHub Secrets
-4. Check database migrations completed (if applicable)
-5. Manual rollback if necessary: `./scripts/deploy/rollback.sh`
-
-### Health Checks Failing
-
-1. Verify application logs: `docker logs <container>` (if using Docker)
-2. Check connectivity to external services
-3. Verify environment variables are correct
-4. Test locally with production config (using GitHub Secrets values locally)
-
-### Rollback Not Working
-
-1. Verify previous version is still available
-2. Check permissions for running rollback script
-3. Verify database rollback procedures (if data migrations occurred)
-4. Contact infrastructure team if issue persists
-
-## Security
-
-### Secrets Management
-
-- **Development**: Use local `.env` file (git-ignored)
-- **Production**: Use GitHub Secrets (never in code)
-- **Rotation**: Rotate secrets regularly (at least quarterly)
-- **Access**: Limit who can approve production deployments
-
-### Deployment Approval
-
-- Minimum 1 reviewer for production deployments
-- Require green CI/CD pipeline
-- Block auto-merge until approval granted
-- Log all deployments for audit trail
-
-## Configuration by Environment
-
-| Setting | Development | Staging | Production |
-|---------|-------------|---------|------------|
-| DEBUG | True | False | False |
-| LOG_LEVEL | debug | info | warning |
-| CACHE_TTL | 60 | 300 | 3600 |
-| DATABASE | SQLite | PostgreSQL | PostgreSQL |
-| Secrets | .env file | GitHub Secrets | GitHub Secrets |
-| Health Checks | Optional | Required | Required |
-| Approval Required | No | No | Yes |
-
-## Deployment Calendar
-
-- **Staging**: Auto-deploys on every merge to main (continuous deployment)
-- **Production**: Manual deployments, business hours recommended
-- **Hotfixes**: Can deploy outside hours if critical, but still requires approval
-
-Suggested production deployment times:
-- During business hours (9am-5pm)
-- Off-peak times to minimize user impact
-- Never during critical business periods
-
-## Related Documentation
-
-- [CI-CD.md](CI-CD.md) - GitHub Actions workflow documentation
-- [SECURITY.md](../SECURITY.md) - Security practices
-- [CHANGELOG.md](../CHANGELOG.md) - Release history
-- [contracts/deployment.md](../specs/005-project-organization/contracts/deployment.md) - Detailed deployment contract
+**Sign-off date**: _________
+**Signed by**: _________
 
 ---
 

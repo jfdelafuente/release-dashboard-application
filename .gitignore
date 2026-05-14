@@ -47,6 +47,8 @@ venv.bak/
 *.csv
 *.json
 !README.md
+!project.json
+!specs/project.json
 
 # Data Directories
 csv/
