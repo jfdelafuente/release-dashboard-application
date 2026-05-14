@@ -497,13 +497,17 @@ function extractPostmortemKPIs(incidents, postmortemMetadata) {
                 'postmortem-pap-resolved',
                 '% Resueltas PaP',
                 kpis.pap_resueltas_percent || 0,
-                '%'
+                '%',
+                null,
+                `${kpis.pap_total || 0}`
             ),
             createKPICard(
                 'postmortem-mesa-resolved',
                 '% Resueltas Mesa',
                 kpis.mesa_resueltas_percent || 0,
-                '%'
+                '%',
+                null,
+                `${kpis.mesa_total || 0}`
             )
         ];
     }
@@ -566,13 +570,17 @@ function extractPostmortemKPIs(incidents, postmortemMetadata) {
                 'postmortem-pap-resolved',
                 '% Resueltas PaP',
                 papPercent,
-                '%'
+                '%',
+                null,
+                `${papIncidents.length}`
             ),
             createKPICard(
                 'postmortem-mesa-resolved',
                 '% Resueltas Mesa',
                 mesaPercent,
-                '%'
+                '%',
+                null,
+                `${mesaIncidents.length}`
             )
         ];
     }
@@ -588,13 +596,14 @@ function extractPostmortemKPIs(incidents, postmortemMetadata) {
 /**
  * Create a KPI card object
  */
-function createKPICard(id, label, value, unit = '', trend = null) {
+function createKPICard(id, label, value, unit = '', trend = null, subtitle = null) {
     return {
         id,
         label,
         value: Number(value) || 0,
         unit,
         trend,
+        subtitle,
         link: null // Can be populated with dashboard link
     };
 }
@@ -768,9 +777,20 @@ function createKPICardElement(kpi) {
     }
 
     value.textContent = formattedValue;
+    if (kpi.unit) {
+        value.textContent += ` ${kpi.unit}`;
+    }
 
     content.appendChild(label);
     content.appendChild(value);
+
+    // Subtitle if present
+    if (kpi.subtitle) {
+        const subtitle = document.createElement('div');
+        subtitle.className = 'kpi-subtitle';
+        subtitle.textContent = kpi.subtitle;
+        content.appendChild(subtitle);
+    }
 
     // Trend if present
     if (kpi.trend) {
