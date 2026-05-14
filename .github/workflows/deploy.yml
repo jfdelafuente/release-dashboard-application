@@ -68,7 +68,6 @@ jobs:
     if: github.ref == 'refs/heads/main' || github.event.inputs.environment == 'staging'
     environment:
       name: staging
-      url: ${{ secrets.STAGING_URL }}
 
     steps:
     - name: Checkout code
@@ -182,7 +181,6 @@ jobs:
     if: github.event.inputs.environment == 'production'
     environment:
       name: production
-      url: ${{ secrets.PRODUCTION_URL }}
 
     steps:
     - name: Checkout code
