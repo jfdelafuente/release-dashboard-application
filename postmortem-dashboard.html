@@ -713,7 +713,7 @@
                                 <th style="cursor: pointer;" onclick="sortTable('ID de incidencia')">Código ⇅</th>
                                 <th style="cursor: pointer;" onclick="sortTable('Descripción')">Descripción ⇅</th>
                                 <th style="cursor: pointer;" onclick="sortTable('Estatus')">Estado ⇅</th>
-                                <th style="cursor: pointer;" onclick="sortTable('Impacto')">Impacto ⇅</th>
+                                <th style="cursor: pointer;" onclick="sortTable('Urgencia')">Urgencia ⇅</th>
                                 <th style="cursor: pointer;" onclick="sortTable('Grupo asignado')">Sistema ⇅</th>
                                 <th style="cursor: pointer;" onclick="sortTable('Despliegue')">Despliegue ⇅</th>
                                 <th style="cursor: pointer;" onclick="sortTable('Motivo de estado')">Solución ⇅</th>
@@ -1552,7 +1552,7 @@
                 const row = document.createElement('tr');
                 const status = getStatusText(getIncidentValue(incident, 'Estatus'));
                 const statusClass = getStatusClass(getIncidentValue(incident, 'Estatus'));
-                const impactClass = getImpactClass(getIncidentValue(incident, 'Impacto'));
+                const urgencyClass = getImpactClass(getIncidentValue(incident, 'Urgencia'));
 
                 const codigoIncidencia = getIncidentValue(incident, 'ID de incidencia') || '-';
                 const codigoLink = codigoIncidencia !== '-'
@@ -1563,7 +1563,7 @@
                     <td>${codigoLink}</td>
                     <td>${(getIncidentValue(incident, 'Descripción') || '-').substring(0, 35)}...</td>
                     <td><span class="status-badge ${statusClass}">${status}</span></td>
-                    <td><span class="impact-badge ${impactClass}">${getIncidentValue(incident, 'Impacto') || '-'}</span></td>
+                    <td><span class="impact-badge ${urgencyClass}">${getIncidentValue(incident, 'Urgencia') || '-'}</span></td>
                     <td>${(getIncidentValue(incident, 'Grupo asignado') || '-').substring(0, 20)}</td>
                     <td>${getIncidentValue(incident, 'Despliegue') || '-'}</td>
                     <td>${(getIncidentValue(incident, 'Motivo de estado') || '-').substring(0, 15)}</td>
