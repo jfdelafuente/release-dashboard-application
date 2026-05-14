@@ -95,26 +95,42 @@ specs/[###-feature]/
 ```text
 Release Dashboard Application/
 │
-├── dashboards/                      # Frontend HTML dashboards
-│   ├── massive-incidents-dashboard.html
-│   ├── postmortem-dashboard.html
-│   ├── dashboard-hub.html
-│   └── dashboard-hub.css
+├── src/                             # All source code (organized by type)
+│   │
+│   ├── converters/                  # Python converter modules
+│   │   ├── convert_incidents.py     # Main converter CLI
+│   │   ├── convert_postmortems.py   # Postmortem converter CLI
+│   │   └── csv_to_json/             # Python CSV-to-JSON module
+│   │       ├── __init__.py
+│   │       ├── converter.py
+│   │       ├── encoding.py
+│   │       ├── delimiter.py
+│   │       ├── normalizers.py
+│   │       ├── validators.py
+│   │       ├── schemas.py
+│   │       └── postmortem_*
+│   │
+│   └── dashboards/                  # Frontend HTML + CSS
+│       ├── massive-incidents-dashboard.html
+│       ├── postmortem-dashboard.html
+│       ├── dashboard-hub.html
+│       └── assets/
+│           ├── css/
+│           │   └── dashboard-hub.css
+│           └── js/ (future)
 │
-├── converters/                      # CSV to JSON conversion tools
-│   ├── convert_incidents.py         # Main converter CLI
-│   ├── convert_postmortems.py       # Postmortem converter CLI
-│   ├── convert_incidents.bat        # Windows batch wrapper
-│   ├── convert_incidents.sh         # Unix shell wrapper
-│   └── csv_to_json/                 # Python module
-│       ├── __init__.py
-│       ├── converter.py
-│       ├── encoding.py
-│       ├── delimiter.py
-│       ├── normalizers.py
-│       ├── validators.py
-│       ├── schemas.py
-│       └── postmortem_*
+├── scripts/                         # Executable scripts (organized by function)
+│   │
+│   ├── bin/                         # Converter wrapper scripts
+│   │   ├── convert_incidents.bat    # Windows wrapper
+│   │   ├── convert_incidents.sh     # Unix wrapper
+│   │   ├── convert_postmortems.bat  # Windows wrapper
+│   │   └── convert_postmortems.sh   # Unix wrapper
+│   │
+│   └── deploy/                      # Deployment automation
+│       ├── deploy.sh                # Production deployment
+│       ├── rollback.sh              # Rollback procedure
+│       └── install-hooks.sh         # Git hook setup
 │
 ├── data/                            # Data storage (git-ignored)
 │   ├── input/                       # CSV input files
@@ -131,10 +147,11 @@ Release Dashboard Application/
 │   ├── README.md                    # Project overview
 │   ├── CONTRIBUTING.md              # Development guidelines
 │   ├── DEPLOYMENT.md                # Deployment procedures
+│   ├── DEVELOPMENT.md               # Developer setup guide
 │   ├── API.md                       # API documentation
 │   └── ARCHITECTURE.md              # System design
 │
-├── .github/                         # GitHub configuration (if applicable)
+├── .github/                         # GitHub configuration
 │   ├── workflows/                   # CI/CD pipelines
 │   │   ├── tests.yml
 │   │   ├── lint.yml
@@ -151,10 +168,17 @@ Release Dashboard Application/
 ├── .gitignore                       # Git ignore rules
 ├── CLAUDE.md                        # Development guidance for AI
 ├── MIGRATION.md                     # Migration guide
+├── requirements.txt                 # Python dependencies
+├── requirements-dev.txt             # Development dependencies
 └── VERSION                          # Semantic versioning
 ```
 
-**Structure Decision**: The Release Dashboard Application follows a single-project structure organized by responsibility (dashboards, converters, docs, tests). This supports the 2-6 developer team size and provides clear separation of concerns while remaining simple to navigate.
+**Structure Decision**: The Release Dashboard Application uses a **centralized code structure** (src/) with clear subdirectories for different file types (converters/, dashboards/), and separate scripts/ folder organized by function (bin/ for converter wrappers, deploy/ for deployment automation). This provides:
+
+✅ **Clear separation of concerns**: Code, scripts, and configurations are not mixed
+✅ **Scalability**: Easy to add new modules (src/reports/, src/api/, etc.)
+✅ **Professional organization**: Follows industry standards
+✅ **Team clarity**: New developers understand file organization immediately
 
 ---
 
