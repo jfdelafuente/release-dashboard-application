@@ -112,8 +112,8 @@ class PostmortemKPIMetrics:
         if estatus:
             self.by_estatus[estatus] = self.by_estatus.get(estatus, 0) + 1
 
-            # Count cerradas for Dashboard Hub
-            if 'cerrado' in estatus.lower():
+            # Count cerradas for Dashboard Hub (includes both Cerrado and Resuelto)
+            if 'cerrado' in estatus.lower() or 'resuelto' in estatus.lower():
                 self.cerradas_count += 1
 
         # By Urgencia
