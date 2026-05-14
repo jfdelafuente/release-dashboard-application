@@ -55,23 +55,43 @@ python -m pytest tests/ -v
 
 ### Step 6: Convert Your First CSV
 ```bash
-# Windows
+# Windows - Incidencias Masivas
 scripts\bin\convert_incidents.bat data/input/sample.csv
 
-# Linux/Mac
+# Windows - Postmortems
+scripts\bin\convert_postmortems.bat data/input/postmortem.csv
+
+# Linux/Mac - Incidencias Masivas
 ./scripts/bin/convert_incidents.sh data/input/sample.csv
+
+# Linux/Mac - Postmortems
+./scripts/bin/convert_postmortems.sh data/input/postmortem.csv
 ```
 
-**✅ Done!** Your JSON file is now in `data/output/`
+**✅ Done!** Your JSON files are now in `data/output/`
+
+### Step 7: View Dashboard Hub (Principal)
+```bash
+# Option 1: Using Live Server in VSCode (RECOMMENDED)
+# Right-click on: src/dashboards/dashboard-hub.html → "Open with Live Server"
+
+# Option 2: Using Python HTTP server
+python -m http.server 8000
+# Then open: http://localhost:8000/src/dashboards/dashboard-hub.html
+```
+
+**Dashboard Hub mostrará automáticamente:**
+- 📊 Secciones: Massive Incidents Dashboard y Postmortem Dashboard
+- ⚡ KPIs en tiempo real cargados automáticamente
+- 🔗 Enlaces a dashboards especializados
 
 ## Next Steps
 
-### Option A: Using the Dashboard
+### Option A: Explore Specialized Dashboards
 ```bash
-# Open the dashboard in your browser
-open src/dashboards/massive-incidents-dashboard.html
-
-# Or drag the file to your browser
+# From Dashboard Hub, click on:
+# - "Massive Incidents Dashboard" para análisis detallado con gráficas temporales
+# - "Postmortem Dashboard" para análisis por despliegues
 ```
 
 ### Option B: Processing Your Own Data
@@ -155,6 +175,24 @@ cat data/errors/your-file_errors.json
 cat docs/TROUBLESHOOTING.md
 ```
 
+### Dashboard Hub Not Loading Data
+```bash
+# Issue: Dashboard shows "Loading..." or error message
+
+# Solution 1: Make sure you're using HTTP server, not file://
+# ✅ Correct: http://localhost:8000/src/dashboards/dashboard-hub.html
+# ❌ Wrong: file:///C:/Users/.../dashboard-hub.html (blocks CORS)
+
+# Solution 2: Verify data/output/ has JSON files
+ls data/output/
+# Should show: *.json files and index.json
+
+# Solution 3: Check browser console (F12) for errors
+# - Open DevTools → Console
+# - Look for fetch errors or 404s
+# - Verify: GET http://127.0.0.1:5500/data/output/index.json (should be 200)
+```
+
 ## Documentation
 
 - **Full Setup**: [DEVELOPMENT.md](DEVELOPMENT.md)
@@ -185,12 +223,16 @@ release-dashboard-application/
 
 | File | Purpose |
 |------|---------|
-| `scripts/bin/convert_incidents.bat` | Windows converter script |
-| `scripts/bin/convert_incidents.sh` | Linux/Mac converter script |
+| `src/dashboards/dashboard-hub.html` | **Principal dashboard** - Unified access point |
+| `scripts/bin/convert_incidents.bat` | Windows converter for massive incidents |
+| `scripts/bin/convert_incidents.sh` | Linux/Mac converter for massive incidents |
+| `scripts/bin/convert_postmortems.bat` | Windows converter for postmortems |
+| `scripts/bin/convert_postmortems.sh` | Linux/Mac converter for postmortems |
 | `config/.env` | Environment configuration |
-| `data/input/` | Your CSV input folder |
+| `data/input/` | CSV input folder |
 | `data/output/` | Generated JSON output |
-| `src/dashboards/massive-incidents-dashboard.html` | Main dashboard |
+| `src/dashboards/massive-incidents-dashboard.html` | Specialized dashboard - massive incidents analysis |
+| `src/dashboards/postmortem-dashboard.html` | Specialized dashboard - postmortem analysis |
 
 ## Next: Deploy to Production
 

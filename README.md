@@ -1,6 +1,32 @@
-# Release Dashboard Application - CSV to JSON Workflow
+# Release Dashboard Application
 
-Herramienta completa para convertir archivos CSV de incidencias masivas a formato JSON compatible con el **Massive Incidents Dashboard**.
+Aplicación web interactiva para análisis y visualización de incidencias masivas y postmortems. **Dashboard Hub** es el punto de acceso principal que integra todos los análisis en una vista unificada.
+
+## 🎯 Dashboard Hub - Punto de Acceso Principal
+
+**Dashboard Hub** (`src/dashboards/dashboard-hub.html`) es el **dashboard principal de la aplicación web**. Proporciona:
+
+- 📊 **Vista unificada** de incidencias masivas y postmortems
+- ⚡ **Carga automática** de datos desde `data/output/`
+- 🎯 **KPIs en tiempo real** de todas las fuentes de datos
+- 🔗 **Navegación integrada** a dashboards especializados (Massive Incidents, Postmortem)
+
+### Acceso Rápido al Dashboard Hub
+
+```bash
+# Opción 1: Con Live Server (recomendado)
+# En VSCode: Click derecho en src/dashboards/dashboard-hub.html → "Open with Live Server"
+
+# Opción 2: Con servidor HTTP
+python -m http.server 8000
+# Luego: http://localhost:8000/src/dashboards/dashboard-hub.html
+```
+
+---
+
+## 🔄 Conversores CSV → JSON
+
+Herramienta completa para convertir archivos CSV de incidencias a formato JSON compatible con el Dashboard Hub.
 
 ## ⚡ Manera Más Rápida (30 segundos)
 
@@ -53,11 +79,12 @@ convert_incidents.bat "data/input/datos.csv"
 
 Scripts listos para ejecutar (recomendado para la mayoría de usuarios):
 
-| Archivo | Descripción | Uso |
-|---------|-------------|-----|
-| `convert_incidents.py` | Script principal en Python | `python convert_incidents.py archivo.csv` |
-| `convert_incidents.bat` | Wrapper para Windows | `convert_incidents.bat archivo.csv` |
-| `convert_incidents.sh` | Wrapper para Linux/Mac | `./convert_incidents.sh archivo.csv` |
+| Archivo | Descripción | Tipo Datos |
+|---------|-------------|-----------|
+| `convert_incidents.bat` | Convertidor para Windows | Incidencias Masivas |
+| `convert_incidents.sh` | Convertidor para Linux/Mac | Incidencias Masivas |
+| `convert_postmortems.bat` | Convertidor postmortem para Windows | Postmortems |
+| `convert_postmortems.sh` | Convertidor postmortem para Linux/Mac | Postmortems |
 
 **Características de los scripts:**
 - ✅ Interfaz amigable con colores
@@ -74,23 +101,38 @@ Scripts listos para ejecutar (recomendado para la mayoría de usuarios):
 
 **Los scripts hacen todo automáticamente - mejor opción para usuarios finales**
 
-#### Windows
+#### Convertir Incidencias Masivas
+
+**Windows**
 ```batch
-convert_incidents.bat data/input/datos.csv
+convert_incidents.bat data/input/incidencias.csv
 ```
 
-#### Linux/Mac
+**Linux/Mac**
 ```bash
-./convert_incidents.sh data/input/datos.csv
+./convert_incidents.sh data/input/incidencias.csv
 ```
 
-#### Con opciones personalizadas
+#### Convertir Postmortems
+
+**Windows**
+```batch
+convert_postmortems.bat data/input/postmortem.csv
+```
+
+**Linux/Mac**
 ```bash
-# Especificar directorio de salida
+./convert_postmortems.sh data/input/postmortem.csv
+```
+
+#### Opciones Avanzadas
+```bash
+# Especificar directorios de salida
 convert_incidents.bat data/input/ -o data/output/ -e data/errors/
 
 # Ver resumen de errores
 convert_incidents.bat data/input/datos.csv --show-errors
+convert_postmortems.bat data/input/postmortem.csv --show-errors
 ```
 
 **¿Qué hacen los scripts?**
@@ -339,17 +381,30 @@ for error in report['errors']:
 
 ## 🚀 Integración con Dashboard
 
-El JSON generado es compatible 100% con **Massive Incidents Dashboard**:
+### Dashboard Hub (Principal)
 
-1. Carga el CSV en el conversor
-2. Genera `output.json`
-3. Carga `output.json` en el dashboard
-4. Dashboard parsea automáticamente los datos
+El **Dashboard Hub** carga automáticamente todos los JSONs desde `data/output/`:
 
-**Campos normalizados automáticamente para compatibilidad:**
-- Urgencia: Sin prefijo numérico
-- Estatus: Title case
-- Impacto: Title case
+1. Abre `src/dashboards/dashboard-hub.html` con Live Server o servidor HTTP
+2. Coloca tus CSVs en `data/input/`
+3. Ejecuta los conversores:
+   - `convert_incidents.bat/sh` para incidencias masivas
+   - `convert_postmortems.bat/sh` para postmortems
+4. Dashboard Hub carga automáticamente los datos mediante `index.json`
+5. Visualiza KPIs en tiempo real y navega a dashboards especializados
+
+### Dashboards Especializados
+
+Desde Dashboard Hub puedes acceder a:
+
+- **Massive Incidents Dashboard**: Análisis detallado de incidencias masivas con gráficas temporales
+- **Postmortem Dashboard**: Análisis de postmortems por despliegues (PAP/MESA)
+
+**Campos normalizados automáticamente:**
+- Urgencia: Sin prefijo numérico (4-Baja → Baja)
+- Estatus: Title case (cerrado → Cerrado)
+- Impacto: Title case (masiva → Masiva)
+- Despliegue (postmortems): Derivado automáticamente (PAP/MESA)
 
 ## 📞 Soporte
 
