@@ -80,13 +80,12 @@ jobs:
         name: build-artifact
         path: dist/
 
-    - name: Configure AWS credentials
-      uses: aws-actions/configure-aws-credentials@v2
-      with:
-        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws-region: ${{ secrets.AWS_REGION }}
-      continue-on-error: true
+    - name: Setup SSH
+      run: |
+        mkdir -p ~/.ssh
+        echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+        chmod 600 ~/.ssh/id_rsa
+        ssh-keyscan -p ${{ secrets.STAGING_PORT }} ${{ secrets.STAGING_HOST }} >> ~/.ssh/known_hosts
 
     - name: Deploy to staging
       run: |
@@ -94,29 +93,54 @@ jobs:
         echo "Version: ${{ needs.build.outputs.version }}"
         echo "Artifact: ${{ needs.build.outputs.artifact-id }}"
 
-        # Placeholder for actual deployment logic
+        # Upload artifact to staging server
+        scp -P ${{ secrets.STAGING_PORT }} dist/release-dashboard-${{ needs.build.outputs.artifact-id }}.tar.gz \
+          ${{ secrets.STAGING_USER }}@${{ secrets.STAGING_HOST }}:/tmp/
+
+        # Extract and deploy
+        ssh -p ${{ secrets.STAGING_PORT }} ${{ secrets.STAGING_USER }}@${{ secrets.STAGING_HOST }} << 'EOF'
+        set -e
+        echo "📦 Extracting artifact..."
+        cd /var/www/release-dashboard-staging
+        tar -xzf /tmp/release-dashboard-${{ needs.build.outputs.artifact-id }}.tar.gz
+
+        echo "🔧 Installing dependencies..."
+        pip install -r requirements.txt
+
         echo "✅ Staging deployment completed"
+        EOF
+
         echo "📍 Staging URL: ${{ secrets.STAGING_URL }}"
 
     - name: Health check
       run: |
         echo "🔍 Running health checks..."
-        # Placeholder for health check script
-        echo "✅ Health checks passed"
+        sleep 5
+
+        RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" ${{ secrets.STAGING_URL }})
+        if [ "$RESPONSE" = "200" ]; then
+          echo "✅ Health checks passed (HTTP $RESPONSE)"
+        else
+          echo "❌ Health check failed (HTTP $RESPONSE)"
+          exit 1
+        fi
 
     - name: Notify staging deployment
       if: always()
       uses: actions/github-script@v6
       with:
         script: |
-          github.rest.repos.createDeploymentStatus({
-            owner: context.repo.owner,
-            repo: context.repo.repo,
-            deployment_id: ${{ github.run_id }},
-            state: '${{ job.status }}',
-            environment_url: '${{ secrets.STAGING_URL }}',
-            description: 'Staging deployment completed'
-          });
+          const status = '${{ job.status }}' === 'success' ? '✅ Success' : '❌ Failed';
+          const comment = `## 🚀 Staging Deployment ${status}\n\n- **Version**: ${{ needs.build.outputs.version }}\n- **Commit**: ${{ github.sha }}\n- **Staging URL**: ${{ secrets.STAGING_URL }}\n- **Environment**: Staging VPS\n\n**Next Step**: Test the staging deployment, then approve production deployment if ready.`;
+
+          if (context.issue.number) {
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
+          }
 
   request-production-approval:
     name: Request Production Approval
@@ -177,11 +201,23 @@ jobs:
         echo "✅ All tests passed"
         echo "✅ Staging deployment validated"
 
+    - name: Setup SSH
+      run: |
+        mkdir -p ~/.ssh
+        echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+        chmod 600 ~/.ssh/id_rsa
+        ssh-keyscan -p ${{ secrets.PRODUCTION_PORT }} ${{ secrets.PRODUCTION_HOST }} >> ~/.ssh/known_hosts
+
     - name: Create backup
       run: |
         echo "💾 Creating production backup..."
-        # Placeholder for backup logic
-        echo "✅ Backup created"
+        ssh -p ${{ secrets.PRODUCTION_PORT }} ${{ secrets.PRODUCTION_USER }}@${{ secrets.PRODUCTION_HOST }} << 'EOF'
+        set -e
+        BACKUP_DIR="/var/backups/release-dashboard/$(date +%Y%m%d-%H%M%S)"
+        mkdir -p "$BACKUP_DIR"
+        cp -r /var/www/release-dashboard/* "$BACKUP_DIR/" || true
+        echo "✅ Backup created at $BACKUP_DIR"
+        EOF
 
     - name: Deploy to production
       run: |
@@ -189,15 +225,37 @@ jobs:
         echo "Version: ${{ needs.build.outputs.version }}"
         echo "Artifact: ${{ needs.build.outputs.artifact-id }}"
 
-        # Placeholder for actual deployment logic
+        # Upload artifact to production server
+        scp -P ${{ secrets.PRODUCTION_PORT }} dist/release-dashboard-${{ needs.build.outputs.artifact-id }}.tar.gz \
+          ${{ secrets.PRODUCTION_USER }}@${{ secrets.PRODUCTION_HOST }}:/tmp/
+
+        # Extract and deploy
+        ssh -p ${{ secrets.PRODUCTION_PORT }} ${{ secrets.PRODUCTION_USER }}@${{ secrets.PRODUCTION_HOST }} << 'EOF'
+        set -e
+        echo "📦 Extracting artifact..."
+        cd /var/www/release-dashboard
+        tar -xzf /tmp/release-dashboard-${{ needs.build.outputs.artifact-id }}.tar.gz
+
+        echo "🔧 Installing dependencies..."
+        pip install -r requirements.txt
+
         echo "✅ Production deployment completed"
+        EOF
+
         echo "📍 Production URL: ${{ secrets.PRODUCTION_URL }}"
 
     - name: Post-deployment health check
       run: |
         echo "🔍 Running post-deployment health checks..."
-        # Placeholder for health check script
-        echo "✅ All health checks passed"
+        sleep 5
+
+        RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" ${{ secrets.PRODUCTION_URL }})
+        if [ "$RESPONSE" = "200" ]; then
+          echo "✅ Health checks passed (HTTP $RESPONSE)"
+        else
+          echo "❌ Health check failed (HTTP $RESPONSE)"
+          exit 1
+        fi
 
     - name: Notify production deployment
       if: always()
@@ -205,7 +263,7 @@ jobs:
       with:
         script: |
           const status = '${{ job.status }}' === 'success' ? '✅ Success' : '❌ Failed';
-          const comment = `## 🎉 Production Deployment ${status}\n\n- **Version**: ${{ needs.build.outputs.version }}\n- **Commit**: ${{ github.sha }}\n- **Production URL**: ${{ secrets.PRODUCTION_URL }}\n- **Time**: $(date -u +'%Y-%m-%dT%H:%M:%SZ')`;
+          const comment = `## 🎉 Production Deployment ${status}\n\n- **Version**: ${{ needs.build.outputs.version }}\n- **Commit**: ${{ github.sha }}\n- **Production URL**: ${{ secrets.PRODUCTION_URL }}\n- **Environment**: Production VPS\n- **Time**: ${new Date().toISOString()}`;
 
           github.rest.repos.createRelease({
             owner: context.repo.owner,
