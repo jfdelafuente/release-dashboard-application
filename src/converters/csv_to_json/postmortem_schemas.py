@@ -279,6 +279,7 @@ def derivateDespliegue(records: List[PostmortemRecord]) -> Dict[str, str]:
 
     # Second pass: Assign Despliegue values
     if min_date_tuple:
+        first_with_min_date = False  # Track if we've already assigned PAP to first record
         for record in records:
             record_id = record.data.get('ID de incidencia')
 
@@ -295,9 +296,13 @@ def derivateDespliegue(records: List[PostmortemRecord]) -> Dict[str, str]:
                             if record_min_date is None or date_tuple < record_min_date:
                                 record_min_date = date_tuple
 
-            # Compare only YYYY-MM-DD (without time)
+            # Only first record with the minimum date gets PAP
             if record_min_date and record_min_date[:3] == min_date_tuple[:3]:
-                despliegue_map[record_id] = 'PAP'
+                if not first_with_min_date:
+                    despliegue_map[record_id] = 'PAP'
+                    first_with_min_date = True
+                else:
+                    despliegue_map[record_id] = 'MESA'
             else:
                 despliegue_map[record_id] = 'MESA'
     else:

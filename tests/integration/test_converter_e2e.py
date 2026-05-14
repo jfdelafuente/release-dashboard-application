@@ -49,9 +49,16 @@ INC000003885040,Alta,INDISPONIBILIDAD/ aotlxprvin10211/SL2,Cerrado,02/01/2026 1:
         with open(output_file) as f:
             output_data = json.load(f)
 
-        assert len(output_data) >= 3
-        assert output_data[0]["ID de incidencia"] == "INC000003884945"
-        assert output_data[0]["Urgencia"] == "Baja"  # Normalized from "4-Baja"
+        # Output structure now includes metadata and data sections
+        assert "_metadata" in output_data
+        assert "data" in output_data
+        assert output_data["_metadata"]["record_count"] >= 3
+
+        # Check data records
+        records = output_data["data"]
+        assert len(records) >= 3
+        assert records[0]["ID de incidencia"] == "INC000003884945"
+        assert records[0]["Urgencia"] == "Baja"  # Normalized from "4-Baja"
 
     def test_convert_utf8_sig_csv(self, converter, tmp_path):
         """Test conversion of UTF-8 with BOM encoded CSV."""
@@ -173,8 +180,9 @@ INC000000103,Überraschung äöü,Pendiente,03/01/2026 12:00 PM,Grupo Alemania,2
         with open(output_file, 'r', encoding='utf-8') as f:
             output_data = json.load(f)
 
-        # Check for accented characters in output
-        descriptions = [record["Descripción"] for record in output_data]
+        # Check for accented characters in output (new structure with _metadata and data)
+        records = output_data["data"]
+        descriptions = [record["Descripción"] for record in records]
 
         # Should preserve Spanish accents
         assert any("é" in desc for desc in descriptions), "Spanish accents (é) not preserved"
@@ -223,7 +231,7 @@ INC000000008,Bad Impact,Cerrado,07/01/2026 4:00 PM,Group H,Medio,Alto"""
         with open(output_file) as f:
             import json
             output_data = json.load(f)
-        assert len(output_data) == 4
+        assert len(output_data["data"]) == 4
 
         # Should have error records with details
         assert error_file.exists()
@@ -308,7 +316,7 @@ INC000000202,Latin-1 Test,Cerrado,02/01/2026 11:00 AM,Test Group,3-Medio,Masiva"
         assert output_file.exists()
         with open(output_file) as f:
             output_data = json.load(f)
-        assert len(output_data) == report["stats"]["successful"]
+        assert len(output_data["data"]) == report["stats"]["successful"]
 
     def test_edge_cases_performance(self, converter, tmp_path):
         """[T040] Test performance with edge cases (max field lengths, special characters)."""
@@ -347,13 +355,13 @@ INC000000004,Unicode: 中文 العربية हिन्दी,Resuelto,04/01/20
         assert output_file.exists()
         with open(output_file, 'r', encoding='utf-8') as f:
             output_data = json.load(f)
-        assert len(output_data) > 0
+        assert len(output_data["data"]) > 0
 
         # Verify special characters are preserved
-        first_record = output_data[0]
+        first_record = output_data["data"][0]
         assert "ñ" in first_record["Descripción"] or len(first_record["Descripción"]) > 100
 
         # Verify unicode characters are preserved
-        unicode_record = next((r for r in output_data if "中文" in r["Descripción"] or "العربية" in r["Descripción"] or "हिन्दी" in r["Descripción"]), None)
+        unicode_record = next((r for r in output_data["data"] if "中文" in r["Descripción"] or "العربية" in r["Descripción"] or "हिन्दी" in r["Descripción"]), None)
         if unicode_record:
             assert any(char in unicode_record["Descripción"] for char in ["中文", "العربية", "हिन्दी"])
