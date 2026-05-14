@@ -325,7 +325,8 @@ function extractMassiveIncidentsKPIs(incidents, metadata) {
                     percentage: kpis.trend_7d,
                     direction: getTrendDirection(kpis.trend_7d),
                     period: '7 días'
-                }
+                },
+                null  // Subtitle will be generated from fallback calculation
             ),
             createKPICard(
                 'trend-15-day',
@@ -336,7 +337,8 @@ function extractMassiveIncidentsKPIs(incidents, metadata) {
                     percentage: kpis.trend_15d,
                     direction: getTrendDirection(kpis.trend_15d),
                     period: '15 días'
-                }
+                },
+                null  // Subtitle will be generated from fallback calculation
             ),
             createKPICard(
                 'trend-30-day',
@@ -347,7 +349,8 @@ function extractMassiveIncidentsKPIs(incidents, metadata) {
                     percentage: kpis.trend_30d,
                     direction: getTrendDirection(kpis.trend_30d),
                     period: '30 días'
-                }
+                },
+                null  // Subtitle will be generated from fallback calculation
             )
         ];
     }
@@ -392,6 +395,12 @@ function extractMassiveIncidentsKPIs(incidents, metadata) {
     const trend15Day = calculateTrendPercentage(pendingFifteenDaysAgo, pendingCount);
     const trend30Day = calculateTrendPercentage(pendingThirtyDaysAgo, pendingCount);
 
+    // Generate trend details with comparison values
+    const getTrendArrow = (percentage) => percentage < -2 ? '↓' : percentage > 2 ? '↑' : '→';
+    const trend7Details = `${getTrendArrow(trend7Day)} ${pendingCount} vs ${pendingSevenDaysAgo} (7d atrás)`;
+    const trend15Details = `${getTrendArrow(trend15Day)} ${pendingCount} vs ${pendingFifteenDaysAgo} (15d atrás)`;
+    const trend30Details = `${getTrendArrow(trend30Day)} ${pendingCount} vs ${pendingThirtyDaysAgo} (30d atrás)`;
+
     return [
         createKPICard(
             'total-incidents',
@@ -414,7 +423,8 @@ function extractMassiveIncidentsKPIs(incidents, metadata) {
                 percentage: trend7Day,
                 direction: getTrendDirection(trend7Day),
                 period: '7 días'
-            }
+            },
+            trend7Details
         ),
         createKPICard(
             'trend-15-day',
@@ -425,7 +435,8 @@ function extractMassiveIncidentsKPIs(incidents, metadata) {
                 percentage: trend15Day,
                 direction: getTrendDirection(trend15Day),
                 period: '15 días'
-            }
+            },
+            trend15Details
         ),
         createKPICard(
             'trend-30-day',
@@ -436,7 +447,8 @@ function extractMassiveIncidentsKPIs(incidents, metadata) {
                 percentage: trend30Day,
                 direction: getTrendDirection(trend30Day),
                 period: '30 días'
-            }
+            },
+            trend30Details
         )
     ];
 }
