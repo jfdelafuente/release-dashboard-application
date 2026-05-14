@@ -248,9 +248,9 @@ from csv_to_json import CsvToJsonConverter
 
 converter = CsvToJsonConverter()
 success, report = converter.convert_file(
-    input_path='datos.csv',
-    output_path='datos.json',
-    error_report_path='errors.json'
+    input_path='data/input/datos.csv',
+    output_path='data/output/datos.json',
+    error_report_path='data/errors/errors.json'
 )
 
 # Resultado
@@ -353,6 +353,34 @@ El script `csv_to_json.py` anterior era un conversor simple sin validación ni n
 **Next Step**: Run `/speckit-tasks` to generate task breakdown and implementation checklist
 
 <!-- SPECKIT END -->
+
+## 📁 Estructura de Directorios de Datos
+
+El proyecto utiliza una estructura clara y organizada para datos de entrada y salida:
+
+```
+data/
+├── input/      # Archivos CSV de incidencias masivas y postmortem
+├── output/     # Archivos JSON generados por los conversores
+├── errors/     # Reportes de errores de conversión
+└── archive/    # Archivos históricos (opcionales)
+```
+
+**Directorios protegidos por .gitignore**: Todos los directorios `data/` están protegidos para evitar commit accidental de datos sensibles de incidencias.
+
+**Convenciones de nombres**:
+- **Input (CSV)**: `cs-masiva-202605.csv`, `2026r4-postmortem.csv`, `cs-informe-diario.csv`
+- **Output (JSON)**: Mismo nombre base que el CSV, extensión `.json`
+- **Errores**: `{nombre-base}_errors.json`
+- **Sufijos automáticos**: `-massive` para masivas, `-postmortem` para postmortems
+
+**Ejemplos**:
+```
+data/input/CS_Masiva_20260514.csv
+  ↓ (conversión)
+data/output/CS_Masiva_20260514-massive.json
+data/errors/CS_Masiva_20260514_errors.json
+```
 
 ## Idioma de Comunicación
 
