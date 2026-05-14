@@ -1,0 +1,101 @@
+ID de incidencia,Descripción,Estatus,Fecha de envío,Grupo asignado,Fecha de notificación,Fecha de última resolución,Motivo de estado,MotivoEstado_Anterior,Grupo Resolutor,Urgencia,Impacto,Grupo Remitente
+INC000001,Error en autenticación de usuarios,Cerrada,01/05/2026 8:00 a,SOP_AUTH,01/05/2026 8:15 a,01/05/2026 10:00 a,Resuelto,En Progreso,SOP_AUTH,Alta,Masiva,Customer Support
+INC000002,Problema con sincronización de datos,Cerrada,02/05/2026 9:30 a,SOP_DATA,02/05/2026 9:45 a,02/05/2026 11:30 a,Resuelto,En Progreso,SOP_DATA,Media,Parcial,Engineering
+INC000003,Timeout en conexión a base datos,Cerrada,03/05/2026 10:00 a,SOP_DB,03/05/2026 10:15 a,03/05/2026 12:00 p,Resuelto,Abierto,SOP_DB,Alta,Masiva,Operations
+INC000004,Error en procesamiento de pagos,Cerrada,04/05/2026 11:00 a,SOP_PAYMENT,04/05/2026 11:20 a,04/05/2026 1:00 p,Resuelto,En Progreso,SOP_PAYMENT,Crítica,Crítico,Finance
+INC000005,Problema con caché distribuido,Cerrada,05/05/2026 7:00 a,SOP_CACHE,05/05/2026 7:30 a,05/05/2026 9:00 a,Resuelto,Pendiente,SOP_CACHE,Media,Parcial,Engineering
+INC000006,Error en validación de formularios,Cerrada,06/05/2026 8:30 a,SOP_UI,06/05/2026 8:45 a,06/05/2026 10:30 a,Resuelto,En Progreso,SOP_UI,Baja,Mínimo,Frontend
+INC000007,Problema con envío de correos,Cerrada,07/05/2026 9:15 a,SOP_EMAIL,07/05/2026 9:30 a,07/05/2026 11:00 a,Resuelto,En Progreso,SOP_EMAIL,Media,Parcial,Infrastructure
+INC000008,Error en generación de reportes,En Progreso,08/05/2026 10:00 a,SOP_REPORTS,08/05/2026 10:15 a,,En Progreso,Abierto,SOP_REPORTS,Media,Parcial,Analytics
+INC000009,Problema con autenticación 2FA,Cerrada,09/05/2026 11:30 a,SOP_AUTH,09/05/2026 11:45 a,09/05/2026 2:00 p,Resuelto,Pendiente,SOP_AUTH,Alta,Masiva,Security
+INC000010,Error en importación de datos,Cerrada,10/05/2026 8:00 a,SOP_DATA,10/05/2026 8:30 a,10/05/2026 10:00 a,Resuelto,En Progreso,SOP_DATA,Media,Parcial,Data Team
+INC000011,Problema con rendimiento de API,En Progreso,11/05/2026 9:00 a,SOP_API,11/05/2026 9:15 a,,En Progreso,Abierto,SOP_API,Alta,Masiva,Backend
+INC000012,Error en sincronización de clientes,Cerrada,12/05/2026 10:30 a,SOP_CRM,12/05/2026 10:45 a,12/05/2026 12:30 p,Resuelto,En Progreso,SOP_CRM,Media,Parcial,CRM Team
+INC000013,Problema con generación de tokens,Cerrada,13/05/2026 7:30 a,SOP_AUTH,13/05/2026 7:45 a,13/05/2026 9:30 a,Resuelto,Pendiente,SOP_AUTH,Alta,Masiva,Security
+INC000014,Error en procesamiento de eventos,Cerrada,14/05/2026 8:15 a,SOP_EVENTS,14/05/2026 8:30 a,14/05/2026 10:15 a,Resuelto,En Progreso,SOP_EVENTS,Media,Parcial,Events Team
+INC000015,Problema con caché de sesiones,Cerrada,15/05/2026 9:45 a,SOP_SESSION,15/05/2026 10:00 a,15/05/2026 11:30 a,Resuelto,Abierto,SOP_SESSION,Media,Parcial,Session Mgmt
+INC000016,Error en validación de permisos,Cerrada,16/05/2026 10:00 a,SOP_AUTH,16/05/2026 10:15 a,16/05/2026 12:00 p,Resuelto,En Progreso,SOP_AUTH,Alta,Masiva,Authorization
+INC000017,Problema con integración de terceros,Cerrada,17/05/2026 11:00 a,SOP_INTEGRATION,17/05/2026 11:15 a,17/05/2026 1:30 p,Resuelto,Pendiente,SOP_INTEGRATION,Media,Parcial,Integration Team
+INC000018,Error en procesamiento de archivos,Cerrada,18/05/2026 8:30 a,SOP_FILES,18/05/2026 8:45 a,18/05/2026 10:30 a,Resuelto,En Progreso,SOP_FILES,Media,Parcial,File Ops
+INC000019,Problema con notificaciones push,En Progreso,19/05/2026 9:15 a,SOP_NOTIFICATIONS,19/05/2026 9:30 a,,En Progreso,Abierto,SOP_NOTIFICATIONS,Media,Parcial,Notifications
+INC000020,Error en sincronización de inventario,Cerrada,20/05/2026 10:45 a,SOP_INVENTORY,20/05/2026 11:00 a,20/05/2026 1:00 p,Resuelto,En Progreso,SOP_INVENTORY,Media,Parcial,Inventory Team
+INC000021,Problema con rendimiento de BD,En Progreso,21/05/2026 8:00 a,SOP_DB,21/05/2026 8:20 a,,En Progreso,Abierto,SOP_DB,Alta,Masiva,Database Team
+INC000022,Error en procesamiento de transacciones,Cerrada,22/05/2026 9:30 a,SOP_PAYMENT,22/05/2026 9:45 a,22/05/2026 11:30 a,Resuelto,Pendiente,SOP_PAYMENT,Crítica,Crítico,Payment Team
+INC000023,Problema con conexión de redes,Cerrada,23/05/2026 10:15 a,SOP_NETWORK,23/05/2026 10:30 a,23/05/2026 12:15 p,Resuelto,En Progreso,SOP_NETWORK,Media,Parcial,Network Team
+INC000024,Error en autenticación LDAP,Cerrada,24/05/2026 7:45 a,SOP_AUTH,24/05/2026 8:00 a,24/05/2026 9:45 a,Resuelto,Abierto,SOP_AUTH,Alta,Masiva,Directory Services
+INC000025,Problema con caché de API,Cerrada,25/05/2026 8:30 a,SOP_API,25/05/2026 8:45 a,25/05/2026 10:30 a,Resuelto,En Progreso,SOP_API,Media,Parcial,API Team
+INC000026,Error en validación de datos,Cerrada,26/05/2026 9:00 a,SOP_DATA,26/05/2026 9:15 a,26/05/2026 11:00 a,Resuelto,Pendiente,SOP_DATA,Media,Parcial,Data Validation
+INC000027,Problema con seguridad de aplicación,En Progreso,27/05/2026 10:30 a,SOP_SECURITY,27/05/2026 10:45 a,,En Progreso,Abierto,SOP_SECURITY,Alta,Masiva,Security Team
+INC000028,Error en procesamiento de logs,Cerrada,28/05/2026 8:15 a,SOP_LOGS,28/05/2026 8:30 a,28/05/2026 10:15 a,Resuelto,En Progreso,SOP_LOGS,Baja,Mínimo,Logging Team
+INC000029,Problema con replicación de datos,Cerrada,29/05/2026 9:45 a,SOP_DATA,29/05/2026 10:00 a,29/05/2026 11:45 a,Resuelto,Abierto,SOP_DATA,Media,Parcial,Data Replication
+INC000030,Error en generación de configuración,Cerrada,30/05/2026 10:00 a,SOP_CONFIG,30/05/2026 10:15 a,30/05/2026 12:00 p,Resuelto,Pendiente,SOP_CONFIG,Media,Parcial,Configuration Mgmt
+INC000031,Problema con monitoreo de sistemas,En Progreso,01/06/2026 8:00 a,SOP_MONITORING,01/06/2026 8:15 a,,En Progreso,Abierto,SOP_MONITORING,Media,Parcial,Monitoring Team
+INC000032,Error en backup de datos,Cerrada,02/06/2026 9:30 a,SOP_BACKUP,02/06/2026 9:45 a,02/06/2026 11:30 a,Resuelto,En Progreso,SOP_BACKUP,Alta,Masiva,Backup Team
+INC000033,Problema con recuperación ante desastres,Cerrada,03/06/2026 10:45 a,SOP_DR,03/06/2026 11:00 a,03/06/2026 1:00 p,Resuelto,Pendiente,SOP_DR,Alta,Crítico,Disaster Recovery
+INC000034,Error en sincronización de usuarios,Cerrada,04/06/2026 8:30 a,SOP_USERS,04/06/2026 8:45 a,04/06/2026 10:30 a,Resuelto,Abierto,SOP_USERS,Media,Parcial,User Management
+INC000035,Problema con gestión de sesiones,En Progreso,05/06/2026 9:15 a,SOP_SESSION,05/06/2026 9:30 a,,En Progreso,Abierto,SOP_SESSION,Media,Parcial,Session Management
+INC000036,Error en procesamiento de pedidos,Cerrada,06/06/2026 10:00 a,SOP_ORDERS,06/06/2026 10:15 a,06/06/2026 12:00 p,Resuelto,En Progreso,SOP_ORDERS,Media,Masiva,Orders Team
+INC000037,Problema con envío de notificaciones,Cerrada,07/06/2026 8:45 a,SOP_NOTIFICATIONS,07/06/2026 9:00 a,07/06/2026 10:45 a,Resuelto,Pendiente,SOP_NOTIFICATIONS,Media,Parcial,Notifications Team
+INC000038,Error en validación de direcciones,Cerrada,08/06/2026 9:30 a,SOP_VALIDATION,08/06/2026 9:45 a,08/06/2026 11:30 a,Resuelto,Abierto,SOP_VALIDATION,Baja,Mínimo,Validation Team
+INC000039,Problema con integración de pagos,In Progreso,09/06/2026 10:15 a,SOP_PAYMENT,10/06/2026 10:30 a,,En Progreso,Abierto,SOP_PAYMENT,Alta,Crítico,Payment Integration
+INC000040,Error en procesamiento de devoluciones,Cerrada,10/06/2026 8:00 a,SOP_RETURNS,10/06/2026 8:15 a,10/06/2026 10:00 a,Resuelto,En Progreso,SOP_RETURNS,Media,Parcial,Returns Team
+INC000041,Problema con gestión de inventario,Cerrada,11/06/2026 9:45 a,SOP_INVENTORY,11/06/2026 10:00 a,11/06/2026 11:45 a,Resuelto,Pendiente,SOP_INVENTORY,Media,Parcial,Inventory Management
+INC000042,Error en sincronización de proveedores,In Progreso,12/06/2026 10:30 a,SOP_SUPPLIERS,12/06/2026 10:45 a,,En Progreso,Abierto,SOP_SUPPLIERS,Media,Parcial,Supplier Management
+INC000043,Problema con reportes de ventas,Cerrada,13/06/2026 8:15 a,SOP_SALES,13/06/2026 8:30 a,13/06/2026 10:15 a,Resuelto,En Progreso,SOP_SALES,Baja,Mínimo,Sales Reporting
+INC000044,Error en análisis de datos,Cerrada,14/06/2026 9:00 a,SOP_ANALYTICS,14/06/2026 9:15 a,14/06/2026 11:00 a,Resuelto,Abierto,SOP_ANALYTICS,Media,Parcial,Analytics Team
+INC000045,Problema con dashboard de métricas,En Progreso,15/06/2026 10:45 a,SOP_METRICS,15/06/2026 11:00 a,,En Progreso,Abierto,SOP_METRICS,Media,Parcial,Metrics Team
+INC000046,Error en cálculo de KPIs,Cerrada,16/06/2026 8:30 a,SOP_KPI,16/06/2026 8:45 a,16/06/2026 10:30 a,Resuelto,En Progreso,SOP_KPI,Media,Parcial,KPI Team
+INC000047,Problema con alertas automáticas,Cerrada,17/06/2026 9:15 a,SOP_ALERTS,17/06/2026 9:30 a,17/06/2026 11:15 a,Resuelto,Pendiente,SOP_ALERTS,Media,Parcial,Alerts Team
+INC000048,Error en procesamiento de excepciones,In Progreso,18/06/2026 10:00 a,SOP_EXCEPTIONS,18/06/2026 10:15 a,,En Progreso,Abierto,SOP_EXCEPTIONS,Alta,Masiva,Exception Handling
+INC000049,Problema con logs de auditoría,Cerrada,19/06/2026 8:45 a,SOP_AUDIT,19/06/2026 9:00 a,19/06/2026 10:45 a,Resuelto,Abierto,SOP_AUDIT,Media,Parcial,Audit Team
+INC000050,Error en compresión de archivos,Cerrada,20/06/2026 9:30 a,SOP_COMPRESSION,20/06/2026 9:45 a,20/06/2026 11:30 a,Resuelto,En Progreso,SOP_COMPRESSION,Baja,Mínimo,Compression Team
+INC000051,Problema con deduplicación de datos,Cerrada,21/06/2026 10:15 a,SOP_DEDUP,21/06/2026 10:30 a,21/06/2026 12:15 p,Resuelto,Pendiente,SOP_DEDUP,Media,Parcial,Deduplication Team
+INC000052,Error en fragmentación de archivos,In Progreso,22/06/2026 8:00 a,SOP_FRAGMENTATION,22/06/2026 8:15 a,,En Progreso,Abierto,SOP_FRAGMENTATION,Media,Parcial,Storage Team
+INC000053,Problema con índices de base de datos,Cerrada,23/06/2026 9:45 a,SOP_INDEXING,23/06/2026 10:00 a,23/06/2026 11:45 a,Resuelto,Abierto,SOP_INDEXING,Alta,Masiva,Database Indexing
+INC000054,Error en optimización de consultas,Cerrada,24/06/2026 10:30 a,SOP_QUERY_OPT,24/06/2026 10:45 a,24/06/2026 12:30 p,Resuelto,En Progreso,SOP_QUERY_OPT,Media,Parcial,Query Optimization
+INC000055,Problema con particionamiento de datos,Cerrada,25/06/2026 8:15 a,SOP_PARTITIONING,25/06/2026 8:30 a,25/06/2026 10:15 a,Resuelto,Pendiente,SOP_PARTITIONING,Media,Parcial,Partitioning Team
+INC000056,Error en estrategia de caché,In Progreso,26/06/2026 9:00 a,SOP_CACHE_STRAT,26/06/2026 9:15 a,,En Progreso,Abierto,SOP_CACHE_STRAT,Alta,Masiva,Cache Strategy Team
+INC000057,Problema con pooling de conexiones,Cerrada,27/06/2026 10:45 a,SOP_POOL,27/06/2026 11:00 a,27/06/2026 1:00 p,Resuelto,Abierto,SOP_POOL,Media,Parcial,Connection Pooling
+INC000058,Error en gestión de transacciones,Cerrada,28/06/2026 8:30 a,SOP_TRANSACTIONS,28/06/2026 8:45 a,28/06/2026 10:30 a,Resuelto,En Progreso,SOP_TRANSACTIONS,Media,Parcial,Transaction Management
+INC000059,Problema con aislamiento de datos,Cerrada,29/06/2026 9:15 a,SOP_ISOLATION,29/06/2026 9:30 a,29/06/2026 11:15 a,Resuelto,Pendiente,SOP_ISOLATION,Media,Parcial,Data Isolation Team
+INC000060,Error en consistencia de datos,In Progreso,30/06/2026 10:00 a,SOP_CONSISTENCY,30/06/2026 10:15 a,,En Progreso,Abierto,SOP_CONSISTENCY,Alta,Masiva,Data Consistency Team
+INC000061,Problema con serialización de objetos,Cerrada,01/07/2026 8:45 a,SOP_SERIALIZATION,01/07/2026 9:00 a,01/07/2026 10:45 a,Resuelto,Abierto,SOP_SERIALIZATION,Media,Parcial,Serialization Team
+INC000062,Error en descompresión de datos,Cerrada,02/07/2026 9:30 a,SOP_DECOMPRESS,02/07/2026 9:45 a,02/07/2026 11:30 a,Resuelto,En Progreso,SOP_DECOMPRESS,Baja,Mínimo,Decompression Team
+INC000063,Problema con validación de esquemas,Cerrada,03/07/2026 10:15 a,SOP_SCHEMA_VAL,03/07/2026 10:30 a,03/07/2026 12:15 p,Resuelto,Pendiente,SOP_SCHEMA_VAL,Media,Parcial,Schema Validation Team
+INC000064,Error en transformación de datos,In Progreso,04/07/2026 8:00 a,SOP_TRANSFORM,04/07/2026 8:15 a,,En Progreso,Abierto,SOP_TRANSFORM,Media,Parcial,Data Transformation
+INC000065,Problema con carga de datos,Cerrada,05/07/2026 9:45 a,SOP_LOAD,05/07/2026 10:00 a,05/07/2026 11:45 a,Resuelto,Abierto,SOP_LOAD,Media,Masiva,Data Loading
+INC000066,Error en extracción de datos,Cerrada,06/07/2026 10:30 a,SOP_EXTRACT,06/07/2026 10:45 a,06/07/2026 12:30 p,Resuelto,En Progreso,SOP_EXTRACT,Media,Parcial,Data Extraction
+INC000067,Problema con pipeline de datos,Cerrada,07/07/2026 8:15 a,SOP_PIPELINE,07/07/2026 8:30 a,07/07/2026 10:15 a,Resuelto,Pendiente,SOP_PIPELINE,Media,Parcial,Data Pipeline Team
+INC000068,Error en orquestación de workflows,In Progreso,08/07/2026 9:00 a,SOP_WORKFLOW,08/07/2026 9:15 a,,En Progreso,Abierto,SOP_WORKFLOW,Alta,Masiva,Workflow Orchestration
+INC000069,Problema con ejecutor de trabajos,Cerrada,09/07/2026 10:45 a,SOP_JOBS,09/07/2026 11:00 a,09/07/2026 1:00 p,Resuelto,Abierto,SOP_JOBS,Media,Parcial,Job Execution Team
+INC000070,Error en programador de tareas,Cerrada,10/07/2026 8:30 a,SOP_SCHEDULER,10/07/2026 8:45 a,10/07/2026 10:30 a,Resuelto,En Progreso,SOP_SCHEDULER,Media,Parcial,Scheduling Team
+INC000071,Problema con gestor de colas,Cerrada,11/07/2026 9:15 a,SOP_QUEUE,11/07/2026 9:30 a,11/07/2026 11:15 a,Resuelto,Pendiente,SOP_QUEUE,Media,Parcial,Queue Management
+INC000072,Error en procesador de mensajes,In Progreso,12/07/2026 10:00 a,SOP_MESSAGING,12/07/2026 10:15 a,,En Progreso,Abierto,SOP_MESSAGING,Alta,Masiva,Messaging Team
+INC000073,Problema con broker de eventos,Cerrada,13/07/2026 8:45 a,SOP_EVENT_BROKER,13/07/2026 9:00 a,13/07/2026 10:45 a,Resuelto,Abierto,SOP_EVENT_BROKER,Media,Parcial,Event Broker Team
+INC000074,Error en publicador de eventos,Cerrada,14/07/2026 9:30 a,SOP_PUBLISHER,14/07/2026 9:45 a,14/07/2026 11:30 a,Resuelto,En Progreso,SOP_PUBLISHER,Media,Parcial,Publishing Team
+INC000075,Problema con suscriptor de eventos,Cerrada,15/07/2026 10:15 a,SOP_SUBSCRIBER,15/07/2026 10:30 a,15/07/2026 12:15 p,Resuelto,Pendiente,SOP_SUBSCRIBER,Media,Parcial,Subscription Team
+INC000076,Error en enrutamiento de eventos,In Progreso,16/07/2026 8:00 a,SOP_ROUTING,16/07/2026 8:15 a,,En Progreso,Abierto,SOP_ROUTING,Media,Parcial,Routing Team
+INC000077,Problema con filtrado de eventos,Cerrada,17/07/2026 9:45 a,SOP_FILTERING,17/07/2026 10:00 a,17/07/2026 11:45 a,Resuelto,Abierto,SOP_FILTERING,Media,Parcial,Filtering Team
+INC000078,Error en transformación de eventos,Cerrada,18/07/2026 10:30 a,SOP_EVENT_TRANSFORM,18/07/2026 10:45 a,18/07/2026 12:30 p,Resuelto,En Progreso,SOP_EVENT_TRANSFORM,Media,Parcial,Event Transformation
+INC000079,Problema con enriquecimiento de eventos,Cerrada,19/07/2026 8:15 a,SOP_ENRICHMENT,19/07/2026 8:30 a,19/07/2026 10:15 a,Resuelto,Pendiente,SOP_ENRICHMENT,Media,Parcial,Enrichment Team
+INC000080,Error en agregación de eventos,In Progreso,20/07/2026 9:00 a,SOP_AGGREGATION,20/07/2026 9:15 a,,En Progreso,Abierto,SOP_AGGREGATION,Alta,Masiva,Aggregation Team
+INC000081,Problema con correlación de eventos,Cerrada,21/07/2026 10:45 a,SOP_CORRELATION,21/07/2026 11:00 a,21/07/2026 1:00 p,Resuelto,Abierto,SOP_CORRELATION,Media,Parcial,Correlation Team
+INC000082,Error en deduplicación de eventos,Cerrada,22/07/2026 8:30 a,SOP_DEDUP_EVENTS,22/07/2026 8:45 a,22/07/2026 10:30 a,Resuelto,En Progreso,SOP_DEDUP_EVENTS,Media,Parcial,Deduplication Events
+INC000083,Problema con persistencia de eventos,Cerrada,23/07/2026 9:15 a,SOP_PERSISTENCE,23/07/2026 9:30 a,23/07/2026 11:15 a,Resuelto,Pendiente,SOP_PERSISTENCE,Media,Parcial,Persistence Team
+INC000084,Error en recuperación de eventos,In Progreso,24/07/2026 10:00 a,SOP_RECOVERY,24/07/2026 10:15 a,,En Progreso,Abierto,SOP_RECOVERY,Alta,Crítico,Recovery Team
+INC000085,Problema con replay de eventos,Cerrada,25/07/2026 8:45 a,SOP_REPLAY,25/07/2026 9:00 a,25/07/2026 10:45 a,Resuelto,Abierto,SOP_REPLAY,Media,Parcial,Replay Team
+INC000086,Error en versionado de eventos,Cerrada,26/07/2026 9:30 a,SOP_VERSIONING,26/07/2026 9:45 a,26/07/2026 11:30 a,Resuelto,En Progreso,SOP_VERSIONING,Media,Parcial,Versioning Team
+INC000087,Problema con compatibilidad de esquemas,Cerrada,27/07/2026 10:15 a,SOP_COMPAT,27/07/2026 10:30 a,27/07/2026 12:15 p,Resuelto,Pendiente,SOP_COMPAT,Media,Parcial,Compatibility Team
+INC000088,Error en migración de eventos,In Progreso,28/07/2026 8:00 a,SOP_MIGRATION,28/07/2026 8:15 a,,En Progreso,Abierto,SOP_MIGRATION,Media,Parcial,Migration Team
+INC000089,Problema con monitoreo de eventos,Cerrada,29/07/2026 9:45 a,SOP_EVENT_MON,29/07/2026 10:00 a,29/07/2026 11:45 a,Resuelto,Abierto,SOP_EVENT_MON,Media,Parcial,Event Monitoring
+INC000090,Error en alertas de eventos,Cerrada,30/07/2026 10:30 a,SOP_EVENT_ALERTS,30/07/2026 10:45 a,30/07/2026 12:30 p,Resuelto,En Progreso,SOP_EVENT_ALERTS,Media,Parcial,Event Alerts
+INC000091,Problema con análisis de eventos,Cerrada,31/07/2026 8:15 a,SOP_EVENT_ANALYSIS,31/07/2026 8:30 a,31/07/2026 10:15 a,Resuelto,Pendiente,SOP_EVENT_ANALYSIS,Media,Parcial,Event Analysis
+INC000092,Error en reportes de eventos,In Progreso,01/08/2026 9:00 a,SOP_EVENT_REPORTS,01/08/2026 9:15 a,,En Progreso,Abierto,SOP_EVENT_REPORTS,Media,Parcial,Event Reports
+INC000093,Problema con dashboards de eventos,Cerrada,02/08/2026 10:45 a,SOP_EVENT_DASHBOARDS,02/08/2026 11:00 a,02/08/2026 1:00 p,Resuelto,Abierto,SOP_EVENT_DASHBOARDS,Media,Parcial,Event Dashboards
+INC000094,Error en visualización de eventos,Cerrada,03/08/2026 8:30 a,SOP_EVENT_VIZ,03/08/2026 8:45 a,03/08/2026 10:30 a,Resuelto,En Progreso,SOP_EVENT_VIZ,Media,Parcial,Event Visualization
+INC000095,Problema con búsqueda de eventos,Cerrada,04/08/2026 9:15 a,SOP_SEARCH,04/08/2026 9:30 a,04/08/2026 11:15 a,Resuelto,Pendiente,SOP_SEARCH,Media,Parcial,Search Team
+INC000096,Error en filtrado avanzado,In Progreso,05/08/2026 10:00 a,SOP_ADV_FILTERING,05/08/2026 10:15 a,,En Progreso,Abierto,SOP_ADV_FILTERING,Media,Parcial,Advanced Filtering
+INC000097,Problema con grouping de eventos,Cerrada,06/08/2026 8:45 a,SOP_GROUPING,06/08/2026 9:00 a,06/08/2026 10:45 a,Resuelto,Abierto,SOP_GROUPING,Media,Parcial,Grouping Team
+INC000098,Error en sorting de eventos,Cerrada,07/08/2026 9:30 a,SOP_SORTING,07/08/2026 9:45 a,07/08/2026 11:30 a,Resuelto,En Progreso,SOP_SORTING,Media,Parcial,Sorting Team
+INC000099,Problema con paginación de eventos,Cerrada,08/08/2026 10:15 a,SOP_PAGINATION,08/08/2026 10:30 a,08/08/2026 12:15 p,Resuelto,Pendiente,SOP_PAGINATION,Media,Parcial,Pagination Team
+INC000100,Error en exportación de datos,In Progreso,09/08/2026 8:00 a,SOP_EXPORT,09/08/2026 8:15 a,,En Progreso,Abierto,SOP_EXPORT,Media,Parcial,Export Team

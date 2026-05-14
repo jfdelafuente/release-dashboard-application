@@ -1,0 +1,139 @@
+{
+  "_metadata": {
+    "type": "postmortem",
+    "version": "1.0",
+    "created": "2026-05-14T16:10:33.627352Z",
+    "source_filename": "normalization-edge-cases.csv",
+    "record_count": 10,
+    "conversion_timestamp": "2026-05-14T16:10:33.627352Z",
+    "kpis": {
+      "total": 10,
+      "by_estatus": {
+        "Cerrada": 9,
+        "En Progreso": 1
+      },
+      "by_urgencia": {
+        "Alta": 6,
+        "Media": 1,
+        "Baja": 2,
+        "Crítica": 1
+      },
+      "by_impacto": {
+        "Masiva": 6,
+        "Parcial": 1,
+        "Mínimo": 2,
+        "Crítico": 1
+      },
+      "dashboard_hub": {
+        "total_incidencias": 10,
+        "cerradas_percent": 0,
+        "pap_resueltas_percent": 0,
+        "mesa_resueltas_percent": 0,
+        "pap_total": 1,
+        "mesa_total": 9
+      }
+    }
+  },
+  "data": [
+    {
+      "ID de incidencia": "INC001",
+      "Descripción": "lowercase estatus",
+      "Estatus": "Cerrada",
+      "Fecha de envío": "01/05/2026",
+      "Grupo asignado": "SOP_TEST",
+      "Urgencia": "Alta",
+      "Impacto": "Masiva",
+      "Despliegue": "MESA"
+    },
+    {
+      "ID de incidencia": "INC002",
+      "Descripción": "UPPERCASE ESTATUS",
+      "Estatus": "Cerrada",
+      "Fecha de envío": "02/05/2026",
+      "Grupo asignado": "SOP_TEST",
+      "Urgencia": "Alta",
+      "Impacto": "Masiva",
+      "Despliegue": "MESA"
+    },
+    {
+      "ID de incidencia": "INC003",
+      "Descripción": "Mixed Case Estatus",
+      "Estatus": "En Progreso",
+      "Fecha de envío": "03/05/2026",
+      "Grupo asignado": "SOP_TEST",
+      "Urgencia": "Media",
+      "Impacto": "Parcial",
+      "Despliegue": "MESA"
+    },
+    {
+      "ID de incidencia": "INC004",
+      "Descripción": "Spanish date abbreviation",
+      "Estatus": "Cerrada",
+      "Fecha de envío": "15/04/2026",
+      "Grupo asignado": "SOP_TEST",
+      "Urgencia": "Alta",
+      "Impacto": "Masiva",
+      "Despliegue": "MESA"
+    },
+    {
+      "ID de incidencia": "INC005",
+      "Descripción": "Date with padding",
+      "Estatus": "Cerrada",
+      "Fecha de envío": "05/04/2026",
+      "Grupo asignado": "SOP_TEST",
+      "Urgencia": "Alta",
+      "Impacto": "Masiva",
+      "Despliegue": "PAP"
+    },
+    {
+      "ID de incidencia": "INC006",
+      "Descripción": "Date normalized",
+      "Estatus": "Cerrada",
+      "Fecha de envío": "01/05/2026",
+      "Grupo asignado": "SOP_TEST",
+      "Urgencia": "Baja",
+      "Impacto": "Mínimo",
+      "Despliegue": "MESA"
+    },
+    {
+      "ID de incidencia": "INC007",
+      "Descripción": "Urgencia variations",
+      "Estatus": "Cerrada",
+      "Fecha de envío": "07/05/2026",
+      "Grupo asignado": "SOP_TEST",
+      "Urgencia": "Crítica",
+      "Impacto": "Crítico",
+      "Despliegue": "MESA"
+    },
+    {
+      "ID de incidencia": "INC008",
+      "Descripción": "All title case",
+      "Estatus": "Cerrada",
+      "Fecha de envío": "08/05/2026",
+      "Grupo asignado": "SOP_TEST",
+      "Urgencia": "Alta",
+      "Impacto": "Masiva",
+      "Despliegue": "MESA"
+    },
+    {
+      "ID de incidencia": "INC009",
+      "Descripción": "Mixed spaces",
+      "Estatus": "Cerrada",
+      "Fecha de envío": "09/05/2026",
+      "Grupo asignado": "SOP_TEST",
+      "Urgencia": "Alta",
+      "Impacto": "Masiva",
+      "Despliegue": "MESA"
+    },
+    {
+      "ID de incidencia": "INC010",
+      "Descripción": "Urgencia Baja",
+      "Estatus": "Cerrada",
+      "Fecha de envío": "10/05/2026",
+      "Grupo asignado": "SOP_TEST",
+      "Urgencia": "Baja",
+      "Impacto": "Mínimo",
+      "Despliegue": "MESA"
+    }
+  ]
+}
