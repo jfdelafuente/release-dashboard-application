@@ -14,7 +14,7 @@ const hubState = {
 /**
  * Constants
  */
-const DATA_OUTPUT_DIR = 'data/output/';
+const DATA_OUTPUT_DIR = '/data/output/';
 const PENDING_STATUSES = ['Abierto', 'En Progreso', 'Pendiente', 'Asignado'];
 const CLOSED_STATUSES = ['Cerrado', 'Resuelto', 'Cancelado'];
 
