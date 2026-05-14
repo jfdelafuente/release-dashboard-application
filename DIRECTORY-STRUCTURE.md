@@ -110,7 +110,6 @@ release-dashboard-application/
 ├── CLAUDE.md                           # Development guidance for Claude AI
 ├── CONTRIBUTING.md                     # Contributing guidelines
 ├── DIRECTORY-STRUCTURE.md              # This file
-├── MIGRATION.md                        # Data directory migration guide
 ├── SECURITY.md                         # Security practices
 ├── CHANGELOG.md                        # Release history
 ├── README.md                           # Project overview
@@ -357,11 +356,11 @@ Empty directories don't persist in git. To preserve them:
 
 ## Related Documentation
 
-- [MIGRATION.md](MIGRATION.md) - Data directory migration from `datos/` to `data/`
 - [README.md](README.md) - Project overview
 - [CONTRIBUTING.md](CONTRIBUTING.md) - Development standards
 - [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) - Setup guide
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) - System design
+- [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) - Common issues and solutions
 
 ---
 
