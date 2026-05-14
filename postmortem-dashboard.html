@@ -930,7 +930,9 @@
                         const month = parseInt(parts[1]) - 1; // JavaScript months are 0-indexed
                         const year = parseInt(parts[2]);
                         if (!isNaN(day) && !isNaN(month) && !isNaN(year)) {
-                            return new Date(year, month, day);
+                            const date = new Date(year, month, day);
+                            console.log(`[parseDate] Parsed "${dateStr}" -> ${date.toISOString()}`);
+                            return date;
                         }
                     }
                 }
@@ -1036,6 +1038,10 @@
                 }
             });
 
+            console.log(`[createEvolutionChart] Total incidents: ${allIncidents.length}`);
+            console.log(`[createEvolutionChart] Min date: ${absoluteMinDate?.toISOString()}, Max date: ${absoluteMaxDate?.toISOString()}`);
+            console.log(`[createEvolutionChart] Daily data keys: ${Object.keys(dailyData).length}`);
+
             if (absoluteMinDate && absoluteMaxDate) {
                 const minDate = absoluteMinDate;
                 const maxDate = absoluteMaxDate;
@@ -1086,6 +1092,9 @@
                     });
                 });
             }
+
+            console.log(`[createEvolutionChart] Prepared data - Dates: ${dates.length}, Entries: ${entries.length}, Resolutions: ${resolutions.length}, Backlog: ${backlog.length}`);
+            console.log(`[createEvolutionChart] First few dates: ${dates.slice(0, 5)}`);
 
             // Create traces
             const entriesTrace = {
