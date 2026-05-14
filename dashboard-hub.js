@@ -38,8 +38,13 @@ async function initHub() {
     try {
         showLoading();
 
-        // Load latest JSON file
-        const { incidents, metadata } = await loadLatestJSON();
+        // Load latest JSON files
+        const {
+            incidents,
+            metadata,
+            massiveMetadata,
+            postmortemMetadata
+        } = await loadLatestJSON();
 
         if (!incidents || incidents.length === 0) {
             showError('No hay datos disponibles. Por favor cargue archivos JSON en data/output/');
@@ -49,10 +54,12 @@ async function initHub() {
         // Store in global state
         hubState.allIncidents = incidents;
         hubState.metadata = metadata;
+        hubState.massiveMetadata = massiveMetadata;
+        hubState.postmortemMetadata = postmortemMetadata;
         hubState.lastUpdated = new Date();
 
-        // Extract KPIs
-        const kpis = extractKPIs(incidents, metadata);
+        // Extract KPIs with both metadata types
+        const kpis = extractKPIs(incidents, massiveMetadata, postmortemMetadata);
 
         // Render the hub
         renderHub(kpis);
@@ -151,29 +158,30 @@ async function loadLatestJSON() {
         let allMetadata = null;
 
         // Load latest massive file if available
+        let massiveMetadata = null;
         if (massiveFiles.length > 0) {
             const massiveFile = massiveFiles[0];
             console.log(`Loading massive incidents from: ${massiveFile.name}`);
             const massiveData = await loadAndParseJSON(massiveFile.name);
             if (massiveData.incidents && massiveData.incidents.length > 0) {
                 allIncidents.push(...massiveData.incidents);
-                // Use massive metadata as primary
                 if (massiveData.metadata) {
-                    allMetadata = massiveData.metadata;
+                    massiveMetadata = massiveData.metadata;
+                    allMetadata = massiveData.metadata; // Keep for backward compatibility
                 }
             }
         }
 
         // Load latest postmortem file if available
+        let postmortemMetadata = null;
         if (postmortemFiles.length > 0) {
             const postmortemFile = postmortemFiles[0];
             console.log(`Loading postmortem data from: ${postmortemFile.name}`);
             const postmortemData = await loadAndParseJSON(postmortemFile.name);
             if (postmortemData.incidents && postmortemData.incidents.length > 0) {
                 allIncidents.push(...postmortemData.incidents);
-                // If no massive metadata, use postmortem metadata
-                if (!allMetadata && postmortemData.metadata) {
-                    allMetadata = postmortemData.metadata;
+                if (postmortemData.metadata) {
+                    postmortemMetadata = postmortemData.metadata;
                 }
             }
         }
@@ -184,7 +192,13 @@ async function loadLatestJSON() {
 
         console.log(`Successfully loaded ${allIncidents.length} total incidents`);
 
-        return { incidents: allIncidents, metadata: allMetadata };
+        // Return both metadata and incidents
+        return {
+            incidents: allIncidents,
+            metadata: allMetadata,
+            massiveMetadata: massiveMetadata,
+            postmortemMetadata: postmortemMetadata
+        };
 
     } catch (error) {
         console.error('Error loading JSON:', error);
@@ -247,34 +261,32 @@ async function loadAndParseJSON(filename) {
  * Extract KPI metrics from incident data
  * Routes to appropriate KPI extraction based on file type and data structure
  */
-function extractKPIs(incidents, metadata) {
-    const fileType = metadata?.type || 'unknown';
-    const hasKPIsMetadata = metadata && metadata.kpis;
+function extractKPIs(incidents, massiveMetadata, postmortemMetadata) {
+    const massiveFileType = massiveMetadata?.type || 'unknown';
+    const postmortemFileType = postmortemMetadata?.type || 'unknown';
+    const hasKPIsMetadata = massiveMetadata && massiveMetadata.kpis;
     const hasDespliegue = incidents && incidents.length > 0 &&
         incidents.some(i => getIncidentFieldValue(i, 'Despliegue'));
 
-    console.log(`[extractKPIs] File type: ${fileType}, Has KPIs metadata: ${!!hasKPIsMetadata}, Has Despliegue: ${hasDespliegue}`);
+    console.log(`[extractKPIs] Massive type: ${massiveFileType}, Postmortem type: ${postmortemFileType}, Has Despliegue: ${hasDespliegue}`);
 
     // Decide which KPIs to extract
     let massiveIncidentsKPIs = [];
     let postmortemKPIs = [];
 
-    // Always try to extract massive KPIs if we have metadata.kpis
+    // Extract massive KPIs if we have massive data
     if (hasKPIsMetadata) {
         console.log(`[extractKPIs] Extracting Massive KPIs from metadata`);
-        massiveIncidentsKPIs = extractMassiveIncidentsKPIs(incidents, metadata);
-    }
-
-    // Extract postmortem KPIs if we have Despliegue field
-    if (hasDespliegue) {
-        console.log(`[extractKPIs] Extracting Postmortem KPIs from Despliegue field`);
-        postmortemKPIs = extractPostmortemKPIs(incidents, metadata);
-    }
-
-    // Fallback: if no metadata KPIs but no Despliegue either, try massive KPI calculation
-    if (!hasKPIsMetadata && !hasDespliegue && incidents && incidents.length > 0) {
+        massiveIncidentsKPIs = extractMassiveIncidentsKPIs(incidents, massiveMetadata);
+    } else if (incidents && incidents.length > 0) {
         console.log(`[extractKPIs] Fallback: calculating Massive KPIs from incidents data`);
-        massiveIncidentsKPIs = extractMassiveIncidentsKPIs(incidents, metadata);
+        massiveIncidentsKPIs = extractMassiveIncidentsKPIs(incidents, massiveMetadata);
+    }
+
+    // Extract postmortem KPIs if we have postmortem metadata or Despliegue field
+    if (postmortemMetadata || hasDespliegue) {
+        console.log(`[extractKPIs] Extracting Postmortem KPIs`);
+        postmortemKPIs = extractPostmortemKPIs(incidents, postmortemMetadata);
     }
 
     return {
@@ -454,19 +466,19 @@ function getIncidentFieldValue(incident, fieldName) {
  * Reads pre-calculated KPIs from metadata (calculated during CSV conversion)
  * Falls back to calculation if metadata doesn't have dashboard_hub section
  */
-function extractPostmortemKPIs(incidents, metadata) {
+function extractPostmortemKPIs(incidents, postmortemMetadata) {
     if (!incidents || incidents.length === 0) {
         return [];
     }
 
-    const fileType = metadata?.type || 'unknown';
+    const fileType = postmortemMetadata?.type || 'unknown';
 
     console.log(`[extractPostmortemKPIs] File type: ${fileType}`);
 
     // Try to read pre-calculated KPIs from metadata first
-    if (metadata && metadata.dashboard_hub) {
+    if (postmortemMetadata && postmortemMetadata.dashboard_hub) {
         console.log(`[extractPostmortemKPIs] Using pre-calculated KPIs from metadata`);
-        const kpis = metadata.dashboard_hub;
+        const kpis = postmortemMetadata.dashboard_hub;
 
         return [
             createKPICard(
@@ -500,25 +512,25 @@ function extractPostmortemKPIs(incidents, metadata) {
     // (for backward compatibility with old JSON files without dashboard_hub metadata)
     console.log(`[extractPostmortemKPIs] Falling back to calculating KPIs from incidents data`);
 
-    const totalRecords = incidents.length;
+    // Filter only postmortem incidents (those with Despliegue field)
+    const postmortemIncidents = incidents.filter(i => getIncidentFieldValue(i, 'Despliegue'));
 
-    // Check if this is actually postmortem data with Despliegue field
-    const hasDespliegue = incidents.some(i => getIncidentFieldValue(i, 'Despliegue'));
-
-    if (!hasDespliegue && fileType !== 'postmortem') {
-        console.log(`[extractPostmortemKPIs] No Despliegue field found and file type is '${fileType}'. Returning empty KPIs.`);
+    if (postmortemIncidents.length === 0) {
+        console.log(`[extractPostmortemKPIs] No postmortem incidents found (no Despliegue field). Returning empty KPIs.`);
         return [];
     }
 
+    const totalRecords = postmortemIncidents.length;
+
     // Calculate percentages
-    const closedCount = incidents.filter(i => {
+    const closedCount = postmortemIncidents.filter(i => {
         const status = (getIncidentFieldValue(i, 'Estatus') || '').toLowerCase();
-        return status.includes('cerrado');
+        return status.includes('cerrado') || status.includes('resuelto');
     }).length;
     const closedPercent = totalRecords > 0 ? Math.round((closedCount / totalRecords) * 100) : 0;
 
     // Calculate PAP metrics (Cerrado + Resuelto)
-    const papIncidents = incidents.filter(i => getIncidentFieldValue(i, 'Despliegue') === 'PAP');
+    const papIncidents = postmortemIncidents.filter(i => getIncidentFieldValue(i, 'Despliegue') === 'PAP');
     const papResolved = papIncidents.filter(i => {
         const status = (getIncidentFieldValue(i, 'Estatus') || '').toLowerCase();
         return status.includes('cerrado') || status.includes('resuelto');
@@ -526,7 +538,7 @@ function extractPostmortemKPIs(incidents, metadata) {
     const papPercent = papIncidents.length > 0 ? Math.round((papResolved / papIncidents.length) * 100) : 0;
 
     // Calculate MESA metrics (Cerrado + Resuelto)
-    const mesaIncidents = incidents.filter(i => getIncidentFieldValue(i, 'Despliegue') === 'MESA');
+    const mesaIncidents = postmortemIncidents.filter(i => getIncidentFieldValue(i, 'Despliegue') === 'MESA');
     const mesaResolved = mesaIncidents.filter(i => {
         const status = (getIncidentFieldValue(i, 'Estatus') || '').toLowerCase();
         return status.includes('cerrado') || status.includes('resuelto');
