@@ -3,6 +3,7 @@ Encoding detection for CSV files.
 
 Automatically detects file encoding (UTF-8, UTF-8-sig, Windows-1252, Latin-1, ISO-8859-15).
 """
+from __future__ import annotations
 
 
 def detect_encoding(file_bytes: bytes) -> str:

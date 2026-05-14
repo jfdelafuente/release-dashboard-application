@@ -3,6 +3,7 @@ Field schemas and validation rules for incident records.
 
 Defines the structure, validation rules, and allowed values for each incident field.
 """
+from __future__ import annotations
 
 # Required fields for all incident records
 REQUIRED_FIELDS = {

@@ -8,6 +8,7 @@ Orchestrates the complete conversion pipeline:
 4. Validate records
 5. Output JSON + error report
 """
+from __future__ import annotations
 
 import json
 from datetime import datetime

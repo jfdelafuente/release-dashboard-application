@@ -3,6 +3,7 @@ Field normalization utilities.
 
 Normalizes field values before validation (trim, casing, format standardization).
 """
+from __future__ import annotations
 
 import re
 from datetime import datetime

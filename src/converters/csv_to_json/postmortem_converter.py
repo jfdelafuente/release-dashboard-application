@@ -9,6 +9,7 @@ Orchestrates the conversion pipeline for postmortem incident data:
 4. Generate JSON with metadata
 5. Create error reports
 """
+from __future__ import annotations
 
 import json
 import csv

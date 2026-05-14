@@ -3,6 +3,7 @@ CSV delimiter detection.
 
 Automatically detects CSV delimiter (comma, semicolon, tab).
 """
+from __future__ import annotations
 
 import csv
 

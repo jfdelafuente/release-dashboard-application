@@ -3,6 +3,7 @@ Field validation logic.
 
 Validates incident record fields against schema rules (presence, type, format, values).
 """
+from __future__ import annotations
 
 from .schemas import FIELD_VALIDATORS, ALLOWED_VALUES, REQUIRED_FIELDS
 from .normalizers import normalize_datetime
