@@ -1,139 +1,113 @@
-# Implementation Plan: Postmortem CSV to JSON Converter
+# Implementation Plan: [FEATURE]
 
-**Branch**: `004-postmortem-converter` | **Date**: 2026-05-13 | **Spec**: [spec.md](spec.md)
+**Branch**: `[###-feature-name]` | **Date**: [DATE] | **Spec**: [link]
 
-**Input**: Feature specification from `specs/004-postmortem-converter/spec.md`
+**Input**: Feature specification from `/specs/[###-feature-name]/spec.md`
+
+**Note**: This template is filled in by the `/speckit-plan` command. See `.specify/templates/plan-template.md` for the execution workflow.
 
 ## Summary
 
-Create a CSV-to-JSON converter for postmortem incident data that auto-detects encoding and delimiters, normalizes fields, derives deployment type from date analysis, pre-calculates KPIs, and integrates with Dashboard Hub auto-load discovery system. Follows Massive Incidents Converter pattern (chardet + csv.Sniffer) for encoding/delimiter detection, single-pass KPI calculation, and file-based output to `data/output/` with `-postmortem` suffix for automatic Dashboard Hub indexing.
+[Extract from feature spec: primary requirement + technical approach from research]
 
 ## Technical Context
 
-**Language/Version**: Python 3.7+ (matches project baseline)
+<!--
+  ACTION REQUIRED: Replace the content in this section with the technical details
+  for the project. The structure here is presented in advisory capacity to guide
+  the iteration process.
+-->
 
-**Primary Dependencies**: chardet (encoding detection), csv (stdlib), json (stdlib), pathlib (stdlib)
+**Language/Version**: [e.g., Python 3.11, Swift 5.9, Rust 1.75 or NEEDS CLARIFICATION]
 
-**Storage**: File-based - CSV input from `data/input/`, JSON output to `data/output/`
+**Primary Dependencies**: [e.g., FastAPI, UIKit, LLVM or NEEDS CLARIFICATION]
 
-**Testing**: pytest (Python testing framework)
+**Storage**: [if applicable, e.g., PostgreSQL, CoreData, files or N/A]
 
-**Target Platform**: Windows/Linux CLI (cross-platform via pathlib)
+**Testing**: [e.g., pytest, XCTest, cargo test or NEEDS CLARIFICATION]
 
-**Project Type**: CLI data converter / ETL script
+**Target Platform**: [e.g., Linux server, iOS 15+, WASM or NEEDS CLARIFICATION]
 
-**Performance Goals**: Process 1000+ record CSV in under 5 seconds (SC-003)
+**Project Type**: [e.g., library/cli/web-service/mobile-app/compiler/desktop-app or NEEDS CLARIFICATION]
 
-**Constraints**: Zero encoding failures (100% auto-detection success per SC-008), zero silent failures (all errors logged per SC-002)
+**Performance Goals**: [domain-specific, e.g., 1000 req/s, 10k lines/sec, 60 fps or NEEDS CLARIFICATION]
 
-**Scale/Scope**: Variable CSV sizes (typical: 100-500 records; tested: 1000+), 13 input fields + 1 derived field
+**Constraints**: [domain-specific, e.g., <200ms p95, <100MB memory, offline-capable or NEEDS CLARIFICATION]
+
+**Scale/Scope**: [domain-specific, e.g., 10k users, 1M LOC, 50 screens or NEEDS CLARIFICATION]
 
 ## Constitution Check
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-✅ **PASS** - No constitution violations detected:
-- Follows established CSV-JSON conversion pattern (Massive Incidents Converter)
-- Uses only stdlib + chardet (minimal dependencies)
-- File-based storage (no new infrastructure required)
-- Contributes to unified Dashboard Hub feature (002-dashboard-hub already merged)
+[Gates determined based on constitution file]
 
 ## Project Structure
 
 ### Documentation (this feature)
 
 ```text
-specs/004-postmortem-converter/
+specs/[###-feature]/
 ├── plan.md              # This file (/speckit-plan command output)
-├── research.md          # Design decisions and strategy
-├── data-model.md        # Entity definitions and relationships
-├── quickstart.md        # Testing scenarios and integration guide
-├── spec.md              # Feature specification (completed)
-└── tasks.md             # Task breakdown (/speckit-tasks command - NOT YET created)
+├── research.md          # Phase 0 output (/speckit-plan command)
+├── data-model.md        # Phase 1 output (/speckit-plan command)
+├── quickstart.md        # Phase 1 output (/speckit-plan command)
+├── contracts/           # Phase 1 output (/speckit-plan command)
+└── tasks.md             # Phase 2 output (/speckit-tasks command - NOT created by /speckit-plan)
 ```
 
 ### Source Code (repository root)
+<!--
+  ACTION REQUIRED: Replace the placeholder tree below with the concrete layout
+  for this feature. Delete unused options and expand the chosen structure with
+  real paths (e.g., apps/admin, packages/something). The delivered plan must
+  not include Option labels.
+-->
 
 ```text
-csv_to_json/                    # Existing converter module (REUSE)
-├── __init__.py
-├── encoding.py                 # Reuse: encoding detection
-├── delimiter.py                # Reuse: delimiter detection
-├── normalizers.py              # Adapt: postmortem-specific normalization
-├── validators.py               # Adapt: postmortem-specific validation
-├── schemas.py                  # Adapt: 13-field postmortem schema
-└── converter.py                # Adapt: add _calculate_postmortem_kpis()
+# [REMOVE IF UNUSED] Option 1: Single project (DEFAULT)
+src/
+├── models/
+├── services/
+├── cli/
+└── lib/
 
-convert_postmortems.py          # NEW: CLI entry point for postmortem conversion
-                                 # (or adapt convert_incidents.py)
+tests/
+├── contract/
+├── integration/
+└── unit/
 
-data/                            # Data directories
-├── input/                       # CSV input files (users place files here)
-├── output/                      # JSON output files (converter creates here)
-└── errors/                      # Error reports (converter creates here)
+# [REMOVE IF UNUSED] Option 2: Web application (when "frontend" + "backend" detected)
+backend/
+├── src/
+│   ├── models/
+│   ├── services/
+│   └── api/
+└── tests/
 
-tests/                           # Test suite
-├── test_postmortem_encoding.py  # Unit: encoding detection
-├── test_postmortem_delimiter.py # Unit: delimiter detection
-├── test_postmortem_parser.py    # Unit: date parsing and Despliegue logic
-├── test_postmortem_kpis.py      # Unit: KPI calculation
-├── test_postmortem_converter.py # Integration: end-to-end conversion
-└── test_data/                   # Test CSV files
-    ├── valid-100.csv
-    ├── invalid-mixed.csv
-    ├── encoding-utf8.csv
-    └── large-1000.csv
+frontend/
+├── src/
+│   ├── components/
+│   ├── pages/
+│   └── services/
+└── tests/
+
+# [REMOVE IF UNUSED] Option 3: Mobile + API (when "iOS/Android" detected)
+api/
+└── [same as backend above]
+
+ios/ or android/
+└── [platform-specific structure: feature modules, UI flows, platform tests]
 ```
 
-**Structure Decision**: Extend existing `csv_to_json` module (proven pattern for Massive Incidents) with postmortem-specific adaptations. Create new CLI entry point `convert_postmortems.py` or extend `convert_incidents.py`. Data directories already exist; converter creates output files with `-postmortem` suffix for Dashboard Hub discovery.
+**Structure Decision**: [Document the selected structure and reference the real
+directories captured above]
 
-## Phase 0: Research (COMPLETE)
+## Complexity Tracking
 
-**Deliverables**: `research.md`
+> **Fill ONLY if Constitution Check has violations that must be justified**
 
-Completed design decisions for:
-- Encoding detection strategy (chardet + BOM fallback)
-- Delimiter detection strategy (csv.Sniffer + manual fallback)
-- Date format handling (DD-MMM and DD/MM/YYYY normalization)
-- Despliegue derivation logic (PAP = oldest date, MESA = rest)
-- KPI calculation architecture (single-pass aggregation)
-- Output JSON structure (metadata + data with postmortem KPIs)
-- File discovery integration (`-postmortem` suffix pattern)
-- Error handling approach (lenient data, strict structure)
-- Testing strategy (unit + integration)
-
-## Phase 1: Design (COMPLETE)
-
-**Deliverables**: `data-model.md`, `quickstart.md`
-
-Completed design for:
-- **PostmortemRecord** entity (13 input fields + 1 derived Despliegue)
-- **PostmortemKPIMetrics** (total, by_status, by_urgency, by_impact)
-- **ConversionMetadata** (type, version, timestamps, audit trail)
-- **ValidationError** (row-level error tracking)
-- Data relationships and state transitions
-- Performance targets and constraints
-- Integration points with Dashboard Hub
-- End-to-end testing scenarios (8 test cases)
-
-## Next Phase: Implementation Planning
-
-Run `/speckit-tasks` to generate:
-- Detailed task breakdown by user story
-- Dependency tracking
-- Parallel execution opportunities
-- Acceptance criteria for each task
-- Estimated effort allocation
-
----
-
-## Key Design Decisions Summary
-
-| Decision | Rationale | Implementation |
-|----------|-----------|-----------------|
-| Reuse csv_to_json module | Proven pattern for Massive Incidents | Adapt encoding.py, delimiter.py, schemas.py, validators.py |
-| Single-pass KPI calculation | Performance: <5 sec for 1000 records | In-memory dicts accumulate during CSV read |
-| Despliegue from date analysis | Business requirement: oldest date = PAP | Two-pass or tracking-minimum approach |
-| `-postmortem` suffix for auto-load | Dashboard Hub auto-discovery pattern | Index.json scans for filename pattern |
-| Pre-calculated KPIs in metadata | Spec SC-010: Dashboard needs ready values | No deferred computation in dashboard |
-| Lenient data validation | SC-002: 0 silent failures | Collect all errors, output valid records |
+| Violation | Why Needed | Simpler Alternative Rejected Because |
+|-----------|------------|-------------------------------------|
+| [e.g., 4th project] | [current need] | [why 3 projects insufficient] |
+| [e.g., Repository pattern] | [specific problem] | [why direct DB access insufficient] |

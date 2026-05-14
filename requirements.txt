@@ -1,8 +1,11 @@
-# CSV to JSON Workflow - Dependencies
+# Release Dashboard Application - Production Dependencies
 
-# Testing
-pytest>=7.0.0
-pytest-cov>=4.0.0
+# Core Python modules (using standard library, minimal external dependencies)
+# csv_to_json module is part of the project, not external
 
-# No external dependencies for main code - using Python stdlib only
-# csv, json, pathlib, datetime, re all available in Python 3.6+
+# Configuration management
+python-dotenv>=0.19.0
+
+# No other production dependencies required for core functionality
+# Dashboard uses Plotly.js (JavaScript CDN, no Python package needed)
+# CSV-to-JSON conversion uses Python standard library (csv, json)

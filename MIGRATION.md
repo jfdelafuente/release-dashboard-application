@@ -1,212 +1,103 @@
-# Migración de Estructura de Directorios: datos/ → data/
+# Migration Guide: Data Directory Reorganization
 
-**Fecha de efectividad**: 2026-05-14
+This guide documents the migration from the old directory structure (`datos/`, `csv/`, `incidencias/`) to the new unified structure (`data/input/`, `data/output/`, `data/errors/`).
 
-## Resumen
+## Old Structure vs. New Structure
 
-El proyecto ha reorganizado la estructura de directorios para datos de incidencias con el objetivo de mejorar seguridad, claridad y escalabilidad. Se ha pasado de una estructura inconsistente a una estructura clara, predecible y bien documentada.
-
-## Cambios Principales
-
-### Estructura Anterior (Deprecada)
-
+### Old Structure (Deprecated)
 ```
-proyecto/
-├── datos/
-│   ├── csv/              # Archivos CSV de entrada
-│   ├── json/             # Archivos JSON de salida
-│   └── errors/           # Reportes de errores
-├── incidencias/          # (documentada pero no existía)
-└── output/               # (documentada pero no existía)
+datos/
+├── csv/              # CSV input files
+├── json/             # Generated JSON files
+└── errors/           # Error reports
 ```
 
-**Problemas**:
-- ❌ Inconsistencia: documentación menciona rutas que no existen
-- ❌ Seguridad: `.gitignore` no protegía completamente `datos/`
-- ❌ Claridad: usuarios confundidos sobre dónde colocar archivos
-- ❌ Escalabilidad: sin estructura para archivo histórico
-
-### Nueva Estructura (Actual)
-
+### New Structure (Current)
 ```
-proyecto/
-└── data/
-    ├── input/           # Archivos CSV de entrada (usuarios colocan aquí)
-    ├── output/          # Archivos JSON generados (dashboard carga de aquí)
-    ├── errors/          # Reportes de errores de validación
-    └── archive/         # Archivos históricos (año/mes)
+data/
+├── input/            # CSV input files (replace: datos/csv/)
+├── output/           # Generated JSON files (replace: datos/json/)
+├── errors/           # Error reports (replace: datos/errors/)
+└── archive/          # Historical data (optional)
 ```
 
-**Ventajas**:
-- ✅ Claridad inmediata: nombres auto-explicativos
-- ✅ Seguridad: `data/` totalmente protegido en `.gitignore`
-- ✅ Documentación alineada: rutas coinciden con código y docs
-- ✅ Escalabilidad: estructura para históricos indefinidos
+## Benefits
 
-## Migración de Archivos
+✅ Clarity: `data/input/` and `data/output/` are self-documenting
+✅ Security: `data/` in `.gitignore` prevents accidental commits  
+✅ Consistency: Aligns with industry standards
+✅ Scalability: Supports archiving without clogging active directories
 
-### Para Usuarios (Analistas, Equipos de Operaciones)
+## Migration Steps
 
-#### Paso 1: Identifica tus archivos CSV
+### Phase 1: Directory Creation (✅ Done)
+New directories created in `data/` hierarchy.
 
+### Phase 2: Migrate Existing Data
 ```bash
-# Si tienes CSVs en la estructura anterior
-find datos/csv/ -name "*.csv"
-```
-
-#### Paso 2: Copia tus CSVs a la nueva ubicación
-
-```bash
-# Windows
-copy "datos\csv\*" "data\input\"
-
-# Linux/Mac
 cp datos/csv/* data/input/
+cp datos/json/* data/output/
+cp datos/errors/* data/errors/
 ```
 
-#### Paso 3: Usa los nuevos conversores
+### Phase 3: Update Converters
+Old paths still work during transition (30-day period).
 
-Los conversores detectan automáticamente la nueva estructura:
-
+New preferred usage:
 ```bash
-# Windows
-convert_incidents.bat "data/input/tu-archivo.csv"
-
-# Linux/Mac
-./convert_incidents.sh "data/input/tu-archivo.csv"
+python src/converters/convert_incidents.py data/input/sample.csv
+# Output: data/output/sample.json
 ```
 
-El JSON se genera automáticamente en `data/output/`.
+## File Naming Conventions
 
-### Para Desarrolladores
+### CSV Files (Input)
+Pattern: `<type>-<identifier>-<date>.csv`
+- `cs-masiva-202605.csv` (Customer Service, massive, June 2026)
+- `2026r4-postmortem.csv` (Release 2026 R4, post-mortem)
 
-#### Código Python
+### JSON Files (Output)
+Same base name as CSV, with `.json` extension:
+- `data/input/cs-masiva-202605.csv` → `data/output/cs-masiva-202605.json`
 
-Si tienes código que lee de la estructura antigua:
+### Error Reports
+Pattern: `<base>_errors.json`
+- `data/errors/cs-masiva-202605_errors.json`
 
-**Antes**:
-```python
-from csv_to_json import CsvToJsonConverter
+## Backward Compatibility
 
-converter.convert_file(
-    input_path='datos/csv/archivo.csv',
-    output_path='datos/json/archivo.json'
-)
-```
+### Transition Period (30 days)
 
-**Ahora**:
-```python
-from csv_to_json import CsvToJsonConverter
+Both paths work:
+✅ `python src/converters/convert_incidents.py data/input/sample.csv` (new, preferred)
+✅ `python src/converters/convert_incidents.py datos/csv/sample.csv` (old, fallback)
 
-converter.convert_file(
-    input_path='data/input/archivo.csv',
-    output_path='data/output/archivo.json'
-)
-```
+After 2026-06-14: Only new paths supported.
 
-#### Scripts y Automatización
+## Dashboard Integration
 
-Los scripts `convert_incidents.py` y `convert_postmortems.py` incluyen **backward compatibility**:
-- Por defecto usan `data/output/` y `data/errors/`
-- Si `data/` no existe, caen atrás a `datos/json/` y `datos/errors/`
+1. Start server: `python -m http.server 8000`
+2. Open dashboard: `http://localhost:8000/src/dashboards/massive-incidents-dashboard.html`
+3. Load JSON: Click "Select JSON File" → navigate to `data/output/` → select `.json`
 
-**No requiere cambios inmediatos**, pero se recomienda actualizar en próxima iteración.
+## Verification Checklist
 
-## Período de Transición
+- [ ] `data/input/`, `data/output/`, `data/errors/` exist
+- [ ] `.gitignore` contains `data/` pattern
+- [ ] Converter works: `python src/converters/convert_incidents.py data/input/test.csv`
+- [ ] Output appears in `data/output/`
+- [ ] Dashboard can load JSON from `data/output/`
+- [ ] `.env` files are git-ignored
 
-### Ahora hasta 30 de Junio de 2026
+## Related Documentation
 
-- ✅ Ambas estructuras (`datos/` y `data/`) soportadas
-- ✅ Conversores usan `data/` por defecto
-- ✅ Código de fallback soporta `datos/` para compatibilidad atrás
+- [DIRECTORY-STRUCTURE.md](DIRECTORY-STRUCTURE.md) - Detailed directory organization
+- [docs/API.md](docs/API.md) - Converter API
+- [README.md](README.md) - Quick start
+- [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) - Development setup
 
-### Después del 30 de Junio de 2026
+---
 
-- ❌ Estructura `datos/` será removida
-- ❌ Código de fallback será eliminado
-- ✅ Solo `data/` será soportado
-
-## Dashboard Hub - Carga Automática
-
-El Dashboard Hub ahora busca archivos JSON en `data/output/`:
-
-```javascript
-// Dashboard Hub busca automáticamente en:
-data/output/*.json
-data/output/*-massive.json
-data/output/*-postmortem.json
-```
-
-**Para que tus archivos aparezcan en Dashboard Hub**:
-1. Convierte tu CSV usando los scripts
-2. JSON se genera automáticamente en `data/output/`
-3. Dashboard Hub detecta y carga automáticamente
-4. No requiere acción manual
-
-## Verificación: ¿Está el cambio completo?
-
-Puedes verificar que el cambio está completo revisando:
-
-### ✅ Estructura de directorios
-
-```bash
-# Debe existir y tener archivos
-ls -la data/input/
-ls -la data/output/
-ls -la data/errors/
-
-# Debe estar vacío o con archivos de backup
-ls -la datos/ 2>/dev/null || echo "datos/ ya está removido"
-```
-
-### ✅ Documentación alineada
-
-```bash
-# No debe encontrar referencias a incidencias/ o datos/
-grep -r "incidencias/" README.md CONVERTER_USAGE.md
-grep -r "datos/csv" *.py *.sh *.bat
-
-# Si encuentra algo, actualizar manualmente
-```
-
-### ✅ Archivos protegidos en git
-
-```bash
-# Verificar que data/ está protegido
-grep "^data/" .gitignore
-
-# Intentar agregar archivo (debe ser rechazado)
-echo "test" > data/input/test.csv
-git add data/input/test.csv
-# Resultado esperado: "The following paths are ignored"
-```
-
-## Preguntas Frecuentes
-
-### P: ¿Dónde coloco mis archivos CSV?
-**R**: En la carpeta `data/input/`. El dashboard y los conversores buscarán allí automáticamente.
-
-### P: ¿Mi antiguo código seguirá funcionando?
-**R**: Sí, durante el período de transición (hasta 30 junio 2026). Los conversores mantienen compatibilidad atrás.
-
-### P: ¿Qué pasa si vuelvo a ejecutar un viejo script?
-**R**: Los scripts incluyen lógica de fallback. Si especificas rutas antiguas, intentarán usar `datos/` si `data/` no existe.
-
-### P: ¿Los datos antiguos se pierden?
-**R**: No. Los archivos en `datos/` permanecen y son respaldados. Puedes migrar en tu propio horario.
-
-### P: ¿Necesito actualizar mis dashboards?
-**R**: No. Los dashboards actuales buscan en ambas ubicaciones durante el período de transición.
-
-## Soporte
-
-Si tienes dudas sobre la migración:
-1. Revisa este documento
-2. Consulta [README.md](README.md) para ejemplos actualizados
-3. Revisa los comentarios en los scripts de conversión
-
-## Más Información
-
-- [README.md](README.md) - Documentación del conversor
-- [CONVERTER_USAGE.md](CONVERTER_USAGE.md) - Guía de uso
-- [CLAUDE.md](CLAUDE.md) - Detalles técnicos de la arquitectura
+**Migration Deadline**: 2026-06-14  
+**Status**: Backward compatible until deadline  
+**Last Updated**: 2026-05-14
