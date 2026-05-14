@@ -308,13 +308,13 @@ function extractMassiveIncidentsKPIs(incidents, metadata) {
                 'total-incidents',
                 'Total de Incidencias',
                 kpis.total,
-                'incidencias'
+                ''
             ),
             createKPICard(
                 'pending-incidents',
                 'Incidencias Pendientes',
                 kpis.pending,
-                'pendientes'
+                ''
             ),
             createKPICard(
                 'trend-7-day',
@@ -397,13 +397,13 @@ function extractMassiveIncidentsKPIs(incidents, metadata) {
             'total-incidents',
             'Total de Incidencias',
             totalIncidents,
-            'incidencias'
+            ''
         ),
         createKPICard(
             'pending-incidents',
             'Incidencias Pendientes',
             pendingCount,
-            'pendientes'
+            ''
         ),
         createKPICard(
             'trend-7-day',
@@ -485,7 +485,7 @@ function extractPostmortemKPIs(incidents, postmortemMetadata) {
                 'total-postmortem-incidents',
                 'Total Incidencias',
                 kpis.total_incidencias || 0,
-                'incidencias'
+                ''
             ),
             createKPICard(
                 'postmortem-closed-percent',
@@ -499,7 +499,7 @@ function extractPostmortemKPIs(incidents, postmortemMetadata) {
                 kpis.pap_resueltas_percent || 0,
                 '%',
                 null,
-                `${kpis.pap_total || 0}`
+                `${kpis.pap_total || 0} incidencias`
             ),
             createKPICard(
                 'postmortem-mesa-resolved',
@@ -507,7 +507,7 @@ function extractPostmortemKPIs(incidents, postmortemMetadata) {
                 kpis.mesa_resueltas_percent || 0,
                 '%',
                 null,
-                `${kpis.mesa_total || 0}`
+                `${kpis.mesa_total || 0} incidencias`
             )
         ];
     }
@@ -558,7 +558,7 @@ function extractPostmortemKPIs(incidents, postmortemMetadata) {
                 'total-postmortem-incidents',
                 'Total Incidencias',
                 totalRecords,
-                'incidencias'
+                ''
             ),
             createKPICard(
                 'postmortem-closed-percent',
@@ -572,7 +572,7 @@ function extractPostmortemKPIs(incidents, postmortemMetadata) {
                 papPercent,
                 '%',
                 null,
-                `${papIncidents.length}`
+                `${papIncidents.length} incidencias`
             ),
             createKPICard(
                 'postmortem-mesa-resolved',
@@ -580,7 +580,7 @@ function extractPostmortemKPIs(incidents, postmortemMetadata) {
                 mesaPercent,
                 '%',
                 null,
-                `${mesaIncidents.length}`
+                `${mesaIncidents.length} incidencias`
             )
         ];
     }
