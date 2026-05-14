@@ -151,10 +151,12 @@ pylint src/ csv_to_json/
 
 **Archivo**: `.github/workflows/deploy.yml`
 **Trigger**:
-- Automático en merge a `main` (staging)
-- Manual para producción (workflow_dispatch)
+- ⚠️ Manual solamente (`workflow_dispatch`)
+- No se ejecuta automáticamente hasta que staging esté configurado
 
-**Propósito**: Auto-deploy a VPS staging + aprobación manual para VPS producción
+**Propósito**: Deploy manual a VPS staging + aprobación manual para VPS producción
+
+**⚠️ ESTADO**: Este workflow está **DESACTIVADO** por defecto. Se ejecutará únicamente cuando sea disparado manualmente desde GitHub Actions y se configure los secretos requeridos (SSH_PRIVATE_KEY, STAGING_HOST, STAGING_USER, STAGING_PORT, STAGING_URL, etc.)
 
 **Infraestructura**:
 - **Staging**: VPS via SSH (conectado automáticamente en cada push a main)
@@ -205,8 +207,8 @@ git push origin feature/X
 
 4. **Merge a main**:
    - Una vez que PR es aprobado y checks pasan
-   - Deploy a staging se dispara automáticamente
-   - Recibirás comentario con URL de staging
+   - ⚠️ El deployment NO se ejecuta automáticamente (requiere secretos configurados)
+   - Para desplegar manualmente a staging/producción, usa la sección "Deployment Manual" abajo
 
 ### Ejecución Manual (Para Testing)
 
@@ -216,6 +218,47 @@ Para disparar workflows manualmente sin hacer push:
 2. Selecciona el workflow (e.g., "Tests & Coverage")
 3. Haz click **"Run workflow"**
 4. Selecciona rama y haz click **"Run"**
+
+### Deployment Manual (Staging/Production)
+
+⚠️ **PREREQUISITO**: Primero debes configurar los GitHub Secrets (ver sección "Configurar GitHub Secrets" arriba).
+
+**Para desplegar a Staging**:
+
+1. Ve a tu repositorio GitHub → **Actions**
+2. Selecciona **"Deployment Pipeline"**
+3. Haz click **"Run workflow"**
+4. Selecciona:
+   - **Branch**: `main` (o la rama que quieras desplegar)
+   - **Environment**: `staging`
+5. Haz click **"Run workflow"**
+6. Espera a que se complete:
+   - Build
+   - Deploy Staging
+   - Health Check
+7. Si todo falla, revisa el log del workflow para ver el error
+
+**Para desplegar a Production** (DESPUÉS de validar staging):
+
+1. Ve a **Actions** → **Deployment Pipeline**
+2. Haz click **"Run workflow"**
+3. Selecciona:
+   - **Branch**: `main`
+   - **Environment**: `production` ← ⚠️ IMPORTANTE: Cambia a "production"
+4. Haz click **"Run workflow"**
+5. El flujo hará:
+   - Build
+   - Deploy a Production VPS
+   - Crea backup automático antes de deploy
+   - Health check
+   - Crea GitHub Release con la versión
+
+**⚠️ IMPORTANTE - Secretos requeridos**:
+
+Si el workflow falla con errores de SSH o conexión:
+1. Verifica que TODOS los secrets estén configurados en Settings → Secrets → Actions
+2. Requeridos para staging: `SSH_PRIVATE_KEY`, `STAGING_HOST`, `STAGING_USER`, `STAGING_PORT`, `STAGING_URL`
+3. Requeridos para production: `SSH_PRIVATE_KEY`, `PRODUCTION_HOST`, `PRODUCTION_USER`, `PRODUCTION_PORT`, `PRODUCTION_URL`
 
 ---
 
@@ -386,14 +429,20 @@ git push origin feature/add-validation
 #    → Si pasan: verás ✅ "All checks passed"
 
 # 7. Merge a main (desde GitHub UI)
-#    → deploy.yml se dispara automáticamente
-#    → Deploy a staging se ejecuta
-#    → Recibirás comentario con URL de staging para validar
+#    → Tests y Linting se ejecutan de nuevo
+#    → ⚠️ Deployment NO se ejecuta automáticamente
+#    → Debes disparar deployment manualmente
 
-# 8. Para producción:
+# 8. Para desplegar a staging (manual):
+#    → Ve a Actions → Deployment Pipeline
+#    → Haz click "Run workflow"
+#    → Selecciona environment: "staging"
+#    → Verifica en STAGING_URL después del deploy
+
+# 9. Para producción (después de validar staging):
 #    → Ve a Actions → Deploy Pipeline
 #    → Haz click "Run workflow"
-#    → Selecciona "production"
+#    → Selecciona environment: "production" ⚠️ IMPORTANTE
 #    → Verifica en PRODUCTION_URL
 ```
 
@@ -434,18 +483,25 @@ tests.yml (Python 3.8-3.11, Coverage 80%)
        ↓
 lint.yml (flake8, black, isort, pylint, bandit)
        ↓
-PR Review & Merge
+PR Review & Merge a main
        ↓
-deploy.yml → SSH a Staging VPS (automático)
+⚠️ MANUAL: Actions → Deployment Pipeline → Run workflow
        ↓
-Health Check → comentario en PR
+deploy.yml (disparado manualmente) → SSH a Staging VPS
        ↓
-Manual: Actions → Deploy to Production VPS
+Health Check Staging
+       ↓
+⚠️ MANUAL: Actions → Deploy to Production (después de validar staging)
        ↓
 Backup automático + Deploy + Health Check
        ↓
 GitHub Release creado
 ```
+
+**IMPORTANTE**: El deployment NO es automático. Debes:
+1. Hacer merge a `main` para ejecutar tests y linting
+2. Una vez validado, disparar deployment manualmente desde Actions → Deployment Pipeline
+3. Seleccionar environment (staging o production)
 
 **Last Updated**: 2026-05-14
 **Infrastructure**: VPS via SSH (no AWS)
