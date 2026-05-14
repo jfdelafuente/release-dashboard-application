@@ -57,6 +57,17 @@
 | **Edge Cases** | ✅ Complete | 7 edge cases covering encoding, line endings, duplicates, ties |
 | **Backward Compatibility** | ✅ Complete | Explicitly documented in assumptions |
 
+## Clarifications Integrated (2026-05-14)
+
+✅ **Metadata KPIs Structure**:
+- Massive Incidents: Aggregations + trends (option C)
+- Postmortem: Dashboard Hub KPIs + aggregations (option B)
+- Additional info: Essential + validation + KPIs object (option B)
+
+✅ **Updated Requirements**:
+- FR-011 & FR-012: Now specify exact KPIs for each converter
+- FR-013: Now specifies full metadata structure with essential, validation, and KPIs sections
+
 ## Notes
 
-Ready for `/speckit-plan` workflow to generate implementation plan.
+✅ All clarifications integrated. Ready for `/speckit-plan` workflow to generate implementation plan.

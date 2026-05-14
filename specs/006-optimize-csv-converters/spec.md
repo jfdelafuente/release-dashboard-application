@@ -8,6 +8,14 @@
 
 **Input**: User description: "vamos a revisar los 2 conversores de csv to json (convert_incident y convert_postmortem) para que realice la conversion y los calculos de forma eficiente y correcta."
 
+## Clarifications
+
+### Session 2026-05-14
+
+- Q: What KPIs should Massive Incidents Converter include in metadata? → A: Option C - aggregations by dimension (by_estatus, by_urgencia, by_impacto) + trends (7d, 15d, 30d)
+- Q: What KPIs should Postmortem Converter include in metadata? → A: Option B - Dashboard Hub KPIs (cerradas_percent, pap_resueltas_percent, mesa_resueltas_percent) + aggregations by dimension
+- Q: What additional information should metadata include besides KPIs? → A: Option B - Essential fields + validation info (success_rate, valid_records, invalid_records) + kpis object
+
 ## User Scenarios & Testing
 
 ### User Story 1 - Validate Massive Incidents Converter (Priority: P1)
@@ -116,9 +124,17 @@ Support teams need detailed error reports that clearly identify which records fa
 - **FR-008**: Converter MUST validate Impacto field contains only "Masiva"
 - **FR-009**: Postmortem Converter MUST derive Despliegue field: PAP for record with earliest date, MESA for all others
 - **FR-010**: Postmortem Converter MUST parse dates in format DD-MMM (e.g., "26-abr") and DD/MM/YYYY (e.g., "26/04/2026")
-- **FR-011**: Postmortem Converter MUST calculate KPI metrics aggregated by Estatus, Urgencia, and Impacto
-- **FR-012**: Postmortem Converter MUST calculate Dashboard Hub KPIs: cerradas_percent, pap_resueltas_percent, mesa_resueltas_percent
-- **FR-013**: Converter MUST include metadata in output JSON: type, version, created timestamp, record_count, source_filename
+- **FR-011**: Massive Incidents Converter MUST calculate and include in metadata KPI metrics:
+  - Aggregations: `by_estatus`, `by_urgencia`, `by_impacto` (count breakdowns)
+  - Trends: `trend_7d`, `trend_15d`, `trend_30d` (percentage change vs date)
+  - Summary: `total_incidencias`, `total_pendientes` (not closed/resolved/cancelled)
+- **FR-012**: Postmortem Converter MUST calculate and include in metadata both:
+  - **Dashboard Hub KPIs**: `cerradas_percent`, `pap_resueltas_percent`, `mesa_resueltas_percent`
+  - **Aggregations**: `by_estatus`, `by_urgencia`, `by_impacto` (count breakdowns for Postmortem Dashboard)
+- **FR-013**: Converter MUST include comprehensive metadata in output JSON:
+  - **Essential**: `type` (massive/postmortem), `version`, `created` (ISO timestamp), `record_count`, `source_filename`, `encoding_detected`, `delimiter_detected`
+  - **Validation**: `success_rate` (%), `valid_records` (count), `invalid_records` (count)
+  - **KPIs**: Complete `kpis` object with all calculated metrics (see FR-011, FR-012 for specifics)
 - **FR-014**: Converter MUST generate separate error report file containing: summary (total, successful, failed, success_rate) and detailed error list
 - **FR-015**: Error report MUST include row number, record ID, error type, and specific field-level issues for each failed record
 - **FR-016**: Converter MUST handle edge case: files with empty content, only headers, or malformed CSV structure gracefully
@@ -128,8 +144,16 @@ Support teams need detailed error reports that clearly identify which records fa
 ### Key Entities
 
 - **IncidentRecord**: Represents a single incident entry with fields: ID, Description, Status, Submission Date, Assigned Group, Urgency, Impact, and optional resolution fields
+
 - **PostmortemRecord**: Represents a postmortem entry with 13 fields including derived Despliegue field and calculated KPI contributions
-- **ConversionMetadata**: File-level metadata including encoding detected, delimiter detected, record counts, KPI aggregates
+
+- **ConversionMetadata**: File-level metadata structure with:
+  - **Essential Fields**: `type` (massive/postmortem), `version`, `created` (ISO timestamp), `record_count`, `source_filename`, `encoding_detected`, `delimiter_detected`
+  - **Validation Metrics**: `success_rate` (%), `valid_records`, `invalid_records`
+  - **KPIs Object**: Complete aggregations and trend calculations:
+    - For Massive Incidents: `total_incidencias`, `total_pendientes`, `by_estatus`, `by_urgencia`, `by_impacto`, `trend_7d`, `trend_15d`, `trend_30d`
+    - For Postmortem: `cerradas_percent`, `pap_resueltas_percent`, `mesa_resueltas_percent`, `by_estatus`, `by_urgencia`, `by_impacto`, `pap_total`, `mesa_total`
+
 - **ValidationError**: Record-level error with row number, record ID, specific field errors, and original values
 
 ## Success Criteria
