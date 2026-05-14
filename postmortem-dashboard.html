@@ -913,10 +913,24 @@
         }
 
         function createEvolutionChart() {
-            // Helper function to parse date (formato "26-abr", "27-abr", etc.)
+            // Helper function to parse date (supports "26-abr" and "26/04/2026" formats)
             function parseDate(dateStr) {
                 if (!dateStr) return null;
 
+                // Soporta formato DD/MM/YYYY (del conversor de postmortem)
+                if (dateStr.includes('/')) {
+                    const parts = dateStr.split('/');
+                    if (parts.length >= 3) {
+                        const day = parseInt(parts[0]);
+                        const month = parseInt(parts[1]) - 1; // JavaScript months are 0-indexed
+                        const year = parseInt(parts[2]);
+                        if (!isNaN(day) && !isNaN(month) && !isNaN(year)) {
+                            return new Date(year, month, day);
+                        }
+                    }
+                }
+
+                // Soporta formato "26-abr" (legacy)
                 const months = {
                     'ene': 0, 'feb': 1, 'mar': 2, 'abr': 3, 'may': 4, 'jun': 5,
                     'jul': 6, 'ago': 7, 'sep': 8, 'oct': 9, 'nov': 10, 'dic': 11
@@ -1159,10 +1173,24 @@
         }
 
         function createOpenIncidentsChart() {
-            // Helper function to parse date
+            // Helper function to parse date (supports "26-abr" and "26/04/2026" formats)
             function parseDate(dateStr) {
                 if (!dateStr) return null;
 
+                // Soporta formato DD/MM/YYYY (del conversor de postmortem)
+                if (dateStr.includes('/')) {
+                    const parts = dateStr.split('/');
+                    if (parts.length >= 3) {
+                        const day = parseInt(parts[0]);
+                        const month = parseInt(parts[1]) - 1; // JavaScript months are 0-indexed
+                        const year = parseInt(parts[2]);
+                        if (!isNaN(day) && !isNaN(month) && !isNaN(year)) {
+                            return new Date(year, month, day);
+                        }
+                    }
+                }
+
+                // Soporta formato "26-abr" (legacy)
                 const months = {
                     'ene': 0, 'feb': 1, 'mar': 2, 'abr': 3, 'may': 4, 'jun': 5,
                     'jul': 6, 'ago': 7, 'sep': 8, 'oct': 9, 'nov': 10, 'dic': 11
