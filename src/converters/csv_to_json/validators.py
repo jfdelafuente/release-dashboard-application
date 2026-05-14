@@ -4,8 +4,8 @@ Field validation logic.
 Validates incident record fields against schema rules (presence, type, format, values).
 """
 
-from csv_to_json.schemas import FIELD_VALIDATORS, ALLOWED_VALUES, REQUIRED_FIELDS
-from csv_to_json.normalizers import normalize_datetime
+from .schemas import FIELD_VALIDATORS, ALLOWED_VALUES, REQUIRED_FIELDS
+from .normalizers import normalize_datetime
 
 
 class ValidationError(Exception):

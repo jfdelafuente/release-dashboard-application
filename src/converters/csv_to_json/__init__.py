@@ -13,6 +13,6 @@ Main exports:
 __version__ = "1.0.0"
 __author__ = "Release Dashboard Team"
 
-from csv_to_json.converter import CsvToJsonConverter
+from .converter import CsvToJsonConverter
 
 __all__ = ["CsvToJsonConverter"]

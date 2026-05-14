@@ -250,10 +250,126 @@ Task generation will produce granular items for:
 - **Testing infrastructure** (pytest setup, config in pytest.ini, CI/CD workflows)
 - **Deployment automation** (scripts/deploy/deploy.sh, rollback.sh, logging)
 
-**Execution paths**:
+### Code Migration Strategy
+
+**Objective**: Organize existing code files from root directory into proper src/ and scripts/ subdirectories with validated import paths.
+
+**Current State**:
+- Python converters in root: `csv_to_json.py`, `convert_incidents.py`, `convert_postmortems.py`, `validate_kpis.py`, `build_index.py`
+- CSV-to-JSON module: `csv_to_json/` directory (partially migrated)
+- HTML dashboards in root: `dashboard-hub.html`, `massive-incidents-dashboard.html`, `postmortem-dashboard.html`
+- CSS file in root: `dashboard-hub.css`
+- JavaScript file in root: `dashboard-hub.js`
+
+**Target Structure** (post-migration):
+```
+src/converters/
+├── convert_incidents.py
+├── convert_postmortems.py
+├── validate_kpis.py
+├── build_index.py
+├── csv_to_json.py          # Wrapper/legacy
+└── csv_to_json/            # Module (moved from root)
+    ├── __init__.py
+    ├── converter.py
+    ├── encoding.py
+    ├── delimiter.py
+    ├── normalizers.py
+    ├── validators.py
+    ├── schemas.py
+    ├── postmortem_converter.py
+    └── postmortem_schemas.py
+
+src/dashboards/
+├── massive-incidents-dashboard.html
+├── postmortem-dashboard.html
+├── dashboard-hub.html
+└── assets/
+    ├── css/
+    │   └── dashboard-hub.css
+    └── js/
+        └── dashboard-hub.js
+```
+
+**Migration Plan**:
+
+1. **T020a**: Prepare imports for migration
+   - Change absolute imports to relative imports in `csv_to_json/` module files
+   - Example: `from csv_to_json.converter import ...` → `from .converter import ...`
+   - Update `csv_to_json/__init__.py` to use relative imports
+
+2. **T020b**: Move Python converters
+   - Move `csv_to_json.py` to `src/converters/`
+   - Move `convert_incidents.py` to `src/converters/`
+   - Move `convert_postmortems.py` to `src/converters/`
+   - Move `validate_kpis.py` to `src/converters/`
+   - Move `build_index.py` to `src/converters/`
+   - Move `csv_to_json/` directory to `src/converters/csv_to_json/`
+
+3. **T020c**: Move HTML dashboards
+   - Move `dashboard-hub.html` to `src/dashboards/`
+   - Move `massive-incidents-dashboard.html` to `src/dashboards/`
+   - Move `postmortem-dashboard.html` to `src/dashboards/`
+   - No import path changes needed (HTML is static)
+
+4. **T020d**: Move CSS and JavaScript
+   - Move `dashboard-hub.css` to `src/dashboards/assets/css/`
+   - Move `dashboard-hub.js` to `src/dashboards/assets/js/`
+   - Update relative links in `dashboard-hub.html` if necessary
+
+5. **T020e**: Update pytest configuration
+   - Update `pytest.ini`: change `--cov=csv_to_json` to `--cov=src.converters.csv_to_json`
+   - Ensure PYTHONPATH includes project root so `from src.converters.csv_to_json import ...` works
+
+6. **T020f**: Validation - Execute complete test suite
+   - Run: `python -m pytest --cov=src.converters.csv_to_json tests/`
+   - Verify: All tests pass with ≥80% coverage
+   - Verify: Coverage report includes csv_to_json module
+   - Document: Any import adjustments made
+
+**Import Update Details**:
+
+Changes in `csv_to_json/converter.py`:
+```python
+# BEFORE:
+from csv_to_json.encoding import decode_file
+from csv_to_json.delimiter import parse_csv_with_delimiter, detect_delimiter
+from csv_to_json.normalizers import normalize_field
+from csv_to_json.validators import validate_record
+from csv_to_json.schemas import REQUIRED_FIELDS, FIELD_VALIDATORS
+
+# AFTER:
+from .encoding import decode_file
+from .delimiter import parse_csv_with_delimiter, detect_delimiter
+from .normalizers import normalize_field
+from .validators import validate_record
+from .schemas import REQUIRED_FIELDS, FIELD_VALIDATORS
+```
+
+Changes in `convert_incidents.py`:
+```python
+# BEFORE:
+from csv_to_json import CsvToJsonConverter
+
+# AFTER (same location, relative imports still work):
+from csv_to_json import CsvToJsonConverter
+```
+
+**Validation Criteria**:
+- ✅ All 5 Python files moved to `src/converters/`
+- ✅ CSV-to-JSON module moved to `src/converters/csv_to_json/`
+- ✅ All 3 HTML dashboards moved to `src/dashboards/`
+- ✅ CSS moved to `src/dashboards/assets/css/`
+- ✅ JavaScript moved to `src/dashboards/assets/js/`
+- ✅ Import paths converted to relative (no absolute imports in module)
+- ✅ `pytest.ini` updated to cover new module path
+- ✅ All tests pass: `python -m pytest`
+- ✅ Coverage report includes `src.converters.csv_to_json`
+
+**Execution paths** (post-migration):
 - Converters: `python -m src.converters.convert_incidents <csv>`
 - Wrapper scripts: `./scripts/bin/convert_incidents.bat` (from repo root)
 - Deploy: `./scripts/deploy/deploy.sh <env> <version>`
 - Rollback: `./scripts/deploy/rollback.sh <version>`
 
-Expected: 30-50 tasks organized across 5 user stories
+Expected: 30-50 tasks organized across 5 user stories (including 6 code migration tasks)

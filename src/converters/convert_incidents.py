@@ -27,7 +27,7 @@ import json
 import sys
 from pathlib import Path
 from datetime import datetime
-from csv_to_json import CsvToJsonConverter
+from .csv_to_json import CsvToJsonConverter
 
 
 # Configuración de rutas por defecto

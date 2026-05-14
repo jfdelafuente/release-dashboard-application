@@ -15,9 +15,9 @@ import csv
 from pathlib import Path
 from typing import Tuple, Dict, List, Any, Optional
 
-from csv_to_json.encoding import decode_file
-from csv_to_json.delimiter import detect_delimiter
-from csv_to_json.postmortem_schemas import (
+from .encoding import decode_file
+from .delimiter import detect_delimiter
+from .postmortem_schemas import (
     PostmortemRecord,
     PostmortemKPIMetrics,
     ConversionMetadata,

@@ -37,9 +37,9 @@ echo %GREEN%    CSV to JSON Converter - Dashboard de Incidencias Masivas%RESET%
 echo %GREEN%======================================================================%RESET%
 echo.
 
-REM Ejecutar script Python
+REM Ejecutar script Python desde nueva ubicación src/converters/
 REM IMPORTANTE: Usar "" para que Python interprete los argumentos correctamente
-python convert_incidents.py %*
+python -m src.converters.convert_incidents %*
 
 REM Guardar el código de salida
 set EXITCODE=!ERRORLEVEL!

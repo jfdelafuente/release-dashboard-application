@@ -14,7 +14,7 @@ convert_incidents.bat "data/input/datos.csv"
 
 **¡Eso es todo!** El JSON se genera automáticamente con validación, normalización y reporte de errores.
 
-→ **[Más detalles y opciones](CONVERTER_USAGE.md)**
+→ **[Más detalles y opciones](docs/API.md)**
 
 ## 🎯 Características Principales
 
@@ -66,7 +66,7 @@ Scripts listos para ejecutar (recomendado para la mayoría de usuarios):
 - ✅ Reporte de errores JSON
 - ✅ Detección automática de encoding/delimitadores
 
-**→ [Guía completa de scripts](CONVERTER_USAGE.md)**
+**→ [Guía completa de scripts](docs/API.md)**
 
 ## 🚀 Inicio Rápido
 
@@ -277,11 +277,11 @@ pytest tests/unit/ -v
 
 ## 📚 Documentación Adicional
 
-- [Especificación Feature](specs/001-csv-to-json-workflow/spec.md)
-- [Plan Técnico](specs/001-csv-to-json-workflow/plan.md)
-- [Modelo de Datos](specs/001-csv-to-json-workflow/data-model.md)
-- [Guía de Inicio Rápido](specs/001-csv-to-json-workflow/quickstart.md)
-- [Investigación Técnica](specs/001-csv-to-json-workflow/research.md)
+- [Especificación Feature](specs/005-project-organization/spec.md)
+- [Plan Técnico](specs/005-project-organization/plan.md)
+- [Modelo de Datos](specs/005-project-organization/data-model.md)
+- [Guía de Inicio Rápido](specs/005-project-organization/quickstart.md)
+- [Investigación Técnica](specs/005-project-organization/research.md)
 
 ## 🐛 Solución de Problemas
 
@@ -354,8 +354,8 @@ El JSON generado es compatible 100% con **Massive Incidents Dashboard**:
 ## 📞 Soporte
 
 Para preguntas o problemas:
-- Revisa [quickstart.md](specs/001-csv-to-json-workflow/quickstart.md)
-- Consulta [spec.md](specs/001-csv-to-json-workflow/spec.md) para detalles técnicos
+- Revisa [quickstart.md](specs/005-project-organization/quickstart.md)
+- Consulta [spec.md](specs/005-project-organization/spec.md) para detalles técnicos
 - Ejecuta tests con `pytest` para verificar funcionamiento
 
 ## 📄 Licencia

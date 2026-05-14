@@ -35,6 +35,6 @@ if [ $# -eq 0 ]; then
     exit 1
 fi
 
-# Ejecutar script Python con argumentos
-python3 convert_incidents.py "$@"
+# Ejecutar script Python desde nueva ubicación src/converters/ con argumentos
+python3 -m src.converters.convert_incidents "$@"
 exit $?

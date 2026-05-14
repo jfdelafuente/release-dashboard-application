@@ -6,7 +6,7 @@ Normalizes field values before validation (trim, casing, format standardization)
 
 import re
 from datetime import datetime
-from csv_to_json.schemas import DATE_FORMAT, NORMALIZE_FIELDS
+from .schemas import DATE_FORMAT, NORMALIZE_FIELDS
 
 
 def normalize_field(field_name: str, value: str) -> str:

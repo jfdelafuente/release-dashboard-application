@@ -14,11 +14,11 @@ from datetime import datetime
 from pathlib import Path
 from typing import Tuple, Dict, List, Any
 
-from csv_to_json.encoding import decode_file
-from csv_to_json.delimiter import parse_csv_with_delimiter, detect_delimiter
-from csv_to_json.normalizers import normalize_field
-from csv_to_json.validators import validate_record
-from csv_to_json.schemas import REQUIRED_FIELDS, FIELD_VALIDATORS
+from .encoding import decode_file
+from .delimiter import parse_csv_with_delimiter, detect_delimiter
+from .normalizers import normalize_field
+from .validators import validate_record
+from .schemas import REQUIRED_FIELDS, FIELD_VALIDATORS
 
 
 class CsvToJsonConverter:
