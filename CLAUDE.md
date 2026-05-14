@@ -350,7 +350,19 @@ El script `csv_to_json.py` anterior era un conversor simple sin validación ni n
 - Data model: [specs/004-postmortem-converter/data-model.md](specs/004-postmortem-converter/data-model.md)
 - Testing guide: [specs/004-postmortem-converter/quickstart.md](specs/004-postmortem-converter/quickstart.md)
 
-**Next Step**: Run `/speckit-tasks` to generate task breakdown and implementation checklist
+## Plan Reference
+
+**Current Implementation Plan**: [specs/005-project-organization/plan.md](specs/005-project-organization/plan.md)
+
+The plan defines the organizational and architectural foundation for the project, including:
+- Technical context (languages, frameworks, testing strategy)
+- Constitutional compliance gates
+- Project structure and file organization
+- Phase 0: Research (completed) with key technical decisions
+- Phase 1: Design & Contracts (completed) with data model and deployment contracts
+- Phase 2: Implementation tasks (to be generated via `/speckit-tasks`)
+
+**Next Step**: Run `/speckit-tasks` to generate granular task breakdown and implementation checklist
 
 <!-- SPECKIT END -->
 
