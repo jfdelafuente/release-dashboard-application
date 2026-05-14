@@ -243,10 +243,17 @@ For new developers: clone, venv, install, configure, run tests - done in <30 min
 ## Phase 2: Implementation via /speckit-tasks
 
 Task generation will produce granular items for:
-- Foundation setup (directory structure, .gitignore)
-- Documentation (README, CONTRIBUTING, DEPLOYMENT)
-- Configuration (environment files, secrets management)
-- Testing infrastructure (pytest setup, CI/CD)
-- Deployment automation (scripts, rollback)
+- **Foundation setup** (src/, scripts/ directories, .gitignore)
+- **Converter wrappers** (scripts/bin/convert_incidents.bat/sh)
+- **Documentation** (README, CONTRIBUTING, DEVELOPMENT, DEPLOYMENT)
+- **Configuration** (config/.env.example, pre-commit hook in config/)
+- **Testing infrastructure** (pytest setup, config in pytest.ini, CI/CD workflows)
+- **Deployment automation** (scripts/deploy/deploy.sh, rollback.sh, logging)
+
+**Execution paths**:
+- Converters: `python -m src.converters.convert_incidents <csv>`
+- Wrapper scripts: `./scripts/bin/convert_incidents.bat` (from repo root)
+- Deploy: `./scripts/deploy/deploy.sh <env> <version>`
+- Rollback: `./scripts/deploy/rollback.sh <version>`
 
 Expected: 30-50 tasks organized across 5 user stories
