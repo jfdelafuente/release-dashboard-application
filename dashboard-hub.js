@@ -834,8 +834,8 @@ function createKPICardElement(kpi) {
         content.appendChild(subtitle);
     }
 
-    // Trend if present
-    if (kpi.trend) {
+    // Trend if present (only show if no subtitle - avoid duplicate information)
+    if (kpi.trend && !kpi.subtitle) {
         const trendDiv = document.createElement('div');
         trendDiv.className = `kpi-trend trend-${kpi.trend.direction}`;
 
