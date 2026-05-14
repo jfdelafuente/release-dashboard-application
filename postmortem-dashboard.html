@@ -913,9 +913,14 @@
         }
 
         function createEvolutionChart() {
-            // Helper function to parse date (supports "26-abr" and "26/04/2026" formats)
+            // Helper function to parse date (supports "26-abr" and "26/04/2026" formats, with optional time)
             function parseDate(dateStr) {
                 if (!dateStr) return null;
+
+                // Remove time component if present (e.g., "26/04/2026 8:40 a" -> "26/04/2026")
+                if (dateStr.includes(' ')) {
+                    dateStr = dateStr.split(' ')[0];
+                }
 
                 // Soporta formato DD/MM/YYYY (del conversor de postmortem)
                 if (dateStr.includes('/')) {
@@ -1173,9 +1178,14 @@
         }
 
         function createOpenIncidentsChart() {
-            // Helper function to parse date (supports "26-abr" and "26/04/2026" formats)
+            // Helper function to parse date (supports "26-abr" and "26/04/2026" formats, with optional time)
             function parseDate(dateStr) {
                 if (!dateStr) return null;
+
+                // Remove time component if present (e.g., "26/04/2026 8:40 a" -> "26/04/2026")
+                if (dateStr.includes(' ')) {
+                    dateStr = dateStr.split(' ')[0];
+                }
 
                 // Soporta formato DD/MM/YYYY (del conversor de postmortem)
                 if (dateStr.includes('/')) {
