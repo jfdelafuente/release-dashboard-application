@@ -10,7 +10,6 @@ Defines all data models for postmortem incident processing:
 - Date parsing and Despliegue derivation logic
 """
 from __future__ import annotations
-"""
 
 from datetime import datetime
 from typing import Dict, List, Optional, Any
