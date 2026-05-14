@@ -6,20 +6,9 @@ Aplicación web interactiva para análisis y visualización de incidencias masiv
 
 ---
 
-## 🚀 Inicio Rápido (30 segundos)
+## 🚀 Inicio Rápido (5 minutos)
 
-### 1️⃣ Abre el Dashboard Hub
-
-**Opción A: Con Live Server** (recomendado)
-- En VSCode: Click derecho en `src/dashboards/dashboard-hub.html` → "Open with Live Server"
-
-**Opción B: Con Python**
-```bash
-python -m http.server 8000
-# Luego abre: http://localhost:8000/src/dashboards/dashboard-hub.html
-```
-
-### 2️⃣ Coloca tus CSVs en `data/input/`
+### 1️⃣ Coloca tus CSVs en `data/input/`
 
 ```
 data/input/
@@ -27,7 +16,7 @@ data/input/
 └── postmortem.csv          (para Postmortem Dashboard)
 ```
 
-### 3️⃣ Ejecuta los Conversores
+### 2️⃣ Ejecuta los Conversores (necesario para generar JSONs)
 
 **Convertir Incidencias Masivas**
 ```batch
@@ -47,9 +36,20 @@ convert_postmortems.bat data/input/postmortem.csv
 ./convert_postmortems.sh data/input/postmortem.csv
 ```
 
-### 4️⃣ Dashboard Hub carga automáticamente
+Los JSONs se generan en `data/output/` e `index.json` se actualiza automáticamente.
 
-Los JSONs se generan en `data/output/` y el Dashboard Hub los carga automáticamente mediante `index.json`.
+### 3️⃣ Abre el Dashboard Hub
+
+**Opción A: Con Live Server** (recomendado)
+- En VSCode: Click derecho en `src/dashboards/dashboard-hub.html` → "Open with Live Server"
+
+**Opción B: Con Python**
+```bash
+python -m http.server 8000
+# Luego abre: http://localhost:8000/src/dashboards/dashboard-hub.html
+```
+
+### 4️⃣ Dashboard Hub carga automáticamente los datos
 
 - 📊 **KPIs en tiempo real** de incidencias masivas y postmortems
 - 🔗 Navega a **dashboards especializados**:
