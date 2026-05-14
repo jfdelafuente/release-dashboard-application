@@ -303,6 +303,36 @@ function extractMassiveIncidentsKPIs(incidents, metadata) {
     // If KPIs are already calculated in metadata, use those
     if (metadata && metadata.kpis) {
         const kpis = metadata.kpis;
+
+        // Calculate comparison values from incidents to show in trend subtitles
+        const getTrendArrow = (percentage) => percentage < -2 ? '↓' : percentage > 2 ? '↑' : '→';
+
+        // Count pending incidents today and at different dates
+        const pendingToday = incidents.filter(incident => {
+            const status = (incident['Estatus'] || '').toLowerCase();
+            return !status.includes('cerrado') && !status.includes('resuelto') && !status.includes('cancelado');
+        }).length;
+
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        const sevenDaysAgo = new Date(today);
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+        const pendingSevenDaysAgo = countPendingAtDate(incidents, sevenDaysAgo);
+
+        const fifteenDaysAgo = new Date(today);
+        fifteenDaysAgo.setDate(fifteenDaysAgo.getDate() - 15);
+        const pendingFifteenDaysAgo = countPendingAtDate(incidents, fifteenDaysAgo);
+
+        const thirtyDaysAgo = new Date(today);
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+        const pendingThirtyDaysAgo = countPendingAtDate(incidents, thirtyDaysAgo);
+
+        // Generate trend details
+        const trend7Details = `${getTrendArrow(kpis.trend_7d)} ${pendingToday} vs ${pendingSevenDaysAgo} (7d atrás)`;
+        const trend15Details = `${getTrendArrow(kpis.trend_15d)} ${pendingToday} vs ${pendingFifteenDaysAgo} (15d atrás)`;
+        const trend30Details = `${getTrendArrow(kpis.trend_30d)} ${pendingToday} vs ${pendingThirtyDaysAgo} (30d atrás)`;
+
         return [
             createKPICard(
                 'total-incidents',
@@ -326,7 +356,7 @@ function extractMassiveIncidentsKPIs(incidents, metadata) {
                     direction: getTrendDirection(kpis.trend_7d),
                     period: '7 días'
                 },
-                null  // Subtitle will be generated from fallback calculation
+                trend7Details
             ),
             createKPICard(
                 'trend-15-day',
@@ -338,7 +368,7 @@ function extractMassiveIncidentsKPIs(incidents, metadata) {
                     direction: getTrendDirection(kpis.trend_15d),
                     period: '15 días'
                 },
-                null  // Subtitle will be generated from fallback calculation
+                trend15Details
             ),
             createKPICard(
                 'trend-30-day',
@@ -350,7 +380,7 @@ function extractMassiveIncidentsKPIs(incidents, metadata) {
                     direction: getTrendDirection(kpis.trend_30d),
                     period: '30 días'
                 },
-                null  // Subtitle will be generated from fallback calculation
+                trend30Details
             )
         ];
     }
