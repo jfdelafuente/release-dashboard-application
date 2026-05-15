@@ -61,12 +61,12 @@ log_info() {
 
 log_success() {
     echo -e "${GREEN}[✓]${NC} $1" | tee -a "$HEALTH_LOG"
-    ((CHECKS_PASSED++))
+    ((++CHECKS_PASSED))
 }
 
 log_error() {
     echo -e "${RED}[✗]${NC} $1" | tee -a "$HEALTH_LOG"
-    ((CHECKS_FAILED++))
+    ((++CHECKS_FAILED))
 }
 
 log_warning() {
@@ -329,21 +329,21 @@ main() {
         # Environment-specific checks
         if [[ "$ENVIRONMENT" == "local" ]]; then
             log_info "Running local health checks..."
-            check_dashboard_files
-            check_python_environment
-            check_converter_functionality
-            check_data_structure
-            check_json_files
-            check_disk_space
-            check_logs_directory
-            check_requirements_met
-            check_git_status
+            check_dashboard_files      || true
+            check_python_environment   || true
+            check_converter_functionality || true
+            check_data_structure       || true
+            check_json_files           || true
+            check_disk_space           || true
+            check_logs_directory       || true
+            check_requirements_met     || true
+            check_git_status           || true
 
         elif [[ "$ENVIRONMENT" =~ ^(staging|production)$ ]]; then
             log_info "Running remote ($ENVIRONMENT) health checks..."
-            check_http_endpoint "${URLS[$ENVIRONMENT]}"
-            check_disk_space
-            check_logs_directory
+            check_http_endpoint "${URLS[$ENVIRONMENT]}" || true
+            check_disk_space           || true
+            check_logs_directory       || true
 
         else
             log_error "Unknown environment: $ENVIRONMENT"
