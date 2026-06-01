@@ -1623,9 +1623,6 @@
                         setTimeout(() => {
                             try {
                                 analyzeData();
-                                document.getElementById('filterStatus').addEventListener('change', filterTable);
-                                document.getElementById('filterDespliegue').addEventListener('change', filterTable);
-                                document.getElementById('filterImpacto').addEventListener('change', filterTable);
                             } catch (e) {
                                 console.error('Error in analyzeData:', e);
                             }
