@@ -1,0 +1,126 @@
+╔════════════════════════════════════════════════════════════════════════════════╗
+║                          TEST STRUCTURE ORGANIZATION                           ║
+╚════════════════════════════════════════════════════════════════════════════════╝
+
+tests/
+│
+├── conftest.py                    ← Shared pytest fixtures
+├── test_data/                     ← Test input fixtures (CSV)
+│   ├── valid-100.csv
+│   ├── invalid-mixed.csv
+│   └── normalization-edge-cases.csv
+│
+├── utils/                         ← Test utilities
+│   ├── __init__.py
+│   └── helpers.py
+│
+├── unit/                          ← UNIT TESTS (Pure logic, no I/O)
+│   ├── __init__.py
+│   │
+│   ├── encoding/                  [ENCODING DETECTION]
+│   │   ├── __init__.py
+│   │   ├── test_encoding.py                       2 tests
+│   │   └── test_postmortem_encoding_detection.py
+│   │
+│   ├── delimiter/                 [DELIMITER DETECTION]
+│   │   ├── __init__.py
+│   │   ├── test_delimiter.py                      2 tests
+│   │   └── test_postmortem_delimiter_detection.py
+│   │
+│   ├── normalizers/               [DATA NORMALIZATION]
+│   │   ├── __init__.py
+│   │   ├── test_normalizers.py                    4 tests
+│   │   ├── test_estatus_normalization.py
+│   │   ├── test_record_normalization.py
+│   │   └── test_date_parser.py
+│   │
+│   ├── validators/                [DATA VALIDATION]
+│   │   ├── __init__.py
+│   │   ├── test_validators.py                     3 tests
+│   │   ├── test_validation_rules.py
+│   │   └── test_field_mapping.py
+│   │
+│   ├── schemas/                   [DATA STRUCTURES]
+│   │   ├── __init__.py
+│   │   ├── test_postmortem_schemas.py             4 tests
+│   │   ├── test_kpi_calculation.py
+│   │   ├── test_kpi_metrics.py
+│   │   └── test_metadata_generation.py
+│   │
+│   └── derivation/                [DERIVED LOGIC]
+│       ├── __init__.py
+│       └── test_despliegue_derivation.py          1 test
+│
+├── integration/                   ← INTEGRATION TESTS (With I/O)
+│   ├── __init__.py
+│   │
+│   ├── converters/                [CSV→JSON CONVERSION]
+│   │   ├── __init__.py
+│   │   ├── test_converter_e2e.py                  2 tests
+│   │   └── test_csv_reader.py
+│   │
+│   └── postmortem/                [POSTMORTEM CONVERTER]
+│       ├── __init__.py
+│       ├── test_postmortem_e2e_conversion.py      4 tests
+│       ├── test_postmortem_e2e_full.py
+│       ├── test_postmortem_normalization_integration.py
+│       └── test_error_handling.py
+│
+└── e2e/                           ← E2E TESTS (Complete workflows)
+    ├── __init__.py
+    │
+    └── performance/               [PERFORMANCE & BENCHMARKS]
+        ├── __init__.py
+        └── test_performance.py                    1 test
+
+════════════════════════════════════════════════════════════════════════════════
+
+                               TEST STATISTICS
+
+┌─────────────────────┬──────────┬─────────────┐
+│ Category            │ Files    │ Tests       │
+├─────────────────────┼──────────┼─────────────┤
+│ Unit Tests          │ 16       │ 178 tests   │
+│ Integration Tests   │ 6        │ 85 tests    │
+│ E2E Tests           │ 1        │ 1 test      │
+├─────────────────────┼──────────┼─────────────┤
+│ TOTAL               │ 23       │ 264 tests   │
+└─────────────────────┴──────────┴─────────────┘
+
+Execution: ~1.3 seconds
+Coverage:  86% (exceeds 80%)
+
+════════════════════════════════════════════════════════════════════════════════
+
+                            QUICK COMMAND REFERENCE
+
+Run all tests:
+  pytest tests/
+
+Run by category:
+  pytest tests/unit/                    # All unit tests
+  pytest tests/integration/             # All integration tests
+  pytest tests/e2e/                     # All e2e tests
+
+Run by functionality:
+  pytest tests/unit/encoding/           # Encoding tests
+  pytest tests/unit/delimiter/          # Delimiter tests
+  pytest tests/unit/normalizers/        # Normalization tests
+  pytest tests/unit/validators/         # Validation tests
+  pytest tests/unit/schemas/            # Schema tests
+
+Run by converter:
+  pytest tests/integration/converters/  # General converter
+  pytest tests/integration/postmortem/  # Postmortem converter
+
+Run with filters:
+  pytest tests/ -k "normalization"      # Tests matching pattern
+  pytest tests/ -v                      # Verbose output
+
+Run in parallel (requires pytest-xdist):
+  pytest tests/ -n auto                 # Auto-detect CPU cores
+
+Run with coverage:
+  pytest tests/ --cov=src --cov-report=html
+
+════════════════════════════════════════════════════════════════════════════════
