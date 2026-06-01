@@ -1608,12 +1608,12 @@
 
                         // Procesar datos
                         if (Array.isArray(jsonData)) {
-                            allPostmortems = jsonData;
+                            allIncidents = jsonData;
                         } else if (jsonData._metadata && jsonData.data) {
-                            allPostmortems = jsonData.data;
+                            allIncidents = jsonData.data;
                             console.log(`Auto-loaded: ${latestFile.name} (${jsonData._metadata.record_count} records)`);
                         } else if (typeof jsonData === 'object' && !Array.isArray(jsonData)) {
-                            allPostmortems = [jsonData];
+                            allIncidents = [jsonData];
                         }
 
                         // Mostrar dashboard
