@@ -2,7 +2,20 @@
 
 Aplicación web interactiva para análisis y visualización de incidencias masivas y postmortems.
 
-**Dashboard Hub** (`src/dashboards/dashboard-hub.html`) es el **punto de acceso principal**. Carga automáticamente todos los datos desde `data/output/` y proporciona KPIs en tiempo real.
+**Dashboard Hub** (`dashboards/src/dashboard-hub.html`) es el **punto de acceso principal**. Carga automáticamente todos los datos desde `data/output/` y proporciona KPIs en tiempo real.
+
+---
+
+## 📦 Estructura: 2 Componentes Independientes
+
+El proyecto está dividido en **2 partes claramente diferenciadas**:
+
+| Componente | Ubicación | Descripción | Tecnología |
+|-----------|-----------|-------------|-----------|
+| **Converters** | [`converters/`](converters/) | Scripts de conversión CSV→JSON | Python 3.8+ |
+| **Dashboards** | [`dashboards/`](dashboards/) | Visualización web de datos | HTML5/CSS3/JavaScript |
+
+Cada componente puede funcionar **independientemente**.
 
 ---
 
@@ -21,19 +34,19 @@ data/input/
 **Convertir Incidencias Masivas**
 ```batch
 # Windows
-convert_incidents.bat data/input/incidencias.csv
+converters/scripts/bin/convert_incidents.bat ../data/input/incidencias.csv
 
 # Linux/Mac
-./convert_incidents.sh data/input/incidencias.csv
+./converters/scripts/bin/convert_incidents.sh ../data/input/incidencias.csv
 ```
 
 **Convertir Postmortems** (necesario para datos postmortem)
 ```batch
 # Windows
-convert_postmortems.bat data/input/postmortem.csv
+converters/scripts/bin/convert_postmortems.bat ../data/input/postmortem.csv
 
 # Linux/Mac
-./convert_postmortems.sh data/input/postmortem.csv
+./converters/scripts/bin/convert_postmortems.sh ../data/input/postmortem.csv
 ```
 
 Los JSONs se generan en `data/output/` e `index.json` se actualiza automáticamente.
@@ -41,12 +54,12 @@ Los JSONs se generan en `data/output/` e `index.json` se actualiza automáticame
 ### 3️⃣ Abre el Dashboard Hub
 
 **Opción A: Con Live Server** (recomendado)
-- En VSCode: Click derecho en `src/dashboards/dashboard-hub.html` → "Open with Live Server"
+- En VSCode: Click derecho en `dashboards/index.html` → "Open with Live Server"
 
 **Opción B: Con Python**
 ```bash
 python -m http.server 8000
-# Luego abre: http://localhost:8000/src/dashboards/dashboard-hub.html
+# Luego abre: http://localhost:8000/dashboards/
 ```
 
 ### 4️⃣ Dashboard Hub carga automáticamente los datos
@@ -60,7 +73,7 @@ python -m http.server 8000
 
 ## 📦 Scripts de Conversión
 
-Ambos conversores son **necesarios** para que el Dashboard Hub muestre toda la información:
+Los scripts de conversión están en [`converters/scripts/bin/`](converters/scripts/bin/) y son **necesarios** para generar los JSONs que el Dashboard Hub consume:
 
 | Script | Propósito | Entrada |
 |--------|-----------|---------|
@@ -80,7 +93,13 @@ Ambos conversores son **necesarios** para que el Dashboard Hub muestre toda la i
 
 **Convertir Incidencias Masivas:**
 ```python
-from src.converters.csv_to_json import CsvToJsonConverter
+import sys
+from pathlib import Path
+
+# Agregar converters/src al path
+sys.path.insert(0, str(Path('converters/src')))
+
+from csv_to_json import CsvToJsonConverter
 
 converter = CsvToJsonConverter()
 success, report = converter.convert_file(
@@ -96,17 +115,23 @@ print(f"Encoding detectado: {report['encoding_detected']}")
 
 **Convertir Postmortems:**
 ```python
-from src.converters.csv_to_json.postmortem_converter import convertPostmortemCSV
+import sys
+from pathlib import Path
 
-success, records, kpis, metadata, errors = convertPostmortemCSV(
+# Agregar converters/src al path
+sys.path.insert(0, str(Path('converters/src')))
+
+from csv_to_json.postmortem_converter import PostmortemConverter
+
+converter = PostmortemConverter()
+success, report = converter.convert_file(
     input_path='data/input/postmortem.csv',
     output_path='data/output/postmortem.json',
     error_report_path='data/errors/postmortem_errors.json'
 )
 
-print(f"Postmortems procesados: {len(records)}")
-print(f"KPIs Despliegue PAP - Resueltas: {kpis.dashboard_hub_kpis.pap_resueltas_percent}%")
-print(f"KPIs Despliegue MESA - Resueltas: {kpis.dashboard_hub_kpis.mesa_resueltas_percent}%")
+print(f"Conversión exitosa: {success}")
+print(f"Registros procesados: {report['stats']['successful']}/{report['stats']['total_records']}")
 ```
 
 ### Acceder a los KPIs en JavaScript
@@ -173,6 +198,8 @@ Para más información, consulta:
 ### Ejecutar Tests
 
 ```bash
+cd converters
+
 # Todos los tests
 pytest tests/
 
@@ -201,7 +228,7 @@ pytest tests/ -n auto                 # Auto-detecta número de CPUs
 Los tests están organizados en una estructura híbrida por funcionalidad y tipo de conversor:
 
 ```
-tests/
+converters/tests/
 ├── unit/                    # Tests de lógica pura (sin I/O)
 │   ├── encoding/           # Detección de encoding
 │   ├── delimiter/          # Detección de delimitadores
@@ -216,22 +243,24 @@ tests/
     └── performance/        # Benchmarks y límites
 ```
 
-Ver [docs/TEST_STRUCTURE.md](docs/TEST_STRUCTURE.md) para detalle completo.
+Ver [converters/docs/TEST_STRUCTURE.md](converters/docs/TEST_STRUCTURE.md) para detalle completo.
 
 ### Calidad de Código
 
 ```bash
+cd converters
+
 # Linting (PEP 8)
 pip install flake8
-flake8 src/converters/ --max-line-length=120
+flake8 src/ cli/ --max-line-length=120
 
 # Formatting
 pip install black
-black --check src/converters/
+black --check src/ cli/
 
 # Import sorting
 pip install isort
-isort --check-only src/converters/
+isort --check-only src/ cli/
 ```
 
 ---
