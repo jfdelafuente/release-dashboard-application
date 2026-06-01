@@ -7,6 +7,9 @@ Tests comprehensive error handling:
 - Valid records are in output
 - Zero silent failures
 - Detailed error information
+
+NOTE: All tests use pytest tmp_path fixture for temporary output files.
+No files are left in tests/test_data after test execution.
 """
 
 import pytest
@@ -18,14 +21,17 @@ from csv_to_json.postmortem_converter import PostmortemConverter
 class TestErrorHandling:
     """Test error handling and reporting."""
 
-    def test_invalid_records_captured(self):
+    def test_invalid_records_captured(self, tmp_path):
         """Test that all invalid records are captured in error report."""
         converter = PostmortemConverter()
 
+        output_file = tmp_path / "valid.json"
+        error_file = tmp_path / "errors.json"
+
         success, report = converter.convert_file(
             'tests/test_data/invalid-mixed.csv',
-            'tests/test_data/error_handling_valid.json',
-            'tests/test_data/error_handling_errors.json'
+            str(output_file),
+            str(error_file)
         )
 
         # Should report failures
@@ -33,7 +39,6 @@ class TestErrorHandling:
         assert report['stats']['failed'] > 0
 
         # Error report should exist
-        error_file = Path('tests/test_data/error_handling_errors.json')
         assert error_file.exists()
 
         with open(error_file, 'r', encoding='utf-8') as f:
@@ -42,17 +47,19 @@ class TestErrorHandling:
         # Number of error entries should match failed count
         assert len(error_report['errors']) == report['stats']['failed']
 
-    def test_valid_records_in_output(self):
+    def test_valid_records_in_output(self, tmp_path):
         """Test that valid records are in output JSON."""
         converter = PostmortemConverter()
 
+        output_file = tmp_path / "valid.json"
+        error_file = tmp_path / "errors.json"
+
         success, report = converter.convert_file(
             'tests/test_data/invalid-mixed.csv',
-            'tests/test_data/error_handling_mixed_valid.json',
-            'tests/test_data/error_handling_mixed_errors.json'
+            str(output_file),
+            str(error_file)
         )
 
-        output_file = Path('tests/test_data/error_handling_mixed_valid.json')
         assert output_file.exists()
 
         with open(output_file, 'r', encoding='utf-8') as f:
@@ -62,14 +69,17 @@ class TestErrorHandling:
         assert len(output_data['data']) == report['stats']['successful']
         assert len(output_data['data']) > 0
 
-    def test_zero_silent_failures(self):
+    def test_zero_silent_failures(self, tmp_path):
         """Test that total records equal successful + failed (zero silent failures)."""
         converter = PostmortemConverter()
 
+        output_file = tmp_path / "valid.json"
+        error_file = tmp_path / "errors.json"
+
         success, report = converter.convert_file(
             'tests/test_data/invalid-mixed.csv',
-            'tests/test_data/error_zero_silent_valid.json',
-            'tests/test_data/error_zero_silent_errors.json'
+            str(output_file),
+            str(error_file)
         )
 
         total = report['stats']['total_records']
@@ -79,17 +89,18 @@ class TestErrorHandling:
         # This is the key test: no silent failures
         assert total == successful + failed, "Silent failures detected!"
 
-    def test_detailed_error_information(self):
+    def test_detailed_error_information(self, tmp_path):
         """Test that error entries contain useful information."""
         converter = PostmortemConverter()
 
+        error_file = tmp_path / "errors.json"
+
         converter.convert_file(
             'tests/test_data/invalid-mixed.csv',
-            'tests/test_data/error_detail_valid.json',
-            'tests/test_data/error_detail_errors.json'
+            str(tmp_path / "valid.json"),
+            str(error_file)
         )
 
-        error_file = Path('tests/test_data/error_detail_errors.json')
         with open(error_file, 'r', encoding='utf-8') as f:
             error_report = json.load(f)
 
@@ -113,48 +124,50 @@ class TestErrorHandling:
                 assert isinstance(issue, str)
                 assert len(issue) > 0
 
-    def test_missing_required_fields_error(self):
+    def test_missing_required_fields_error(self, tmp_path):
         """Test that missing required fields are properly reported."""
         converter = PostmortemConverter()
 
+        error_file = tmp_path / "errors.json"
+
         converter.convert_file(
             'tests/test_data/invalid-mixed.csv',
-            'tests/test_data/error_missing_fields_valid.json',
-            'tests/test_data/error_missing_fields_errors.json'
+            str(tmp_path / "valid.json"),
+            str(error_file)
         )
 
-        error_file = Path('tests/test_data/error_missing_fields_errors.json')
         with open(error_file, 'r', encoding='utf-8') as f:
             error_report = json.load(f)
 
         # Should have some errors about missing fields
         assert len(error_report['errors']) > 0
 
-    def test_invalid_date_format_error(self):
+    def test_invalid_date_format_error(self, tmp_path):
         """Test that invalid date formats are reported."""
         converter = PostmortemConverter()
 
+        error_file = tmp_path / "errors.json"
+
         converter.convert_file(
             'tests/test_data/invalid-mixed.csv',
-            'tests/test_data/error_invalid_date_valid.json',
-            'tests/test_data/error_invalid_date_errors.json'
+            str(tmp_path / "valid.json"),
+            str(error_file)
         )
 
-        error_file = Path('tests/test_data/error_invalid_date_errors.json')
         with open(error_file, 'r', encoding='utf-8') as f:
             error_report = json.load(f)
 
         # Errors should be present (mixed data has some invalid dates)
         assert len(error_report['errors']) >= 0  # May or may not have date errors
 
-    def test_success_rate_calculation(self):
+    def test_success_rate_calculation(self, tmp_path):
         """Test that success rate is correctly calculated."""
         converter = PostmortemConverter()
 
         # Test with valid data (100% success)
         success1, report1 = converter.convert_file(
             'tests/test_data/valid-100.csv',
-            'tests/test_data/error_rate_valid.json'
+            str(tmp_path / "valid.json")
         )
         assert report1['stats']['success_rate'] == 100.0
 
@@ -162,23 +175,24 @@ class TestErrorHandling:
         converter2 = PostmortemConverter()
         success2, report2 = converter2.convert_file(
             'tests/test_data/invalid-mixed.csv',
-            'tests/test_data/error_rate_mixed_valid.json'
+            str(tmp_path / "mixed_valid.json")
         )
 
         expected_rate = (report2['stats']['successful'] / report2['stats']['total_records']) * 100
         assert abs(report2['stats']['success_rate'] - expected_rate) < 0.01
 
-    def test_error_report_summary(self):
+    def test_error_report_summary(self, tmp_path):
         """Test that error report summary is accurate."""
         converter = PostmortemConverter()
 
+        error_file = tmp_path / "errors.json"
+
         converter.convert_file(
             'tests/test_data/invalid-mixed.csv',
-            'tests/test_data/error_summary_valid.json',
-            'tests/test_data/error_summary_report.json'
+            str(tmp_path / "valid.json"),
+            str(error_file)
         )
 
-        error_file = Path('tests/test_data/error_summary_report.json')
         with open(error_file, 'r', encoding='utf-8') as f:
             error_report = json.load(f)
 
@@ -199,37 +213,41 @@ class TestErrorHandling:
         # Summary counts should match errors array
         assert summary['failed'] == len(error_report['errors'])
 
-    def test_partial_record_error_reporting(self):
+    def test_partial_record_error_reporting(self, tmp_path):
         """Test that records with some invalid fields are properly reported."""
         converter = PostmortemConverter()
 
+        valid_file = tmp_path / "valid.json"
+        error_file = tmp_path / "errors.json"
+
         converter.convert_file(
             'tests/test_data/invalid-mixed.csv',
-            'tests/test_data/error_partial_valid.json',
-            'tests/test_data/error_partial_errors.json'
+            str(valid_file),
+            str(error_file)
         )
 
-        with open('tests/test_data/error_partial_valid.json', 'r', encoding='utf-8') as f:
+        with open(valid_file, 'r', encoding='utf-8') as f:
             valid_output = json.load(f)
 
-        with open('tests/test_data/error_partial_errors.json', 'r', encoding='utf-8') as f:
+        with open(error_file, 'r', encoding='utf-8') as f:
             error_output = json.load(f)
 
         # Sum of valid output + errors should equal total
         total_from_report = error_output['summary']['total_records']
         assert len(valid_output['data']) + len(error_output['errors']) == total_from_report
 
-    def test_no_data_loss_on_error(self):
+    def test_no_data_loss_on_error(self, tmp_path):
         """Test that error reporting doesn't lose information about invalid records."""
         converter = PostmortemConverter()
 
+        error_file = tmp_path / "errors.json"
+
         converter.convert_file(
             'tests/test_data/invalid-mixed.csv',
-            'tests/test_data/error_no_loss_valid.json',
-            'tests/test_data/error_no_loss_errors.json'
+            str(tmp_path / "valid.json"),
+            str(error_file)
         )
 
-        error_file = Path('tests/test_data/error_no_loss_errors.json')
         with open(error_file, 'r', encoding='utf-8') as f:
             error_report = json.load(f)
 
