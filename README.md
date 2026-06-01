@@ -136,12 +136,26 @@ console.log(`Tendencia 7 días: ${metadata.kpis.trend_7d}%`);
 
 Para más información, consulta:
 
+### Guías Principales
 | Documento | Contenido |
 |-----------|-----------|
 | **[docs/QUICKSTART.md](docs/QUICKSTART.md)** | Setup completo en 5 minutos |
 | **[docs/README.md](docs/README.md)** | Índice de toda la documentación |
 | **[docs/API.md](docs/API.md)** | Referencia técnica de los conversores |
 | **[docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md)** | Solución de problemas comunes |
+
+### Optimización & Conversores
+| Documento | Contenido |
+|-----------|-----------|
+| **[docs/PERFORMANCE.md](docs/PERFORMANCE.md)** | Decisiones de optimización, benchmarks, análisis de cuello de botella |
+| **[docs/TEST_STRUCTURE.md](docs/TEST_STRUCTURE.md)** | Organización de tests por funcionalidad, cómo ejecutar tests específicos |
+| **[docs/TEST_STRUCTURE_DIAGRAM.txt](docs/TEST_STRUCTURE_DIAGRAM.txt)** | Diagrama visual de la jerarquía de tests |
+| **[docs/TESTING_BEST_PRACTICES.md](docs/TESTING_BEST_PRACTICES.md)** | Guía completa de pytest fixtures, refactorización, y aislamiento |
+
+### Especificaciones del Feature
+| Documento | Contenido |
+|-----------|-----------|
+| **[specs/006-optimize-csv-converters/](specs/006-optimize-csv-converters/)** | Plan completo, especificación, desglose de tareas (80 tareas, 7 fases) |
 
 ---
 
@@ -151,6 +165,74 @@ Para más información, consulta:
 - **Dashboards**: ✅ Todos funcionales
 - **Conversores**: ✅ Incidents + Postmortems
 - **MVP**: ✅ Completamente validado
+
+---
+
+## 🧪 Testing & Calidad de Código
+
+### Ejecutar Tests
+
+```bash
+# Todos los tests
+pytest tests/
+
+# Por categoría
+pytest tests/unit/                    # Tests unitarios (pura lógica)
+pytest tests/integration/             # Tests de integración (con I/O)
+pytest tests/e2e/                     # Tests end-to-end (flujos completos)
+
+# Por funcionalidad específica
+pytest tests/unit/encoding/           # Solo tests de encoding
+pytest tests/unit/normalizers/        # Solo tests de normalización
+pytest tests/unit/validators/         # Solo tests de validación
+
+# Con opciones útiles
+pytest tests/ -v                      # Verbose (muestra cada test)
+pytest tests/ -k "normalization"      # Filtra por patrón
+pytest tests/ --cov=src --cov-report=html  # Genera reporte de coverage
+
+# En paralelo (requiere pytest-xdist)
+pip install pytest-xdist
+pytest tests/ -n auto                 # Auto-detecta número de CPUs
+```
+
+### Estructura de Tests
+
+Los tests están organizados en una estructura híbrida por funcionalidad y tipo de conversor:
+
+```
+tests/
+├── unit/                    # Tests de lógica pura (sin I/O)
+│   ├── encoding/           # Detección de encoding
+│   ├── delimiter/          # Detección de delimitadores
+│   ├── normalizers/        # Normalización de datos
+│   ├── validators/         # Validación de campos
+│   ├── schemas/            # Estructuras de datos
+│   └── derivation/         # Lógica derivada (Despliegue)
+├── integration/             # Tests con I/O (archivos, CSV)
+│   ├── converters/         # Conversor CSV→JSON general
+│   └── postmortem/         # Conversor postmortem
+└── e2e/                    # Tests end-to-end
+    └── performance/        # Benchmarks y límites
+```
+
+Ver [docs/TEST_STRUCTURE.md](docs/TEST_STRUCTURE.md) para detalle completo.
+
+### Calidad de Código
+
+```bash
+# Linting (PEP 8)
+pip install flake8
+flake8 src/converters/ --max-line-length=120
+
+# Formatting
+pip install black
+black --check src/converters/
+
+# Import sorting
+pip install isort
+isort --check-only src/converters/
+```
 
 ---
 
