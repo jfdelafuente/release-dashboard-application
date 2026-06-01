@@ -8,6 +8,9 @@ Tests the full conversion pipeline including:
 - KPI calculation
 - JSON output generation
 - Error report generation
+
+NOTE: All tests use pytest tmp_path fixture for temporary output files.
+No files are left in tests/test_data after test execution.
 """
 
 import pytest
@@ -19,14 +22,17 @@ from csv_to_json.postmortem_converter import PostmortemConverter
 class TestFullEndToEnd:
     """Complete E2E tests for postmortem converter."""
 
-    def test_full_conversion_pipeline_valid_data(self):
+    def test_full_conversion_pipeline_valid_data(self, tmp_path):
         """Test complete conversion workflow with valid data."""
         converter = PostmortemConverter()
 
+        output_file = tmp_path / "output.json"
+        error_file = tmp_path / "errors.json"
+
         success, report = converter.convert_file(
             'tests/test_data/valid-100.csv',
-            'tests/test_data/e2e_full_valid_output.json',
-            'tests/test_data/e2e_full_valid_errors.json'
+            str(output_file),
+            str(error_file)
         )
 
         # Check success
@@ -36,7 +42,6 @@ class TestFullEndToEnd:
         assert report['stats']['total_records'] == 100
 
         # Check output file exists and is valid JSON
-        output_file = Path('tests/test_data/e2e_full_valid_output.json')
         assert output_file.exists()
 
         with open(output_file, 'r', encoding='utf-8') as f:
@@ -64,14 +69,17 @@ class TestFullEndToEnd:
         assert 'Fecha de envío' in record
         assert 'Despliegue' in record  # Should be derived
 
-    def test_full_conversion_pipeline_with_errors(self):
+    def test_full_conversion_pipeline_with_errors(self, tmp_path):
         """Test conversion workflow with mixed valid/invalid records."""
         converter = PostmortemConverter()
 
+        output_file = tmp_path / "output.json"
+        error_file = tmp_path / "errors.json"
+
         success, report = converter.convert_file(
             'tests/test_data/invalid-mixed.csv',
-            'tests/test_data/e2e_full_mixed_output.json',
-            'tests/test_data/e2e_full_mixed_errors.json'
+            str(output_file),
+            str(error_file)
         )
 
         # Check partial success
@@ -81,7 +89,6 @@ class TestFullEndToEnd:
         assert report['stats']['total_records'] == 60
 
         # Check output file exists with valid records
-        output_file = Path('tests/test_data/e2e_full_mixed_output.json')
         assert output_file.exists()
 
         with open(output_file, 'r', encoding='utf-8') as f:
@@ -90,7 +97,6 @@ class TestFullEndToEnd:
         assert len(output_data['data']) == report['stats']['successful']
 
         # Check error report exists
-        error_file = Path('tests/test_data/e2e_full_mixed_errors.json')
         assert error_file.exists()
 
         with open(error_file, 'r', encoding='utf-8') as f:
@@ -100,16 +106,17 @@ class TestFullEndToEnd:
         assert 'errors' in error_data
         assert len(error_data['errors']) == report['stats']['failed']
 
-    def test_json_output_structure_validity(self):
+    def test_json_output_structure_validity(self, tmp_path):
         """Test that JSON output has correct structure for dashboard loading."""
         converter = PostmortemConverter()
 
+        output_file = tmp_path / "output.json"
         converter.convert_file(
             'tests/test_data/valid-100.csv',
-            'tests/test_data/e2e_structure_test.json'
+            str(output_file)
         )
 
-        with open('tests/test_data/e2e_structure_test.json', 'r', encoding='utf-8') as f:
+        with open(output_file, 'r', encoding='utf-8') as f:
             output_data = json.load(f)
 
         # Check root structure
@@ -145,16 +152,17 @@ class TestFullEndToEnd:
             assert 'Estatus' in record
             assert 'Despliegue' in record
 
-    def test_field_formatting_in_output(self):
+    def test_field_formatting_in_output(self, tmp_path):
         """Test that fields are properly formatted in JSON output."""
         converter = PostmortemConverter()
 
+        output_file = tmp_path / "output.json"
         converter.convert_file(
             'tests/test_data/valid-100.csv',
-            'tests/test_data/e2e_formatting_test.json'
+            str(output_file)
         )
 
-        with open('tests/test_data/e2e_formatting_test.json', 'r', encoding='utf-8') as f:
+        with open(output_file, 'r', encoding='utf-8') as f:
             output_data = json.load(f)
 
         for record in output_data['data']:
@@ -177,16 +185,17 @@ class TestFullEndToEnd:
             despliegue = record.get('Despliegue')
             assert despliegue in ['PAP', 'MESA']
 
-    def test_kpi_calculation_in_metadata(self):
+    def test_kpi_calculation_in_metadata(self, tmp_path):
         """Test that KPIs are properly calculated and included."""
         converter = PostmortemConverter()
 
+        output_file = tmp_path / "output.json"
         converter.convert_file(
             'tests/test_data/valid-100.csv',
-            'tests/test_data/e2e_kpi_test.json'
+            str(output_file)
         )
 
-        with open('tests/test_data/e2e_kpi_test.json', 'r', encoding='utf-8') as f:
+        with open(output_file, 'r', encoding='utf-8') as f:
             output_data = json.load(f)
 
         kpis = output_data['_metadata']['kpis']
@@ -207,28 +216,32 @@ class TestFullEndToEnd:
         impacto_total = sum(kpis['by_impacto'].values())
         assert impacto_total == record_count
 
-    def test_encoding_detection_in_pipeline(self):
+    def test_encoding_detection_in_pipeline(self, tmp_path):
         """Test that encoding detection works through full pipeline."""
         converter = PostmortemConverter()
 
+        output_file = tmp_path / "output.json"
         success, report = converter.convert_file(
             'tests/test_data/valid-100.csv',
-            'tests/test_data/e2e_encoding_test.json'
+            str(output_file)
         )
 
         assert report['encoding_detected'] in ['utf-8', 'UTF-8']
 
-    def test_error_report_contains_detailed_info(self):
+    def test_error_report_contains_detailed_info(self, tmp_path):
         """Test that error report provides useful debugging information."""
         converter = PostmortemConverter()
 
+        output_file = tmp_path / "output.json"
+        error_file = tmp_path / "errors.json"
+
         converter.convert_file(
             'tests/test_data/invalid-mixed.csv',
-            'tests/test_data/e2e_error_detail_out.json',
-            'tests/test_data/e2e_error_detail_report.json'
+            str(output_file),
+            str(error_file)
         )
 
-        with open('tests/test_data/e2e_error_detail_report.json', 'r', encoding='utf-8') as f:
+        with open(error_file, 'r', encoding='utf-8') as f:
             error_report = json.load(f)
 
         # Check summary
@@ -252,19 +265,20 @@ class TestFullEndToEnd:
             assert isinstance(error_entry['issues'], list)
             assert len(error_entry['issues']) > 0
 
-    def test_cli_output_consistency(self):
+    def test_cli_output_consistency(self, tmp_path):
         """Test that CLI conversion produces same output as direct API."""
         from csv_to_json.postmortem_converter import PostmortemConverter
 
         # Use API directly
         converter1 = PostmortemConverter()
+        output_file = tmp_path / "output.json"
         converter1.convert_file(
             'tests/test_data/valid-100.csv',
-            'tests/test_data/e2e_api_output.json'
+            str(output_file)
         )
 
         # Load both results
-        with open('tests/test_data/e2e_api_output.json', 'r', encoding='utf-8') as f:
+        with open(output_file, 'r', encoding='utf-8') as f:
             api_data = json.load(f)
 
         # Results should be consistent
