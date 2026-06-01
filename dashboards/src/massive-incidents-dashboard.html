@@ -803,15 +803,9 @@
         }
 
         function analyzeData() {
-            console.log('[analyzeData] Called with', allIncidents.length, 'incidents');
-            console.log('[analyzeData] Data sample:', allIncidents.slice(0, 2));
-
             if (allIncidents.length === 0) {
-                console.log('[analyzeData] ERROR: No incidents loaded, returning early');
                 return;
             }
-
-            console.log('[analyzeData] Proceeding with data analysis');
 
             // NUEVO: Aplicar filtro de tiempo PRIMERO
             const timeFilteredIncidents = applyTimeFilter(
@@ -1505,12 +1499,9 @@
         }
 
         function filterTable(timeFilteredIncidents = allIncidents) {
-            console.log('[filterTable] Called with', timeFilteredIncidents.length, 'incidents');
             const statusFilter = document.getElementById('filterStatus').value.toLowerCase();
             const systemFilter = document.getElementById('filterSystem').value.toLowerCase();
             const urgencyFilter = document.getElementById('filterImpacto').value.toLowerCase();
-
-            console.log('[filterTable] Filter values:', {statusFilter, systemFilter, urgencyFilter});
 
             filteredIncidents = timeFilteredIncidents.filter(incident => {
                 const status = (getIncidentValue(incident, 'Estatus') || '').toLowerCase();
@@ -1528,8 +1519,6 @@
 
                 return statusMatch && grupoMatch && urgencyMatch;
             });
-
-            console.log('[filterTable] After filter:', filteredIncidents.length, 'incidents remain');
 
             // Apply sorting
             filteredIncidents.sort((a, b) => {
@@ -1563,17 +1552,12 @@
         }
 
         function populateTable() {
-            console.log('[populateTable] Called with filteredIncidents.length =', filteredIncidents.length);
             const tbody = document.getElementById('tableBody');
-            if (!tbody) {
-                console.error('[populateTable] ERROR: tbody element not found!');
-                return;
-            }
+            if (!tbody) return;
 
             tbody.innerHTML = '';
 
             if (!filteredIncidents || filteredIncidents.length === 0) {
-                console.log('[populateTable] No incidents to display');
                 const row = document.createElement('tr');
                 row.innerHTML = '<td colspan="7" style="text-align: center; padding: 20px; color: #9ca3af;">No hay datos para mostrar</td>';
                 tbody.appendChild(row);
@@ -1602,7 +1586,6 @@
                 tbody.appendChild(row);
             });
 
-            console.log('[populateTable] Rendered', filteredIncidents.length, 'rows');
             document.getElementById('filteredCount').textContent = filteredIncidents.length;
         }
 
@@ -1643,19 +1626,12 @@
             // Auto-cargar datos más recientes desde index.json
             async function autoLoadLatestData() {
                 try {
-                    console.log('[autoLoadLatestData] Starting auto-load attempt');
-
                     const response = await fetch('../../data/output/index.json');
-                    console.log('[autoLoadLatestData] index.json fetch status:', response.status);
-
                     const indexData = await response.json();
-                    console.log('[autoLoadLatestData] index.json parsed:', indexData);
 
                     if (indexData.massive && indexData.massive.files && indexData.massive.files.length > 0) {
                         // Obtener el archivo más reciente (primer archivo en la lista)
                         const latestFile = indexData.massive.files[0];
-                        console.log('[autoLoadLatestData] Latest file found:', latestFile);
-
                         let filePath = latestFile.path;
 
                         // Ajustar la ruta si es necesario (desde dashboards/src/)
@@ -1663,47 +1639,25 @@
                             filePath = '../../' + filePath;
                         }
 
-                        console.log('[autoLoadLatestData] Auto-loading from:', filePath);
-
                         // Cargar el archivo JSON
                         const fileResponse = await fetch(filePath);
-                        console.log('[autoLoadLatestData] Data file fetch status:', fileResponse.status);
-
                         const jsonData = await fileResponse.json();
-                        console.log('[autoLoadLatestData] JSON data structure:', {
-                            isArray: Array.isArray(jsonData),
-                            hasMetadata: !!jsonData._metadata,
-                            hasData: !!jsonData.data,
-                            dataLength: jsonData.data ? jsonData.data.length : (Array.isArray(jsonData) ? jsonData.length : 0),
-                            fullData: jsonData
-                        });
 
                         // Procesar datos
                         if (Array.isArray(jsonData)) {
-                            console.log('[autoLoadLatestData] Data is array, loading directly');
                             allIncidents = jsonData;
                         } else if (jsonData._metadata && jsonData.data) {
-                            console.log('[autoLoadLatestData] Data has _metadata.data structure, extracting data array');
                             allIncidents = jsonData.data;
-                            console.log(`[autoLoadLatestData] Auto-loaded: ${latestFile.name} (${jsonData._metadata.record_count} records)`);
                         } else if (typeof jsonData === 'object' && !Array.isArray(jsonData)) {
-                            console.log('[autoLoadLatestData] Data is single object, wrapping in array');
                             allIncidents = [jsonData];
                         }
-
-                        console.log('[autoLoadLatestData] allIncidents after load:', {
-                            length: allIncidents.length,
-                            sample: allIncidents.slice(0, 2)
-                        });
 
                         // Mostrar dashboard
                         uploadScreen.classList.add('hidden');
                         dashboardScreen.classList.remove('hidden');
-                        console.log('[autoLoadLatestData] Dashboard screen shown');
 
                         setTimeout(() => {
                             try {
-                                console.log('[autoLoadLatestData] setTimeout triggered, calling analyzeData');
                                 globalTimeFilter = {
                                     period: 'all',
                                     startDate: null,
@@ -1712,16 +1666,13 @@
                                 document.getElementById('timeFilter').value = 'all';
                                 document.getElementById('dateRangeDisplay').style.display = 'none';
                                 analyzeData();
-                                console.log('[autoLoadLatestData] analyzeData completed');
                             } catch (e) {
-                                console.error('[autoLoadLatestData] Error in analyzeData:', e);
+                                console.error('Error in analyzeData:', e);
                             }
                         }, 100);
-                    } else {
-                        console.log('[autoLoadLatestData] No massive files found in index.json');
                     }
                 } catch (err) {
-                    console.log('[autoLoadLatestData] No se encontró index.json o datos. Usuario puede cargar manualmente.', err);
+                    console.log('No se encontró index.json o datos. Usuario puede cargar manualmente.');
                 }
             }
 
