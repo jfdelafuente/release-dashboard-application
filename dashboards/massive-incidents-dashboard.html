@@ -1626,7 +1626,7 @@
             // Auto-cargar datos más recientes desde index.json
             async function autoLoadLatestData() {
                 try {
-                    const response = await fetch('../../data/output/index.json');
+                    const response = await fetch('../data/output/index.json');
                     const indexData = await response.json();
 
                     if (indexData.massive && indexData.massive.files && indexData.massive.files.length > 0) {

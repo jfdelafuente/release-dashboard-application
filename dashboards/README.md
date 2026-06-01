@@ -2,6 +2,21 @@
 
 Dashboards web interactivos para análisis y visualización de incidencias masivas y postmortems.
 
+## 📂 Estructura
+
+```
+dashboards/
+├── index.html                           # Portal principal
+├── dashboard-portal.html                # Hub central de dashboards
+├── massive-incidents-dashboard.html     # Dashboard de incidencias masivas
+├── postmortem-dashboard.html            # Dashboard de postmortem
+├── css/                                 # Estilos compartidos
+├── js/                                  # Scripts compartidos
+└── README.md                            # Este archivo
+```
+
+**Solo código frontal**: HTML, CSS, y JavaScript. Sin configuraciones de deploy ni documentación técnica.
+
 ## 🚀 Características
 
 - 📊 **Dashboard Hub**: Punto de acceso unificado con KPIs en tiempo real

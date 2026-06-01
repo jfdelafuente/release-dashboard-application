@@ -511,7 +511,7 @@
         // Load data from index.json
         async function loadDashboardData() {
             try {
-                const response = await fetch('../../data/output/index.json');
+                const response = await fetch('../data/output/index.json');
                 const data = await response.json();
 
                 updateStats(data);
