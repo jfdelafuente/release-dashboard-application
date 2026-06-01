@@ -73,6 +73,55 @@ Ambos conversores son **necesarios** para que el Dashboard Hub muestre toda la i
 - ✅ Normalización de campos automática
 - ✅ Reporte de errores detallado
 - ✅ Estadísticas de conversión
+- ✅ KPIs pre-calculadas en metadata
+- ✅ 264 tests (86% code coverage)
+
+### Uso Programático en Python
+
+**Convertir Incidencias Masivas:**
+```python
+from src.converters.csv_to_json import CsvToJsonConverter
+
+converter = CsvToJsonConverter()
+success, report = converter.convert_file(
+    input_path='data/input/incidencias.csv',
+    output_path='data/output/incidencias-massive.json',
+    error_report_path='data/errors/incidencias_errors.json'
+)
+
+print(f"Conversión exitosa: {success}")
+print(f"Registros procesados: {report['stats']['successful']}/{report['stats']['total_records']}")
+print(f"Encoding detectado: {report['encoding_detected']}")
+```
+
+**Convertir Postmortems:**
+```python
+from src.converters.csv_to_json.postmortem_converter import convertPostmortemCSV
+
+success, records, kpis, metadata, errors = convertPostmortemCSV(
+    input_path='data/input/postmortem.csv',
+    output_path='data/output/postmortem.json',
+    error_report_path='data/errors/postmortem_errors.json'
+)
+
+print(f"Postmortems procesados: {len(records)}")
+print(f"KPIs Despliegue PAP - Resueltas: {kpis.dashboard_hub_kpis.pap_resueltas_percent}%")
+print(f"KPIs Despliegue MESA - Resueltas: {kpis.dashboard_hub_kpis.mesa_resueltas_percent}%")
+```
+
+### Acceder a los KPIs en JavaScript
+
+Una vez generados los JSONs, los dashboards acceden a los KPIs automáticamente:
+
+```javascript
+// En el Dashboard Hub
+const result = JSON.parse(massiveIncidentsJSON);
+const metadata = result._metadata;
+
+console.log(`Total incidencias: ${metadata.kpis.total}`);
+console.log(`Incidencias pendientes: ${metadata.kpis.pending}`);
+console.log(`Tendencia 7 días: ${metadata.kpis.trend_7d}%`);
+```
 
 ---
 

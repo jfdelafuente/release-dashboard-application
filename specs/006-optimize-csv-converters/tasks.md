@@ -10,12 +10,12 @@
 
 **Goal**: Prepare project structure, test infrastructure, and development environment
 
-- [ ] T001 Create test data structure with sample CSV files in `tests/test_data/`
-- [ ] T002 [P] Set up pytest configuration for CSV converter tests in `tests/conftest.py`
-- [ ] T003 [P] Create test utilities module `tests/utils.py` with helpers for CSV/JSON comparison
-- [ ] T004 Initialize performance profiling module `tests/test_performance.py` with timing fixtures
-- [ ] T005 Create mock data generator for large-scale testing (50K+ records) in `tests/utils/data_generator.py`
-- [ ] T006 Set up pre-commit hooks to run linting and tests on `src/converters/csv_to_json/`
+- [x] T001 Create test data structure with sample CSV files in `tests/test_data/`
+- [x] T002 [P] Set up pytest configuration for CSV converter tests in `tests/conftest.py`
+- [x] T003 [P] Create test utilities module `tests/utils.py` with helpers for CSV/JSON comparison
+- [x] T004 Initialize performance profiling module `tests/test_performance.py` with timing fixtures
+- [x] T005 Create mock data generator for large-scale testing (50K+ records) in `tests/utils/data_generator.py`
+- [x] T006 Set up pre-commit hooks to run linting and tests on `src/converters/csv_to_json/`
 
 ---
 
@@ -23,16 +23,16 @@
 
 **Goal**: Build common test framework and validation utilities required by all converters
 
-- [ ] T007 [P] Create base validator class `src/converters/csv_to_json/validators.py` with field validation framework
-- [ ] T008 [P] Implement encoding detection module `src/converters/csv_to_json/encoding.py` with BOM and charset detection
-- [ ] T009 [P] Implement delimiter detection module `src/converters/csv_to_json/delimiter.py` using csv.Sniffer + statistical analysis
-- [ ] T010 Create normalization utilities `src/converters/csv_to_json/normalizers.py` with title case, urgencia extraction, trim functions
-- [ ] T011 Create schemas module `src/converters/csv_to_json/schemas.py` defining allowed field values and validation rules
-- [ ] T012 [P] Write unit tests for validators in `tests/test_validators.py` (required fields, enum values, date parsing)
-- [ ] T013 [P] Write unit tests for normalizers in `tests/test_normalizers.py` (title case, urgencia extraction, edge cases)
-- [ ] T014 Write unit tests for encoding detection in `tests/test_encoding.py` (BOM, common encodings, fallbacks)
-- [ ] T015 Write unit tests for delimiter detection in `tests/test_delimiter.py` (comma, semicolon, tab, mixed)
-- [ ] T016 Create error reporting class `src/converters/csv_to_json/validation_error.py` with structured error tracking
+- [x] T007 [P] Create base validator class `src/converters/csv_to_json/validators.py` with field validation framework
+- [x] T008 [P] Implement encoding detection module `src/converters/csv_to_json/encoding.py` with BOM and charset detection
+- [x] T009 [P] Implement delimiter detection module `src/converters/csv_to_json/delimiter.py` using csv.Sniffer + statistical analysis
+- [x] T010 Create normalization utilities `src/converters/csv_to_json/normalizers.py` with title case, urgencia extraction, trim functions
+- [x] T011 Create schemas module `src/converters/csv_to_json/schemas.py` defining allowed field values and validation rules
+- [x] T012 [P] Write unit tests for validators in `tests/test_validators.py` (required fields, enum values, date parsing)
+- [x] T013 [P] Write unit tests for normalizers in `tests/test_normalizers.py` (title case, urgencia extraction, edge cases)
+- [x] T014 Write unit tests for encoding detection in `tests/test_encoding.py` (BOM, common encodings, fallbacks)
+- [x] T015 Write unit tests for delimiter detection in `tests/test_delimiter.py` (comma, semicolon, tab, mixed)
+- [x] T016 Create error reporting class `src/converters/csv_to_json/validation_error.py` with structured error tracking
 
 ---
 
@@ -44,27 +44,27 @@
 
 ### Core Implementation
 
-- [ ] T017 [US1] Implement base CsvToJsonConverter class in `src/converters/csv_to_json/converter.py` with main convert_file() method
-- [ ] T018 [US1] [P] Implement IncidentRecord class in `src/converters/csv_to_json/schemas.py` representing single incident entry
-- [ ] T019 [US1] [P] Implement field normalization pipeline in converter: Urgencia extraction, status title case, trim whitespace
-- [ ] T020 [US1] [P] Implement per-record validation in converter: required fields check, enum values check, date format validation
-- [ ] T021 [US1] Create metadata generation `src/converters/csv_to_json/converter.py` with encoding, delimiter, record counts, success rate
-- [ ] T022 [US1] Implement KPI calculation for Massive Incidents: total_incidencias, total_pendientes in `src/converters/csv_to_json/converter.py`
-- [ ] T023 [US1] [P] Implement aggregation by_estatus, by_urgencia, by_impacto in KPI calculator
-- [ ] T024 [US1] Implement trend calculation (7d, 15d, 30d) based on date filtering in `src/converters/csv_to_json/converter.py`
-- [ ] T025 [US1] Implement JSON output writer with metadata and KPIs in `src/converters/csv_to_json/converter.py`
-- [ ] T026 [US1] Implement error report generator `src/converters/csv_to_json/converter.py` with row numbers, record IDs, field-level issues
+- [x] T017 [US1] Implement base CsvToJsonConverter class in `src/converters/csv_to_json/converter.py` with main convert_file() method
+- [x] T018 [US1] [P] Implement IncidentRecord class in `src/converters/csv_to_json/schemas.py` representing single incident entry
+- [x] T019 [US1] [P] Implement field normalization pipeline in converter: Urgencia extraction, status title case, trim whitespace
+- [x] T020 [US1] [P] Implement per-record validation in converter: required fields check, enum values check, date format validation
+- [x] T021 [US1] Create metadata generation `src/converters/csv_to_json/converter.py` with encoding, delimiter, record counts, success rate
+- [x] T022 [US1] Implement KPI calculation for Massive Incidents: total_incidencias, total_pendientes in `src/converters/csv_to_json/converter.py`
+- [x] T023 [US1] [P] Implement aggregation by_estatus, by_urgencia, by_impacto in KPI calculator
+- [x] T024 [US1] Implement trend calculation (7d, 15d, 30d) based on date filtering in `src/converters/csv_to_json/converter.py`
+- [x] T025 [US1] Implement JSON output writer with metadata and KPIs in `src/converters/csv_to_json/converter.py`
+- [x] T026 [US1] Implement error report generator `src/converters/csv_to_json/converter.py` with row numbers, record IDs, field-level issues
 
 ### Testing
 
-- [ ] T027 [US1] Write integration test for valid 100-record CSV in `tests/test_converter.py::test_valid_massive_incidents_100`
-- [ ] T028 [US1] [P] Write integration test for encoding detection (UTF-8, Windows-1252, Latin-1) in `tests/test_converter.py::test_encoding_detection_massive`
-- [ ] T029 [US1] [P] Write integration test for delimiter detection (comma, semicolon, tab) in `tests/test_converter.py::test_delimiter_detection_massive`
-- [ ] T030 [US1] Write integration test for field normalization (Urgencia extraction, status case) in `tests/test_converter.py::test_normalization_massive`
-- [ ] T031 [US1] Write test for KPI accuracy: verify by_estatus, by_urgencia, by_impacto counts match records in `tests/test_converter.py::test_kpi_calculations_massive`
-- [ ] T032 [US1] Write test for trend calculation accuracy: verify 7d/15d/30d trends vs manual calc in `tests/test_converter.py::test_trend_calculations`
-- [ ] T033 [US1] [P] Write test for JSON schema validation: verify output matches dashboard expectations in `tests/test_converter.py::test_json_schema_massive`
-- [ ] T034 [US1] Verify 80% test coverage for massive incidents converter: `pytest tests/ --cov=src.converters.csv_to_json.converter --cov-fail-under=80`
+- [x] T027 [US1] Write integration test for valid 100-record CSV in `tests/test_converter.py::test_valid_massive_incidents_100`
+- [x] T028 [US1] [P] Write integration test for encoding detection (UTF-8, Windows-1252, Latin-1) in `tests/test_converter.py::test_encoding_detection_massive`
+- [x] T029 [US1] [P] Write integration test for delimiter detection (comma, semicolon, tab) in `tests/test_converter.py::test_delimiter_detection_massive`
+- [x] T030 [US1] Write integration test for field normalization (Urgencia extraction, status case) in `tests/test_converter.py::test_normalization_massive`
+- [x] T031 [US1] Write test for KPI accuracy: verify by_estatus, by_urgencia, by_impacto counts match records in `tests/test_converter.py::test_kpi_calculations_massive`
+- [x] T032 [US1] Write test for trend calculation accuracy: verify 7d/15d/30d trends vs manual calc in `tests/test_converter.py::test_trend_calculations`
+- [x] T033 [US1] [P] Write test for JSON schema validation: verify output matches dashboard expectations in `tests/test_converter.py::test_json_schema_massive`
+- [x] T034 [US1] Verify 80% test coverage for massive incidents converter: `pytest tests/ --cov=src.converters.csv_to_json.converter --cov-fail-under=80`
 
 ---
 
@@ -76,22 +76,22 @@
 
 ### Core Implementation
 
-- [ ] T035 [US2] Create PostmortemRecord class `src/converters/csv_to_json/postmortem_schemas.py` with 13-field specification
-- [ ] T036 [US2] Implement date parsing for postmortem: DD-MMM format, DD/MM/YYYY, with/without time in `src/converters/csv_to_json/postmortem_schemas.py`
-- [ ] T037 [US2] Implement Despliegue derivation algorithm `src/converters/csv_to_json/postmortem_schemas.py`: scan all dates, PAP=earliest, MESA=others, deterministic tie-breaking
-- [ ] T038 [US2] [P] Create PostmortemKPIMetrics class `src/converters/csv_to_json/postmortem_schemas.py` with by_estatus, by_urgencia, by_impacto aggregation
-- [ ] T039 [US2] [P] Implement Dashboard Hub KPI calculation in PostmortemKPIMetrics: cerradas_percent, pap_resueltas_percent, mesa_resueltas_percent
-- [ ] T040 [US2] Create postmortem-specific converter class (extends CsvToJsonConverter) or add postmortem logic to base converter
-- [ ] T041 [US2] Implement postmortem metadata generation with Dashboard Hub KPIs in metadata.kpis object
+- [x] T035 [US2] Create PostmortemRecord class `src/converters/csv_to_json/postmortem_schemas.py` with 13-field specification
+- [x] T036 [US2] Implement date parsing for postmortem: DD-MMM format, DD/MM/YYYY, with/without time in `src/converters/csv_to_json/postmortem_schemas.py`
+- [x] T037 [US2] Implement Despliegue derivation algorithm `src/converters/csv_to_json/postmortem_schemas.py`: scan all dates, PAP=earliest, MESA=others, deterministic tie-breaking
+- [x] T038 [US2] [P] Create PostmortemKPIMetrics class `src/converters/csv_to_json/postmortem_schemas.py` with by_estatus, by_urgencia, by_impacto aggregation
+- [x] T039 [US2] [P] Implement Dashboard Hub KPI calculation in PostmortemKPIMetrics: cerradas_percent, pap_resueltas_percent, mesa_resueltas_percent
+- [x] T040 [US2] Create postmortem-specific converter class (extends CsvToJsonConverter) or add postmortem logic to base converter
+- [x] T041 [US2] Implement postmortem metadata generation with Dashboard Hub KPIs in metadata.kpis object
 
 ### Testing
 
-- [ ] T042 [US2] Write integration test for postmortem CSV with multiple dates in `tests/test_postmortem_converter.py::test_despliegue_derivation_basic`
-- [ ] T043 [US2] Write test for Despliegue tie-breaking: verify first occurrence gets PAP in `tests/test_postmortem_converter.py::test_despliegue_tie_breaking`
-- [ ] T044 [US2] [P] Write test for date parsing: DD-MMM, DD/MM/YYYY, with/without time in `tests/test_postmortem_converter.py::test_date_parsing_formats`
-- [ ] T045 [US2] [P] Write test for Dashboard Hub KPI accuracy: cerradas_percent, pap/mesa_resueltas_percent in `tests/test_postmortem_converter.py::test_dashboard_hub_kpis`
-- [ ] T046 [US2] Write test for aggregation accuracy: by_estatus, by_urgencia, by_impacto in `tests/test_postmortem_converter.py::test_postmortem_aggregations`
-- [ ] T047 [US2] Verify 80% test coverage for postmortem converter: `pytest tests/ --cov=src.converters.csv_to_json.postmortem_schemas --cov-fail-under=80`
+- [x] T042 [US2] Write integration test for postmortem CSV with multiple dates in `tests/test_postmortem_converter.py::test_despliegue_derivation_basic`
+- [x] T043 [US2] Write test for Despliegue tie-breaking: verify first occurrence gets PAP in `tests/test_postmortem_converter.py::test_despliegue_tie_breaking`
+- [x] T044 [US2] [P] Write test for date parsing: DD-MMM, DD/MM/YYYY, with/without time in `tests/test_postmortem_converter.py::test_date_parsing_formats`
+- [x] T045 [US2] [P] Write test for Dashboard Hub KPI accuracy: cerradas_percent, pap/mesa_resueltas_percent in `tests/test_postmortem_converter.py::test_dashboard_hub_kpis`
+- [x] T046 [US2] Write test for aggregation accuracy: by_estatus, by_urgencia, by_impacto in `tests/test_postmortem_converter.py::test_postmortem_aggregations`
+- [x] T047 [US2] Verify 80% test coverage for postmortem converter: `pytest tests/ --cov=src.converters.csv_to_json.postmortem_schemas --cov-fail-under=80`
 
 ---
 
@@ -103,20 +103,20 @@
 
 ### Core Implementation
 
-- [ ] T048 [P] [US4] Enhance error reporting: include row number, record ID, specific field errors in error report JSON
-- [ ] T049 [P] [US4] Implement field-level error messages in validators with specific guidance (e.g., "Invalid Estatus: must be one of [...]")
-- [ ] T050 [US4] [P] Create error report generator that aggregates all ValidationError objects into structured JSON file
-- [ ] T051 [US4] Implement edge case handling: empty CSV, header-only CSV, malformed records (continue processing, log all)
-- [ ] T052 [US4] Add original value capture to error reporting for debugging purposes
+- [x] T048 [P] [US4] Enhance error reporting: include row number, record ID, specific field errors in error report JSON
+- [x] T049 [P] [US4] Implement field-level error messages in validators with specific guidance (e.g., "Invalid Estatus: must be one of [...]")
+- [x] T050 [US4] [P] Create error report generator that aggregates all ValidationError objects into structured JSON file
+- [x] T051 [US4] Implement edge case handling: empty CSV, header-only CSV, malformed records (continue processing, log all)
+- [x] T052 [US4] Add original value capture to error reporting for debugging purposes
 
 ### Testing
 
-- [ ] T053 [US4] Write test for missing required fields error reporting in `tests/test_error_handling.py::test_missing_required_fields`
-- [ ] T054 [US4] [P] Write test for invalid enum values in error report in `tests/test_error_handling.py::test_invalid_enum_values`
-- [ ] T055 [US4] [P] Write test for invalid date formats error reporting in `tests/test_error_handling.py::test_invalid_date_formats`
-- [ ] T056 [US4] Write test for empty CSV handling (0 records, 100% success rate) in `tests/test_error_handling.py::test_empty_csv`
-- [ ] T057 [US4] Write test for partial record handling: missing optional fields should not fail, only required fields in `tests/test_error_handling.py::test_optional_fields`
-- [ ] T058 [US4] Verify error report JSON structure: summary (total, successful, failed, success_rate) + errors array
+- [x] T053 [US4] Write test for missing required fields error reporting in `tests/test_error_handling.py::test_missing_required_fields`
+- [x] T054 [US4] [P] Write test for invalid enum values in error report in `tests/test_error_handling.py::test_invalid_enum_values`
+- [x] T055 [US4] [P] Write test for invalid date formats error reporting in `tests/test_error_handling.py::test_invalid_date_formats`
+- [x] T056 [US4] Write test for empty CSV handling (0 records, 100% success rate) in `tests/test_error_handling.py::test_empty_csv`
+- [x] T057 [US4] Write test for partial record handling: missing optional fields should not fail, only required fields in `tests/test_error_handling.py::test_optional_fields`
+- [x] T058 [US4] Verify error report JSON structure: summary (total, successful, failed, success_rate) + errors array
 
 ---
 
@@ -128,19 +128,19 @@
 
 ### Core Implementation
 
-- [ ] T059 [US3] Optimize CSV parsing: use streaming with csv.DictReader to avoid loading entire file in memory
-- [ ] T060 [US3] [P] Optimize normalization: pre-compile regex patterns, cache title case results, avoid redundant operations
-- [ ] T061 [US3] [P] Optimize KPI aggregation: use efficient data structures (dict/Counter) instead of nested loops, calculate trends in single pass
-- [ ] T062 [US3] [P] Implement progress tracking for large files: log progress every 10K records to stderr without blocking
-- [ ] T063 [US3] Profile converter with large test files (10K, 50K, 100K) and identify bottlenecks in `tests/test_performance.py`
+- [x] T059 [US3] Optimize CSV parsing: use streaming with csv.DictReader to avoid loading entire file in memory
+- [x] T060 [US3] [P] Optimize normalization: pre-compile regex patterns, cache title case results, avoid redundant operations
+- [x] T061 [US3] [P] Optimize KPI aggregation: use efficient data structures (dict/Counter) instead of nested loops, calculate trends in single pass
+- [x] T062 [US3] [P] Implement progress tracking for large files: log progress every 10K records to stderr without blocking
+- [x] T063 [US3] Profile converter with large test files (10K, 50K, 100K) and identify bottlenecks in `tests/test_performance.py`
 
 ### Testing
 
-- [ ] T064 [US3] Write performance test for 10K records: must complete <5 seconds in `tests/test_performance.py::test_10k_records_timing`
-- [ ] T065 [US3] [P] Write performance test for 50K records: must complete <30 seconds, memory <500MB in `tests/test_performance.py::test_50k_records_timing`
-- [ ] T066 [US3] [P] Write performance test for 100K records: memory must stay <800MB in `tests/test_performance.py::test_100k_records_memory`
-- [ ] T067 [US3] Write performance test for consistent throughput: verify processing rate per 1K records is consistent
-- [ ] T068 [US3] Benchmark before/after optimization: document performance improvements in `docs/PERFORMANCE.md`
+- [x] T064 [US3] Write performance test for 10K records: must complete <5 seconds in `tests/test_performance.py::test_10k_records_timing`
+- [x] T065 [US3] [P] Write performance test for 50K records: must complete <30 seconds, memory <500MB in `tests/test_performance.py::test_50k_records_timing`
+- [x] T066 [US3] [P] Write performance test for 100K records: memory must stay <800MB in `tests/test_performance.py::test_100k_records_memory`
+- [x] T067 [US3] Write performance test for consistent throughput: verify processing rate per 1K records is consistent
+- [x] T068 [US3] Benchmark before/after optimization: document performance improvements in `docs/PERFORMANCE.md`
 
 ---
 
@@ -148,11 +148,11 @@
 
 **Goal**: Final validation, documentation, and integration testing for complete feature
 
-- [ ] T069 [P] Conduct end-to-end integration test with actual Massive Incidents Dashboard: load JSON, verify KPIs display correctly
-- [ ] T070 [P] Conduct end-to-end integration test with Postmortem Dashboard + Dashboard Hub: verify Despliegue display, KPI cards show correct values
-- [ ] T071 Write edge case test: BOM handling, mixed line endings, duplicate headers in `tests/test_edge_cases.py`
-- [ ] T072 [P] Write edge case test: extremely long field values (>10KB) in `tests/test_edge_cases.py`
-- [ ] T073 Verify all 264 existing tests still pass after changes: `pytest tests/ --cov=src.converters --cov-fail-under=80`
+- [x] T069 [P] Conduct end-to-end integration test with actual Massive Incidents Dashboard: load JSON, verify KPIs display correctly
+- [x] T070 [P] Conduct end-to-end integration test with Postmortem Dashboard + Dashboard Hub: verify Despliegue display, KPI cards show correct values
+- [x] T071 Write edge case test: BOM handling, mixed line endings, duplicate headers in `tests/test_edge_cases.py`
+- [x] T072 [P] Write edge case test: extremely long field values (>10KB) in `tests/test_edge_cases.py`
+- [x] T073 Verify all 264 existing tests still pass after changes: `pytest tests/ --cov=src.converters --cov-fail-under=80`
 - [ ] T074 Update CLAUDE.md with any changes to converter usage or API in `CLAUDE.md`
 - [ ] T075 Create migration guide if output JSON format changed in `docs/MIGRATION.md`
 - [ ] T076 [P] Document performance optimization decisions in `docs/PERFORMANCE.md`
