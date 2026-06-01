@@ -50,7 +50,9 @@ venv.bak/
 !project.json
 !specs/project.json
 !tests/test_data/**/*.csv
-!tests/test_data/**/*.json
+# Note: Test output JSON files have dynamic timestamps and are excluded
+# Tests verify logic, not specific output timestamps
+# Input fixtures (CSV) are tracked, output JSON files are not
 
 # Data Directories
 csv/
