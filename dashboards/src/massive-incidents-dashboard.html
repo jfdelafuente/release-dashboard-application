@@ -1624,6 +1624,67 @@
             const fileInput = document.getElementById('fileInput');
             const resetBtn = document.getElementById('resetBtn');
 
+            // Auto-cargar datos más recientes desde index.json
+            async function autoLoadLatestData() {
+                try {
+                    const response = await fetch('../../data/output/index.json');
+                    const indexData = response.json();
+
+                    indexData.then(data => {
+                        if (data.massive && data.massive.files && data.massive.files.length > 0) {
+                            // Obtener el archivo más reciente (primer archivo en la lista)
+                            const latestFile = data.massive.files[0];
+                            const filePath = latestFile.path;
+
+                            // Cargar el archivo JSON
+                            fetch(filePath)
+                                .then(r => r.json())
+                                .then(jsonData => {
+                                    // Procesar datos
+                                    if (Array.isArray(jsonData)) {
+                                        allIncidents = jsonData;
+                                    } else if (jsonData._metadata && jsonData.data) {
+                                        allIncidents = jsonData.data;
+                                        console.log(`Auto-loaded: ${latestFile.name}`);
+                                    } else if (typeof jsonData === 'object' && !Array.isArray(jsonData)) {
+                                        allIncidents = [jsonData];
+                                    }
+
+                                    // Mostrar dashboard
+                                    uploadScreen.classList.add('hidden');
+                                    dashboardScreen.classList.remove('hidden');
+
+                                    setTimeout(() => {
+                                        try {
+                                            globalTimeFilter = {
+                                                period: 'all',
+                                                startDate: null,
+                                                endDate: new Date()
+                                            };
+                                            document.getElementById('timeFilter').value = 'all';
+                                            document.getElementById('dateRangeDisplay').style.display = 'none';
+                                            analyzeData();
+                                            document.getElementById('filterStatus').addEventListener('change', filterTable);
+                                            document.getElementById('filterSystem').addEventListener('change', filterTable);
+                                            document.getElementById('filterImpacto').addEventListener('change', filterTable);
+                                        } catch (e) {
+                                            console.error('Error in analyzeData:', e);
+                                        }
+                                    }, 100);
+                                })
+                                .catch(err => {
+                                    console.log('No se pudo auto-cargar datos. Usuario puede cargar manualmente.');
+                                });
+                        }
+                    });
+                } catch (err) {
+                    console.log('No se encontró index.json. Usuario puede cargar manualmente.');
+                }
+            }
+
+            // Intentar auto-cargar cuando la página se carga
+            autoLoadLatestData();
+
             uploadBtn.onclick = function(e) {
                 e.preventDefault();
                 fileInput.click();
