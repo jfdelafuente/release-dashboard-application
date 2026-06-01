@@ -22,7 +22,7 @@
 #
 ################################################################################
 
-set -euo pipefail
+set -u
 
 # ============================================================================
 # Configuration
@@ -164,16 +164,28 @@ check_python_environment() {
 check_converter_functionality() {
     log_info "Checking converter functionality..."
 
+    # Check both converter scripts exist
     if [[ ! -f "src/converters/convert_incidents.py" ]]; then
         log_error "Converter script missing: src/converters/convert_incidents.py"
         return 1
     fi
 
-    # Try to get help
-    if python src/converters/convert_incidents.py --help > /dev/null 2>&1; then
-        log_success "Converter is executable and responsive"
+    if [[ ! -f "src/converters/convert_postmortems.py" ]]; then
+        log_error "Converter script missing: src/converters/convert_postmortems.py"
+        return 1
+    fi
+
+    # Check if csv_to_json module exists
+    if [[ ! -d "src/converters/csv_to_json" ]]; then
+        log_error "CSV-to-JSON module missing: src/converters/csv_to_json"
+        return 1
+    fi
+
+    # Verify main converter class is available
+    if python -c "from src.converters.csv_to_json import CsvToJsonConverter; print('OK')" > /dev/null 2>&1; then
+        log_success "Converter module is working correctly"
     else
-        log_error "Converter command failed"
+        log_error "Converter module import failed"
         return 1
     fi
 

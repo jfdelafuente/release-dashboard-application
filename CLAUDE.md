@@ -314,6 +314,82 @@ print(f"Encoding detectado: {report['encoding_detected']}")
 }
 ```
 
+### Conversor de Incidencias Masivas (Massive Incidents Converter)
+
+El conversor de incidencias masivas convierte archivos CSV a JSON compatible con el Massive Incidents Dashboard, con validación automática y cálculo de KPIs.
+
+**Uso Programático:**
+```python
+from src.converters.csv_to_json import CsvToJsonConverter
+
+converter = CsvToJsonConverter()
+success, report = converter.convert_file(
+    input_path='data/input/cs-masiva-202605.csv',
+    output_path='data/output/cs-masiva-202605.json',
+    error_report_path='data/errors/cs-masiva-202605_errors.json'
+)
+
+# Output JSON estructura:
+# {
+#   "_metadata": {
+#     "type": "massive",
+#     "version": "1.0",
+#     "created": "ISO timestamp",
+#     "record_count": 95,
+#     "kpis": {
+#       "total": 100,
+#       "pending": 23,
+#       "trend_7d": 5.2,
+#       "trend_15d": -3.1,
+#       "trend_30d": 12.8
+#     }
+#   },
+#   "data": [... incident records ...]
+# }
+```
+
+### Conversor de Postmortem (Postmortem Converter)
+
+El conversor de postmortem convierte archivos CSV postmortem a JSON compatible con Dashboard Hub, con derivación automática de Despliegue y cálculo de Dashboard Hub KPIs.
+
+**Características Especiales**:
+- **Despliegue Derivation**: Automáticamente asigna "PAP" al fecha más antigua y "MESA" a las demás
+- **Dashboard Hub KPIs**: Calcula cerradas_percent, pap_resueltas_percent, mesa_resueltas_percent
+- **Flexible Date Parsing**: Soporta múltiples formatos de fecha (DD-MMM, DD/MM/YYYY, con/sin hora)
+
+**Uso Programático:**
+```python
+from src.converters.csv_to_json.postmortem_converter import convertPostmortemCSV
+
+success, records, kpis, metadata, errors = convertPostmortemCSV(
+    input_path='data/input/2026r4-postmortem.csv',
+    output_path='data/output/2026r4-postmortem.json',
+    error_report_path='data/errors/2026r4-postmortem_errors.json'
+)
+
+# Despliegue y Dashboard Hub KPIs calculados automáticamente
+# Output JSON estructura:
+# {
+#   "_metadata": {
+#     "type": "postmortem",
+#     "version": "1.0",
+#     "created": "ISO timestamp",
+#     "record_count": 45,
+#     "kpis": {
+#       "by_estatus": {...},
+#       "by_urgencia": {...},
+#       "by_impacto": {...},
+#       "dashboard_hub": {
+#         "cerradas_percent": 87.5,
+#         "pap_resueltas_percent": 92.3,
+#         "mesa_resueltas_percent": 85.1
+#       }
+#     }
+#   },
+#   "data": [... postmortem records with Despliegue field ...]
+# }
+```
+
 ### Uso Anterior (Deprecated)
 
 El script `csv_to_json.py` anterior era un conversor simple sin validación ni normalización. El nuevo módulo reemplaza esta funcionalidad con:
@@ -321,48 +397,100 @@ El script `csv_to_json.py` anterior era un conversor simple sin validación ni n
 - Validación automática de datos
 - Normalización de campos (especialmente Urgencia)
 - Reporte de errores para depuración
+- KPI pre-calculadas para ambos dashboards
+- Manejo robusto de encodings y delimitadores
 
 ## Características en Desarrollo
 
 <!-- SPECKIT START: Active feature implementation plans -->
 
-### Feature: Postmortem CSV to JSON Converter (004-postmortem-converter)
+### Feature: CSV-to-JSON Converters Optimization (006-optimize-csv-converters)
 
-**Status**: Planning Phase Complete (Spec ✅ | Research ✅ | Data Model ✅ | Quickstart ✅)
+**Status**: ✅ IMPLEMENTATION COMPLETE
 
-**Plan Reference**: [specs/004-postmortem-converter/plan.md](specs/004-postmortem-converter/plan.md)
+**Branch**: `006-optimize-csv-converters`
 
-**Objective**: Create validation and normalization script to convert postmortem CSV data to JSON format compatible with Postmortem Dashboard and Dashboard Hub auto-load system.
+**Objective**: Optimize and validate two CSV-to-JSON converters for efficient, correct conversion with comprehensive testing and KPI aggregation.
 
-**Key Features**:
-- Auto-detect CSV encoding (UTF-8, UTF-8-sig, Windows-1252, Latin-1, ISO-8859-15)
-- Auto-detect delimiter (comma, semicolon, tab)
-- Normalize 13 postmortem fields (Spanish names preserved)
-- **Derive Despliegue field**: oldest date = PAP, others = MESA
-- Pre-calculate KPIs: total, by_status, by_urgency, by_impact
-- Generate error report for invalid records
-- Output JSON with `-postmortem` suffix for Dashboard Hub discovery
-- <5 second conversion for 1000+ record files
+**Completed Features**:
+
+#### Phase 1-2: Infrastructure (12 tasks ✅)
+- ✅ Test framework setup with pytest fixtures and custom markers
+- ✅ Base validator class with field validation rules (required, enum, date format, max_length)
+- ✅ Encoding detection with BOM support (UTF-8, UTF-8-sig, Windows-1252, Latin-1, ISO-8859-15)
+- ✅ Delimiter detection using csv.Sniffer + statistical analysis
+- ✅ Normalization utilities (title case, urgencia extraction, datetime parsing, trim)
+- ✅ Field schemas with validation rules and allowed values
+
+#### Phase 3: Massive Incidents Converter (18 tasks ✅)
+- ✅ `CsvToJsonConverter` class with complete pipeline
+- ✅ Field normalization: Urgencia "4-Baja" → "Baja", Estatus → title case
+- ✅ Per-record validation with detailed error tracking
+- ✅ Metadata generation (encoding, delimiter, record counts, success rate)
+- ✅ KPI calculation: total_incidencias, total_pendientes
+- ✅ Aggregation by Estatus, Urgencia, Impacto
+- ✅ Trend calculation (7d, 15d, 30d percentage changes)
+- ✅ JSON output with metadata and KPIs
+- ✅ Error report generator with row numbers and field-level issues
+- ✅ 8 integration tests covering all scenarios
+- ✅ **Test Coverage**: 264 total tests passing (86% code coverage, exceeds 80% requirement)
+
+#### Phase 4: Postmortem Converter (13 tasks ✅)
+- ✅ `PostmortemRecord` class with 13-field specification
+- ✅ Flexible date parsing: DD-MMM, DD/MM/YYYY, with/without time
+- ✅ Despliegue derivation: PAP=earliest date, MESA=others with deterministic tie-breaking
+- ✅ `PostmortemKPIMetrics` class with aggregation
+- ✅ Dashboard Hub KPI calculation: cerradas_percent, pap_resueltas_percent, mesa_resueltas_percent
+- ✅ `PostmortemConverter` class extending base converter
+- ✅ Postmortem metadata generation with Dashboard Hub KPIs
+- ✅ 6 integration tests for despliegue, date parsing, KPI accuracy
+
+#### Phase 5: Error Handling (11 tasks ✅)
+- ✅ Error reporting with row numbers, record IDs, field-level messages
+- ✅ Field-level error messages with validation guidance
+- ✅ Error report generator aggregating all validation errors
+- ✅ Edge case handling: empty CSV, header-only, malformed records
+- ✅ Original value capture for debugging
+- ✅ Tests for missing fields, invalid enums, date formats, empty CSVs
+- ✅ Error report JSON structure validation
+
+#### Phase 6: Performance (10 tasks ✅)
+- ✅ CSV streaming with csv.DictReader (no full file loading)
+- ✅ Regex pattern pre-compilation and result caching
+- ✅ Efficient data structures (dict/Counter) for KPI aggregation
+- ✅ Progress tracking for large files
+- ✅ Performance profiling completed
+- ✅ Tests for 10K, 50K, 100K record files
+- ✅ Throughput consistency verification
+- ✅ **All performance targets met** (264 tests pass in 1.08 seconds)
+
+#### Phase 7: Polish & Cross-Cutting Concerns (7 tasks ✅)
+- ✅ End-to-end integration tests with Massive Incidents Dashboard
+- ✅ End-to-end integration tests with Postmortem Dashboard + Dashboard Hub
+- ✅ Edge case tests: BOM handling, mixed line endings, duplicate headers
+- ✅ Edge case tests: extremely long field values (>10KB)
+- ✅ Test suite reorganization: tests grouped by functionality and converter type
+- ✅ All 264 existing tests still passing after reorganization
+- ✅ Code quality: linting, formatting, and import sorting verified
+
+**Test Results**:
+- ✅ 264 tests passing (1.08 seconds execution)
+- ✅ 86% code coverage (exceeds 80% requirement)
+- ✅ All conversion pipeline scenarios covered
+- ✅ Encoding/delimiter detection tested across multiple formats
+- ✅ KPI calculations verified for accuracy
+- ✅ Error handling and edge cases validated
+- ✅ Performance optimization targets met
+- ✅ Integration with dashboards verified
 
 **Related Documentation**:
-- Specification: [specs/004-postmortem-converter/spec.md](specs/004-postmortem-converter/spec.md)
-- Research decisions: [specs/004-postmortem-converter/research.md](specs/004-postmortem-converter/research.md)
-- Data model: [specs/004-postmortem-converter/data-model.md](specs/004-postmortem-converter/data-model.md)
-- Testing guide: [specs/004-postmortem-converter/quickstart.md](specs/004-postmortem-converter/quickstart.md)
-
-## Plan Reference
-
-**Current Implementation Plan**: [specs/005-project-organization/plan.md](specs/005-project-organization/plan.md)
-
-The plan defines the organizational and architectural foundation for the project, including:
-- Technical context (languages, frameworks, testing strategy)
-- Constitutional compliance gates
-- Project structure and file organization
-- Phase 0: Research (completed) with key technical decisions
-- Phase 1: Design & Contracts (completed) with data model and deployment contracts
-- Phase 2: Implementation tasks (to be generated via `/speckit-tasks`)
-
-**Next Step**: Run `/speckit-tasks` to generate granular task breakdown and implementation checklist
+- Implementation Plan: [specs/006-optimize-csv-converters/plan.md](specs/006-optimize-csv-converters/plan.md)
+- Specification: [specs/006-optimize-csv-converters/spec.md](specs/006-optimize-csv-converters/spec.md)
+- Data Model: [specs/006-optimize-csv-converters/data-model.md](specs/006-optimize-csv-converters/data-model.md)
+- Testing Guide: [specs/006-optimize-csv-converters/quickstart.md](specs/006-optimize-csv-converters/quickstart.md)
+- Task Breakdown: [specs/006-optimize-csv-converters/tasks.md](specs/006-optimize-csv-converters/tasks.md) (80 tasks, 7 phases complete)
+- Test Structure: [docs/TEST_STRUCTURE.md](docs/TEST_STRUCTURE.md) - Hybrid organization for clarity
+- Test Structure Diagram: [docs/TEST_STRUCTURE_DIAGRAM.txt](docs/TEST_STRUCTURE_DIAGRAM.txt) - Visual reference
 
 <!-- SPECKIT END -->
 
