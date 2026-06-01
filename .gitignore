@@ -50,15 +50,12 @@ venv.bak/
 !project.json
 !specs/project.json
 !tests/test_data/**/*.csv
-# Temporarily allow data/output JSON files for testing
-!data/output/*.json
-!data/output/index.json
 
 # Data Directories
 csv/
 incidencias/
 datos/
-# data/  # Temporarily commented to allow testing data
+data/
 output/
 archive/
 
