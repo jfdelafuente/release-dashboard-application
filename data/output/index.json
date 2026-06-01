@@ -1,0 +1,40 @@
+{
+  "postmortem": {
+    "type": "postmortem",
+    "updated": "2026-05-14T12:42:59.421024Z",
+    "count": 1,
+    "files": [
+      {
+        "name": "2026R4MESAPOST_20260513-postmortem.json",
+        "size": 55979,
+        "modified": "2026-05-14T12:42:59.421025",
+        "path": "data/output/2026R4MESAPOST_20260513-postmortem.json"
+      }
+    ]
+  },
+  "massive": {
+    "type": "massive",
+    "updated": "2026-05-26T12:28:21.677911Z",
+    "count": 3,
+    "files": [
+      {
+        "name": "CS_MASIVA_20260526-massive.json",
+        "size": 1031189,
+        "modified": "2026-05-26T12:28:21.652666",
+        "path": "data/output/CS_MASIVA_20260526-massive.json"
+      },
+      {
+        "name": "CS_Masiva_20260514-massive.json",
+        "size": 1033191,
+        "modified": "2026-05-14T12:39:55.620275",
+        "path": "data/output/CS_Masiva_20260514-massive.json"
+      },
+      {
+        "name": "CS_Masiva_20260513-massive.json",
+        "size": 1033147,
+        "modified": "2026-05-13T17:22:22.250654",
+        "path": "data/output/CS_Masiva_20260513-massive.json"
+      }
+    ]
+  }
+}
