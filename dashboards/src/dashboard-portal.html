@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Release Dashboard - Portal Principal</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: #e2e8f0;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        header {
+            text-align: center;
+            margin-bottom: 50px;
+            animation: slideDown 0.6s ease-out;
+        }
+
+        header h1 {
+            font-size: 3em;
+            font-weight: 800;
+            background: linear-gradient(135deg, #f97316 0%, #fb923c 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+        }
+
+        header p {
+            font-size: 1.1em;
+            color: #94a3b8;
+            margin-bottom: 30px;
+        }
+
+        /* Stats Section */
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 50px;
+        }
+
+        .stat-card {
+            background: rgba(15, 23, 42, 0.8);
+            border: 1px solid #334155;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            transition: all 0.3s ease;
+            animation: fadeIn 0.6s ease-out;
+        }
+
+        .stat-card:hover {
+            border-color: #f97316;
+            background: rgba(15, 23, 42, 0.95);
+            transform: translateY(-5px);
+        }
+
+        .stat-card .value {
+            font-size: 2.5em;
+            font-weight: 800;
+            color: #f97316;
+            margin: 10px 0;
+        }
+
+        .stat-card .label {
+            color: #94a3b8;
+            font-size: 0.95em;
+        }
+
+        /* Dashboards Grid */
+        .dashboards-section h2 {
+            font-size: 2em;
+            margin-bottom: 30px;
+            color: #f1f5f9;
+        }
+
+        .dashboards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            margin-bottom: 50px;
+        }
+
+        .dashboard-card {
+            background: rgba(30, 41, 59, 0.8);
+            border: 2px solid #334155;
+            border-radius: 16px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            animation: fadeIn 0.6s ease-out;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .dashboard-card:hover {
+            border-color: #f97316;
+            background: rgba(30, 41, 59, 0.95);
+            transform: translateY(-10px);
+            box-shadow: 0 20px 40px rgba(249, 115, 22, 0.2);
+        }
+
+        .dashboard-header {
+            background: linear-gradient(135deg, #f97316 0%, #fb923c 100%);
+            padding: 20px;
+            color: white;
+            flex-shrink: 0;
+        }
+
+        .dashboard-header h3 {
+            font-size: 1.5em;
+            margin-bottom: 5px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .dashboard-icon {
+            font-size: 1.8em;
+        }
+
+        .dashboard-header p {
+            font-size: 0.9em;
+            opacity: 0.95;
+        }
+
+        .dashboard-content {
+            padding: 20px;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .dashboard-description {
+            color: #cbd5e1;
+            margin-bottom: 15px;
+            font-size: 0.95em;
+            line-height: 1.6;
+            flex-grow: 1;
+        }
+
+        .dashboard-features {
+            list-style: none;
+            margin-bottom: 20px;
+            font-size: 0.9em;
+        }
+
+        .dashboard-features li {
+            padding: 5px 0;
+            color: #94a3b8;
+            padding-left: 20px;
+            position: relative;
+        }
+
+        .dashboard-features li:before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: #22c55e;
+            font-weight: bold;
+        }
+
+        .dashboard-link {
+            display: inline-block;
+            background: linear-gradient(135deg, #f97316 0%, #fb923c 100%);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            text-align: center;
+            border: none;
+            cursor: pointer;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .dashboard-link:hover {
+            transform: scale(1.05);
+            box-shadow: 0 10px 20px rgba(249, 115, 22, 0.3);
+        }
+
+        /* Data Info Section */
+        .data-info {
+            background: rgba(30, 41, 59, 0.6);
+            border-left: 4px solid #f97316;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 50px;
+        }
+
+        .data-info h3 {
+            margin-bottom: 15px;
+            color: #f97316;
+        }
+
+        .data-files {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+        }
+
+        .data-file {
+            background: rgba(15, 23, 42, 0.5);
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #334155;
+            font-size: 0.9em;
+        }
+
+        .data-file .filename {
+            color: #f97316;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .data-file .details {
+            color: #94a3b8;
+            font-size: 0.85em;
+        }
+
+        /* Coming Soon */
+        .coming-soon {
+            opacity: 0.6;
+            position: relative;
+        }
+
+        .coming-soon::after {
+            content: "PRÓXIMAMENTE";
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #f97316;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.75em;
+            font-weight: 700;
+        }
+
+        /* Footer */
+        footer {
+            text-align: center;
+            padding-top: 30px;
+            border-top: 1px solid #334155;
+            color: #94a3b8;
+            font-size: 0.9em;
+        }
+
+        footer a {
+            color: #f97316;
+            text-decoration: none;
+        }
+
+        footer a:hover {
+            text-decoration: underline;
+        }
+
+        /* Animations */
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            header h1 {
+                font-size: 2em;
+            }
+
+            .dashboards-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .stats {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        /* Loading spinner */
+        .spinner {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border: 2px solid rgba(249, 115, 22, 0.3);
+            border-top-color: #f97316;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #94a3b8;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header>
+            <h1>📊 Release Dashboard</h1>
+            <p>Portal centralizado para análisis de incidencias y postmortems</p>
+        </header>
+
+        <!-- Stats -->
+        <div class="stats" id="stats-container">
+            <div class="stat-card">
+                <div class="label">Incidencias Masivas</div>
+                <div class="value" id="massive-count">-</div>
+                <div class="label" id="massive-date">Cargando...</div>
+            </div>
+            <div class="stat-card">
+                <div class="label">Postmortems</div>
+                <div class="value" id="postmortem-count">-</div>
+                <div class="label" id="postmortem-date">Cargando...</div>
+            </div>
+            <div class="stat-card">
+                <div class="label">Datasets Disponibles</div>
+                <div class="value" id="total-files">-</div>
+                <div class="label">archivos JSON</div>
+            </div>
+        </div>
+
+        <!-- Data Info -->
+        <div class="data-info" id="data-info">
+            <h3>📁 Datasets Disponibles</h3>
+            <div class="data-files" id="data-files-list">
+                <div class="loading">
+                    <div class="spinner"></div> Cargando índice...
+                </div>
+            </div>
+        </div>
+
+        <!-- Dashboards -->
+        <section class="dashboards-section">
+            <h2>🎯 Dashboards Disponibles</h2>
+            <div class="dashboards-grid">
+                <!-- Dashboard 1: Massive Incidents -->
+                <div class="dashboard-card">
+                    <div class="dashboard-header">
+                        <h3>
+                            <span class="dashboard-icon">📈</span>
+                            Incidencias Masivas
+                        </h3>
+                        <p>Análisis temporal en tiempo real</p>
+                    </div>
+                    <div class="dashboard-content">
+                        <div class="dashboard-description">
+                            Visualiza la evolución temporal de incidencias masivas con gráficas interactivas, tendencias y análisis detallado de backlog.
+                        </div>
+                        <ul class="dashboard-features">
+                            <li>Filtro de tiempo global (7d, 15d, 30d, 90d, 6m, año)</li>
+                            <li>KPIs con tendencias color-coded</li>
+                            <li>Gráficas temporales interactivas</li>
+                            <li>Filtros por estado, sistema, urgencia</li>
+                            <li>Links directos a Remedy</li>
+                        </ul>
+                        <a href="massive-incidents-dashboard.html" class="dashboard-link">Acceder →</a>
+                    </div>
+                </div>
+
+                <!-- Dashboard 2: Postmortem -->
+                <div class="dashboard-card">
+                    <div class="dashboard-header">
+                        <h3>
+                            <span class="dashboard-icon">🔍</span>
+                            Análisis Postmortem
+                        </h3>
+                        <p>Análisis detallado por despliegue</p>
+                    </div>
+                    <div class="dashboard-content">
+                        <div class="dashboard-description">
+                            Desglose detallado de postmortems con análisis por despliegues PAP/MESA, KPIs específicas y métricas de resolución.
+                        </div>
+                        <ul class="dashboard-features">
+                            <li>Análisis por despliegue (PAP/MESA)</li>
+                            <li>KPIs desglosadas por tipo</li>
+                            <li>Visualizaciones interactivas</li>
+                            <li>Filtros avanzados</li>
+                            <li>Detalles de cada postmortem</li>
+                        </ul>
+                        <a href="postmortem-dashboard.html" class="dashboard-link">Acceder →</a>
+                    </div>
+                </div>
+
+
+                <!-- Placeholder: Future Dashboard 1 -->
+                <div class="dashboard-card coming-soon">
+                    <div class="dashboard-header">
+                        <h3>
+                            <span class="dashboard-icon">⏳</span>
+                            Análisis Predictivo
+                        </h3>
+                        <p>Próximamente</p>
+                    </div>
+                    <div class="dashboard-content">
+                        <div class="dashboard-description">
+                            Predicción de incidencias futuras basada en patrones históricos, tendencias y machine learning.
+                        </div>
+                        <ul class="dashboard-features">
+                            <li>Análisis de patrones históricos</li>
+                            <li>Predicciones de tendencias</li>
+                            <li>Alertas inteligentes</li>
+                            <li>Recomendaciones automáticas</li>
+                        </ul>
+                        <button class="dashboard-link" disabled>Próximamente</button>
+                    </div>
+                </div>
+
+                <!-- Placeholder: Future Dashboard 2 -->
+                <div class="dashboard-card coming-soon">
+                    <div class="dashboard-header">
+                        <h3>
+                            <span class="dashboard-icon">👥</span>
+                            Análisis por Equipo
+                        </h3>
+                        <p>Próximamente</p>
+                    </div>
+                    <div class="dashboard-content">
+                        <div class="dashboard-description">
+                            Análisis detallado por equipo, carga de trabajo, tiempos de respuesta y métricas de rendimiento.
+                        </div>
+                        <ul class="dashboard-features">
+                            <li>Performance por equipo</li>
+                            <li>Carga de trabajo</li>
+                            <li>Tiempos de respuesta</li>
+                            <li>Métricas de SLA</li>
+                        </ul>
+                        <button class="dashboard-link" disabled>Próximamente</button>
+                    </div>
+                </div>
+
+                <!-- Placeholder: Future Dashboard 3 -->
+                <div class="dashboard-card coming-soon">
+                    <div class="dashboard-header">
+                        <h3>
+                            <span class="dashboard-icon">📊</span>
+                            Reportes Personalizados
+                        </h3>
+                        <p>Próximamente</p>
+                    </div>
+                    <div class="dashboard-content">
+                        <div class="dashboard-description">
+                            Generador de reportes personalizado con exportación a PDF, Excel y programación de reportes automáticos.
+                        </div>
+                        <ul class="dashboard-features">
+                            <li>Reportes personalizables</li>
+                            <li>Exportación múltiple (PDF, Excel)</li>
+                            <li>Programación de reportes</li>
+                            <li>Distribución automática</li>
+                        </ul>
+                        <button class="dashboard-link" disabled>Próximamente</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer>
+            <p>
+                Release Dashboard Application |
+                <a href="https://github.com/anthropics/claude-code" target="_blank">Documentación</a> |
+                Última actualización: <span id="update-time">-</span>
+            </p>
+            <p style="font-size: 0.85em; margin-top: 10px; color: #64748b;">
+                Para más información, consulta la documentación en <code>dashboards/README.md</code>
+            </p>
+        </footer>
+    </div>
+
+    <script>
+        // Load data from index.json
+        async function loadDashboardData() {
+            try {
+                const response = await fetch('../../data/output/index.json');
+                const data = await response.json();
+
+                updateStats(data);
+                updateDataInfo(data);
+                updateTimestamp(data);
+            } catch (error) {
+                console.error('Error cargando datos:', error);
+                document.getElementById('data-files-list').innerHTML =
+                    '<div class="loading" style="grid-column: 1/-1;">⚠️ No se pudieron cargar los datos. Asegúrate de que index.json existe en data/output/</div>';
+            }
+        }
+
+        function updateStats(data) {
+            // Massive incidents
+            const massiveCount = data.massive?.count || 0;
+            const massiveFile = data.massive?.files?.[0];
+            const massiveDate = massiveFile?.modified ? new Date(massiveFile.modified).toLocaleDateString('es-ES') : '-';
+
+            document.getElementById('massive-count').textContent = massiveCount;
+            document.getElementById('massive-date').textContent = `Última: ${massiveDate}`;
+
+            // Postmortems
+            const postmortemCount = data.postmortem?.count || 0;
+            const postmortemFile = data.postmortem?.files?.[0];
+            const postmortemDate = postmortemFile?.modified ? new Date(postmortemFile.modified).toLocaleDateString('es-ES') : '-';
+
+            document.getElementById('postmortem-count').textContent = postmortemCount;
+            document.getElementById('postmortem-date').textContent = `Última: ${postmortemDate}`;
+
+            // Total files
+            const totalFiles = massiveCount + postmortemCount;
+            document.getElementById('total-files').textContent = totalFiles;
+        }
+
+        function updateDataInfo(data) {
+            const filesList = document.getElementById('data-files-list');
+            filesList.innerHTML = '';
+
+            // Massive incidents files
+            if (data.massive?.files?.length > 0) {
+                data.massive.files.forEach(file => {
+                    const fileEl = document.createElement('div');
+                    fileEl.className = 'data-file';
+                    const size = (file.size / 1024).toFixed(1);
+                    const date = new Date(file.modified).toLocaleDateString('es-ES');
+                    fileEl.innerHTML = `
+                        <div class="filename">📈 ${file.name}</div>
+                        <div class="details">
+                            Tamaño: ${size} KB<br>
+                            Modificado: ${date}
+                        </div>
+                    `;
+                    filesList.appendChild(fileEl);
+                });
+            }
+
+            // Postmortem files
+            if (data.postmortem?.files?.length > 0) {
+                data.postmortem.files.forEach(file => {
+                    const fileEl = document.createElement('div');
+                    fileEl.className = 'data-file';
+                    const size = (file.size / 1024).toFixed(1);
+                    const date = new Date(file.modified).toLocaleDateString('es-ES');
+                    fileEl.innerHTML = `
+                        <div class="filename">🔍 ${file.name}</div>
+                        <div class="details">
+                            Tamaño: ${size} KB<br>
+                            Modificado: ${date}
+                        </div>
+                    `;
+                    filesList.appendChild(fileEl);
+                });
+            }
+
+            if (!data.massive?.files?.length && !data.postmortem?.files?.length) {
+                filesList.innerHTML = '<div class="loading" style="grid-column: 1/-1;">ℹ️ No hay datasets disponibles. Ejecuta los converters para generar datos.</div>';
+            }
+        }
+
+        function updateTimestamp(data) {
+            const latestDate = Math.max(
+                new Date(data.massive?.updated || 0).getTime(),
+                new Date(data.postmortem?.updated || 0).getTime()
+            );
+
+            if (latestDate > 0) {
+                const date = new Date(latestDate).toLocaleDateString('es-ES', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+                document.getElementById('update-time').textContent = date;
+            }
+        }
+
+        // Load data on page load
+        document.addEventListener('DOMContentLoaded', loadDashboardData);
+
+        // Refresh data every 30 seconds
+        setInterval(loadDashboardData, 30000);
+    </script>
+</body>
+</html>
