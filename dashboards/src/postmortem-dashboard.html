@@ -1593,43 +1593,46 @@
                     if (indexData.postmortem && indexData.postmortem.files && indexData.postmortem.files.length > 0) {
                         // Obtener el archivo más reciente (primer archivo en la lista)
                         const latestFile = indexData.postmortem.files[0];
-                        const filePath = latestFile.path;
+                        let filePath = latestFile.path;
+
+                        // Ajustar la ruta si es necesario (desde dashboards/src/)
+                        if (!filePath.startsWith('http')) {
+                            filePath = '../../' + filePath;
+                        }
+
+                        console.log(`Auto-loading: ${filePath}`);
 
                         // Cargar el archivo JSON
-                        fetch(filePath)
-                            .then(r => r.json())
-                            .then(jsonData => {
-                                // Procesar datos
-                                if (Array.isArray(jsonData)) {
-                                    allPostmortems = jsonData;
-                                } else if (jsonData._metadata && jsonData.data) {
-                                    allPostmortems = jsonData.data;
-                                    console.log(`Auto-loaded: ${latestFile.name}`);
-                                } else if (typeof jsonData === 'object' && !Array.isArray(jsonData)) {
-                                    allPostmortems = [jsonData];
-                                }
+                        const fileResponse = await fetch(filePath);
+                        const jsonData = await fileResponse.json();
 
-                                // Mostrar dashboard
-                                uploadScreen.classList.add('hidden');
-                                dashboardScreen.classList.remove('hidden');
+                        // Procesar datos
+                        if (Array.isArray(jsonData)) {
+                            allPostmortems = jsonData;
+                        } else if (jsonData._metadata && jsonData.data) {
+                            allPostmortems = jsonData.data;
+                            console.log(`Auto-loaded: ${latestFile.name} (${jsonData._metadata.record_count} records)`);
+                        } else if (typeof jsonData === 'object' && !Array.isArray(jsonData)) {
+                            allPostmortems = [jsonData];
+                        }
 
-                                setTimeout(() => {
-                                    try {
-                                        analyzeData();
-                                        document.getElementById('filterDesplegador').addEventListener('change', filterTable);
-                                        document.getElementById('filterEstatus').addEventListener('change', filterTable);
-                                        document.getElementById('filterUrgencia').addEventListener('change', filterTable);
-                                    } catch (e) {
-                                        console.error('Error in analyzeData:', e);
-                                    }
-                                }, 100);
-                            })
-                            .catch(err => {
-                                console.log('No se pudo auto-cargar datos. Usuario puede cargar manualmente.');
-                            });
+                        // Mostrar dashboard
+                        uploadScreen.classList.add('hidden');
+                        dashboardScreen.classList.remove('hidden');
+
+                        setTimeout(() => {
+                            try {
+                                analyzeData();
+                                document.getElementById('filterDesplegador').addEventListener('change', filterTable);
+                                document.getElementById('filterEstatus').addEventListener('change', filterTable);
+                                document.getElementById('filterUrgencia').addEventListener('change', filterTable);
+                            } catch (e) {
+                                console.error('Error in analyzeData:', e);
+                            }
+                        }, 100);
                     }
                 } catch (err) {
-                    console.log('No se encontró index.json. Usuario puede cargar manualmente.');
+                    console.log('No se encontró index.json o datos. Usuario puede cargar manualmente.', err);
                 }
             }
 
