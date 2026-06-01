@@ -1,0 +1,11 @@
+# Release Dashboard Application - Production Dependencies
+
+# Core Python modules (using standard library, minimal external dependencies)
+# csv_to_json module is part of the project, not external
+
+# Configuration management
+python-dotenv>=0.19.0
+
+# No other production dependencies required for core functionality
+# Dashboard uses Plotly.js (JavaScript CDN, no Python package needed)
+# CSV-to-JSON conversion uses Python standard library (csv, json)

@@ -27,7 +27,11 @@ import json
 import sys
 from pathlib import Path
 from datetime import datetime
-from .csv_to_json import CsvToJsonConverter
+import subprocess
+
+# Add parent/src to path for csv_to_json module
+sys.path.insert(0, str(Path(__file__).parent.parent / 'src'))
+from csv_to_json import CsvToJsonConverter
 
 
 # Configuración de rutas por defecto
@@ -338,14 +342,22 @@ Ejemplos:
     print()
     print_info("Generando index.json para Dashboard Hub...")
     try:
-        # Import the build_index function
-        sys.path.insert(0, str(Path(__file__).parent))
-        from build_index import build_index
-
-        if build_index(str(DEFAULT_OUTPUT_DIR)):
+        # Call build_index as subprocess
+        cli_path = Path(__file__).parent / 'build_index.py'
+        result = subprocess.run(
+            [sys.executable, str(cli_path), str(DEFAULT_OUTPUT_DIR)],
+            capture_output=True,
+            text=True
+        )
+        if result.returncode == 0:
             print_success(f"Index actualizado: {DEFAULT_OUTPUT_DIR / 'index.json'}")
+            if result.stdout:
+                for line in result.stdout.strip().split('\n'):
+                    print(f"  {line}")
         else:
             print_warning("No se pudo generar index.json")
+            if result.stderr:
+                print_warning(f"Error: {result.stderr}")
     except Exception as e:
         print_warning(f"Error al generar index.json: {e}")
 

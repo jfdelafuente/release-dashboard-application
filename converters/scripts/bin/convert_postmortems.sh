@@ -35,6 +35,10 @@ if [ $# -eq 0 ]; then
     exit 1
 fi
 
-# Ejecutar script Python desde ubicacion src/converters/ con argumentos
-python3 -m src.converters.convert_postmortems "$@"
+# Ejecutar script Python desde nueva ubicación cli/convert_postmortems.py con argumentos
+# Obtener directorio del script
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+CONVERTERS_DIR="$(dirname "$(dirname "$SCRIPT_DIR")")"
+
+python3 "$CONVERTERS_DIR/cli/convert_postmortems.py" "$@"
 exit $?

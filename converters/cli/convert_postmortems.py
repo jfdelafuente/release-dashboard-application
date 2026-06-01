@@ -36,7 +36,11 @@ import sys
 import json
 from pathlib import Path
 from datetime import datetime
-from .csv_to_json.postmortem_converter import PostmortemConverter
+import subprocess
+
+# Add parent/src to path for csv_to_json module
+sys.path.insert(0, str(Path(__file__).parent.parent / 'src'))
+from csv_to_json.postmortem_converter import PostmortemConverter
 
 
 # Configuración de rutas por defecto

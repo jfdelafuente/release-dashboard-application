@@ -37,9 +37,15 @@ echo %GREEN%    CSV to JSON Converter - Dashboard de Postmortems%RESET%
 echo %GREEN%======================================================================%RESET%
 echo.
 
-REM Ejecutar script Python desde ubicacion src/converters/
+REM Obtener directorio del script batch
+set SCRIPT_DIR=%~dp0
+REM Navegar hacia arriba dos niveles (bin -> scripts -> converters)
+for %%A in ("%SCRIPT_DIR%..") do set SCRIPTS_DIR=%%~dpA
+for %%A in ("%SCRIPTS_DIR%..") do set CONVERTERS_DIR=%%~dpA
+
+REM Ejecutar script Python desde nueva ubicación cli/convert_postmortems.py
 REM IMPORTANTE: Usar "" para que Python interprete los argumentos correctamente
-python -m src.converters.convert_postmortems %*
+python "%CONVERTERS_DIR%cli\convert_postmortems.py" %*
 
 REM Guardar el código de salida
 set EXITCODE=!ERRORLEVEL!

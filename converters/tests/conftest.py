@@ -5,10 +5,16 @@ Provides common fixtures, markers, and test utilities for all converter tests.
 """
 import json
 import os
+import sys
 import tempfile
 from pathlib import Path
 
 import pytest
+
+# Add src to Python path so tests can import csv_to_json module
+src_path = Path(__file__).parent.parent / "src"
+if str(src_path) not in sys.path:
+    sys.path.insert(0, str(src_path))
 
 
 @pytest.fixture
