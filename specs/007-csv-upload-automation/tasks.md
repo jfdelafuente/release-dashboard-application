@@ -38,8 +38,8 @@ Task breakdown organized by user story priority. Each story is independently tes
 
 ### Tasks
 
-- [ ] T001 Initialize backend project structure with framework chosen (Flask, FastAPI, or Express.js), create main server file, and setup initial requirements/package files in `backend/` directory
-- [ ] T002 [P] Initialize frontend project structure with module loader or build tool, create HTML/JS entry points in `dashboards/` directory, setup package.json if using Node.js
+- [X] T001 Initialize backend project structure with framework chosen (Flask, FastAPI, or Express.js), create main server file, and setup initial requirements/package files in `backend/` directory
+- [X] T002 [P] Initialize frontend project structure with module loader or build tool, create HTML/JS entry points in `dashboards/` directory, setup package.json if using Node.js
 - [ ] T003 Create `/api/health` endpoint in backend to verify server is running and responding correctly
 - [ ] T004 Setup CORS configuration in backend to allow dashboard (frontend) to communicate with API if running on different port/host
 - [ ] T005 [P] Create logging infrastructure in backend (all API calls, file operations, errors logged with timestamp)

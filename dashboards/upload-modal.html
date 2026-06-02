@@ -1,0 +1,149 @@
+<!-- CSV Upload Modal Component -->
+<div id="upload-modal" class="modal hidden">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2>Upload CSV File</h2>
+      <button class="modal-close" id="modal-close-btn" aria-label="Close modal">×</button>
+    </div>
+
+    <div class="modal-body">
+      <!-- Step 1: File Selection -->
+      <div id="upload-step-select" class="upload-step active">
+        <h3>Select CSV File</h3>
+
+        <!-- Drag and Drop Zone -->
+        <div id="drop-zone" class="drop-zone">
+          <svg class="drop-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="17 8 12 3 7 8"></polyline>
+            <line x1="12" y1="3" x2="12" y2="15"></line>
+          </svg>
+          <p class="drop-text">Drag and drop CSV file here</p>
+          <p class="drop-subtext">or</p>
+          <label for="file-input" class="file-button">
+            Choose File
+          </label>
+          <input
+            id="file-input"
+            type="file"
+            accept=".csv"
+            class="hidden-input"
+            aria-label="Upload CSV file"
+          >
+        </div>
+
+        <!-- File Info Display -->
+        <div id="file-info" class="file-info hidden">
+          <p><strong>Selected file:</strong> <span id="file-name">-</span></p>
+          <p><strong>File size:</strong> <span id="file-size">-</span></p>
+          <p id="file-warning" class="file-warning hidden"></p>
+        </div>
+
+        <!-- Error Display -->
+        <div id="error-select" class="error-message hidden"></div>
+      </div>
+
+      <!-- Step 2: Validation Results -->
+      <div id="upload-step-validation" class="upload-step hidden">
+        <h3>Validation Results</h3>
+
+        <!-- Validation Success -->
+        <div id="validation-success" class="validation-success hidden">
+          <div class="success-icon">✓</div>
+          <h4>File Validated Successfully</h4>
+
+          <div class="validation-details">
+            <div class="detail-row">
+              <span class="detail-label">File Name:</span>
+              <span class="detail-value" id="val-filename">-</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">File Size:</span>
+              <span class="detail-value" id="val-filesize">-</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Detected Encoding:</span>
+              <span class="detail-value" id="val-encoding">-</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Detected Delimiter:</span>
+              <span class="detail-value" id="val-delimiter">-</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Number of Records:</span>
+              <span class="detail-value" id="val-rowcount">-</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Column Names:</span>
+              <span class="detail-value" id="val-headers">-</span>
+            </div>
+          </div>
+
+          <!-- Warnings if any -->
+          <div id="validation-warnings" class="validation-warnings hidden">
+            <h5>⚠️ Warnings</h5>
+            <ul id="warnings-list"></ul>
+          </div>
+        </div>
+
+        <!-- Validation Failed -->
+        <div id="validation-error" class="validation-error hidden">
+          <div class="error-icon">✕</div>
+          <h4>Validation Failed</h4>
+          <div id="error-details" class="error-details"></div>
+          <button class="btn-secondary" id="btn-back-to-select">Try Another File</button>
+        </div>
+
+        <!-- Progress Bar -->
+        <div id="validation-progress" class="progress-bar hidden">
+          <div class="progress-fill"></div>
+          <p>Validating file...</p>
+        </div>
+      </div>
+
+      <!-- Step 3: Processing -->
+      <div id="upload-step-processing" class="upload-step hidden">
+        <h3>Processing File</h3>
+
+        <div class="processing-status">
+          <div class="spinner"></div>
+          <p id="processing-message">Uploading file...</p>
+        </div>
+
+        <div class="processing-steps">
+          <div class="step">
+            <span class="step-number">1</span>
+            <span class="step-text">Upload File</span>
+          </div>
+          <div class="step-separator"></div>
+          <div class="step">
+            <span class="step-number">2</span>
+            <span class="step-text">Validate File</span>
+          </div>
+          <div class="step-separator"></div>
+          <div class="step">
+            <span class="step-number">3</span>
+            <span class="step-text">Move to Input</span>
+          </div>
+          <div class="step-separator"></div>
+          <div class="step">
+            <span class="step-number">4</span>
+            <span class="step-text">Convert to JSON</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button id="btn-cancel" class="btn-secondary">Cancel</button>
+      <button id="btn-upload" class="btn-primary">Upload & Convert</button>
+      <button id="btn-confirm" class="btn-primary hidden">Confirm & Convert</button>
+    </div>
+  </div>
+
+  <!-- Modal Overlay -->
+  <div id="modal-overlay" class="modal-overlay"></div>
+</div>
+
+<!-- Notification Container -->
+<div id="notifications-container" class="notifications-container"></div>
