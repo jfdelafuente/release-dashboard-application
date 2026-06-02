@@ -11,6 +11,15 @@ on:
         options:
           - staging
           - production
+      component:
+        description: 'Component to deploy'
+        required: true
+        default: 'both'
+        type: choice
+        options:
+          - converters
+          - dashboards
+          - both
 
 jobs:
   build:
@@ -19,6 +28,7 @@ jobs:
     outputs:
       version: ${{ steps.version.outputs.version }}
       artifact-id: ${{ steps.artifact.outputs.id }}
+      artifact-name: ${{ steps.artifact.outputs.artifact-name }}
 
     steps:
     - name: Checkout code
@@ -34,22 +44,42 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
-        python-version: '3.10'
-
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
+        python-version: '3.11'
 
     - name: Create artifact
       id: artifact
       run: |
         ARTIFACT_ID="${{ github.sha }}"
-        echo "Creating build artifact: $ARTIFACT_ID"
-        echo "id=$ARTIFACT_ID" >> $GITHUB_OUTPUT
+        COMPONENT="${{ github.event.inputs.component }}"
         mkdir -p dist
-        tar -czf dist/release-dashboard-$ARTIFACT_ID.tar.gz \
-          src/ scripts/ config/ requirements.txt VERSION
+
+        echo "Creating build artifact for component: $COMPONENT"
+
+        if [ "$COMPONENT" = "converters" ] || [ "$COMPONENT" = "both" ]; then
+          echo "📦 Including converters..."
+          tar -czf dist/release-dashboard-converters-$ARTIFACT_ID.tar.gz \
+            converters/ scripts/generate-dashboards.sh scripts/README.md VERSION
+        fi
+
+        if [ "$COMPONENT" = "dashboards" ] || [ "$COMPONENT" = "both" ]; then
+          echo "📦 Including dashboards..."
+          tar -czf dist/release-dashboard-dashboards-$ARTIFACT_ID.tar.gz \
+            dashboards/ data/ VERSION
+        fi
+
+        if [ "$COMPONENT" = "both" ]; then
+          echo "📦 Including complete release..."
+          tar -czf dist/release-dashboard-complete-$ARTIFACT_ID.tar.gz \
+            converters/ dashboards/ data/ scripts/ VERSION
+          ARTIFACT_NAME="complete"
+        elif [ "$COMPONENT" = "converters" ]; then
+          ARTIFACT_NAME="converters"
+        else
+          ARTIFACT_NAME="dashboards"
+        fi
+
+        echo "artifact-name=$ARTIFACT_NAME" >> $GITHUB_OUTPUT
+        echo "id=$ARTIFACT_ID" >> $GITHUB_OUTPUT
         ls -lh dist/
 
     - name: Upload build artifact
@@ -86,23 +116,39 @@ jobs:
 
     - name: Deploy to staging
       run: |
-        echo "🚀 Deploying to staging environment..."
+        COMPONENT="${{ github.event.inputs.component }}"
+        ARTIFACT_ID="${{ needs.build.outputs.artifact-id }}"
+        ARTIFACT_NAME="${{ needs.build.outputs.artifact-name }}"
+
+        echo "🚀 Deploying $COMPONENT to staging environment..."
         echo "Version: ${{ needs.build.outputs.version }}"
-        echo "Artifact: ${{ needs.build.outputs.artifact-id }}"
+        echo "Artifact: $ARTIFACT_ID"
 
         # Upload artifact to staging server
-        scp -P ${{ secrets.STAGING_PORT }} dist/release-dashboard-${{ needs.build.outputs.artifact-id }}.tar.gz \
+        scp -P ${{ secrets.STAGING_PORT }} dist/release-dashboard-$ARTIFACT_NAME-$ARTIFACT_ID.tar.gz \
           ${{ secrets.STAGING_USER }}@${{ secrets.STAGING_HOST }}:/tmp/
 
-        # Extract and deploy
+        # Extract and deploy based on component
         ssh -p ${{ secrets.STAGING_PORT }} ${{ secrets.STAGING_USER }}@${{ secrets.STAGING_HOST }} << 'EOF'
         set -e
+        COMPONENT="$COMPONENT"
+        ARTIFACT_ID="$ARTIFACT_ID"
+        ARTIFACT_NAME="$ARTIFACT_NAME"
+
         echo "📦 Extracting artifact..."
         cd /var/www/release-dashboard-staging
-        tar -xzf /tmp/release-dashboard-${{ needs.build.outputs.artifact-id }}.tar.gz
+        tar -xzf /tmp/release-dashboard-$ARTIFACT_NAME-$ARTIFACT_ID.tar.gz
 
-        echo "🔧 Installing dependencies..."
-        pip install -r requirements.txt
+        if [ "$COMPONENT" = "converters" ] || [ "$COMPONENT" = "both" ]; then
+          echo "🔧 Installing converter dependencies..."
+          cd converters
+          pip install -r requirements.txt
+          cd ..
+        fi
+
+        if [ "$COMPONENT" = "dashboards" ] || [ "$COMPONENT" = "both" ]; then
+          echo "📊 Dashboards deployed (no dependencies needed)"
+        fi
 
         echo "✅ Staging deployment completed"
         EOF
@@ -128,7 +174,8 @@ jobs:
       with:
         script: |
           const status = '${{ job.status }}' === 'success' ? '✅ Success' : '❌ Failed';
-          const comment = `## 🚀 Staging Deployment ${status}\n\n- **Version**: ${{ needs.build.outputs.version }}\n- **Commit**: ${{ github.sha }}\n- **Staging URL**: ${{ secrets.STAGING_URL }}\n- **Environment**: Staging VPS\n\n**Next Step**: Test the staging deployment, then approve production deployment if ready.`;
+          const component = '${{ github.event.inputs.component }}';
+          const comment = `## 🚀 Staging Deployment ${status}\n\n- **Component**: ${component}\n- **Version**: ${{ needs.build.outputs.version }}\n- **Commit**: ${{ github.sha }}\n- **Staging URL**: ${{ secrets.STAGING_URL }}\n- **Environment**: Staging VPS\n\n**Next Step**: Test the staging deployment, then approve production deployment if ready.`;
 
           if (context.issue.number) {
             github.rest.issues.createComment({
@@ -151,8 +198,8 @@ jobs:
       with:
         script: |
           const sha = context.sha.substring(0, 7);
-          const version = process.env.VERSION || 'unknown';
-          const comment = `## 🚀 Staging Deployment Successful\n\n- **Version**: ${version}\n- **Commit**: ${sha}\n- **Staging URL**: ${{ secrets.STAGING_URL }}\n\n**Next Step**: Approve production deployment\n\nTo deploy to production, comment with: \`/deploy-production\``;
+          const component = '${{ github.event.inputs.component }}';
+          const comment = `## 🚀 Staging Deployment Successful\n\n- **Component**: ${component}\n- **Version**: ${{ needs.build.outputs.version }}\n- **Commit**: ${sha}\n- **Staging URL**: ${{ secrets.STAGING_URL }}\n\n**Next Step**: Test staging, then approve production deployment\n\nTo deploy to production:\n\`\`\`\ncomponent=${{ github.event.inputs.component }}\nenvironment=production\n\`\`\``;
 
           if (context.issue.number) {
             github.rest.issues.createComment({
@@ -217,23 +264,39 @@ jobs:
 
     - name: Deploy to production
       run: |
-        echo "🚀 Deploying to production..."
+        COMPONENT="${{ github.event.inputs.component }}"
+        ARTIFACT_ID="${{ needs.build.outputs.artifact-id }}"
+        ARTIFACT_NAME="${{ needs.build.outputs.artifact-name }}"
+
+        echo "🚀 Deploying $COMPONENT to production..."
         echo "Version: ${{ needs.build.outputs.version }}"
-        echo "Artifact: ${{ needs.build.outputs.artifact-id }}"
+        echo "Artifact: $ARTIFACT_ID"
 
         # Upload artifact to production server
-        scp -P ${{ secrets.PRODUCTION_PORT }} dist/release-dashboard-${{ needs.build.outputs.artifact-id }}.tar.gz \
+        scp -P ${{ secrets.PRODUCTION_PORT }} dist/release-dashboard-$ARTIFACT_NAME-$ARTIFACT_ID.tar.gz \
           ${{ secrets.PRODUCTION_USER }}@${{ secrets.PRODUCTION_HOST }}:/tmp/
 
-        # Extract and deploy
+        # Extract and deploy based on component
         ssh -p ${{ secrets.PRODUCTION_PORT }} ${{ secrets.PRODUCTION_USER }}@${{ secrets.PRODUCTION_HOST }} << 'EOF'
         set -e
+        COMPONENT="$COMPONENT"
+        ARTIFACT_ID="$ARTIFACT_ID"
+        ARTIFACT_NAME="$ARTIFACT_NAME"
+
         echo "📦 Extracting artifact..."
         cd /var/www/release-dashboard
-        tar -xzf /tmp/release-dashboard-${{ needs.build.outputs.artifact-id }}.tar.gz
+        tar -xzf /tmp/release-dashboard-$ARTIFACT_NAME-$ARTIFACT_ID.tar.gz
 
-        echo "🔧 Installing dependencies..."
-        pip install -r requirements.txt
+        if [ "$COMPONENT" = "converters" ] || [ "$COMPONENT" = "both" ]; then
+          echo "🔧 Installing converter dependencies..."
+          cd converters
+          pip install -r requirements.txt
+          cd ..
+        fi
+
+        if [ "$COMPONENT" = "dashboards" ] || [ "$COMPONENT" = "both" ]; then
+          echo "📊 Dashboards deployed (no dependencies needed)"
+        fi
 
         echo "✅ Production deployment completed"
         EOF
@@ -259,13 +322,14 @@ jobs:
       with:
         script: |
           const status = '${{ job.status }}' === 'success' ? '✅ Success' : '❌ Failed';
-          const comment = `## 🎉 Production Deployment ${status}\n\n- **Version**: ${{ needs.build.outputs.version }}\n- **Commit**: ${{ github.sha }}\n- **Production URL**: ${{ secrets.PRODUCTION_URL }}\n- **Environment**: Production VPS\n- **Time**: ${new Date().toISOString()}`;
+          const component = '${{ github.event.inputs.component }}';
+          const comment = `## 🎉 Production Deployment ${status}\n\n- **Component**: ${component}\n- **Version**: ${{ needs.build.outputs.version }}\n- **Commit**: ${{ github.sha }}\n- **Production URL**: ${{ secrets.PRODUCTION_URL }}\n- **Environment**: Production VPS\n- **Time**: ${new Date().toISOString()}`;
 
           github.rest.repos.createRelease({
             owner: context.repo.owner,
             repo: context.repo.repo,
             tag_name: '${{ needs.build.outputs.version }}',
-            name: 'Release ${{ needs.build.outputs.version }}',
+            name: 'Release ${{ needs.build.outputs.version }} (${{ github.event.inputs.component }})',
             body: comment,
             draft: false,
             prerelease: false
