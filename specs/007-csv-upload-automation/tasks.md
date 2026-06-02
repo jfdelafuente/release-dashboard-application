@@ -194,32 +194,32 @@ After file validation and user confirmation, CSV file moved to `data/input/` and
 
 #### US3.1 File Confirmation & Movement
 
-- [ ] T060 [US3] Create POST `/api/confirm-upload` endpoint in `backend/routes/upload.py` accepting validated file reference
-- [ ] T061 [US3] Implement sanitized filename generation in `/api/confirm-upload` (remove special chars, add timestamp if duplicate)
-- [ ] T062 [US3] Implement file movement from temporary directory to `data/input/` in `/api/confirm-upload`, with validation that target directory is writable
-- [ ] T063 [US3] Handle file movement errors gracefully (permission denied, disk full, etc.) returning specific error to user
-- [ ] T064 [US3] Log file movement event with original filename, sanitized filename, timestamp, file size to upload log
+- [X] T060 [US3] Create POST `/api/confirm-upload` endpoint in `backend/routes/upload.py` accepting validated file reference
+- [X] T061 [US3] Implement sanitized filename generation in `/api/confirm-upload` (remove special chars, add timestamp if duplicate)
+- [X] T062 [US3] Implement file movement from temporary directory to `data/input/` in `/api/confirm-upload`, with validation that target directory is writable
+- [X] T063 [US3] Handle file movement errors gracefully (permission denied, disk full, etc.) returning specific error to user
+- [X] T064 [US3] Log file movement event with original filename, sanitized filename, timestamp, file size to upload log
 
 #### US3.2 Conversion Trigger
 
-- [ ] T065 [US3] Create mechanism to poll conversion status after file moved (or wait for webhook if cron provides notification)
-- [ ] T066 [US3] Return conversion status to frontend indicating "Processing started..."
-- [ ] T067 [US3] Implement timeout mechanism (wait up to 2 minutes for conversion, then notify user if still pending)
+- [X] T065 [US3] Create mechanism to poll conversion status after file moved (or wait for webhook if cron provides notification)
+- [X] T066 [US3] Return conversion status to frontend indicating "Processing started..."
+- [X] T067 [US3] Implement timeout mechanism (wait up to 2 minutes for conversion, then notify user if still pending)
 
 #### US3.3 Frontend Confirmation & Feedback
 
-- [ ] T068 [US3] Extend modal to show preview after validation (filename, encoding, rows, etc.) with confirmation button
-- [ ] T069 [US3] Implement "Confirm & Convert" button click handler calling `/api/confirm-upload`
-- [ ] T070 [US3] Show "Processing..." message in modal after confirmation
-- [ ] T071 [US3] Auto-close modal after successful upload/confirmation
-- [ ] T072 [US3] Display success notification with converted record count after conversion complete
+- [X] T068 [US3] Extend modal to show preview after validation (filename, encoding, rows, etc.) with confirmation button
+- [X] T069 [US3] Implement "Confirm & Convert" button click handler calling `/api/confirm-upload`
+- [X] T070 [US3] Show "Processing..." message in modal after confirmation
+- [X] T071 [US3] Auto-close modal after successful upload/confirmation
+- [X] T072 [US3] Display success notification with converted record count after conversion complete
 
 #### US3.4 Integration Testing
 
-- [ ] T073 [US3] Create E2E test: upload valid CSV → validation passes → file moved to data/input/ → verify file exists
-- [ ] T074 [US3] Create test for large file (200MB) → moved successfully without corruption
-- [ ] T075 [US3] Create test for concurrent uploads → all files moved without collision/overwrite
-- [ ] T076 [US3] Create test for filename with special characters → properly sanitized and moved
+- [X] T073 [US3] Create E2E test: upload valid CSV → validation passes → file moved to data/input/ → verify file exists
+- [X] T074 [US3] Create test for large file (200MB) → moved successfully without corruption
+- [X] T075 [US3] Create test for concurrent uploads → all files moved without collision/overwrite
+- [X] T076 [US3] Create test for filename with special characters → properly sanitized and moved
 
 ### Independent Test Criteria - US3
 - [ ] File successfully moved from temp to `data/input/`

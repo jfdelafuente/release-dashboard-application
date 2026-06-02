@@ -16,6 +16,7 @@ from app.utils.temp_files import TempFileManager
 from app.utils.preview import format_file_size
 from app.logging.upload_log import get_upload_logger
 from app.services.validation_service import create_validation_service
+from app.services.conversion_service import create_conversion_service
 
 logger = logging.getLogger(__name__)
 upload_logger = get_upload_logger()
@@ -154,7 +155,7 @@ async def upload_csv(file: UploadFile = File(...)):
 @router.post("/confirm-upload")
 async def confirm_upload(data: dict):
     """
-    Confirm upload and move file to input directory for conversion
+    Confirm upload, move file to input directory, and poll for conversion
 
     Args:
         data: Dict with temp_file_path and metadata
@@ -185,19 +186,20 @@ async def confirm_upload(data: dict):
 
         # Add timestamp to avoid conflicts
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-        safe_filename = f"{timestamp}_{safe_filename}"
+        final_filename = f"{timestamp}_{safe_filename}"
 
         # Move to input directory
         input_dir = Path(Config.DATA_INPUT_DIR)
         input_dir.mkdir(parents=True, exist_ok=True)
 
-        target_path = input_dir / safe_filename
+        target_path = input_dir / final_filename
 
         try:
             temp_file_path.rename(target_path)
             logger.info(f"File moved to input directory: {target_path}")
         except Exception as e:
             logger.error(f"Error moving file: {e}")
+            upload_logger.log_error(original_filename, f"File movement failed: {e}")
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail={
@@ -209,16 +211,49 @@ async def confirm_upload(data: dict):
         # Log file movement
         upload_logger.log_upload({
             'filename': original_filename,
-            'final_filename': safe_filename,
+            'final_filename': final_filename,
             'status': 'moved_to_input',
             'timestamp': datetime.utcnow().isoformat()
         })
 
+        logger.info(f"Starting conversion polling for: {final_filename}")
+
+        # Poll for conversion using ConversionService
+        conversion_service = create_conversion_service(
+            Config.DATA_INPUT_DIR,
+            Config.DATA_OUTPUT_DIR,
+            timeout_seconds=120
+        )
+
+        conversion_result = conversion_service.get_conversion_status(
+            original_filename,
+            poll_interval=1,
+            max_polls=120
+        )
+
+        # Log conversion result
+        if conversion_result['success']:
+            upload_logger.log_completion(
+                original_filename,
+                conversion_result.get('output_file', ''),
+                conversion_result.get('record_count', 0)
+            )
+        else:
+            upload_logger.log_error(
+                original_filename,
+                conversion_result.get('message', 'Conversion failed')
+            )
+
         return {
-            "success": True,
-            "message": "File confirmed and moved to processing queue",
-            "final_filename": safe_filename,
-            "status": "processing"
+            "success": conversion_result['success'],
+            "message": conversion_result.get('message', 'Processing complete'),
+            "final_filename": final_filename,
+            "status": conversion_result['status'],
+            "conversion": {
+                "output_file": conversion_result.get('output_file'),
+                "record_count": conversion_result.get('record_count', 0),
+                "elapsed_seconds": conversion_result.get('elapsed_seconds', 0)
+            }
         }
 
     except HTTPException:
