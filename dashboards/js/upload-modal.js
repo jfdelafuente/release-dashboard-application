@@ -6,8 +6,11 @@
 class UploadModalHandler {
   constructor(config = {}) {
     this.config = {
-      apiBaseUrl: config.apiBaseUrl || 'http://localhost:8000',
-      maxFileSize: config.maxFileSize || 500 * 1024 * 1024, // 500MB default
+      apiBaseUrl: getApiUrl(''),
+      maxFileSize: API_CONFIG.upload.maxFileSize,
+      warningFileSize: API_CONFIG.upload.warningFileSize,
+      timeout: API_CONFIG.upload.timeout,
+      retryConfig: API_CONFIG.retry,
       ...config
     };
 
@@ -191,17 +194,8 @@ class UploadModalHandler {
       const formData = new FormData();
       formData.append('file', this.currentFile);
 
-      // Upload and validate
-      const response = await fetch(`${this.config.apiBaseUrl}/api/upload`, {
-        method: 'POST',
-        body: formData
-      });
-
-      if (!response.ok) {
-        throw new Error(`Upload failed: ${response.statusText}`);
-      }
-
-      this.validationReport = await response.json();
+      // Upload with retry logic
+      this.validationReport = await this.uploadWithRetry(formData);
 
       // Hide progress bar
       progressBar.classList.add('hidden');
@@ -212,6 +206,49 @@ class UploadModalHandler {
       console.error('Upload error:', error);
       progressBar.classList.add('hidden');
       this.showValidationError(error.message);
+    }
+  }
+
+  async uploadWithRetry(formData, attempt = 0) {
+    const uploadUrl = getApiUrl(API_CONFIG.endpoints.upload);
+    const maxAttempts = this.config.retryConfig.maxAttempts;
+    const delays = this.config.retryConfig.delayMs;
+
+    try {
+      debugLog(`Upload attempt ${attempt + 1}/${maxAttempts}`, uploadUrl);
+
+      const response = await fetch(uploadUrl, {
+        method: 'POST',
+        body: formData,
+        timeout: this.config.timeout
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        const errorMessage = errorData.detail?.message ||
+                            errorData.message ||
+                            `Upload failed: ${response.statusText}`;
+        throw new Error(errorMessage);
+      }
+
+      return await response.json();
+
+    } catch (error) {
+      // Retry on network errors, not validation errors
+      if (attempt < maxAttempts - 1 && error.message.includes('failed')) {
+        const delay = delays[attempt] || 5000;
+        debugLog(`Retrying after ${delay}ms...`);
+
+        // Show retry message
+        if (attempt > 0) {
+          notificationManager.info(`Reintentando... (intento ${attempt + 1})`);
+        }
+
+        await new Promise(resolve => setTimeout(resolve, delay));
+        return this.uploadWithRetry(formData, attempt + 1);
+      }
+
+      throw error;
     }
   }
 
@@ -286,32 +323,41 @@ class UploadModalHandler {
     this.showStep('processing');
 
     try {
-      // Call convert endpoint
-      const response = await fetch(`${this.config.apiBaseUrl}/api/convert`, {
+      // Call confirm-upload endpoint
+      const confirmUrl = getApiUrl(API_CONFIG.endpoints.confirmUpload);
+
+      const response = await fetch(confirmUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
+          temp_file_path: this.validationReport.temp_file_path,
           filename: this.currentFile.name,
           metadata: this.validationReport.metadata
         })
       });
 
       if (!response.ok) {
-        throw new Error(`Conversion failed: ${response.statusText}`);
+        const errorData = await response.json();
+        const errorMessage = errorData.detail?.message ||
+                            errorData.detail ||
+                            'Error al confirmar la subida';
+        throw new Error(errorMessage);
       }
 
       const result = await response.json();
 
+      debugLog('Upload confirmation successful', result);
+
       // Show success notification
-      notificationManager.showSuccess('CSV convertido exitosamente');
+      notificationManager.success('CSV subido y en procesamiento');
 
       // Close modal after a brief delay
       setTimeout(() => this.closeModal(), 2000);
     } catch (error) {
-      console.error('Conversion error:', error);
-      notificationManager.showError(`Error en la conversión: ${error.message}`);
+      console.error('Confirmation error:', error);
+      notificationManager.error(`Error: ${error.message}`);
       this.goBackToSelect();
     }
   }

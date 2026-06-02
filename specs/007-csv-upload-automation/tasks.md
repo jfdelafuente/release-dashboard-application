@@ -96,35 +96,35 @@ Users can upload CSV files directly via web UI without SSH/CLI access. Simple, i
 
 #### US1.1 Backend File Reception
 
-- [ ] T021 [US1] Create POST `/api/upload` endpoint in `backend/routes/upload.py` receiving multipart/form-data with CSV file
-- [ ] T022 [US1] Implement file size validation in upload endpoint (max 500MB, return 413 if exceeded) with user-friendly message
-- [ ] T023 [US1] Implement file extension validation in upload endpoint (.csv only, return 400 with specific error if different)
-- [ ] T024 [US1] Create temporary file storage in `backend/utils/temp_upload.py` storing received file with unique temporary name
-- [ ] T025 [US1] Implement basic error responses (400 Bad Request, 413 Payload Too Large, 500 Server Error) with JSON error details
+- [X] T021 [US1] Create POST `/api/upload` endpoint in `backend/routes/upload.py` receiving multipart/form-data with CSV file
+- [X] T022 [US1] Implement file size validation in upload endpoint (max 500MB, return 413 if exceeded) with user-friendly message
+- [X] T023 [US1] Implement file extension validation in upload endpoint (.csv only, return 400 with specific error if different)
+- [X] T024 [US1] Create temporary file storage in `backend/utils/temp_upload.py` storing received file with unique temporary name
+- [X] T025 [US1] Implement basic error responses (400 Bad Request, 413 Payload Too Large, 500 Server Error) with JSON error details
 
 #### US1.2 Frontend Upload Modal
 
-- [ ] T026 [P] [US1] Create modal HTML structure in `dashboards/upload-modal.html` with file input, drag-drop zone, submit/cancel buttons
-- [ ] T027 [P] [US1] Add "Upload CSV" button to `dashboards/dashboard-portal.html` header/navigation to open modal
-- [ ] T028 [P] [US1] Implement modal CSS styling in `dashboards/css/upload-modal.css` for responsive design (desktop, tablet)
-- [ ] T029 [P] [US1] Implement file input handler JavaScript in `dashboards/js/upload-modal.js` capturing file selection and validating basic info
-- [ ] T030 [US1] Implement drag-and-drop handler in `dashboards/js/upload-modal.js` accepting CSV files via drag-drop with visual feedback
-- [ ] T031 [US1] Create progress indicator in modal HTML showing upload percentage during transmission
+- [X] T026 [P] [US1] Create modal HTML structure in `dashboards/upload-modal.html` with file input, drag-drop zone, submit/cancel buttons
+- [X] T027 [P] [US1] Add "Upload CSV" button to `dashboards/dashboard-portal.html` header/navigation to open modal
+- [X] T028 [P] [US1] Implement modal CSS styling in `dashboards/css/upload-modal.css` for responsive design (desktop, tablet)
+- [X] T029 [P] [US1] Implement file input handler JavaScript in `dashboards/js/upload-modal.js` capturing file selection and validating basic info
+- [X] T030 [US1] Implement drag-and-drop handler in `dashboards/js/upload-modal.js` accepting CSV files via drag-drop with visual feedback
+- [X] T031 [US1] Create progress indicator in modal HTML showing upload percentage during transmission
 
 #### US1.3 Client-Side Validation
 
-- [ ] T032 [P] [US1] Implement file size check in `dashboards/js/upload-modal.js` (warn if >100MB, block if >500MB)
-- [ ] T033 [P] [US1] Implement file extension check in `dashboards/js/upload-modal.js` (.csv only, show specific error if not)
-- [ ] T034 [US1] Display selected filename in modal before upload for user confirmation
-- [ ] T035 [US1] Create error message display area in modal HTML for user-friendly error feedback
-- [ ] T036 [US1] Implement progress bar update during upload using XMLHttpRequest or fetch progress events
+- [X] T032 [P] [US1] Implement file size check in `dashboards/js/upload-modal.js` (warn if >100MB, block if >500MB)
+- [X] T033 [P] [US1] Implement file extension check in `dashboards/js/upload-modal.js` (.csv only, show specific error if not)
+- [X] T034 [US1] Display selected filename in modal before upload for user confirmation
+- [X] T035 [US1] Create error message display area in modal HTML for user-friendly error feedback
+- [X] T036 [US1] Implement progress bar update during upload using XMLHttpRequest or fetch progress events
 
 #### US1.4 Upload Integration
 
-- [ ] T037 [US1] Create fetch request in `dashboards/js/upload-modal.js` POST to `/api/upload` with file and progress tracking
-- [ ] T038 [US1] Implement error handling in upload request (network errors, server errors) with retry capability
-- [ ] T039 [US1] Create response parser for upload API response containing validation metadata
-- [ ] T040 [US1] Add success/error toast notification system in `dashboards/js/notifications.js` for user feedback
+- [X] T037 [US1] Create fetch request in `dashboards/js/upload-modal.js` POST to `/api/upload` with file and progress tracking
+- [X] T038 [US1] Implement error handling in upload request (network errors, server errors) with retry capability
+- [X] T039 [US1] Create response parser for upload API response containing validation metadata
+- [X] T040 [US1] Add success/error toast notification system in `dashboards/js/notifications.js` for user feedback
 
 ### Independent Test Criteria - US1
 - [ ] Upload modal opens/closes correctly

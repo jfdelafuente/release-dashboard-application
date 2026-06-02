@@ -12,22 +12,27 @@ from dotenv import load_dotenv
 # Load environment variables
 load_dotenv()
 
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
+# Setup logging
+from app.logging.config import setup_logging
+setup_logging()
 logger = logging.getLogger(__name__)
+
+# Load configuration
+from app.config import Config
+Config.ensure_directories()
+Config.validate()
 
 # Create FastAPI app
 app = FastAPI(
     title="CSV Upload API",
     description="Backend API for CSV file upload, validation, and conversion pipeline",
-    version="1.0.0"
+    version="1.0.0",
+    docs_url="/docs",
+    redoc_url="/redoc"
 )
 
 # Configure CORS
-allowed_origins = os.getenv("CORS_ORIGINS", "http://localhost:8000").split(",")
+allowed_origins = [origin.strip() for origin in Config.CORS_ORIGINS]
 app.add_middleware(
     CORSMiddleware,
     allow_origins=allowed_origins,
@@ -36,8 +41,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Routes will be imported here
-# from app.routes import upload
+# Import and include routes
+from app.routes import upload_router
+app.include_router(upload_router)
 
 
 @app.get("/health", tags=["Health"])
