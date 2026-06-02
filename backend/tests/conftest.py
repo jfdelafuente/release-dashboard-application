@@ -132,6 +132,10 @@ def reset_config():
     Config.ensure_directories()
 
 
+# Service fixtures - note: test classes define their own 'service' fixtures
+# This fixture is only for tests that don't have a class-level fixture
+
+
 # Logging fixtures
 @pytest.fixture
 def caplog_handler(caplog):

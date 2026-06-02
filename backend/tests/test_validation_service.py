@@ -136,7 +136,7 @@ class TestValidationService:
         """Test validation of large CSV file (performance)"""
         # Create large CSV
         csv_file = Path(temp_dir) / "test_large.csv"
-        with open(csv_file, 'w') as f:
+        with open(csv_file, 'w', encoding='utf-8') as f:
             f.write("ID de incidencia,Descripción,Estatus,Fecha de envío,Grupo asignado,Urgencia,Impacto\n")
             for i in range(1000):
                 f.write(f"INC{i:06d},Test {i},Abierto,01/01/2026 10:00 AM,Team,Alta,Masiva\n")
@@ -152,7 +152,7 @@ class TestValidationService:
         assert result.row_counts['data_count'] == 1000
 
 
-class TestValidationErrors:
+class TestValidationErrors(TestValidationService):
     """Tests for validation error handling"""
 
     @pytest.mark.unit
@@ -178,7 +178,7 @@ class TestValidationErrors:
         assert len(result.all_errors) > 0
 
 
-class TestValidationResult:
+class TestValidationResult(TestValidationService):
     """Tests for ValidationResult class"""
 
     @pytest.mark.unit

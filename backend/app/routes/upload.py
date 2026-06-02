@@ -10,11 +10,11 @@ from pathlib import Path
 from datetime import datetime
 
 from app.config import Config
-from app.utils.error_messages import file_not_csv_error, file_too_large_error
+from app.utils.error_messages import file_not_csv_error, file_too_large_error, empty_file_error
 from app.utils.sanitizer import sanitize_filename
 from app.utils.temp_files import TempFileManager
 from app.utils.preview import format_file_size
-from app.logging.upload_log import get_upload_logger
+from app.upload_logging.upload_log import get_upload_logger
 from app.services.validation_service import create_validation_service
 from app.services.conversion_service import create_conversion_service
 
@@ -47,7 +47,7 @@ async def upload_csv(file: UploadFile = File(...)):
             error = file_not_csv_error()
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail=error
+                detail={"error": error['code'], "message": error['message']}
             )
 
         # Read file content
@@ -62,16 +62,16 @@ async def upload_csv(file: UploadFile = File(...)):
             error = file_too_large_error(Config.MAX_FILE_SIZE_MB)
             raise HTTPException(
                 status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
-                detail=error
+                detail={"error": error['code'], "message": error['message']}
             )
 
         # Validate minimum file size (at least has headers)
         if file_size == 0:
             logger.warning(f"Empty file upload: {original_filename}")
-            error = get_error_message('empty_file')
+            error = empty_file_error()
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail={"error": "ERR_008", "message": error}
+                detail={"error": error['code'], "message": error['message']}
             )
 
         # Log upload start

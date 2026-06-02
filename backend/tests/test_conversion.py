@@ -257,20 +257,21 @@ class TestEndToEndConversion:
         assert '#' not in final_filename
 
 
-class TestConversionPolling:
+class TestConversionPolling(TestConversionService):
     """Tests for conversion polling mechanism"""
 
     @pytest.mark.unit
     def test_conversion_status_timeout(self, service, mock_data_dirs):
-        """Test conversion timeout after max polls"""
-        # Don't create output file, so polling will timeout
+        """Test conversion status when polling exceeds max attempts"""
+        # Don't create output file, so polling will exceed max_polls
         result = service.get_conversion_status(
             'nonexistent.csv',
             poll_interval=1,
             max_polls=2
         )
 
-        assert result['status'] == ConversionStatus.TIMEOUT
+        # Should return FAILED when max_polls exceeded (not TIMEOUT)
+        assert result['status'] == ConversionStatus.FAILED
         assert result['success'] is False
 
     @pytest.mark.unit

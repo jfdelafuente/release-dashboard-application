@@ -13,7 +13,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Setup logging
-from app.logging.config import setup_logging
+from app.upload_logging.config import setup_logging
 setup_logging()
 logger = logging.getLogger(__name__)
 

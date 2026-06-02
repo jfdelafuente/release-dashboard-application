@@ -11,7 +11,8 @@ from typing import Optional
 logger = logging.getLogger(__name__)
 
 # Characters to remove from filenames
-DANGEROUS_CHARS_PATTERN = re.compile(r'[<>:"|?*\x00-\x1f]')
+# Removes: < > : " | ? * special chars (!@#$%^&) and control chars
+DANGEROUS_CHARS_PATTERN = re.compile(r'[<>:"|?*!@#$%^&\x00-\x1f]')
 DIRECTORY_TRAVERSAL_PATTERN = re.compile(r'\.\.|\0|[/\\]')
 
 

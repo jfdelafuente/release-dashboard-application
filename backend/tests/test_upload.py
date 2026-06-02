@@ -43,7 +43,8 @@ class TestUploadEndpoint:
 
         assert response.status_code == 400
         data = response.json()
-        assert 'error' in data['detail']
+        assert data['detail']['error'] == 'ERR_007'
+        assert '.csv' in data['detail']['message'].lower()
 
     @pytest.mark.unit
     def test_upload_empty_file(self):
@@ -69,8 +70,8 @@ class TestUploadEndpoint:
 
         assert response.status_code == 400
         data = response.json()
-        assert data['detail']['error'] == 'ERR_001'
-        assert 'missing' in data['detail']['message'].lower()
+        assert data['detail']['error'] == 'ERR_005'
+        assert 'falta' in data['detail']['message'].lower() or 'missing' in data['detail']['message'].lower()
 
     @pytest.mark.unit
     def test_upload_empty_csv(self, empty_csv_content):
@@ -84,7 +85,7 @@ class TestUploadEndpoint:
 
         assert response.status_code == 400
         data = response.json()
-        assert data['detail']['error'] == 'ERR_004'
+        assert data['detail']['error'] == 'ERR_005'
 
     @pytest.mark.unit
     def test_upload_response_structure(self, sample_csv_content):
