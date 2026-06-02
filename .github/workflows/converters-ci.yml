@@ -124,7 +124,7 @@ jobs:
       - name: Run performance tests
         run: |
           cd converters
-          pytest tests/ -m slow --cov=src --cov-report=term -v
+          pytest -m slow --cov=src --cov-report=term -v
 
       - name: Store benchmark results
         uses: actions/upload-artifact@v3
