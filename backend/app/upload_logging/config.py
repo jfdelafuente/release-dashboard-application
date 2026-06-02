@@ -111,3 +111,64 @@ def get_logger(name):
 def get_upload_logger():
     """Get the upload-specific logger"""
     return logging.getLogger('upload')
+
+
+def setup_error_logging(log_level=logging.ERROR):
+    """
+    Setup separate error logging for admin debugging with full stack traces
+
+    Args:
+        log_level: logging level (default ERROR to capture all errors)
+
+    Returns:
+        logger: configured error logger
+    """
+    error_logger = logging.getLogger('upload_errors')
+    error_logger.setLevel(log_level)
+
+    # Remove existing handlers to avoid duplicates
+    for handler in error_logger.handlers[:]:
+        error_logger.removeHandler(handler)
+
+    # Detailed formatter with exception info
+    detailed_formatter = logging.Formatter(
+        '%(asctime)s - %(levelname)s - %(message)s\n'
+        'Module: %(name)s | File: %(filename)s:%(lineno)d\n'
+        'Function: %(funcName)s',
+        datefmt='%Y-%m-%d %H:%M:%S'
+    )
+
+    # File handler for error logs with full stack traces
+    error_handler = logging.handlers.RotatingFileHandler(
+        LOGS_DIR / 'errors_detailed.log',
+        maxBytes=10 * 1024 * 1024,  # 10MB
+        backupCount=5
+    )
+    error_handler.setLevel(log_level)
+    error_handler.setFormatter(detailed_formatter)
+    error_logger.addHandler(error_handler)
+
+    # Also log to main error log
+    main_error_handler = logging.handlers.RotatingFileHandler(
+        ERROR_LOG_FILE,
+        maxBytes=5 * 1024 * 1024,  # 5MB
+        backupCount=3
+    )
+    main_error_handler.setLevel(log_level)
+    main_error_handler.setFormatter(detailed_formatter)
+    error_logger.addHandler(main_error_handler)
+
+    return error_logger
+
+
+def get_error_logger():
+    """
+    Get or create the error-specific logger for admin debugging
+
+    Returns:
+        logger: error logger with enhanced stack trace formatting
+    """
+    logger = logging.getLogger('upload_errors')
+    if not logger.handlers:
+        setup_error_logging()
+    return logger

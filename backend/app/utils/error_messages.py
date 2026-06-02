@@ -22,8 +22,8 @@ ERROR_TEMPLATES = {
     'invalid_enum': 'El valor "{value}" en la columna "{column}" no es válido. Valores permitidos: {allowed}.',
     'network_error': 'Error de conexión. Por favor verifica tu conexión a internet e intenta de nuevo.',
     'server_error': 'Error del servidor. Por favor intenta de nuevo más tarde.',
-    'permission_denied': 'Permiso denegado. No se puede escribir en el directorio de datos.',
-    'disk_full': 'Espacio en disco insuficiente. Por favor libera espacio e intenta de nuevo.',
+    'permission_denied': 'No tienes permisos de escritura en el directorio de procesamiento. Contacta con el administrador del sistema.',
+    'disk_full': 'Espacio en disco insuficiente ({available_space} disponible). Se requieren {required_space}. Libera espacio e intenta de nuevo.',
 }
 
 # Error codes for frontend
@@ -42,6 +42,24 @@ ERROR_CODES = {
     'SERVER_ERROR': 'ERR_012',
     'PERMISSION_DENIED': 'ERR_013',
     'DISK_FULL': 'ERR_014',
+}
+
+# Help documentation links (TODO: Update with actual documentation URLs)
+ERROR_HELP_LINKS = {
+    'ERR_001': 'https://docs.example.com/es/errores/columnas-faltantes',
+    'ERR_002': 'https://docs.example.com/es/errores/encoding',
+    'ERR_003': 'https://docs.example.com/es/errores/delimitador',
+    'ERR_004': 'https://docs.example.com/es/errores/datos-vacios',
+    'ERR_005': 'https://docs.example.com/es/errores/archivo-invalido',
+    'ERR_006': 'https://docs.example.com/es/errores/tamaño-maximo',
+    'ERR_007': 'https://docs.example.com/es/errores/no-csv',
+    'ERR_008': 'https://docs.example.com/es/errores/archivo-vacio',
+    'ERR_009': 'https://docs.example.com/es/errores/fecha-invalida',
+    'ERR_010': 'https://docs.example.com/es/errores/valor-invalido',
+    'ERR_011': 'https://docs.example.com/es/errores/conexion',
+    'ERR_012': 'https://docs.example.com/es/errores/servidor',
+    'ERR_013': 'https://docs.example.com/es/errores/permisos',
+    'ERR_014': 'https://docs.example.com/es/errores/espacio-disco',
 }
 
 
@@ -176,11 +194,15 @@ def permission_denied_error() -> Dict[str, str]:
     }
 
 
-def disk_full_error() -> Dict[str, str]:
-    """Generate disk full error"""
+def disk_full_error(available_space: str = 'desconocido', required_space: str = 'desconocido') -> Dict[str, str]:
+    """Generate disk full error with space information"""
     return {
         'code': ERROR_CODES['DISK_FULL'],
-        'message': get_error_message('disk_full')
+        'message': get_error_message(
+            'disk_full',
+            available_space=available_space,
+            required_space=required_space
+        )
     }
 
 
@@ -192,11 +214,11 @@ def format_error_response(error: Dict[str, str]) -> Dict:
         error: Error dict with code and message
 
     Returns:
-        Formatted error response
+        Formatted error response with help link
     """
+    error_code = error.get('code', 'UNKNOWN')
     return {
-        'error': error.get('code', 'UNKNOWN'),
+        'error': error_code,
         'message': error.get('message', 'Error desconocido'),
-        'user_action': 'Please check the error details and try again.',
-        'contact_support': 'If the problem persists, please contact support.'
+        'help_url': ERROR_HELP_LINKS.get(error_code)
     }

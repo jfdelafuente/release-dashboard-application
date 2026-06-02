@@ -1,13 +1,13 @@
 {
   "massive": {
     "type": "massive",
-    "updated": "2026-06-02T16:27:33.894126Z",
+    "updated": "2026-06-02T16:41:37.054153Z",
     "count": 1,
     "files": [
       {
         "name": "20260602_162358_CS-Informe-masiva-20260602-massive.json",
         "size": 1038018,
-        "modified": "2026-06-02T16:27:33.833099",
+        "modified": "2026-06-02T16:41:36.771261",
         "path": "data/output/20260602_162358_CS-Informe-masiva-20260602-massive.json"
       }
     ]

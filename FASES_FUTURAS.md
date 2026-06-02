@@ -1,4 +1,5 @@
 🎯 Fases Futuras Sugeridas
+
 Opción 1: Phase 6 - Mejorar Dashboard Hub (High Value)
 Crear nuevas funcionalidades en los dashboards existentes:
 
@@ -7,6 +8,7 @@ Crear nuevas funcionalidades en los dashboards existentes:
 ✅ Gráficas adicionales (tendencias, SLA tracking)
 ✅ Real-time data refresh
 Esfuerzo: ~2-3 semanas
+
 Opción 2: Phase 6 - Automatización Crontab (Practical)
 Configurar automation en VPS para que converters corra automáticamente:
 
@@ -15,6 +17,7 @@ Configurar automation en VPS para que converters corra automáticamente:
 ✅ Email notifications si falla
 ✅ Monitoring y logs
 Esfuerzo: ~1 semana
+
 Opción 3: Phase 6 - Monitoreo y Alertas (Operational)
 Agregar visibilidad sobre la salud del sistema:
 
@@ -23,6 +26,7 @@ Agregar visibilidad sobre la salud del sistema:
 ✅ Métricas de performance (tiempo de conversión)
 ✅ Health check endpoint
 Esfuerzo: ~1-2 semanas
+
 Opción 4: Phase 6 - Nuevo Dashboard (Expandable)
 Crear un nuevo dashboard para análisis adicional:
 
@@ -31,6 +35,7 @@ Crear un nuevo dashboard para análisis adicional:
 ✅ Análisis de causas raíz
 ✅ Team performance metrics
 Esfuerzo: ~2-3 semanas
+
 Opción 5: Phase 6 - Testing Visual (Quality)
 Mejorar validación de dashboards con tests visuales:
 
@@ -39,6 +44,7 @@ Mejorar validación de dashboards con tests visuales:
 ✅ Responsive design tests
 ✅ Performance lighthouse checks
 Esfuerzo: ~1-2 semanas
+
 Opción 6: Phase 6 - API REST (Extensibility)
 Crear API REST para acceso a datos:
 
@@ -47,6 +53,7 @@ Crear API REST para acceso a datos:
 ✅ Authentication + Authorization
 ✅ Rate limiting
 Esfuerzo: ~2-3 semanas
+
 Opción 7: Phase 6 - Database Integration (Scalability)
 Pasar de JSON files a base de datos:
 
@@ -55,6 +62,7 @@ Pasar de JSON files a base de datos:
 ✅ Update converters to write to DB
 ✅ Dashboard queries from DB
 Esfuerzo: ~3-4 semanas
+
 📊 Matriz de Decisión
 Phase	Complejidad	Valor	Tiempo	Dependencias
 Dashboard Features	🟡 Media	🟢 Alto	2-3 sem	Ninguna
@@ -64,6 +72,7 @@ Nuevo Dashboard	🟡 Media	🟡 Medio	2-3 sem	Converters OK
 Visual Testing	🟡 Media	🟢 Alto	1-2 sem	Converters OK
 API REST	🟠 Alta	🟢 Alto	2-3 sem	Design needed
 Database	🟠 Alta	🟡 Medio	3-4 sem	Planning needed
+
 💡 Recomendación
 Combinación recomendada (Impacto Máximo):
 

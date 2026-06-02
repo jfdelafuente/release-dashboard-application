@@ -13,8 +13,9 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Setup logging
-from app.upload_logging.config import setup_logging
+from app.upload_logging.config import setup_logging, setup_error_logging
 setup_logging()
+setup_error_logging()
 logger = logging.getLogger(__name__)
 
 # Load configuration

@@ -209,6 +209,36 @@ class UploadModalHandler {
     }
   }
 
+  isRetryableError(errorCode, statusCode) {
+    /**
+     * Determine if an error should be retried based on error code or HTTP status
+     *
+     * Retryable errors: Network (ERR_011), Server (ERR_012), 5xx status codes
+     * Non-retryable: Validation errors (ERR_001-010, ERR_013)
+     */
+    // Retryable error codes (network, server, temporary failures)
+    const retryableCodes = ['ERR_011', 'ERR_012'];
+
+    // Retryable HTTP status codes
+    const retryableStatuses = [408, 429, 500, 502, 503, 504, 507];
+
+    // Validation errors should NOT be retried
+    const validationCodes = [
+      'ERR_001', 'ERR_002', 'ERR_003', 'ERR_004',
+      'ERR_005', 'ERR_006', 'ERR_007', 'ERR_008',
+      'ERR_009', 'ERR_010', 'ERR_013'
+    ];
+
+    // If it's a validation error, don't retry
+    if (errorCode && validationCodes.includes(errorCode)) {
+      return false;
+    }
+
+    // Check if error code or status indicates retry is OK
+    return (errorCode && retryableCodes.includes(errorCode)) ||
+           retryableStatuses.includes(statusCode);
+  }
+
   async uploadWithRetry(formData, attempt = 0) {
     const uploadUrl = getApiUrl(API_CONFIG.endpoints.upload);
     const maxAttempts = this.config.retryConfig.maxAttempts;
@@ -225,25 +255,42 @@ class UploadModalHandler {
 
       if (!response.ok) {
         const errorData = await response.json();
+        const errorCode = errorData.detail?.error || errorData.error;
         const errorMessage = errorData.detail?.message ||
                             errorData.message ||
                             `Upload failed: ${response.statusText}`;
+
+        // Determine if error is retryable based on error code
+        const isRetryable = this.isRetryableError(errorCode, response.status);
+
+        if (isRetryable && attempt < maxAttempts - 1) {
+          // Add jitter to prevent thundering herd
+          const jitter = Math.floor(Math.random() * 1000);
+          const delay = delays[attempt] + jitter;
+
+          debugLog(`Retrying after ${delay}ms... (jitter: ${jitter}ms)`);
+
+          notificationManager.info(`Reintentando... (intento ${attempt + 2} de ${maxAttempts})`);
+          await new Promise(resolve => setTimeout(resolve, delay));
+          return this.uploadWithRetry(formData, attempt + 1);
+        }
+
+        // Not retryable or max attempts reached
         throw new Error(errorMessage);
       }
 
       return await response.json();
 
     } catch (error) {
-      // Retry on network errors, not validation errors
-      if (attempt < maxAttempts - 1 && error.message.includes('failed')) {
-        const delay = delays[attempt] || 5000;
-        debugLog(`Retrying after ${delay}ms...`);
+      // Network errors (fetch failed, no response)
+      if (error.name === 'TypeError' && attempt < maxAttempts - 1) {
+        // Add jitter to prevent thundering herd
+        const jitter = Math.floor(Math.random() * 1000);
+        const delay = delays[attempt] + jitter;
 
-        // Show retry message
-        if (attempt > 0) {
-          notificationManager.info(`Reintentando... (intento ${attempt + 1})`);
-        }
+        debugLog(`Network error. Retrying after ${delay}ms... (jitter: ${jitter}ms)`);
 
+        notificationManager.info(`Conexión perdida. Reintentando... (intento ${attempt + 2} de ${maxAttempts})`);
         await new Promise(resolve => setTimeout(resolve, delay));
         return this.uploadWithRetry(formData, attempt + 1);
       }
