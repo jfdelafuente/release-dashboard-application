@@ -67,16 +67,16 @@ Task breakdown organized by user story priority. Each story is independently tes
 
 ### Tasks
 
-- [ ] T011 Implement encoding detector in `backend/validators/encoding.py` supporting UTF-8, UTF-8-sig, Windows-1252, Latin-1, ISO-8859-15 with tests
-- [ ] T012 [P] Implement CSV delimiter detector in `backend/validators/delimiter.py` (auto-detect comma, semicolon, tab) with fallback to comma
-- [ ] T013 [P] Implement required headers validator in `backend/validators/headers.py` checking for: "ID de incidencia", "Estatus", "Fecha de envío", "Grupo asignado", "Urgencia", "Impacto", "Descripción"
-- [ ] T014 [P] Implement CSV row counter in `backend/validators/counter.py` efficiently counting rows without loading entire file into memory
-- [ ] T015 Create error message generator in `backend/utils/error_messages.py` producing user-friendly error messages in Spanish for all validation failures
-- [ ] T016 Create file sanitizer in `backend/utils/sanitizer.py` removing/escaping dangerous characters, preventing directory traversal attacks
-- [ ] T017 [P] Create temporary file manager in `backend/utils/temp_files.py` handling cleanup of old temp files (>1 hour) and failed uploads
-- [ ] T018 Implement CSV preview generator in `backend/utils/preview.py` extracting file metadata (encoding, delimiter, row count, first 3-5 headers)
-- [ ] T019 [P] Create upload logger in `backend/logging/upload_log.py` tracking all uploads (timestamp, filename, file size, user, status, errors)
-- [ ] T020 Create validation test suite in `tests/test_validators.py` with test cases for all validators (valid/invalid inputs, edge cases)
+- [X] T011 Implement encoding detector in `backend/validators/encoding.py` supporting UTF-8, UTF-8-sig, Windows-1252, Latin-1, ISO-8859-15 with tests
+- [X] T012 [P] Implement CSV delimiter detector in `backend/validators/delimiter.py` (auto-detect comma, semicolon, tab) with fallback to comma
+- [X] T013 [P] Implement required headers validator in `backend/validators/headers.py` checking for: "ID de incidencia", "Estatus", "Fecha de envío", "Grupo asignado", "Urgencia", "Impacto", "Descripción"
+- [X] T014 [P] Implement CSV row counter in `backend/validators/counter.py` efficiently counting rows without loading entire file into memory
+- [X] T015 Create error message generator in `backend/utils/error_messages.py` producing user-friendly error messages in Spanish for all validation failures
+- [X] T016 Create file sanitizer in `backend/utils/sanitizer.py` removing/escaping dangerous characters, preventing directory traversal attacks
+- [X] T017 [P] Create temporary file manager in `backend/utils/temp_files.py` handling cleanup of old temp files (>1 hour) and failed uploads
+- [X] T018 Implement CSV preview generator in `backend/utils/preview.py` extracting file metadata (encoding, delimiter, row count, first 3-5 headers)
+- [X] T019 [P] Create upload logger in `backend/logging/upload_log.py` tracking all uploads (timestamp, filename, file size, user, status, errors)
+- [X] T020 Create validation test suite in `tests/test_validators.py` with test cases for all validators (valid/invalid inputs, edge cases)
 
 ### Independent Test Criteria
 - [ ] All validators return correct results for test data
