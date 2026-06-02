@@ -40,14 +40,14 @@ Task breakdown organized by user story priority. Each story is independently tes
 
 - [X] T001 Initialize backend project structure with framework chosen (Flask, FastAPI, or Express.js), create main server file, and setup initial requirements/package files in `backend/` directory
 - [X] T002 [P] Initialize frontend project structure with module loader or build tool, create HTML/JS entry points in `dashboards/` directory, setup package.json if using Node.js
-- [ ] T003 Create `/api/health` endpoint in backend to verify server is running and responding correctly
-- [ ] T004 Setup CORS configuration in backend to allow dashboard (frontend) to communicate with API if running on different port/host
-- [ ] T005 [P] Create logging infrastructure in backend (all API calls, file operations, errors logged with timestamp)
-- [ ] T006 Setup basic error middleware in backend (catch unhandled errors, return user-friendly error messages)
-- [ ] T007 Create `.env` configuration file template with required settings (upload directory paths, max file size, temporary directory)
-- [ ] T008 Create directory structure for test data: `converters/tests/test_data/` with sample CSV files (valid, invalid, various encodings)
-- [ ] T009 [P] Setup testing framework for backend (pytest fixtures, test config, test directory structure)
-- [ ] T010 [P] Setup testing framework for frontend (browser testing setup, test runners)
+- [X] T003 Create `/api/health` endpoint in backend to verify server is running and responding correctly
+- [X] T004 Setup CORS configuration in backend to allow dashboard (frontend) to communicate with API if running on different port/host
+- [X] T005 [P] Create logging infrastructure in backend (all API calls, file operations, errors logged with timestamp)
+- [X] T006 Setup basic error middleware in backend (catch unhandled errors, return user-friendly error messages)
+- [X] T007 Create `.env` configuration file template with required settings (upload directory paths, max file size, temporary directory)
+- [X] T008 Create directory structure for test data: `converters/tests/test_data/` with sample CSV files (valid, invalid, various encodings)
+- [X] T009 [P] Setup testing framework for backend (pytest fixtures, test config, test directory structure)
+- [X] T010 [P] Setup testing framework for frontend (browser testing setup, test runners)
 
 ### Independent Test Criteria
 - [ ] Backend server starts and `/health` endpoint responds with 200
