@@ -327,3 +327,4 @@ KPIs + Dashboards Especializados
 ---
 
 **Última actualización**: 2026-05-14
+
