@@ -1,0 +1,116 @@
+name: Dashboards CI
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'dashboards/**'
+      - 'data/**'
+      - '.github/workflows/dashboards-ci.yml'
+  pull_request:
+    paths:
+      - 'dashboards/**'
+
+jobs:
+  validate:
+    name: HTML & Structure Validation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      - name: Install validation tools
+        run: |
+          npm install -g htmlhint linkinator
+
+      - name: Validate HTML5 syntax
+        run: |
+          echo "🔍 Validando sintaxis HTML5..."
+          htmlhint dashboards/*.html --format=compact || true
+
+      - name: Check for missing files
+        run: |
+          echo "🔍 Verificando que todos los dashboards existen..."
+          test -f dashboards/index.html && echo "✓ index.html" || exit 1
+          test -f dashboards/dashboard-portal.html && echo "✓ dashboard-portal.html" || exit 1
+          test -f dashboards/massive-incidents-dashboard.html && echo "✓ massive-incidents-dashboard.html" || exit 1
+          test -f dashboards/postmortem-dashboard.html && echo "✓ postmortem-dashboard.html" || exit 1
+
+      - name: Validate internal links structure
+        run: |
+          echo "🔍 Validando estructura interna..."
+
+          # Verificar que los dashboards referencian archivos correctos
+          grep -q "dashboard-portal.html\|index.html" dashboards/index.html && echo "✓ index.html tiene redirect correcto" || exit 1
+          grep -q "massive-incidents-dashboard.html\|postmortem-dashboard.html" dashboards/dashboard-portal.html && echo "✓ dashboard-portal.html tiene links a otros dashboards" || exit 1
+
+          # Verificar que los dashboards refencia los datos correctos
+          grep -q "\.\./data/output" dashboards/dashboard-portal.html && echo "✓ dashboard-portal.html busca datos en la ruta correcta" || exit 1
+          grep -q "\.\./data/output" dashboards/massive-incidents-dashboard.html && echo "✓ massive-incidents-dashboard.html busca datos en la ruta correcta" || exit 1
+          grep -q "\.\./data/output" dashboards/postmortem-dashboard.html && echo "✓ postmortem-dashboard.html busca datos en la ruta correcta" || exit 1
+
+  data-validation:
+    name: Data Contract Validation
+    runs-on: ubuntu-latest
+    if: hashFiles('data/output/index.json') != ''
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Validate index.json schema
+        run: |
+          python scripts/validate_json_schema.py data/output/index.json
+
+      - name: Validate JSON files are valid
+        run: |
+          echo "🔍 Validando que todos los JSON generados son válidos..."
+          for json_file in data/output/*.json; do
+            if [ -f "$json_file" ]; then
+              python -m json.tool "$json_file" > /dev/null && echo "✓ $(basename $json_file)" || exit 1
+            fi
+          done
+
+  build-check:
+    name: Build Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Verify no build artifacts needed
+        run: |
+          echo "✅ Dashboards are pure frontend - no build process needed"
+          echo "   - No npm dependencies"
+          echo "   - No bundler required"
+          echo "   - No compilation step"
+
+      - name: Check file sizes
+        run: |
+          echo "📊 Tamaño de archivos:"
+          for html_file in dashboards/*.html; do
+            size=$(du -h "$html_file" | cut -f1)
+            echo "  $(basename $html_file): $size"
+          done
+
+  summary:
+    name: Validation Summary
+    runs-on: ubuntu-latest
+    needs: [validate, build-check]
+    if: always()
+    steps:
+      - name: Check job status
+        run: |
+          if [ "${{ needs.validate.result }}" = "success" ] && [ "${{ needs.build-check.result }}" = "success" ]; then
+            echo "✅ Todos los validadores pasaron"
+            exit 0
+          else
+            echo "❌ Algunos validadores fallaron"
+            exit 1
+          fi

@@ -1,0 +1,139 @@
+name: Converters CI
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'converters/**'
+      - '.github/workflows/converters-ci.yml'
+  pull_request:
+    paths:
+      - 'converters/**'
+
+jobs:
+  test:
+    name: Test & Coverage
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.8', '3.9', '3.10', '3.11']
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          cd converters
+          pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -r requirements-dev.txt
+
+      - name: Run tests with coverage
+        run: |
+          cd converters
+          pytest tests/ \
+            --cov=src \
+            --cov=csv_to_json \
+            --cov-report=xml \
+            --cov-report=term-missing \
+            --cov-fail-under=80 \
+            -v
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          files: ./converters/coverage.xml
+          flags: converters
+          name: converters-py${{ matrix.python-version }}
+          fail_ci_if_error: false
+
+  lint:
+    name: Code Quality & Linting
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          cd converters
+          pip install --upgrade pip
+          pip install -r requirements-dev.txt
+
+      - name: Lint with flake8
+        run: |
+          cd converters
+          flake8 src/ cli/ --max-line-length=120 --count --statistics
+        continue-on-error: true
+
+      - name: Check code formatting with black
+        run: |
+          cd converters
+          black --check src/ cli/ --line-length=120
+        continue-on-error: true
+
+      - name: Check import sorting with isort
+        run: |
+          cd converters
+          isort --check-only src/ cli/
+        continue-on-error: true
+
+      - name: Analyze with pylint
+        run: |
+          cd converters
+          pylint src/ cli/ --exit-zero --output-format=text > pylint-report.txt
+        continue-on-error: true
+
+      - name: Security check with bandit
+        run: |
+          cd converters
+          bandit -r src/ cli/ -f json -o bandit-report.json
+        continue-on-error: true
+
+      - name: Upload lint reports
+        uses: actions/upload-artifact@v3
+        with:
+          name: lint-reports
+          path: converters/
+
+  performance:
+    name: Performance Benchmarks (main only)
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          cd converters
+          pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -r requirements-dev.txt
+          pip install psutil
+
+      - name: Run performance tests
+        run: |
+          cd converters
+          pytest tests/ -m slow --cov=src --cov-report=term -v
+
+      - name: Store benchmark results
+        uses: actions/upload-artifact@v3
+        with:
+          name: performance-benchmarks
+          path: converters/
