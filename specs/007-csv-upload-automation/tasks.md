@@ -147,34 +147,34 @@ Backend automatically validates uploaded CSV files (encoding, headers, delimiter
 
 #### US2.1 Server-Side Validation Pipeline
 
-- [ ] T041 [US2] Create validation orchestrator in `backend/services/validation_service.py` calling all validators in sequence (encoding → delimiter → headers → rows)
-- [ ] T042 [US2] Implement encoding validation in POST `/api/upload` using encoding detector, detecting file encoding from first 4KB bytes
-- [ ] T043 [US2] Implement delimiter detection in validation pipeline, auto-detecting CSV delimiter (comma, semicolon, tab)
-- [ ] T044 [US2] Implement header validation in validation pipeline, checking required headers present and providing specific missing column error
-- [ ] T045 [US2] Implement row count detection in validation pipeline for preview metadata
-- [ ] T046 [US2] Create validation response object in `backend/models/validation_result.py` containing: encoding, delimiter, headers, row_count, errors, warnings
+- [X] T041 [US2] Create validation orchestrator in `backend/services/validation_service.py` calling all validators in sequence (encoding → delimiter → headers → rows)
+- [X] T042 [US2] Implement encoding validation in POST `/api/upload` using encoding detector, detecting file encoding from first 4KB bytes
+- [X] T043 [US2] Implement delimiter detection in validation pipeline, auto-detecting CSV delimiter (comma, semicolon, tab)
+- [X] T044 [US2] Implement header validation in validation pipeline, checking required headers present and providing specific missing column error
+- [X] T045 [US2] Implement row count detection in validation pipeline for preview metadata
+- [X] T046 [US2] Create validation response object in `backend/models/validation_result.py` containing: encoding, delimiter, headers, row_count, errors, warnings
 
 #### US2.2 Validation Error Handling
 
-- [ ] T047 [US2] Generate user-friendly error messages for missing headers (e.g., "Missing required column: 'Estatus' - please check your CSV")
-- [ ] T048 [US2] Generate error messages for unsupported encoding (suggest UTF-8 or ask user to convert file)
-- [ ] T049 [US2] Generate error messages for parsing failures (line number, specific error, suggestion)
-- [ ] T050 [US2] Create validation error list structure returning all validation issues in single response
+- [X] T047 [US2] Generate user-friendly error messages for missing headers (e.g., "Missing required column: 'Estatus' - please check your CSV")
+- [X] T048 [US2] Generate error messages for unsupported encoding (suggest UTF-8 or ask user to convert file)
+- [X] T049 [US2] Generate error messages for parsing failures (line number, specific error, suggestion)
+- [X] T050 [US2] Create validation error list structure returning all validation issues in single response
 
 #### US2.3 Preview & User Confirmation
 
-- [ ] T051 [US2] Extend `/api/upload` response to include preview data: detected_encoding, detected_delimiter, header_names, row_count, file_size_formatted
-- [ ] T052 [US2] Return validation_passed boolean to frontend indicating file is acceptable
-- [ ] T053 [US2] Implement warning generation (e.g., "Unusual encoding detected: Windows-1252") returned in response
+- [X] T051 [US2] Extend `/api/upload` response to include preview data: detected_encoding, detected_delimiter, header_names, row_count, file_size_formatted
+- [X] T052 [US2] Return validation_passed boolean to frontend indicating file is acceptable
+- [X] T053 [US2] Implement warning generation (e.g., "Unusual encoding detected: Windows-1252") returned in response
 
 #### US2.4 Validation Testing
 
-- [ ] T054 [US2] Create integration test for valid CSV upload → validation passes and returns correct metadata
-- [ ] T055 [US2] Create test for CSV with missing required header → specific error returned
-- [ ] T056 [US2] Create test for non-UTF-8 encoding → encoding correctly detected
-- [ ] T057 [US2] Create test for unusual delimiter (semicolon) → correctly detected
-- [ ] T058 [US2] Create test for empty CSV → error "No data rows found"
-- [ ] T059 [US2] Create test for large CSV (50MB+) → validation completes in <2 seconds
+- [X] T054 [US2] Create integration test for valid CSV upload → validation passes and returns correct metadata
+- [X] T055 [US2] Create test for CSV with missing required header → specific error returned
+- [X] T056 [US2] Create test for non-UTF-8 encoding → encoding correctly detected
+- [X] T057 [US2] Create test for unusual delimiter (semicolon) → correctly detected
+- [X] T058 [US2] Create test for empty CSV → error "No data rows found"
+- [X] T059 [US2] Create test for large CSV (50MB+) → validation completes in <2 seconds
 
 ### Independent Test Criteria - US2
 - [ ] All validators return correct results for test CSVs

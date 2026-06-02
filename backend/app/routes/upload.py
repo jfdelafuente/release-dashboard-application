@@ -10,18 +10,12 @@ from pathlib import Path
 from datetime import datetime
 
 from app.config import Config
-from app.validators.encoding import detect_encoding, is_encoding_supported
-from app.validators.delimiter import detect_delimiter
-from app.validators.headers import validate_headers
-from app.validators.counter import count_csv_rows_with_header
-from app.utils.error_messages import (
-    get_error_message, file_not_csv_error, file_too_large_error,
-    missing_headers_error, unsupported_encoding_error, no_data_rows_error
-)
+from app.utils.error_messages import file_not_csv_error, file_too_large_error
 from app.utils.sanitizer import sanitize_filename
 from app.utils.temp_files import TempFileManager
-from app.utils.preview import generate_preview, format_file_size
+from app.utils.preview import format_file_size
 from app.logging.upload_log import get_upload_logger
+from app.services.validation_service import create_validation_service
 
 logger = logging.getLogger(__name__)
 upload_logger = get_upload_logger()
@@ -86,36 +80,41 @@ async def upload_csv(file: UploadFile = File(...)):
         temp_file_path = temp_manager.create_temp_file(original_filename, file_content)
         logger.info(f"Temporary file created: {temp_file_path}")
 
-        # Run validation pipeline
-        validation_result = validate_upload(temp_file_path, original_filename)
+        # Run validation pipeline using ValidationService
+        validation_service = create_validation_service()
+        validation_result = validation_service.validate_file(temp_file_path, original_filename)
 
-        if not validation_result['success']:
+        if not validation_result.is_valid:
             # Log validation error
+            error_message = '; '.join(validation_result.all_errors) if validation_result.all_errors else 'Validation failed'
             upload_logger.log_error(
                 original_filename,
-                validation_result.get('error', 'Validation failed'),
+                error_message,
                 'validation'
             )
             # Cleanup temp file on validation failure
             temp_manager.delete_temp_file(temp_file_path)
 
+            # Return first error to user
+            first_error = validation_result.all_errors[0] if validation_result.all_errors else 'Validation failed'
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail={
-                    "error": validation_result.get('error_code', 'ERR_005'),
-                    "message": validation_result.get('error', 'Validation failed'),
-                    "errors": validation_result.get('errors', [])
+                    "error": "ERR_005",
+                    "message": first_error,
+                    "errors": validation_result.all_errors
                 }
             )
 
         # Log successful validation
         upload_logger.log_validation(
             original_filename,
-            validation_result['encoding'],
-            validation_result['delimiter'],
-            validation_result['row_counts']['data_count'],
-            validation_result['headers_count'],
-            True
+            validation_result.encoding,
+            validation_result.delimiter,
+            validation_result.row_counts['data_count'],
+            len(validation_result.headers),
+            True,
+            validation_result.warnings if validation_result.warnings else None
         )
 
         # Return success response with metadata
@@ -127,13 +126,13 @@ async def upload_csv(file: UploadFile = File(...)):
                 "filename": original_filename,
                 "file_size": file_size,
                 "file_size_formatted": format_file_size(file_size),
-                "encoding_detected": validation_result['encoding'],
-                "encoding_confidence": validation_result['encoding_confidence'],
-                "delimiter_detected": validation_result['delimiter'],
-                "headers": validation_result['headers'],
-                "headers_count": validation_result['headers_count'],
-                "record_count": validation_result['row_counts']['data_count'],
-                "warnings": validation_result.get('warnings', [])
+                "encoding_detected": validation_result.encoding,
+                "encoding_confidence": validation_result.encoding_confidence,
+                "delimiter_detected": validation_result.delimiter,
+                "headers": validation_result.headers,
+                "headers_count": len(validation_result.headers),
+                "record_count": validation_result.row_counts['data_count'],
+                "warnings": validation_result.warnings
             }
         }
 
@@ -232,85 +231,3 @@ async def confirm_upload(data: dict):
         )
 
 
-def validate_upload(file_path: str, original_filename: str) -> dict:
-    """
-    Run complete validation pipeline on uploaded file
-
-    Args:
-        file_path: Path to uploaded file
-        original_filename: Original filename
-
-    Returns:
-        Dict with validation results and metadata
-    """
-    try:
-        result = {
-            'success': False,
-            'error': None,
-            'error_code': None,
-            'errors': [],
-            'warnings': []
-        }
-
-        # Detect encoding
-        encoding, encoding_confidence = detect_encoding(file_path)
-        result['encoding'] = encoding
-        result['encoding_confidence'] = encoding_confidence
-
-        if not is_encoding_supported(encoding):
-            result['error'] = get_error_message(
-                'unsupported_encoding',
-                encoding=encoding
-            )
-            result['error_code'] = 'ERR_002'
-            return result
-
-        # Detect delimiter
-        delimiter = detect_delimiter(file_path, encoding)
-        result['delimiter'] = delimiter
-
-        # Validate headers
-        headers_result = validate_headers(file_path, encoding, delimiter)
-        result['headers'] = headers_result['headers']
-        result['headers_count'] = len(headers_result['headers'])
-
-        if not headers_result['valid']:
-            result['error'] = get_error_message(
-                'missing_headers',
-                columns=', '.join(headers_result['missing_headers'])
-            )
-            result['error_code'] = 'ERR_001'
-            result['errors'] = headers_result['missing_headers']
-            return result
-
-        # Count rows
-        row_counts = count_csv_rows_with_header(file_path, encoding, delimiter)
-        result['row_counts'] = row_counts
-
-        if row_counts['data_count'] == 0:
-            result['error'] = get_error_message('no_data_rows')
-            result['error_code'] = 'ERR_004'
-            return result
-
-        # Generate warnings
-        warnings = []
-        if encoding != 'utf-8':
-            warnings.append(f"Unusual encoding detected: {encoding}")
-        if row_counts['empty_count'] > 0:
-            warnings.append(f"{row_counts['empty_count']} empty rows found")
-
-        result['warnings'] = warnings
-        result['success'] = True
-
-        logger.info(f"Validation successful for: {original_filename}")
-        return result
-
-    except Exception as e:
-        logger.error(f"Validation error: {e}")
-        return {
-            'success': False,
-            'error': str(e),
-            'error_code': 'ERR_005',
-            'errors': [],
-            'warnings': []
-        }
