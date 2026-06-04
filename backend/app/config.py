@@ -24,7 +24,7 @@ class Config:
     DEBUG = os.getenv("DEBUG", "False").lower() == "true"
 
     # CORS configuration
-    CORS_ORIGINS = os.getenv("CORS_ORIGINS", "http://localhost:8000,http://localhost:3000").split(",")
+    CORS_ORIGINS = os.getenv("CORS_ORIGINS", "http://localhost:5000,http://localhost:5500,http://localhost:8000,http://localhost:3000").split(",")
 
     # File upload configuration
     MAX_FILE_SIZE_MB = int(os.getenv("MAX_FILE_SIZE_MB", "500"))

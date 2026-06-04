@@ -1,14 +1,14 @@
 {
   "massive": {
     "type": "massive",
-    "updated": "2026-06-02T16:41:37.054153Z",
+    "updated": "2026-06-03T11:56:26.807339Z",
     "count": 1,
     "files": [
       {
-        "name": "20260602_162358_CS-Informe-masiva-20260602-massive.json",
-        "size": 1038018,
-        "modified": "2026-06-02T16:41:36.771261",
-        "path": "data/output/20260602_162358_CS-Informe-masiva-20260602-massive.json"
+        "name": "20260603_115559_CS-Informe-masiva-20260603-massive.json",
+        "size": 1038883,
+        "modified": "2026-06-03T11:56:26.552301",
+        "path": "data/output/20260603_115559_CS-Informe-masiva-20260603-massive.json"
       }
     ]
   },

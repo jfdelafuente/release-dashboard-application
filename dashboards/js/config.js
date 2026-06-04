@@ -38,6 +38,16 @@ const API_CONFIG = {
     maxNotifications: 5
   },
 
+  // Auto-refresh settings
+  autoRefresh: {
+    enabled: true,
+    intervalMs: 10000, // 10 seconds default
+    minIntervalMs: 5000, // Minimum 5 seconds
+    maxIntervalMs: 60000, // Maximum 60 seconds
+    indexJsonPath: '/data/output/index.json',
+    changeDetectionCooldown: 1000 // 1 second before allowing next check
+  },
+
   // Debug mode
   debug: window.location.hostname === 'localhost'
 };

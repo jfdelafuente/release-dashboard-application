@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Release Dashboard - Portal Principal</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/auto-refresh.css">
     <style>
         * {
             margin: 0;
@@ -631,8 +632,54 @@
         // Load data on page load
         document.addEventListener('DOMContentLoaded', loadDashboardData);
 
-        // Refresh data every 30 seconds
-        setInterval(loadDashboardData, 30000);
+        // Initialize auto-refresh manager for Dashboard Portal
+        window.AutoRefreshConfig = {
+          enabled: true,
+          intervalMs: 10000, // 10 seconds (faster than old 30 second interval)
+          indexJsonPath: '../data/output/index.json',
+          onDataChanged: function(newData) {
+            console.log('Portal data changed, reloading...');
+            loadDashboardData();
+          },
+          onRefreshStart: function() {
+            console.log('Portal refresh started');
+          },
+          onRefreshComplete: function(hasChanged) {
+            if (hasChanged) {
+              console.log('Portal refresh complete - data updated');
+            }
+          },
+          onRefreshError: function(error) {
+            console.error('Portal refresh error:', error);
+          }
+        };
+    </script>
+
+    <!-- Auto-Refresh Manager Scripts -->
+    <script src="js/config.js"></script>
+    <script src="js/notifications.js"></script>
+    <script src="js/auto-refresh-manager.js"></script>
+
+    <!-- Initialize Auto-Refresh -->
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        if (autoRefreshManager) {
+          autoRefreshManager.addFreshnessIndicator('header');
+          autoRefreshManager.addControls('header');
+          autoRefreshManager.startPolling();
+
+          // Check for saved auto-refresh preference
+          const savedPref = localStorage.getItem('auto_refresh_enabled');
+          if (savedPref === 'false') {
+            const toggle = document.getElementById('auto-refresh-toggle');
+            if (toggle) {
+              toggle.click();
+            }
+          }
+
+          console.log('Auto-refresh manager initialized for Dashboard Portal');
+        }
+      });
     </script>
 
     <!-- Upload Modal Component -->

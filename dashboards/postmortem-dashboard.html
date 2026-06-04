@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Incident PostMortem Dashboard</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/auto-refresh.css">
     <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
     <style>
         * {
@@ -1585,57 +1586,6 @@
             const resetBtn = document.getElementById('resetBtn');
 
             // Auto-cargar datos más recientes desde index.json
-            async function autoLoadLatestData() {
-                try {
-                    const response = await fetch('../data/output/index.json');
-                    const indexData = await response.json();
-
-                    if (indexData.postmortem && indexData.postmortem.files && indexData.postmortem.files.length > 0) {
-                        // Obtener el archivo más reciente (primer archivo en la lista)
-                        const latestFile = indexData.postmortem.files[0];
-                        let filePath = latestFile.path;
-
-                        // Ajustar la ruta si es necesario (desde dashboards/src/)
-                        if (!filePath.startsWith('http')) {
-                            filePath = '../../' + filePath;
-                        }
-
-                        console.log(`Auto-loading: ${filePath}`);
-
-                        // Cargar el archivo JSON
-                        const fileResponse = await fetch(filePath);
-                        const jsonData = await fileResponse.json();
-
-                        // Procesar datos
-                        if (Array.isArray(jsonData)) {
-                            allIncidents = jsonData;
-                        } else if (jsonData._metadata && jsonData.data) {
-                            allIncidents = jsonData.data;
-                            console.log(`Auto-loaded: ${latestFile.name} (${jsonData._metadata.record_count} records)`);
-                        } else if (typeof jsonData === 'object' && !Array.isArray(jsonData)) {
-                            allIncidents = [jsonData];
-                        }
-
-                        // Mostrar dashboard
-                        uploadScreen.classList.add('hidden');
-                        dashboardScreen.classList.add('visible');
-
-                        setTimeout(() => {
-                            try {
-                                analyzeData();
-                            } catch (e) {
-                                console.error('Error in analyzeData:', e);
-                            }
-                        }, 100);
-                    }
-                } catch (err) {
-                    console.log('No se encontró index.json o datos. Usuario puede cargar manualmente.', err);
-                }
-            }
-
-            // Intentar auto-cargar cuando la página se carga
-            autoLoadLatestData();
-
             uploadBtn.onclick = function(e) {
                 e.preventDefault();
                 fileInput.click();
@@ -1710,6 +1660,54 @@
                 Plotly.Plots.resize('systemChart');
             }
         });
+
+        // Initialize auto-refresh manager for Postmortem Dashboard
+        window.AutoRefreshConfig = {
+          enabled: true,
+          intervalMs: 10000, // 10 seconds
+          indexJsonPath: '../data/output/index.json',
+          onDataChanged: function(newData) {
+            console.log('Dashboard data changed, reloading...');
+          },
+          onRefreshStart: function() {
+            console.log('Dashboard refresh started');
+          },
+          onRefreshComplete: function(hasChanged) {
+            if (hasChanged) {
+              console.log('Dashboard refresh complete - data updated');
+            }
+          },
+          onRefreshError: function(error) {
+            console.error('Dashboard refresh error:', error);
+          }
+        };
+    </script>
+
+    <!-- Auto-Refresh Manager Scripts -->
+    <script src="js/config.js"></script>
+    <script src="js/notifications.js"></script>
+    <script src="js/auto-refresh-manager.js"></script>
+
+    <!-- Initialize Auto-Refresh -->
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        if (autoRefreshManager) {
+          autoRefreshManager.addFreshnessIndicator('.header');
+          autoRefreshManager.addControls('.header');
+          autoRefreshManager.startPolling();
+
+          // Check for saved auto-refresh preference
+          const savedPref = localStorage.getItem('auto_refresh_enabled');
+          if (savedPref === 'false') {
+            const toggle = document.getElementById('auto-refresh-toggle');
+            if (toggle) {
+              toggle.click();
+            }
+          }
+
+          console.log('Auto-refresh manager initialized for Postmortem Dashboard');
+        }
+      });
     </script>
 </body>
 </html>

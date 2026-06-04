@@ -1,0 +1,11 @@
+ID de incidencia,Descripción,Estatus,Fecha de envío,Grupo asignado,Urgencia,Impacto,Fecha de última resolución
+INC001,Incident from 15 days ago,Cerrado,19/05/2026 9:00 AM,TEAM_A,Baja,Normal,19/05/2026 10:00 AM
+INC002,Incident from 14 days ago,Abierto,20/05/2026 10:30 AM,TEAM_B,Media,Masiva,
+INC003,Incident from 10 days ago,Cerrado,24/05/2026 2:00 PM,TEAM_A,Alta,Crítica,24/05/2026 3:00 PM
+INC004,Incident from 8 days ago,Abierto,26/05/2026 11:15 AM,TEAM_C,Baja,Normal,
+INC005,Incident from 5 days ago,Cerrado,29/05/2026 4:45 PM,TEAM_B,Media,Masiva,29/05/2026 5:00 PM
+INC006,Incident from 3 days ago,Abierto,31/05/2026 8:20 AM,TEAM_A,Alta,Normal,
+INC007,Incident from 2 days ago,Pendiente,02/06/2026 1:30 PM,TEAM_C,Baja,Crítica,
+INC008,Incident from 1 day ago,Abierto,02/06/2026 5:00 PM,TEAM_B,Media,Normal,
+INC009,Incident from today,Abierto,03/06/2026 10:00 AM,TEAM_A,Alta,Masiva,
+INC010,Another today,Cerrado,03/06/2026 2:15 PM,TEAM_C,Baja,Normal,03/06/2026 2:30 PM

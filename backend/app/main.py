@@ -7,7 +7,14 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import logging
 import os
+import sys
+from pathlib import Path
 from dotenv import load_dotenv
+
+# Add converters/src to Python path for CSV converter imports
+converters_src = Path(__file__).parent.parent.parent / "converters" / "src"
+if str(converters_src) not in sys.path:
+    sys.path.insert(0, str(converters_src))
 
 # Load environment variables
 load_dotenv()

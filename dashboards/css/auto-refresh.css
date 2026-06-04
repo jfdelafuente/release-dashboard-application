@@ -1,0 +1,270 @@
+/**
+ * Auto-Refresh Styles
+ * Styles for freshness indicator and refresh controls
+ */
+
+/* Freshness Indicator */
+.freshness-indicator {
+  display: inline-block;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 0.85em;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  margin-left: 12px;
+}
+
+.freshness-indicator.fresh {
+  background-color: #dcfce7;
+  color: #166534;
+  border: 1px solid #86efac;
+}
+
+.freshness-indicator.medium {
+  background-color: #fef3c7;
+  color: #92400e;
+  border: 1px solid #fcd34d;
+}
+
+.freshness-indicator.stale {
+  background-color: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #fca5a5;
+}
+
+.freshness-indicator.loading {
+  background-color: #dbeafe;
+  color: #1e40af;
+  border: 1px solid #93c5fd;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+/* Manual Refresh Button */
+.refresh-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  background-color: #f97316;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.9em;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-family: 'Poppins', sans-serif;
+  margin-left: 8px;
+}
+
+.refresh-button:hover {
+  background-color: #fb923c;
+  transform: scale(1.02);
+}
+
+.refresh-button:active {
+  transform: scale(0.98);
+}
+
+.refresh-button:disabled {
+  background-color: #d97706;
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.refresh-button.loading {
+  animation: spin 1s linear infinite;
+}
+
+.refresh-button.loading::before {
+  content: '⟳';
+  display: inline-block;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Auto-Refresh Toggle */
+.auto-refresh-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9em;
+  margin-left: 12px;
+}
+
+.toggle-switch {
+  width: 44px;
+  height: 24px;
+  background-color: #cbd5e1;
+  border-radius: 12px;
+  position: relative;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  border: none;
+  padding: 0;
+}
+
+.toggle-switch.active {
+  background-color: #f97316;
+}
+
+.toggle-switch::after {
+  content: '';
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  background-color: white;
+  border-radius: 10px;
+  top: 2px;
+  left: 2px;
+  transition: left 0.3s ease;
+}
+
+.toggle-switch.active::after {
+  left: 22px;
+}
+
+/* Dashboard Header with Controls */
+.dashboard-header-with-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 12px 0;
+}
+
+.dashboard-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.dashboard-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .freshness-indicator {
+    margin-left: 0;
+    margin-top: 8px;
+  }
+
+  .refresh-button {
+    margin-left: 0;
+    margin-top: 8px;
+  }
+
+  .dashboard-header-with-controls {
+    justify-content: flex-start;
+  }
+
+  .dashboard-controls {
+    width: 100%;
+  }
+
+  .dashboard-info {
+    width: 100%;
+  }
+}
+
+/* Loading State */
+.refreshing {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+/* Notifications Container - if not already styled */
+.notifications-container {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 9999;
+  max-width: 400px;
+}
+
+.notification {
+  background-color: white;
+  padding: 12px 16px;
+  border-radius: 6px;
+  margin-bottom: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  animation: slideIn 0.3s ease;
+  border-left: 4px solid #f97316;
+}
+
+.notification.success {
+  border-left-color: #22c55e;
+  background-color: #f0fdf4;
+}
+
+.notification.error {
+  border-left-color: #ef4444;
+  background-color: #fef2f2;
+}
+
+.notification.warning {
+  border-left-color: #f59e0b;
+  background-color: #fffbeb;
+}
+
+.notification.info {
+  border-left-color: #3b82f6;
+  background-color: #f0f9ff;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(400px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideOut {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(400px);
+    opacity: 0;
+  }
+}
+
+@media (max-width: 768px) {
+  .notifications-container {
+    right: 10px;
+    left: 10px;
+    max-width: none;
+  }
+
+  .notification {
+    margin-bottom: 6px;
+  }
+}

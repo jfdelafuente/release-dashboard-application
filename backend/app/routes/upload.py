@@ -3,7 +3,7 @@ File Upload Routes
 Handles CSV file upload, validation, and processing
 """
 
-from fastapi import APIRouter, UploadFile, File, HTTPException, status, Request
+from fastapi import APIRouter, UploadFile, File, HTTPException, status, Request, Body
 from fastapi.responses import JSONResponse
 import logging
 import json
@@ -34,7 +34,7 @@ router = APIRouter(prefix="/api", tags=["upload"])
 temp_manager = TempFileManager(Config.TEMP_UPLOAD_DIR)
 
 # Create error reports directory
-ERROR_REPORTS_DIR = Path(Config.LOG_DIR) / "error_reports"
+ERROR_REPORTS_DIR = Path(__file__).parent.parent.parent / "logs" / "error_reports"
 ERROR_REPORTS_DIR.mkdir(parents=True, exist_ok=True)
 
 # In-memory storage of last error for download (limited to recent errors)
@@ -70,23 +70,14 @@ async def upload_csv(file: UploadFile = File(...), request: Request = None):
         file_content = await file.read()
         file_size = len(file_content)
 
-        # Validate upload completeness (check Content-Length header)
-        if request:
-            content_length = request.headers.get('content-length')
-            if content_length:
-                try:
-                    expected_size = int(content_length)
-                    if file_size != expected_size:
-                        logger.warning(f"Partial upload detected: expected {expected_size} bytes, got {file_size} bytes")
-                        raise HTTPException(
-                            status_code=status.HTTP_400_BAD_REQUEST,
-                            detail={
-                                "error": "ERR_005",
-                                "message": f"Upload incomplete. Expected {expected_size} bytes, received {file_size} bytes. Please try again."
-                            }
-                        )
-                except ValueError:
-                    logger.warning(f"Invalid Content-Length header: {content_length}")
+        # Validate minimum file size (at least has headers) - check BEFORE Content-Length
+        if file_size == 0:
+            logger.warning(f"Empty file upload: {original_filename}")
+            error = empty_file_error()
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail={"error": error['code'], "message": error['message']}
+            )
 
         # Validate file size
         if file_size > Config.MAX_FILE_SIZE_BYTES:
@@ -99,14 +90,9 @@ async def upload_csv(file: UploadFile = File(...), request: Request = None):
                 detail={"error": error['code'], "message": error['message']}
             )
 
-        # Validate minimum file size (at least has headers)
-        if file_size == 0:
-            logger.warning(f"Empty file upload: {original_filename}")
-            error = empty_file_error()
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail={"error": error['code'], "message": error['message']}
-            )
+        # Note: Content-Length validation is unreliable with multipart/form-data
+        # due to the way HTTP clients encode multipart boundaries. The validation
+        # service will catch actual data corruption issues, so we skip this check.
 
         # Log upload start
         upload_logger.log_upload_start(original_filename, file_size)
@@ -198,7 +184,7 @@ async def upload_csv(file: UploadFile = File(...), request: Request = None):
 
 
 @router.post("/confirm-upload")
-async def confirm_upload(data: dict):
+async def confirm_upload(data: dict = Body(...)):
     """
     Confirm upload, move file to input directory, and poll for conversion
 
@@ -215,7 +201,10 @@ async def confirm_upload(data: dict):
         if not temp_file_path or not original_filename:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Missing required fields: temp_file_path, filename"
+                detail={
+                    "error": "ERR_005",
+                    "message": "Missing required fields: temp_file_path, filename"
+                }
             )
 
         temp_file_path = Path(temp_file_path)
@@ -223,7 +212,10 @@ async def confirm_upload(data: dict):
         if not temp_file_path.exists():
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail="Temporary file not found"
+                detail={
+                    "error": "ERR_005",
+                    "message": "Temporary file not found. Upload session may have expired."
+                }
             )
 
         # Sanitize filename
@@ -313,20 +305,54 @@ async def confirm_upload(data: dict):
             'timestamp': datetime.utcnow().isoformat()
         })
 
-        logger.info(f"Starting conversion polling for: {final_filename}")
+        logger.info(f"Starting conversion for: {final_filename}")
 
-        # Poll for conversion using ConversionService
-        conversion_service = create_conversion_service(
-            Config.DATA_INPUT_DIR,
-            Config.DATA_OUTPUT_DIR,
-            timeout_seconds=120
-        )
+        # Execute conversion directly (synchronously)
+        try:
+            # Add converters/src to path so we can import csv_to_json
+            # From: backend/app/routes/upload.py -> go up 3 levels to project root
+            converters_src = Path(__file__).parent.parent.parent / "converters" / "src"
+            if str(converters_src) not in sys.path:
+                sys.path.insert(0, str(converters_src))
 
-        conversion_result = conversion_service.get_conversion_status(
-            original_filename,
-            poll_interval=1,
-            max_polls=120
-        )
+            from csv_to_json import CsvToJsonConverter
+
+            converter = CsvToJsonConverter()
+            input_path = target_path  # The file we just moved
+
+            # Generate output filename
+            output_filename = f"{final_filename.rsplit('.', 1)[0]}-massive.json"
+            output_path = Path(Config.DATA_OUTPUT_DIR) / output_filename
+            error_path = Path(Config.DATA_ERROR_DIR) / f"{final_filename.rsplit('.', 1)[0]}_errors.json"
+
+            # Convert CSV to JSON
+            success, report = converter.convert_file(
+                str(input_path.resolve()),
+                str(output_path.resolve()),
+                str(error_path.resolve())
+            )
+
+            conversion_result = {
+                'success': success,
+                'output_file': str(output_path),
+                'record_count': report['stats'].get('successful', 0),
+                'message': 'Conversion completed successfully' if success else 'Conversion completed with warnings',
+                'status': 'completed',
+                'elapsed_seconds': 0
+            }
+
+            logger.info(f"Conversion completed: {output_filename}, records: {conversion_result['record_count']}")
+
+        except Exception as e:
+            logger.error(f"Error during conversion: {e}", exc_info=True)
+            conversion_result = {
+                'success': False,
+                'output_file': None,
+                'record_count': 0,
+                'message': f"Conversion error: {str(e)}",
+                'status': 'error',
+                'elapsed_seconds': 0
+            }
 
         # Log conversion result
         if conversion_result['success']:
@@ -335,6 +361,37 @@ async def confirm_upload(data: dict):
                 conversion_result.get('output_file', ''),
                 conversion_result.get('record_count', 0)
             )
+
+            # Update index.json to include the new file
+            try:
+                import importlib.util
+                # Build absolute path from project root to build_index.py
+                project_root = Path(__file__).parent.parent.parent.parent  # From backend/app/routes/upload.py to project root
+                build_index_path = project_root / "converters" / "cli" / "build_index.py"
+
+                logger.info(f"Loading build_index from: {build_index_path}")
+
+                if not build_index_path.exists():
+                    logger.error(f"build_index.py not found at: {build_index_path}")
+                else:
+                    spec = importlib.util.spec_from_file_location("build_index", str(build_index_path))
+                    build_index_module = importlib.util.module_from_spec(spec)
+                    spec.loader.exec_module(build_index_module)
+
+                    # Use absolute path for output directory
+                    output_dir_abs = project_root / "data" / "output"
+
+                    logger.info(f"Calling build_index with: {output_dir_abs}")
+                    result = build_index_module.build_index(str(output_dir_abs))
+
+                    if result:
+                        logger.info(f"[SUCCESS] index.json updated successfully")
+                    else:
+                        logger.error(f"[ERROR] build_index returned False")
+
+            except Exception as e:
+                logger.error(f"[ERROR] Could not update index.json: {e}", exc_info=True)
+
         else:
             upload_logger.log_error(
                 original_filename,
@@ -357,9 +414,73 @@ async def confirm_upload(data: dict):
         raise
     except Exception as e:
         logger.error(f"Error confirming upload: {e}", exc_info=True)
+        error = server_error()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Error processing upload confirmation"
+            detail={"error": error['code'], "message": error['message']}
+        )
+
+
+@router.get("/index-json")
+async def get_index_json():
+    """
+    Get the index.json file with list of converted files
+    Used by frontend to load latest data
+    """
+    try:
+        index_path = Path(Config.DATA_OUTPUT_DIR) / "index.json"
+
+        if not index_path.exists():
+            # Return empty index if file doesn't exist yet
+            return {
+                "massive": {"files": []},
+                "postmortem": {"files": []}
+            }
+
+        with open(index_path, 'r', encoding='utf-8') as f:
+            return json.load(f)
+
+    except Exception as e:
+        logger.error(f"Error reading index.json: {e}")
+        return {
+            "massive": {"files": []},
+            "postmortem": {"files": []}
+        }
+
+
+@router.get("/data-json")
+async def get_data_json(file: str):
+    """
+    Get a specific JSON data file from output directory
+    Used by frontend to load incident data
+    """
+    try:
+        # Sanitize filename to prevent path traversal
+        safe_filename = file.split('/')[-1]  # Get only the filename
+        if '..' in safe_filename or '/' in safe_filename or '\\' in safe_filename:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail={"error": "ERR_005", "message": "Invalid filename"}
+            )
+
+        file_path = Path(Config.DATA_OUTPUT_DIR) / safe_filename
+
+        if not file_path.exists():
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail={"error": "ERR_005", "message": "File not found"}
+            )
+
+        with open(file_path, 'r', encoding='utf-8') as f:
+            return json.load(f)
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error reading data file: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail={"error": "ERR_012", "message": "Error reading data file"}
         )
 
 

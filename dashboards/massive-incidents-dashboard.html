@@ -541,14 +541,30 @@
             <span class="upload-icon">⚠️</span>
             <h2 class="upload-heading">Massive Incidents Dashboard</h2>
             <p class="upload-description">
-                Carga tu archivo JSON con datos de incidencias masivas.<br>
+                Carga tu archivo CSV con datos de incidencias masivas.<br>
                 <small>Drag & drop o haz clic para seleccionar</small><br>
                 <small style="color: #6b7280; margin-top: 8px; display: block;">
-                    💡 Los archivos JSON convertidos están en: <code style="background: #f3f4f6; padding: 2px 4px; border-radius: 3px;">data/output/</code>
+                    El archivo se validará automáticamente (encoding, delimitador, columnas)
                 </small>
             </p>
             <button class="upload-btn" id="uploadBtn">Choose File</button>
-            <input type="file" id="fileInput" accept=".json" />
+            <input type="file" id="fileInput" accept=".csv" />
+        </div>
+    </div>
+
+    <!-- Validation Modal -->
+    <div id="validationModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
+        <div style="background: white; border-radius: 12px; padding: 32px; max-width: 600px; width: 90%; max-height: 80vh; overflow-y: auto; box-shadow: 0 20px 25px rgba(0,0,0,0.15);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h2 style="font-size: 20px; font-weight: 700; color: #1f2937; margin: 0;">Vista Previa de Validacion</h2>
+                <button onclick="closeValidationModal()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #9ca3af;">X</button>
+            </div>
+            <div id="validationContent" style="margin: 20px 0;"></div>
+            <div style="display: flex; gap: 12px; margin-top: 24px; justify-content: flex-end;">
+                <button onclick="closeValidationModal()" style="padding: 10px 20px; border: 1px solid #e2e8f0; border-radius: 8px; background: white; color: #6b7280; font-weight: 600; cursor: pointer; font-family: 'Poppins', sans-serif;">Cancelar</button>
+                <button id="selectAnotherBtn" onclick="selectAnotherFile()" style="padding: 10px 20px; border: 1px solid #fb923c; border-radius: 8px; background: white; color: #fb923c; font-weight: 600; cursor: pointer; font-family: 'Poppins', sans-serif; display: none;">📥 Seleccionar otro archivo</button>
+                <button id="confirmUploadBtn" onclick="confirmUpload()" style="padding: 10px 24px; background: linear-gradient(135deg, #fb923c 0%, #fed7aa 100%); color: white; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; font-family: 'Poppins', sans-serif; display: none;">Confirmar y Convertir</button>
+            </div>
         </div>
     </div>
 
@@ -666,29 +682,6 @@
             </div>
 
             <!-- Debug Table (Collapsible) -->
-            <div class="section-title" style="display: flex; align-items: center; gap: 12px; cursor: pointer;" onclick="toggleDebugTable()">
-                <span>🐛 Debug - Cálculo de Backlog</span>
-                <span id="debugToggleIcon" style="display: inline-block; transition: transform 0.3s;">▶</span>
-            </div>
-            <div id="debugTableContainer" class="card" style="display: none;">
-                <h3>Detalles del Cálculo</h3>
-                <div class="table-container">
-                    <table id="debugTable">
-                        <thead>
-                            <tr>
-                                <th>Fecha</th>
-                                <th>Entradas</th>
-                                <th>Solucionadas</th>
-                                <th>Neto (E-S)</th>
-                                <th>Backlog</th>
-                            </tr>
-                        </thead>
-                        <tbody id="debugTableBody">
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
             <!-- Details Table -->
             <div class="section-title">Detalles de Incidencias Masivas</div>
             <div class="card">
@@ -803,10 +796,13 @@
         }
 
         function analyzeData() {
+            console.log('[analyzeData] Starting with', allIncidents.length, 'incidents');
             if (allIncidents.length === 0) {
+                console.log('[analyzeData] No incidents to analyze, returning');
                 return;
             }
 
+            console.log('[analyzeData] Processing data...');
             // NUEVO: Aplicar filtro de tiempo PRIMERO
             const timeFilteredIncidents = applyTimeFilter(
                 allIncidents,
@@ -1164,29 +1160,6 @@
                 const dateKey = dateObj.toISOString().split('T')[0];
                 globalBacklogData[dateKey] = backlog[idx];
             });
-
-            // Populate debug table with all dates
-            const debugTableBody = document.getElementById('debugTableBody');
-            if (debugTableBody) {
-                debugTableBody.innerHTML = '';
-
-                allDates.forEach((dateObj, idx) => {
-                    const displayDate = dateObj.toLocaleDateString('es-ES');
-                    const dayEntries = entries[idx];
-                    const daySolved = solved[idx];
-                    const neto = dayEntries - daySolved;
-
-                    const row = document.createElement('tr');
-                    row.innerHTML = `
-                        <td>${displayDate}</td>
-                        <td>${dayEntries}</td>
-                        <td>${daySolved}</td>
-                        <td>${neto}</td>
-                        <td><strong>${backlog[idx]}</strong></td>
-                    `;
-                    debugTableBody.appendChild(row);
-                });
-            }
 
             // Create traces
             const entriesTrace = {
@@ -1549,6 +1522,7 @@
             });
 
             populateTable();
+            console.log('[analyzeData] COMPLETED SUCCESSFULLY - Dashboard rendered');
         }
 
         function populateTable() {
@@ -1615,78 +1589,436 @@
         }
 
         // File Handling
+        window.logMessages = [];
+        function customLog(msg) {
+            console.log(msg);
+            window.logMessages.push(msg);
+            if (window.logMessages.length > 100) {
+                window.logMessages.shift();
+            }
+        }
+
+        customLog('Script loaded, waiting for DOMContentLoaded');
+
+        // Global functions for validation modal
+        function closeValidationModal() {
+            document.getElementById('validationModal').style.display = 'none';
+            window.pendingValidation = null;
+        }
+
+        function selectAnotherFile() {
+            closeValidationModal();
+            document.getElementById('fileInput').click();
+        }
+
+        async function uploadCSVWithValidation(file) {
+            try {
+                customLog('=== Starting CSV validation ===');
+                customLog('File name: ' + file.name);
+                customLog('File size: ' + file.size);
+
+                const modal = document.getElementById('validationModal');
+                const content = document.getElementById('validationContent');
+
+                if (!modal) {
+                    customLog('ERROR: Modal element not found!');
+                    alert('ERROR: validationModal not found');
+                    return;
+                }
+
+                content.innerHTML = '<p style="text-align: center; color: #9ca3af;">Validando archivo...</p>';
+                modal.style.display = 'flex';
+                customLog('Modal displayed');
+
+                const formData = new FormData();
+                formData.append('file', file);
+                customLog('FormData created');
+
+                customLog('Sending to: http://localhost:8000/api/upload');
+                const response = await fetch('http://localhost:8000/api/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                customLog('Response received. Status: ' + response.status);
+
+                let result;
+                try {
+                    result = await response.json();
+                    customLog('JSON parsed successfully');
+                } catch (parseError) {
+                    customLog('ERROR parsing JSON response!');
+                    throw parseError;
+                }
+
+                customLog('Response data: ' + JSON.stringify(result).substring(0, 200));
+
+                if (!response.ok) {
+                    customLog('Validation failed');
+                    const errorMsg = result.detail?.message || result.message || 'Error desconocido';
+                    content.innerHTML = '<div style="background: #fee2e2; border: 2px solid #fca5a5; border-radius: 8px; padding: 16px; margin: 12px 0;"><h3 style="color: #dc2626; margin-top: 0;">Validacion: FALLO</h3><p style="color: #991b1b;">' + errorMsg + '</p></div>';
+                    document.getElementById('confirmUploadBtn').style.display = 'none';
+                    document.getElementById('selectAnotherBtn').style.display = 'inline-block';
+
+                    // Save error state to localStorage for persistence across reloads
+                    localStorage.setItem('validationError', errorMsg);
+                    localStorage.setItem('showValidationError', 'true');
+
+                    // Show alert so user can read error
+                    alert('❌ VALIDACIÓN FALLIDA\n\n' + errorMsg + '\n\nPor favor selecciona otro archivo.');
+                    return;
+                }
+
+                customLog('Validation passed');
+                const metadata = result.metadata;
+                if (!metadata) {
+                    throw new Error('No metadata received from server');
+                }
+                document.getElementById('confirmUploadBtn').style.display = 'inline-block';
+                document.getElementById('selectAnotherBtn').style.display = 'none';
+                customLog('Confirm button shown');
+
+                let html = '<div style="background: #dcfce7; border: 2px solid #bbf7d0; border-radius: 8px; padding: 16px; margin: 12px 0;"><h3 style="color: #166534; margin-top: 0;">Validacion: PASADA</h3></div>';
+                html += '<div style="margin: 16px 0;">';
+                html += '<p style="margin: 12px 0;"><strong>Archivo:</strong> ' + file.name + '</p>';
+                html += '<p style="margin: 12px 0;"><strong>Encoding:</strong> ' + (metadata.encoding_detected || 'UTF-8') + '</p>';
+                html += '<p style="margin: 12px 0;"><strong>Delimitador:</strong> ' + (metadata.delimiter_detected === ',' ? 'Coma (,)' : metadata.delimiter_detected) + '</p>';
+                html += '<p style="margin: 12px 0;"><strong>Filas de datos:</strong> ' + (metadata.record_count || 0) + '</p>';
+                html += '<p style="margin: 12px 0;"><strong>Columnas:</strong> ' + (metadata.headers ? metadata.headers.length : 0) + '</p>';
+                html += '</div>';
+
+                if (metadata.headers) {
+                    html += '<div style="background: #f3f4f6; border-radius: 8px; padding: 12px; margin: 12px 0;"><p style="color: #6b7280; font-size: 12px; margin-top: 0; margin-bottom: 8px;"><strong>Headers:</strong></p><p style="margin: 0; color: #1f2937; font-size: 13px;">' + metadata.headers.join(', ') + '</p></div>';
+                }
+
+                customLog('Setting HTML content');
+                content.innerHTML = html;
+                customLog('HTML set successfully');
+                window.pendingValidation = result;
+
+                // Save to localStorage in case of page reload
+                try {
+                    localStorage.setItem('pendingValidation', JSON.stringify(result));
+                    localStorage.setItem('validationHTML', html);
+                    customLog('Validation data saved to localStorage');
+                } catch (e) {
+                    customLog('Could not save to localStorage: ' + e.message);
+                }
+
+                customLog('Validation passed, modal should be visible now');
+                customLog('=== uploadCSVWithValidation COMPLETE - WAITING FOR USER ACTION ===');
+
+            } catch (error) {
+                customLog('=== EXCEPTION CAUGHT ===');
+                customLog('Error: ' + (error.message || 'unknown'));
+                var allLogs = window.logMessages.join('\n');
+                alert('ERROR OCCURRED:\n\n' + allLogs + '\n\nError: ' + (error.message || 'unknown'));
+                closeValidationModal();
+            }
+        }
+
+        async function loadDashboardAfterUpload() {
+            customLog('=== loadDashboardAfterUpload() called ===');
+            try {
+                // Fetch index to get latest file
+                customLog('Fetching index.json from backend...');
+                const response = await fetch('http://localhost:8000/api/index-json');
+                if (!response.ok) {
+                    throw new Error('Failed to fetch index.json: ' + response.statusText);
+                }
+                const indexData = await response.json();
+                customLog('Index data fetched: ' + JSON.stringify(indexData).substring(0, 100));
+
+                if (!indexData.massive || !indexData.massive.files || indexData.massive.files.length === 0) {
+                    throw new Error('No massive files found in index.json');
+                }
+
+                const latestFile = indexData.massive.files[0];
+                customLog('Latest file: ' + latestFile.name);
+
+                // Fetch the JSON data
+                const dataUrl = 'http://localhost:8000/api/data-json?file=' + encodeURIComponent(latestFile.name);
+                customLog('Fetching data from: ' + dataUrl);
+                const fileResponse = await fetch(dataUrl);
+                if (!fileResponse.ok) {
+                    throw new Error('Failed to fetch data file: ' + fileResponse.statusText);
+                }
+                const jsonData = await fileResponse.json();
+                customLog('JSON data received');
+
+                // Process data
+                if (Array.isArray(jsonData)) {
+                    allIncidents = jsonData;
+                    customLog('Data is array, ' + jsonData.length + ' records');
+                } else if (jsonData._metadata && jsonData.data) {
+                    allIncidents = jsonData.data;
+                    customLog('Data has metadata structure, ' + jsonData.data.length + ' records');
+                } else if (typeof jsonData === 'object' && !Array.isArray(jsonData)) {
+                    allIncidents = [jsonData];
+                    customLog('Data is single object');
+                } else {
+                    throw new Error('Unexpected data format: ' + typeof jsonData);
+                }
+
+                customLog('Data loaded into allIncidents: ' + allIncidents.length + ' records');
+
+                // Verify dashboard elements exist
+                const uploadScreen = document.getElementById('uploadScreen');
+                const dashboardScreen = document.getElementById('dashboardScreen');
+                const timeFilter = document.getElementById('timeFilter');
+                const dateRangeDisplay = document.getElementById('dateRangeDisplay');
+
+                if (!uploadScreen) throw new Error('uploadScreen element not found');
+                if (!dashboardScreen) throw new Error('dashboardScreen element not found');
+                if (!timeFilter) throw new Error('timeFilter element not found');
+                if (!dateRangeDisplay) throw new Error('dateRangeDisplay element not found');
+
+                customLog('All dashboard elements verified');
+
+                // Show dashboard
+                uploadScreen.classList.add('hidden');
+                dashboardScreen.classList.remove('hidden');
+                customLog('Dashboard screen shown');
+
+                // Record when dashboard was loaded
+                window.dashboardLoadTime = Date.now();
+                customLog('Dashboard load time recorded');
+
+                // Analyze data
+                setTimeout(() => {
+                    try {
+                        customLog('Starting data analysis...');
+                        globalTimeFilter = {
+                            period: 'all',
+                            startDate: null,
+                            endDate: new Date()
+                        };
+                        timeFilter.value = 'all';
+                        dateRangeDisplay.style.display = 'none';
+                        analyzeData();
+                        customLog('=== ✅ Dashboard loaded successfully ===');
+
+                        // Clean up localStorage after successful load
+                        localStorage.removeItem('pendingValidation');
+                        localStorage.removeItem('validationHTML');
+                        localStorage.removeItem('validationError');
+                        localStorage.removeItem('showValidationError');
+                        customLog('localStorage cleaned up');
+                    } catch (e) {
+                        customLog('ERROR in analyzeData: ' + e.message);
+                        customLog('Stack: ' + e.stack);
+                        console.error('Error in analyzeData:', e);
+                        alert('Error al analizar datos: ' + e.message + '\n\nVer consola para detalles');
+                    }
+                }, 100);
+
+            } catch (err) {
+                customLog('=== ❌ ERROR in loadDashboardAfterUpload ===');
+                customLog('Error: ' + err.message);
+                customLog('Stack: ' + err.stack);
+                console.error('Full error:', err);
+                alert('Error al cargar el dashboard:\n\n' + err.message + '\n\nVer consola para detalles');
+            }
+        }
+
+        async function confirmUpload() {
+            customLog('=== confirmUpload() called ===');
+            const btn = document.getElementById('confirmUploadBtn');
+            try {
+                if (!window.pendingValidation) {
+                    alert('No hay validacion pendiente');
+                    return;
+                }
+
+                btn.disabled = true;
+                btn.textContent = 'Procesando...';
+                customLog('Button disabled, sending to backend...');
+
+                customLog('Sending confirmation to backend...');
+                customLog('temp_file_path: ' + window.pendingValidation.temp_file_path);
+                customLog('filename: ' + window.pendingValidation.metadata.filename);
+
+                const response = await fetch('http://localhost:8000/api/confirm-upload', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        temp_file_path: window.pendingValidation.temp_file_path,
+                        filename: window.pendingValidation.metadata.filename
+                    })
+                });
+
+                customLog('Backend response status: ' + response.status);
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    customLog('Error response body: ' + errorText);
+                    let errorMsg = 'Error en conversión';
+                    try {
+                        const error = JSON.parse(errorText);
+                        errorMsg = error.detail?.message || error.message || errorMsg;
+                    } catch (e) {
+                        errorMsg = errorText || errorMsg;
+                    }
+                    throw new Error(errorMsg);
+                }
+
+                const result = await response.json();
+                customLog('Backend response: ' + JSON.stringify(result).substring(0, 200));
+
+                if (result.success) {
+                    customLog('✅ Conversion successful! Closing modal...');
+                    closeValidationModal();
+
+                    customLog('✅ Modal closed! Loading dashboard...');
+                    alert('¡Archivo cargado correctamente!\n\nCargando dashboard...');
+
+                    // Load dashboard with new data
+                    customLog('About to call loadDashboardAfterUpload()...');
+                    await loadDashboardAfterUpload();
+                    customLog('✅ loadDashboardAfterUpload() completed');
+                } else {
+                    throw new Error(result.message || 'Conversion failed');
+                }
+
+            } catch (error) {
+                customLog('=== ❌ ERROR in confirmUpload ===');
+                customLog('Error message: ' + error.message);
+                customLog('Stack: ' + error.stack);
+                console.error('Full error:', error);
+
+                alert('Error al cargar archivo:\n\n' + error.message + '\n\nVer consola para detalles');
+
+                // Re-enable button for retry
+                if (btn) {
+                    btn.disabled = false;
+                    btn.textContent = 'Confirmar y Convertir';
+                    customLog('Button re-enabled for retry');
+                }
+            }
+        }
+
+        // Flag to prevent reload during auto-load
+        var isLoadingData = false;
+
+        // Disabled: beforeunload causes issues with auto-reload
+        // window.addEventListener('beforeunload', function(e) {
+        //     if (isLoadingData) {
+        //         e.preventDefault();
+        //         return false;
+        //     }
+        // });
+
+        // Disabled: location wrappers - not needed for debugging
+        // var originalReplace = window.location.replace;
+        // window.location.replace = function(url) {
+        //     customLog('!!! location.replace called with:' + url);
+        //     return originalReplace.call(window.location, url);
+        // };
+        //
+        // var originalAssign = window.location.assign;
+        // window.location.assign = function(url) {
+        //     customLog('!!! location.assign called with:' + url);
+        //     return originalAssign.call(window.location, url);
+        // };
+
+        // Auto-load latest data from backend
         document.addEventListener('DOMContentLoaded', function() {
+            customLog('DOMContentLoaded event fired');
             const uploadScreen = document.getElementById('uploadScreen');
             const dashboardScreen = document.getElementById('dashboardScreen');
             const uploadCard = document.getElementById('uploadCard');
             const uploadBtn = document.getElementById('uploadBtn');
             const fileInput = document.getElementById('fileInput');
             const resetBtn = document.getElementById('resetBtn');
+            const validationModal = document.getElementById('validationModal');
+            const validationContent = document.getElementById('validationContent');
+            const confirmUploadBtn = document.getElementById('confirmUploadBtn');
 
-            // Auto-cargar datos más recientes desde index.json
-            async function autoLoadLatestData() {
-                try {
-                    const response = await fetch('../data/output/index.json');
-                    const indexData = await response.json();
+            customLog('Elements found. uploadBtn:' + (uploadBtn ? 'yes' : 'NO') + ' fileInput:' + (fileInput ? 'yes' : 'NO'));
 
-                    if (indexData.massive && indexData.massive.files && indexData.massive.files.length > 0) {
-                        // Obtener el archivo más reciente (primer archivo en la lista)
-                        const latestFile = indexData.massive.files[0];
-                        let filePath = latestFile.path;
+            // Check if there's a validation error from a previous page reload
+            try {
+                var showError = localStorage.getItem('showValidationError');
+                var errorMsg = localStorage.getItem('validationError');
+                if (showError === 'true' && errorMsg && validationModal && validationContent) {
+                    customLog('Found validation error from previous load, restoring...');
+                    validationContent.innerHTML = '<div style="background: #fee2e2; border: 2px solid #fca5a5; border-radius: 8px; padding: 16px; margin: 12px 0;"><h3 style="color: #dc2626; margin-top: 0;">Validacion: FALLO</h3><p style="color: #991b1b;">' + errorMsg + '</p></div>';
+                    validationModal.style.display = 'flex';
+                    confirmUploadBtn.style.display = 'none';
+                    document.getElementById('selectAnotherBtn').style.display = 'inline-block';
+                    customLog('Validation error modal restored!');
 
-                        // Ajustar la ruta si es necesario (desde dashboards/src/)
-                        if (!filePath.startsWith('http')) {
-                            filePath = '../../' + filePath;
-                        }
-
-                        // Cargar el archivo JSON
-                        const fileResponse = await fetch(filePath);
-                        const jsonData = await fileResponse.json();
-
-                        // Procesar datos
-                        if (Array.isArray(jsonData)) {
-                            allIncidents = jsonData;
-                        } else if (jsonData._metadata && jsonData.data) {
-                            allIncidents = jsonData.data;
-                        } else if (typeof jsonData === 'object' && !Array.isArray(jsonData)) {
-                            allIncidents = [jsonData];
-                        }
-
-                        // Mostrar dashboard
-                        uploadScreen.classList.add('hidden');
-                        dashboardScreen.classList.remove('hidden');
-
-                        setTimeout(() => {
-                            try {
-                                globalTimeFilter = {
-                                    period: 'all',
-                                    startDate: null,
-                                    endDate: new Date()
-                                };
-                                document.getElementById('timeFilter').value = 'all';
-                                document.getElementById('dateRangeDisplay').style.display = 'none';
-                                analyzeData();
-                            } catch (e) {
-                                console.error('Error in analyzeData:', e);
-                            }
-                        }, 100);
-                    }
-                } catch (err) {
-                    console.log('No se encontró index.json o datos. Usuario puede cargar manualmente.');
+                    // Clear the error from localStorage after displaying it
+                    localStorage.removeItem('showValidationError');
+                    localStorage.removeItem('validationError');
                 }
+            } catch (e) {
+                customLog('Error restoring validation error: ' + e.message);
             }
 
-            // Intentar auto-cargar cuando la página se carga
-            autoLoadLatestData();
+            // Check if there's a pending validation from a previous page reload
+            try {
+                var savedValidation = localStorage.getItem('pendingValidation');
+                var savedHTML = localStorage.getItem('validationHTML');
+                if (savedValidation && savedHTML && validationModal && validationContent) {
+                    customLog('Found pending validation from previous load, restoring...');
+                    window.pendingValidation = JSON.parse(savedValidation);
+                    validationContent.innerHTML = savedHTML;
+                    validationModal.style.display = 'flex';
+                    confirmUploadBtn.style.display = 'inline-block';
+                    document.getElementById('selectAnotherBtn').style.display = 'none';
+                    customLog('Validation modal restored!');
+                    localStorage.removeItem('pendingValidation');
+                    localStorage.removeItem('validationHTML');
+                }
+            } catch (e) {
+                customLog('Error restoring validation: ' + e.message);
+            }
+
+            // Auto-load existing data from backend on page load
+            customLog('Checking for existing data in backend...');
+            (async function autoLoadDataOnPageLoad() {
+                try {
+                    customLog('Auto-load: Fetching index.json from backend');
+                    const response = await fetch('http://localhost:8000/api/index-json');
+                    if (!response.ok) {
+                        customLog('Auto-load: No index.json available (status: ' + response.status + ')');
+                        return;
+                    }
+                    const indexData = await response.json();
+                    customLog('Auto-load: Index fetched, checking for files...');
+
+                    if (!indexData.massive || !indexData.massive.files || indexData.massive.files.length === 0) {
+                        customLog('Auto-load: No massive files in index, showing upload screen');
+                        return;
+                    }
+
+                    customLog('Auto-load: Found ' + indexData.massive.files.length + ' files, loading...');
+                    // Call the existing loadDashboardAfterUpload which handles all the loading logic
+                    await loadDashboardAfterUpload();
+                    customLog('Auto-load: Dashboard loaded successfully');
+
+                } catch (err) {
+                    customLog('Auto-load: No data available or error occurred (' + err.message + '), showing upload screen');
+                    // If auto-load fails, just show the upload screen (default state)
+                }
+            })();
 
             uploadBtn.onclick = function(e) {
-                e.preventDefault();
+                customLog('Upload button clicked');
+                if (e) e.preventDefault();
+                customLog('Triggering file input click');
                 fileInput.click();
+                customLog('File input click triggered');
             };
 
             fileInput.addEventListener('change', function(e) {
+                customLog('File input change event triggered');
                 const file = e.target.files[0];
-                if (file) loadFile(file);
+                customLog('File selected:' + (file ? file.name : 'none'));
+                if (file) {
+                    loadFile(file);
+                }
             });
 
             uploadCard.addEventListener('dragover', function(e) {
@@ -1705,21 +2037,43 @@
                 if (files.length > 0) loadFile(files[0]);
             });
 
-            resetBtn.onclick = function() {
+            // Flag to prevent accidental redirect after dashboard load
+            var dashboardLoadTime = 0;
+
+            resetBtn.onclick = function(e) {
+                if (e) e.preventDefault();
+                console.log('[RESET CLICK] Time since dashboard load:', window.dashboardLoadTime ? Date.now() - window.dashboardLoadTime : 'N/A');
+
+                // STRONG PROTECTION: Block clicks for 5 seconds after dashboard load
+                if (window.dashboardLoadTime && (Date.now() - window.dashboardLoadTime < 5000)) {
+                    console.warn('[RESET BLOCKED] Too soon after dashboard load. Remaining protection time:', 5000 - (Date.now() - window.dashboardLoadTime) + 'ms');
+                    return;
+                }
+
+                console.log('[RESET ALLOWED] Going back to upload screen');
                 uploadScreen.classList.remove('hidden');
                 dashboardScreen.classList.add('hidden');
                 fileInput.value = '';
                 allIncidents = [];
+                window.dashboardLoadTime = 0;
             };
 
             // Event listener para filtro de tiempo
             document.getElementById('timeFilter').addEventListener('change', onTimeFilterChange);
 
             function loadFile(file) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    try {
-                        const parsedData = JSON.parse(e.target.result);
+                customLog('loadFile called with:' + file.name);
+                if (file.name.endsWith('.csv')) {
+                    customLog('CSV file detected, calling uploadCSVWithValidation');
+                    uploadCSVWithValidation(file).catch(function(err) {
+                        customLog('UNHANDLED ERROR in uploadCSVWithValidation:' + err);
+                    });
+                } else if (file.name.endsWith('.json')) {
+                    customLog('JSON file detected');
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        try {
+                            const parsedData = JSON.parse(e.target.result);
 
                         // Handle both old format (array) and new format (with metadata)
                         if (Array.isArray(parsedData)) {
@@ -1728,7 +2082,7 @@
                         } else if (parsedData._metadata && parsedData.data) {
                             // New format: object with metadata and data
                             allIncidents = parsedData.data;
-                            console.log(`Loaded data: type=${parsedData._metadata.type}, records=${parsedData._metadata.record_count}`);
+                            console.log('Data loaded from JSON file');
                         } else if (typeof parsedData === 'object' && !Array.isArray(parsedData)) {
                             // Single object, wrap in array
                             allIncidents = [parsedData];
@@ -1757,8 +2111,11 @@
                     } catch (error) {
                         alert('Error: ' + error.message);
                     }
-                };
-                reader.readAsText(file);
+                    };
+                    reader.readAsText(file);
+                } else {
+                    alert('Por favor, selecciona un archivo CSV o JSON');
+                }
             }
         });
 
@@ -1768,19 +2125,6 @@
                 Plotly.Plots.resize('openTemporalChart');
             }
         });
-
-        function toggleDebugTable() {
-            const container = document.getElementById('debugTableContainer');
-            const icon = document.getElementById('debugToggleIcon');
-
-            if (container.style.display === 'none') {
-                container.style.display = 'block';
-                icon.style.transform = 'rotate(90deg)';
-            } else {
-                container.style.display = 'none';
-                icon.style.transform = 'rotate(0deg)';
-            }
-        }
     </script>
 </body>
 </html>
