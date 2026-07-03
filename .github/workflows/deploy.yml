@@ -21,6 +21,9 @@ on:
           - dashboards
           - both
 
+permissions:
+  contents: write
+
 jobs:
   build:
     name: Build & Prepare
@@ -315,6 +318,11 @@ jobs:
           echo "❌ Health check failed (HTTP $RESPONSE)"
           exit 1
         fi
+
+    - name: Update production branch pointer
+      run: |
+        echo "🔖 Fast-forwarding 'production' branch to ${{ github.sha }}..."
+        git push origin ${{ github.sha }}:refs/heads/production
 
     - name: Notify production deployment
       if: always()
