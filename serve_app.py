@@ -6,9 +6,13 @@ Resuelve problemas de sincronización de archivos en Windows
 
 import os
 import json
+import sys
+import subprocess
 import http.server
 import socketserver
 from pathlib import Path
+from email.parser import BytesParser
+from email import policy
 
 # Cambiar al directorio raíz del proyecto
 PROJECT_ROOT = Path(__file__).parent.absolute()
@@ -16,9 +20,104 @@ os.chdir(PROJECT_ROOT)
 
 PORT = 8000
 
+CONVERTER_SCRIPTS = {
+    'massive': PROJECT_ROOT / 'converters' / 'cli' / 'convert_incidents.py',
+    'postmortem': PROJECT_ROOT / 'converters' / 'cli' / 'convert_postmortems.py',
+}
+
+
 class CustomHTTPHandler(http.server.SimpleHTTPRequestHandler):
     # Asegurar que sirve desde el PROJECT_ROOT
     directory = str(PROJECT_ROOT)
+
+    def do_POST(self):
+        print(f"POST {self.path}")
+        if self.path == '/api/upload':
+            self.handle_upload()
+        else:
+            self.send_error(404, "Not Found")
+
+    def handle_upload(self):
+        content_type = self.headers.get('Content-Type', '')
+        if not content_type.startswith('multipart/form-data'):
+            self._send_json(400, {'success': False, 'error': 'Content-Type debe ser multipart/form-data'})
+            return
+
+        try:
+            content_length = int(self.headers.get('Content-Length', 0))
+        except ValueError:
+            content_length = 0
+
+        if content_length <= 0:
+            self._send_json(400, {'success': False, 'error': 'Petición vacía'})
+            return
+
+        body = self.rfile.read(content_length)
+        header_bytes = f"Content-Type: {content_type}\r\nMIME-Version: 1.0\r\n\r\n".encode('utf-8')
+        message = BytesParser(policy=policy.default).parsebytes(header_bytes + body)
+
+        file_bytes = None
+        filename = None
+        dashboard_type = 'massive'
+
+        if message.is_multipart():
+            for part in message.iter_parts():
+                field_name = part.get_param('name', header='Content-Disposition')
+                if field_name == 'file':
+                    filename = part.get_filename()
+                    file_bytes = part.get_payload(decode=True)
+                elif field_name == 'type':
+                    dashboard_type = part.get_payload(decode=True).decode('utf-8').strip()
+
+        if not file_bytes or not filename:
+            self._send_json(400, {'success': False, 'error': 'No se recibió ningún archivo CSV'})
+            return
+
+        filename = Path(filename).name
+        if not filename.lower().endswith('.csv'):
+            self._send_json(400, {'success': False, 'error': 'El archivo debe tener extensión .csv'})
+            return
+
+        script_path = CONVERTER_SCRIPTS.get(dashboard_type, CONVERTER_SCRIPTS['massive'])
+        if not script_path.exists():
+            self._send_json(500, {'success': False, 'error': f'Converter no encontrado: {script_path}'})
+            return
+
+        input_dir = PROJECT_ROOT / 'data' / 'input'
+        input_dir.mkdir(parents=True, exist_ok=True)
+        csv_path = input_dir / filename
+        csv_path.write_bytes(file_bytes)
+        print(f"  Guardado: {csv_path} ({len(file_bytes)} bytes)")
+
+        result = subprocess.run(
+            [sys.executable, str(script_path), str(csv_path)],
+            capture_output=True,
+            text=True,
+            cwd=str(PROJECT_ROOT)
+        )
+
+        if result.returncode != 0:
+            print(f"  Error de conversión: {result.stderr}")
+            self._send_json(500, {
+                'success': False,
+                'error': 'El CSV se guardó pero falló la conversión a JSON',
+                'details': (result.stdout + result.stderr)[-4000:]
+            })
+            return
+
+        print(f"  Conversión OK: {filename}")
+        self._send_json(200, {
+            'success': True,
+            'message': f'{filename} guardado en data/input/ y convertido correctamente'
+        })
+
+    def _send_json(self, status, payload):
+        body = json.dumps(payload, ensure_ascii=False).encode('utf-8')
+        self.send_response(status)
+        self.send_header('Content-Type', 'application/json; charset=utf-8')
+        self.send_header('Content-Length', str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
 
     def do_GET(self):
         # Debug

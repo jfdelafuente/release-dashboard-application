@@ -541,14 +541,14 @@
             <span class="upload-icon">⚠️</span>
             <h2 class="upload-heading">Massive Incidents Dashboard</h2>
             <p class="upload-description">
-                Carga tu archivo JSON con datos de incidencias masivas.<br>
+                Carga tu archivo CSV con datos de incidencias masivas.<br>
                 <small>Drag & drop o haz clic para seleccionar</small><br>
                 <small style="color: #6b7280; margin-top: 8px; display: block;">
-                    💡 Los archivos JSON convertidos están en: <code style="background: #f3f4f6; padding: 2px 4px; border-radius: 3px;">data/output/</code>
+                    💡 El CSV se guardará en <code style="background: #f3f4f6; padding: 2px 4px; border-radius: 3px;">data/input/</code> y se convertirá automáticamente
                 </small>
             </p>
             <button class="upload-btn" id="uploadBtn">Choose File</button>
-            <input type="file" id="fileInput" accept=".json" />
+            <input type="file" id="fileInput" accept=".csv" />
         </div>
     </div>
 
@@ -662,30 +662,6 @@
                 <div class="card">
                     <h3>Incidencias No Cerradas por Status y Backlog Acumulado</h3>
                     <div id="openTemporalChart" class="chart-container" style="min-height: 450px;"></div>
-                </div>
-            </div>
-
-            <!-- Debug Table (Collapsible) -->
-            <div class="section-title" style="display: flex; align-items: center; gap: 12px; cursor: pointer;" onclick="toggleDebugTable()">
-                <span>🐛 Debug - Cálculo de Backlog</span>
-                <span id="debugToggleIcon" style="display: inline-block; transition: transform 0.3s;">▶</span>
-            </div>
-            <div id="debugTableContainer" class="card" style="display: none;">
-                <h3>Detalles del Cálculo</h3>
-                <div class="table-container">
-                    <table id="debugTable">
-                        <thead>
-                            <tr>
-                                <th>Fecha</th>
-                                <th>Entradas</th>
-                                <th>Solucionadas</th>
-                                <th>Neto (E-S)</th>
-                                <th>Backlog</th>
-                            </tr>
-                        </thead>
-                        <tbody id="debugTableBody">
-                        </tbody>
-                    </table>
                 </div>
             </div>
 
@@ -1165,29 +1141,6 @@
                 globalBacklogData[dateKey] = backlog[idx];
             });
 
-            // Populate debug table with all dates
-            const debugTableBody = document.getElementById('debugTableBody');
-            if (debugTableBody) {
-                debugTableBody.innerHTML = '';
-
-                allDates.forEach((dateObj, idx) => {
-                    const displayDate = dateObj.toLocaleDateString('es-ES');
-                    const dayEntries = entries[idx];
-                    const daySolved = solved[idx];
-                    const neto = dayEntries - daySolved;
-
-                    const row = document.createElement('tr');
-                    row.innerHTML = `
-                        <td>${displayDate}</td>
-                        <td>${dayEntries}</td>
-                        <td>${daySolved}</td>
-                        <td>${neto}</td>
-                        <td><strong>${backlog[idx]}</strong></td>
-                    `;
-                    debugTableBody.appendChild(row);
-                });
-            }
-
             // Create traces
             const entriesTrace = {
                 x: dates,
@@ -1626,7 +1579,7 @@
             // Auto-cargar datos más recientes desde index.json
             async function autoLoadLatestData() {
                 try {
-                    const response = await fetch('../data/output/index.json');
+                    const response = await fetch('../data/output/index.json?t=' + Date.now());
                     const indexData = await response.json();
 
                     if (indexData.massive && indexData.massive.files && indexData.massive.files.length > 0) {
@@ -1639,8 +1592,8 @@
                             filePath = '../../' + filePath;
                         }
 
-                        // Cargar el archivo JSON
-                        const fileResponse = await fetch(filePath);
+                        // Cargar el archivo JSON (cache-busting para reflejar conversiones recientes)
+                        const fileResponse = await fetch(filePath + '?t=' + Date.now());
                         const jsonData = await fileResponse.json();
 
                         // Procesar datos
@@ -1716,49 +1669,34 @@
             document.getElementById('timeFilter').addEventListener('change', onTimeFilterChange);
 
             function loadFile(file) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    try {
-                        const parsedData = JSON.parse(e.target.result);
+                if (!file.name.toLowerCase().endsWith('.csv')) {
+                    alert('Por favor selecciona un archivo CSV');
+                    return;
+                }
 
-                        // Handle both old format (array) and new format (with metadata)
-                        if (Array.isArray(parsedData)) {
-                            // Old format: direct array of incidents
-                            allIncidents = parsedData;
-                        } else if (parsedData._metadata && parsedData.data) {
-                            // New format: object with metadata and data
-                            allIncidents = parsedData.data;
-                            console.log(`Loaded data: type=${parsedData._metadata.type}, records=${parsedData._metadata.record_count}`);
-                        } else if (typeof parsedData === 'object' && !Array.isArray(parsedData)) {
-                            // Single object, wrap in array
-                            allIncidents = [parsedData];
-                        } else {
-                            throw new Error('Formato de JSON no reconocido');
+                const originalBtnText = uploadBtn.textContent;
+                uploadBtn.disabled = true;
+                uploadBtn.textContent = 'Subiendo y convirtiendo...';
+
+                const formData = new FormData();
+                formData.append('file', file);
+                formData.append('type', 'massive');
+
+                fetch('/api/upload', { method: 'POST', body: formData })
+                    .then(response => response.json().then(data => ({ ok: response.ok, data })))
+                    .then(({ ok, data }) => {
+                        if (!ok || !data.success) {
+                            throw new Error(data.error || 'Error al subir el archivo');
                         }
-                        uploadScreen.classList.add('hidden');
-                        dashboardScreen.classList.remove('hidden');
-                        setTimeout(() => {
-                            try {
-                                // Inicializar filtro de tiempo al cargar
-                                globalTimeFilter = {
-                                    period: 'all',
-                                    startDate: null,
-                                    endDate: new Date()
-                                };
-                                document.getElementById('timeFilter').value = 'all';
-                                document.getElementById('dateRangeDisplay').style.display = 'none';
-
-                                analyzeData();
-                            } catch (analysisError) {
-                                console.error('Error in analyzeData:', analysisError);
-                                alert('Error processing data: ' + analysisError.message);
-                            }
-                        }, 100);
-                    } catch (error) {
+                        return autoLoadLatestData();
+                    })
+                    .catch(error => {
                         alert('Error: ' + error.message);
-                    }
-                };
-                reader.readAsText(file);
+                    })
+                    .finally(() => {
+                        uploadBtn.disabled = false;
+                        uploadBtn.textContent = originalBtnText;
+                    });
             }
         });
 
@@ -1769,18 +1707,6 @@
             }
         });
 
-        function toggleDebugTable() {
-            const container = document.getElementById('debugTableContainer');
-            const icon = document.getElementById('debugToggleIcon');
-
-            if (container.style.display === 'none') {
-                container.style.display = 'block';
-                icon.style.transform = 'rotate(90deg)';
-            } else {
-                container.style.display = 'none';
-                icon.style.transform = 'rotate(0deg)';
-            }
-        }
     </script>
 </body>
 </html>
