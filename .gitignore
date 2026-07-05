@@ -108,3 +108,7 @@ coverage.xml
 # Tool Configuration
 .specify/
 .claude/
+
+# Design source artifacts (reference only, not versioned)
+MASORANGE dashboard redesign/
+MASORANGE dashboard redesign.zip

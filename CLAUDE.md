@@ -539,5 +539,5 @@ data/errors/CS_Masiva_20260514_errors.json
 
 - Campo de filtro de tiempo: "Fecha de envío"
 - URL Remedy: https://soptmc.si.orange.es/MonTMC/epsilon/remedyC/{ID}
-- Colores naranja: #f97316 (entradas), #fb923c (solucionadas), #c2410c (backlog)
+- Paleta MASORANGE/Orange: #FF7900 (acento principal/solucionadas), #FFC08A (entradas/tono claro), #0C0B09 (tinta/backlog), #F5F3F0 (fondo página), #E2DDD5 (bordes)
 - Formato fecha: dd/mm/yyyy HH:mm a (parseDate() lo convierte a Date)

@@ -4,7 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Incident PostMortem Dashboard</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
     <style>
         * {
@@ -19,31 +20,69 @@
         }
 
         body {
-            font-family: 'Poppins', sans-serif;
-            background-color: #f0f4f8;
-            color: #1f2937;
+            font-family: 'Inter', 'Helvetica Neue', sans-serif;
+            background-color: #F5F3F0;
+            color: #0C0B09;
         }
 
-        /* Breadcrumb Navigation */
-        .breadcrumb-nav {
-            background-color: #1f2937;
-            padding: 0.75rem 1.5rem;
+        /* MASORANGE Top Bar */
+        .mo-topbar {
+            position: sticky;
+            top: 0;
+            z-index: 60;
+            background: #000;
+            color: #fff;
             display: flex;
             align-items: center;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            gap: 22px;
+            padding: 0 26px;
+            height: 66px;
+            border-bottom: 1px solid #26241F;
         }
 
-        .breadcrumb-link {
-            color: #f97316;
+        .mo-topbar img {
+            height: 24px;
+            width: auto;
+        }
+
+        .mo-topbar-sep {
+            width: 1px;
+            height: 24px;
+            background: #33302B;
+        }
+
+        .mo-topbar-dept {
+            font-size: 13px;
+            font-weight: 600;
+            letter-spacing: .01em;
+            color: #9E988E;
+            white-space: nowrap;
+        }
+
+        .mo-topbar-nav {
+            display: flex;
+            gap: 2px;
+            margin-left: 14px;
+        }
+
+        .mo-topbar-nav a {
             text-decoration: none;
-            font-weight: 500;
-            font-size: 0.95rem;
-            transition: color 0.3s ease;
+            font-family: inherit;
+            font-size: 13.5px;
+            font-weight: 600;
+            color: #9E988E;
+            padding: 8px 14px;
+            border-bottom: 2px solid transparent;
+            transition: color .2s ease;
         }
 
-        .breadcrumb-link:hover {
-            color: #fb923c;
-            text-decoration: underline;
+        .mo-topbar-nav a:hover {
+            color: #fff;
+        }
+
+        .mo-topbar-nav a.active {
+            color: #fff;
+            border-bottom-color: #FF7900;
         }
 
         /* Upload Screen */
@@ -61,7 +100,7 @@
 
         .upload-card {
             background: white;
-            border: 2px dashed #cbd5e1;
+            border: 2px dashed #DEDAD3;
             border-radius: 16px;
             padding: 80px 60px;
             max-width: 550px;
@@ -74,9 +113,9 @@
 
         .upload-card:hover,
         .upload-card.drag-over {
-            border-color: #fb923c;
-            background-color: #f0f9ff;
-            box-shadow: 0 20px 25px rgba(251, 146, 60, 0.15);
+            border-color: #FF7900;
+            background-color: #FFF3E8;
+            box-shadow: 0 20px 25px rgba(255, 121, 0, 0.15);
             transform: translateY(-2px);
         }
 
@@ -95,20 +134,20 @@
         .upload-heading {
             font-size: 28px;
             font-weight: 800;
-            color: #1f2937;
+            color: #0C0B09;
             margin-bottom: 12px;
             letter-spacing: -0.5px;
         }
 
         .upload-description {
             font-size: 15px;
-            color: #6b7280;
+            color: #5C5852;
             margin-bottom: 32px;
             line-height: 1.6;
         }
 
         .upload-btn {
-            background: linear-gradient(135deg, #fb923c 0%, #fed7aa 100%);
+            background: linear-gradient(135deg, #FF7900 0%, #FFC08A 100%);
             color: white;
             border: none;
             padding: 14px 36px;
@@ -117,7 +156,7 @@
             font-weight: 700;
             cursor: pointer;
             transition: all 0.3s ease;
-            font-family: 'Poppins', sans-serif;
+            font-family: 'Inter', 'Helvetica Neue', sans-serif;
         }
 
         .upload-btn:hover {
@@ -152,13 +191,13 @@
             background: white;
             padding: 20px 40px;
             text-align: center;
-            border-bottom: 1px solid #e2e8f0;
+            border-bottom: 1px solid #E2DDD5;
         }
 
         .eyebrow {
             display: inline-block;
-            background: rgba(251, 146, 60, 0.1);
-            color: #fb923c;
+            background: rgba(255, 121, 0, 0.1);
+            color: #FF7900;
             padding: 6px 16px;
             border-radius: 24px;
             font-size: 10px;
@@ -176,19 +215,19 @@
         }
 
         .header h1 .accent {
-            color: #fb923c;
+            color: #FF7900;
         }
 
         .header p {
             font-size: 13px;
-            color: #6b7280;
+            color: #5C5852;
             margin-bottom: 12px;
         }
 
         .gradient-divider {
             height: 3px;
             width: 50px;
-            background: linear-gradient(90deg, #fb923c 0%, #fed7aa 100%);
+            background: linear-gradient(90deg, #FF7900 0%, #FFC08A 100%);
             margin: 0 auto;
             border-radius: 2px;
         }
@@ -209,10 +248,10 @@
         }
 
         .record-pill {
-            background: rgba(251, 146, 60, 0.1);
-            color: #fb923c;
+            background: #FFE7D1;
+            color: #C2410C;
             padding: 8px 18px;
-            border-radius: 20px;
+            border-radius: 999px;
             font-size: 13px;
             font-weight: 700;
             display: flex;
@@ -224,7 +263,7 @@
         .live-dot {
             width: 8px;
             height: 8px;
-            background: #fb923c;
+            background: #FF7900;
             border-radius: 50%;
             animation: pulse 2s infinite;
         }
@@ -247,19 +286,19 @@
 
         .reset-btn {
             background: white;
-            color: #fb923c;
-            border: 2px solid #fb923c;
+            color: #FF7900;
+            border: 2px solid #FF7900;
             padding: 10px 22px;
             border-radius: 8px;
             font-size: 13px;
             font-weight: 700;
             cursor: pointer;
             transition: all 0.3s ease;
-            font-family: 'Poppins', sans-serif;
+            font-family: 'Inter', 'Helvetica Neue', sans-serif;
         }
 
         .reset-btn:hover {
-            background: #f0f9ff;
+            background: #FFF3E8;
             transform: translateY(-2px);
         }
 
@@ -273,7 +312,7 @@
 
         .kpi-card {
             background: white;
-            border: 1px solid #e2e8f0;
+            border: 1px solid #E2DDD5;
             border-radius: 16px;
             padding: 32px;
             box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
@@ -291,22 +330,22 @@
         }
 
         .kpi-card:nth-child(1) {
-            border-left-color: #fb923c;
+            border-left-color: #FF7900;
             animation-delay: 0.1s;
         }
 
         .kpi-card:nth-child(2) {
-            border-left-color: #fed7aa;
+            border-left-color: #FFB066;
             animation-delay: 0.2s;
         }
 
         .kpi-card:nth-child(3) {
-            border-left-color: #f97316;
+            border-left-color: #0C0B09;
             animation-delay: 0.3s;
         }
 
         .kpi-card:nth-child(4) {
-            border-left-color: #fb923c;
+            border-left-color: #FF7900;
             animation-delay: 0.4s;
         }
 
@@ -339,22 +378,22 @@
 
         .kpi-label {
             font-size: 12px;
-            color: #6b7280;
+            color: #5C5852;
             font-weight: 600;
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
 
-        .kpi-card:nth-child(1) .kpi-value { color: #fb923c; }
-        .kpi-card:nth-child(2) .kpi-value { color: #fed7aa; }
-        .kpi-card:nth-child(3) .kpi-value { color: #f97316; }
-        .kpi-card:nth-child(4) .kpi-value { color: #fb923c; }
+        .kpi-card:nth-child(1) .kpi-value { color: #FF7900; }
+        .kpi-card:nth-child(2) .kpi-value { color: #FFB066; }
+        .kpi-card:nth-child(3) .kpi-value { color: #0C0B09; }
+        .kpi-card:nth-child(4) .kpi-value { color: #FF7900; }
 
         /* Sections */
         .section-title {
             font-size: 18px;
             font-weight: 800;
-            color: #1f2937;
+            color: #0C0B09;
             margin: 48px 0 24px 0;
             letter-spacing: -0.3px;
         }
@@ -382,7 +421,7 @@
 
         .card {
             background: white;
-            border: 1px solid #e2e8f0;
+            border: 1px solid #E2DDD5;
             border-radius: 16px;
             padding: 32px;
             box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
@@ -405,7 +444,7 @@
         .card h3 {
             font-size: 16px;
             font-weight: 700;
-            color: #1f2937;
+            color: #0C0B09;
             margin-bottom: 24px;
         }
 
@@ -425,8 +464,8 @@
         }
 
         table thead {
-            background: linear-gradient(90deg, #f97316 0%, #fb923c 100%);
-            border-bottom: 3px solid #c2410c;
+            background: #0C0B09;
+            border-bottom: 3px solid #FF7900;
         }
 
         table th {
@@ -441,7 +480,7 @@
 
         table td {
             padding: 12px;
-            border-bottom: 1px solid #f0e6d6;
+            border-bottom: 1px solid #E2DDD5;
         }
 
         table tbody tr {
@@ -449,7 +488,7 @@
         }
 
         table tbody tr:nth-child(odd) {
-            background: #fefdf9;
+            background: #FBFAF8;
         }
 
         table tbody tr:nth-child(even) {
@@ -457,8 +496,8 @@
         }
 
         table tbody tr:hover {
-            background: #fef3e2;
-            box-shadow: inset 0 0 12px rgba(251, 146, 60, 0.1);
+            background: #FFF1E0;
+            box-shadow: inset 0 0 12px rgba(255, 121, 0, 0.1);
         }
 
         .status-badge {
@@ -472,15 +511,15 @@
         }
 
         /* Status badges - Dynamic colors for each status */
-        .status-cerrada { background: #10b981; color: #ffffff; border-color: #059669; }
-        .status-resuelto { background: #06b6d4; color: #ffffff; border-color: #0891b2; }
-        .status-abierta { background: #f97316; color: #ffffff; border-color: #d85f0a; }
-        .status-en-progreso { background: #fb923c; color: #ffffff; border-color: #e67e27; }
-        .status-pendiente { background: #fed7aa; color: #92400e; border-color: #fcc88e; }
-        .status-en-espera { background: #fbbf24; color: #78350f; border-color: #f59e0b; }
-        .status-rechazada { background: #ef4444; color: #ffffff; border-color: #dc2626; }
-        .status-cancelada { background: #8b5cf6; color: #ffffff; border-color: #7c3aed; }
-        .status-default { background: #9ca3af; color: #ffffff; border-color: #6b7280; }
+        .status-cerrada { background: #1D8754; color: #ffffff; border-color: transparent; }
+        .status-resuelto { background: #2E6BD4; color: #ffffff; border-color: transparent; }
+        .status-abierta { background: #FF7900; color: #ffffff; border-color: transparent; }
+        .status-en-progreso { background: #FFB066; color: #3D2A15; border-color: transparent; }
+        .status-pendiente { background: #FFE7D1; color: #C2410C; border-color: transparent; }
+        .status-en-espera { background: #E6A100; color: #3D2A15; border-color: transparent; }
+        .status-rechazada { background: #D43A2F; color: #ffffff; border-color: transparent; }
+        .status-cancelada { background: #5C5852; color: #ffffff; border-color: transparent; }
+        .status-default { background: #8A857C; color: #ffffff; border-color: transparent; }
 
         .impact-badge {
             padding: 6px 12px;
@@ -492,28 +531,28 @@
 
         /* Impact badges - Dynamic colors for each impact level */
         .impact-crítico,
-        .impact-1 { background: #c2410c; color: #ffffff; border-color: #a03709; }
+        .impact-1 { background: #C2410C; color: #ffffff; border-color: transparent; }
 
         .impact-alto,
-        .impact-2 { background: #fb923c; color: #ffffff; border-color: #e67e27; }
+        .impact-2 { background: #FF7900; color: #ffffff; border-color: transparent; }
 
         .impact-medio,
-        .impact-3 { background: #fed7aa; color: #92400e; border-color: #fcc88e; }
+        .impact-3 { background: #FFC08A; color: #3D2A15; border-color: transparent; }
 
         .impact-bajo,
-        .impact-4 { background: #fbbf24; color: #78350f; border-color: #f59e0b; }
+        .impact-4 { background: #FFD200; color: #3D2A15; border-color: transparent; }
 
         .impact-mínimo,
-        .impact-5 { background: #10b981; color: #ffffff; border-color: #059669; }
+        .impact-5 { background: #1D8754; color: #ffffff; border-color: transparent; }
 
-        .impact-default { background: #9ca3af; color: #ffffff; border-color: #6b7280; }
+        .impact-default { background: #8A857C; color: #ffffff; border-color: transparent; }
 
         /* Footer */
         .footer {
             text-align: center;
             padding: 40px 20px;
-            border-top: 1px solid #e2e8f0;
-            color: #6b7280;
+            border-top: 1px solid #E2DDD5;
+            color: #5C5852;
             font-size: 12px;
             background: white;
             margin-top: 48px;
@@ -571,9 +610,17 @@
 </head>
 <body>
     <!-- Breadcrumb Navigation -->
-    <nav class="breadcrumb-nav">
-        <a href="dashboard-portal.html" class="breadcrumb-link">← Volver al Portal Principal</a>
-    </nav>
+    <!-- MASORANGE Top Bar -->
+    <div class="mo-topbar">
+        <img src="assets/masorange-logo-positive.svg" alt="MASORANGE">
+        <div class="mo-topbar-sep"></div>
+        <span class="mo-topbar-dept">Customer &amp; Service Operations</span>
+        <nav class="mo-topbar-nav">
+            <a href="dashboard-portal.html">Portal</a>
+            <a href="massive-incidents-dashboard.html">Incidencias masivas</a>
+            <a href="postmortem-dashboard.html" class="active">Postmortem</a>
+        </nav>
+    </div>
 
     <!-- Upload Screen -->
     <div class="upload-screen" id="uploadScreen">
@@ -583,8 +630,8 @@
             <p class="upload-description">
                 Carga tu archivo CSV con datos de PostMortem.<br>
                 <small>Drag & drop o haz clic para seleccionar</small><br>
-                <small style="color: #6b7280; margin-top: 8px; display: block;">
-                    💡 El CSV se guardará en <code style="background: #f3f4f6; padding: 2px 4px; border-radius: 3px;">data/input/</code> y se convertirá automáticamente
+                <small style="color: #5C5852; margin-top: 8px; display: block;">
+                    💡 El CSV se guardará en <code style="background: #EDEAE4; padding: 2px 4px; border-radius: 3px;">data/input/</code> y se convertirá automáticamente
                 </small>
             </p>
             <button class="upload-btn" id="uploadBtn">Choose File</button>
@@ -682,8 +729,8 @@
                 <!-- Filters -->
                 <div style="margin-bottom: 24px; display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px;">
                     <div>
-                        <label style="font-size: 12px; font-weight: 600; color: #6b7280; text-transform: uppercase; display: block; margin-bottom: 6px;">Estado</label>
-                        <select id="filterStatus" style="width: 100%; padding: 8px; border: 1px solid #e2e8f0; border-radius: 6px; font-family: 'Poppins', sans-serif; font-size: 13px;">
+                        <label style="font-size: 12px; font-weight: 600; color: #5C5852; text-transform: uppercase; display: block; margin-bottom: 6px;">Estado</label>
+                        <select id="filterStatus" style="width: 100%; padding: 8px; border: 1px solid #E2DDD5; border-radius: 6px; font-family: 'Inter', 'Helvetica Neue', sans-serif; font-size: 13px;">
                             <option value="">Todos</option>
                             <option value="cerrada">Cerrada</option>
                             <option value="abierta">Abierta</option>
@@ -691,14 +738,14 @@
                         </select>
                     </div>
                     <div>
-                        <label style="font-size: 12px; font-weight: 600; color: #6b7280; text-transform: uppercase; display: block; margin-bottom: 6px;">Despliegue</label>
-                        <select id="filterDespliegue" style="width: 100%; padding: 8px; border: 1px solid #e2e8f0; border-radius: 6px; font-family: 'Poppins', sans-serif; font-size: 13px;">
+                        <label style="font-size: 12px; font-weight: 600; color: #5C5852; text-transform: uppercase; display: block; margin-bottom: 6px;">Despliegue</label>
+                        <select id="filterDespliegue" style="width: 100%; padding: 8px; border: 1px solid #E2DDD5; border-radius: 6px; font-family: 'Inter', 'Helvetica Neue', sans-serif; font-size: 13px;">
                             <option value="">Todos</option>
                         </select>
                     </div>
                     <div>
-                        <label style="font-size: 12px; font-weight: 600; color: #6b7280; text-transform: uppercase; display: block; margin-bottom: 6px;">Impacto</label>
-                        <select id="filterImpacto" style="width: 100%; padding: 8px; border: 1px solid #e2e8f0; border-radius: 6px; font-family: 'Poppins', sans-serif; font-size: 13px;">
+                        <label style="font-size: 12px; font-weight: 600; color: #5C5852; text-transform: uppercase; display: block; margin-bottom: 6px;">Impacto</label>
+                        <select id="filterImpacto" style="width: 100%; padding: 8px; border: 1px solid #E2DDD5; border-radius: 6px; font-family: 'Inter', 'Helvetica Neue', sans-serif; font-size: 13px;">
                             <option value="">Todos</option>
                         </select>
                     </div>
@@ -706,7 +753,7 @@
 
                 <!-- Table -->
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                    <span style="font-size: 12px; color: #6b7280;"><span id="filteredCount">0</span> registros mostrados</span>
+                    <span style="font-size: 12px; color: #5C5852;"><span id="filteredCount">0</span> registros mostrados</span>
                 </div>
 
                 <div class="table-container">
@@ -771,14 +818,14 @@
 
         // Status color mapping
         const statusColorMap = {
-            'cerrado': '#10b981',      // Verde
-            'resuelto': '#06b6d4',     // Cyan
-            'abierta': '#f97316',      // Naranja oscuro
-            'en progreso': '#fb923c',  // Naranja medio
-            'pendiente': '#fed7aa',    // Naranja claro
-            'en espera': '#fbbf24',    // Ámbar
-            'rechazada': '#ef4444',    // Rojo
-            'cancelada': '#8b5cf6'     // Púrpura
+            'cerrado': '#1D8754',      // Verde
+            'resuelto': '#2E6BD4',     // Azul
+            'abierta': '#FF7900',      // Naranja MASORANGE
+            'en progreso': '#FFB066',  // Naranja claro
+            'pendiente': '#FFE7D1',    // Naranja muy claro
+            'en espera': '#E6A100',    // Ámbar
+            'rechazada': '#D43A2F',    // Rojo
+            'cancelada': '#5C5852'     // Gris
         };
 
         function getStatusClass(status) {
@@ -798,16 +845,16 @@
 
         // Impact color mapping
         const impactColorMap = {
-            'crítico': '#c2410c',      // Naranja oscuro
-            '1': '#c2410c',            // Crítico (nivel 1)
-            'alto': '#fb923c',         // Naranja medio
-            '2': '#fb923c',            // Alto (nivel 2)
-            'medio': '#fed7aa',        // Naranja claro
-            '3': '#fed7aa',            // Medio (nivel 3)
-            'bajo': '#fbbf24',         // Ámbar
-            '4': '#fbbf24',            // Bajo (nivel 4)
-            'mínimo': '#10b981',       // Verde
-            '5': '#10b981'             // Mínimo (nivel 5)
+            'crítico': '#C2410C',      // Naranja oscuro
+            '1': '#C2410C',            // Crítico (nivel 1)
+            'alto': '#FF7900',         // Naranja MASORANGE
+            '2': '#FF7900',            // Alto (nivel 2)
+            'medio': '#FFC08A',        // Naranja claro
+            '3': '#FFC08A',            // Medio (nivel 3)
+            'bajo': '#FFD200',         // Ámbar
+            '4': '#FFD200',            // Bajo (nivel 4)
+            'mínimo': '#1D8754',       // Verde
+            '5': '#1D8754'             // Mínimo (nivel 5)
         };
 
         function getImpactClass(impact) {
@@ -878,35 +925,35 @@
                 x: sorted.map(d => d[1]),
                 type: 'bar',
                 orientation: 'h',
-                marker: { color: '#fb923c' },
+                marker: { color: '#FF7900' },
                 hovertemplate: '<b>%{y}</b><br>%{x} incidencias<extra></extra>'
             };
 
             const layout = {
                 responsive: true,
-                font: { family: 'Poppins, sans-serif', size: 11, color: '#6b7280' },
+                font: { family: 'Inter, sans-serif', size: 11, color: '#5C5852' },
                 paper_bgcolor: 'transparent',
                 plot_bgcolor: 'transparent',
                 hovermode: 'x unified',
                 margin: { l: 180, r: 70, t: 40, b: 40 },
                 xaxis: {
                     showgrid: true,
-                    gridcolor: '#e2e8f0',
+                    gridcolor: '#E2DDD5',
                     showline: true,
                     linewidth: 1,
-                    linecolor: '#e2e8f0'
+                    linecolor: '#E2DDD5'
                 },
                 yaxis: {
                     showgrid: false,
                     showline: true,
                     linewidth: 1,
-                    linecolor: '#e2e8f0'
+                    linecolor: '#E2DDD5'
                 },
                 legend: {
                     x: 0.02,
                     y: 0.98,
                     bgcolor: 'rgba(255, 255, 255, 0.9)',
-                    bordercolor: '#e2e8f0',
+                    bordercolor: '#E2DDD5',
                     borderwidth: 1,
                     font: { size: 11 }
                 }
@@ -1105,7 +1152,7 @@
                 y: entries,
                 name: 'Entradas Diarias',
                 type: 'bar',
-                marker: { color: '#fed7aa' },
+                marker: { color: '#FFC08A' },
                 yaxis: 'y',
                 hovertemplate: '<b>%{x}</b><br>Entradas: %{y}<extra></extra>'
             };
@@ -1115,7 +1162,7 @@
                 y: resolutions,
                 name: 'Resoluciones Diarias',
                 type: 'bar',
-                marker: { color: '#fb923c' },
+                marker: { color: '#FF7900' },
                 yaxis: 'y',
                 hovertemplate: '<b>%{x}</b><br>Resueltas: %{y}<extra></extra>'
             };
@@ -1126,8 +1173,8 @@
                 name: 'Backlog Acumulado',
                 type: 'scatter',
                 mode: 'lines+markers',
-                line: { color: '#c2410c', width: 3 },
-                marker: { size: 8, color: '#c2410c' },
+                line: { color: '#0C0B09', width: 3 },
+                marker: { size: 8, color: '#0C0B09' },
                 yaxis: 'y2',
                 hovertemplate: '<b>%{x}</b><br>Backlog: %{y}<extra></extra>'
             };
@@ -1135,44 +1182,44 @@
             const layout = {
                 responsive: true,
                 barmode: 'group',
-                font: { family: 'Poppins, sans-serif', size: 11, color: '#6b7280' },
+                font: { family: 'Inter, sans-serif', size: 11, color: '#5C5852' },
                 paper_bgcolor: 'transparent',
                 plot_bgcolor: 'transparent',
                 hovermode: 'x unified',
                 margin: { l: 70, r: 70, t: 40, b: 80 },
                 xaxis: {
-                    title: { text: 'Fecha de Apertura', font: { size: 12, color: '#6b7280' } },
+                    title: { text: 'Fecha de Apertura', font: { size: 12, color: '#5C5852' } },
                     showgrid: true,
-                    gridcolor: '#e2e8f0',
+                    gridcolor: '#E2DDD5',
                     tickangle: -45,
                     showline: true,
                     linewidth: 1,
-                    linecolor: '#e2e8f0'
+                    linecolor: '#E2DDD5'
                 },
                 yaxis: {
-                    title: { text: 'Entradas y Resoluciones (Volumen)', font: { size: 12, color: '#6b7280' } },
+                    title: { text: 'Entradas y Resoluciones (Volumen)', font: { size: 12, color: '#5C5852' } },
                     showgrid: true,
-                    gridcolor: '#e2e8f0',
+                    gridcolor: '#E2DDD5',
                     showline: true,
                     linewidth: 1,
-                    linecolor: '#e2e8f0',
+                    linecolor: '#E2DDD5',
                     zeroline: false
                 },
                 yaxis2: {
-                    title: { text: 'Backlog Acumulado', font: { size: 12, color: '#6b7280' } },
+                    title: { text: 'Backlog Acumulado', font: { size: 12, color: '#5C5852' } },
                     overlaying: 'y',
                     side: 'right',
                     showgrid: false,
                     showline: true,
                     linewidth: 1,
-                    linecolor: '#e2e8f0',
+                    linecolor: '#E2DDD5',
                     zeroline: false
                 },
                 legend: {
                     x: 0.02,
                     y: 0.98,
                     bgcolor: 'rgba(255, 255, 255, 0.9)',
-                    bordercolor: '#e2e8f0',
+                    bordercolor: '#E2DDD5',
                     borderwidth: 1,
                     font: { size: 11 }
                 }
@@ -1377,7 +1424,7 @@
             }
 
             // Create stacked bar traces for each status
-            const colors = ['#f97316', '#fb923c', '#fed7aa', '#fca5a5', '#fecaca', '#fee2e2', '#fef2f2'];
+            const colors = ['#FF7900', '#FFC08A', '#E66D00', '#FFD200', '#B8B2A9', '#5C5852', '#DEDAD3'];
             const openCountTraces = statusList.map((status, idx) => ({
                 x: datesOpen,
                 y: statusData[status],
@@ -1395,8 +1442,8 @@
                 name: 'Backlog Acumulado',
                 type: 'scatter',
                 mode: 'lines+markers',
-                line: { color: '#c2410c', width: 3 },
-                marker: { size: 8, color: '#c2410c' },
+                line: { color: '#0C0B09', width: 3 },
+                marker: { size: 8, color: '#0C0B09' },
                 yaxis: 'y2',
                 hovertemplate: '<b>%{x}</b><br>Backlog: %{y}<extra></extra>'
             };
@@ -1407,44 +1454,44 @@
             const layout = {
                 responsive: true,
                 barmode: 'stack',
-                font: { family: 'Poppins, sans-serif', size: 11, color: '#6b7280' },
+                font: { family: 'Inter, sans-serif', size: 11, color: '#5C5852' },
                 paper_bgcolor: 'transparent',
                 plot_bgcolor: 'transparent',
                 hovermode: 'x unified',
                 margin: { l: 70, r: 70, t: 40, b: 80 },
                 xaxis: {
-                    title: { text: 'Fecha de Apertura', font: { size: 12, color: '#6b7280' } },
+                    title: { text: 'Fecha de Apertura', font: { size: 12, color: '#5C5852' } },
                     showgrid: true,
-                    gridcolor: '#e2e8f0',
+                    gridcolor: '#E2DDD5',
                     tickangle: -45,
                     showline: true,
                     linewidth: 1,
-                    linecolor: '#e2e8f0'
+                    linecolor: '#E2DDD5'
                 },
                 yaxis: {
-                    title: { text: 'Incidencias No Cerradas', font: { size: 12, color: '#6b7280' } },
+                    title: { text: 'Incidencias No Cerradas', font: { size: 12, color: '#5C5852' } },
                     showgrid: true,
-                    gridcolor: '#e2e8f0',
+                    gridcolor: '#E2DDD5',
                     showline: true,
                     linewidth: 1,
-                    linecolor: '#e2e8f0',
+                    linecolor: '#E2DDD5',
                     zeroline: false
                 },
                 yaxis2: {
-                    title: { text: 'Backlog Acumulado', font: { size: 12, color: '#6b7280' } },
+                    title: { text: 'Backlog Acumulado', font: { size: 12, color: '#5C5852' } },
                     overlaying: 'y',
                     side: 'right',
                     showgrid: false,
                     showline: true,
                     linewidth: 1,
-                    linecolor: '#e2e8f0',
+                    linecolor: '#E2DDD5',
                     zeroline: false
                 },
                 legend: {
                     x: 0.02,
                     y: 0.98,
                     bgcolor: 'rgba(255, 255, 255, 0.9)',
-                    bordercolor: '#e2e8f0',
+                    bordercolor: '#E2DDD5',
                     borderwidth: 1,
                     font: { size: 11 }
                 }
@@ -1559,7 +1606,7 @@
 
                 const codigoIncidencia = getIncidentValue(incident, 'ID de incidencia') || '-';
                 const codigoLink = codigoIncidencia !== '-'
-                    ? `<a href="https://soptmc.si.orange.es/MonTMC/epsilon/remedyC/${codigoIncidencia}" target="_blank" style="color: #fb923c; text-decoration: none; font-weight: 700; cursor: pointer;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">${codigoIncidencia}</a>`
+                    ? `<a href="https://soptmc.si.orange.es/MonTMC/epsilon/remedyC/${codigoIncidencia}" target="_blank" style="color: #FF7900; text-decoration: none; font-weight: 700; cursor: pointer;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">${codigoIncidencia}</a>`
                     : '-';
 
                 row.innerHTML = `

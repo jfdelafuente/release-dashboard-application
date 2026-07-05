@@ -4,7 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Massive Incidents Dashboard</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
     <style>
         * {
@@ -19,31 +20,69 @@
         }
 
         body {
-            font-family: 'Poppins', sans-serif;
-            background-color: #f0f4f8;
-            color: #1f2937;
+            font-family: 'Inter', 'Helvetica Neue', sans-serif;
+            background-color: #F5F3F0;
+            color: #0C0B09;
         }
 
-        /* Breadcrumb Navigation */
-        .breadcrumb-nav {
-            background-color: #1f2937;
-            padding: 0.75rem 1.5rem;
+        /* MASORANGE Top Bar */
+        .mo-topbar {
+            position: sticky;
+            top: 0;
+            z-index: 60;
+            background: #000;
+            color: #fff;
             display: flex;
             align-items: center;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            gap: 22px;
+            padding: 0 26px;
+            height: 66px;
+            border-bottom: 1px solid #26241F;
         }
 
-        .breadcrumb-link {
-            color: #f97316;
+        .mo-topbar img {
+            height: 24px;
+            width: auto;
+        }
+
+        .mo-topbar-sep {
+            width: 1px;
+            height: 24px;
+            background: #33302B;
+        }
+
+        .mo-topbar-dept {
+            font-size: 13px;
+            font-weight: 600;
+            letter-spacing: .01em;
+            color: #9E988E;
+            white-space: nowrap;
+        }
+
+        .mo-topbar-nav {
+            display: flex;
+            gap: 2px;
+            margin-left: 14px;
+        }
+
+        .mo-topbar-nav a {
             text-decoration: none;
-            font-weight: 500;
-            font-size: 0.95rem;
-            transition: color 0.3s ease;
+            font-family: inherit;
+            font-size: 13.5px;
+            font-weight: 600;
+            color: #9E988E;
+            padding: 8px 14px;
+            border-bottom: 2px solid transparent;
+            transition: color .2s ease;
         }
 
-        .breadcrumb-link:hover {
-            color: #fb923c;
-            text-decoration: underline;
+        .mo-topbar-nav a:hover {
+            color: #fff;
+        }
+
+        .mo-topbar-nav a.active {
+            color: #fff;
+            border-bottom-color: #FF7900;
         }
 
         /* Upload Screen */
@@ -61,7 +100,7 @@
 
         .upload-card {
             background: white;
-            border: 2px dashed #cbd5e1;
+            border: 2px dashed #DEDAD3;
             border-radius: 16px;
             padding: 80px 60px;
             max-width: 550px;
@@ -74,9 +113,9 @@
 
         .upload-card:hover,
         .upload-card.drag-over {
-            border-color: #fb923c;
-            background-color: #fff7ed;
-            box-shadow: 0 20px 25px rgba(251, 146, 60, 0.15);
+            border-color: #FF7900;
+            background-color: #FFF3E8;
+            box-shadow: 0 20px 25px rgba(255, 121, 0, 0.15);
             transform: translateY(-2px);
         }
 
@@ -95,20 +134,20 @@
         .upload-heading {
             font-size: 28px;
             font-weight: 800;
-            color: #1f2937;
+            color: #0C0B09;
             margin-bottom: 12px;
             letter-spacing: -0.5px;
         }
 
         .upload-description {
             font-size: 15px;
-            color: #6b7280;
+            color: #5C5852;
             margin-bottom: 32px;
             line-height: 1.6;
         }
 
         .upload-btn {
-            background: linear-gradient(135deg, #fb923c 0%, #fed7aa 100%);
+            background: linear-gradient(135deg, #FF7900 0%, #FFC08A 100%);
             color: white;
             border: none;
             padding: 14px 36px;
@@ -117,12 +156,12 @@
             font-weight: 700;
             cursor: pointer;
             transition: all 0.3s ease;
-            font-family: 'Poppins', sans-serif;
+            font-family: 'Inter', 'Helvetica Neue', sans-serif;
         }
 
         .upload-btn:hover {
             transform: scale(1.05);
-            box-shadow: 0 12px 24px rgba(251, 146, 60, 0.3);
+            box-shadow: 0 12px 24px rgba(255, 121, 0, 0.3);
         }
 
         .upload-btn:active {
@@ -149,13 +188,13 @@
             background: white;
             padding: 20px 40px;
             text-align: center;
-            border-bottom: 1px solid #e2e8f0;
+            border-bottom: 1px solid #E2DDD5;
         }
 
         .eyebrow {
             display: inline-block;
-            background: rgba(251, 146, 60, 0.1);
-            color: #fb923c;
+            background: rgba(255, 121, 0, 0.1);
+            color: #FF7900;
             padding: 6px 16px;
             border-radius: 24px;
             font-size: 10px;
@@ -173,19 +212,19 @@
         }
 
         .header h1 .accent {
-            color: #fb923c;
+            color: #FF7900;
         }
 
         .header p {
             font-size: 13px;
-            color: #6b7280;
+            color: #5C5852;
             margin-bottom: 12px;
         }
 
         .gradient-divider {
             height: 3px;
             width: 50px;
-            background: linear-gradient(90deg, #fb923c 0%, #fed7aa 100%);
+            background: linear-gradient(90deg, #FF7900 0%, #FFC08A 100%);
             margin: 0 auto;
             border-radius: 2px;
         }
@@ -212,10 +251,10 @@
             display: flex;
             align-items: center;
             gap: 8px;
-            background: rgba(251, 146, 60, 0.1);
-            color: #fb923c;
+            background: #FFE7D1;
+            color: #C2410C;
             padding: 8px 18px;
-            border-radius: 20px;
+            border-radius: 999px;
             font-size: 13px;
             font-weight: 700;
         }
@@ -224,7 +263,7 @@
             display: inline-block;
             width: 8px;
             height: 8px;
-            background: #fb923c;
+            background: #FF7900;
             border-radius: 50%;
             animation: pulse 2s infinite;
         }
@@ -236,19 +275,19 @@
 
         .reset-btn {
             background: white;
-            color: #fb923c;
-            border: 2px solid #fb923c;
+            color: #FF7900;
+            border: 2px solid #FF7900;
             padding: 10px 22px;
             border-radius: 8px;
             font-size: 13px;
             font-weight: 700;
             cursor: pointer;
             transition: all 0.3s ease;
-            font-family: 'Poppins', sans-serif;
+            font-family: 'Inter', 'Helvetica Neue', sans-serif;
         }
 
         .reset-btn:hover {
-            background: #fb923c;
+            background: #FF7900;
             color: white;
         }
 
@@ -262,7 +301,7 @@
 
         .kpi-card {
             background: white;
-            border: 1px solid #e2e8f0;
+            border: 1px solid #E2DDD5;
             border-radius: 16px;
             padding: 24px;
             border-left: 4px solid;
@@ -277,37 +316,37 @@
         }
 
         .kpi-card:nth-child(1) {
-            border-left-color: #fb923c;
+            border-left-color: #FF7900;
             animation-delay: 0.1s;
         }
 
         .kpi-card:nth-child(2) {
-            border-left-color: #fed7aa;
+            border-left-color: #FFB066;
             animation-delay: 0.2s;
         }
 
         .kpi-card:nth-child(3) {
-            border-left-color: #f97316;
+            border-left-color: #FF7900;
             animation-delay: 0.3s;
         }
 
         .kpi-card:nth-child(4) {
-            border-left-color: #c2410c;
+            border-left-color: #0C0B09;
             animation-delay: 0.4s;
         }
 
         .kpi-card:nth-child(5) {
-            border-left-color: #9333ea;
+            border-left-color: #0C0B09;
             animation-delay: 0.5s;
         }
 
         .kpi-card:nth-child(6) {
-            border-left-color: #fb923c;
+            border-left-color: #FF7900;
             animation-delay: 0.6s;
         }
 
         .kpi-card:nth-child(7) {
-            border-left-color: #f97316;
+            border-left-color: #FF7900;
             animation-delay: 0.7s;
         }
 
@@ -337,7 +376,7 @@
         .kpi-label {
             font-size: 12px;
             font-weight: 600;
-            color: #9ca3af;
+            color: #8A857C;
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
@@ -345,28 +384,28 @@
         .kpi-value {
             font-size: 32px;
             font-weight: 800;
-            color: #1f2937;
+            color: #0C0B09;
             letter-spacing: 0.5px;
         }
 
-        .kpi-card:nth-child(1) .kpi-value { color: #fb923c; }
-        .kpi-card:nth-child(2) .kpi-value { color: #fed7aa; }
-        .kpi-card:nth-child(3) .kpi-value { color: #f97316; }
-        .kpi-card:nth-child(4) .kpi-value { color: #c2410c; }
-        .kpi-card:nth-child(5) .kpi-value { color: #9333ea; }
-        .kpi-card:nth-child(6) .kpi-value { color: #fb923c; }
-        .kpi-card:nth-child(7) .kpi-value { color: #f97316; }
+        .kpi-card:nth-child(1) .kpi-value { color: #FF7900; }
+        .kpi-card:nth-child(2) .kpi-value { color: #FFB066; }
+        .kpi-card:nth-child(3) .kpi-value { color: #FF7900; }
+        .kpi-card:nth-child(4) .kpi-value { color: #0C0B09; }
+        .kpi-card:nth-child(5) .kpi-value { color: #0C0B09; }
+        .kpi-card:nth-child(6) .kpi-value { color: #FF7900; }
+        .kpi-card:nth-child(7) .kpi-value { color: #FF7900; }
 
         /* Dynamic color classes for trend - Higher specificity to override base colors */
-        .kpi-card.trend-up .kpi-value { color: #dc2626 !important; }
-        .kpi-card.trend-down .kpi-value { color: #10b981 !important; }
-        .kpi-card.trend-stable .kpi-value { color: #6b7280 !important; }
+        .kpi-card.trend-up .kpi-value { color: #D43A2F !important; }
+        .kpi-card.trend-down .kpi-value { color: #1D8754 !important; }
+        .kpi-card.trend-stable .kpi-value { color: #5C5852 !important; }
 
         /* Sections */
         .section-title {
             font-size: 16px;
             font-weight: 700;
-            color: #1f2937;
+            color: #0C0B09;
             text-transform: uppercase;
             letter-spacing: 0.8px;
             margin-bottom: 24px;
@@ -390,8 +429,8 @@
         }
 
         table thead {
-            background: linear-gradient(90deg, #f97316 0%, #fb923c 100%);
-            border-bottom: 3px solid #c2410c;
+            background: #0C0B09;
+            border-bottom: 3px solid #FF7900;
         }
 
         table th {
@@ -406,7 +445,7 @@
 
         table td {
             padding: 12px;
-            border-bottom: 1px solid #f0e6d6;
+            border-bottom: 1px solid #E2DDD5;
         }
 
         table tbody tr {
@@ -414,7 +453,7 @@
         }
 
         table tbody tr:nth-child(odd) {
-            background: #fefdf9;
+            background: #FBFAF8;
         }
 
         table tbody tr:nth-child(even) {
@@ -422,8 +461,8 @@
         }
 
         table tbody tr:hover {
-            background: #fef3e2;
-            box-shadow: inset 0 0 12px rgba(251, 146, 60, 0.1);
+            background: #FFF1E0;
+            box-shadow: inset 0 0 12px rgba(255, 121, 0, 0.1);
         }
 
         /* Card Layout */
@@ -432,7 +471,7 @@
             border-radius: 12px;
             padding: 24px;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-            border: 1px solid #e2e8f0;
+            border: 1px solid #E2DDD5;
             transition: all 0.3s ease;
         }
 
@@ -445,7 +484,7 @@
             font-size: 15px;
             font-weight: 700;
             margin-bottom: 20px;
-            color: #1f2937;
+            color: #0C0B09;
         }
 
         .row-1col {
@@ -477,18 +516,18 @@
             border: 1px solid;
         }
 
-        .status-cerrada { background: #10b981; color: #ffffff; border-color: #059669; }
-        .status-abierta { background: #f97316; color: #ffffff; border-color: #d85f0a; }
-        .status-en-progreso { background: #fb923c; color: #ffffff; border-color: #e67e27; }
-        .status-pendiente { background: #fed7aa; color: #92400e; border-color: #fcc88e; }
-        .status-default { background: #9ca3af; color: #ffffff; border-color: #6b7280; }
+        .status-cerrada { background: #1D8754; color: #ffffff; border-color: transparent; }
+        .status-abierta { background: #FF7900; color: #ffffff; border-color: transparent; }
+        .status-en-progreso { background: #FFB066; color: #3D2A15; border-color: transparent; }
+        .status-pendiente { background: #FFE7D1; color: #C2410C; border-color: transparent; }
+        .status-default { background: #8A857C; color: #ffffff; border-color: transparent; }
 
         /* Footer */
         .footer {
             text-align: center;
             padding: 40px 20px;
-            border-top: 1px solid #e2e8f0;
-            color: #6b7280;
+            border-top: 1px solid #E2DDD5;
+            color: #5C5852;
             font-size: 12px;
             background: white;
             margin-top: auto;
@@ -530,10 +569,17 @@
     </style>
 </head>
 <body>
-    <!-- Breadcrumb Navigation -->
-    <nav class="breadcrumb-nav">
-        <a href="dashboard-portal.html" class="breadcrumb-link">← Volver al Portal Principal</a>
-    </nav>
+    <!-- MASORANGE Top Bar -->
+    <div class="mo-topbar">
+        <img src="assets/masorange-logo-positive.svg" alt="MASORANGE">
+        <div class="mo-topbar-sep"></div>
+        <span class="mo-topbar-dept">Customer &amp; Service Operations</span>
+        <nav class="mo-topbar-nav">
+            <a href="dashboard-portal.html">Portal</a>
+            <a href="massive-incidents-dashboard.html" class="active">Incidencias masivas</a>
+            <a href="postmortem-dashboard.html">Postmortem</a>
+        </nav>
+    </div>
 
     <!-- Upload Screen -->
     <div class="upload-screen" id="uploadScreen">
@@ -543,8 +589,8 @@
             <p class="upload-description">
                 Carga tu archivo CSV con datos de incidencias masivas.<br>
                 <small>Drag & drop o haz clic para seleccionar</small><br>
-                <small style="color: #6b7280; margin-top: 8px; display: block;">
-                    💡 El CSV se guardará en <code style="background: #f3f4f6; padding: 2px 4px; border-radius: 3px;">data/input/</code> y se convertirá automáticamente
+                <small style="color: #5C5852; margin-top: 8px; display: block;">
+                    💡 El CSV se guardará en <code style="background: #EDEAE4; padding: 2px 4px; border-radius: 3px;">data/input/</code> y se convertirá automáticamente
                 </small>
             </p>
             <button class="upload-btn" id="uploadBtn">Choose File</button>
@@ -573,17 +619,17 @@
                 <button class="reset-btn" id="resetBtn">↻ Upload New File</button>
                 <!-- Time Filter -->
                 <div style="display: flex; align-items: center; gap: 12px;">
-                    <label style="font-size: 12px; font-weight: 600; color: #6b7280; text-transform: uppercase;">
+                    <label style="font-size: 12px; font-weight: 600; color: #5C5852; text-transform: uppercase;">
                         Período:
                     </label>
                     <select id="timeFilter"
                             style="padding: 10px 18px;
-                                   border: 2px solid #fb923c;
+                                   border: 2px solid #FF7900;
                                    border-radius: 8px;
-                                   font-family: 'Poppins', sans-serif;
+                                   font-family: 'Inter', 'Helvetica Neue', sans-serif;
                                    font-size: 13px;
                                    font-weight: 700;
-                                   color: #fb923c;
+                                   color: #FF7900;
                                    background: white;
                                    cursor: pointer;">
                         <option value="all">Todo</option>
@@ -597,7 +643,7 @@
                     </select>
                     <span id="dateRangeDisplay"
                           style="font-size: 11px;
-                                 color: #9ca3af;
+                                 color: #8A857C;
                                  font-weight: 600;
                                  display: none;">
                     </span>
@@ -626,7 +672,7 @@
                     <div class="kpi-content">
                         <div class="kpi-value" id="backlogTrend7d">-</div>
                         <div class="kpi-label">Tendencia 7 días</div>
-                        <div class="kpi-subtitle" id="backlogTrendDetails7d" style="font-size: 10px; color: #9ca3af; margin-top: 4px;"></div>
+                        <div class="kpi-subtitle" id="backlogTrendDetails7d" style="font-size: 10px; color: #8A857C; margin-top: 4px;"></div>
                     </div>
                 </div>
                 <div class="kpi-card">
@@ -634,7 +680,7 @@
                     <div class="kpi-content">
                         <div class="kpi-value" id="backlogTrend15d">-</div>
                         <div class="kpi-label">Tendencia 15 días</div>
-                        <div class="kpi-subtitle" id="backlogTrendDetails15d" style="font-size: 10px; color: #9ca3af; margin-top: 4px;"></div>
+                        <div class="kpi-subtitle" id="backlogTrendDetails15d" style="font-size: 10px; color: #8A857C; margin-top: 4px;"></div>
                     </div>
                 </div>
                 <div class="kpi-card">
@@ -642,7 +688,7 @@
                     <div class="kpi-content">
                         <div class="kpi-value" id="backlogTrend30d">-</div>
                         <div class="kpi-label">Tendencia 30 días</div>
-                        <div class="kpi-subtitle" id="backlogTrendDetails30d" style="font-size: 10px; color: #9ca3af; margin-top: 4px;"></div>
+                        <div class="kpi-subtitle" id="backlogTrendDetails30d" style="font-size: 10px; color: #8A857C; margin-top: 4px;"></div>
                     </div>
                 </div>
             </div>
@@ -673,20 +719,20 @@
                 <!-- Filters -->
                 <div style="margin-bottom: 24px; display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px;">
                     <div>
-                        <label style="font-size: 12px; font-weight: 600; color: #6b7280; text-transform: uppercase; display: block; margin-bottom: 6px;">Estatus</label>
-                        <select id="filterStatus" style="width: 100%; padding: 8px; border: 1px solid #e2e8f0; border-radius: 6px; font-family: 'Poppins', sans-serif; font-size: 13px;">
+                        <label style="font-size: 12px; font-weight: 600; color: #5C5852; text-transform: uppercase; display: block; margin-bottom: 6px;">Estatus</label>
+                        <select id="filterStatus" style="width: 100%; padding: 8px; border: 1px solid #E2DDD5; border-radius: 6px; font-family: 'Inter', 'Helvetica Neue', sans-serif; font-size: 13px;">
                             <option value="">Todos</option>
                         </select>
                     </div>
                     <div>
-                        <label style="font-size: 12px; font-weight: 600; color: #6b7280; text-transform: uppercase; display: block; margin-bottom: 6px;">Grupo Asignado</label>
-                        <select id="filterSystem" style="width: 100%; padding: 8px; border: 1px solid #e2e8f0; border-radius: 6px; font-family: 'Poppins', sans-serif; font-size: 13px;">
+                        <label style="font-size: 12px; font-weight: 600; color: #5C5852; text-transform: uppercase; display: block; margin-bottom: 6px;">Grupo Asignado</label>
+                        <select id="filterSystem" style="width: 100%; padding: 8px; border: 1px solid #E2DDD5; border-radius: 6px; font-family: 'Inter', 'Helvetica Neue', sans-serif; font-size: 13px;">
                             <option value="">Todos</option>
                         </select>
                     </div>
                     <div>
-                        <label style="font-size: 12px; font-weight: 600; color: #6b7280; text-transform: uppercase; display: block; margin-bottom: 6px;">Urgencia</label>
-                        <select id="filterImpacto" style="width: 100%; padding: 8px; border: 1px solid #e2e8f0; border-radius: 6px; font-family: 'Poppins', sans-serif; font-size: 13px;">
+                        <label style="font-size: 12px; font-weight: 600; color: #5C5852; text-transform: uppercase; display: block; margin-bottom: 6px;">Urgencia</label>
+                        <select id="filterImpacto" style="width: 100%; padding: 8px; border: 1px solid #E2DDD5; border-radius: 6px; font-family: 'Inter', 'Helvetica Neue', sans-serif; font-size: 13px;">
                             <option value="">Todos</option>
                         </select>
                     </div>
@@ -694,7 +740,7 @@
 
                 <!-- Table -->
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                    <span style="font-size: 12px; color: #6b7280;"><span id="filteredCount">0</span> registros mostrados</span>
+                    <span style="font-size: 12px; color: #5C5852;"><span id="filteredCount">0</span> registros mostrados</span>
                 </div>
 
                 <div class="table-container">
@@ -1147,7 +1193,7 @@
                 y: entries,
                 name: 'Entradas',
                 type: 'bar',
-                marker: { color: '#fed7aa' },
+                marker: { color: '#FFC08A' },
                 yaxis: 'y',
                 hovertemplate: '<b>%{x}</b><br>Entradas: %{y}<extra></extra>'
             };
@@ -1157,7 +1203,7 @@
                 y: solved,
                 name: 'Solucionadas',
                 type: 'bar',
-                marker: { color: '#fb923c' },
+                marker: { color: '#FF7900' },
                 yaxis: 'y',
                 hovertemplate: '<b>%{x}</b><br>Solucionadas: %{y}<extra></extra>'
             };
@@ -1168,46 +1214,46 @@
                 name: 'Backlog Acumulado',
                 type: 'scatter',
                 mode: 'lines+markers',
-                line: { color: '#c2410c', width: 3 },
-                marker: { size: 8, color: '#c2410c' },
+                line: { color: '#0C0B09', width: 3 },
+                marker: { size: 8, color: '#0C0B09' },
                 yaxis: 'y2',
                 hovertemplate: '<b>%{x}</b><br>Backlog: %{y}<extra></extra>'
             };
 
             const layout = {
                 responsive: true,
-                font: { family: 'Poppins, sans-serif', size: 11, color: '#6b7280' },
+                font: { family: 'Inter, sans-serif', size: 11, color: '#5C5852' },
                 paper_bgcolor: 'transparent',
                 plot_bgcolor: 'transparent',
                 hovermode: 'x unified',
                 margin: { l: 70, r: 70, t: 40, b: 80 },
                 xaxis: {
-                    title: { text: 'Fecha', font: { size: 12, color: '#6b7280' } },
+                    title: { text: 'Fecha', font: { size: 12, color: '#5C5852' } },
                     showgrid: true,
-                    gridcolor: '#e2e8f0',
+                    gridcolor: '#E2DDD5',
                     tickangle: -45,
                     showline: true,
                     linewidth: 1,
-                    linecolor: '#e2e8f0'
+                    linecolor: '#E2DDD5'
                 },
                 yaxis: {
-                    title: { text: 'Entradas y Solucionadas', font: { size: 12, color: '#6b7280' } },
+                    title: { text: 'Entradas y Solucionadas', font: { size: 12, color: '#5C5852' } },
                     showgrid: true,
-                    gridcolor: '#e2e8f0',
+                    gridcolor: '#E2DDD5',
                     showline: true,
                     linewidth: 1,
-                    linecolor: '#e2e8f0',
+                    linecolor: '#E2DDD5',
                     zeroline: false,
                     dtick: 1
                 },
                 yaxis2: {
-                    title: { text: 'Backlog Acumulado', font: { size: 12, color: '#6b7280' } },
+                    title: { text: 'Backlog Acumulado', font: { size: 12, color: '#5C5852' } },
                     overlaying: 'y',
                     side: 'right',
                     showgrid: false,
                     showline: true,
                     linewidth: 1,
-                    linecolor: '#e2e8f0',
+                    linecolor: '#E2DDD5',
                     zeroline: false,
                     dtick: 1
                 },
@@ -1215,7 +1261,7 @@
                     x: 0.02,
                     y: 0.98,
                     bgcolor: 'rgba(255, 255, 255, 0.9)',
-                    bordercolor: '#e2e8f0',
+                    bordercolor: '#E2DDD5',
                     borderwidth: 1,
                     font: { size: 11 }
                 }
@@ -1314,7 +1360,7 @@
             });
 
             // Create color palette for statuses
-            const colors = ['#f97316', '#fb923c', '#fed7aa', '#fca5a5', '#fecaca', '#fee2e2', '#fef2f2'];
+            const colors = ['#FF7900', '#FFC08A', '#E66D00', '#FFD200', '#B8B2A9', '#5C5852', '#DEDAD3'];
 
             // Create stacked bar traces
             const openCountTraces = statusList.map((status, idx) => ({
@@ -1335,8 +1381,8 @@
                 name: 'Backlog Acumulado',
                 type: 'scatter',
                 mode: 'lines+markers',
-                line: { color: '#c2410c', width: 3 },
-                marker: { size: 8, color: '#c2410c' },
+                line: { color: '#0C0B09', width: 3 },
+                marker: { size: 8, color: '#0C0B09' },
                 yaxis: 'y2',
                 hovertemplate: '<b>%{x}</b><br>Backlog: %{y}<extra></extra>'
             };
@@ -1346,38 +1392,38 @@
             const layout = {
                 responsive: true,
                 barmode: 'stack',
-                font: { family: 'Poppins, sans-serif', size: 11, color: '#6b7280' },
+                font: { family: 'Inter, sans-serif', size: 11, color: '#5C5852' },
                 paper_bgcolor: 'transparent',
                 plot_bgcolor: 'transparent',
                 hovermode: 'x unified',
                 margin: { l: 70, r: 70, t: 40, b: 80 },
                 xaxis: {
-                    title: { text: 'Fecha de Apertura', font: { size: 12, color: '#6b7280' } },
+                    title: { text: 'Fecha de Apertura', font: { size: 12, color: '#5C5852' } },
                     showgrid: true,
-                    gridcolor: '#e2e8f0',
+                    gridcolor: '#E2DDD5',
                     tickangle: -45,
                     showline: true,
                     linewidth: 1,
-                    linecolor: '#e2e8f0'
+                    linecolor: '#E2DDD5'
                 },
                 yaxis: {
-                    title: { text: 'Incidencias No Cerradas', font: { size: 12, color: '#6b7280' } },
+                    title: { text: 'Incidencias No Cerradas', font: { size: 12, color: '#5C5852' } },
                     showgrid: true,
-                    gridcolor: '#e2e8f0',
+                    gridcolor: '#E2DDD5',
                     showline: true,
                     linewidth: 1,
-                    linecolor: '#e2e8f0',
+                    linecolor: '#E2DDD5',
                     zeroline: false,
                     dtick: 1
                 },
                 yaxis2: {
-                    title: { text: 'Backlog Acumulado', font: { size: 12, color: '#6b7280' } },
+                    title: { text: 'Backlog Acumulado', font: { size: 12, color: '#5C5852' } },
                     overlaying: 'y',
                     side: 'right',
                     showgrid: false,
                     showline: true,
                     linewidth: 1,
-                    linecolor: '#e2e8f0',
+                    linecolor: '#E2DDD5',
                     zeroline: false,
                     dtick: 1
                 },
@@ -1385,7 +1431,7 @@
                     x: 0.02,
                     y: 0.98,
                     bgcolor: 'rgba(255, 255, 255, 0.9)',
-                    bordercolor: '#e2e8f0',
+                    bordercolor: '#E2DDD5',
                     borderwidth: 1,
                     font: { size: 11 }
                 }
@@ -1512,7 +1558,7 @@
 
             if (!filteredIncidents || filteredIncidents.length === 0) {
                 const row = document.createElement('tr');
-                row.innerHTML = '<td colspan="7" style="text-align: center; padding: 20px; color: #9ca3af;">No hay datos para mostrar</td>';
+                row.innerHTML = '<td colspan="7" style="text-align: center; padding: 20px; color: #8A857C;">No hay datos para mostrar</td>';
                 tbody.appendChild(row);
                 document.getElementById('filteredCount').textContent = '0';
                 return;
@@ -1524,7 +1570,7 @@
                 const statusClass = getStatusClass(status);
                 const codigoIncidencia = getIncidentValue(incident, 'ID de incidencia') || '-';
                 const codigoLink = codigoIncidencia !== '-'
-                    ? `<a href="https://soptmc.si.orange.es/MonTMC/epsilon/remedyC/${codigoIncidencia}" target="_blank" style="color: #fb923c; text-decoration: none; font-weight: 700; cursor: pointer;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">${codigoIncidencia}</a>`
+                    ? `<a href="https://soptmc.si.orange.es/MonTMC/epsilon/remedyC/${codigoIncidencia}" target="_blank" style="color: #FF7900; text-decoration: none; font-weight: 700; cursor: pointer;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">${codigoIncidencia}</a>`
                     : '-';
 
                 row.innerHTML = `
