@@ -4,7 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Release Dashboard - Portal Principal</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         * {
             margin: 0;
@@ -13,21 +14,84 @@
         }
 
         body {
-            font-family: 'Poppins', sans-serif;
-            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-            color: #e2e8f0;
+            font-family: 'Inter', 'Helvetica Neue', sans-serif;
+            background: #F5F3F0;
+            color: #0C0B09;
             min-height: 100vh;
-            padding: 20px;
+        }
+
+        /* MASORANGE Top Bar */
+        .mo-topbar {
+            position: sticky;
+            top: 0;
+            z-index: 60;
+            background: #000;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 22px;
+            padding: 0 26px;
+            height: 66px;
+            border-bottom: 1px solid #26241F;
+        }
+
+        .mo-topbar img {
+            height: 24px;
+            width: auto;
+        }
+
+        .mo-topbar-sep {
+            width: 1px;
+            height: 24px;
+            background: #33302B;
+        }
+
+        .mo-topbar-dept {
+            font-size: 13px;
+            font-weight: 600;
+            letter-spacing: .01em;
+            color: #9E988E;
+            white-space: nowrap;
+        }
+
+        .mo-topbar-nav {
+            display: flex;
+            gap: 2px;
+            margin-left: 14px;
+        }
+
+        .mo-topbar-nav a {
+            text-decoration: none;
+            font-family: inherit;
+            font-size: 13.5px;
+            font-weight: 600;
+            color: #9E988E;
+            padding: 8px 14px;
+            border-bottom: 2px solid transparent;
+            transition: color .2s ease;
+        }
+
+        .mo-topbar-nav a:hover {
+            color: #fff;
+        }
+
+        .mo-topbar-nav a.active {
+            color: #fff;
+            border-bottom-color: #FF7900;
         }
 
         .container {
             max-width: 1200px;
             margin: 0 auto;
+            padding: 20px;
         }
 
         /* Header */
         header {
             text-align: center;
+            background: #000;
+            color: #fff;
+            padding: 56px 20px 48px;
             margin-bottom: 50px;
             animation: slideDown 0.6s ease-out;
         }
@@ -35,17 +99,15 @@
         header h1 {
             font-size: 3em;
             font-weight: 800;
-            background: linear-gradient(135deg, #f97316 0%, #fb923c 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
+            color: #fff;
+            letter-spacing: -.02em;
             margin-bottom: 10px;
         }
 
         header p {
             font-size: 1.1em;
-            color: #94a3b8;
-            margin-bottom: 30px;
+            color: #B8B2A9;
+            margin-bottom: 0;
         }
 
         /* Stats Section */
@@ -57,9 +119,9 @@
         }
 
         .stat-card {
-            background: rgba(15, 23, 42, 0.8);
-            border: 1px solid #334155;
-            border-radius: 12px;
+            background: #FFFFFF;
+            border: 1px solid #E2DDD5;
+            border-radius: 14px;
             padding: 20px;
             text-align: center;
             transition: all 0.3s ease;
@@ -67,20 +129,20 @@
         }
 
         .stat-card:hover {
-            border-color: #f97316;
-            background: rgba(15, 23, 42, 0.95);
+            border-color: #FF7900;
+            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.08);
             transform: translateY(-5px);
         }
 
         .stat-card .value {
             font-size: 2.5em;
             font-weight: 800;
-            color: #f97316;
+            color: #FF7900;
             margin: 10px 0;
         }
 
         .stat-card .label {
-            color: #94a3b8;
+            color: #8A857C;
             font-size: 0.95em;
         }
 
@@ -88,7 +150,7 @@
         .dashboards-section h2 {
             font-size: 2em;
             margin-bottom: 30px;
-            color: #f1f5f9;
+            color: #0C0B09;
         }
 
         .dashboards-grid {
@@ -99,9 +161,9 @@
         }
 
         .dashboard-card {
-            background: rgba(30, 41, 59, 0.8);
-            border: 2px solid #334155;
-            border-radius: 16px;
+            background: #FFFFFF;
+            border: 1px solid #E2DDD5;
+            border-radius: 14px;
             overflow: hidden;
             transition: all 0.3s ease;
             animation: fadeIn 0.6s ease-out;
@@ -111,14 +173,13 @@
         }
 
         .dashboard-card:hover {
-            border-color: #f97316;
-            background: rgba(30, 41, 59, 0.95);
+            border-color: #FF7900;
             transform: translateY(-10px);
-            box-shadow: 0 20px 40px rgba(249, 115, 22, 0.2);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
         }
 
         .dashboard-header {
-            background: linear-gradient(135deg, #f97316 0%, #fb923c 100%);
+            background: #FF7900;
             padding: 20px;
             color: white;
             flex-shrink: 0;
@@ -149,7 +210,7 @@
         }
 
         .dashboard-description {
-            color: #cbd5e1;
+            color: #5C5852;
             margin-bottom: 15px;
             font-size: 0.95em;
             line-height: 1.6;
@@ -164,22 +225,22 @@
 
         .dashboard-features li {
             padding: 5px 0;
-            color: #94a3b8;
+            color: #5C5852;
             padding-left: 20px;
             position: relative;
         }
 
         .dashboard-features li:before {
-            content: "✓";
+            content: "+";
             position: absolute;
             left: 0;
-            color: #22c55e;
-            font-weight: bold;
+            color: #FF7900;
+            font-weight: 800;
         }
 
         .dashboard-link {
             display: inline-block;
-            background: linear-gradient(135deg, #f97316 0%, #fb923c 100%);
+            background: #FF7900;
             color: white;
             padding: 12px 24px;
             border-radius: 8px;
@@ -189,26 +250,27 @@
             text-align: center;
             border: none;
             cursor: pointer;
-            font-family: 'Poppins', sans-serif;
+            font-family: 'Inter', 'Helvetica Neue', sans-serif;
         }
 
         .dashboard-link:hover {
             transform: scale(1.05);
-            box-shadow: 0 10px 20px rgba(249, 115, 22, 0.3);
+            box-shadow: 0 10px 20px rgba(255, 121, 0, 0.3);
         }
 
         /* Data Info Section */
         .data-info {
-            background: rgba(30, 41, 59, 0.6);
-            border-left: 4px solid #f97316;
-            border-radius: 8px;
-            padding: 20px;
+            background: #FFFFFF;
+            border: 1px solid #E2DDD5;
+            border-left: 4px solid #FF7900;
+            border-radius: 14px;
+            padding: 26px 28px;
             margin-bottom: 50px;
         }
 
         .data-info h3 {
             margin-bottom: 15px;
-            color: #f97316;
+            color: #0C0B09;
         }
 
         .data-files {
@@ -218,21 +280,21 @@
         }
 
         .data-file {
-            background: rgba(15, 23, 42, 0.5);
+            background: #F5F3F0;
             padding: 15px;
-            border-radius: 8px;
-            border: 1px solid #334155;
+            border-radius: 10px;
+            border: 1px solid #E2DDD5;
             font-size: 0.9em;
         }
 
         .data-file .filename {
-            color: #f97316;
+            color: #FF7900;
             font-weight: 600;
             margin-bottom: 5px;
         }
 
         .data-file .details {
-            color: #94a3b8;
+            color: #8A857C;
             font-size: 0.85em;
         }
 
@@ -247,10 +309,10 @@
             position: absolute;
             top: 10px;
             right: 10px;
-            background: #f97316;
+            background: #FF7900;
             color: white;
             padding: 5px 10px;
-            border-radius: 20px;
+            border-radius: 999px;
             font-size: 0.75em;
             font-weight: 700;
         }
@@ -259,13 +321,13 @@
         footer {
             text-align: center;
             padding-top: 30px;
-            border-top: 1px solid #334155;
-            color: #94a3b8;
+            border-top: 1px solid #E2DDD5;
+            color: #8A857C;
             font-size: 0.9em;
         }
 
         footer a {
-            color: #f97316;
+            color: #FF7900;
             text-decoration: none;
         }
 
@@ -316,8 +378,8 @@
             display: inline-block;
             width: 12px;
             height: 12px;
-            border: 2px solid rgba(249, 115, 22, 0.3);
-            border-top-color: #f97316;
+            border: 2px solid rgba(255, 121, 0, 0.3);
+            border-top-color: #FF7900;
             border-radius: 50%;
             animation: spin 0.8s linear infinite;
         }
@@ -329,18 +391,30 @@
         .loading {
             text-align: center;
             padding: 40px;
-            color: #94a3b8;
+            color: #8A857C;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <!-- Header -->
-        <header>
-            <h1>📊 Release Dashboard</h1>
-            <p>Portal centralizado para análisis de incidencias y postmortems</p>
-        </header>
+    <!-- MASORANGE Top Bar -->
+    <div class="mo-topbar">
+        <img src="assets/masorange-logo-positive.svg" alt="MASORANGE">
+        <div class="mo-topbar-sep"></div>
+        <span class="mo-topbar-dept">Customer &amp; Service Operations</span>
+        <nav class="mo-topbar-nav">
+            <a href="dashboard-portal.html" class="active">Portal</a>
+            <a href="massive-incidents-dashboard.html">Incidencias masivas</a>
+            <a href="postmortem-dashboard.html">Postmortem</a>
+        </nav>
+    </div>
 
+    <!-- Header -->
+    <header>
+        <h1>📊 Release Dashboard</h1>
+        <p>Portal centralizado para análisis de incidencias y postmortems</p>
+    </header>
+
+    <div class="container">
         <!-- Stats -->
         <div class="stats" id="stats-container">
             <div class="stat-card">
@@ -524,7 +598,7 @@
                 <a href="https://github.com/anthropics/claude-code" target="_blank">Documentación</a> |
                 Última actualización: <span id="update-time">-</span>
             </p>
-            <p style="font-size: 0.85em; margin-top: 10px; color: #64748b;">
+            <p style="font-size: 0.85em; margin-top: 10px; color: #8A857C;">
                 Para más información, consulta la documentación en <code>dashboards/README.md</code>
             </p>
         </footer>
