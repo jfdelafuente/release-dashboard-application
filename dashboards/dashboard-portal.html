@@ -5,8 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Release Dashboard - Portal Principal</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --mono: 'IBM Plex Mono', 'SF Mono', Consolas, monospace;
+            --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+
         * {
             margin: 0;
             padding: 0;
@@ -18,6 +23,25 @@
             background: #F5F3F0;
             color: #0C0B09;
             min-height: 100vh;
+        }
+
+        .num, .stat-card .value, .data-file .details {
+            font-family: var(--mono);
+            font-variant-numeric: tabular-nums;
+            font-feature-settings: "tnum" 1;
+        }
+
+        :focus-visible {
+            outline: 2px solid #FF7900;
+            outline-offset: 2px;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
         }
 
         /* MASORANGE Top Bar */
@@ -88,25 +112,43 @@
 
         /* Header */
         header {
-            text-align: center;
             background: #000;
             color: #fff;
-            padding: 56px 20px 48px;
+            padding: 64px 20px 56px;
             margin-bottom: 50px;
-            animation: slideDown 0.6s ease-out;
+            animation: slideDown 0.5s var(--ease);
+        }
+
+        header .header-inner {
+            max-width: 1160px;
+            margin: 0 auto;
+        }
+
+        header .eyebrow-light {
+            display: inline-block;
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            color: #FF7900;
+            margin-bottom: 18px;
         }
 
         header h1 {
-            font-size: 3em;
+            font-size: clamp(2.1rem, 4vw, 3rem);
             font-weight: 800;
             color: #fff;
-            letter-spacing: -.02em;
-            margin-bottom: 10px;
+            letter-spacing: -0.02em;
+            line-height: 1.05;
+            max-width: 20ch;
+            margin-bottom: 14px;
         }
 
         header p {
-            font-size: 1.1em;
+            font-size: 1.05em;
+            line-height: 1.55;
             color: #B8B2A9;
+            max-width: 56ch;
             margin-bottom: 0;
         }
 
@@ -124,7 +166,7 @@
             border-radius: 14px;
             padding: 20px;
             text-align: center;
-            transition: all 0.3s ease;
+            transition: all 0.25s var(--ease);
             animation: fadeIn 0.6s ease-out;
         }
 
@@ -165,7 +207,7 @@
             border: 1px solid #E2DDD5;
             border-radius: 14px;
             overflow: hidden;
-            transition: all 0.3s ease;
+            transition: all 0.25s var(--ease);
             animation: fadeIn 0.6s ease-out;
             cursor: pointer;
             display: flex;
@@ -246,7 +288,7 @@
             border-radius: 8px;
             text-decoration: none;
             font-weight: 600;
-            transition: all 0.3s ease;
+            transition: all 0.25s var(--ease);
             text-align: center;
             border: none;
             cursor: pointer;
@@ -410,8 +452,11 @@
 
     <!-- Header -->
     <header>
-        <h1>📊 Release Dashboard</h1>
-        <p>Portal centralizado para análisis de incidencias y postmortems</p>
+        <div class="header-inner">
+            <span class="eyebrow-light">Fiabilidad de servicio · Customer &amp; Service Operations</span>
+            <h1>Backlog, incidencias y postmortems de release.</h1>
+            <p>Sigue el backlog en tiempo real y revisa el histórico de postmortems por despliegue, con los datos ya cargados desde los conversores.</p>
+        </div>
     </header>
 
     <div class="container">
@@ -436,7 +481,7 @@
 
         <!-- Data Info -->
         <div class="data-info" id="data-info">
-            <h3>📁 Datasets Disponibles</h3>
+            <h3>Archivos cargados</h3>
             <div class="data-files" id="data-files-list">
                 <div class="loading">
                     <div class="spinner"></div> Cargando índice...
@@ -446,7 +491,7 @@
 
         <!-- Dashboards -->
         <section class="dashboards-section">
-            <h2>🎯 Dashboards Disponibles</h2>
+            <h2>Elige un panel</h2>
             <div class="dashboards-grid">
                 <!-- Dashboard 1: Massive Incidents -->
                 <div class="dashboard-card">
@@ -594,12 +639,9 @@
         <!-- Footer -->
         <footer>
             <p>
-                Release Dashboard Application |
-                <a href="https://github.com/anthropics/claude-code" target="_blank">Documentación</a> |
-                Última actualización: <span id="update-time">-</span>
-            </p>
-            <p style="font-size: 0.85em; margin-top: 10px; color: #8A857C;">
-                Para más información, consulta la documentación en <code>dashboards/README.md</code>
+                Release Dashboard Application &middot;
+                <a href="README.md">Documentación</a> &middot;
+                Última actualización: <span id="update-time" class="num">-</span>
             </p>
         </footer>
     </div>
@@ -655,7 +697,7 @@
                     const size = (file.size / 1024).toFixed(1);
                     const date = new Date(file.modified).toLocaleDateString('es-ES');
                     fileEl.innerHTML = `
-                        <div class="filename">📈 ${file.name}</div>
+                        <div class="filename">${file.name}</div>
                         <div class="details">
                             Tamaño: ${size} KB<br>
                             Modificado: ${date}
@@ -673,7 +715,7 @@
                     const size = (file.size / 1024).toFixed(1);
                     const date = new Date(file.modified).toLocaleDateString('es-ES');
                     fileEl.innerHTML = `
-                        <div class="filename">🔍 ${file.name}</div>
+                        <div class="filename">${file.name}</div>
                         <div class="details">
                             Tamaño: ${size} KB<br>
                             Modificado: ${date}
