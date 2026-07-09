@@ -53,14 +53,23 @@ Los JSONs se generan en `data/output/` e `index.json` se actualiza automáticame
 
 ### 3️⃣ Abre el Dashboard Hub
 
-**Opción A: Con Live Server** (recomendado)
+**Opción A: Con Live Server** — solo si ya generaste los JSONs a mano
 - En VSCode: Click derecho en `dashboards/index.html` → "Open with Live Server"
+- ⚠️ Live Server solo sirve archivos estáticos: la subida de CSV desde el
+  navegador no funcionará con esta opción (ver aviso abajo).
 
-**Opción B: Con Python**
+**Opción B: Con `serve_app.py`** (recomendado — necesario para subir CSV desde el navegador)
 ```bash
-python -m http.server 8000
+python serve_app.py
 # Luego abre: http://localhost:8000/dashboards/
 ```
+
+> ⚠️ **No uses `python -m http.server` ni Live Server si quieres subir un
+> CSV desde el navegador.** Ambos solo sirven archivos estáticos: no
+> implementan `POST`, así que la subida falla con "Failed to fetch" (el
+> servidor ni siquiera responde a la petición). Usa siempre `serve_app.py`,
+> que además del servidor estático añade el endpoint `/api/upload` que
+> guarda el CSV en `data/input/` y ejecuta el conversor correspondiente.
 
 ### 4️⃣ Dashboard Hub carga automáticamente los datos
 
