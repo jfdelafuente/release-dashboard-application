@@ -4,11 +4,11 @@
 # Script: generate-dashboards.sh
 # Propósito: Ejecutar converters CSV->JSON y generar index.json
 # Uso: ./generate-dashboards.sh
-# Crontab: 0 2 * * * /infocodes/release-dashboard-application/scripts/generate-dashboards.sh
+# Crontab: 0 2 * * * /infocodes/project/release-dashboard-application/scripts/generate-dashboards.sh
 #####################################################################
 
 # Configuración
-PROJECT_ROOT="/infocodes/release-dashboard-application"
+PROJECT_ROOT="/infocodes/project/release-dashboard-application"
 CONVERTERS_DIR="${PROJECT_ROOT}/converters"
 DATA_INPUT_DIR="${PROJECT_ROOT}/data/input"
 DATA_OUTPUT_DIR="${PROJECT_ROOT}/data/output"
