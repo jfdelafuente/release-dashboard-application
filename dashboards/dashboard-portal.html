@@ -6,102 +6,19 @@
     <title>Release Dashboard - Portal Principal</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="assets/shared.css">
     <style>
-        :root {
-            --mono: 'IBM Plex Mono', 'SF Mono', Consolas, monospace;
-            --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
+        /* Estilos específicos de esta página. El framework compartido
+           (barra superior, reset, telemetría numérica, foco/animación)
+           vive en assets/shared.css. */
         body {
-            font-family: 'Inter', 'Helvetica Neue', sans-serif;
-            background: #F5F3F0;
-            color: #0C0B09;
             min-height: 100vh;
         }
 
-        .num, .stat-card .value, .data-file .details {
+        .stat-card .value, .data-file .details {
             font-family: var(--mono);
             font-variant-numeric: tabular-nums;
             font-feature-settings: "tnum" 1;
-        }
-
-        :focus-visible {
-            outline: 2px solid #FF7900;
-            outline-offset: 2px;
-        }
-
-        @media (prefers-reduced-motion: reduce) {
-            *, *::before, *::after {
-                animation-duration: 0.01ms !important;
-                animation-iteration-count: 1 !important;
-                transition-duration: 0.01ms !important;
-            }
-        }
-
-        /* MASORANGE Top Bar */
-        .mo-topbar {
-            position: sticky;
-            top: 0;
-            z-index: 60;
-            background: #000;
-            color: #fff;
-            display: flex;
-            align-items: center;
-            gap: 22px;
-            padding: 0 26px;
-            height: 66px;
-            border-bottom: 1px solid #26241F;
-        }
-
-        .mo-topbar img {
-            height: 24px;
-            width: auto;
-        }
-
-        .mo-topbar-sep {
-            width: 1px;
-            height: 24px;
-            background: #33302B;
-        }
-
-        .mo-topbar-dept {
-            font-size: 13px;
-            font-weight: 600;
-            letter-spacing: .01em;
-            color: #9E988E;
-            white-space: nowrap;
-        }
-
-        .mo-topbar-nav {
-            display: flex;
-            gap: 2px;
-            margin-left: 14px;
-        }
-
-        .mo-topbar-nav a {
-            text-decoration: none;
-            font-family: inherit;
-            font-size: 13.5px;
-            font-weight: 600;
-            color: #9E988E;
-            padding: 8px 14px;
-            border-bottom: 2px solid transparent;
-            transition: color .2s ease;
-        }
-
-        .mo-topbar-nav a:hover {
-            color: #fff;
-        }
-
-        .mo-topbar-nav a.active {
-            color: #fff;
-            border-bottom-color: #FF7900;
         }
 
         .container {
