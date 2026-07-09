@@ -62,28 +62,22 @@ fi
 
 log "Encontrados ${CSV_COUNT} archivo(s) CSV para procesar"
 
-# Procesar cada CSV encontrado
+# Procesar cada CSV encontrado, despachando al conversor que le corresponde
+# según el nombre de archivo (evita convertir cada postmortem dos veces: una
+# con el conversor equivocado y otra con el correcto)
 for csv_file in "${DATA_INPUT_DIR}"/*.csv; do
     if [ -f "${csv_file}" ]; then
         filename=$(basename "${csv_file}")
-        log "Procesando: ${filename}"
 
-        # Ejecutar converter de incidencias masivas
-        if python "${CONVERTERS_DIR}/cli/convert_incidents.py" "${csv_file}" -o "${DATA_OUTPUT_DIR}" 2>>"${LOG_FILE}"; then
-            log "✓ Conversión exitosa: ${filename}"
+        if [[ "${filename}" == *postmortem* ]]; then
+            converter_script="${CONVERTERS_DIR}/cli/convert_postmortems.py"
+            log "Procesando postmortem: ${filename}"
         else
-            log "✗ Error en conversión de: ${filename}"
+            converter_script="${CONVERTERS_DIR}/cli/convert_incidents.py"
+            log "Procesando: ${filename}"
         fi
-    fi
-done
 
-# Procesar postmortems si existen
-for csv_file in "${DATA_INPUT_DIR}"/*postmortem*.csv; do
-    if [ -f "${csv_file}" ]; then
-        filename=$(basename "${csv_file}")
-        log "Procesando postmortem: ${filename}"
-
-        if python "${CONVERTERS_DIR}/cli/convert_postmortems.py" "${csv_file}" -o "${DATA_OUTPUT_DIR}" 2>>"${LOG_FILE}"; then
+        if python "${converter_script}" "${csv_file}" -o "${DATA_OUTPUT_DIR}" 2>>"${LOG_FILE}"; then
             log "✓ Conversión exitosa: ${filename}"
         else
             log "✗ Error en conversión de: ${filename}"
