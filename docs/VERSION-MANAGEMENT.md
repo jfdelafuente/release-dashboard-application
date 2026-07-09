@@ -59,10 +59,10 @@ echo "0.2.0" > VERSION
 git add VERSION
 git commit -m "Bump version to 0.2.0"
 
-# Option 2: Script (if available)
-./scripts/bump-version.sh minor  # 0.1.0 → 0.2.0
-./scripts/bump-version.sh patch  # 0.2.0 → 0.2.1
 ```
+
+> There is no `bump-version.sh` script in the repo (yet). Manual editing,
+> as shown above, is the only way to bump the version today.
 
 ---
 
@@ -105,49 +105,28 @@ git tag -l v0.2.0
 
 ---
 
-## Deployment Version Locking
+## Deployment and Version Tracking
+
+There is no build/artifact phase — this repo has no `deploy.yml` workflow
+(it existed at one point but was removed: unused, and it packaged a `src/`
+directory that no longer exists). Deployment is manual, and the `VERSION`
+file travels with the git checkout, not with a separate build artifact.
 
 ### How It Works
 
-1. **Build Phase** (GitHub Actions)
-   - Reads VERSION file
-   - Creates artifact: `release-dashboard-{VERSION}-{timestamp}.tar.gz`
-   - Stores version in build output
+1. Bump `VERSION` and tag the release commit locally (see above).
+2. Push the commit and the tag.
+3. On the VPS, SSH in and `git pull` the `production` branch — the
+   checkout now has the new `VERSION` file automatically, since it's a
+   tracked file in the repo.
+4. Verify: `ssh <user>@<vps-host> "cat /infocodes/project/release-dashboard-application/VERSION"`
+   should match the tag you just pushed.
 
-2. **Deployment Phase**
-   - Deploys specific artifact with locked version
-   - Cannot accidentally deploy different version
-
-3. **Verification**
-   - Deployment log records exact version deployed
-   - Can verify running version matches tag: `ssh app@host "cat VERSION"`
-
-### Example Deployment Flow
-
-```bash
-# 1. VERSION file shows
-cat VERSION
-# 0.2.0
-
-# 2. Artifact created with version
-ls dist/
-# release-dashboard-0.2.0-20260514-153045.tar.gz
-
-# 3. Artifact deployed with version baked in
-./scripts/deploy/deploy.sh production
-
-# 4. Deployment log records version
-grep "Version:" logs/deployments/DEPLOYMENT-RECORDS.log
-# Version: 0.2.0
-
-# 5. Running system has same version
-ssh app@prod.example.com "cat VERSION"
-# 0.2.0
-
-# 6. Git tag matches
-git tag -l | grep 0.2.0
-# v0.2.0
-```
+There is no separate "deployment log" or automated record of what version
+is running — the VPS checkout's `VERSION` file (and `git log -1`) is the
+source of truth. **Not confirmed**: whether there's any process-level
+restart needed after `git pull` for the checks to reflect the new code, or
+if nginx serving static files means changes apply immediately.
 
 ---
 
@@ -174,9 +153,7 @@ Before creating a release (bumping version):
 
 - [ ] Unit tests passing
 - [ ] Integration tests passing
-- [ ] Manual testing completed
-- [ ] Staging deployment verified
-- [ ] Health checks passing
+- [ ] Manual testing completed (there is no staging environment or automated health check — verify manually against production after deploying)
 
 ### Version & Tags
 
@@ -253,61 +230,38 @@ git log v0.1.0..v0.2.0 --format="- %s" > release-notes.txt
 
 ## Handling Version Mismatches
 
-If running version doesn't match deployed version:
+If the version running on the VPS doesn't match what you expect:
 
 ```bash
 # Check deployed version
-ssh app@prod.example.com "cat VERSION"
-# Output: 0.1.5
+ssh <user>@<vps-host> "cat /infocodes/project/release-dashboard-application/VERSION"
 
-# Check git current version
+# Check local/repo version
 cat VERSION
-# Output: 0.2.0
 
-# Check git tag vs running
-git describe --tags  # Should show v0.1.5 if on that tag
-# Output: v0.2.0
-
-# Options:
-# 1. Update VERSION to match running: `echo "0.2.0" > VERSION`
-# 2. Or rollback: `./scripts/deploy/rollback.sh production`
+# If they differ, the VPS checkout is simply behind — pull the latest
+# production branch on the VPS (see docs/DEPLOYMENT.md):
+ssh <user>@<vps-host> "cd /infocodes/project/release-dashboard-application && git pull origin production"
 ```
+
+Rollback is also manual: `git checkout <previous-tag-or-commit>` (or
+`git revert`) on the VPS checkout, then `git pull`/`git reset` as needed.
+There is no `rollback.sh` script.
 
 ---
 
 ## CI/CD Version Integration
 
-### GitHub Actions (deploy.yml)
+There is no version-aware CI/CD integration. `.github/workflows/` only
+has `lint.yml` and `tests.yml` (tests + coverage + style checks on push/PR)
+— neither reads the `VERSION` file, builds an artifact, or creates a
+GitHub Release. A `deploy.yml` workflow that did some of this existed at
+one point but was removed (unused, and broken: it packaged a `src/`
+directory that no longer exists in the repo). See
+[CI-CD.md](CI-CD.md) for what actually runs today.
 
-Automatically:
-1. Reads VERSION file
-2. Includes in artifact name
-3. Passes to deployment script
-4. Logs in deployment record
-
-```yaml
-- name: Get version
-  id: version
-  run: |
-    VERSION=$(cat VERSION)
-    echo "version=$VERSION" >> $GITHUB_OUTPUT
-
-- name: Deploy artifact
-  run: |
-    echo "Deploying version: ${{ steps.version.outputs.version }}"
-    # ... deployment steps ...
-```
-
-### GitHub Releases
-
-Automatically created by deploy.yml on production deploy:
-
-```bash
-# GitHub automatically creates release:
-# Title: "Release v0.2.0"
-# Tag: "v0.2.0"
-# Body: Deployment logs, changes, affected systems
-```
+GitHub Releases, if you want them, currently have to be created manually
+(`gh release create v0.2.0` or via the GitHub UI) after pushing the tag.
 
 ---
 
@@ -333,15 +287,16 @@ Automatically created by deploy.yml on production deploy:
 
 ## Rollback Version Considerations
 
-When rolling back to previous version:
+There is no automated rollback. To roll back on the VPS:
 
 ```bash
-# Automatic rollback restores previous VERSION
-./scripts/deploy/rollback.sh production
+ssh <user>@<vps-host>
+cd /infocodes/project/release-dashboard-application
+git log --oneline -5          # find the commit/tag to roll back to
+git checkout <previous-tag>   # or: git revert <bad-commit>
 
 # Verify version after rollback
-ssh app@prod.example.com "cat VERSION"
-# Should show previous version
+cat VERSION
 ```
 
 ---

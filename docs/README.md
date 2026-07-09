@@ -1,83 +1,86 @@
-# Documentation Index
+# Índice de Documentación
 
-📖 Complete documentation for the Release Dashboard Application.
+📖 Documentación completa de Release Dashboard Application.
 
-**→ Start here**: [../README.md](../README.md) (project overview and quick start)
-
----
-
-## 📚 Documentation Topics
-
-### Getting Started
-- **[QUICKSTART.md](QUICKSTART.md)** - 5-minute setup guide (recommended for first-time users)
-- **[DEVELOPMENT.md](DEVELOPMENT.md)** - Development environment setup and workflows
-
-### Using the Application
-- **[API.md](API.md)** - Converter API reference and usage examples
-- **[CONVERTER_USAGE.md](CONVERTER_USAGE.md)** - Detailed CSV-to-JSON converter guide
-- **[TROUBLESHOOTING.md](TROUBLESHOOTING.md)** - Common issues and solutions
-
-### Architecture & Design
-- **[ARCHITECTURE.md](ARCHITECTURE.md)** - System architecture and component overview
-- **[DATABASE.md](DATABASE.md)** - Data schema and storage (if applicable)
-
-### Operations & Deployment
-- **[DEPLOYMENT.md](DEPLOYMENT.md)** - Production deployment procedures
-- **[SECURITY.md](../SECURITY.md)** - Security practices and incident response
-- **[OPERATIONS.md](OPERATIONS.md)** - Monitoring, logging, and maintenance (if applicable)
-
-### Contributing
-- **[CONTRIBUTING.md](CONTRIBUTING.md)** - Code standards, commit conventions, PR process
-- **[CHANGELOG.md](../CHANGELOG.md)** - Release history and version changes
+**→ Empieza aquí**: [../README.md](../README.md) (visión general y arranque rápido)
 
 ---
 
-## 🎯 Dashboards Overview
+## 📚 Temas
 
-| Dashboard | File | Purpose |
+### Primeros pasos
+- **[QUICKSTART.md](QUICKSTART.md)** - Guía de instalación y primer uso
+- **[DEVELOPMENT.md](DEVELOPMENT.md)** - Entorno de desarrollo y flujo de trabajo
+
+### Usar la aplicación
+- **[TROUBLESHOOTING.md](TROUBLESHOOTING.md)** - Problemas comunes y soluciones
+- **[../converters/docs/API.md](../converters/docs/API.md)** - Referencia de la API de los conversores CSV→JSON
+- **[../converters/docs/CSV-TO-JSON-WORKFLOW.md](../converters/docs/CSV-TO-JSON-WORKFLOW.md)** - Flujo detallado de conversión
+
+### Arquitectura y diseño
+- **[PROJECT-STRUCTURE.md](PROJECT-STRUCTURE.md)** - Estructura del proyecto y de producción
+- **[../converters/docs/ARCHITECTURE.md](../converters/docs/ARCHITECTURE.md)** - Arquitectura del módulo de conversión
+
+### Operaciones y despliegue
+- **[DEPLOYMENT.md](DEPLOYMENT.md)** - Procedimiento de despliegue (manual, vía SSH)
+- **[CI-CD.md](CI-CD.md)** - Qué automatiza CI (tests y linting) y qué no (el despliegue)
+- **[VERSION-MANAGEMENT.md](VERSION-MANAGEMENT.md)** - Versionado semántico
+- **[VPS-REQUIREMENTS.md](VPS-REQUIREMENTS.md)** - Requisitos del servidor
+- **[../SECURITY.md](../SECURITY.md)** - Prácticas de seguridad
+
+### Contribuir
+- **[CONTRIBUTING.md](CONTRIBUTING.md)** - Estándares de código, commits, proceso de PR
+- **[GITHUB-BRANCH-PROTECTION.md](GITHUB-BRANCH-PROTECTION.md)** - Reglas de protección de ramas
+- **[../CHANGELOG.md](../CHANGELOG.md)** - Historial de versiones
+- **[MIGRATION.md](MIGRATION.md)** - Cambios de formato entre versiones del conversor
+
+---
+
+## 🎯 Dashboards
+
+| Dashboard | Archivo | Propósito |
 |-----------|------|---------|
-| **Dashboard Hub** (Principal) | `src/dashboards/dashboard-hub.html` | Unified access point with auto-loaded KPIs |
-| **Massive Incidents** | `src/dashboards/massive-incidents-dashboard.html` | Detailed incident analysis with temporal trends |
-| **Postmortem** | `src/dashboards/postmortem-dashboard.html` | Post-mortem analysis by deployments |
+| **Portal** (entrada principal) | `dashboards/dashboard-portal.html` | Punto de acceso único, con tarjetas a cada dashboard |
+| **Incidencias Masivas** | `dashboards/massive-incidents-dashboard.html` | Análisis temporal de incidencias masivas |
+| **Postmortem / Release** | `dashboards/postmortem-dashboard.html` | Análisis por despliegue (PAP/MESA) |
+
+`dashboards/index.html` redirige automáticamente al Portal.
 
 ---
 
-## 🔧 Data Workflow
+## 🔧 Flujo de Datos
 
 ```
-CSV Files (data/input/)
+CSV (subido desde el navegador, o en data/input/)
     ↓
-Converters (convert_incidents.bat, convert_postmortems.bat)
+serve_app.py [/api/upload]  o  converters/cli/convert_incidents.py / convert_postmortems.py
     ↓
-JSON Output (data/output/*.json)
+JSON (data/output/) + build_index.py → index.json
     ↓
-Index Builder (build_index.py)
+Portal (dashboard-portal.html)
     ↓
-Index (data/output/index.json)
-    ↓
-Dashboard Hub (Auto-loads all data)
-    ↓
-Specialized Dashboards (Incidents, Postmortems)
+Incidencias Masivas · Postmortem/Release
 ```
 
 ---
 
-## 📊 Technology Stack
+## 📊 Stack Tecnológico
 
-- **Backend**: Python 3.6+
-- **Frontend**: HTML5, CSS3, JavaScript ES6+
-- **Visualization**: Plotly.js
-- **Testing**: pytest (80%+ coverage requirement)
-- **Configuration**: Environment-based (.env files)
+- **Conversores**: Python 3.8+
+- **Dashboards**: HTML5, CSS3, JavaScript ES6+ (sin framework, sin build step)
+- **Visualización**: Plotly.js (vía CDN)
+- **Testing**: pytest (ver [converters/docs/TEST_STRUCTURE.md](../converters/docs/TEST_STRUCTURE.md))
 
 ---
 
-## ✅ Project Status
+## ✅ Estado del Proyecto
 
-- **MVP**: Complete and validated ✅
-- **Tests**: 264 passing (86.13% coverage) ✅
-- **Dashboards**: All functional ✅
-- **Converters**: Incidents + Postmortems ✅
-- **Documentation**: Updated ✅
+- **Dashboards**: ✅ Portal, Incidencias Masivas y Postmortem/Release funcionales
+- **Subida de CSV desde el navegador**: ✅ vía `serve_app.py` (`/api/upload`)
+- **Conversores**: ✅ Incidencias masivas + Postmortems
+- **CI**: ✅ tests y linting automatizados en cada PR (ver [CI-CD.md](CI-CD.md))
+- **Despliegue**: manual (SSH + git pull), ver [DEPLOYMENT.md](DEPLOYMENT.md)
 
-**Last Updated**: 2026-05-14
+---
+
+**Última actualización**: 2026-07-09

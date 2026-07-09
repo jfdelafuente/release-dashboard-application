@@ -250,6 +250,6 @@ const kpis = result._metadata.kpis;
 ## Questions?
 
 Refer to:
-- [Implementation Plan](../specs/006-optimize-csv-converters/plan.md)
-- [Specification](../specs/006-optimize-csv-converters/spec.md)
-- [Data Model](../specs/006-optimize-csv-converters/data-model.md)
+- [Implementation Plan](../converters/specs/006-optimize-csv-converters/plan.md)
+- [Specification](../converters/specs/006-optimize-csv-converters/spec.md)
+- [Data Model](../converters/specs/006-optimize-csv-converters/data-model.md)

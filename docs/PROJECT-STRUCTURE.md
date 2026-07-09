@@ -1,440 +1,227 @@
-# Estructura del Proyecto: Estático vs Python
+# Estructura del Proyecto
 
-Documento que especifica la separación clara entre:
-- **Contenido Estático**: HTML, CSS, JS (sirve Nginx)
-- **Código Python**: Conversores, scripts (ejecuta Python)
-- **Datos**: CSVs, JSONs (directorio compartido)
+Este documento describe la organización real del repositorio: qué vive en cada carpeta, cómo se ejecuta en local y cómo se sirve en producción (VPS + Nginx).
+
+> Verificado explorando el repositorio y leyendo `nginx.conf`, `scripts/generate-dashboards.sh` y `.github/workflows/*.yml` el 2026-07-09. Donde no ha sido posible confirmar un dato con certeza absoluta, se indica explícitamente como **"no confirmado"**.
 
 ---
 
-## 📁 Estructura en Local (Desarrollo)
+## 📁 Estructura del repositorio (raíz)
 
 ```
 release-dashboard-application/
 │
-├── 📄 README.md
-├── 📄 CLAUDE.md
+├── 📄 README.md                     # Punto de entrada: qué es, cómo arrancar en local
+├── 📄 CLAUDE.md                     # Guía funcional de los dashboards para Claude Code
+├── 📄 CHANGELOG.md
+├── 📄 CONTRIBUTING.md
+├── 📄 SECURITY.md
+├── 📄 DIRECTORY-STRUCTURE.md        # Otro documento de estructura (histórico; ver nota más abajo)
+├── 📄 DEPLOYMENT-LOG.md
 ├── 📄 VERSION
-├── 📄 requirements.txt
+├── 📄 requirements.txt              # Dependencias Python de producción (raíz del repo)
+├── 📄 requirements-dev.txt
+├── 📄 project.json
+├── 📄 skills-lock.json
+├── 📄 serve_app.py                  # Servidor de desarrollo (estáticos + POST /api/upload)
+├── 📄 nginx.conf                    # Config Nginx real usada en el VPS (gitignored, solo local)
 │
-├── 📁 src/                          # CÓDIGO FUENTE
-│   ├── 📁 converters/               # ⚙️ PYTHON (ejecuta)
-│   │   ├── convert_incidents.py
-│   │   ├── convert_postmortems.py
-│   │   ├── csv_to_json/
-│   │   ├── build_index.py
-│   │   └── __init__.py
-│   │
-│   ├── 📁 dashboards/               # 🌐 ESTÁTICO (sirve Nginx)
-│   │   ├── dashboard-hub.html
-│   │   ├── massive-incidents-dashboard.html
-│   │   ├── postmortem-dashboard.html
-│   │   └── 📁 assets/
-│   │       ├── 📁 css/
-│   │       │   ├── dashboard-hub.css
-│   │       │   ├── massive-incidents.css
-│   │       │   └── postmortem.css
-│   │       └── 📁 js/
-│   │           └── dashboard-hub.js
-│   │
-│   └── 📁 scripts/                  # ⚙️ PYTHON (utilidades)
-│       ├── health-check.sh
-│       ├── backup.sh
-│       └── watch-and-convert.sh
-│
-├── 📁 data/                         # 📊 DATOS (compartido)
-│   ├── 📁 input/                    # CSVs originales
-│   │   ├── incidencias.csv
-│   │   └── postmortem.csv
-│   ├── 📁 output/                   # JSONs generados
-│   │   ├── index.json
-│   │   ├── incidencias.json
-│   │   └── postmortem.json
-│   ├── 📁 errors/                   # Reportes de errores
-│   │   └── incidencias_errors.json
-│   └── 📁 archive/                  # Histórico
-│       └── YYYY/MM/...
-│
-├── 📁 docs/                         # 📚 DOCUMENTACIÓN
-│   ├── README.md
-│   ├── CI-CD.md
-│   ├── VPS-REQUIREMENTS.md
-│   ├── CSV-TO-JSON-WORKFLOW.md
-│   └── PROJECT-STRUCTURE.md
-│
-├── 📁 specs/                        # 📋 ESPECIFICACIONES
-│   ├── 001-csv-to-json-workflow/
-│   └── ...
-│
-├── 📁 tests/                        # 🧪 TESTS
-│   ├── test_converter.py
-│   └── ...
-│
-└── 📁 .github/                      # 🔄 CI/CD
-    └── workflows/
-        ├── tests.yml
-        ├── lint.yml
-        └── deploy.yml
+├── 📁 converters/                   # Todo el código Python (CLI, lógica, tests, docs, specs)
+├── 📁 dashboards/                   # Todo el frontend estático (HTML/CSS/JS in-line)
+├── 📁 data/                         # input/output/errors — gitignored, datos reales de incidencias
+├── 📁 scripts/                      # Automatización de la conversión batch en el VPS
+├── 📁 docs/                         # Documentación del proyecto (este archivo incluido)
+├── 📁 specs/                        # Specs de features a nivel de repo (spec-kit)
+├── 📁 config/                       # .env.example, .env.development, hook de pre-commit
+├── 📁 .github/workflows/            # CI: lint.yml y tests.yml (no hay deploy.yml)
+├── 📁 .specify/                     # Plantillas y scripts del framework spec-kit
+└── 📁 .agents/                      # Skills de agente instaladas localmente (frontend-design, etc.)
 ```
+
+**Nota sobre `DIRECTORY-STRUCTURE.md`**: existe otro documento de estructura en la raíz del repo, además de este. No se ha verificado si está alineado con la realidad actual; si contradice lo que dice este documento, este documento (`docs/PROJECT-STRUCTURE.md`) es el que se acaba de auditar contra el repo real.
+
+**Cambio importante respecto a versiones anteriores de este documento**: ya no existe un directorio `src/` con `src/converters/`, `src/dashboards/` y `src/scripts/`. El repo se reorganizó (ver `specs/005-project-organization/`) y ahora `converters/` y `dashboards/` son carpetas de primer nivel, independientes entre sí. Tampoco existe ya el concepto de "Dashboard Hub" (`dashboard-hub.html/css/js`): el punto de entrada real es `dashboards/dashboard-portal.html`.
 
 ---
 
-## 🖥️ Estructura en VPS (Producción/Staging)
+## 📁 `converters/` — Código Python
 
 ```
-/var/www/release-dashboard/         # Raíz de la aplicación
+converters/
+├── cli/                             # Puntos de entrada ejecutables
+│   ├── convert_incidents.py         # CSV de incidencias masivas → JSON
+│   ├── convert_postmortems.py       # CSV de postmortem → JSON
+│   ├── build_index.py               # Genera data/output/index.json
+│   ├── validate_kpis.py             # Valida KPIs calculadas contra el dataset
+│   └── upload_csv.py                # Usado por serve_app.py para el endpoint de subida
 │
-├── 📁 static/                       # 🌐 ESTÁTICO (sirve Nginx)
-│   ├── 📁 dashboards/
-│   │   ├── dashboard-hub.html
-│   │   ├── massive-incidents-dashboard.html
-│   │   ├── postmortem-dashboard.html
-│   │   └── 📁 assets/
-│   │       ├── 📁 css/
-│   │       └── 📁 js/
-│   │
-│   └── 📁 images/                   # (si hay imágenes)
-│       └── ...
+├── src/csv_to_json/                 # Lógica de conversión (paquete importado por cli/)
+│   ├── converter.py                 # Orquestador principal (incidencias masivas)
+│   ├── postmortem_converter.py      # Orquestador específico de postmortem
+│   ├── encoding.py                  # Detección de encoding
+│   ├── delimiter.py                 # Detección de delimitador
+│   ├── normalizers.py               # Normalización de campos (Urgencia, Estatus, fechas...)
+│   ├── validators.py                # Validación de registros
+│   ├── schemas.py                   # Reglas de campo para incidencias masivas
+│   └── postmortem_schemas.py        # Reglas de campo para postmortem
 │
-├── 📁 app/                          # ⚙️ PYTHON (ejecuta)
-│   ├── converters/
-│   │   ├── convert_incidents.py
-│   │   ├── convert_postmortems.py
-│   │   ├── csv_to_json/
-│   │   ├── build_index.py
-│   │   └── __init__.py
-│   │
-│   ├── scripts/
-│   │   ├── health-check.sh
-│   │   └── backup.sh
-│   │
-│   └── __init__.py
+├── scripts/bin/                     # Wrappers de conveniencia para invocar los CLI
+│   ├── convert_incidents.sh / .bat
+│   └── convert_postmortems.sh / .bat
 │
-├── 📁 data/                         # 📊 DATOS
-│   ├── 📁 input/                    # CSVs colocados aquí
-│   │   └── incidencias.csv
-│   ├── 📁 output/                   # JSONs generados
-│   │   ├── index.json
-│   │   └── incidencias.json
-│   ├── 📁 errors/
-│   └── 📁 archive/
-│
-├── 📁 logs/                         # 📝 LOGS
-│   ├── app.log
-│   ├── supervisor.log
-│   └── health-check.log
-│
-├── 📄 requirements.txt
-├── 📄 VERSION
-└── 📄 .env                          # Variables de entorno (NO en git)
+├── tests/                           # unit/, integration/, e2e/, performance/, utils/
+├── docs/                            # API.md, ARCHITECTURE.md, CODE_QUALITY.md,
+│                                     # CSV-TO-JSON-WORKFLOW.md, PERFORMANCE.md,
+│                                     # TESTING_BEST_PRACTICES.md, TEST_STRUCTURE*.md
+├── specs/                           # 001-csv-to-json-workflow/, 004-postmortem-converter/,
+│                                     # 006-optimize-csv-converters/
+├── requirements.txt / requirements-dev.txt
+├── pytest.ini
+└── README.md
 ```
+
+`converters/` es autocontenido: tiene su propio `README.md`, sus propios `requirements*.txt` y su propia suite de tests (duplican, casi al carácter, los de la raíz del repo — no se ha confirmado por qué existen ambos conjuntos ni cuál es la fuente de verdad; **no confirmado**).
+
+Ver [`converters/README.md`](../converters/README.md) y [`converters/docs/API.md`](../converters/docs/API.md) para el uso detallado de cada conversor.
 
 ---
 
-## 🔄 Flujo de Deploy: Local → VPS
-
-### Paso 1: Local (Desarrollo)
+## 📁 `dashboards/` — Frontend estático
 
 ```
-En tu máquina:
-
-src/dashboards/*.html          (HTML estático)
-src/converters/                (Python)
-data/input/                    (CSVs para testing)
+dashboards/
+├── index.html                           # Redirige (meta-refresh + JS) a dashboard-portal.html
+├── dashboard-portal.html                # Portal / punto de entrada principal
+├── massive-incidents-dashboard.html     # Dashboard de incidencias masivas
+├── postmortem-dashboard.html            # Dashboard de postmortem / release
+├── assets/
+│   ├── masorange-logo-negative.svg
+│   ├── masorange-logo-positive.svg
+│   └── masorange-mark.svg
+└── README.md
 ```
 
-### Paso 2: Git Push → GitHub
+No hay `css/` ni `js/` compartidos ni build step: cada dashboard es un único `.html` autocontenido, con su CSS y JavaScript en línea (salvo Plotly.js y Google Fonts, que se cargan vía CDN). El portal (`dashboard-portal.html`) es el punto de acceso único, con tarjetas hacia cada dashboard y hacia los paneles hermanos (`/reportes-incidencias`, `/problemas`), que **no** forman parte de este repositorio.
 
-```
-Incluye en git:
-  ✅ src/converters/
-  ✅ src/dashboards/
-  ✅ src/scripts/
-  ✅ docs/
-  ✅ requirements.txt
-
-Excluye de git (.gitignore):
-  ❌ data/input/
-  ❌ data/output/
-  ❌ data/errors/
-  ❌ data/archive/
-  ❌ logs/
-  ❌ .env
-```
-
-### Paso 3: GitHub Actions Deploy
-
-```yaml
-# .github/workflows/deploy.yml
-
-- name: Download artifact
-  # Descarga source code (converters + dashboards)
-
-- name: Deploy to VPS via SSH
-  run: |
-    scp -r src/dashboards/* app@vps:/var/www/release-dashboard/static/
-    scp -r src/converters/* app@vps:/var/www/release-dashboard/app/
-    scp -r src/scripts/* app@vps:/var/www/release-dashboard/app/scripts/
-
-- name: Convert CSVs (en VPS)
-  run: |
-    ssh app@vps 'cd /var/www/release-dashboard && \
-      python3 app/converters/convert_incidents.py data/input/*.csv && \
-      python3 app/converters/convert_postmortems.py data/input/*.csv'
-```
-
-### Paso 4: VPS (Servidor)
-
-```
-/var/www/release-dashboard/
-├── static/              ← Nginx sirve esto
-├── app/                 ← Python ejecuta esto
-├── data/
-│   ├── input/          ← Usuario coloca CSVs aquí
-│   ├── output/         ← Conversores generan JSONs aquí
-│   └── errors/
-└── logs/
-```
+Ver [`dashboards/README.md`](../dashboards/README.md) para el detalle funcional de cada dashboard.
 
 ---
 
-## 🌐 Configuración Nginx (VPS)
+## 📁 `data/` — Datos (no versionados)
 
-```nginx
-# /etc/nginx/sites-available/release-dashboard
-
-server {
-    listen 443 ssl http2;
-    server_name example.com;
-
-    # SSL
-    ssl_certificate /etc/letsencrypt/live/example.com/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/example.com/privkey.pem;
-
-    # ============================================================
-    # ESTÁTICO: Nginx sirve directamente (rápido)
-    # ============================================================
-
-    # Raíz de archivos estáticos
-    root /var/www/release-dashboard/static;
-
-    # Dashboards HTML
-    location / {
-        try_files $uri $uri/ =404;
-        expires 1h;
-    }
-
-    # CSS
-    location /assets/css/ {
-        expires 30d;
-        add_header Cache-Control "public, immutable";
-    }
-
-    # JavaScript
-    location /assets/js/ {
-        expires 30d;
-        add_header Cache-Control "public, immutable";
-    }
-
-    # Imágenes
-    location /images/ {
-        expires 365d;
-        add_header Cache-Control "public, immutable";
-    }
-
-    # ============================================================
-    # DATOS: Nginx sirve JSONs (generados por Python)
-    # ============================================================
-
-    location /data/ {
-        alias /var/www/release-dashboard/data/;
-        expires 1h;  # Cache de 1 hora (se actualiza frecuentemente)
-        add_header Cache-Control "public";
-    }
-
-    # ============================================================
-    # API: Si en futuro añades backend Python
-    # ============================================================
-
-    # location /api/ {
-    #     proxy_pass http://127.0.0.1:8000;
-    #     proxy_set_header Host $host;
-    #     proxy_set_header X-Real-IP $remote_addr;
-    #     proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-    #     proxy_set_header X-Forwarded-Proto $scheme;
-    # }
-
-    # ============================================================
-    # LOGS
-    # ============================================================
-
-    access_log /var/log/nginx/release-dashboard-access.log;
-    error_log /var/log/nginx/release-dashboard-error.log;
-}
 ```
+data/
+├── input/     # CSVs de origen (colocados manualmente o vía POST /api/upload)
+├── output/    # JSONs generados por los conversores + index.json
+└── errors/    # Reportes de error por cada conversión (uno por CSV)
+```
+
+Los tres subdirectorios están cubiertos por `.gitignore` (línea `data/` en `.gitignore`): nada de lo que hay dentro se versiona. No existe un directorio `data/archive/` en el repo actual (a diferencia de lo que describían versiones anteriores de este documento).
 
 ---
 
-## ⚙️ Cron Job para Conversión (VPS)
+## 📁 `scripts/` — Automatización
+
+```
+scripts/
+├── generate-dashboards.sh   # Cron de conversión batch en el VPS
+└── README.md
+```
+
+Es el único script que queda en `scripts/` (las anteriores menciones a `health-check.sh`, `backup.sh`, `watch-and-convert.sh` ya no existen). `generate-dashboards.sh`:
+
+- Define `PROJECT_ROOT="/infocodes/project/release-dashboard-application"` (corregido recientemente, ver commit `df2550d`).
+- Recorre `data/input/*.csv`; si el nombre de archivo contiene `postmortem` usa `convert_postmortems.py`, en caso contrario `convert_incidents.py`.
+- Al terminar, regenera `data/output/index.json` con `build_index.py`.
+- Pensado para ejecutarse por `crontab` en el VPS (ver ejemplos en [`scripts/README.md`](../scripts/README.md)).
+
+**Nota de coherencia**: `scripts/README.md` todavía muestra algunos ejemplos con la ruta `/infocodes/release-dashboard-application/` (sin `/project/`), que no coincide con el `PROJECT_ROOT` real del script ni con las rutas de `nginx.conf`. La ruta correcta y confirmada es `/infocodes/project/release-dashboard-application/`.
+
+---
+
+## 🖥️ `serve_app.py` — Servidor de desarrollo
+
+Servidor HTTP en Python puro (`http.server` + `socketserver`), pensado para desarrollo local en Windows. Se lanza desde la raíz del repo:
 
 ```bash
-# /etc/cron.d/release-dashboard-converter
-
-# Ejecutar conversores cada hora
-0 * * * * app cd /var/www/release-dashboard && \
-  python3 app/converters/convert_incidents.py data/input/*.csv && \
-  python3 app/converters/convert_postmortems.py data/input/*.csv >> logs/converter.log 2>&1
+python serve_app.py
+# http://localhost:8000/dashboards/dashboard-portal.html
 ```
+
+Responsabilidades:
+- Sirve todos los archivos estáticos del repo (dashboards, data, etc.) desde `PROJECT_ROOT`.
+- Sirve `data/output/index.json` de forma dinámica (relee el archivo en cada petición, con `Cache-Control: no-cache`, para evitar que el navegador cachee un índice desactualizado).
+- Expone `POST /api/upload`: recibe un CSV vía `multipart/form-data` (campos `file` y `type`), lo guarda en `data/input/`, invoca `converters/cli/upload_csv.py::run_upload()` para convertirlo, y devuelve el resultado como JSON.
+
+Si solo se necesita lectura de datos ya generados (sin subir CSVs desde el navegador), basta con `python -m http.server 8000` o Live Server — pero entonces `POST /api/upload` no existe y la subida desde el navegador falla con "Failed to fetch".
 
 ---
 
-## 📋 Tabla: Quién Sirve Qué
+## 🔄 CI: `.github/workflows/`
 
-| Archivo/Directorio | Ubicación Local | Ubicación VPS | Quién Sirve | Cómo |
-|-------------------|-----------------|---------------|-----------|------|
-| `dashboard-hub.html` | `src/dashboards/` | `/var/www/release-dashboard/static/` | Nginx | `localhost:8000/dashboard-hub.html` |
-| `dashboard-hub.js` | `src/dashboards/assets/js/` | `/var/www/release-dashboard/static/assets/js/` | Nginx | HTTP GET |
-| `dashboard-hub.css` | `src/dashboards/assets/css/` | `/var/www/release-dashboard/static/assets/css/` | Nginx | HTTP GET |
-| `convert_incidents.py` | `src/converters/` | `/var/www/release-dashboard/app/converters/` | Python | `python3 app/converters/convert_incidents.py` |
-| `build_index.py` | `src/converters/` | `/var/www/release-dashboard/app/converters/` | Python | Llamado por conversor |
-| `index.json` | `data/output/` | `/var/www/release-dashboard/data/output/` | Nginx | HTTP GET (generado por Python) |
-| `incidencias.json` | `data/output/` | `/var/www/release-dashboard/data/output/` | Nginx | HTTP GET (generado por Python) |
-| `incidencias.csv` | `data/input/` | `/var/www/release-dashboard/data/input/` | - | Colocado por usuario |
+```
+.github/workflows/
+├── lint.yml    # flake8, black, isort, pylint, bandit (sobre push/PR a main, develop)
+└── tests.yml   # pytest + cobertura (matriz Python 3.8-3.11), gate de 80% de cobertura
+```
+
+**No existe `deploy.yml`**: se eliminó porque no se usaba y estaba roto. Actualmente no hay ningún pipeline de despliegue automático desde GitHub Actions; el despliegue al VPS es manual (ver más abajo).
+
+Aviso de coherencia interna en `lint.yml` y `tests.yml`: ambos siguen invocando `src`/`src.converters` (p. ej. `flake8 src tests`, `pytest --cov=src.converters`), rutas que ya no existen tras la reorganización a `converters/`. **No confirmado** si estos workflows pasan realmente en su estado actual o si están rotos por este desajuste; no se ha ejecutado el CI como parte de esta auditoría.
 
 ---
 
-## 🔐 Permisos en VPS
+## 🌐 Producción (VPS) — configuración real de `nginx.conf`
 
-```bash
-# Nginx puede leer estático
-sudo chown -R www-data:www-data /var/www/release-dashboard/static/
-sudo chmod -R 755 /var/www/release-dashboard/static/
+A diferencia de lo que describían versiones anteriores de este documento, **no existe** una estructura `/var/www/release-dashboard/{static,app}` ni un paso de "copia" de archivos al servidor. En producción, Nginx apunta **directamente** al checkout de este repositorio (actualizado con `git pull` manual) mediante `alias`, sin build ni etapa intermedia.
 
-# Python puede leer/escribir datos
-sudo chown -R app:app /var/www/release-dashboard/app/
-sudo chown -R app:app /var/www/release-dashboard/data/
-sudo chmod -R 755 /var/www/release-dashboard/app/
-sudo chmod -R 755 /var/www/release-dashboard/data/
-sudo chmod -R 755 /var/www/release-dashboard/data/input
-sudo chmod -R 755 /var/www/release-dashboard/data/output
+Datos confirmados leyendo `nginx.conf` (archivo local, no versionado — está en `.gitignore`):
 
-# Logs pueden escribir app
-sudo chown -R app:app /var/www/release-dashboard/logs/
-sudo chmod -R 755 /var/www/release-dashboard/logs/
-```
+- El repo vive en el VPS en `/infocodes/project/release-dashboard-application` (coincide con `PROJECT_ROOT` de `generate-dashboards.sh`).
+- Nginx escucha en el puerto `8081`, `server_name 10.132.68.85 infocodes.si.orange.es`.
+- `location /dashboards` → `alias /infocodes/project/release-dashboard-application/dashboards;` (sirve el HTML estático directamente desde el repo).
+- `location /data` → `alias /infocodes/project/release-dashboard-application/data;` con `autoindex off` (sirve los JSON generados por los conversores).
+- `location /api` → `proxy_pass http://fastapi_backend;` con `upstream fastapi_backend { server localhost:8000; }`. Este backend FastAPI vive en el repo hermano `cso-incident-masivas-report` (**no confirmado directamente desde `nginx.conf`**, que solo define el upstream por puerto; la asociación con ese repo se da por indicación externa a este documento).
+- `location /reportes-incidencias` → `alias /infocodes/project/cso-incident-masivas-report/app;` — app estática de otro repo hermano, ajena a este proyecto.
+- `location /problemas` → `proxy_pass http://gestion_problemas_backend;` con `upstream gestion_problemas_backend { server localhost:3001; }`. Es una app Next.js con `basePath=/problemas`, gestionada con `pm2` (según comentario en el propio `nginx.conf`); tampoco pertenece a este repositorio.
+- `location /static` → `alias /infocodes/project/dashboardsonar-application-python/infocodest/static;` — de otra aplicación distinta (`dashboardsonar-application-python`), no relacionada con este proyecto.
+- `location /` (raíz) → `proxy_pass http://unix:/infocodes/var/run/infocodes.sock;` con `proxy_cache`, es decir, delega a otra aplicación vía socket Unix; este proyecto no ocupa la raíz del dominio.
 
----
+En resumen, este repositorio solo controla `/dashboards` (estático) y `/data` (JSON generados); todo lo demás en `nginx.conf` pertenece a aplicaciones hermanas que conviven en el mismo VPS y mismo dominio.
 
-## 📦 El Archivo `.env` (NO en Git)
-
-Solo en VPS, no en git:
-
-```bash
-# /var/www/release-dashboard/.env
-
-FLASK_ENV=production
-DEBUG=False
-DATA_DIR=/var/www/release-dashboard/data
-STATIC_DIR=/var/www/release-dashboard/static
-LOG_DIR=/var/www/release-dashboard/logs
-APP_DIR=/var/www/release-dashboard/app
-```
+**Generación de los JSON en el VPS**: no vía CI/CD, sino por `scripts/generate-dashboards.sh` ejecutado periódicamente (cron — la periodicidad exacta configurada en el `crontab` real del VPS **no está confirmada**; `scripts/README.md` solo documenta opciones sugeridas).
 
 ---
 
-## 🚀 Diferencia: Local vs VPS
+## 📋 Tabla: quién sirve qué
 
-### Local (Desarrollo)
-
-```
-python -m http.server 8000
-    ↓
-Sirve TODO desde raíz del proyecto:
-  - src/dashboards/*.html       (estático)
-  - src/converters/*.py         (no sirve, solo ejecutas)
-  - data/output/*.json          (estático, servido por http.server)
-```
-
-### VPS (Producción)
-
-```
-Nginx en puerto 80/443
-    ↓
-    ├─ Estático: /var/www/release-dashboard/static/
-    │   ├─ dashboards/*.html
-    │   └─ assets/css/, /js/
-    │
-    └─ Datos: /var/www/release-dashboard/data/output/
-        └─ index.json, *.json
-
-Python ejecutándose por cron/supervisor
-    ↓
-    ├─ Lee: /var/www/release-dashboard/data/input/*.csv
-    └─ Escribe: /var/www/release-dashboard/data/output/*.json
-```
+| Recurso | Ubicación en el repo | Quién lo sirve en producción |
+|---|---|---|
+| `dashboard-portal.html`, `*.html` de `dashboards/` | `dashboards/` | Nginx, `alias /dashboards` |
+| Logos SVG | `dashboards/assets/` | Nginx, `alias /dashboards` |
+| `index.json`, `*-massive.json`, `*-postmortem.json` | `data/output/` | Nginx, `alias /data` (autoindex off) |
+| CSVs de origen | `data/input/` | No se sirven vía Nginx; los escribe `serve_app.py` (dev) o se colocan manualmente (VPS) |
+| Conversores Python | `converters/` | Se ejecutan por `scripts/generate-dashboards.sh` (cron) en el VPS, o manualmente/vía `serve_app.py` en local |
+| `/api/*` | Fuera de este repo | Backend FastAPI de otro repo (proxy Nginx a `localhost:8000`) |
 
 ---
 
-## 📝 Archivos a Actualizar en VPS
+## 🚀 Local vs Producción, en una frase
 
-Cuando haces deploy (push → GitHub Actions → VPS):
-
-```bash
-# Estos se copian al VPS
-DEPLOY:
-  src/dashboards/          → /var/www/release-dashboard/static/
-  src/converters/          → /var/www/release-dashboard/app/
-  src/scripts/             → /var/www/release-dashboard/app/scripts/
-  requirements.txt         → /var/www/release-dashboard/
-  VERSION                  → /var/www/release-dashboard/
-
-# Estos NO se tocan (data del usuario)
-NO DEPLOY:
-  data/input/*             (usuario coloca)
-  data/output/*            (Python genera)
-  data/errors/*            (Python genera)
-  logs/*                   (Python escribe)
-  .env                     (secrets del server)
-```
+- **Local (desarrollo)**: `python serve_app.py` desde la raíz sirve todo el repo (`dashboards/`, `data/`) y añade `POST /api/upload` para convertir CSVs desde el navegador. Alternativa de solo lectura: `python -m http.server 8000` o Live Server (sin subida de CSV).
+- **Producción (VPS)**: Nginx sirve `dashboards/` y `data/` directamente desde el checkout git del repo vía `alias` (sin copiar archivos a otra ruta); los JSON de `data/output/` se regeneran periódicamente con `scripts/generate-dashboards.sh` vía cron; no hay backend propio de este repo para `/api` (es de un repo hermano) ni pipeline de despliegue automático (no hay `deploy.yml`).
 
 ---
 
-## ✅ Checklist: Verificar Separación Correcta
+## Referencias
 
-### En Local
-
-- [ ] `src/dashboards/` contiene solo HTML, CSS, JS
-- [ ] `src/converters/` contiene solo código Python
-- [ ] `data/` está en `.gitignore`
-- [ ] `requirements.txt` está en raíz
-
-### En VPS
-
-- [ ] `/var/www/release-dashboard/static/` = HTML, CSS, JS (lee Nginx)
-- [ ] `/var/www/release-dashboard/app/` = código Python (ejecuta app user)
-- [ ] `/var/www/release-dashboard/data/` = datos (lee/escribe app user)
-- [ ] Nginx apunta a `/var/www/release-dashboard/static/` como root
-- [ ] Cron job ejecuta Python contra `/var/www/release-dashboard/data/`
+- [`../CLAUDE.md`](../CLAUDE.md) — comportamiento funcional detallado de ambos dashboards y de los conversores
+- [`../converters/README.md`](../converters/README.md) — uso de los conversores CSV→JSON
+- [`../converters/docs/API.md`](../converters/docs/API.md) — contrato de los JSON de salida
+- [`../dashboards/README.md`](../dashboards/README.md) — estructura y uso de los dashboards
+- [`../scripts/README.md`](../scripts/README.md) — instalación y crontab de `generate-dashboards.sh`
+- [`../.github/workflows/lint.yml`](../.github/workflows/lint.yml), [`../.github/workflows/tests.yml`](../.github/workflows/tests.yml) — pipelines de CI
 
 ---
 
-## 🎯 Resumen
-
-| Aspecto | Responsable |
-|--------|-----------|
-| Servir HTML, CSS, JS | **Nginx** (rápido, estático) |
-| Ejecutar conversores | **Python** (cron job o CI/CD) |
-| Leer/escribir datos | **Python** |
-| Servir JSONs generados | **Nginx** (desde `/data/output/`) |
-| Servir index.json | **Nginx** (generado por Python) |
-
-**Beneficio**:
-- Nginx es rápido para estático
-- Python ejecuta solo cuando necesita
-- Separación clara de responsabilidades
-- Fácil de debuggear y mantener
-
----
-
-**Fecha de Actualización**: 2026-05-14
-**Versión**: 1.0
+**Última actualización**: 2026-07-09

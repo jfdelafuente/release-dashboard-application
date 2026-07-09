@@ -148,7 +148,7 @@ def test_converter_handles_utf8_encoding():
 ### When to Write Documentation
 
 - New features: Add to relevant docs
-- API changes: Update docs/API.md
+- API changes: Update converters/docs/API.md
 - Setup changes: Update docs/DEVELOPMENT.md
 - Deployment changes: Update docs/DEPLOYMENT.md
 
@@ -179,10 +179,11 @@ def test_converter_handles_utf8_encoding():
 The pre-commit hook automatically prevents committing:
 
 ```bash
-# Install hook (one-time setup)
-./scripts/deploy/install-hooks.sh
+# Instalar el hook (configuración única)
+cp config/pre-commit-hook.sh .git/hooks/pre-commit
+chmod +x .git/hooks/pre-commit
 
-# Run manually
+# Ejecutarlo manualmente
 bash config/pre-commit-hook.sh
 ```
 
@@ -195,7 +196,7 @@ bash config/pre-commit-hook.sh
 Profile code before optimizing:
 
 ```bash
-python -m cProfile -s cumulative src/converters/convert_incidents.py data/input/sample.csv
+python -m cProfile -s cumulative converters/cli/convert_incidents.py data/input/sample.csv
 ```
 
 ## Release Process
@@ -213,7 +214,7 @@ Example semantic versioning:
 
 ## Questions?
 
-- Check [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) for common issues
+- Check [TROUBLESHOOTING.md](TROUBLESHOOTING.md) for common issues
 - Review [DIRECTORY-STRUCTURE.md](../DIRECTORY-STRUCTURE.md) for file organization
 - Read existing code for patterns and conventions
 
