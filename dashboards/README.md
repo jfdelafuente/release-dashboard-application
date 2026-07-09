@@ -1,120 +1,97 @@
 # Release Dashboards
 
-Dashboards web interactivos para análisis y visualización de incidencias masivas y postmortems.
+Dashboards web interactivos para análisis y visualización de incidencias masivas y postmortems de release, con la identidad visual de MASORANGE.
 
 ## 📂 Estructura
 
 ```
 dashboards/
-├── index.html                           # Portal principal
-├── dashboard-portal.html                # Hub central de dashboards
+├── index.html                           # Redirige a dashboard-portal.html
+├── dashboard-portal.html                # Portal principal (punto de entrada)
 ├── massive-incidents-dashboard.html     # Dashboard de incidencias masivas
-├── postmortem-dashboard.html            # Dashboard de postmortem
-├── css/                                 # Estilos compartidos
-├── js/                                  # Scripts compartidos
+├── postmortem-dashboard.html            # Dashboard de postmortem / release
+├── assets/                              # Logos MASORANGE (SVG)
 └── README.md                            # Este archivo
 ```
 
-**Solo código frontal**: HTML, CSS, y JavaScript. Sin configuraciones de deploy ni documentación técnica.
+**Solo código frontal**: HTML, CSS y JavaScript en línea en cada página. No hay `css/`/`js/` compartidos ni build step: cada dashboard es un único archivo autocontenido (salvo Plotly.js y las fuentes, que se cargan vía CDN).
 
 ## 🚀 Características
 
-- 📊 **Dashboard Hub**: Punto de acceso unificado con KPIs en tiempo real
-- 📈 **Massive Incidents Dashboard**: Análisis temporal con tendencias, filtros y backlog
-- 🔍 **Postmortem Dashboard**: Análisis detallado por despliegues (PAP/MESA)
-- ⚡ **Sin dependencias**: Puro HTML5, CSS3 y JavaScript (Plotly.js vía CDN)
-- 📱 **Responsive**: Funciona en desktop, tablet y móvil
-- 🔄 **Auto-carga**: Dashboard Hub carga datos automáticamente desde `index.json`
+- 🧭 **Portal**: punto de acceso único, con tarjetas clicables a cada dashboard (incluye enlaces a Reportes de Incidencias y Gestión de Problemas, que son apps de los repos hermanos, no de este repositorio)
+- 📈 **Incidencias Masivas**: filtro de tiempo global, KPIs con tendencias, gráficas temporales (entradas/solucionadas/backlog), incidencias abiertas por estado, tabla filtrable y ordenable con enlaces a Remedy
+- 🔍 **Postmortem / Release**: análisis por despliegue (PAP/MESA), KPIs de resolución, distribución por sistema y por estado, tabla filtrable y ordenable
+- 📤 **Subida de CSV desde el navegador**: arrastra o selecciona un CSV y se convierte automáticamente (requiere `serve_app.py`, ver más abajo)
+- 🎨 **Identidad MASORANGE**: barra superior negra con logo, acento naranja `#FF7900` sobre neutros cálidos, tipografía Inter (interfaz) + IBM Plex Mono (cifras/datos)
+- 📱 **Responsive**: funciona en desktop, tablet y móvil
+- ⚡ **Sin dependencias propias**: HTML5, CSS3 y JavaScript vanilla (Plotly.js vía CDN)
 
 ## 📦 Prerequisitos
 
 ### Datos
 
-Los dashboards requieren archivos JSON en `../data/output/` generados por los [converters](../converters/README.md).
+Los dashboards consumen JSON de `../data/output/`, generados por los [converters](../converters/README.md) — automáticamente al subir un CSV desde el navegador, o manualmente con los scripts de `converters/scripts/bin/`.
 
 **Formato esperado:**
-- `*-massive.json`: Datos de incidencias masivas
-- `*-postmortem.json`: Datos de postmortem (opcional)
-- `index.json`: Índice de datasets disponibles (auto-generado)
+- `*-massive.json`: datos de incidencias masivas
+- `*-postmortem.json`: datos de postmortem (opcional)
+- `index.json`: índice de datasets disponibles (auto-generado por `build_index.py`)
 
-Ver [Contrato JSON](../converters/docs/API.md) para estructura detallada.
+Ver [Contrato JSON](../converters/docs/API.md) para la estructura detallada.
 
 ### Navegador
 
-- Chrome/Edge/Firefox/Safari moderno (soporta ES6+)
-- Conexión a internet (para Plotly.js y Google Fonts vía CDN)
+- Chrome/Edge/Firefox/Safari moderno (ES6+)
+- Conexión a internet (Plotly.js y Google Fonts vía CDN)
 
 ## 🎯 Uso
 
-### Opción A: Live Server (VSCode) - Recomendado
+### Con subida de CSV desde el navegador (recomendado)
 
-1. Instalar extensión "Live Server"
-2. Click derecho en `index.html`
-3. Seleccionar "Open with Live Server"
-4. Abre automáticamente en `http://localhost:5500/`
-
-### Opción B: Python HTTP Server
+Desde la **raíz del repositorio** (no desde `dashboards/`):
 
 ```bash
-# Desde el directorio dashboards
+python serve_app.py
+# Abre: http://localhost:8000/dashboards/dashboard-portal.html
+```
+
+`serve_app.py` sirve los archivos estáticos **y** el endpoint `POST /api/upload`, que guarda el CSV en `data/input/`, ejecuta el conversor correspondiente y deja el JSON listo en `data/output/`.
+
+### Solo lectura (datos ya generados, sin subida desde el navegador)
+
+Si solo quieres ver datos que ya están en `data/output/`, sirve sin más:
+
+```bash
+# Con Live Server (VSCode): clic derecho en dashboard-portal.html → "Open with Live Server"
+# o con Python, desde la raíz del repo:
 python -m http.server 8000
-
-# Abre en navegador: http://localhost:8000/
 ```
 
-### Opción C: Nginx (Producción)
+> ⚠️ Ninguna de estas dos opciones implementa `POST`: si intentas subir un
+> CSV desde el navegador con alguna de ellas, fallará con "Failed to
+> fetch". Para subir CSVs, usa siempre `serve_app.py`.
 
-```nginx
-server {
-    listen 80;
-    server_name dashboards.example.com;
-    root /var/www/dashboards;
+### Producción (Nginx)
 
-    location / {
-        try_files $uri $uri/ /index.html;
-    }
-
-    # Cache assets
-    location ~* \.(js|css|png|jpg|jpeg|gif|ico|woff|woff2)$ {
-        expires 1y;
-        add_header Cache-Control "public, immutable";
-    }
-}
-```
+En producción, `dashboards/` se sirve como alias estático y `/api` se enruta al backend FastAPI que ejecuta los conversores (ver `nginx.conf` en la raíz del repo para la configuración completa, incluida la de los paneles hermanos `/reportes-incidencias` y `/problemas`).
 
 ## 📊 Dashboards Disponibles
 
-### Dashboard Hub (`index.html`)
+### Portal (`dashboard-portal.html`)
 
-**Punto de entrada principal** - Carga automáticamente los datos.
+**Punto de entrada.** Tarjetas clicables a cada dashboard, con contador de registros e índice de datasets cargados (`../data/output/index.json`).
 
-**Características:**
-- KPIs resumidas (total, pendientes, tendencias)
-- Auto-detección de datasets disponibles
-- Navegación a dashboards especializados
-- Breadcrumbs para volver
-
-**Flujo:**
-1. Carga `../data/output/index.json`
-2. Extrae KPIs del `_metadata`
-3. Muestra links a dashboards con datos disponibles
-
-### Massive Incidents Dashboard (`src/massive-incidents-dashboard.html`)
+### Incidencias Masivas (`massive-incidents-dashboard.html`)
 
 **Análisis temporal de incidencias masivas.**
 
-**Características:**
-- Filtro de tiempo global (7d, 15d, 30d, 90d, 6m, año, custom)
-- KPI cards dinámicas con tendencias (color-coded)
-- Gráficas temporales:
-  - Evolución diaria de entradas/solucionadas
-  - Backlog acumulado
-  - Incidencias abiertas por estado
-- Filtros de tabla (Estado, Sistema, Urgencia)
-- Tabla ordenable con links a Remedy
-- Debug table con cálculos diarios
+- Filtro de tiempo global (7d, 15d, 30d, 90d, 6m, año, año en curso, todo)
+- KPI cards con tendencias (7d/15d/30d, color-coded)
+- Gráficas temporales: entradas/solucionadas/backlog, incidencias abiertas por estado
+- Filtros de tabla (Estado, Grupo asignado, Urgencia)
+- Tabla ordenable con enlaces a Remedy
 
-**Entrada:** JSON con estructura masivas
+**Entrada:** JSON con estructura de incidencias masivas, p. ej.:
 ```json
 {
   "ID de incidencia": "INC000003884945",
@@ -127,201 +104,52 @@ server {
 }
 ```
 
-### Postmortem Dashboard (`src/postmortem-dashboard.html`)
+### Postmortem / Release (`postmortem-dashboard.html`)
 
-**Análisis detallado de postmortems.**
+**Análisis detallado de postmortems por despliegue.**
 
-**Características:**
-- Análisis por despliegue (PAP/MESA)
-- KPI desglosadas por tipo de despliegue
-- Visualizaciones por estado de resolución
-- Filtros avanzados
-- Detalles de cada postmortem
-
-**Entrada:** JSON con estructura postmortem
-
-## 🎨 Personalización
-
-### Cambiar colores
-
-En `src/assets/css/dashboard-hub.css`:
-
-```css
-/* Colores primarios */
-:root {
-  --primary-color: #f97316;      /* Naranja principal */
-  --secondary-color: #fb923c;    /* Naranja claro */
-  --dark-color: #c2410c;         /* Naranja oscuro */
-  --success-color: #22c55e;      /* Verde (tendencia positiva) */
-  --danger-color: #ef4444;       /* Rojo (tendencia negativa) */
-  --neutral-color: #6b7280;      /* Gris (estable) */
-}
-```
-
-### Cambiar KPIs mostradas
-
-En `src/dashboard-hub.html` y `src/massive-incidents-dashboard.html`:
-- Buscar sección "KPI Cards"
-- Modificar campos extraídos del `_metadata.kpis`
-- Ajustar cálculos según necesidad
-
-### Agregar nuevas gráficas
-
-1. Copiar estructura HTML de gráfica existente
-2. Crear función JavaScript en `assets/js/dashboard-hub.js`
-3. Usar Plotly.newPlot() para renderizar
-4. Conectar con datos filtrados
-
-Ejemplo:
-```javascript
-function createMyChart(filteredData) {
-  const trace = {
-    x: filteredData.map(r => r['Fecha de envío']),
-    y: filteredData.map(r => r['Impacto']),
-    type: 'scatter'
-  };
-  Plotly.newPlot('myChartDiv', [trace]);
-}
-```
-
-## 📱 Responsividad
-
-Los dashboards usan CSS Grid y Flexbox. Para optimizar para móvil:
-
-```css
-@media (max-width: 768px) {
-  .kpi-container {
-    grid-template-columns: 1fr; /* Una columna en móvil */
-  }
-
-  .chart-container {
-    height: 300px; /* Reducir altura */
-  }
-}
-```
-
-## 🔌 Integración con Otros Sistemas
-
-Los dashboards pueden consumir datos de **cualquier fuente** que genere JSON compatible:
-
-```javascript
-// Ejemplo: Cargar desde API externa
-fetch('https://api.example.com/incidencias')
-  .then(r => r.json())
-  .then(data => {
-    // Asegurar que cumple formato esperado
-    allIncidents = data.data || data;
-    renderDashboard();
-  });
-```
-
-No es necesario usar los converters de este repositorio.
-
-## 🚀 Despliegue
-
-### Staging
-
-```bash
-./scripts/deploy/deploy.sh staging
-```
-
-### Production
-
-```bash
-./scripts/deploy/deploy.sh production
-```
-
-Ver [DEPLOYMENT.md](docs/DEPLOYMENT.md) para configuración detallada.
+- KPIs: total, % cerradas, % resueltas PaP, % resueltas Mesa
+- Gráfica temporal de entradas/resoluciones/backlog
+- Distribución por sistema y por estado
+- Filtros de tabla (Estado, Despliegue, Impacto) y tabla ordenable
 
 ## 🐛 Debugging
 
 ### Ver logs del navegador
 
-1. Abrir DevTools (F12)
-2. Tab "Console"
-3. Buscar mensajes de error
+1. Abrir DevTools (F12) → pestaña "Console"
+2. Los dashboards registran ahí los fallos de carga de datos (p. ej. si `index.json` no existe todavía porque no se ha subido ningún CSV)
 
 ### Verificar datos cargados
 
-En console:
+En la consola del navegador:
 ```javascript
-console.log(allIncidents);      // Todos los datos
-console.log(filteredIncidents); // Datos después de filtros
-console.log(globalBacklogData); // Datos de backlog por fecha
+console.log(allIncidents);      // Todos los datos cargados
+console.log(filteredIncidents); // Datos después de aplicar filtros
 ```
-
-### Probar con datos de ejemplo
-
-1. Crear archivo JSON de prueba en `../data/output/test.json`
-2. Actualizar `index.json` manualmente
-3. Recargar dashboard
-
-## 📊 Estructura de Archivos
-
-```
-dashboards/
-├── src/
-│   ├── dashboard-hub.html              # Punto de entrada principal
-│   ├── massive-incidents-dashboard.html # Dashboard masivas
-│   ├── postmortem-dashboard.html       # Dashboard postmortems
-│   └── assets/
-│       ├── css/dashboard-hub.css       # Estilos globales
-│       └── js/dashboard-hub.js         # Lógica Dashboard Hub
-├── scripts/deploy/                     # Scripts de despliegue
-├── specs/002-dashboard-hub/            # Especificación
-├── docs/                               # Documentación
-└── index.html                          # Redirect a Dashboard Hub
-```
-
-## 📈 Performance
-
-- Gráficas actualizadas en <500ms para 1000 registros
-- Memory footprint: <50MB con 10K registros
-- CDN caching para assets (Plotly.js, Google Fonts)
 
 ## 🔐 Seguridad
 
-- Sin autenticación requerida (asume acceso controlado en red)
-- Sin llamadas a APIs externas (excepto CDN)
-- Datos procesados localmente en navegador
-- XSS protection a través de sanitización de strings
+- Sin autenticación propia (asume acceso controlado en red/VPN)
+- Sin llamadas a APIs externas salvo CDN (Plotly.js, Google Fonts)
+- Los datos se procesan en el navegador; la subida de CSV pasa por el backend, que valida la extensión antes de guardar
 
 ## 🤝 Desarrollo
 
-### Stack
+- **HTML5 + CSS3 + JavaScript (ES6+)**, sin framework ni build step
+- **Plotly.js** para las gráficas interactivas
+- **Google Fonts**: Inter (interfaz) e IBM Plex Mono (cifras)
 
-- **HTML5**: Estructura semántica
-- **CSS3**: Flexbox, Grid, Media queries
-- **JavaScript (ES6+)**: Manipulación DOM, filtrado, cálculos
-- **Plotly.js**: Gráficas interactivas
-- **Google Fonts**: Tipografía (Poppins)
-
-### Agregar nueva funcionalidad
-
-1. Crear rama: `git checkout -b feature/nuevo-dashboard`
-2. Editar archivos en `src/`
-3. Probar localmente con `python -m http.server 8000`
-4. Commit y push
-5. CI/CD desplegará automáticamente
-
-## 📚 Referencias
-
-- [Dashboard Hub Spec](specs/002-dashboard-hub/spec.md)
-- [Plotly.js Docs](https://plotly.com/javascript/)
-- [MDN Web Docs](https://developer.mozilla.org/)
+Para añadir o modificar un dashboard, edita directamente el `.html` correspondiente (estilos y lógica viven en el mismo archivo) y pruébalo con `python serve_app.py` desde la raíz del repo.
 
 ## 📞 Soporte
 
 Para problemas:
-1. Verificar que JSON de entrada cumple el formato esperado
-2. Revisar logs del navegador (DevTools)
-3. Consultar documentación en `docs/`
-4. Verificar que converters generaron datos correctamente
-
-## 📝 Licencia
-
-Parte del proyecto Release Dashboard Application.
+1. Verificar que el JSON en `data/output/` cumple el formato esperado (ver [converters/docs/API.md](../converters/docs/API.md))
+2. Revisar la consola del navegador (DevTools)
+3. Si la subida de CSV falla con "Failed to fetch", confirmar que el servidor es `serve_app.py` y no `python -m http.server` / Live Server
+4. Consultar [docs/TROUBLESHOOTING.md](../docs/TROUBLESHOOTING.md)
 
 ---
 
-**Última actualización**: 2026-06-01
+**Última actualización**: 2026-07-09
