@@ -7,7 +7,6 @@ Resuelve problemas de sincronización de archivos en Windows
 import os
 import json
 import sys
-import subprocess
 import http.server
 import socketserver
 from pathlib import Path
@@ -18,12 +17,10 @@ from email import policy
 PROJECT_ROOT = Path(__file__).parent.absolute()
 os.chdir(PROJECT_ROOT)
 
-PORT = 8000
+sys.path.insert(0, str(PROJECT_ROOT / 'converters' / 'cli'))
+from upload_csv import run_upload  # noqa: E402
 
-CONVERTER_SCRIPTS = {
-    'massive': PROJECT_ROOT / 'converters' / 'cli' / 'convert_incidents.py',
-    'postmortem': PROJECT_ROOT / 'converters' / 'cli' / 'convert_postmortems.py',
-}
+PORT = 8000
 
 
 class CustomHTTPHandler(http.server.SimpleHTTPRequestHandler):
@@ -78,38 +75,21 @@ class CustomHTTPHandler(http.server.SimpleHTTPRequestHandler):
             self._send_json(400, {'success': False, 'error': 'El archivo debe tener extensión .csv'})
             return
 
-        script_path = CONVERTER_SCRIPTS.get(dashboard_type, CONVERTER_SCRIPTS['massive'])
-        if not script_path.exists():
-            self._send_json(500, {'success': False, 'error': f'Converter no encontrado: {script_path}'})
-            return
-
         input_dir = PROJECT_ROOT / 'data' / 'input'
         input_dir.mkdir(parents=True, exist_ok=True)
         csv_path = input_dir / filename
         csv_path.write_bytes(file_bytes)
         print(f"  Guardado: {csv_path} ({len(file_bytes)} bytes)")
 
-        result = subprocess.run(
-            [sys.executable, str(script_path), str(csv_path)],
-            capture_output=True,
-            text=True,
-            cwd=str(PROJECT_ROOT)
-        )
+        result = run_upload(csv_path, dashboard_type, PROJECT_ROOT)
 
-        if result.returncode != 0:
-            print(f"  Error de conversión: {result.stderr}")
-            self._send_json(500, {
-                'success': False,
-                'error': 'El CSV se guardó pero falló la conversión a JSON',
-                'details': (result.stdout + result.stderr)[-4000:]
-            })
+        if not result['success']:
+            print(f"  Error de conversión: {result.get('details', result.get('error'))}")
+            self._send_json(500, result)
             return
 
         print(f"  Conversión OK: {filename}")
-        self._send_json(200, {
-            'success': True,
-            'message': f'{filename} guardado en data/input/ y convertido correctamente'
-        })
+        self._send_json(200, result)
 
     def _send_json(self, status, payload):
         body = json.dumps(payload, ensure_ascii=False).encode('utf-8')
@@ -155,7 +135,7 @@ class CustomHTTPHandler(http.server.SimpleHTTPRequestHandler):
 print(f"Release Dashboard Server")
 print(f"Sirviendo desde: {PROJECT_ROOT}")
 print(f"URL: http://localhost:{PORT}/")
-print(f"Dashboard Portal: http://localhost:{PORT}/dashboards/src/dashboard-portal.html")
+print(f"Dashboard Portal: http://localhost:{PORT}/dashboards/dashboard-portal.html")
 print(f"\nPresiona Ctrl+C para detener el servidor\n")
 
 with socketserver.TCPServer(("", PORT), CustomHTTPHandler) as httpd:
