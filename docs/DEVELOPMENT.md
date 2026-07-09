@@ -4,7 +4,7 @@ Complete guide for setting up a development environment.
 
 ## Prerequisites
 
-- Python 3.6 or higher: `python --version`
+- Python 3.8 or higher: `python --version`
 - Git: `git --version`
 - Text editor or IDE (VS Code, PyCharm, Sublime, etc.)
 
@@ -75,22 +75,25 @@ tests/... PASSED                           [100%]
 ### Start Dashboard Server
 
 ```bash
-# Using Python built-in server
-python -m http.server 8000
-
-# Then visit: http://localhost:8000
+python serve_app.py
+# Then visit: http://localhost:8000/dashboards/dashboard-portal.html
 ```
+
+> ⚠️ Don't use `python -m http.server` or Live Server: they only serve
+> static files and don't implement `POST`, so uploading a CSV from the
+> browser fails with "Failed to fetch". `serve_app.py` adds the
+> `/api/upload` endpoint that the dashboards need.
 
 ### Convert CSV to JSON
 
 ```bash
 # Convert incidents CSV
-python src/converters/convert_incidents.py data/input/sample.csv
+python converters/cli/convert_incidents.py data/input/sample.csv
 
-# Output location: data/output/sample.json
+# Output location: data/output/sample-massive.json
 ```
 
-See [docs/API.md](API.md) for detailed converter documentation.
+See [converters/docs/API.md](../converters/docs/API.md) for detailed converter documentation.
 
 ## Development Workflow
 
@@ -109,11 +112,13 @@ Edit code in your favorite editor.
 ### 3. Run Tests
 
 ```bash
+cd converters
+
 # Run all tests
 pytest tests/ -v
 
 # Run specific test
-pytest tests/unit/test_converter.py -v
+pytest tests/unit/ -v
 
 # Run with coverage
 pytest tests/ --cov=src --cov-report=html
@@ -149,39 +154,39 @@ git push origin feature/your-feature-name
 
 ## Code Organization
 
-See [DIRECTORY-STRUCTURE.md](../DIRECTORY-STRUCTURE.md) for where to place:
-- Python converters: `src/converters/`
-- Dashboards (HTML/CSS): `src/dashboards/`
-- Tests: `tests/` (mirror src/ structure)
-- Scripts: `scripts/bin/` or `scripts/deploy/`
+See [PROJECT-STRUCTURE.md](PROJECT-STRUCTURE.md) for the full layout. In short:
+- Python converters: `converters/cli/` (entry points) + `converters/src/csv_to_json/` (logic)
+- Dashboards (HTML/CSS/JS, inline per file, no shared assets folder): `dashboards/`
+- Converter tests: `converters/tests/` (there's no top-level `tests/`)
+- Batch/cron script: `scripts/generate-dashboards.sh` (there's no `scripts/bin/` or `scripts/deploy/`)
 
 ## Common Tasks
 
 ### Adding a New Converter
 
-1. Create file: `src/converters/convert_new_data.py`
+1. Create file: `converters/cli/convert_new_data.py`
 2. Implement converter function
-3. Add tests: `tests/unit/test_convert_new_data.py`
-4. Update [docs/API.md](API.md) with usage
+3. Add tests: `converters/tests/unit/test_convert_new_data.py`
+4. Update [converters/docs/API.md](../converters/docs/API.md) with usage
 
 ### Modifying a Dashboard
 
-1. Edit HTML: `src/dashboards/dashboard-name.html`
-2. Edit styles: `src/dashboards/assets/css/`
-3. Test in browser: http://localhost:8000/src/dashboards/dashboard-name.html
-4. Update [docs/](.) with any new features
+1. Edit the dashboard's `.html` directly (styles and JS live inline in the same file): `dashboards/dashboard-name.html`
+2. Test with `python serve_app.py` (not `http.server`/Live Server — see the warning above): http://localhost:8000/dashboards/dashboard-name.html
+3. Update [docs/](.) with any new features
 
 ### Running Specific Tests
 
+Run these from `converters/` (that's where `pytest.ini` lives):
+
 ```bash
+cd converters
+
 # Test file
-pytest tests/unit/test_converter.py -v
+pytest tests/unit/test_csv_reader.py -v
 
 # Test function
-pytest tests/unit/test_converter.py::test_encoding_detection -v
-
-# Test class
-pytest tests/unit/test_converter.py::TestConverter -v
+pytest tests/unit/encoding/test_encoding.py::TestEncodingDetection::test_detect_utf8 -v
 
 # By pattern
 pytest tests/ -k "csv" -v
@@ -192,10 +197,11 @@ pytest tests/ -k "csv" -v
 The repository includes pre-commit hooks to prevent committing secrets:
 
 ```bash
-# Install hooks (one-time setup)
-./scripts/deploy/install-hooks.sh
+# Install the hook (one-time setup)
+cp config/pre-commit-hook.sh .git/hooks/pre-commit
+chmod +x .git/hooks/pre-commit
 
-# Pre-commit hook runs automatically on: git commit
+# Runs automatically on: git commit
 
 # To run manually:
 bash config/pre-commit-hook.sh
@@ -234,8 +240,8 @@ source venv/bin/activate
 
 ```bash
 # Make scripts executable
-chmod +x scripts/bin/*.sh
-chmod +x scripts/deploy/*.sh
+chmod +x converters/scripts/bin/*.sh
+chmod +x scripts/generate-dashboards.sh
 ```
 
 ### Pytest Not Found
@@ -315,7 +321,7 @@ python -m cProfile -s cumulative src/converters/convert_incidents.py data/input/
 
 1. Read [CONTRIBUTING.md](CONTRIBUTING.md) for coding standards
 2. Review [DIRECTORY-STRUCTURE.md](../DIRECTORY-STRUCTURE.md) for file organization
-3. Check [docs/API.md](API.md) for API documentation
+3. Check [converters/docs/API.md](../converters/docs/API.md) for API documentation
 4. Explore existing code in `src/` for patterns
 
 ---

@@ -20,12 +20,12 @@ Script principal que ejecuta todo el proceso de conversión de datos.
 
 1. **Hacer el script ejecutable:**
 ```bash
-chmod +x /infocodes/release-dashboard-application/scripts/generate-dashboards.sh
+chmod +x /infocodes/project/release-dashboard-application/scripts/generate-dashboards.sh
 ```
 
 2. **Configurar Python (en el VPS):**
 ```bash
-cd /infocodes/release-dashboard-application
+cd /infocodes/project/release-dashboard-application
 pip install -r converters/requirements.txt
 ```
 
@@ -39,17 +39,17 @@ pip install -r converters/requirements.txt
 
 **Opción A: Diariamente a las 2 AM**
 ```bash
-0 2 * * * /infocodes/release-dashboard-application/scripts/generate-dashboards.sh >> /var/log/dashboards-cron.log 2>&1
+0 2 * * * /infocodes/project/release-dashboard-application/scripts/generate-dashboards.sh >> /var/log/dashboards-cron.log 2>&1
 ```
 
 **Opción B: Cada 6 horas**
 ```bash
-0 */6 * * * /infocodes/release-dashboard-application/scripts/generate-dashboards.sh >> /var/log/dashboards-cron.log 2>&1
+0 */6 * * * /infocodes/project/release-dashboard-application/scripts/generate-dashboards.sh >> /var/log/dashboards-cron.log 2>&1
 ```
 
 **Opción C: Cada hora**
 ```bash
-0 * * * * /infocodes/release-dashboard-application/scripts/generate-dashboards.sh >> /var/log/dashboards-cron.log 2>&1
+0 * * * * /infocodes/project/release-dashboard-application/scripts/generate-dashboards.sh >> /var/log/dashboards-cron.log 2>&1
 ```
 
 ### Agregar a Crontab
@@ -69,13 +69,13 @@ Los logs se guardan en:
 
 Ver logs:
 ```bash
-tail -f /infocodes/release-dashboard-application/logs/dashboards-generation-*.log
+tail -f /infocodes/project/release-dashboard-application/logs/dashboards-generation-*.log
 ```
 
 ### Estructura de Directorios Esperada
 
 ```
-/infocodes/release-dashboard-application/
+/infocodes/project/release-dashboard-application/
 ├── converters/
 │   ├── cli/
 │   │   ├── convert_incidents.py
@@ -105,7 +105,7 @@ chmod +x scripts/generate-dashboards.sh
 ```
 
 **Error: "No such file or directory"**
-- Verificar que el path `/infocodes/release-dashboard-application/` es correcto
+- Verificar que el path `/infocodes/project/release-dashboard-application/` es correcto
 - Ajustar la variable `PROJECT_ROOT` en el script si es diferente
 
 **Error: "Python not found"**
@@ -121,7 +121,7 @@ chmod +x scripts/generate-dashboards.sh
 
 **Ver último log:**
 ```bash
-tail /infocodes/release-dashboard-application/logs/dashboards-generation-$(date +%Y%m%d).log
+tail /infocodes/project/release-dashboard-application/logs/dashboards-generation-$(date +%Y%m%d).log
 ```
 
 **Ver ejecuciones de cron:**
@@ -131,5 +131,5 @@ grep generate-dashboards /var/log/syslog  # En sistemas Linux
 
 **Ver estado de los datos:**
 ```bash
-ls -lh /infocodes/release-dashboard-application/data/output/
+ls -lh /infocodes/project/release-dashboard-application/data/output/
 ```

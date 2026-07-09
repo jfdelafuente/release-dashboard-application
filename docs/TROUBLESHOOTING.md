@@ -2,13 +2,38 @@
 
 Solutions for common issues when setting up and running the Release Dashboard Application.
 
+## CSV Upload Issues
+
+### "Failed to fetch" When Uploading a CSV
+
+**Symptom**: Clicking "Seleccionar archivo" / dragging a CSV shows an alert `Error: Failed to fetch`.
+
+**Cause**: The dashboard is being served by something that doesn't implement `POST` — usually `python -m http.server` or VS Code's Live Server. Both only serve static files, so the browser's request to `/api/upload` never gets a response at all.
+
+**Solution**:
+```bash
+# Stop whatever is serving port 8000, then from the project root:
+python serve_app.py
+# Open: http://localhost:8000/dashboards/dashboard-portal.html
+```
+
+`serve_app.py` adds the `POST /api/upload` handler (saves the CSV to `data/input/`, runs the matching converter via `converters/cli/upload_csv.py`). If you only need to view already-generated JSON and don't need to upload anything, `http.server`/Live Server are fine.
+
+### Upload Succeeds but Shows "Falló la conversión a JSON"
+
+**Symptom**: The upload response has `"success": false` with a `details` field showing converter output.
+
+**Cause**: The CSV itself failed validation (wrong columns, bad encoding, invalid enum values, etc.) — the `details` field is the converter's own stdout/stderr, truncated to 4000 characters.
+
+**Solution**: Read the `details` text — it names the exact row/field that failed. Check [converters/docs/API.md](../converters/docs/API.md) for the expected column names and allowed values.
+
 ## Setup Issues
 
 ### Python Not Found
 
 **Symptom**: "python: command not found" or "python is not recognized"
 
-**Cause**: Python 3.6+ is not installed or not in system PATH
+**Cause**: Python 3.8+ is not installed or not in system PATH
 
 **Solution**:
 ```bash
@@ -56,10 +81,10 @@ python --version  # Should show Python 3.6+
 cd /path/to/release-dashboard-application
 
 # Verify you're in the right place
-ls src/converters/csv_to_json/
+ls converters/src/csv_to_json/
 
 # Try running from project root
-python -m src.converters.convert_incidents data/input/sample.csv
+python converters/cli/convert_incidents.py data/input/sample.csv
 ```
 
 ### Pip Install Fails
@@ -80,7 +105,7 @@ pip install -r requirements.txt -v
 pip install python-dotenv
 
 # Check Python version compatibility
-python --version  # Should be 3.6+
+python --version  # Should be 3.8+
 ```
 
 ## Converter Issues
@@ -95,22 +120,20 @@ python --version  # Should be 3.6+
 
 **Windows**:
 ```batch
-# Scripts should be in scripts\bin\
-cd scripts\bin\
-convert_incidents.bat ..\..\data\input\sample.csv
-
-# Or run from project root with full path
-scripts\bin\convert_incidents.bat data\input\sample.csv
+REM Scripts are in converters\scripts\bin\
+converters\scripts\bin\convert_incidents.bat data\input\sample.csv
 ```
 
 **Linux/Mac**:
 ```bash
 # Make scripts executable
-chmod +x scripts/bin/*.sh
+chmod +x converters/scripts/bin/*.sh
 
 # Run from project root
-./scripts/bin/convert_incidents.sh data/input/sample.csv
+./converters/scripts/bin/convert_incidents.sh data/input/sample.csv
 ```
+
+Cross-platform alternative, no wrapper script needed: `python converters/cli/convert_incidents.py data/input/sample.csv`.
 
 ### "Input file not found"
 
@@ -208,12 +231,13 @@ convert_incidents.bat data/input/your-file.csv
 ls data/output/
 
 # If no JSON files, run converter first
-scripts/bin/convert_incidents.sh data/input/sample.csv
+converters/scripts/bin/convert_incidents.sh data/input/sample.csv
 
-# Try opening dashboard from file explorer
-# Windows: double-click src\dashboards\massive-incidents-dashboard.html
-# Mac: open src/dashboards/massive-incidents-dashboard.html
-# Linux: xdg-open src/dashboards/massive-incidents-dashboard.html
+# Serve the dashboards over HTTP — do NOT open the .html file directly
+# (file://) or use `python -m http.server`: relative fetch() calls to
+# data/output/index.json and the /api/upload endpoint need a real server.
+python serve_app.py
+# Then open: http://localhost:8000/dashboards/dashboard-portal.html
 ```
 
 ### Dashboard Showing Empty Data
@@ -406,7 +430,7 @@ git commit -m "fix: update gitignore"
    ```
 
 3. **Check documentation**:
-   - [API.md](API.md) - Converter API reference
+   - [../converters/docs/API.md](../converters/docs/API.md) - Converter API reference
    - [DEVELOPMENT.md](DEVELOPMENT.md) - Setup guide
    - [docs/](.) - Complete documentation
 
