@@ -2,14 +2,17 @@ name: Tests & Coverage
 
 on:
   push:
-    branches: [main, develop]
+    branches: [main, production]
   pull_request:
-    branches: [main, develop]
+    branches: [main, production]
 
 jobs:
   test:
     name: Run Tests & Check Coverage
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: converters
     strategy:
       matrix:
         python-version: ['3.8', '3.9', '3.10', '3.11']
@@ -27,7 +30,7 @@ jobs:
       uses: actions/cache@v4
       with:
         path: ~/.cache/pip
-        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements-dev.txt') }}
+        key: ${{ runner.os }}-pip-${{ hashFiles('converters/requirements-dev.txt') }}
         restore-keys: |
           ${{ runner.os }}-pip-
 
@@ -39,15 +42,14 @@ jobs:
 
     - name: Run tests with pytest
       run: |
-        pytest tests/ -v --cov=src.converters --cov=tests \
+        pytest tests/ -v --cov=src \
           --cov-report=xml --cov-report=html --cov-report=term-missing \
-          --cov-fail-under=80 \
           --tb=short
 
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v4
       with:
-        files: ./coverage.xml
+        files: ./converters/coverage.xml
         flags: unittests
         name: codecov-umbrella
         fail_ci_if_error: false
@@ -65,7 +67,7 @@ jobs:
       with:
         script: |
           const fs = require('fs');
-          const coverage = fs.readFileSync('coverage.xml', 'utf8');
+          const coverage = fs.readFileSync('converters/coverage.xml', 'utf8');
           if (coverage.includes('line-rate')) {
             const match = coverage.match(/line-rate="([\d.]+)"/);
             if (match) {

@@ -2,14 +2,17 @@ name: Code Quality & Linting
 
 on:
   push:
-    branches: [main, develop, 005-project-organization]
+    branches: [main, production]
   pull_request:
-    branches: [main, develop]
+    branches: [main, production]
 
 jobs:
   lint:
     name: Lint & Format Check
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: converters
 
     steps:
     - name: Checkout code
@@ -24,7 +27,7 @@ jobs:
       uses: actions/cache@v4
       with:
         path: ~/.cache/pip
-        key: ${{ runner.os }}-pip-lint-${{ hashFiles('**/requirements-dev.txt') }}
+        key: ${{ runner.os }}-pip-lint-${{ hashFiles('converters/requirements-dev.txt') }}
         restore-keys: |
           ${{ runner.os }}-pip-lint-
 
@@ -36,41 +39,44 @@ jobs:
     - name: Run flake8 (style guide enforcement)
       run: |
         echo "Running flake8 style checks..."
-        flake8 src tests --count --select=E9,F63,F7,F82 --show-source --statistics
-        flake8 src tests --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+        flake8 src cli tests --count --select=E9,F63,F7,F82 --show-source --statistics
+        flake8 src cli tests --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
 
     - name: Run black (code formatter check)
       run: |
         echo "Checking code formatting with black..."
-        black --check src tests --diff || true
+        black --check src cli tests --diff || true
 
     - name: Run isort (import sorting check)
       run: |
         echo "Checking import sorting with isort..."
-        isort --check-only src tests --diff || true
+        isort --check-only src cli tests --diff || true
 
     - name: Run pylint (code analysis)
       run: |
         echo "Running pylint analysis..."
-        find src tests -name "*.py" -type f | xargs pylint --exit-zero --jobs=0 \
+        find src cli tests -name "*.py" -type f | xargs pylint --exit-zero --jobs=0 \
           --disable=missing-docstring,too-many-arguments,too-few-public-methods \
           2>&1 | tee pylint-report.txt || true
 
     - name: Check Python syntax
       run: |
         echo "Checking Python syntax..."
-        python -m py_compile src/converters/*.py tests/**/*.py || true
+        find src cli tests -name "*.py" -type f -print0 | xargs -0 -n1 python -m py_compile || true
 
     - name: Upload pylint report
       if: always()
       uses: actions/upload-artifact@v4
       with:
         name: pylint-report
-        path: pylint-report.txt
+        path: converters/pylint-report.txt
 
   security:
     name: Security Checks
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: converters
 
     steps:
     - name: Checkout code
@@ -89,15 +95,15 @@ jobs:
     - name: Run bandit (security check)
       run: |
         echo "Running security checks with bandit..."
-        bandit -r src --skip B101,B601 --format json -o bandit-report.json || true
-        bandit -r src --skip B101,B601 || true
+        bandit -r src cli --skip B101,B601 --format json -o bandit-report.json || true
+        bandit -r src cli --skip B101,B601 || true
 
     - name: Upload bandit report
       if: always()
       uses: actions/upload-artifact@v4
       with:
         name: bandit-report
-        path: bandit-report.json
+        path: converters/bandit-report.json
 
   result:
     name: Lint Result Summary
