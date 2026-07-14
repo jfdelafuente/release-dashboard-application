@@ -6,7 +6,7 @@
     <title>Release Dashboard - Portal Principal</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="assets/shared.css">
+    <link rel="stylesheet" href="/dashboards/assets/shared.css">
     <style>
         /* Estilos específicos de esta página. El framework compartido
            (barra superior, reset, telemetría numérica, foco/animación)
@@ -312,20 +312,8 @@
     </style>
 </head>
 <body>
-    <!-- MASORANGE Top Bar -->
-    <div class="mo-topbar">
-        <img src="assets/masorange-logo-positive.svg" alt="MASORANGE">
-        <div class="mo-topbar-sep"></div>
-        <span class="mo-topbar-dept">Customer &amp; Service Operations</span>
-        <nav class="mo-topbar-nav">
-            <a href="dashboard-portal.html" class="active">Portal</a>
-            <a href="massive-incidents-dashboard.html">Incidencias masivas</a>
-            <a href="postmortem-dashboard.html">Release</a>
-            <a href="release-kpis-dashboard/index.html">KPIs Release</a>
-            <a href="/reportes-incidencias/index.html">Reportes de Incidencias</a>
-            <a href="/problemas">Gestión de Problemas</a>
-        </nav>
-    </div>
+    <!-- MASORANGE Top Bar (inyectada por assets/topbar.js) -->
+    <div id="mo-topbar-root" data-active="portal"></div>
 
     <!-- Header -->
     <header>
@@ -342,7 +330,7 @@
             <h2>Elige un panel</h2>
             <div class="dashboards-grid">
                 <!-- Dashboard 1: Massive Incidents -->
-                <a class="dashboard-card" href="massive-incidents-dashboard.html">
+                <a class="dashboard-card" href="/dashboards/massive-incidents/">
                     <div class="dashboard-header">
                         <h3>
                             <span class="dashboard-icon">📈</span>
@@ -359,7 +347,7 @@
                 </a>
 
                 <!-- Dashboard 2: Postmortem -->
-                <a class="dashboard-card" href="postmortem-dashboard.html">
+                <a class="dashboard-card" href="/dashboards/postmortem/">
                     <div class="dashboard-header">
                         <h3>
                             <span class="dashboard-icon">🔍</span>
@@ -410,7 +398,7 @@
                 </a>
 
                 <!-- Dashboard 5: KPIs de Release (histórico) -->
-                <a class="dashboard-card" href="release-kpis-dashboard/index.html">
+                <a class="dashboard-card" href="/dashboards/release-kpis/">
                     <div class="dashboard-header">
                         <h3>
                             <span class="dashboard-icon">🎯</span>
@@ -472,7 +460,7 @@
         // Load data from index.json
         async function loadDashboardData() {
             try {
-                const response = await fetch('../data/output/index.json');
+                const response = await fetch('/data/output/index.json');
                 const data = await response.json();
 
                 updateStats(data);
@@ -576,5 +564,6 @@
         // Refresh data every 30 seconds
         setInterval(loadDashboardData, 30000);
     </script>
+    <script src="/dashboards/assets/topbar.js" defer></script>
 </body>
 </html>

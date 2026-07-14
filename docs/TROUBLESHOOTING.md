@@ -14,7 +14,7 @@ Solutions for common issues when setting up and running the Release Dashboard Ap
 ```bash
 # Stop whatever is serving port 8000, then from the project root:
 python serve_app.py
-# Open: http://localhost:8000/dashboards/dashboard-portal.html
+# Open: http://localhost:8000/dashboards/portal/
 ```
 
 `serve_app.py` adds the `POST /api/upload` handler (saves the CSV to `data/input/`, runs the matching converter via `converters/cli/upload_csv.py`). If you only need to view already-generated JSON and don't need to upload anything, `http.server`/Live Server are fine.
@@ -234,10 +234,12 @@ ls data/output/
 converters/scripts/bin/convert_incidents.sh data/input/sample.csv
 
 # Serve the dashboards over HTTP — do NOT open the .html file directly
-# (file://) or use `python -m http.server`: relative fetch() calls to
-# data/output/index.json and the /api/upload endpoint need a real server.
+# (file://): fetch() calls to /data/output/index.json need a real server.
+# `python -m http.server` works for read-only viewing (run it from the
+# repo root, not from dashboards/), but only serve_app.py implements the
+# /api/upload endpoint needed to upload a CSV from the browser.
 python serve_app.py
-# Then open: http://localhost:8000/dashboards/dashboard-portal.html
+# Then open: http://localhost:8000/dashboards/portal/
 ```
 
 ### Dashboard Showing Empty Data

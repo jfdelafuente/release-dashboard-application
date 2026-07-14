@@ -40,9 +40,10 @@
 
 | Dashboard | Archivo | Propósito |
 |-----------|------|---------|
-| **Portal** (entrada principal) | `dashboards/dashboard-portal.html` | Punto de acceso único, con tarjetas a cada dashboard |
-| **Incidencias Masivas** | `dashboards/massive-incidents-dashboard.html` | Análisis temporal de incidencias masivas |
-| **Postmortem / Release** | `dashboards/postmortem-dashboard.html` | Análisis por despliegue (PAP/MESA) |
+| **Portal** (entrada principal) | `dashboards/portal/index.html` | Punto de acceso único, con tarjetas a cada dashboard |
+| **Incidencias Masivas** | `dashboards/massive-incidents/index.html` | Análisis temporal de incidencias masivas |
+| **Postmortem / Release** | `dashboards/postmortem/index.html` | Análisis por despliegue (PAP/MESA) |
+| **KPIs Release (Histórico)** | `dashboards/release-kpis/index.html` | Serie histórica de KPIs por release, dataset estático |
 
 `dashboards/index.html` redirige automáticamente al Portal.
 
@@ -57,7 +58,7 @@ serve_app.py [/api/upload]  o  converters/cli/convert_incidents.py / convert_pos
     ↓
 JSON (data/output/) + build_index.py → index.json
     ↓
-Portal (dashboard-portal.html)
+Portal (dashboards/portal/)
     ↓
 Incidencias Masivas · Postmortem/Release
 ```

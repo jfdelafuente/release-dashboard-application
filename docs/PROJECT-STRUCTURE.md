@@ -40,7 +40,7 @@ release-dashboard-application/
 
 **Nota sobre `DIRECTORY-STRUCTURE.md`**: existe otro documento de estructura en la raíz del repo, además de este. No se ha verificado si está alineado con la realidad actual; si contradice lo que dice este documento, este documento (`docs/PROJECT-STRUCTURE.md`) es el que se acaba de auditar contra el repo real.
 
-**Cambio importante respecto a versiones anteriores de este documento**: ya no existe un directorio `src/` con `src/converters/`, `src/dashboards/` y `src/scripts/`. El repo se reorganizó (ver `specs/005-project-organization/`) y ahora `converters/` y `dashboards/` son carpetas de primer nivel, independientes entre sí. Tampoco existe ya el concepto de "Dashboard Hub" (`dashboard-hub.html/css/js`): el punto de entrada real es `dashboards/dashboard-portal.html`.
+**Cambio importante respecto a versiones anteriores de este documento**: ya no existe un directorio `src/` con `src/converters/`, `src/dashboards/` y `src/scripts/`. El repo se reorganizó (ver `specs/005-project-organization/`) y ahora `converters/` y `dashboards/` son carpetas de primer nivel, independientes entre sí. Tampoco existe ya el concepto de "Dashboard Hub" (`dashboard-hub.html/css/js`): el punto de entrada real es `dashboards/portal/`.
 
 ---
 
@@ -90,18 +90,23 @@ Ver [`converters/README.md`](../converters/README.md) y [`converters/docs/API.md
 
 ```
 dashboards/
-├── index.html                           # Redirige (meta-refresh + JS) a dashboard-portal.html
-├── dashboard-portal.html                # Portal / punto de entrada principal
-├── massive-incidents-dashboard.html     # Dashboard de incidencias masivas
-├── postmortem-dashboard.html            # Dashboard de postmortem / release
-├── assets/
+├── index.html                # Redirige (meta-refresh + JS) a /dashboards/portal/
+├── portal/index.html         # Portal / punto de entrada principal
+├── massive-incidents/index.html
+├── postmortem/index.html
+├── release-kpis/             # index.html, app.js, style.css, colors_and_type.css, releases-data.js
+├── assets/                   # Compartido por los 4 dashboards
 │   ├── masorange-logo-negative.svg
 │   ├── masorange-logo-positive.svg
-│   └── masorange-mark.svg
+│   ├── masorange-mark.svg
+│   ├── tokens.css            # Variables de diseño (única fuente de tokens)
+│   ├── topbar.css            # Barra superior MASORANGE
+│   ├── topbar.js             # Inyecta la barra superior con la nav activa marcada
+│   └── shared.css            # Framework de los 3 dashboards "clásicos" (importa tokens.css/topbar.css)
 └── README.md
 ```
 
-No hay `css/` ni `js/` compartidos ni build step: cada dashboard es un único `.html` autocontenido, con su CSS y JavaScript en línea (salvo Plotly.js y Google Fonts, que se cargan vía CDN). El portal (`dashboard-portal.html`) es el punto de acceso único, con tarjetas hacia cada dashboard y hacia los paneles hermanos (`/reportes-incidencias`, `/problemas`), que **no** forman parte de este repositorio.
+Sin build step: cada dashboard es un `.html` con su CSS y JavaScript propios en línea (salvo Plotly.js y Google Fonts, vía CDN), más el framework compartido de `assets/`. El portal (`dashboards/portal/`) es el punto de acceso único, con tarjetas hacia cada dashboard y hacia los paneles hermanos (`/reportes-incidencias`, `/problemas`), que **no** forman parte de este repositorio.
 
 Ver [`dashboards/README.md`](../dashboards/README.md) para el detalle funcional de cada dashboard.
 
@@ -145,7 +150,7 @@ Servidor HTTP en Python puro (`http.server` + `socketserver`), pensado para desa
 
 ```bash
 python serve_app.py
-# http://localhost:8000/dashboards/dashboard-portal.html
+# http://localhost:8000/dashboards/portal/
 ```
 
 Responsabilidades:
@@ -197,7 +202,7 @@ En resumen, este repositorio solo controla `/dashboards` (estático) y `/data` (
 
 | Recurso | Ubicación en el repo | Quién lo sirve en producción |
 |---|---|---|
-| `dashboard-portal.html`, `*.html` de `dashboards/` | `dashboards/` | Nginx, `alias /dashboards` |
+| `portal/index.html`, resto de `*.html` de `dashboards/` | `dashboards/` | Nginx, `alias /dashboards` |
 | Logos SVG | `dashboards/assets/` | Nginx, `alias /dashboards` |
 | `index.json`, `*-massive.json`, `*-postmortem.json` | `data/output/` | Nginx, `alias /data` (autoindex off) |
 | CSVs de origen | `data/input/` | No se sirven vía Nginx; los escribe `serve_app.py` (dev) o se colocan manualmente (VPS) |

@@ -385,7 +385,7 @@ check_disk_space() {
 
 check_http_status() {
     # Puerto real del Nginx que sirve este repo (ver nginx.conf): 8081, no 80
-    STATUS=$(curl -s -o /dev/null -w "%{http_code}" "http://localhost:8081/dashboards/dashboard-portal.html")
+    STATUS=$(curl -s -o /dev/null -w "%{http_code}" "http://localhost:8081/dashboards/portal/")
     if [ "$STATUS" != "200" ]; then
         echo "[$(date)] ERROR: HTTP status $STATUS" >> "$LOG_FILE"
         return 1
@@ -539,7 +539,7 @@ sudo nginx -t
 sudo systemctl status nginx
 
 # 6. Acceso HTTP al portal (puerto real: 8081)
-curl -I http://infocodes.si.orange.es:8081/dashboards/dashboard-portal.html
+curl -I http://infocodes.si.orange.es:8081/dashboards/portal/
 
 # 7. Datos accesibles vía Nginx
 curl -I http://infocodes.si.orange.es:8081/data/index.json
@@ -591,7 +591,7 @@ Antes de desplegar en producción (ver también el checklist de `docs/DEPLOYMENT
 - [ ] Nginx configurado (`nginx -t` sin errores) y corriendo
 - [ ] Cron de `scripts/generate-dashboards.sh` configurado (ver `scripts/README.md`)
 - [ ] Prueba: `git pull origin production` funciona sin conflictos
-- [ ] Prueba: acceso HTTP a `/dashboards/dashboard-portal.html` y `/data/index.json` en el puerto 8081
+- [ ] Prueba: acceso HTTP a `/dashboards/portal/` y `/data/index.json` en el puerto 8081
 
 **No aplica** (no existe ese mecanismo en este proyecto): despliegue automático desde GitHub Actions (no hay `deploy.yml`, ver `docs/PROJECT-STRUCTURE.md`), SSH key en GitHub Secrets para deploy, certificado SSL gestionado por este Nginx (ver sección 4.4), health checks/backups automáticos (no implementados hoy, ver secciones 6 y 7).
 

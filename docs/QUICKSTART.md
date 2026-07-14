@@ -51,7 +51,7 @@ cp config/.env.example config/.env
 ### Paso 5: Arranca el servidor local
 ```bash
 python serve_app.py
-# Abre: http://localhost:8000/dashboards/dashboard-portal.html
+# Abre: http://localhost:8000/dashboards/portal/
 ```
 
 > ⚠️ **No uses `python -m http.server` ni Live Server de VSCode.** Ambos
@@ -91,15 +91,15 @@ converters\scripts\bin\convert_postmortems.bat data/input/postmortem.csv
 
 Con `serve_app.py` corriendo, ve a:
 ```
-http://localhost:8000/dashboards/dashboard-portal.html
+http://localhost:8000/dashboards/portal/
 ```
 (o simplemente `http://localhost:8000/dashboards/`, que redirige ahí a
 través de `dashboards/index.html`).
 
 **El Portal enlaza a:**
-- 📊 **Incidencias Masivas** (`massive-incidents-dashboard.html`): evolución
+- 📊 **Incidencias Masivas** (`dashboards/massive-incidents/`): evolución
   temporal, backlog, tendencias, filtros por estado/sistema/urgencia.
-- 📋 **Postmortem / Release** (`postmortem-dashboard.html`): análisis por
+- 📋 **Postmortem / Release** (`dashboards/postmortem/`): análisis por
   despliegue (PAP/MESA), KPIs de resolución.
 - 🔗 Enlaces a los paneles de los repos hermanos (Reportes de Incidencias,
   Gestión de Problemas), que no forman parte de este repositorio.
@@ -207,8 +207,8 @@ cat docs/TROUBLESHOOTING.md
 # Causa más común: estás usando `python -m http.server` o Live Server,
 # que no soportan POST. Usa `python serve_app.py` en su lugar (Paso 5).
 
-# ✅ Correcto:  http://localhost:8000/dashboards/dashboard-portal.html
-# ❌ Incorrecto: file:///C:/Users/.../dashboard-portal.html (bloquea CORS)
+# ✅ Correcto:  http://localhost:8000/dashboards/portal/
+# ❌ Incorrecto: file:///C:/Users/.../dashboards/portal/index.html (bloquea CORS)
 
 # Verifica que data/output/ tiene archivos JSON
 ls data/output/
@@ -235,11 +235,12 @@ ls data/output/
 ```
 release-dashboard-application/
 ├── serve_app.py             # Servidor local (dashboards + /api/upload)
-├── dashboards/               # Dashboards HTML/CSS/JS
-│   ├── index.html            # Redirige a dashboard-portal.html
-│   ├── dashboard-portal.html  # Portal principal
-│   ├── massive-incidents-dashboard.html
-│   └── postmortem-dashboard.html
+├── dashboards/               # Dashboards HTML/CSS/JS, cada uno en su subcarpeta
+│   ├── index.html            # Redirige a /dashboards/portal/
+│   ├── portal/                # Portal principal
+│   ├── massive-incidents/
+│   ├── postmortem/
+│   └── release-kpis/
 ├── converters/                # Módulo Python de conversión CSV→JSON
 │   ├── cli/                   # convert_incidents.py, convert_postmortems.py, upload_csv.py
 │   ├── src/csv_to_json/       # Lógica de conversión (encoding, normalización, validación)
@@ -260,9 +261,9 @@ release-dashboard-application/
 | Archivo | Propósito |
 |---------|-----------|
 | `serve_app.py` | Servidor local recomendado (soporta subida de CSV vía `/api/upload`) |
-| `dashboards/dashboard-portal.html` | **Portal principal** - punto de acceso a los dashboards |
-| `dashboards/massive-incidents-dashboard.html` | Dashboard de incidencias masivas |
-| `dashboards/postmortem-dashboard.html` | Dashboard de postmortem/release |
+| `dashboards/portal/index.html` | **Portal principal** - punto de acceso a los dashboards |
+| `dashboards/massive-incidents/index.html` | Dashboard de incidencias masivas |
+| `dashboards/postmortem/index.html` | Dashboard de postmortem/release |
 | `converters/scripts/bin/convert_incidents.bat` / `.sh` | Conversor de incidencias masivas |
 | `converters/scripts/bin/convert_postmortems.bat` / `.sh` | Conversor de postmortems |
 | `config/.env.example` | Plantilla de configuración de entorno |
