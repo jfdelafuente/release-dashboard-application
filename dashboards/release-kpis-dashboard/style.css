@@ -8,16 +8,9 @@ body { margin: 0; background: var(--bg-2); font-family: var(--font-body); color:
 
 .app { min-height: 100vh; background: var(--bg-2); }
 
-.header { background: var(--mo-black); padding: 20px 32px; display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:20; }
-.header-left { display:flex; align-items:center; gap:16px; }
-.header-mark { height:28px; width:auto; }
-.header-divider { width:1px; height:24px; background: var(--mo-grey-600); }
-.header-title { font-family: var(--font-display); font-weight:700; font-size: var(--fs-18); color: var(--mo-white); letter-spacing: var(--tracking-tight); line-height:1; }
-.header-subtitle { font-size: var(--fs-12); color: var(--mo-grey-400); margin-top:2px; }
-.header-period { font-size: var(--fs-12); color: var(--mo-grey-400); text-align:right; }
-.header-period-value { color: var(--mo-white); font-weight:600; }
-.header-back-link { display:block; color: var(--mo-grey-400); font-size: var(--fs-12); margin-bottom:6px; text-decoration:none; }
-.header-back-link:hover { color: var(--mo-white); }
+.page-meta { padding: 20px 32px 0; display:flex; align-items:baseline; justify-content:space-between; flex-wrap:wrap; gap:8px; max-width: 1320px; margin: 0 auto; }
+.page-meta-title { font-family: var(--font-display); font-weight:700; font-size: var(--fs-18); color: var(--fg-1); letter-spacing: var(--tracking-tight); }
+.page-meta-period { font-size: var(--fs-12); color: var(--fg-3); }
 
 .container { max-width: 1320px; margin: 0 auto; padding: 32px 32px 96px; }
 

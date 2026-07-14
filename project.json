@@ -31,28 +31,28 @@
       "id": "massive-incidents-dashboard",
       "name": "Massive Incidents Dashboard",
       "description": "Real-time KPIs and temporal analysis of incident data",
-      "location": "src/dashboards/massive-incidents-dashboard.html",
+      "location": "dashboards/massive-incidents-dashboard.html",
       "status": "production"
     },
     {
       "id": "postmortem-dashboard",
       "name": "Postmortem Dashboard",
       "description": "Analysis of postmortem incidents by deployment and segment",
-      "location": "src/dashboards/postmortem-dashboard.html",
+      "location": "dashboards/postmortem-dashboard.html",
       "status": "production"
     },
     {
       "id": "release-kpis-dashboard",
       "name": "Release KPIs Dashboard (Historical)",
-      "description": "Standalone, self-contained view of historical release KPIs (PaP/Post incident volume and resolution %) with a 75% KPI threshold indicator. Uses a static, hand-maintained dataset (src/dashboards/release-kpis-dashboard/releases-data.js) instead of the CSV/converters pipeline.",
-      "location": "src/dashboards/release-kpis-dashboard/index.html",
+      "description": "Standalone, self-contained view of historical release KPIs (PaP/Post incident volume and resolution %) with a 75% KPI threshold indicator. Uses a static, hand-maintained dataset (dashboards/release-kpis-dashboard/releases-data.js) instead of the CSV/converters pipeline.",
+      "location": "dashboards/release-kpis-dashboard/index.html",
       "status": "production"
     },
     {
-      "id": "dashboard-hub",
-      "name": "Dashboard Hub (Principal)",
+      "id": "dashboard-portal",
+      "name": "Dashboard Portal (Principal)",
       "description": "Central access point for all dashboards with auto-loading of data",
-      "location": "src/dashboards/dashboard-hub.html",
+      "location": "dashboards/dashboard-portal.html",
       "status": "production"
     },
     {
@@ -117,5 +117,5 @@
     "deployment_log": "logs/deployments/DEPLOYMENT-RECORDS.log"
   },
   "created_date": "2026-05-14",
-  "last_updated": "2026-05-14"
+  "last_updated": "2026-07-14"
 }

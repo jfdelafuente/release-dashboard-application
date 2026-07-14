@@ -2,14 +2,20 @@
    Release Dashboard — estilos compartidos entre dashboards
    ============================================================
    Framework visual común a massive-incidents-dashboard.html y
-   postmortem-dashboard.html: barra superior MASORANGE, pantalla
-   de subida de CSV, cabecera, tarjetas KPI, tabla y badges de
-   estado base. Verificado byte a byte como idéntico entre ambos
-   antes de extraerlo aquí — lo que diferían (layout de KPIs,
-   colores de acento por página, breakpoints responsive, mecanismo
-   de mostrar/ocultar el dashboard) se queda en el <style> de cada
-   página.
+   postmortem-dashboard.html: pantalla de subida de CSV, cabecera,
+   tarjetas KPI, tabla y badges de estado base. Verificado byte a
+   byte como idéntico entre ambos antes de extraerlo aquí — lo que
+   diferían (layout de KPIs, colores de acento por página,
+   breakpoints responsive, mecanismo de mostrar/ocultar el
+   dashboard) se queda en el <style> de cada página.
+
+   La barra superior MASORANGE vive en topbar.css (importado abajo)
+   porque la usan TODOS los dashboards, incluidos los que no
+   necesitan el resto de este framework (p. ej. release-kpis-
+   dashboard, que no tiene pantalla de subida ni tabla).
    ============================================================ */
+
+@import url('topbar.css');
 
 :root {
     --mono: 'IBM Plex Mono', 'SF Mono', Consolas, monospace;
@@ -51,66 +57,6 @@ body {
         animation-iteration-count: 1 !important;
         transition-duration: 0.01ms !important;
     }
-}
-
-/* MASORANGE Top Bar */
-.mo-topbar {
-    position: sticky;
-    top: 0;
-    z-index: 60;
-    background: #000;
-    color: #fff;
-    display: flex;
-    align-items: center;
-    gap: 22px;
-    padding: 0 26px;
-    height: 66px;
-    border-bottom: 1px solid #26241F;
-}
-
-.mo-topbar img {
-    height: 24px;
-    width: auto;
-}
-
-.mo-topbar-sep {
-    width: 1px;
-    height: 24px;
-    background: #33302B;
-}
-
-.mo-topbar-dept {
-    font-size: 13px;
-    font-weight: 600;
-    letter-spacing: .01em;
-    color: #9E988E;
-    white-space: nowrap;
-}
-
-.mo-topbar-nav {
-    display: flex;
-    gap: 2px;
-    margin-left: 14px;
-}
-
-.mo-topbar-nav a {
-    text-decoration: none;
-    font-family: inherit;
-    font-size: 13.5px;
-    font-weight: 600;
-    color: #9E988E;
-    padding: 8px 14px;
-    border-bottom: 2px solid transparent;
-    transition: color .2s ease;
-}
-
-.mo-topbar-nav a:hover {
-    color: #fff;
-}
-
-.mo-topbar-nav a.active {
-    color: #fff;
-    border-bottom-color: #FF7900;
 }
 
 /* Upload Screen */
