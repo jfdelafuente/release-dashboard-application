@@ -2,7 +2,7 @@
 
 Aplicación web para análisis y visualización de incidencias masivas y postmortems de release, con conversión automática de CSV a JSON.
 
-**Portal** (`dashboards/dashboard-portal.html`) es el **punto de acceso principal**: enlaza a los dashboards de este repo (Incidencias Masivas, Postmortem/Release) y a los paneles de los repos hermanos (Reportes de Incidencias, Gestión de Problemas).
+**Portal** (`dashboards/portal/`) es el **punto de acceso principal**: enlaza a los dashboards de este repo (Incidencias Masivas, Postmortem/Release) y a los paneles de los repos hermanos (Reportes de Incidencias, Gestión de Problemas).
 
 ---
 
@@ -25,7 +25,7 @@ Cada componente puede funcionar **independientemente**.
 
 ```bash
 python serve_app.py
-# Abre: http://localhost:8000/dashboards/dashboard-portal.html
+# Abre: http://localhost:8000/dashboards/portal/
 ```
 
 > ⚠️ **No uses `python -m http.server` ni Live Server.** Solo sirven
@@ -65,12 +65,12 @@ Los JSONs se generan en `data/output/` e `index.json` se actualiza automáticame
 
 ### 3️⃣ Abre el Portal
 
-Con `serve_app.py` corriendo, ve a `http://localhost:8000/dashboards/dashboard-portal.html` (o simplemente `/dashboards/`, que redirige ahí vía `dashboards/index.html`).
+Con `serve_app.py` corriendo, ve a `http://localhost:8000/dashboards/portal/` (o simplemente `/dashboards/`, que redirige ahí vía `dashboards/index.html`).
 
 ### 4️⃣ Los dashboards cargan automáticamente los datos más recientes
 
-- **Incidencias Masivas** (`massive-incidents-dashboard.html`): evolución temporal, backlog, tendencias, filtros por estado/sistema/urgencia.
-- **Postmortem / Release** (`postmortem-dashboard.html`): análisis por despliegue (PAP/MESA), KPIs de resolución.
+- **Incidencias Masivas** (`massive-incidents/`): evolución temporal, backlog, tendencias, filtros por estado/sistema/urgencia.
+- **Postmortem / Release** (`postmortem/`): análisis por despliegue (PAP/MESA), KPIs de resolución.
 
 Desde el Portal también se enlaza a **Reportes de Incidencias** y **Gestión de Problemas**, que son aplicaciones de los repos hermanos (`cso-incident-masivas-report` y el backend de gestión de problemas), no parte de este repositorio.
 
@@ -272,12 +272,13 @@ isort --check-only src/ cli/
 ```
 release-dashboard-application/
 ├── serve_app.py                  # Servidor local (dashboards + /api/upload)
-├── dashboards/                   # Dashboards (HTML/CSS/JS)
-│   ├── index.html                # Redirige a dashboard-portal.html
-│   ├── dashboard-portal.html     # Portal principal
-│   ├── massive-incidents-dashboard.html
-│   ├── postmortem-dashboard.html
-│   └── assets/                   # Logos e imágenes
+├── dashboards/                   # Dashboards (HTML/CSS/JS), cada uno en su subcarpeta
+│   ├── index.html                # Redirige a /dashboards/portal/
+│   ├── portal/                   # Portal principal
+│   ├── massive-incidents/        # Dashboard de incidencias masivas
+│   ├── postmortem/               # Dashboard de postmortem / release
+│   ├── release-kpis/             # Dashboard de KPIs históricos de release
+│   └── assets/                   # Logos, tokens.css, topbar.css/topbar.js, shared.css
 ├── converters/                   # Módulo Python de conversión CSV→JSON
 │   ├── cli/                      # convert_incidents.py, convert_postmortems.py, build_index.py
 │   ├── src/csv_to_json/          # Lógica de conversión (encoding, normalización, validación)
@@ -305,7 +306,7 @@ serve_app.py [/api/upload]  o  convert_incidents.py / convert_postmortems.py
     ↓
 JSON (data/output/) + build_index.py → index.json
     ↓
-Portal (dashboard-portal.html)
+Portal (dashboards/portal/)
     ↓
 Incidencias Masivas · Postmortem/Release
 ```

@@ -1,8 +1,8 @@
 /* ============================================================
    Release Dashboard — barra superior MASORANGE
    ============================================================
-   Compartida por TODOS los dashboards (clásicos + release-kpis-
-   dashboard). Extraído de shared.css para que un dashboard que no
+   Compartida por TODOS los dashboards (clásicos + release-kpis).
+   Extraído de shared.css para que un dashboard que no
    necesita el resto del framework (upload, kpi-card, tabla, badges)
    pueda usar solo la topbar sin cargar CSS inerte.
    ============================================================ */

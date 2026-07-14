@@ -1,5 +1,11 @@
 /* ============================================================
    MASORANGE Design Tokens — Colors & Type
+   ============================================================
+   Fuente única de variables de diseño para TODOS los dashboards.
+   Extraído del :root que vivía en release-kpis/colors_and_type.css
+   (ya armonizado con la identidad visual compartida). Este archivo
+   solo define variables — ninguna regla de selector — por lo que es
+   seguro importarlo desde cualquier dashboard sin riesgo de colisión.
    ============================================================ */
 
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap");
@@ -105,78 +111,3 @@
   --container:          1200px;
   --gutter:             24px;
 }
-
-html { color: var(--fg-1); background: var(--bg-1); }
-
-body {
-  font-family: var(--font-body);
-  font-size: var(--fs-16);
-  line-height: var(--lh-normal);
-  letter-spacing: var(--tracking-normal);
-  -webkit-font-smoothing: antialiased;
-  text-rendering: optimizeLegibility;
-}
-
-.h-display, .h1, .h2, .h3, .h4 {
-  font-family: var(--font-display);
-  font-weight: 700;
-  letter-spacing: var(--tracking-tight);
-  line-height: var(--lh-tight);
-  color: var(--fg-1);
-  margin: 0;
-  text-wrap: balance;
-}
-.h-display { font-size: clamp(3rem, 7vw, var(--fs-96)); font-weight: 800; }
-.h1        { font-size: clamp(2.25rem, 5vw, var(--fs-72)); }
-.h2        { font-size: clamp(1.75rem, 4vw, var(--fs-56)); }
-.h3        { font-size: var(--fs-32); }
-.h4        { font-size: var(--fs-24); letter-spacing: -0.01em; }
-
-.eyebrow {
-  font-family: var(--font-body);
-  font-size: var(--fs-12);
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: var(--tracking-caps);
-  color: var(--accent);
-}
-
-.lead {
-  font-size: var(--fs-20);
-  line-height: var(--lh-normal);
-  color: var(--fg-2);
-  text-wrap: pretty;
-  max-width: 60ch;
-}
-
-p, .body {
-  font-size: var(--fs-16);
-  line-height: var(--lh-normal);
-  color: var(--fg-1);
-  text-wrap: pretty;
-  max-width: 65ch;
-}
-
-.caption {
-  font-size: var(--fs-14);
-  line-height: var(--lh-normal);
-  color: var(--fg-3);
-}
-
-code, .code, kbd {
-  font-family: var(--font-mono);
-  font-size: 0.95em;
-  background: var(--bg-3);
-  padding: 0.1em 0.35em;
-  border-radius: var(--r-xs);
-}
-
-a {
-  color: var(--fg-1);
-  text-decoration: underline;
-  text-decoration-thickness: 1.5px;
-  text-underline-offset: 3px;
-  text-decoration-color: var(--accent);
-  transition: color var(--dur-fast) var(--ease-out);
-}
-a:hover { color: var(--accent); }

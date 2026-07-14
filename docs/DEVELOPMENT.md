@@ -76,7 +76,7 @@ tests/... PASSED                           [100%]
 
 ```bash
 python serve_app.py
-# Then visit: http://localhost:8000/dashboards/dashboard-portal.html
+# Then visit: http://localhost:8000/dashboards/portal/
 ```
 
 > ⚠️ Don't use `python -m http.server` or Live Server: they only serve

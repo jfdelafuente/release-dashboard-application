@@ -10,7 +10,7 @@ Este repositorio aporta **contenido estático** (dashboards HTML/CSS/JS) y **dat
 
 | Ruta servida | Origen | Contenido |
 |---|---|---|
-| `/dashboards` | `dashboards/` del repo | Portal (`dashboard-portal.html`), Incidencias Masivas, Postmortem/Release |
+| `/dashboards` | `dashboards/` del repo | Portal (`dashboards/portal/`), Incidencias Masivas, Postmortem/Release, KPIs Release |
 | `/data` | `data/` del repo | JSONs generados por los conversores (`data/output/`) |
 
 Lo que **no** se despliega desde este repo (corren aparte, en otros procesos/repos hermanos):
@@ -161,7 +161,7 @@ Los datos (`data/output/*.json`) no se versionan en git (`data/` está en `.giti
 ## Verificación post-deploy
 
 - [ ] `git log -1` en el VPS muestra el commit esperado en la rama `production`.
-- [ ] El portal carga en `/dashboards/dashboard-portal.html`.
+- [ ] El portal carga en `/dashboards/portal/`.
 - [ ] Los dashboards de Incidencias Masivas y Postmortem muestran datos (vía `/data/index.json`).
 - [ ] Si se recargó nginx: `/reportes-incidencias` y `/problemas` siguen respondiendo (no deberían verse afectados por este despliegue, pero comparten el mismo nginx).
 

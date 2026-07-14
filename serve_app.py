@@ -135,7 +135,7 @@ class CustomHTTPHandler(http.server.SimpleHTTPRequestHandler):
 print(f"Release Dashboard Server")
 print(f"Sirviendo desde: {PROJECT_ROOT}")
 print(f"URL: http://localhost:{PORT}/")
-print(f"Dashboard Portal: http://localhost:{PORT}/dashboards/dashboard-portal.html")
+print(f"Dashboard Portal: http://localhost:{PORT}/dashboards/portal/")
 print(f"\nPresiona Ctrl+C para detener el servidor\n")
 
 with socketserver.TCPServer(("", PORT), CustomHTTPHandler) as httpd:

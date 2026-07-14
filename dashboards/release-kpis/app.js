@@ -105,19 +105,7 @@ function buildKpiChartData(chartReleases, entradaField, resueltasField, pctField
 
 function renderHeader(vm) {
   return `
-    <div class="mo-topbar">
-      <img src="../assets/masorange-logo-positive.svg" alt="MASORANGE">
-      <div class="mo-topbar-sep"></div>
-      <span class="mo-topbar-dept">Customer &amp; Service Operations</span>
-      <nav class="mo-topbar-nav">
-        <a href="../dashboard-portal.html">Portal</a>
-        <a href="../massive-incidents-dashboard.html">Incidencias masivas</a>
-        <a href="../postmortem-dashboard.html">Release</a>
-        <a href="index.html" class="active">KPIs Release</a>
-        <a href="/reportes-incidencias/index.html">Reportes de Incidencias</a>
-        <a href="/problemas">Gestión de Problemas</a>
-      </nav>
-    </div>
+    <div id="mo-topbar-root" data-active="release-kpis"></div>
     <div class="page-meta">
       <span class="page-meta-title">Dashboard de KPIs de Release</span>
       <span class="page-meta-period">Periodo: ${escapeHtml(vm.periodLabel)}</span>
@@ -311,6 +299,7 @@ function render() {
       </div>
       ${renderTable(vm)}
     </div>`;
+  if (window.MoTopbar) window.MoTopbar.render();
 }
 
 function getTooltipFor(col) {

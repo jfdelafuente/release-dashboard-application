@@ -165,7 +165,7 @@ if __name__ == '__main__':
         print(f"Tendencia 30d:       {kpis['trend_30_day']:>7.1f}%")
 
         print("\n⚠️  PRÓXIMO PASO:")
-        print("   1. Abre 'massive-incidents-dashboard.html' en el navegador")
+        print("   1. Abre '/dashboards/massive-incidents/' en el navegador")
         print("   2. Carga manualmente el archivo: CS_Masiva_20260513-massive.json")
         print("   3. Verifica que estos valores coinciden con los que aparecen en el dashboard")
         print("   4. Compara especialmente las TENDENCIAS (7d, 15d, 30d)")

@@ -1,8 +1,8 @@
 /* ============================================================
    Release Dashboard — estilos compartidos entre dashboards
    ============================================================
-   Framework visual común a massive-incidents-dashboard.html y
-   postmortem-dashboard.html: pantalla de subida de CSV, cabecera,
+   Framework visual común a massive-incidents/index.html y
+   postmortem/index.html: pantalla de subida de CSV, cabecera,
    tarjetas KPI, tabla y badges de estado base. Verificado byte a
    byte como idéntico entre ambos antes de extraerlo aquí — lo que
    diferían (layout de KPIs, colores de acento por página,
@@ -11,15 +11,16 @@
 
    La barra superior MASORANGE vive en topbar.css (importado abajo)
    porque la usan TODOS los dashboards, incluidos los que no
-   necesitan el resto de este framework (p. ej. release-kpis-
-   dashboard, que no tiene pantalla de subida ni tabla).
+   necesitan el resto de este framework (p. ej. release-kpis,
+   que no tiene pantalla de subida ni tabla).
    ============================================================ */
 
 @import url('topbar.css');
+@import url('/dashboards/assets/tokens.css');
 
 :root {
-    --mono: 'IBM Plex Mono', 'SF Mono', Consolas, monospace;
-    --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+    --mono: var(--font-mono);
+    --ease: var(--ease-out);
 }
 
 * {
@@ -357,7 +358,7 @@ table tbody tr:hover {
 }
 
 /* Status badges — base + variantes comunes a ambos dashboards.
-   postmortem-dashboard.html añade variantes propias adicionales
+   postmortem/index.html añade variantes propias adicionales
    (resuelto, en-espera, rechazada, cancelada, impact-*) en su
    propio <style>, cargado después de este archivo. */
 .status-badge {
