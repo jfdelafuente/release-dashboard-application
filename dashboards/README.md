@@ -10,11 +10,22 @@ dashboards/
 ├── dashboard-portal.html                # Portal principal (punto de entrada)
 ├── massive-incidents-dashboard.html     # Dashboard de incidencias masivas
 ├── postmortem-dashboard.html            # Dashboard de postmortem / release
-├── assets/                              # Logos MASORANGE (SVG)
+├── release-kpis-dashboard/              # Dashboard de KPIs históricos de release
+│   ├── index.html
+│   ├── app.js
+│   ├── releases-data.js                 # Dataset estático mantenido a mano
+│   ├── colors_and_type.css              # Tokens de diseño propios de este dashboard
+│   └── style.css
+├── assets/                              # Compartido por TODOS los dashboards
+│   ├── masorange-logo-positive.svg      # Logo (fondo oscuro)
+│   ├── masorange-logo-negative.svg      # Logo (fondo claro)
+│   ├── masorange-mark.svg               # Isotipo reducido
+│   ├── topbar.css                       # Barra superior MASORANGE (usada por los 4 dashboards)
+│   └── shared.css                       # Resto del framework de los 3 dashboards "clásicos"
 └── README.md                            # Este archivo
 ```
 
-**Solo código frontal**: HTML, CSS y JavaScript en línea en cada página. No hay `css/`/`js/` compartidos ni build step: cada dashboard es un único archivo autocontenido (salvo Plotly.js y las fuentes, que se cargan vía CDN).
+**Sin build step**: HTML, CSS y JavaScript servidos directos, sin bundler. Los 3 dashboards "clásicos" (portal, incidencias masivas, postmortem) tienen su CSS/JS específico en línea en el propio `.html`, y enlazan `assets/shared.css` para lo común (barra superior, pantalla de subida, tarjetas KPI, tabla, badges de estado). `release-kpis-dashboard/` sigue un patrón distinto — archivos separados en su propia carpeta — porque tiene bastante más CSS/JS propio y un modelo de datos diferente (ver más abajo); solo enlaza `assets/topbar.css` de lo compartido, ya que no usa el resto del framework (no tiene pantalla de subida ni tabla con badges de estado).
 
 ## 🚀 Características
 
@@ -113,6 +124,22 @@ En producción, `dashboards/` se sirve como alias estático y `/api` se enruta a
 - Distribución por sistema y por estado
 - Filtros de tabla (Estado, Despliegue, Impacto) y tabla ordenable
 
+### KPIs Release — Histórico (`release-kpis-dashboard/index.html`)
+
+**Vista histórica de KPIs de release (volumen y % de resolución PaP/1ª semana), con indicador de umbral del 75%.**
+
+- ⚠️ **No usa la tubería CSV/converters.** A diferencia de los otros 3, consume un dataset estático mantenido a mano en `releases-data.js` (48 releases desde 2020 en adelante) — no hace `fetch` de `data/output/`, ni se actualiza subiendo un CSV. Para añadir un release nuevo, edita `releases-data.js` directamente.
+- Filtros por año y por número de gráficas a mostrar
+- Panel de detalle por release con incidencias asociadas
+
+## 🎨 Convención para futuros dashboards
+
+- **Un dashboard nuevo con CSS/JS propio sustancial** (como `release-kpis-dashboard`) va en su propia subcarpeta con su propio `index.html`, en vez de sumar otro archivo `.html` suelto en la raíz de `dashboards/`.
+- Enlaza siempre `assets/topbar.css` para la barra superior (así se mantiene la navegación cruzada entre todos los dashboards). Si además necesitas el resto del framework compartido (pantalla de subida de CSV, tarjetas KPI, tabla, badges de estado), enlaza `assets/shared.css` en su lugar — ya incluye `topbar.css` internamente vía `@import`.
+- No dupliques los SVG de marca: referencia siempre `assets/masorange-*.svg`, nunca una copia local.
+- Los 3 dashboards "clásicos" (portal, incidencias masivas, postmortem) se quedan como archivos sueltos por continuidad histórica — no es la norma a replicar para dashboards nuevos.
+- Añade el enlace del dashboard nuevo a la `.mo-topbar-nav` de **todas** las páginas existentes (incluida la propia, marcando su pestaña como `active`) y a las tarjetas del portal.
+
 ## 🐛 Debugging
 
 ### Ver logs del navegador
@@ -152,4 +179,4 @@ Para problemas:
 
 ---
 
-**Última actualización**: 2026-07-09
+**Última actualización**: 2026-07-14

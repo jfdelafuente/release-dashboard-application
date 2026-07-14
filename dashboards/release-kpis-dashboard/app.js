@@ -105,20 +105,22 @@ function buildKpiChartData(chartReleases, entradaField, resueltasField, pctField
 
 function renderHeader(vm) {
   return `
-    <div class="header">
-      <div class="header-left">
-        <img src="./assets/masorange-mark.svg" alt="MASORANGE" class="header-mark" />
-        <div class="header-divider"></div>
-        <div>
-          <div class="header-title">Dashboard de KPIs de Release</div>
-          <div class="header-subtitle">Postmortem &amp; seguimiento de incidencias post-lanzamiento</div>
-        </div>
-      </div>
-      <div class="header-period">
-        <a class="header-back-link" href="../dashboard-portal.html">← Volver al portal</a>
-        <div>Periodo</div>
-        <div class="header-period-value">${escapeHtml(vm.periodLabel)}</div>
-      </div>
+    <div class="mo-topbar">
+      <img src="../assets/masorange-logo-positive.svg" alt="MASORANGE">
+      <div class="mo-topbar-sep"></div>
+      <span class="mo-topbar-dept">Customer &amp; Service Operations</span>
+      <nav class="mo-topbar-nav">
+        <a href="../dashboard-portal.html">Portal</a>
+        <a href="../massive-incidents-dashboard.html">Incidencias masivas</a>
+        <a href="../postmortem-dashboard.html">Release</a>
+        <a href="index.html" class="active">KPIs Release</a>
+        <a href="/reportes-incidencias/index.html">Reportes de Incidencias</a>
+        <a href="/problemas">Gestión de Problemas</a>
+      </nav>
+    </div>
+    <div class="page-meta">
+      <span class="page-meta-title">Dashboard de KPIs de Release</span>
+      <span class="page-meta-period">Periodo: ${escapeHtml(vm.periodLabel)}</span>
     </div>`;
 }
 

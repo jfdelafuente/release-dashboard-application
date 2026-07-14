@@ -2,7 +2,7 @@
    MASORANGE Design Tokens — Colors & Type
    ============================================================ */
 
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Roboto+Mono:wght@400;500&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap");
 
 :root {
   --mo-black:           #000000;
@@ -12,7 +12,7 @@
   --mo-orange-tint:     #FFE7D1;
   --mo-yellow:          #FFD200;
 
-  --mo-grey-50:         #F7F6F4;
+  --mo-grey-50:         #F5F3F0;
   --mo-grey-100:        #EFEDE9;
   --mo-grey-200:        #DEDAD3;
   --mo-grey-300:        #B8B2A9;
@@ -22,7 +22,7 @@
   --mo-grey-700:        #26241F;
   --mo-grey-900:        #0C0B09;
 
-  --fg-1:               var(--mo-black);
+  --fg-1:               var(--mo-grey-900);
   --fg-2:               var(--mo-grey-600);
   --fg-3:               var(--mo-grey-400);
   --fg-on-black:        var(--mo-white);
@@ -48,7 +48,7 @@
 
   --font-display:       "Helvetica Neue", "Helvetica", "Inter", system-ui, sans-serif;
   --font-body:          "Inter", "Helvetica Neue", "Helvetica", system-ui, sans-serif;
-  --font-mono:          "Roboto Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  --font-mono:          "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
 
   --fs-12:              0.75rem;
   --fs-14:              0.875rem;
