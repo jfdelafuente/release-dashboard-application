@@ -42,6 +42,13 @@
       "status": "production"
     },
     {
+      "id": "release-kpis-dashboard",
+      "name": "Release KPIs Dashboard (Historical)",
+      "description": "Standalone, self-contained view of historical release KPIs (PaP/Post incident volume and resolution %) with a 75% KPI threshold indicator. Uses a static, hand-maintained dataset (src/dashboards/release-kpis-dashboard/releases-data.js) instead of the CSV/converters pipeline.",
+      "location": "src/dashboards/release-kpis-dashboard/index.html",
+      "status": "production"
+    },
+    {
       "id": "dashboard-hub",
       "name": "Dashboard Hub (Principal)",
       "description": "Central access point for all dashboards with auto-loading of data",
