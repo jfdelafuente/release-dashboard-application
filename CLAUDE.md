@@ -404,6 +404,22 @@ El script `csv_to_json.py` anterior era un conversor simple sin validación ni n
 
 <!-- SPECKIT START: Active feature implementation plans -->
 
+### Feature: Dashboards por Release (007-per-release-dashboards)
+
+**Status**: 📋 PLANNING COMPLETE (pendiente de `/speckit-tasks` e implementación)
+
+**Branch**: `007-per-release-dashboards`
+
+**Objective**: Sustituir el dashboard combinado de Postmortem/Release por un dashboard dedicado por release, identificado por el nombre que el usuario le da al subir el CSV, navegable desde la tabla ya existente en `dashboards/release-kpis/` (columna "RELEASE" convertida en enlace).
+
+**Related Documentation**:
+- Specification: [specs/007-per-release-dashboards/spec.md](specs/007-per-release-dashboards/spec.md)
+- Implementation Plan: [specs/007-per-release-dashboards/plan.md](specs/007-per-release-dashboards/plan.md)
+- Research: [specs/007-per-release-dashboards/research.md](specs/007-per-release-dashboards/research.md)
+- Data Model: [specs/007-per-release-dashboards/data-model.md](specs/007-per-release-dashboards/data-model.md)
+- Contracts: [specs/007-per-release-dashboards/contracts/](specs/007-per-release-dashboards/contracts/)
+- Quickstart: [specs/007-per-release-dashboards/quickstart.md](specs/007-per-release-dashboards/quickstart.md)
+
 ### Feature: CSV-to-JSON Converters Optimization (006-optimize-csv-converters)
 
 **Status**: ✅ IMPLEMENTATION COMPLETE
