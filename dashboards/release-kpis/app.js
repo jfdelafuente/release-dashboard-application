@@ -73,7 +73,7 @@ function computeViewModel() {
     yearChips, chartCountChips,
     releaseBars, pointsPaP, pointsFirstWeek, axisLeftTicks, axisRightTicks,
     kpiPap, kpiPost,
-    releaseRows: filtered
+    releaseRows: filtered.slice().reverse() // tabla: más reciente primero; los datos base (filtered/chartReleases) se mantienen en orden cronológico ascendente para las gráficas
   };
 }
 

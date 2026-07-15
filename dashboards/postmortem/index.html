@@ -436,6 +436,9 @@
         </div>
     </div>
 
+    <!-- RAW_RELEASES: única fuente del orden cronológico de releases (dashboards/release-kpis/),
+         usada aquí solo para determinar cuál es la más reciente cuando no hay ?release= en la URL. -->
+    <script src="/dashboards/release-kpis/releases-data.js"></script>
     <script>
         let allIncidents = [];
         let filteredIncidents = [];
@@ -1308,11 +1311,30 @@
                 dashboardScreen.classList.remove('visible');
             }
 
-            // Cargar los datos de la release indicada en ?release= (si existen)
+            // Nombre de la release cronológicamente más reciente, según el orden
+            // (ascendente) de RAW_RELEASES en dashboards/release-kpis/releases-data.js —
+            // no depende de qué release se subió/convirtió más recientemente.
+            function getMostRecentReleaseName() {
+                if (typeof RAW_RELEASES !== 'undefined' && Array.isArray(RAW_RELEASES) && RAW_RELEASES.length > 0) {
+                    return RAW_RELEASES[RAW_RELEASES.length - 1][0];
+                }
+                return null;
+            }
+
+            // Cargar los datos de la release indicada en ?release= (si existen).
+            // Sin parámetro, se asume la pestaña "Release" del menú: se redirige a
+            // la release más reciente en el tiempo (no la más recientemente cargada).
             async function autoLoadLatestData() {
-                const releaseParam = getReleaseParam();
+                let releaseParam = getReleaseParam();
 
                 if (!releaseParam) {
+                    const mostRecent = getMostRecentReleaseName();
+                    if (mostRecent) {
+                        const url = new URL(window.location.href);
+                        url.searchParams.set('release', mostRecent);
+                        window.location.replace(url.toString());
+                        return;
+                    }
                     showNoReleaseState();
                     return;
                 }
