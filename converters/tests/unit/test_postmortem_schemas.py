@@ -167,6 +167,24 @@ class TestConversionMetadata:
         assert 'kpis' in result
         assert result['kpis']['total'] == 1
 
+    def test_metadata_with_release_name(self):
+        """Test that release_name is included in to_dict() when provided."""
+        kpis = PostmortemKPIMetrics()
+        metadata = ConversionMetadata('test.csv', 0, kpis, release_name='2026R6-MESA')
+
+        assert metadata.release_name == '2026R6-MESA'
+        result = metadata.to_dict()
+        assert result['release_name'] == '2026R6-MESA'
+
+    def test_metadata_without_release_name(self):
+        """Test that release_name defaults to None when not provided (backward compatibility)."""
+        kpis = PostmortemKPIMetrics()
+        metadata = ConversionMetadata('test.csv', 0, kpis)
+
+        assert metadata.release_name is None
+        result = metadata.to_dict()
+        assert result['release_name'] is None
+
 
 class TestValidationError:
     """Test validation error tracking."""

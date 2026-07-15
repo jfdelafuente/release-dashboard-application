@@ -190,7 +190,8 @@ def generatePostmortemJSON(
     records: List[PostmortemRecord],
     output_path: str,
     source_filename: str = 'unknown',
-    include_metadata: bool = True
+    include_metadata: bool = True,
+    release_name: Optional[str] = None
 ) -> Dict[str, Any]:
     """
     Generate JSON output with postmortem records and optional metadata.
@@ -206,6 +207,8 @@ def generatePostmortemJSON(
         output_path: Path for output JSON file
         source_filename: Original CSV filename for metadata
         include_metadata: Whether to include metadata section
+        release_name: Name of the release these records belong to (optional,
+            propagated to _metadata.release_name for the per-release dashboards feature)
 
     Returns:
         Report dict with stats
@@ -231,7 +234,8 @@ def generatePostmortemJSON(
         metadata = ConversionMetadata(
             source_filename=source_filename,
             record_count=len(output_records),
-            kpis=kpis
+            kpis=kpis,
+            release_name=release_name
         )
         output_data['_metadata'] = metadata.to_dict()
 
@@ -270,7 +274,8 @@ class PostmortemConverter:
         self,
         input_path: str,
         output_path: Optional[str] = None,
-        error_report_path: Optional[str] = None
+        error_report_path: Optional[str] = None,
+        release_name: Optional[str] = None
     ) -> Tuple[bool, Dict[str, Any]]:
         """
         Convert postmortem CSV to JSON.
@@ -279,6 +284,8 @@ class PostmortemConverter:
             input_path: Path to input CSV
             output_path: Path for output JSON
             error_report_path: Path for error report
+            release_name: Name of the release these records belong to (optional,
+                propagated to _metadata.release_name)
 
         Returns:
             Tuple of (success, report)
@@ -323,7 +330,8 @@ class PostmortemConverter:
             generatePostmortemJSON(
                 self.valid_records,
                 output_path,
-                source_filename=input_file.name
+                source_filename=input_file.name,
+                release_name=release_name
             )
 
         if error_report_path:

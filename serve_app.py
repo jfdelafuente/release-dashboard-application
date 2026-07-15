@@ -56,6 +56,7 @@ class CustomHTTPHandler(http.server.SimpleHTTPRequestHandler):
         file_bytes = None
         filename = None
         dashboard_type = 'massive'
+        release_name = None
 
         if message.is_multipart():
             for part in message.iter_parts():
@@ -65,9 +66,15 @@ class CustomHTTPHandler(http.server.SimpleHTTPRequestHandler):
                     file_bytes = part.get_payload(decode=True)
                 elif field_name == 'type':
                     dashboard_type = part.get_payload(decode=True).decode('utf-8').strip()
+                elif field_name == 'release_name':
+                    release_name = part.get_payload(decode=True).decode('utf-8').strip()
 
         if not file_bytes or not filename:
             self._send_json(400, {'success': False, 'error': 'No se recibió ningún archivo CSV'})
+            return
+
+        if dashboard_type == 'postmortem' and not release_name:
+            self._send_json(400, {'success': False, 'error': 'Falta el nombre de la release (release_name)'})
             return
 
         filename = Path(filename).name
@@ -81,7 +88,7 @@ class CustomHTTPHandler(http.server.SimpleHTTPRequestHandler):
         csv_path.write_bytes(file_bytes)
         print(f"  Guardado: {csv_path} ({len(file_bytes)} bytes)")
 
-        result = run_upload(csv_path, dashboard_type, PROJECT_ROOT)
+        result = run_upload(csv_path, dashboard_type, PROJECT_ROOT, release_name)
 
         if not result['success']:
             print(f"  Error de conversión: {result.get('details', result.get('error'))}")

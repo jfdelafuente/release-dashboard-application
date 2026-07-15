@@ -256,8 +256,26 @@
     <!-- MASORANGE Top Bar (inyectada por assets/topbar.js) -->
     <div id="mo-topbar-root" data-active="postmortem"></div>
 
-    <!-- Upload Screen -->
-    <div class="upload-screen" id="uploadScreen">
+    <!-- Sin parámetro de release: ya no existe un dashboard combinado -->
+    <div class="upload-screen" id="noReleaseScreen">
+        <div class="upload-card">
+            <span class="upload-icon" aria-hidden="true">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#FF7900" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 16V4M12 4l-4 4M12 4l4 4"/>
+                    <path d="M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/>
+                </svg>
+            </span>
+            <h2 class="upload-heading">Elige una release</h2>
+            <p class="upload-description">
+                Este dashboard se accede por release, no como vista combinada.<br>
+                <small>Accede desde el dashboard de KPIs de Release y haz clic en el nombre de la release que quieras ver.</small>
+            </p>
+            <a class="upload-btn" href="/dashboards/release-kpis/" style="display:inline-block; text-decoration:none;">Ir a KPIs de Release</a>
+        </div>
+    </div>
+
+    <!-- Upload Screen (release identificada por la URL, sin datos todavía) -->
+    <div class="upload-screen hidden" id="uploadScreen">
         <div class="upload-card" id="uploadCard">
             <span class="upload-icon" aria-hidden="true">
                 <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#FF7900" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
@@ -265,12 +283,12 @@
                     <path d="M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/>
                 </svg>
             </span>
-            <h2 class="upload-heading">Análisis Postmortem</h2>
+            <h2 class="upload-heading">Postmortem — <span id="uploadReleaseName"></span></h2>
             <p class="upload-description">
-                Carga tu archivo CSV con datos de postmortem.<br>
+                Carga el CSV con datos de postmortem de esta release.<br>
                 <small>Arrastra el archivo o haz clic para seleccionarlo</small><br>
                 <small style="color: #5C5852; margin-top: 8px; display: block;">
-                    El CSV se guardará en <code style="background: #EDEAE4; padding: 2px 4px; border-radius: 3px;">data/input/</code> y se convertirá automáticamente
+                    El CSV se guardará en <code style="background: #EDEAE4; padding: 2px 4px; border-radius: 3px;">data/input/</code> y se convertirá automáticamente, asociado a esta release
                 </small>
             </p>
             <button class="upload-btn" id="uploadBtn">Seleccionar archivo</button>
@@ -282,8 +300,8 @@
     <div class="dashboard-screen" id="dashboardScreen">
         <!-- Header -->
         <div class="header">
-            <div class="eyebrow">Customer &amp; Service Operations</div>
-            <h1>Análisis <span class="accent">Postmortem</span></h1>
+            <div class="eyebrow">Customer &amp; Service Operations · Postmortem</div>
+            <h1 id="releaseHeading">Postmortem</h1>
             <p>Rendimiento de incidencias por despliegue y evolución operativa</p>
             <div class="gradient-divider"></div>
         </div>
@@ -418,6 +436,9 @@
         </div>
     </div>
 
+    <!-- RAW_RELEASES: única fuente del orden cronológico de releases (dashboards/release-kpis/),
+         usada aquí solo para determinar cuál es la más reciente cuando no hay ?release= en la URL. -->
+    <script src="/dashboards/release-kpis/releases-data.js"></script>
     <script>
         let allIncidents = [];
         let filteredIncidents = [];
@@ -1263,6 +1284,7 @@
 
         // File Handling
         document.addEventListener('DOMContentLoaded', function() {
+            const noReleaseScreen = document.getElementById('noReleaseScreen');
             const uploadScreen = document.getElementById('uploadScreen');
             const dashboardScreen = document.getElementById('dashboardScreen');
             const uploadCard = document.getElementById('uploadCard');
@@ -1270,55 +1292,109 @@
             const fileInput = document.getElementById('fileInput');
             const resetBtn = document.getElementById('resetBtn');
 
-            // Auto-cargar datos más recientes desde index.json
+            // Nombre de la release actual, tomado siempre del parámetro ?release=
+            // de la URL (nunca de un campo de texto libre — ver research.md R5)
+            function getReleaseParam() {
+                return new URLSearchParams(window.location.search).get('release');
+            }
+
+            function showNoReleaseState() {
+                noReleaseScreen.classList.remove('hidden');
+                uploadScreen.classList.add('hidden');
+                dashboardScreen.classList.remove('visible');
+            }
+
+            function showUploadScreenForRelease(releaseName) {
+                document.getElementById('uploadReleaseName').textContent = releaseName;
+                noReleaseScreen.classList.add('hidden');
+                uploadScreen.classList.remove('hidden');
+                dashboardScreen.classList.remove('visible');
+            }
+
+            // Nombre de la release cronológicamente más reciente, según el orden
+            // (ascendente) de RAW_RELEASES en dashboards/release-kpis/releases-data.js —
+            // no depende de qué release se subió/convirtió más recientemente.
+            function getMostRecentReleaseName() {
+                if (typeof RAW_RELEASES !== 'undefined' && Array.isArray(RAW_RELEASES) && RAW_RELEASES.length > 0) {
+                    return RAW_RELEASES[RAW_RELEASES.length - 1][0];
+                }
+                return null;
+            }
+
+            // Cargar los datos de la release indicada en ?release= (si existen).
+            // Sin parámetro, se asume la pestaña "Release" del menú: se redirige a
+            // la release más reciente en el tiempo (no la más recientemente cargada).
             async function autoLoadLatestData() {
+                let releaseParam = getReleaseParam();
+
+                if (!releaseParam) {
+                    const mostRecent = getMostRecentReleaseName();
+                    if (mostRecent) {
+                        const url = new URL(window.location.href);
+                        url.searchParams.set('release', mostRecent);
+                        window.location.replace(url.toString());
+                        return;
+                    }
+                    showNoReleaseState();
+                    return;
+                }
+
                 try {
                     const response = await fetch('/data/output/index.json?t=' + Date.now());
                     const indexData = await response.json();
 
-                    if (indexData.postmortem && indexData.postmortem.files && indexData.postmortem.files.length > 0) {
-                        // Obtener el archivo más reciente (primer archivo en la lista)
-                        const latestFile = indexData.postmortem.files[0];
-                        let filePath = latestFile.path;
+                    const files = (indexData.postmortem && indexData.postmortem.files) || [];
+                    const matchingFile = files.find(f => f.release_name === releaseParam);
 
-                        // Ruta root-absoluta: filePath ya es relativo a la raíz del repo (ej. "data/output/xxx.json")
-                        if (!filePath.startsWith('http')) {
-                            filePath = '/' + filePath;
-                        }
-
-                        console.log(`Auto-loading: ${filePath}`);
-
-                        // Cargar el archivo JSON (cache-busting para reflejar conversiones recientes)
-                        const fileResponse = await fetch(filePath + '?t=' + Date.now());
-                        const jsonData = await fileResponse.json();
-
-                        // Procesar datos
-                        if (Array.isArray(jsonData)) {
-                            allIncidents = jsonData;
-                        } else if (jsonData._metadata && jsonData.data) {
-                            allIncidents = jsonData.data;
-                            console.log(`Auto-loaded: ${latestFile.name} (${jsonData._metadata.record_count} records)`);
-                        } else if (typeof jsonData === 'object' && !Array.isArray(jsonData)) {
-                            allIncidents = [jsonData];
-                        }
-
-                        // Mostrar dashboard
-                        uploadScreen.classList.add('hidden');
-                        dashboardScreen.classList.add('visible');
-
-                        setTimeout(() => {
-                            try {
-                                analyzeData();
-                                document.getElementById('filterStatus').addEventListener('change', filterTable);
-                                document.getElementById('filterDespliegue').addEventListener('change', filterTable);
-                                document.getElementById('filterImpacto').addEventListener('change', filterTable);
-                            } catch (e) {
-                                console.error('Error in analyzeData:', e);
-                            }
-                        }, 100);
+                    if (!matchingFile) {
+                        showUploadScreenForRelease(releaseParam);
+                        return;
                     }
+
+                    let filePath = matchingFile.path;
+
+                    // Ruta root-absoluta: filePath ya es relativo a la raíz del repo (ej. "data/output/xxx.json")
+                    if (!filePath.startsWith('http')) {
+                        filePath = '/' + filePath;
+                    }
+
+                    console.log(`Auto-loading: ${filePath}`);
+
+                    // Cargar el archivo JSON (cache-busting para reflejar conversiones recientes)
+                    const fileResponse = await fetch(filePath + '?t=' + Date.now());
+                    const jsonData = await fileResponse.json();
+
+                    // Procesar datos
+                    if (Array.isArray(jsonData)) {
+                        allIncidents = jsonData;
+                    } else if (jsonData._metadata && jsonData.data) {
+                        allIncidents = jsonData.data;
+                        console.log(`Auto-loaded: ${matchingFile.name} (${jsonData._metadata.record_count} records)`);
+                    } else if (typeof jsonData === 'object' && !Array.isArray(jsonData)) {
+                        allIncidents = [jsonData];
+                    }
+
+                    // Cabecera con el nombre de la release (textContent escapa automáticamente)
+                    document.getElementById('releaseHeading').textContent = releaseParam;
+
+                    // Mostrar dashboard
+                    noReleaseScreen.classList.add('hidden');
+                    uploadScreen.classList.add('hidden');
+                    dashboardScreen.classList.add('visible');
+
+                    setTimeout(() => {
+                        try {
+                            analyzeData();
+                            document.getElementById('filterStatus').addEventListener('change', filterTable);
+                            document.getElementById('filterDespliegue').addEventListener('change', filterTable);
+                            document.getElementById('filterImpacto').addEventListener('change', filterTable);
+                        } catch (e) {
+                            console.error('Error in analyzeData:', e);
+                        }
+                    }, 100);
                 } catch (err) {
-                    console.log('No se encontró index.json o datos. Usuario puede cargar manualmente.', err);
+                    console.log('No se encontró index.json o datos para esta release. Usuario puede cargarlos.', err);
+                    showUploadScreenForRelease(releaseParam);
                 }
             }
 
@@ -1371,6 +1447,7 @@
                 const formData = new FormData();
                 formData.append('file', file);
                 formData.append('type', 'postmortem');
+                formData.append('release_name', getReleaseParam() || '');
 
                 fetch('/api/upload', { method: 'POST', body: formData })
                     .then(response => response.json().then(data => ({ ok: response.ok, data })))

@@ -368,12 +368,18 @@ success, records, kpis, metadata, errors = convertPostmortemCSV(
 )
 
 # Despliegue y Dashboard Hub KPIs calculados automáticamente
+# release_name (opcional): nombre de la release a la que pertenecen estos
+# datos, usado por el dashboard de postmortem por release (ver
+# specs/007-per-release-dashboards). Se pasa como --release-name en el CLI
+# (converters/cli/convert_postmortems.py) o como campo release_name en la
+# subida por navegador (POST /api/upload). Si se omite, queda en null.
 # Output JSON estructura:
 # {
 #   "_metadata": {
 #     "type": "postmortem",
 #     "version": "1.0",
 #     "created": "ISO timestamp",
+#     "release_name": "2026R4-PRUEBA",
 #     "record_count": 45,
 #     "kpis": {
 #       "by_estatus": {...},
@@ -390,6 +396,8 @@ success, records, kpis, metadata, errors = convertPostmortemCSV(
 # }
 ```
 
+`data/output/index.json` refleja `release_name` en cada entrada de `postmortem.files[]` (leído del `_metadata` de cada archivo; `null` para archivos generados antes de esta feature). El dashboard de postmortem por release (`dashboards/postmortem/index.html`) usa este campo para encontrar los datos de `?release=<nombre>`.
+
 ### Uso Anterior (Deprecated)
 
 El script `csv_to_json.py` anterior era un conversor simple sin validación ni normalización. El nuevo módulo reemplaza esta funcionalidad con:
@@ -403,6 +411,22 @@ El script `csv_to_json.py` anterior era un conversor simple sin validación ni n
 ## Características en Desarrollo
 
 <!-- SPECKIT START: Active feature implementation plans -->
+
+### Feature: Dashboards por Release (007-per-release-dashboards)
+
+**Status**: 📋 PLANNING COMPLETE (pendiente de `/speckit-tasks` e implementación)
+
+**Branch**: `007-per-release-dashboards`
+
+**Objective**: Sustituir el dashboard combinado de Postmortem/Release por un dashboard dedicado por release, identificado por el nombre que el usuario le da al subir el CSV, navegable desde la tabla ya existente en `dashboards/release-kpis/` (columna "RELEASE" convertida en enlace).
+
+**Related Documentation**:
+- Specification: [specs/007-per-release-dashboards/spec.md](specs/007-per-release-dashboards/spec.md)
+- Implementation Plan: [specs/007-per-release-dashboards/plan.md](specs/007-per-release-dashboards/plan.md)
+- Research: [specs/007-per-release-dashboards/research.md](specs/007-per-release-dashboards/research.md)
+- Data Model: [specs/007-per-release-dashboards/data-model.md](specs/007-per-release-dashboards/data-model.md)
+- Contracts: [specs/007-per-release-dashboards/contracts/](specs/007-per-release-dashboards/contracts/)
+- Quickstart: [specs/007-per-release-dashboards/quickstart.md](specs/007-per-release-dashboards/quickstart.md)
 
 ### Feature: CSV-to-JSON Converters Optimization (006-optimize-csv-converters)
 

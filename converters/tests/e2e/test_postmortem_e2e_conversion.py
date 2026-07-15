@@ -270,5 +270,49 @@ class TestPostmortemE2EConversion:
         assert data['_metadata']['record_count'] == len(data['data'])
 
 
+class TestPostmortemReleaseNamePropagation:
+    """Test that release_name flows through convert_file() into _metadata.
+
+    Uses a minimal inline CSV (via tmp_path) instead of tests/test_data/*.csv,
+    since those fixture files are missing from the repo (pre-existing issue,
+    unrelated to this feature).
+    """
+
+    def _write_minimal_csv(self, path):
+        path.write_text(
+            "ID de incidencia,Descripción,Estatus,Fecha de envío,Grupo asignado,Urgencia,Impacto\n"
+            "INC001,Incidente de prueba,Cerrado,26/04/2026,SOP_TEST,Alta,Medio\n",
+            encoding='utf-8'
+        )
+
+    def test_e2e_release_name_in_metadata(self, tmp_path):
+        """Test that a release_name passed to convert_file() ends up in _metadata."""
+        input_csv = tmp_path / "input.csv"
+        self._write_minimal_csv(input_csv)
+        output_file = tmp_path / "output.json"
+
+        converter = PostmortemConverter()
+        converter.convert_file(str(input_csv), str(output_file), release_name="2026R4-PRUEBA")
+
+        with open(output_file, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+
+        assert data['_metadata']['release_name'] == "2026R4-PRUEBA"
+
+    def test_e2e_release_name_absent_by_default(self, tmp_path):
+        """Test that _metadata.release_name is None when not provided (backward compatibility)."""
+        input_csv = tmp_path / "input.csv"
+        self._write_minimal_csv(input_csv)
+        output_file = tmp_path / "output.json"
+
+        converter = PostmortemConverter()
+        converter.convert_file(str(input_csv), str(output_file))
+
+        with open(output_file, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+
+        assert data['_metadata']['release_name'] is None
+
+
 if __name__ == '__main__':
     pytest.main([__file__, '-v'])
