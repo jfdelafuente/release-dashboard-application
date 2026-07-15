@@ -211,7 +211,7 @@ def show_error_summary(error_path):
         print_warning(f"No se pudo leer reporte de errores: {e}")
 
 
-def convert_single_file(csv_file, output_path=None, error_path=None):
+def convert_single_file(csv_file, output_path=None, error_path=None, release_name=None):
     """Convierte un archivo CSV individual."""
     print_info(f"Procesando: {csv_file.name}")
     print_info(f"Tamaño: {format_size(csv_file.stat().st_size)}")
@@ -246,7 +246,8 @@ def convert_single_file(csv_file, output_path=None, error_path=None):
         success, report = converter.convert_file(
             str(csv_file),
             str(output_path),
-            str(error_path) if error_path else None
+            str(error_path) if error_path else None,
+            release_name=release_name
         )
 
         # Mostrar resultados
@@ -339,11 +340,23 @@ def build_index_for_hub(output_dir=None):
 
     for file_path in postmortem_files:
         stat = file_path.stat()
+
+        # Leer release_name de _metadata (ausente/None para archivos generados
+        # antes de esta feature — ver specs/007-per-release-dashboards)
+        release_name = None
+        try:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                file_content = json.load(f)
+            release_name = file_content.get('_metadata', {}).get('release_name')
+        except (json.JSONDecodeError, IOError, OSError):
+            pass
+
         file_info = {
             'name': file_path.name,
             'size': stat.st_size,
             'modified': datetime.fromtimestamp(stat.st_mtime).isoformat(),
-            'path': f"data/output/{file_path.name}"
+            'path': f"data/output/{file_path.name}",
+            'release_name': release_name
         }
         postmortem_index['files'].append(file_info)
         print(f"  • {file_path.name} ({format_size(stat.st_size)})")
@@ -427,6 +440,12 @@ Ejemplos:
     )
 
     parser.add_argument(
+        '--release-name',
+        help='Nombre de la release a asociar a los datos convertidos (se guarda en _metadata.release_name)',
+        default=None
+    )
+
+    parser.add_argument(
         '-v', '--verbose',
         action='store_true',
         help='Output más detallado'
@@ -467,7 +486,7 @@ Ejemplos:
             output_path = Path(args.output) if args.output else None
             error_path = Path(args.errors) if args.errors else None
 
-        success = convert_single_file(csv_file, output_path, error_path)
+        success = convert_single_file(csv_file, output_path, error_path, release_name=args.release_name)
 
         if not success:
             total_success = False

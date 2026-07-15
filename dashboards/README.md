@@ -40,7 +40,7 @@ dashboards/
 
 - 🧭 **Portal**: punto de acceso único, con tarjetas clicables a cada dashboard (incluye enlaces a Reportes de Incidencias y Gestión de Problemas, que son apps de los repos hermanos, no de este repositorio)
 - 📈 **Incidencias Masivas**: filtro de tiempo global, KPIs con tendencias, gráficas temporales (entradas/solucionadas/backlog), incidencias abiertas por estado, tabla filtrable y ordenable con enlaces a Remedy
-- 🔍 **Postmortem / Release**: análisis por despliegue (PAP/MESA), KPIs de resolución, distribución por sistema y por estado, tabla filtrable y ordenable
+- 🔍 **Postmortem / Release**: un dashboard por release (identificado por su nombre), con análisis por despliegue (PAP/MESA), KPIs de resolución, distribución por sistema y por estado, tabla filtrable y ordenable — se accede desde la tabla de KPIs de Release, no como vista combinada
 - 🎯 **KPIs de Release (Histórico)**: serie histórica de KPIs de release (volumen y % de resolución PaP/1ª semana) con indicador de umbral del 75%, sobre un dataset estático mantenido a mano
 - 📤 **Subida de CSV desde el navegador**: arrastra o selecciona un CSV y se convierte automáticamente (requiere `serve_app.py`, ver más abajo)
 - 🎨 **Identidad MASORANGE**: barra superior negra con logo, acento naranja `#FF7900` sobre neutros cálidos, tipografía Inter (interfaz) + IBM Plex Mono (cifras/datos)
@@ -127,12 +127,14 @@ En producción, `dashboards/` se sirve como alias estático y `/api` se enruta a
 
 ### Postmortem / Release (`postmortem/index.html`)
 
-**Análisis detallado de postmortems por despliegue.**
+**Un dashboard por release, no una vista combinada.** Se accede mediante `/dashboards/postmortem/?release=<nombre>` — el nombre coincide con el que aparece en la columna "RELEASE" de la tabla de `dashboards/release-kpis/`, cuyas filas enlazan directamente aquí. No existe ya un dashboard con todas las releases mezcladas.
 
-- KPIs: total, % cerradas, % resueltas PaP, % resueltas Mesa
+- KPIs: total, % cerradas, % resueltas PaP, % resueltas Mesa (de la release cargada)
 - Gráfica temporal de entradas/resoluciones/backlog
 - Distribución por sistema y por estado
 - Filtros de tabla (Estado, Despliegue, Impacto) y tabla ordenable
+- **Tres estados según el parámetro `release`**: sin parámetro → mensaje pidiendo acceder desde KPIs de Release; con parámetro y datos ya cargados → dashboard normal con el nombre de la release en la cabecera; con parámetro pero sin datos todavía → pantalla de subida de CSV con el nombre de la release ya asociado (no hay que escribirlo a mano)
+- El nombre de release se asocia al subir el CSV: `data/output/index.json` guarda `release_name` por archivo (leído de `_metadata.release_name`), y el JS de este dashboard busca ahí el archivo que corresponde al `?release=` de la URL
 
 ### KPIs Release — Histórico (`release-kpis/index.html`)
 
@@ -141,6 +143,7 @@ En producción, `dashboards/` se sirve como alias estático y `/api` se enruta a
 - ⚠️ **No usa la tubería CSV/converters.** A diferencia de los otros 3, consume un dataset estático mantenido a mano en `releases-data.js` (48 releases desde 2020 en adelante) — no hace `fetch` de `data/output/`, ni se actualiza subiendo un CSV. Para añadir un release nuevo, edita `releases-data.js` directamente.
 - Filtros por año y por número de gráficas a mostrar
 - Panel de detalle por release con incidencias asociadas
+- El nombre de cada release en la columna "RELEASE" de la tabla enlaza a `/dashboards/postmortem/?release=<nombre>` — es el único punto de acceso a los dashboards de postmortem por release (ver más abajo)
 - Su barra superior se inyecta igual que en los otros 3 (vía `assets/topbar.js`), pero como este dashboard reconstruye todo su DOM en cada `render()` propio (`app.js`), llama explícitamente a `window.MoTopbar.render()` después de cada re-render, en vez de depender solo del evento `DOMContentLoaded`.
 
 ## 🎨 Convención para dashboards

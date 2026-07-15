@@ -144,11 +144,18 @@ class PostmortemKPIMetrics:
 class ConversionMetadata:
     """File-level metadata attached to output JSON."""
 
-    def __init__(self, source_filename: str, record_count: int, kpis: PostmortemKPIMetrics):
+    def __init__(
+        self,
+        source_filename: str,
+        record_count: int,
+        kpis: PostmortemKPIMetrics,
+        release_name: Optional[str] = None
+    ):
         self.type = 'postmortem'
         self.version = '1.0'
         self.created = datetime.now().isoformat() + 'Z'
         self.source_filename = source_filename
+        self.release_name = release_name
         self.record_count = record_count
         self.kpis = kpis
 
@@ -159,6 +166,7 @@ class ConversionMetadata:
             'version': self.version,
             'created': self.created,
             'source_filename': self.source_filename,
+            'release_name': self.release_name,
             'record_count': self.record_count,
             'conversion_timestamp': self.created,
             'kpis': self.kpis.to_dict()
