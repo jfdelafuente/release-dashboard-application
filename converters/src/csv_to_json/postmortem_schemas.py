@@ -261,6 +261,44 @@ def parsePostmortemDate(date_str: str) -> Optional[str]:
     return None
 
 
+def parsePostmortemDateTime(date_str: str) -> Optional[str]:
+    """
+    Parse postmortem date preserving time-of-day, for features that need
+    intra-day granularity (e.g., the PAP evolution chart's 30-minute
+    x-axis). Unlike parsePostmortemDate(), which normalizes to date-only
+    DD/MM/YYYY, this keeps HH:MM.
+
+    The trailing 'a'/'p' suffix seen in real exports (e.g., "8:49 a",
+    "14:02 a") is ignored: real data shows it present regardless of
+    whether the hour is morning or afternoon (24-hour clock), so it does
+    not reliably indicate AM/PM in this dataset.
+
+    Returns normalized 'DD/MM/YYYY HH:MM' (defaults to 00:00 when no
+    time is present or parseable) or None if the date itself is
+    unparseable.
+    """
+    if not date_str:
+        return None
+
+    date_str = date_str.strip()
+    date_part = date_str
+    hour, minute = 0, 0
+
+    if ' ' in date_str:
+        date_part, rest = date_str.split(' ', 1)
+        time_match = re.match(r'(\d{1,2}):(\d{2})', rest.strip())
+        if time_match:
+            parsed_hour, parsed_minute = int(time_match.group(1)), int(time_match.group(2))
+            if 0 <= parsed_hour <= 23 and 0 <= parsed_minute <= 59:
+                hour, minute = parsed_hour, parsed_minute
+
+    parsed_date = parsePostmortemDate(date_part)
+    if not parsed_date:
+        return None
+
+    return f"{parsed_date} {hour:02d}:{minute:02d}"
+
+
 def derivateDespliegue(records: List[PostmortemRecord]) -> Dict[str, str]:
     """
     Derive Despliegue field for each record based on 'Fecha de envío'.

@@ -6,7 +6,7 @@ Tests parsePostmortemDate() function covering DD-MMM, DD/MM/YYYY, and edge cases
 """
 
 import pytest
-from csv_to_json.postmortem_schemas import parsePostmortemDate
+from csv_to_json.postmortem_schemas import parsePostmortemDate, parsePostmortemDateTime
 
 
 class TestDateParser:
@@ -108,6 +108,60 @@ class TestDateParser:
         # 2026 is not a leap year
         result = parsePostmortemDate('29/02/2026')
         assert result is None
+
+
+class TestDateTimeParser:
+    """Test parsePostmortemDateTime() — preserves time-of-day (PAP chart's 30-min x-axis)."""
+
+    def test_preserves_morning_time(self):
+        """Test that a morning time is preserved as 24-hour HH:MM."""
+        result = parsePostmortemDateTime('26/04/2026 8:49 a')
+        assert result == '26/04/2026 08:49'
+
+    def test_preserves_afternoon_time_despite_a_suffix(self):
+        """Test that an afternoon 24h hour is preserved as-is, ignoring the 'a' suffix.
+
+        Real exports carry the 'a' suffix regardless of morning/afternoon
+        hour (e.g. '14:02 a', '22:18 a'), so it is not a reliable 12-hour
+        AM/PM indicator here and must not trigger a +12h conversion.
+        """
+        result = parsePostmortemDateTime('07/06/2026 14:02 a')
+        assert result == '07/06/2026 14:02'
+
+    def test_p_suffix_also_ignored(self):
+        """Test that a 'p' suffix is likewise not treated as a 12-hour PM indicator."""
+        result = parsePostmortemDateTime('01/05/2026 9:15 p')
+        assert result == '01/05/2026 09:15'
+
+    def test_date_only_defaults_to_midnight(self):
+        """Test that a date without a time component defaults to 00:00."""
+        result = parsePostmortemDateTime('26/04/2026')
+        assert result == '26/04/2026 00:00'
+
+    def test_spanish_abbreviation_defaults_to_midnight(self):
+        """Test that the legacy DD-MMM format (no time) defaults to 00:00."""
+        result = parsePostmortemDateTime('26-abr')
+        assert result is not None
+        assert result.endswith(' 00:00')
+
+    def test_single_digit_hour_and_minute_zero_padded(self):
+        """Test that single-digit hour/minute are zero-padded."""
+        result = parsePostmortemDateTime('01/05/2026 8:05 a')
+        assert result == '01/05/2026 08:05'
+
+    def test_invalid_date_returns_none(self):
+        """Test that an unparseable date still returns None, regardless of any time part."""
+        assert parsePostmortemDateTime('invalid 8:00 a') is None
+
+    def test_empty_and_none_return_none(self):
+        """Test empty string and None input."""
+        assert parsePostmortemDateTime('') is None
+        assert parsePostmortemDateTime(None) is None
+
+    def test_malformed_time_part_falls_back_to_midnight(self):
+        """Test that a date with an unparseable trailing time part still returns the date, at 00:00."""
+        result = parsePostmortemDateTime('26/04/2026 garbage')
+        assert result == '26/04/2026 00:00'
 
 
 if __name__ == '__main__':

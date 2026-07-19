@@ -22,7 +22,7 @@ from .postmortem_schemas import (
     PostmortemRecord,
     PostmortemKPIMetrics,
     ConversionMetadata,
-    parsePostmortemDate,
+    parsePostmortemDateTime,
     derivateDespliegue
 )
 
@@ -164,9 +164,9 @@ def normalizePostmortemRecord(
             'Fecha de notificación',
             'Fecha de última resolución'
         ]:
-            # Date parsing - parse and normalize
+            # Date parsing - parse and normalize (preserves time-of-day)
             if value:
-                parsed = parsePostmortemDate(value)
+                parsed = parsePostmortemDateTime(value)
                 if parsed:
                     value = parsed
                 else:

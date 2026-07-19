@@ -100,12 +100,12 @@ class TestDateParsing:
 
         pm_record, errors = normalizePostmortemRecord(record)
 
-        # Should parse and normalize to DD/MM/YYYY
-        assert pm_record.data['Fecha de envío'] == '01/05/2026'
+        # Should parse and normalize to DD/MM/YYYY HH:MM (time preserved)
+        assert pm_record.data['Fecha de envío'] == '01/05/2026 08:00'
         assert len(errors) == 0
 
     def test_normalize_date_with_time_component(self):
-        """Test date parsing strips time component."""
+        """Test date parsing preserves the time component (needed for the PAP chart's 30-min x-axis)."""
         record = {
             'ID de incidencia': 'INC001',
             'Descripción': 'Test',
@@ -119,9 +119,11 @@ class TestDateParsing:
 
         pm_record, errors = normalizePostmortemRecord(record)
 
-        # Time should be stripped
-        assert pm_record.data['Fecha de envío'] == '01/05/2026'
-        assert pm_record.data['Fecha de notificación'] == '01/05/2026'
+        # Time should be preserved as 24-hour HH:MM (the trailing 'a'/'p'
+        # suffix is ignored, not treated as a 12-hour AM/PM indicator --
+        # real exports carry it regardless of morning/afternoon hour)
+        assert pm_record.data['Fecha de envío'] == '01/05/2026 14:30'
+        assert pm_record.data['Fecha de notificación'] == '01/05/2026 15:00'
 
     def test_normalize_date_single_digit_padding(self):
         """Test single digit day/month are zero-padded."""
@@ -138,7 +140,7 @@ class TestDateParsing:
         pm_record, errors = normalizePostmortemRecord(record)
 
         # Should be zero-padded
-        assert pm_record.data['Fecha de envío'] == '05/04/2026'
+        assert pm_record.data['Fecha de envío'] == '05/04/2026 08:00'
 
     def test_normalize_date_spanish_abbreviation(self):
         """Test parsing Spanish month abbreviations."""
