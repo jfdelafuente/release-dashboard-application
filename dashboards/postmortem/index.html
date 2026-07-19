@@ -1245,18 +1245,15 @@
                 datesOpen.push(...globalBacklogData.dates);
                 backlogOpen = [...globalBacklogData.backlog];
 
-                // Populate status data for each date in the global dates array
+                // Populate status data for each date in the global dates array.
+                // Empareja por día calendario (clave ISO YYYY-MM-DD), no por
+                // igualdad de texto exacto: desde que "Fecha de envío" incluye
+                // la hora, dos incidencias del mismo día casi nunca comparten
+                // el mismo string completo, así que comparar el texto tal cual
+                // (como se hacía antes) dejaba de encontrar coincidencias.
                 globalBacklogData.dates.forEach((date, idx) => {
-                    // Find matching date key for this date string
-                    let dateKey = null;
-
-                    for (const key in dailyOpenData) {
-                        const displayDate = dateMapOpen[key];
-                        if (displayDate === date) {
-                            dateKey = key;
-                            break;
-                        }
-                    }
+                    const parsedDisplayDate = parseDate(date);
+                    const dateKey = parsedDisplayDate ? parsedDisplayDate.toISOString().split('T')[0] : null;
 
                     statusList.forEach(status => {
                         const count = dateKey && dailyOpenData[dateKey] && dailyOpenData[dateKey].byStatus[status]
