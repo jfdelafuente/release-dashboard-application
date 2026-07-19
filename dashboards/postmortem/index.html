@@ -532,7 +532,7 @@
             const total = allIncidents.length;
             const closed = allIncidents.filter(i => {
                 const status = (getIncidentValue(i, 'Estatus') || '').toLowerCase();
-                return status.includes('cerrado');
+                return status.includes('cerrado') || status.includes('resuelto');
             }).length;
             const closedPercent = total > 0 ? Math.round((closed / total) * 100) : 0;
 
