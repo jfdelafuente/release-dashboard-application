@@ -355,6 +355,15 @@
                 </div>
             </div>
 
+            <!-- PAP Evolution Chart -->
+            <div class="section-title">Evolución Diaria de Incidencias PAP</div>
+            <div class="row-1col">
+                <div class="card">
+                    <h3>Abiertas y Cerradas (solo PAP)</h3>
+                    <div id="papEvolutionChart" class="chart-container" style="min-height: 450px;"></div>
+                </div>
+            </div>
+
             <!-- Open Incidents Chart -->
             <div class="section-title">Incidencias Abiertas por Día y Backlog</div>
             <div class="row-1col">
@@ -398,8 +407,14 @@
                         </select>
                     </div>
                     <div>
-                        <label style="font-size: 12px; font-weight: 600; color: #5C5852; text-transform: uppercase; display: block; margin-bottom: 6px;">Impacto</label>
-                        <select id="filterImpacto" style="width: 100%; padding: 8px; border: 1px solid #E2DDD5; border-radius: 6px; font-family: 'Inter', 'Helvetica Neue', sans-serif; font-size: 13px;">
+                        <label style="font-size: 12px; font-weight: 600; color: #5C5852; text-transform: uppercase; display: block; margin-bottom: 6px;">Urgencia</label>
+                        <select id="filterUrgencia" style="width: 100%; padding: 8px; border: 1px solid #E2DDD5; border-radius: 6px; font-family: 'Inter', 'Helvetica Neue', sans-serif; font-size: 13px;">
+                            <option value="">Todos</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="font-size: 12px; font-weight: 600; color: #5C5852; text-transform: uppercase; display: block; margin-bottom: 6px;">Sistema</label>
+                        <select id="filterSistema" style="width: 100%; padding: 8px; border: 1px solid #E2DDD5; border-radius: 6px; font-family: 'Inter', 'Helvetica Neue', sans-serif; font-size: 13px;">
                             <option value="">Todos</option>
                         </select>
                     </div>
@@ -532,7 +547,7 @@
             const total = allIncidents.length;
             const closed = allIncidents.filter(i => {
                 const status = (getIncidentValue(i, 'Estatus') || '').toLowerCase();
-                return status.includes('cerrado');
+                return status.includes('cerrado') || status.includes('resuelto');
             }).length;
             const closedPercent = total > 0 ? Math.round((closed / total) * 100) : 0;
 
@@ -567,6 +582,7 @@
 
             // Create charts
             createEvolutionChart();
+            createPapEvolutionChart();
             createOpenIncidentsChart();
             createSystemChart();
         }
@@ -894,6 +910,206 @@
             };
         }
 
+        function createPapEvolutionChart() {
+            // Solo incidencias de PAP (ver derivateDespliegue en el conversor:
+            // todas las incidencias del día del despliegue, no solo la primera)
+            const papIncidents = allIncidents.filter(i => getIncidentValue(i, 'Despliegue') === 'PAP');
+
+            // Parsea fecha+hora completa (formato "DD/MM/YYYY HH:MM", generado
+            // por parsePostmortemDateTime() en el conversor Python — a
+            // diferencia de las otras gráficas, aquí SÍ importa la hora).
+            function parseDateTime(dateStr) {
+                if (!dateStr) return null;
+                const [datePart, timePart] = dateStr.trim().split(' ');
+                if (!datePart || !datePart.includes('/')) return null;
+
+                const dateParts = datePart.split('/');
+                if (dateParts.length < 3) return null;
+
+                const day = parseInt(dateParts[0]);
+                const month = parseInt(dateParts[1]) - 1;
+                const year = parseInt(dateParts[2]);
+                if (isNaN(day) || isNaN(month) || isNaN(year)) return null;
+
+                const timeParts = (timePart || '00:00').split(':');
+                const hour = parseInt(timeParts[0]);
+                const minute = parseInt(timeParts[1]);
+
+                return new Date(year, month, day, isNaN(hour) ? 0 : hour, isNaN(minute) ? 0 : minute);
+            }
+
+            // Redondea hacia abajo al intervalo de 30 minutos (00 o 30)
+            function floorToHalfHour(date) {
+                const floored = new Date(date);
+                floored.setMinutes(date.getMinutes() < 30 ? 0 : 30, 0, 0);
+                return floored;
+            }
+
+            function formatSlot(date) {
+                const dd = String(date.getDate()).padStart(2, '0');
+                const mm = String(date.getMonth() + 1).padStart(2, '0');
+                const hh = String(date.getHours()).padStart(2, '0');
+                const min = String(date.getMinutes()).padStart(2, '0');
+                return `${dd}/${mm} ${hh}:${min}`;
+            }
+
+            if (papIncidents.length === 0) {
+                Plotly.newPlot('papEvolutionChart', [], {
+                    annotations: [{
+                        text: 'No hay incidencias PAP en esta release',
+                        showarrow: false,
+                        font: { size: 13, color: '#5C5852' }
+                    }],
+                    xaxis: { visible: false },
+                    yaxis: { visible: false },
+                    paper_bgcolor: 'transparent',
+                    plot_bgcolor: 'transparent'
+                }, { responsive: true, displayModeBar: false });
+                return;
+            }
+
+            // Datos por intervalo de 30 minutos (solo PAP)
+            const slotData = {}; // key: timestamp del slot -> { entries, resolutions, slotDate }
+
+            // Entradas por fecha/hora de apertura
+            papIncidents.forEach(incident => {
+                const dt = parseDateTime(getIncidentValue(incident, 'Fecha de envío'));
+                if (!dt) return;
+
+                const slot = floorToHalfHour(dt);
+                const key = slot.getTime();
+                if (!slotData[key]) slotData[key] = { entries: 0, resolutions: 0, slotDate: slot };
+                slotData[key].entries++;
+            });
+
+            // Resoluciones (Cerrado o Resuelto) por fecha/hora de última resolución
+            papIncidents.forEach(incident => {
+                const status = (getIncidentValue(incident, 'Estatus') || '').toLowerCase();
+                const isSolved = status.includes('cerrado') || status.includes('resuelto');
+                if (!isSolved) return;
+
+                const dt = parseDateTime(getIncidentValue(incident, 'Fecha de última resolución'));
+                if (!dt) return;
+
+                const slot = floorToHalfHour(dt);
+                const key = slot.getTime();
+                if (!slotData[key]) slotData[key] = { entries: 0, resolutions: 0, slotDate: slot };
+                slotData[key].resolutions++;
+            });
+
+            const dates = [];
+            const entries = [];
+            const resolutions = [];
+            const backlog = [];
+
+            const slotKeys = Object.keys(slotData).map(Number).sort((a, b) => a - b);
+
+            if (slotKeys.length > 0) {
+                const THIRTY_MIN_MS = 30 * 60 * 1000;
+                const minSlot = slotKeys[0];
+                const maxSlot = slotKeys[slotKeys.length - 1];
+
+                let backlogPrevious = 0;
+                for (let t = minSlot; t <= maxSlot; t += THIRTY_MIN_MS) {
+                    const bucket = slotData[t];
+                    const entradas = bucket ? bucket.entries : 0;
+                    const solucionadas = bucket ? bucket.resolutions : 0;
+                    const slotDate = bucket ? bucket.slotDate : new Date(t);
+
+                    const backlogActual = backlogPrevious + entradas - solucionadas;
+                    backlogPrevious = backlogActual;
+
+                    dates.push(formatSlot(slotDate));
+                    entries.push(entradas);
+                    resolutions.push(solucionadas);
+                    backlog.push(Math.max(0, backlogActual));
+                }
+            }
+
+            const entriesTrace = {
+                x: dates,
+                y: entries,
+                name: 'Abiertas (PAP)',
+                type: 'bar',
+                marker: { color: '#FFC08A' },
+                yaxis: 'y',
+                hovertemplate: '<b>%{x}</b><br>Abiertas: %{y}<extra></extra>'
+            };
+
+            const resolutionsTrace = {
+                x: dates,
+                y: resolutions,
+                name: 'Cerradas (PAP)',
+                type: 'bar',
+                marker: { color: '#FF7900' },
+                yaxis: 'y',
+                hovertemplate: '<b>%{x}</b><br>Cerradas: %{y}<extra></extra>'
+            };
+
+            const backlogTrace = {
+                x: dates,
+                y: backlog,
+                name: 'Backlog PAP',
+                type: 'scatter',
+                mode: 'lines+markers',
+                line: { color: '#0C0B09', width: 3 },
+                marker: { size: 8, color: '#0C0B09' },
+                yaxis: 'y2',
+                hovertemplate: '<b>%{x}</b><br>Backlog: %{y}<extra></extra>'
+            };
+
+            const layout = {
+                responsive: true,
+                barmode: 'group',
+                font: { family: 'Inter, sans-serif', size: 11, color: '#5C5852' },
+                paper_bgcolor: 'transparent',
+                plot_bgcolor: 'transparent',
+                hovermode: 'x unified',
+                margin: { l: 70, r: 70, t: 40, b: 80 },
+                xaxis: {
+                    title: { text: 'Hora (intervalos de 30 min)', font: { size: 12, color: '#5C5852' } },
+                    showgrid: true,
+                    gridcolor: '#E2DDD5',
+                    tickangle: -45,
+                    showline: true,
+                    linewidth: 1,
+                    linecolor: '#E2DDD5'
+                },
+                yaxis: {
+                    title: { text: 'Abiertas y Cerradas (Volumen)', font: { size: 12, color: '#5C5852' } },
+                    showgrid: true,
+                    gridcolor: '#E2DDD5',
+                    showline: true,
+                    linewidth: 1,
+                    linecolor: '#E2DDD5',
+                    zeroline: false
+                },
+                yaxis2: {
+                    title: { text: 'Backlog PAP', font: { size: 12, color: '#5C5852' } },
+                    overlaying: 'y',
+                    side: 'right',
+                    showgrid: false,
+                    showline: true,
+                    linewidth: 1,
+                    linecolor: '#E2DDD5',
+                    zeroline: false
+                },
+                legend: {
+                    x: 0.02,
+                    y: 0.98,
+                    bgcolor: 'rgba(255, 255, 255, 0.9)',
+                    bordercolor: '#E2DDD5',
+                    borderwidth: 1,
+                    font: { size: 11 }
+                }
+            };
+
+            Plotly.newPlot('papEvolutionChart', [entriesTrace, resolutionsTrace, backlogTrace], layout, {
+                responsive: true,
+                displayModeBar: false
+            });
+        }
+
         function createOpenIncidentsChart() {
             // Helper function to parse date (supports "26-abr" and "26/04/2026" formats, with optional time)
             function parseDate(dateStr) {
@@ -1189,36 +1405,53 @@
                 deploySelect.appendChild(option);
             });
 
-            // Populate Impacto filter
-            const impactos = [...new Set(allIncidents.map(i => getIncidentValue(i, 'Impacto')).filter(i => i && i !== ''))].sort();
-            const impactSelect = document.getElementById('filterImpacto');
+            // Populate Urgencia filter
+            const urgencias = [...new Set(allIncidents.map(i => getIncidentValue(i, 'Urgencia')).filter(u => u && u !== ''))].sort();
+            const urgenciaSelect = document.getElementById('filterUrgencia');
             // Clear existing options except the first "Todos"
-            while (impactSelect.options.length > 1) {
-                impactSelect.remove(1);
+            while (urgenciaSelect.options.length > 1) {
+                urgenciaSelect.remove(1);
             }
-            impactos.forEach(imp => {
+            urgencias.forEach(urg => {
                 const option = document.createElement('option');
-                option.value = imp.toLowerCase();
-                option.textContent = imp;
-                impactSelect.appendChild(option);
+                option.value = urg.toLowerCase();
+                option.textContent = urg;
+                urgenciaSelect.appendChild(option);
+            });
+
+            // Populate Sistema filter (campo "Grupo asignado")
+            const sistemas = [...new Set(allIncidents.map(i => getIncidentValue(i, 'Grupo asignado')).filter(s => s && s !== ''))].sort();
+            const sistemaSelect = document.getElementById('filterSistema');
+            // Clear existing options except the first "Todos"
+            while (sistemaSelect.options.length > 1) {
+                sistemaSelect.remove(1);
+            }
+            sistemas.forEach(sis => {
+                const option = document.createElement('option');
+                option.value = sis.toLowerCase();
+                option.textContent = sis;
+                sistemaSelect.appendChild(option);
             });
         }
 
         function filterTable() {
             const statusFilter = document.getElementById('filterStatus').value.toLowerCase();
             const deployFilter = document.getElementById('filterDespliegue').value.toLowerCase();
-            const impactFilter = document.getElementById('filterImpacto').value.toLowerCase();
+            const urgenciaFilter = document.getElementById('filterUrgencia').value.toLowerCase();
+            const sistemaFilter = document.getElementById('filterSistema').value.toLowerCase();
 
             filteredIncidents = allIncidents.filter(incident => {
                 const status = (getIncidentValue(incident, 'Estatus') || '').toLowerCase();
                 const despliegue = (getIncidentValue(incident, 'Despliegue') || '').toLowerCase();
-                const impacto = (getIncidentValue(incident, 'Impacto') || '').toLowerCase();
+                const urgencia = (getIncidentValue(incident, 'Urgencia') || '').toLowerCase();
+                const sistema = (getIncidentValue(incident, 'Grupo asignado') || '').toLowerCase();
 
                 const statusMatch = !statusFilter || status === statusFilter;
                 const deployMatch = !deployFilter || despliegue === deployFilter;
-                const impactMatch = !impactFilter || impacto === impactFilter;
+                const urgenciaMatch = !urgenciaFilter || urgencia === urgenciaFilter;
+                const sistemaMatch = !sistemaFilter || sistema === sistemaFilter;
 
-                return statusMatch && deployMatch && impactMatch;
+                return statusMatch && deployMatch && urgenciaMatch && sistemaMatch;
             });
 
             // Apply sorting
@@ -1387,7 +1620,8 @@
                             analyzeData();
                             document.getElementById('filterStatus').addEventListener('change', filterTable);
                             document.getElementById('filterDespliegue').addEventListener('change', filterTable);
-                            document.getElementById('filterImpacto').addEventListener('change', filterTable);
+                            document.getElementById('filterUrgencia').addEventListener('change', filterTable);
+                            document.getElementById('filterSistema').addEventListener('change', filterTable);
                         } catch (e) {
                             console.error('Error in analyzeData:', e);
                         }
@@ -1470,6 +1704,7 @@
         window.addEventListener('resize', function() {
             if (allIncidents.length > 0) {
                 Plotly.Plots.resize('evolutionChart');
+                Plotly.Plots.resize('papEvolutionChart');
                 Plotly.Plots.resize('openIncidentsChart');
                 Plotly.Plots.resize('systemChart');
             }

@@ -131,8 +131,9 @@ En producción, `dashboards/` se sirve como alias estático y `/api` se enruta a
 
 - KPIs: total, % cerradas, % resueltas PaP, % resueltas Mesa (de la release cargada)
 - Gráfica temporal de entradas/resoluciones/backlog
+- Gráfica de evolución de incidencias PAP en intervalos de 30 minutos (usa la hora de "Fecha de envío"/"Fecha de última resolución", preservada por el conversor junto con la fecha)
 - Distribución por sistema y por estado
-- Filtros de tabla (Estado, Despliegue, Impacto) y tabla ordenable
+- Filtros de tabla (Estado, Despliegue, Urgencia, Sistema) y tabla ordenable
 - **Tres estados según el parámetro `release`**: sin parámetro → mensaje pidiendo acceder desde KPIs de Release; con parámetro y datos ya cargados → dashboard normal con el nombre de la release en la cabecera; con parámetro pero sin datos todavía → pantalla de subida de CSV con el nombre de la release ya asociado (no hay que escribirlo a mano)
 - El nombre de release se asocia al subir el CSV: `data/output/index.json` guarda `release_name` por archivo (leído de `_metadata.release_name`), y el JS de este dashboard busca ahí el archivo que corresponde al `?release=` de la URL
 

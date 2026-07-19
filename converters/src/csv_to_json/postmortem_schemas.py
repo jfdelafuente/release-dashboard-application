@@ -261,66 +261,85 @@ def parsePostmortemDate(date_str: str) -> Optional[str]:
     return None
 
 
+def parsePostmortemDateTime(date_str: str) -> Optional[str]:
+    """
+    Parse postmortem date preserving time-of-day, for features that need
+    intra-day granularity (e.g., the PAP evolution chart's 30-minute
+    x-axis). Unlike parsePostmortemDate(), which normalizes to date-only
+    DD/MM/YYYY, this keeps HH:MM.
+
+    The trailing 'a'/'p' suffix seen in real exports (e.g., "8:49 a",
+    "14:02 a") is ignored: real data shows it present regardless of
+    whether the hour is morning or afternoon (24-hour clock), so it does
+    not reliably indicate AM/PM in this dataset.
+
+    Returns normalized 'DD/MM/YYYY HH:MM' (defaults to 00:00 when no
+    time is present or parseable) or None if the date itself is
+    unparseable.
+    """
+    if not date_str:
+        return None
+
+    date_str = date_str.strip()
+    date_part = date_str
+    hour, minute = 0, 0
+
+    if ' ' in date_str:
+        date_part, rest = date_str.split(' ', 1)
+        time_match = re.match(r'(\d{1,2}):(\d{2})', rest.strip())
+        if time_match:
+            parsed_hour, parsed_minute = int(time_match.group(1)), int(time_match.group(2))
+            if 0 <= parsed_hour <= 23 and 0 <= parsed_minute <= 59:
+                hour, minute = parsed_hour, parsed_minute
+
+    parsed_date = parsePostmortemDate(date_part)
+    if not parsed_date:
+        return None
+
+    return f"{parsed_date} {hour:02d}:{minute:02d}"
+
+
 def derivateDespliegue(records: List[PostmortemRecord]) -> Dict[str, str]:
     """
-    Derive Despliegue field for each record based on oldest date.
+    Derive Despliegue field for each record based on 'Fecha de envío'.
+
+    The oldest 'Fecha de envío' among all records is the PAP deployment day.
 
     Returns dict mapping record ID to Despliegue value (PAP or MESA).
-    - PAP: ALL records with the oldest date (first day)
+    - PAP: ALL records whose 'Fecha de envío' matches the deployment day
     - MESA: All other records
     """
     despliegue_map = {}
-    min_date_tuple = None  # Store as (YYYY, MM, DD) for correct comparison
+    record_dates = {}  # record_id -> (YYYY, MM, DD) tuple, or None if unparseable
+    min_date_tuple = None
 
-    # First pass: Find the oldest date
+    # First pass: parse each record's 'Fecha de envío' and find the oldest one
     for record in records:
-        for date_field in ['Fecha de envío', 'Fecha de notificación', 'Fecha de última resolución']:
-            date_str = record.data.get(date_field)
-            if date_str:
-                parsed_date = parsePostmortemDate(date_str)  # Returns DD/MM/YYYY
-                if parsed_date:
-                    # Convert DD/MM/YYYY to (YYYY, MM, DD) tuple for correct comparison
-                    parts = parsed_date.split('/')
-                    if len(parts) == 3:
-                        date_tuple = (int(parts[2]), int(parts[1]), int(parts[0]))  # YYYY, MM, DD
-                        if min_date_tuple is None or date_tuple < min_date_tuple:
-                            min_date_tuple = date_tuple
+        record_id = record.data.get('ID de incidencia')
+        date_tuple = None
+        date_str = record.data.get('Fecha de envío')
+        if date_str:
+            parsed_date = parsePostmortemDate(date_str)  # Returns DD/MM/YYYY
+            if parsed_date:
+                parts = parsed_date.split('/')
+                if len(parts) == 3:
+                    date_tuple = (int(parts[2]), int(parts[1]), int(parts[0]))  # YYYY, MM, DD
 
-    # Second pass: Assign Despliegue values
-    if min_date_tuple:
-        first_with_min_date = False  # Track if we've already assigned PAP to first record
+        record_dates[record_id] = date_tuple
+        if date_tuple is not None and (min_date_tuple is None or date_tuple < min_date_tuple):
+            min_date_tuple = date_tuple
+
+    # Second pass: assign Despliegue values
+    if min_date_tuple is not None:
         for record in records:
             record_id = record.data.get('ID de incidencia')
-
-            # Find oldest date in this record
-            record_min_date = None
-            for date_field in ['Fecha de envío', 'Fecha de notificación', 'Fecha de última resolución']:
-                date_str = record.data.get(date_field)
-                if date_str:
-                    parsed_date = parsePostmortemDate(date_str)
-                    if parsed_date:
-                        parts = parsed_date.split('/')
-                        if len(parts) == 3:
-                            date_tuple = (int(parts[2]), int(parts[1]), int(parts[0]))
-                            if record_min_date is None or date_tuple < record_min_date:
-                                record_min_date = date_tuple
-
-            # Only first record with the minimum date gets PAP
-            if record_min_date and record_min_date[:3] == min_date_tuple[:3]:
-                if not first_with_min_date:
-                    despliegue_map[record_id] = 'PAP'
-                    first_with_min_date = True
-                else:
-                    despliegue_map[record_id] = 'MESA'
-            else:
-                despliegue_map[record_id] = 'MESA'
+            date_tuple = record_dates.get(record_id)
+            despliegue_map[record_id] = 'PAP' if date_tuple == min_date_tuple else 'MESA'
     else:
-        # Handle case where no dates were parseable (all get MESA except first)
+        # No record had a parseable 'Fecha de envío' (should not happen since
+        # it's a required field, but kept as a defensive fallback).
         for i, record in enumerate(records):
             record_id = record.data.get('ID de incidencia')
-            if i == 0:
-                despliegue_map[record_id] = 'PAP'
-            else:
-                despliegue_map[record_id] = 'MESA'
+            despliegue_map[record_id] = 'PAP' if i == 0 else 'MESA'
 
     return despliegue_map
