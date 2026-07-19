@@ -330,18 +330,21 @@
                     <div class="kpi-content">
                         <div class="kpi-value" id="globalClosed">0%</div>
                         <div class="kpi-label">% Cerradas</div>
+                        <div class="kpi-subtitle" id="globalClosedDetails" style="font-size: 10px; color: #8A857C; margin-top: 4px;"></div>
                     </div>
                 </div>
                 <div class="kpi-card">
                     <div class="kpi-content">
                         <div class="kpi-value" id="papResolved">0%</div>
                         <div class="kpi-label">% Resueltas PaP</div>
+                        <div class="kpi-subtitle" id="papResolvedDetails" style="font-size: 10px; color: #8A857C; margin-top: 4px;"></div>
                     </div>
                 </div>
                 <div class="kpi-card">
                     <div class="kpi-content">
                         <div class="kpi-value" id="mesaResolved">0%</div>
                         <div class="kpi-label">% Resueltas Mesa</div>
+                        <div class="kpi-subtitle" id="mesaResolvedDetails" style="font-size: 10px; color: #8A857C; margin-top: 4px;"></div>
                     </div>
                 </div>
             </div>
@@ -572,6 +575,11 @@
             document.getElementById('globalClosed').textContent = closedPercent + '%';
             document.getElementById('papResolved').textContent = papPercent + '%';
             document.getElementById('mesaResolved').textContent = mesaPercent + '%';
+
+            // Detalle de incidencias sobre las que se calcula cada KPI
+            document.getElementById('globalClosedDetails').textContent = `${closed} de ${total} incidencias`;
+            document.getElementById('papResolvedDetails').textContent = `${papResolved} de ${papIncidents.length} incidencias PaP`;
+            document.getElementById('mesaResolvedDetails').textContent = `${mesaResolved} de ${mesaIncidents.length} incidencias Mesa`;
             document.getElementById('recordCount').textContent = total + ' registros';
             document.getElementById('footerCount').textContent = total;
 
@@ -968,7 +976,25 @@
                 return;
             }
 
-            // Datos por intervalo de 30 minutos (solo PAP)
+            // Día del despliegue PAP: todas las incidencias PAP comparten la
+            // misma "Fecha de envío" (ver derivateDespliegue en el conversor),
+            // así que basta con tomar la de la primera para fijar el día.
+            let papDay = null;
+            for (const incident of papIncidents) {
+                const dt = parseDateTime(getIncidentValue(incident, 'Fecha de envío'));
+                if (dt) {
+                    papDay = new Date(dt.getFullYear(), dt.getMonth(), dt.getDate());
+                    break;
+                }
+            }
+
+            function isSameDay(date, dayRef) {
+                return date.getFullYear() === dayRef.getFullYear() &&
+                    date.getMonth() === dayRef.getMonth() &&
+                    date.getDate() === dayRef.getDate();
+            }
+
+            // Datos por intervalo de 30 minutos (solo PAP, solo el día del despliegue)
             const slotData = {}; // key: timestamp del slot -> { entries, resolutions, slotDate }
 
             // Entradas por fecha/hora de apertura
@@ -982,14 +1008,18 @@
                 slotData[key].entries++;
             });
 
-            // Resoluciones (Cerrado o Resuelto) por fecha/hora de última resolución
+            // Resoluciones (Cerrado o Resuelto) por fecha/hora de última resolución.
+            // Si la incidencia PAP se resuelve en un día posterior, no se cuenta
+            // aquí (el eje X se mantiene acotado al día del despliegue) — esa
+            // incidencia sigue apareciendo como backlog abierto hasta el final
+            // del día visible, que es correcto: seguía abierta ese día.
             papIncidents.forEach(incident => {
                 const status = (getIncidentValue(incident, 'Estatus') || '').toLowerCase();
                 const isSolved = status.includes('cerrado') || status.includes('resuelto');
                 if (!isSolved) return;
 
                 const dt = parseDateTime(getIncidentValue(incident, 'Fecha de última resolución'));
-                if (!dt) return;
+                if (!dt || !papDay || !isSameDay(dt, papDay)) return;
 
                 const slot = floorToHalfHour(dt);
                 const key = slot.getTime();
@@ -1002,12 +1032,14 @@
             const resolutions = [];
             const backlog = [];
 
-            const slotKeys = Object.keys(slotData).map(Number).sort((a, b) => a - b);
-
-            if (slotKeys.length > 0) {
+            if (papDay) {
                 const THIRTY_MIN_MS = 30 * 60 * 1000;
-                const minSlot = slotKeys[0];
-                const maxSlot = slotKeys[slotKeys.length - 1];
+                // Las incidencias PAP nunca se abren antes de las 08:00 (horario
+                // de despliegue), así que el eje no muestra el tramo 00:00-08:00,
+                // que siempre estaría vacío.
+                const PAP_DAY_START_HOUR = 8;
+                const minSlot = papDay.getTime() + PAP_DAY_START_HOUR * 60 * 60 * 1000; // 08:00 del día del despliegue
+                const maxSlot = papDay.getTime() + 47 * THIRTY_MIN_MS; // 23:30 del mismo día
 
                 let backlogPrevious = 0;
                 for (let t = minSlot; t <= maxSlot; t += THIRTY_MIN_MS) {
