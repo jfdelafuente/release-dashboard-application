@@ -522,6 +522,18 @@
             return new Date(year, month - 1, day);
         }
 
+        // Clave "YYYY-MM-DD" a partir de los componentes LOCALES de la fecha.
+        // NUNCA usar date.toISOString().split('T')[0] para esto: toISOString()
+        // convierte a UTC, y con España en UTC+1/+2 la medianoche local cae en
+        // las 22:00/23:00 UTC del día ANTERIOR, desplazando la clave un día
+        // hacia atrás (una incidencia del 20/07 terminaba agrupada bajo 19/07).
+        function toLocalDateKey(date) {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
         function calculateStartDate(period) {
             if (period === 'all') return null;
 
@@ -589,7 +601,7 @@
 
             // Get current backlog (last day in the dataset)
             const lastDateObj = globalAllDates[globalAllDates.length - 1];
-            const lastDateKey = lastDateObj.toISOString().split('T')[0];
+            const lastDateKey = toLocalDateKey(lastDateObj);
             const currentBacklog = globalBacklogData[lastDateKey] || 0;
 
             // Calculate the comparison date (period days ago)
@@ -604,7 +616,7 @@
             for (let i = 0; i < period + 7; i++) {  // Allow up to 7 extra days search
                 const searchDate = new Date(comparisonDate);
                 searchDate.setDate(searchDate.getDate() - i);
-                const searchKey = searchDate.toISOString().split('T')[0];
+                const searchKey = toLocalDateKey(searchDate);
 
                 if (globalBacklogData[searchKey] !== undefined) {
                     comparisonBacklog = globalBacklogData[searchKey];
@@ -702,7 +714,7 @@
                 if (entryDateStr) {
                     const dateObj = parseDate(entryDateStr);
                     if (dateObj) {
-                        const dateKey = dateObj.toISOString().split('T')[0];
+                        const dateKey = toLocalDateKey(dateObj);
                         if (!dailyData[dateKey]) {
                             dailyData[dateKey] = {
                                 entries: 0,
@@ -722,7 +734,7 @@
                     if (solveDateStr) {
                         const dateObj = parseDate(solveDateStr);
                         if (dateObj) {
-                            const dateKey = dateObj.toISOString().split('T')[0];
+                            const dateKey = toLocalDateKey(dateObj);
                             if (!dailyData[dateKey]) {
                                 dailyData[dateKey] = {
                                     entries: 0,
@@ -758,11 +770,11 @@
             // Prepare data arrays
             const dates = allDates.map(d => d.toLocaleDateString('es-ES'));
             const entries = allDates.map(d => {
-                const dateKey = d.toISOString().split('T')[0];
+                const dateKey = toLocalDateKey(d);
                 return dailyData[dateKey] ? dailyData[dateKey].entries : 0;
             });
             const solved = allDates.map(d => {
-                const dateKey = d.toISOString().split('T')[0];
+                const dateKey = toLocalDateKey(d);
                 return dailyData[dateKey] ? dailyData[dateKey].solved : 0;
             });
 
@@ -805,7 +817,7 @@
             globalBacklogData = {};
             globalAllDates = allDates;
             allDates.forEach((dateObj, idx) => {
-                const dateKey = dateObj.toISOString().split('T')[0];
+                const dateKey = toLocalDateKey(dateObj);
                 globalBacklogData[dateKey] = backlog[idx];
             });
 
@@ -912,7 +924,7 @@
                     if (dateStr) {
                         const dateObj = parseDate(dateStr);
                         if (dateObj) {
-                            const dateKey = dateObj.toISOString().split('T')[0];
+                            const dateKey = toLocalDateKey(dateObj);
                             const displayDate = dateObj.toLocaleDateString('es-ES');
 
                             if (!dailyOpenData[dateKey]) {
@@ -970,7 +982,7 @@
             let backlogOpen = [];
 
             allDates.forEach(dateObj => {
-                const dateKey = dateObj.toISOString().split('T')[0];
+                const dateKey = toLocalDateKey(dateObj);
                 statusList.forEach(status => {
                     const count = (dailyOpenData[dateKey] && dailyOpenData[dateKey].byStatus[status]) || 0;
                     statusData[status].push(count);

@@ -504,6 +504,18 @@
             content.classList.toggle('collapsed');
         }
 
+        // Clave "YYYY-MM-DD" a partir de los componentes LOCALES de la fecha.
+        // NUNCA usar date.toISOString().split('T')[0] para esto: toISOString()
+        // convierte a UTC, y con España en UTC+1/+2 la medianoche local cae en
+        // las 22:00/23:00 UTC del día ANTERIOR, desplazando la clave un día
+        // hacia atrás (una incidencia del 20/07 terminaba agrupada bajo 19/07).
+        function toLocalDateKey(date) {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
         // Get value handling BOM and field name variations
         function getIncidentValue(incident, fieldName) {
             // Try direct access
@@ -738,7 +750,7 @@
                 if (!dateStr) return;
 
                 const dateObj = parseDate(dateStr);
-                const dateKey = dateObj ? dateObj.toISOString().split('T')[0] : dateStr;
+                const dateKey = dateObj ? toLocalDateKey(dateObj) : dateStr;
 
                 if (!dailyData[dateKey]) {
                     dailyData[dateKey] = { entries: 0, resolutions: 0, dateObj: dateObj };
@@ -758,7 +770,7 @@
 
                     if (dateStr) {
                         const dateObj = parseDate(dateStr);
-                        const dateKey = dateObj ? dateObj.toISOString().split('T')[0] : dateStr;
+                        const dateKey = dateObj ? toLocalDateKey(dateObj) : dateStr;
 
                         // Inicializar si no existe
                         if (!dailyData[dateKey]) {
@@ -821,7 +833,7 @@
                 let currentDate = new Date(minDate);
 
                 while (currentDate <= maxDate) {
-                    const dateKey = currentDate.toISOString().split('T')[0];
+                    const dateKey = toLocalDateKey(currentDate);
                     allDatesInRange.push(dateKey);
                     currentDate.setDate(currentDate.getDate() + 1);
                 }
@@ -1240,7 +1252,7 @@
                     if (!dateStr) return;
 
                     const dateObj = parseDate(dateStr);
-                    const dateKey = dateObj ? dateObj.toISOString().split('T')[0] : dateStr;
+                    const dateKey = dateObj ? toLocalDateKey(dateObj) : dateStr;
 
                     if (!dailyOpenData[dateKey]) {
                         dailyOpenData[dateKey] = {
@@ -1293,7 +1305,7 @@
                 // (como se hacía antes) dejaba de encontrar coincidencias.
                 globalBacklogData.dates.forEach((date, idx) => {
                     const parsedDisplayDate = parseDate(date);
-                    const dateKey = parsedDisplayDate ? parsedDisplayDate.toISOString().split('T')[0] : null;
+                    const dateKey = parsedDisplayDate ? toLocalDateKey(parsedDisplayDate) : null;
 
                     statusList.forEach(status => {
                         const count = dateKey && dailyOpenData[dateKey] && dailyOpenData[dateKey].byStatus[status]
@@ -1331,7 +1343,7 @@
                     let currentDate = new Date(minDate);
 
                     while (currentDate <= maxDate) {
-                        const dateKey = currentDate.toISOString().split('T')[0];
+                        const dateKey = toLocalDateKey(currentDate);
                         allDatesInRange.push(dateKey);
                         currentDate.setDate(currentDate.getDate() + 1);
                     }
