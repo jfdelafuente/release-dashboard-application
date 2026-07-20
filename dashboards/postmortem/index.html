@@ -250,6 +250,30 @@
                 padding: 8px;
             }
         }
+
+        /* Acordeón para las secciones de gráficas (no aplica a Métricas Globales) */
+        .accordion-header {
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .accordion-icon {
+            display: inline-block;
+            transition: transform 0.2s ease;
+            flex-shrink: 0;
+        }
+
+        .accordion-header.collapsed .accordion-icon {
+            transform: rotate(-90deg);
+        }
+
+        .accordion-content {
+            overflow: hidden;
+        }
+
+        .accordion-content.collapsed {
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -350,8 +374,10 @@
             </div>
 
             <!-- Evolution Chart -->
-            <div class="section-title">Evolución Diaria de Incidencias Operativas</div>
-            <div class="row-1col">
+            <div class="section-title accordion-header" onclick="toggleAccordion(this)">
+                <span class="accordion-icon">▾</span> Evolución Diaria de Incidencias Operativas
+            </div>
+            <div class="row-1col accordion-content">
                 <div class="card">
                     <h3>Entradas, Resoluciones y Backlog</h3>
                     <div id="evolutionChart" class="chart-container" style="min-height: 450px;"></div>
@@ -359,8 +385,10 @@
             </div>
 
             <!-- PAP Evolution Chart -->
-            <div class="section-title">Evolución Diaria de Incidencias PAP</div>
-            <div class="row-1col">
+            <div class="section-title accordion-header" onclick="toggleAccordion(this)">
+                <span class="accordion-icon">▾</span> Evolución Diaria de Incidencias PAP
+            </div>
+            <div class="row-1col accordion-content">
                 <div class="card">
                     <h3>Abiertas y Cerradas (solo PAP)</h3>
                     <div id="papEvolutionChart" class="chart-container" style="min-height: 450px;"></div>
@@ -368,8 +396,10 @@
             </div>
 
             <!-- Open Incidents Chart -->
-            <div class="section-title">Incidencias Abiertas por Día y Backlog</div>
-            <div class="row-1col">
+            <div class="section-title accordion-header" onclick="toggleAccordion(this)">
+                <span class="accordion-icon">▾</span> Incidencias Abiertas por Día y Backlog
+            </div>
+            <div class="row-1col accordion-content">
                 <div class="card">
                     <h3>Incidencias No Cerradas y Backlog Acumulado</h3>
                     <div id="openIncidentsChart" class="chart-container" style="min-height: 450px;"></div>
@@ -377,8 +407,10 @@
             </div>
 
             <!-- Distribution Section -->
-            <div class="section-title">Análisis de Distribución</div>
-            <div class="row-3col">
+            <div class="section-title accordion-header" onclick="toggleAccordion(this)">
+                <span class="accordion-icon">▾</span> Análisis de Distribución
+            </div>
+            <div class="row-3col accordion-content">
                 <div class="card">
                     <h3>Por Sistema</h3>
                     <div id="systemChart" class="chart-container"></div>
@@ -463,6 +495,14 @@
         let sortColumn = '';
         let sortDirection = 'asc';
         let globalBacklogData = null; // Store backlog data to reuse across charts
+
+        // Acordeón de las secciones de gráficas (no aplica a Métricas Globales)
+        function toggleAccordion(headerEl) {
+            const content = headerEl.nextElementSibling;
+            if (!content) return;
+            headerEl.classList.toggle('collapsed');
+            content.classList.toggle('collapsed');
+        }
 
         // Get value handling BOM and field name variations
         function getIncidentValue(incident, fieldName) {
