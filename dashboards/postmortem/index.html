@@ -428,12 +428,8 @@
                 <div style="margin-bottom: 24px; display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px;">
                     <div>
                         <label style="font-size: 12px; font-weight: 600; color: #5C5852; text-transform: uppercase; display: block; margin-bottom: 6px;">Estado</label>
-                        <select id="filterStatus" style="width: 100%; padding: 8px; border: 1px solid #E2DDD5; border-radius: 6px; font-family: 'Inter', 'Helvetica Neue', sans-serif; font-size: 13px;">
-                            <option value="">Todos</option>
-                            <option value="cerrada">Cerrada</option>
-                            <option value="abierta">Abierta</option>
-                            <option value="pendiente">Pendiente</option>
-                        </select>
+                        <select id="filterStatus" multiple size="4" style="width: 100%; padding: 4px; border: 1px solid #E2DDD5; border-radius: 6px; font-family: 'Inter', 'Helvetica Neue', sans-serif; font-size: 13px;"></select>
+                        <small style="font-size: 10px; color: #8A857C; display: block; margin-top: 4px;">Ctrl/Cmd + clic para elegir varios. Sin selección = todos.</small>
                     </div>
                     <div>
                         <label style="font-size: 12px; font-weight: 600; color: #5C5852; text-transform: uppercase; display: block; margin-bottom: 6px;">Despliegue</label>
@@ -1460,17 +1456,17 @@
         }
 
         function populateFilterSelects() {
-            // Populate Estado filter
+            // Populate Estado filter (multi-select: sin opción "Todos", se
+            // conservan las selecciones ya hechas al recargar los datos)
             const estados = [...new Set(allIncidents.map(i => getIncidentValue(i, 'Estatus')).filter(s => s && s !== ''))].sort();
             const statusSelect = document.getElementById('filterStatus');
-            // Clear existing options except the first "Todos"
-            while (statusSelect.options.length > 1) {
-                statusSelect.remove(1);
-            }
+            const previouslySelected = new Set(Array.from(statusSelect.selectedOptions).map(opt => opt.value));
+            statusSelect.innerHTML = '';
             estados.forEach(est => {
                 const option = document.createElement('option');
                 option.value = est.toLowerCase();
                 option.textContent = est;
+                option.selected = previouslySelected.has(option.value);
                 statusSelect.appendChild(option);
             });
 
@@ -1518,7 +1514,8 @@
         }
 
         function filterTable() {
-            const statusFilter = document.getElementById('filterStatus').value.toLowerCase();
+            // Estado admite selección múltiple: sin nada seleccionado = todos
+            const statusFilters = Array.from(document.getElementById('filterStatus').selectedOptions).map(opt => opt.value);
             const deployFilter = document.getElementById('filterDespliegue').value.toLowerCase();
             const urgenciaFilter = document.getElementById('filterUrgencia').value.toLowerCase();
             const sistemaFilter = document.getElementById('filterSistema').value.toLowerCase();
@@ -1529,7 +1526,7 @@
                 const urgencia = (getIncidentValue(incident, 'Urgencia') || '').toLowerCase();
                 const sistema = (getIncidentValue(incident, 'Grupo asignado') || '').toLowerCase();
 
-                const statusMatch = !statusFilter || status === statusFilter;
+                const statusMatch = statusFilters.length === 0 || statusFilters.includes(status);
                 const deployMatch = !deployFilter || despliegue === deployFilter;
                 const urgenciaMatch = !urgenciaFilter || urgencia === urgenciaFilter;
                 const sistemaMatch = !sistemaFilter || sistema === sistemaFilter;
