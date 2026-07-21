@@ -533,16 +533,6 @@
             return key ? incident[key] : '';
         }
 
-        // Utility Functions
-        function countField(fieldName) {
-            const counts = {};
-            allIncidents.forEach(incident => {
-                const value = getIncidentValue(incident, fieldName) || 'Unknown';
-                counts[value] = (counts[value] || 0) + 1;
-            });
-            return counts;
-        }
-
         // Status color mapping
         const statusColorMap = {
             'cerrado': '#1D8754',      // Verde
@@ -648,8 +638,20 @@
         }
 
         function createSystemChart() {
-            const data = countField('Grupo asignado');
-            const sorted = Object.entries(data)
+            // Excluye Cerrado y Resuelto: esta distribución solo interesa
+            // sobre incidencias todavía abiertas.
+            const openIncidents = allIncidents.filter(i => {
+                const status = (getIncidentValue(i, 'Estatus') || '').toLowerCase();
+                return !status.includes('cerrado') && !status.includes('resuelto');
+            });
+
+            const counts = {};
+            openIncidents.forEach(incident => {
+                const value = getIncidentValue(incident, 'Grupo asignado') || 'Unknown';
+                counts[value] = (counts[value] || 0) + 1;
+            });
+
+            const sorted = Object.entries(counts)
                 .sort((a, b) => b[1] - a[1])
                 .slice(0, 10);
 
