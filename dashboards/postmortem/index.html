@@ -592,11 +592,56 @@
             }).length;
             const closedPercent = total > 0 ? Math.round((closed / total) * 100) : 0;
 
-            // Calculate PAP metrics (Cerrado + Resuelto)
+            // Parsea "DD/MM/YYYY HH:MM" (formato generado por parsePostmortemDateTime()
+            // en el conversor) para poder comparar fechas por día calendario.
+            function parseDateTime(dateStr) {
+                if (!dateStr) return null;
+                const [datePart, timePart] = dateStr.trim().split(' ');
+                if (!datePart || !datePart.includes('/')) return null;
+
+                const dateParts = datePart.split('/');
+                if (dateParts.length < 3) return null;
+
+                const day = parseInt(dateParts[0]);
+                const month = parseInt(dateParts[1]) - 1;
+                const year = parseInt(dateParts[2]);
+                if (isNaN(day) || isNaN(month) || isNaN(year)) return null;
+
+                const timeParts = (timePart || '00:00').split(':');
+                const hour = parseInt(timeParts[0]);
+                const minute = parseInt(timeParts[1]);
+
+                return new Date(year, month, day, isNaN(hour) ? 0 : hour, isNaN(minute) ? 0 : minute);
+            }
+
+            function isSameDay(a, b) {
+                return a.getFullYear() === b.getFullYear() &&
+                    a.getMonth() === b.getMonth() &&
+                    a.getDate() === b.getDate();
+            }
+
+            // Calculate PAP metrics: resueltas (Cerrado + Resuelto) EXACTAMENTE
+            // el día del despliegue, no en cualquier momento posterior.
             const papIncidents = allIncidents.filter(i => getIncidentValue(i, 'Despliegue') === 'PAP');
+
+            // Día del despliegue: fecha (sin hora) de la "Fecha de envío" más
+            // antigua entre las incidencias PAP (mismo criterio que derivateDespliegue()
+            // en el conversor y que createPapEvolutionChart()).
+            let papDay = null;
+            for (const incident of papIncidents) {
+                const dt = parseDateTime(getIncidentValue(incident, 'Fecha de envío'));
+                if (dt) {
+                    papDay = new Date(dt.getFullYear(), dt.getMonth(), dt.getDate());
+                    break;
+                }
+            }
+
             const papResolved = papIncidents.filter(i => {
                 const status = (getIncidentValue(i, 'Estatus') || '').toLowerCase();
-                return status.includes('cerrado') || status.includes('resuelto');
+                if (!status.includes('cerrado') && !status.includes('resuelto')) return false;
+                if (!papDay) return true;
+                const resolvedAt = parseDateTime(getIncidentValue(i, 'Fecha de última resolución'));
+                return resolvedAt ? isSameDay(resolvedAt, papDay) : false;
             }).length;
             const papPercent = papIncidents.length > 0 ? Math.round((papResolved / papIncidents.length) * 100) : 0;
 
@@ -616,7 +661,7 @@
 
             // Detalle de incidencias sobre las que se calcula cada KPI
             document.getElementById('globalClosedDetails').textContent = `${closed} de ${total} incidencias`;
-            document.getElementById('papResolvedDetails').textContent = `${papResolved} de ${papIncidents.length} incidencias PaP`;
+            document.getElementById('papResolvedDetails').textContent = `${papResolved} de ${papIncidents.length} incidencias PaP resueltas el día del PaP`;
             document.getElementById('mesaResolvedDetails').textContent = `${mesaResolved} de ${mesaIncidents.length} incidencias Mesa`;
             document.getElementById('recordCount').textContent = total + ' registros';
             document.getElementById('footerCount').textContent = total;
