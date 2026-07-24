@@ -686,32 +686,47 @@
                 return !status.includes('cerrado') && !status.includes('resuelto');
             });
 
-            const counts = {};
+            // Cuenta total por sistema (para elegir el top 10) y desglose por Estado.
+            const totalsBySystem = {};
+            const countsBySystemStatus = {};
+            const statusList = [];
+
             openIncidents.forEach(incident => {
-                const value = getIncidentValue(incident, 'Grupo asignado') || 'Unknown';
-                counts[value] = (counts[value] || 0) + 1;
+                const system = getIncidentValue(incident, 'Grupo asignado') || 'Unknown';
+                const status = getIncidentValue(incident, 'Estatus') || 'Sin estado';
+
+                totalsBySystem[system] = (totalsBySystem[system] || 0) + 1;
+
+                if (!countsBySystemStatus[system]) countsBySystemStatus[system] = {};
+                countsBySystemStatus[system][status] = (countsBySystemStatus[system][status] || 0) + 1;
+
+                if (!statusList.includes(status)) statusList.push(status);
             });
 
-            const sorted = Object.entries(counts)
+            const sorted = Object.entries(totalsBySystem)
                 .sort((a, b) => b[1] - a[1])
                 .slice(0, 10);
+            const systems = sorted.map(d => d[0]);
 
-            const trace = {
-                y: sorted.map(d => d[0]),
-                x: sorted.map(d => d[1]),
+            const colors = ['#FF7900', '#FFC08A', '#E66D00', '#FFD200', '#B8B2A9', '#5C5852', '#DEDAD3'];
+            const traces = statusList.map((status, idx) => ({
+                y: systems,
+                x: systems.map(system => (countsBySystemStatus[system] && countsBySystemStatus[system][status]) || 0),
+                name: status,
                 type: 'bar',
                 orientation: 'h',
-                marker: { color: '#FF7900' },
-                hovertemplate: '<b>%{y}</b><br>%{x} incidencias<extra></extra>'
-            };
+                marker: { color: colors[idx % colors.length] },
+                hovertemplate: '<b>%{y}</b><br>' + status + ': %{x}<extra></extra>'
+            }));
 
             const layout = {
                 responsive: true,
+                barmode: 'stack',
                 font: { family: 'Inter, sans-serif', size: 11, color: '#5C5852' },
                 paper_bgcolor: 'transparent',
                 plot_bgcolor: 'transparent',
                 hovermode: 'x unified',
-                margin: { l: 180, r: 70, t: 40, b: 40 },
+                margin: { l: 180, r: 70, t: 70, b: 40 },
                 xaxis: {
                     showgrid: true,
                     gridcolor: '#E2DDD5',
@@ -726,8 +741,11 @@
                     linecolor: '#E2DDD5'
                 },
                 legend: {
-                    x: 0.02,
-                    y: 0.98,
+                    orientation: 'h',
+                    x: 0.5,
+                    xanchor: 'center',
+                    y: 1.12,
+                    yanchor: 'bottom',
                     bgcolor: 'rgba(255, 255, 255, 0.9)',
                     bordercolor: '#E2DDD5',
                     borderwidth: 1,
@@ -735,7 +753,7 @@
                 }
             };
 
-            Plotly.newPlot('systemChart', [trace], layout, { responsive: true, displayModeBar: false });
+            Plotly.newPlot('systemChart', traces, layout, { responsive: true, displayModeBar: false });
         }
 
         function createEvolutionChart() {
@@ -930,6 +948,9 @@
                 type: 'bar',
                 marker: { color: '#FFC08A' },
                 yaxis: 'y',
+                text: entries.map(v => v > 0 ? String(v) : ''),
+                textposition: 'outside',
+                textfont: { size: 10, color: '#5C5852' },
                 hovertemplate: '<b>%{x}</b><br>Entradas: %{y}<extra></extra>'
             };
 
@@ -940,6 +961,9 @@
                 type: 'bar',
                 marker: { color: '#FF7900' },
                 yaxis: 'y',
+                text: resolutions.map(v => v > 0 ? String(v) : ''),
+                textposition: 'outside',
+                textfont: { size: 10, color: '#5C5852' },
                 hovertemplate: '<b>%{x}</b><br>Resueltas: %{y}<extra></extra>'
             };
 
@@ -948,9 +972,12 @@
                 y: backlog,
                 name: 'Backlog Acumulado',
                 type: 'scatter',
-                mode: 'lines+markers',
+                mode: 'lines+markers+text',
                 line: { color: '#0C0B09', width: 3 },
                 marker: { size: 8, color: '#0C0B09' },
+                text: backlog.map(String),
+                textposition: 'top center',
+                textfont: { size: 10, color: '#0C0B09' },
                 yaxis: 'y2',
                 hovertemplate: '<b>%{x}</b><br>Backlog: %{y}<extra></extra>'
             };
@@ -962,7 +989,7 @@
                 paper_bgcolor: 'transparent',
                 plot_bgcolor: 'transparent',
                 hovermode: 'x unified',
-                margin: { l: 70, r: 70, t: 40, b: 80 },
+                margin: { l: 70, r: 70, t: 70, b: 80 },
                 xaxis: {
                     title: { text: 'Fecha de Apertura', font: { size: 12, color: '#5C5852' } },
                     showgrid: true,
@@ -992,8 +1019,11 @@
                     zeroline: false
                 },
                 legend: {
-                    x: 0.02,
-                    y: 0.98,
+                    orientation: 'h',
+                    x: 0.5,
+                    xanchor: 'center',
+                    y: 1.12,
+                    yanchor: 'bottom',
                     bgcolor: 'rgba(255, 255, 255, 0.9)',
                     bordercolor: '#E2DDD5',
                     borderwidth: 1,
@@ -1192,7 +1222,7 @@
                 paper_bgcolor: 'transparent',
                 plot_bgcolor: 'transparent',
                 hovermode: 'x unified',
-                margin: { l: 70, r: 70, t: 40, b: 80 },
+                margin: { l: 70, r: 70, t: 70, b: 80 },
                 xaxis: {
                     title: { text: 'Hora (intervalos de 30 min)', font: { size: 12, color: '#5C5852' } },
                     showgrid: true,
@@ -1222,8 +1252,11 @@
                     zeroline: false
                 },
                 legend: {
-                    x: 0.02,
-                    y: 0.98,
+                    orientation: 'h',
+                    x: 0.5,
+                    xanchor: 'center',
+                    y: 1.12,
+                    yanchor: 'bottom',
                     bgcolor: 'rgba(255, 255, 255, 0.9)',
                     bordercolor: '#E2DDD5',
                     borderwidth: 1,
@@ -1455,7 +1488,7 @@
                 paper_bgcolor: 'transparent',
                 plot_bgcolor: 'transparent',
                 hovermode: 'x unified',
-                margin: { l: 70, r: 70, t: 40, b: 80 },
+                margin: { l: 70, r: 70, t: 70, b: 80 },
                 xaxis: {
                     title: { text: 'Fecha de Apertura', font: { size: 12, color: '#5C5852' } },
                     showgrid: true,
@@ -1485,8 +1518,11 @@
                     zeroline: false
                 },
                 legend: {
-                    x: 0.02,
-                    y: 0.98,
+                    orientation: 'h',
+                    x: 0.5,
+                    xanchor: 'center',
+                    y: 1.12,
+                    yanchor: 'bottom',
                     bgcolor: 'rgba(255, 255, 255, 0.9)',
                     bordercolor: '#E2DDD5',
                     borderwidth: 1,
