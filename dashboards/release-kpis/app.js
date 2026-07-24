@@ -48,20 +48,32 @@ function computeViewModel() {
   const maxCount = Math.max(1, ...chartReleases.map(r => r.totalEntrada));
   const niceMax = Math.max(5, Math.ceil(maxCount / 5) * 5);
   const n = chartReleases.length;
-  const releaseBars = chartReleases.map(r => ({
-    label: r.name,
-    papEntrada: r.papEntrada,
-    postEntrada: r.postEntrada,
-    pctPaP: r.pctPaP,
-    pctFirstWeek: r.pctFirstWeek,
-    colStyle: "flex:1; height:100%; display:flex; align-items:flex-end; justify-content:center;",
-    barStyle: "width:100%; max-width:44px; border-radius: 4px 4px 0 0; overflow:hidden; height:" + Math.round(100 * r.totalEntrada / niceMax) + "%; display:flex; flex-direction:column-reverse;",
-    papSegStyle: "width:100%; background: " + WINDOW_COLORS["PaP"] + "; height:" + Math.round(100 * r.papEntrada / Math.max(1, r.totalEntrada)) + "%;",
-    postSegStyle: "width:100%; background: " + WINDOW_COLORS["Post (1ª semana)"] + "; height:" + Math.round(100 * r.postEntrada / Math.max(1, r.totalEntrada)) + "%;"
-  }));
+  const releaseBars = chartReleases.map(r => {
+    const heightPct = Math.round(100 * r.totalEntrada / niceMax);
+    return {
+      label: r.name,
+      papEntrada: r.papEntrada,
+      postEntrada: r.postEntrada,
+      pctPaP: r.pctPaP,
+      pctFirstWeek: r.pctFirstWeek,
+      totalEntrada: r.totalEntrada,
+      colStyle: "flex:1; height:100%; display:flex; align-items:flex-end; justify-content:center; position:relative;",
+      barStyle: "width:100%; max-width:44px; border-radius: 4px 4px 0 0; overflow:hidden; height:" + heightPct + "%; display:flex; flex-direction:column-reverse;",
+      valueStyle: "bottom:calc(" + heightPct + "% + 4px);",
+      papSegStyle: "width:100%; background: " + WINDOW_COLORS["PaP"] + "; height:" + Math.round(100 * r.papEntrada / Math.max(1, r.totalEntrada)) + "%;",
+      postSegStyle: "width:100%; background: " + WINDOW_COLORS["Post (1ª semana)"] + "; height:" + Math.round(100 * r.postEntrada / Math.max(1, r.totalEntrada)) + "%;"
+    };
+  });
   const ptX = (i) => ((i + 0.5) / n) * 100;
   const pointsPaP = chartReleases.map((r, i) => ptX(i) + "," + (100 - r.pctPaP)).join(" ");
   const pointsFirstWeek = chartReleases.map((r, i) => ptX(i) + "," + (100 - r.pctFirstWeek)).join(" ");
+  // Cuando las dos líneas están muy cerca (o se cruzan), empujar cada
+  // etiqueta hacia el lado de su propio punto (arriba si va más alta, abajo
+  // si va más baja) evita que ambas se desplacen la una hacia la otra y se
+  // solapen en el punto medio.
+  const papHigher = chartReleases.map(r => r.pctPaP >= r.pctFirstWeek);
+  const pointLabelsPaP = chartReleases.map((r, i) => ({ x: ptX(i), y: 100 - r.pctPaP, pct: r.pctPaP, dir: papHigher[i] ? "up" : "down" }));
+  const pointLabelsFirstWeek = chartReleases.map((r, i) => ({ x: ptX(i), y: 100 - r.pctFirstWeek, pct: r.pctFirstWeek, dir: papHigher[i] ? "down" : "up" }));
   const axisLeftTicks = [niceMax, Math.round(niceMax / 2), 0];
   const axisRightTicks = ["100%", "50%", "0%"];
 
@@ -71,7 +83,7 @@ function computeViewModel() {
   return {
     periodLabel: (YEARS[0] + "–" + YEARS[YEARS.length - 1]) + " · " + RELEASES.length + " releases",
     yearChips, chartCountChips,
-    releaseBars, pointsPaP, pointsFirstWeek, axisLeftTicks, axisRightTicks,
+    releaseBars, pointsPaP, pointsFirstWeek, pointLabelsPaP, pointLabelsFirstWeek, axisLeftTicks, axisRightTicks,
     kpiPap, kpiPost,
     releaseRows: filtered.slice().reverse() // tabla: más reciente primero; los datos base (filtered/chartReleases) se mantienen en orden cronológico ascendente para las gráficas
   };
@@ -140,6 +152,7 @@ function renderBarChart(vm) {
     return `<div class="bar-col" tabindex="0" role="img" aria-label="${escapeHtml(tipLabel)}"
         data-label="${escapeHtml(bar.label)}" data-pap="${bar.papEntrada}" data-post="${bar.postEntrada}" data-pct-pap="${bar.pctPaP}" data-pct-post="${bar.pctFirstWeek}"
         style="${bar.colStyle}">
+      <div class="bar-value" style="${bar.valueStyle}">${bar.totalEntrada}</div>
       <div style="${bar.barStyle}">
         <div class="bar-seg" style="${bar.papSegStyle}"></div>
         <div class="bar-seg" style="${bar.postSegStyle}"></div>
@@ -153,6 +166,12 @@ function renderBarChart(vm) {
   ).join("");
   const leftTicks = vm.axisLeftTicks.map(t => `<div>${t}</div>`).join("");
   const rightTicks = vm.axisRightTicks.map(t => `<div>${t}</div>`).join("");
+  const papPointLabels = vm.pointLabelsPaP.map(p =>
+    `<div class="line-value line-value-pap line-value-${p.dir}" style="left:${p.x}%; top:${p.y}%;">${p.pct}%</div>`
+  ).join("");
+  const postPointLabels = vm.pointLabelsFirstWeek.map(p =>
+    `<div class="line-value line-value-post line-value-${p.dir}" style="left:${p.x}%; top:${p.y}%;">${p.pct}%</div>`
+  ).join("");
 
   return `
     <div class="card">
@@ -178,6 +197,7 @@ function renderBarChart(vm) {
             <polyline points="${vm.pointsPaP}" fill="none" stroke="var(--mo-orange)" stroke-width="1.5" vector-effect="non-scaling-stroke" />
             <polyline points="${vm.pointsFirstWeek}" fill="none" stroke="var(--mo-black)" stroke-width="1.5" vector-effect="non-scaling-stroke" />
           </svg>
+          <div class="line-values">${papPointLabels}${postPointLabels}</div>
           <div class="chart-tooltip"></div>
         </div>
         <div class="axis-right">${rightTicks}</div>

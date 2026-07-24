@@ -54,6 +54,22 @@ body { margin: 0; background: var(--bg-2); font-family: var(--font-body); color:
 .bar-seg { transition: filter var(--dur-fast) var(--ease-out); }
 .bar-seg + .bar-seg { box-shadow: 0 -2px 0 0 var(--bg-1); }
 .bar-col:hover .bar-seg, .bar-col:focus-visible .bar-seg { filter: brightness(1.12); }
+.bar-value {
+  position:absolute; left:50%; transform:translateX(-50%);
+  font-size: var(--fs-12); font-weight:700; color: var(--fg-2);
+  white-space:nowrap; pointer-events:none;
+}
+
+.line-values { position:absolute; inset:0 8px; pointer-events:none; }
+.line-value {
+  position:absolute; font-size: var(--fs-12); font-weight:700;
+  white-space:nowrap; padding:0 3px; border-radius:3px;
+  background: var(--bg-1);
+}
+.line-value-pap { color: var(--mo-orange); }
+.line-value-post { color: var(--mo-black); }
+.line-value-up { transform: translate(-50%, calc(-100% - 6px)); }
+.line-value-down { transform: translate(-50%, 6px); }
 
 .chart-tooltip {
   position:absolute; pointer-events:none; z-index:5;
