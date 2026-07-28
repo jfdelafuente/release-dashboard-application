@@ -109,10 +109,34 @@
             animation-delay: 0.4s;
         }
 
+        .kpi-card:nth-child(5) {
+            border-left-color: #FFB066;
+            animation-delay: 0.5s;
+        }
+
+        .kpi-card:nth-child(6) {
+            border-left-color: #0C0B09;
+            animation-delay: 0.6s;
+        }
+
+        .kpi-card:nth-child(7) {
+            border-left-color: #FF7900;
+            animation-delay: 0.7s;
+        }
+
+        .kpi-card:nth-child(8) {
+            border-left-color: #FFB066;
+            animation-delay: 0.8s;
+        }
+
         .kpi-card:nth-child(1) .kpi-value { color: #FF7900; }
         .kpi-card:nth-child(2) .kpi-value { color: #FFB066; }
         .kpi-card:nth-child(3) .kpi-value { color: #0C0B09; }
         .kpi-card:nth-child(4) .kpi-value { color: #FF7900; }
+        .kpi-card:nth-child(5) .kpi-value { color: #FFB066; }
+        .kpi-card:nth-child(6) .kpi-value { color: #0C0B09; }
+        .kpi-card:nth-child(7) .kpi-value { color: #FF7900; }
+        .kpi-card:nth-child(8) .kpi-value { color: #FFB066; }
 
         .row-2col {
             display: grid;
@@ -274,6 +298,46 @@
         .accordion-content.collapsed {
             display: none;
         }
+
+        /* Tooltip informativo en tarjetas KPI (p. ej. Tiempo Medio de Resolución) */
+        .kpi-info-icon {
+            position: relative;
+            display: inline-block;
+            margin-left: 4px;
+            color: #8A857C;
+            font-size: 12px;
+            cursor: help;
+            outline: none;
+        }
+
+        .kpi-info-tooltip {
+            position: absolute;
+            bottom: calc(100% + 8px);
+            left: 50%;
+            transform: translateX(-50%);
+            width: 220px;
+            background: #0C0B09;
+            color: #ffffff;
+            font-size: 11px;
+            font-weight: 400;
+            text-transform: none;
+            letter-spacing: normal;
+            text-align: left;
+            padding: 8px 10px;
+            border-radius: 6px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.15s ease;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .kpi-info-icon:hover .kpi-info-tooltip,
+        .kpi-info-icon:focus-visible .kpi-info-tooltip {
+            opacity: 1;
+            visibility: visible;
+        }
     </style>
 </head>
 <body>
@@ -371,6 +435,34 @@
                         <div class="kpi-subtitle" id="mesaResolvedDetails" style="font-size: 10px; color: #8A857C; margin-top: 4px;"></div>
                     </div>
                 </div>
+                <div class="kpi-card">
+                    <div class="kpi-content">
+                        <div class="kpi-value" id="globalPending">0</div>
+                        <div class="kpi-label">Total Pendientes</div>
+                    </div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-content">
+                        <div class="kpi-value" id="avgResolutionTime">-</div>
+                        <div class="kpi-label">
+                            Tiempo Medio de Resolución
+                            <span class="kpi-info-icon" tabindex="0">ⓘ<span class="kpi-info-tooltip">Media de tiempo entre "Fecha de envío" y "Fecha de última resolución" de las incidencias ya Cerradas o Resueltas con ambas fechas válidas.</span></span>
+                        </div>
+                        <div class="kpi-subtitle" id="avgResolutionTimeDetails" style="font-size: 10px; color: #8A857C; margin-top: 4px;"></div>
+                    </div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-content">
+                        <div class="kpi-value" id="papPending">0</div>
+                        <div class="kpi-label">Total Pendientes PaP</div>
+                    </div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-content">
+                        <div class="kpi-value" id="mesaPending">0</div>
+                        <div class="kpi-label">Total Pendientes Mesa</div>
+                    </div>
+                </div>
             </div>
 
             <!-- Evolution Chart -->
@@ -413,6 +505,11 @@
             <div class="row-3col accordion-content">
                 <div class="card">
                     <h3>Por Sistema</h3>
+                    <div style="margin-bottom: 12px;">
+                        <label style="font-size: 12px; font-weight: 600; color: #5C5852; text-transform: uppercase; display: block; margin-bottom: 6px;">Estado</label>
+                        <select id="filterSystemChartStatus" multiple size="4" style="width: 100%; padding: 4px; border: 1px solid #E2DDD5; border-radius: 6px; font-family: 'Inter', 'Helvetica Neue', sans-serif; font-size: 13px;"></select>
+                        <small style="font-size: 10px; color: #8A857C; display: block; margin-top: 4px;">Ctrl/Cmd + clic para elegir varios. Sin selección = incidencias abiertas (excluye Cerrado/Resuelto). También filtra la tabla "Detalles de Incidencias".</small>
+                    </div>
                     <div id="systemChart" class="chart-container"></div>
                 </div>
             </div>
@@ -425,12 +522,8 @@
                 <h3>Registro Completo</h3>
 
                 <!-- Filters -->
+                <p style="font-size: 12px; color: #8A857C; margin: 0 0 12px 0;">El filtro de Estado de la gráfica "Por Sistema" (arriba) también acota esta tabla.</p>
                 <div style="margin-bottom: 24px; display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px;">
-                    <div>
-                        <label style="font-size: 12px; font-weight: 600; color: #5C5852; text-transform: uppercase; display: block; margin-bottom: 6px;">Estado</label>
-                        <select id="filterStatus" multiple size="4" style="width: 100%; padding: 4px; border: 1px solid #E2DDD5; border-radius: 6px; font-family: 'Inter', 'Helvetica Neue', sans-serif; font-size: 13px;"></select>
-                        <small style="font-size: 10px; color: #8A857C; display: block; margin-top: 4px;">Ctrl/Cmd + clic para elegir varios. Sin selección = todos.</small>
-                    </div>
                     <div>
                         <label style="font-size: 12px; font-weight: 600; color: #5C5852; text-transform: uppercase; display: block; margin-bottom: 6px;">Despliegue</label>
                         <select id="filterDespliegue" style="width: 100%; padding: 8px; border: 1px solid #E2DDD5; border-radius: 6px; font-family: 'Inter', 'Helvetica Neue', sans-serif; font-size: 13px;">
@@ -491,6 +584,7 @@
         let sortColumn = '';
         let sortDirection = 'asc';
         let globalBacklogData = null; // Store backlog data to reuse across charts
+        let systemChartStatusFilterInitialized = false; // Preselección por defecto del filtro de Estado en "Por Sistema" (solo la primera vez)
 
         // Acordeón de las secciones de gráficas (no aplica a Métricas Globales)
         function toggleAccordion(headerEl) {
@@ -591,6 +685,7 @@
                 return status.includes('cerrado') || status.includes('resuelto');
             }).length;
             const closedPercent = total > 0 ? Math.round((closed / total) * 100) : 0;
+            const pendingTotal = total - closed;
 
             // Parsea "DD/MM/YYYY HH:MM" (formato generado por parsePostmortemDateTime()
             // en el conversor) para poder comparar fechas por día calendario.
@@ -645,6 +740,14 @@
             }).length;
             const papPercent = papIncidents.length > 0 ? Math.round((papResolved / papIncidents.length) * 100) : 0;
 
+            // Pendientes PaP: aún sin Cerrado/Resuelto en cualquier momento (no
+            // solo "no resueltas el día del PaP", que es lo que mide papResolved).
+            const papClosedAnytime = papIncidents.filter(i => {
+                const status = (getIncidentValue(i, 'Estatus') || '').toLowerCase();
+                return status.includes('cerrado') || status.includes('resuelto');
+            }).length;
+            const papPending = papIncidents.length - papClosedAnytime;
+
             // Calculate MESA metrics (Cerrado + Resuelto)
             const mesaIncidents = allIncidents.filter(i => getIncidentValue(i, 'Despliegue') === 'MESA');
             const mesaResolved = mesaIncidents.filter(i => {
@@ -652,15 +755,47 @@
                 return status.includes('cerrado') || status.includes('resuelto');
             }).length;
             const mesaPercent = mesaIncidents.length > 0 ? Math.round((mesaResolved / mesaIncidents.length) * 100) : 0;
+            const mesaPending = mesaIncidents.length - mesaResolved;
+
+            // Tiempo medio de resolución: media de "Fecha de última resolución"
+            // menos "Fecha de envío" entre las incidencias ya cerradas/resueltas
+            // con ambas fechas parseables.
+            const resolutionDurations = allIncidents.reduce((acc, i) => {
+                const status = (getIncidentValue(i, 'Estatus') || '').toLowerCase();
+                if (!status.includes('cerrado') && !status.includes('resuelto')) return acc;
+                const sentAt = parseDateTime(getIncidentValue(i, 'Fecha de envío'));
+                const resolvedAt = parseDateTime(getIncidentValue(i, 'Fecha de última resolución'));
+                if (sentAt && resolvedAt && resolvedAt >= sentAt) acc.push(resolvedAt - sentAt);
+                return acc;
+            }, []);
+
+            function formatDuration(ms) {
+                const totalMinutes = Math.round(ms / 60000);
+                const days = Math.floor(totalMinutes / (60 * 24));
+                const hours = Math.floor((totalMinutes % (60 * 24)) / 60);
+                const minutes = totalMinutes % 60;
+                if (days > 0) return `${days}d ${hours}h`;
+                if (hours > 0) return `${hours}h ${minutes}m`;
+                return `${minutes}m`;
+            }
+
+            const avgResolutionMs = resolutionDurations.length > 0
+                ? resolutionDurations.reduce((sum, d) => sum + d, 0) / resolutionDurations.length
+                : null;
 
             // Update global KPIs
             document.getElementById('globalTotal').textContent = total;
+            document.getElementById('globalPending').textContent = pendingTotal;
             document.getElementById('globalClosed').textContent = closedPercent + '%';
+            document.getElementById('avgResolutionTime').textContent = avgResolutionMs !== null ? formatDuration(avgResolutionMs) : '-';
             document.getElementById('papResolved').textContent = papPercent + '%';
+            document.getElementById('papPending').textContent = papPending;
             document.getElementById('mesaResolved').textContent = mesaPercent + '%';
+            document.getElementById('mesaPending').textContent = mesaPending;
 
             // Detalle de incidencias sobre las que se calcula cada KPI
             document.getElementById('globalClosedDetails').textContent = `${closed} de ${total} incidencias`;
+            document.getElementById('avgResolutionTimeDetails').textContent = `${resolutionDurations.length} de ${closed} incidencias cerradas con fechas válidas`;
             document.getElementById('papResolvedDetails').textContent = `${papResolved} de ${papIncidents.length} incidencias PaP resueltas el día del PaP`;
             document.getElementById('mesaResolvedDetails').textContent = `${mesaResolved} de ${mesaIncidents.length} incidencias Mesa`;
             document.getElementById('recordCount').textContent = total + ' registros';
@@ -668,8 +803,7 @@
 
             // Initialize table filters
             populateFilterSelects();
-            filteredIncidents = [...allIncidents];
-            populateTable();
+            filterTable(); // aplica el filtro de Estado (por defecto: excluye Cerrado/Resuelto) y llama a populateTable()
 
             // Create charts
             createEvolutionChart();
@@ -679,10 +813,14 @@
         }
 
         function createSystemChart() {
-            // Excluye Cerrado y Resuelto: esta distribución solo interesa
-            // sobre incidencias todavía abiertas.
+            // Filtro de Estado propio de esta gráfica: sin selección, se
+            // mantiene el comportamiento por defecto (excluye Cerrado/Resuelto,
+            // ya que esta distribución interesa sobre todo para lo que sigue
+            // abierto); con selección, se acota exactamente a los estados elegidos.
+            const statusFilters = Array.from(document.getElementById('filterSystemChartStatus').selectedOptions).map(opt => opt.value);
             const openIncidents = allIncidents.filter(i => {
                 const status = (getIncidentValue(i, 'Estatus') || '').toLowerCase();
+                if (statusFilters.length > 0) return statusFilters.includes(status);
                 return !status.includes('cerrado') && !status.includes('resuelto');
             });
 
@@ -703,9 +841,9 @@
                 if (!statusList.includes(status)) statusList.push(status);
             });
 
+            // Todos los sistemas con incidencias abiertas, sin recortar a un top N.
             const sorted = Object.entries(totalsBySystem)
-                .sort((a, b) => b[1] - a[1])
-                .slice(0, 10);
+                .sort((a, b) => b[1] - a[1]);
             const systems = sorted.map(d => d[0]);
 
             const colors = ['#FF7900', '#FFC08A', '#E66D00', '#FFD200', '#B8B2A9', '#5C5852', '#DEDAD3'];
@@ -752,6 +890,10 @@
                     font: { size: 11 }
                 }
             };
+
+            // Altura dinámica: con muchos sistemas, 350px (min-height por defecto
+            // de .chart-container) los aplasta demasiado para leer las etiquetas.
+            document.getElementById('systemChart').style.minHeight = Math.max(350, 40 * systems.length + 100) + 'px';
 
             Plotly.newPlot('systemChart', traces, layout, { responsive: true, displayModeBar: false });
         }
@@ -1537,19 +1679,10 @@
         }
 
         function populateFilterSelects() {
-            // Populate Estado filter (multi-select: sin opción "Todos", se
-            // conservan las selecciones ya hechas al recargar los datos)
+            // El filtro de Estado (multi-select) vive junto a la gráfica "Por
+            // Sistema" (#filterSystemChartStatus) y acota tanto la gráfica
+            // como esta tabla — se puebla más abajo, junto con esa gráfica.
             const estados = [...new Set(allIncidents.map(i => getIncidentValue(i, 'Estatus')).filter(s => s && s !== ''))].sort();
-            const statusSelect = document.getElementById('filterStatus');
-            const previouslySelected = new Set(Array.from(statusSelect.selectedOptions).map(opt => opt.value));
-            statusSelect.innerHTML = '';
-            estados.forEach(est => {
-                const option = document.createElement('option');
-                option.value = est.toLowerCase();
-                option.textContent = est;
-                option.selected = previouslySelected.has(option.value);
-                statusSelect.appendChild(option);
-            });
 
             // Populate Despliegue filter
             const despliegues = [...new Set(allIncidents.map(i => getIncidentValue(i, 'Despliegue')).filter(d => d && d !== ''))].sort();
@@ -1592,11 +1725,34 @@
                 option.textContent = sis;
                 sistemaSelect.appendChild(option);
             });
+
+            // Populate Estado filter de la gráfica "Por Sistema" (multi-select,
+            // incluye TODOS los estados, no solo los abiertos, para permitir
+            // ver también Cerrado/Resuelto si el usuario los selecciona).
+            // La primera vez se preseleccionan todos los estados salvo
+            // Cerrado/Resuelto; en recargas posteriores se respeta tal cual
+            // lo que el usuario tenga elegido.
+            const systemChartStatusSelect = document.getElementById('filterSystemChartStatus');
+            const previouslySelectedSystemChart = new Set(Array.from(systemChartStatusSelect.selectedOptions).map(opt => opt.value));
+            systemChartStatusSelect.innerHTML = '';
+            estados.forEach(est => {
+                const option = document.createElement('option');
+                option.value = est.toLowerCase();
+                option.textContent = est;
+                option.selected = systemChartStatusFilterInitialized
+                    ? previouslySelectedSystemChart.has(option.value)
+                    : !option.value.includes('cerrado') && !option.value.includes('resuelto');
+                systemChartStatusSelect.appendChild(option);
+            });
+            systemChartStatusFilterInitialized = true;
         }
 
         function filterTable() {
-            // Estado admite selección múltiple: sin nada seleccionado = todos
-            const statusFilters = Array.from(document.getElementById('filterStatus').selectedOptions).map(opt => opt.value);
+            // Estado: comparte el filtro (#filterSystemChartStatus) con la
+            // gráfica "Por Sistema" — misma selección múltiple, mismo criterio
+            // por defecto (sin selección = incidencias abiertas, excluye
+            // Cerrado/Resuelto).
+            const statusFilters = Array.from(document.getElementById('filterSystemChartStatus').selectedOptions).map(opt => opt.value);
             const deployFilter = document.getElementById('filterDespliegue').value.toLowerCase();
             const urgenciaFilter = document.getElementById('filterUrgencia').value.toLowerCase();
             const sistemaFilter = document.getElementById('filterSistema').value.toLowerCase();
@@ -1607,7 +1763,9 @@
                 const urgencia = (getIncidentValue(incident, 'Urgencia') || '').toLowerCase();
                 const sistema = (getIncidentValue(incident, 'Grupo asignado') || '').toLowerCase();
 
-                const statusMatch = statusFilters.length === 0 || statusFilters.includes(status);
+                const statusMatch = statusFilters.length > 0
+                    ? statusFilters.includes(status)
+                    : !status.includes('cerrado') && !status.includes('resuelto');
                 const deployMatch = !deployFilter || despliegue === deployFilter;
                 const urgenciaMatch = !urgenciaFilter || urgencia === urgenciaFilter;
                 const sistemaMatch = !sistemaFilter || sistema === sistemaFilter;
@@ -1779,7 +1937,7 @@
                     setTimeout(() => {
                         try {
                             analyzeData();
-                            document.getElementById('filterStatus').addEventListener('change', filterTable);
+                            document.getElementById('filterSystemChartStatus').addEventListener('change', () => { createSystemChart(); filterTable(); });
                             document.getElementById('filterDespliegue').addEventListener('change', filterTable);
                             document.getElementById('filterUrgencia').addEventListener('change', filterTable);
                             document.getElementById('filterSistema').addEventListener('change', filterTable);
