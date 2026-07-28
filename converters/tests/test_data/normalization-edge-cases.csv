@@ -1,0 +1,11 @@
+ID de incidencia,Descripción,Estatus,Fecha de envío,Grupo asignado,Fecha de notificación,Fecha de última resolución,Motivo de estado,MotivoEstado_Anterior,Grupo Resolutor,Urgencia,Impacto,Grupo Remitente
+INC001,Caso base valido,CERRADO,01/04/2026 8:00 a,SOP_EDGE_1,01/04/2026 8:05 a,01/04/2026 10:00 a,Resuelto,Pendiente,RES_EDGE_1,ALTA,MASIVA,CEP CAU AGI
+INC002,Caso estatus minusculas,cerrado,02/04/2026 8:00 a,SOP_EDGE_2,02/04/2026 8:05 a,02/04/2026 10:00 a,resuelto,pendiente,RES_EDGE_2,media,medio,CEP CAU AGI
+INC003,Caso mixto de progreso,en progreso,03/04/2026 8:00 a,SOP_EDGE_3,03/04/2026 8:05 a,,En analisis,Pendiente,RES_EDGE_3,MEDIA,Medio,CEP CAU AGI
+INC004,Caso fecha DD-MMM,Resuelto,26-abr,SOP_EDGE_4,26-abr,27-abr,Resuelto,Pendiente,RES_EDGE_4,Baja,Bajo,CEP CAU AGI
+INC005,Caso fecha con hora,cerrado,05/04/2026 14:30 a,SOP_EDGE_5,05/04/2026 14:35 a,05/04/2026 16:00 a,Resuelto,Pendiente,RES_EDGE_5,alta,masiva,CEP CAU AGI
+INC006,CASO TODO MAYUSCULAS,RESUELTO,06/04/2026 8:00 a,SOP_EDGE_6,06/04/2026 8:05 a,06/04/2026 10:00 a,RESUELTO,PENDIENTE,RES_EDGE_6,CRITICA,MASIVA,CEP CAU AGI
+INC007,Caso impacto mayusculas,Cerrado,07/04/2026 8:00 a,SOP_EDGE_7,07/04/2026 8:05 a,07/04/2026 10:00 a,Resuelto,Pendiente,RES_EDGE_7,Alta,MASIVA,CEP CAU AGI
+INC008,caso minusculas generalizado,en progreso,08/04/2026 8:00 a,SOP_EDGE_8,08/04/2026 8:05 a,,en analisis,pendiente,RES_EDGE_8,baja,bajo,CEP CAU AGI
+INC009,Caso espacios extra,Cerrado,09/04/2026 8:00 a,SOP_EDGE_9,09/04/2026 8:05 a,09/04/2026 10:00 a,Resuelto,Pendiente,RES_EDGE_9,  Alta  ,Medio,CEP CAU AGI
+INC010,Caso invalido sin urgencia,Cerrado,10/04/2026 8:00 a,SOP_EDGE_10,10/04/2026 8:05 a,10/04/2026 10:00 a,Resuelto,Pendiente,RES_EDGE_10,,Medio,CEP CAU AGI

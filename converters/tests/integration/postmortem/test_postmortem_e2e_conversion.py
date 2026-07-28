@@ -189,7 +189,9 @@ class TestPostmortemE2EConversion:
             # Dates should be in DD/MM/YYYY format
             fecha = record.get('Fecha de envío')
             if fecha:
-                parts = fecha.split('/')
+                # parsePostmortemDateTime() preserva la hora: "DD/MM/YYYY HH:MM"
+                date_part = fecha.split(' ')[0]
+                parts = date_part.split('/')
                 assert len(parts) == 3
                 assert len(parts[0]) == 2  # DD
                 assert len(parts[1]) == 2  # MM
