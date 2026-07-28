@@ -50,6 +50,7 @@ venv.bak/
 !project.json
 !specs/project.json
 !tests/test_data/**/*.csv
+!converters/tests/test_data/**/*.csv
 
 # Data Directories
 csv/

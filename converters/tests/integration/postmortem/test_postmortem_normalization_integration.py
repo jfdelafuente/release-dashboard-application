@@ -93,7 +93,9 @@ class TestNormalizationIntegration:
         for record in data['data']:
             fecha = record.get('Fecha de envío')
             if fecha and fecha != '':
-                parts = fecha.split('/')
+                # parsePostmortemDateTime() preserva la hora: "DD/MM/YYYY HH:MM"
+                date_part = fecha.split(' ')[0]
+                parts = date_part.split('/')
                 assert len(parts) == 3, f"Date not in DD/MM/YYYY format: {fecha}"
                 assert len(parts[0]) == 2, f"Day not 2 digits: {fecha}"
                 assert len(parts[1]) == 2, f"Month not 2 digits: {fecha}"

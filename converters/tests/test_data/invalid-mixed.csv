@@ -1,0 +1,61 @@
+ID de incidencia,Descripción,Estatus,Fecha de envío,Grupo asignado,Fecha de notificación,Fecha de última resolución,Motivo de estado,MotivoEstado_Anterior,Grupo Resolutor,Urgencia,Impacto,Grupo Remitente
+INC000001,Incidencia masiva de prueba 1,Resuelto,02/05/2026 9:00 a,SOP_MASIVA_2,02/05/2026 9:05 a,02/05/2026 11:00 a,Resuelto,En analisis,RES_MASIVA_2,Media,Medio,CEP CAU AGI
+INC000002,Incidencia masiva de prueba 2,En Progreso,03/05/2026 9:00 a,SOP_MASIVA_3,03/05/2026 9:05 a,03/05/2026 11:00 a,Resuelto,En analisis,RES_MASIVA_1,Baja,Bajo,CEP CAU AGI
+INC000003,Incidencia masiva de prueba 3,Cerrado,04/05/2026 9:00 a,SOP_MASIVA_4,04/05/2026 9:05 a,04/05/2026 11:00 a,Resuelto,En analisis,RES_MASIVA_2,Critica,Masiva,CEP CAU AGI
+INC000004,Incidencia masiva de prueba 4,Resuelto,05/05/2026 9:00 a,SOP_MASIVA_1,05/05/2026 9:05 a,05/05/2026 11:00 a,Resuelto,En analisis,RES_MASIVA_1,Alta,Medio,CEP CAU AGI
+INC000005,Incidencia masiva de prueba 5,Cerrado,06/05/2026 9:00 a,SOP_MASIVA_2,06/05/2026 9:05 a,06/05/2026 11:00 a,Resuelto,En analisis,RES_MASIVA_2,Media,Bajo,CEP CAU AGI
+INC000006,Incidencia masiva de prueba 6,Resuelto,07/05/2026 9:00 a,SOP_MASIVA_3,07/05/2026 9:05 a,07/05/2026 11:00 a,Resuelto,En analisis,RES_MASIVA_1,Baja,Masiva,CEP CAU AGI
+INC000007,Incidencia masiva de prueba 7,En Progreso,08/05/2026 9:00 a,SOP_MASIVA_4,08/05/2026 9:05 a,08/05/2026 11:00 a,Resuelto,En analisis,RES_MASIVA_2,Critica,Medio,CEP CAU AGI
+INC000008,Incidencia masiva de prueba 8,Cerrado,09/05/2026 9:00 a,SOP_MASIVA_1,09/05/2026 9:05 a,09/05/2026 11:00 a,Resuelto,En analisis,RES_MASIVA_1,Alta,Bajo,CEP CAU AGI
+INC000009,Incidencia masiva de prueba 9,Resuelto,10/05/2026 9:00 a,SOP_MASIVA_2,10/05/2026 9:05 a,10/05/2026 11:00 a,Resuelto,En analisis,RES_MASIVA_2,Media,Masiva,CEP CAU AGI
+INC000010,Incidencia masiva de prueba 10,Cerrado,11/05/2026 9:00 a,SOP_MASIVA_3,11/05/2026 9:05 a,11/05/2026 11:00 a,Resuelto,En analisis,RES_MASIVA_1,Baja,Medio,CEP CAU AGI
+INC000011,Incidencia masiva de prueba 11,Resuelto,12/05/2026 9:00 a,SOP_MASIVA_4,12/05/2026 9:05 a,12/05/2026 11:00 a,Resuelto,En analisis,RES_MASIVA_2,Critica,Bajo,CEP CAU AGI
+INC000012,Incidencia masiva de prueba 12,En Progreso,13/05/2026 9:00 a,SOP_MASIVA_1,13/05/2026 9:05 a,13/05/2026 11:00 a,Resuelto,En analisis,RES_MASIVA_1,Alta,Masiva,CEP CAU AGI
+INC000013,Incidencia masiva de prueba 13,Cerrado,14/05/2026 9:00 a,SOP_MASIVA_2,14/05/2026 9:05 a,14/05/2026 11:00 a,Resuelto,En analisis,RES_MASIVA_2,Media,Medio,CEP CAU AGI
+INC000014,Incidencia masiva de prueba 14,Resuelto,15/05/2026 9:00 a,SOP_MASIVA_3,15/05/2026 9:05 a,15/05/2026 11:00 a,Resuelto,En analisis,RES_MASIVA_1,Baja,Bajo,CEP CAU AGI
+INC000015,Incidencia masiva de prueba 15,Cerrado,16/05/2026 9:00 a,SOP_MASIVA_4,16/05/2026 9:05 a,16/05/2026 11:00 a,Resuelto,En analisis,RES_MASIVA_2,Critica,Masiva,CEP CAU AGI
+INC000016,Incidencia masiva de prueba 16,Resuelto,17/05/2026 9:00 a,SOP_MASIVA_1,17/05/2026 9:05 a,17/05/2026 11:00 a,Resuelto,En analisis,RES_MASIVA_1,Alta,Medio,CEP CAU AGI
+INC000017,Incidencia masiva de prueba 17,En Progreso,18/05/2026 9:00 a,SOP_MASIVA_2,18/05/2026 9:05 a,18/05/2026 11:00 a,Resuelto,En analisis,RES_MASIVA_2,Media,Bajo,CEP CAU AGI
+INC000018,Incidencia masiva de prueba 18,Cerrado,19/05/2026 9:00 a,SOP_MASIVA_3,19/05/2026 9:05 a,19/05/2026 11:00 a,Resuelto,En analisis,RES_MASIVA_1,Baja,Masiva,CEP CAU AGI
+INC000019,Incidencia masiva de prueba 19,Resuelto,20/05/2026 9:00 a,SOP_MASIVA_4,20/05/2026 9:05 a,20/05/2026 11:00 a,Resuelto,En analisis,RES_MASIVA_2,Critica,Medio,CEP CAU AGI
+INC000020,Incidencia masiva de prueba 20,Cerrado,21/05/2026 9:00 a,SOP_MASIVA_1,21/05/2026 9:05 a,21/05/2026 11:00 a,Resuelto,En analisis,RES_MASIVA_1,Alta,Bajo,CEP CAU AGI
+INC000021,Incidencia masiva de prueba 21,Resuelto,22/05/2026 9:00 a,SOP_MASIVA_2,22/05/2026 9:05 a,22/05/2026 11:00 a,Resuelto,En analisis,RES_MASIVA_2,Media,Masiva,CEP CAU AGI
+INC000022,Incidencia masiva de prueba 22,En Progreso,23/05/2026 9:00 a,SOP_MASIVA_3,23/05/2026 9:05 a,23/05/2026 11:00 a,Resuelto,En analisis,RES_MASIVA_1,Baja,Medio,CEP CAU AGI
+INC000023,Incidencia masiva de prueba 23,Cerrado,24/05/2026 9:00 a,SOP_MASIVA_4,24/05/2026 9:05 a,24/05/2026 11:00 a,Resuelto,En analisis,RES_MASIVA_2,Critica,Bajo,CEP CAU AGI
+INC000024,Incidencia masiva de prueba 24,Resuelto,25/05/2026 9:00 a,SOP_MASIVA_1,25/05/2026 9:05 a,25/05/2026 11:00 a,Resuelto,En analisis,RES_MASIVA_1,Alta,Masiva,CEP CAU AGI
+INC000025,Incidencia masiva de prueba 25,Cerrado,26/05/2026 9:00 a,SOP_MASIVA_2,26/05/2026 9:05 a,26/05/2026 11:00 a,Resuelto,En analisis,RES_MASIVA_2,Media,Medio,CEP CAU AGI
+INC000026,Incidencia masiva de prueba 26,Resuelto,27/05/2026 9:00 a,SOP_MASIVA_3,27/05/2026 9:05 a,27/05/2026 11:00 a,Resuelto,En analisis,RES_MASIVA_1,Baja,Bajo,CEP CAU AGI
+INC000027,Incidencia masiva de prueba 27,En Progreso,28/05/2026 9:00 a,SOP_MASIVA_4,28/05/2026 9:05 a,28/05/2026 11:00 a,Resuelto,En analisis,RES_MASIVA_2,Critica,Masiva,CEP CAU AGI
+INC000028,Incidencia masiva de prueba 28,Cerrado,01/05/2026 9:00 a,SOP_MASIVA_1,01/05/2026 9:05 a,01/05/2026 11:00 a,Resuelto,En analisis,RES_MASIVA_1,Alta,Medio,CEP CAU AGI
+INC000029,Incidencia masiva de prueba 29,Resuelto,02/05/2026 9:00 a,SOP_MASIVA_2,02/05/2026 9:05 a,02/05/2026 11:00 a,Resuelto,En analisis,RES_MASIVA_2,Media,Bajo,CEP CAU AGI
+INC000030,Incidencia masiva de prueba 30,Cerrado,03/05/2026 9:00 a,SOP_MASIVA_3,03/05/2026 9:05 a,03/05/2026 11:00 a,Resuelto,En analisis,RES_MASIVA_1,Baja,Masiva,CEP CAU AGI
+INC000031,Incidencia masiva de prueba 31,Resuelto,04/05/2026 9:00 a,SOP_MASIVA_4,04/05/2026 9:05 a,04/05/2026 11:00 a,Resuelto,En analisis,RES_MASIVA_2,Critica,Medio,CEP CAU AGI
+INC000032,Incidencia masiva de prueba 32,En Progreso,05/05/2026 9:00 a,SOP_MASIVA_1,05/05/2026 9:05 a,05/05/2026 11:00 a,Resuelto,En analisis,RES_MASIVA_1,Alta,Bajo,CEP CAU AGI
+INC000033,Incidencia masiva de prueba 33,Cerrado,06/05/2026 9:00 a,SOP_MASIVA_2,06/05/2026 9:05 a,06/05/2026 11:00 a,Resuelto,En analisis,RES_MASIVA_2,Media,Masiva,CEP CAU AGI
+INC000034,Incidencia masiva de prueba 34,Resuelto,07/05/2026 9:00 a,SOP_MASIVA_3,07/05/2026 9:05 a,07/05/2026 11:00 a,Resuelto,En analisis,RES_MASIVA_1,Baja,Medio,CEP CAU AGI
+INC000035,Incidencia masiva de prueba 35,Cerrado,08/05/2026 9:00 a,SOP_MASIVA_4,08/05/2026 9:05 a,08/05/2026 11:00 a,Resuelto,En analisis,RES_MASIVA_2,Critica,Bajo,CEP CAU AGI
+INC000036,Incidencia masiva de prueba 36,Resuelto,09/05/2026 9:00 a,SOP_MASIVA_1,09/05/2026 9:05 a,09/05/2026 11:00 a,Resuelto,En analisis,RES_MASIVA_1,Alta,Masiva,CEP CAU AGI
+INC000037,Incidencia masiva de prueba 37,En Progreso,10/05/2026 9:00 a,SOP_MASIVA_2,10/05/2026 9:05 a,10/05/2026 11:00 a,Resuelto,En analisis,RES_MASIVA_2,Media,Medio,CEP CAU AGI
+INC000038,Incidencia masiva de prueba 38,Cerrado,11/05/2026 9:00 a,SOP_MASIVA_3,11/05/2026 9:05 a,11/05/2026 11:00 a,Resuelto,En analisis,RES_MASIVA_1,Baja,Bajo,CEP CAU AGI
+INC000039,Incidencia masiva de prueba 39,Resuelto,12/05/2026 9:00 a,SOP_MASIVA_4,12/05/2026 9:05 a,12/05/2026 11:00 a,Resuelto,En analisis,RES_MASIVA_2,Critica,Masiva,CEP CAU AGI
+INC000040,Incidencia masiva de prueba 40,Cerrado,13/05/2026 9:00 a,SOP_MASIVA_1,13/05/2026 9:05 a,13/05/2026 11:00 a,Resuelto,En analisis,RES_MASIVA_1,Alta,Medio,CEP CAU AGI
+INC000041,Incidencia masiva de prueba 41,Resuelto,14/05/2026 9:00 a,SOP_MASIVA_2,14/05/2026 9:05 a,14/05/2026 11:00 a,Resuelto,En analisis,RES_MASIVA_2,Media,Bajo,CEP CAU AGI
+INC000042,Incidencia masiva de prueba 42,En Progreso,15/05/2026 9:00 a,SOP_MASIVA_3,15/05/2026 9:05 a,15/05/2026 11:00 a,Resuelto,En analisis,RES_MASIVA_1,Baja,Masiva,CEP CAU AGI
+INC000043,Incidencia masiva de prueba 43,Cerrado,16/05/2026 9:00 a,SOP_MASIVA_4,16/05/2026 9:05 a,16/05/2026 11:00 a,Resuelto,En analisis,RES_MASIVA_2,Critica,Medio,CEP CAU AGI
+INC000044,Incidencia masiva de prueba 44,Resuelto,17/05/2026 9:00 a,SOP_MASIVA_1,17/05/2026 9:05 a,17/05/2026 11:00 a,Resuelto,En analisis,RES_MASIVA_1,Alta,Bajo,CEP CAU AGI
+INC000045,Incidencia masiva de prueba 45,Cerrado,18/05/2026 9:00 a,SOP_MASIVA_2,18/05/2026 9:05 a,18/05/2026 11:00 a,Resuelto,En analisis,RES_MASIVA_2,Media,Masiva,CEP CAU AGI
+,Incidencia invalida 46,Resuelto,19/05/2026 9:00 a,SOP_MASIVA_3,19/05/2026 9:05 a,19/05/2026 11:00 a,Resuelto,En analisis,RES_MASIVA_1,Baja,Medio,CEP CAU AGI
+INC000047,,En Progreso,20/05/2026 9:00 a,SOP_MASIVA_4,20/05/2026 9:05 a,20/05/2026 11:00 a,Resuelto,En analisis,RES_MASIVA_2,Critica,Bajo,CEP CAU AGI
+INC000048,Incidencia invalida 48,,21/05/2026 9:00 a,SOP_MASIVA_1,21/05/2026 9:05 a,21/05/2026 11:00 a,Resuelto,En analisis,RES_MASIVA_1,Alta,Masiva,CEP CAU AGI
+INC000049,Incidencia invalida 49,Resuelto,,SOP_MASIVA_2,22/05/2026 9:05 a,22/05/2026 11:00 a,Resuelto,En analisis,RES_MASIVA_2,Media,Medio,CEP CAU AGI
+INC000050,Incidencia invalida 50,Cerrado,23/05/2026 9:00 a,,23/05/2026 9:05 a,23/05/2026 11:00 a,Resuelto,En analisis,RES_MASIVA_1,Baja,Bajo,CEP CAU AGI
+INC000051,Incidencia invalida 51,Resuelto,24/05/2026 9:00 a,SOP_MASIVA_4,24/05/2026 9:05 a,24/05/2026 11:00 a,Resuelto,En analisis,RES_MASIVA_2,,Masiva,CEP CAU AGI
+INC000052,Incidencia invalida 52,En Progreso,25/05/2026 9:00 a,SOP_MASIVA_1,25/05/2026 9:05 a,25/05/2026 11:00 a,Resuelto,En analisis,RES_MASIVA_1,Alta,,CEP CAU AGI
+INC000053,Incidencia invalida 53,Cerrado,not-a-date,SOP_MASIVA_2,26/05/2026 9:05 a,26/05/2026 11:00 a,Resuelto,En analisis,RES_MASIVA_2,Media,Bajo,CEP CAU AGI
+,Incidencia invalida 54,Resuelto,27/05/2026 9:00 a,SOP_MASIVA_3,27/05/2026 9:05 a,27/05/2026 11:00 a,Resuelto,En analisis,RES_MASIVA_1,Baja,Masiva,CEP CAU AGI
+INC000055,,Cerrado,28/05/2026 9:00 a,SOP_MASIVA_4,28/05/2026 9:05 a,28/05/2026 11:00 a,Resuelto,En analisis,RES_MASIVA_2,Critica,Medio,CEP CAU AGI
+INC000056,Incidencia invalida 56,,01/05/2026 9:00 a,SOP_MASIVA_1,01/05/2026 9:05 a,01/05/2026 11:00 a,Resuelto,En analisis,RES_MASIVA_1,Alta,Bajo,CEP CAU AGI
+INC000057,Incidencia invalida 57,En Progreso,,SOP_MASIVA_2,02/05/2026 9:05 a,02/05/2026 11:00 a,Resuelto,En analisis,RES_MASIVA_2,Media,Masiva,CEP CAU AGI
+INC000058,Incidencia invalida 58,Cerrado,not-a-date,SOP_MASIVA_3,03/05/2026 9:05 a,03/05/2026 11:00 a,Resuelto,En analisis,RES_MASIVA_1,Baja,Medio,CEP CAU AGI
+INC000059,Incidencia invalida 59,Resuelto,04/05/2026 9:00 a,SOP_MASIVA_4,04/05/2026 9:05 a,04/05/2026 11:00 a,Resuelto,En analisis,RES_MASIVA_2,,Bajo,CEP CAU AGI
+INC000060,Incidencia invalida 60,Cerrado,05/05/2026 9:00 a,SOP_MASIVA_1,05/05/2026 9:05 a,05/05/2026 11:00 a,Resuelto,En analisis,RES_MASIVA_1,Alta,,CEP CAU AGI

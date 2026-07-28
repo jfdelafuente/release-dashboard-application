@@ -1,0 +1,101 @@
+ID de incidencia,Descripción,Estatus,Fecha de envío,Grupo asignado,Fecha de notificación,Fecha de última resolución,Motivo de estado,MotivoEstado_Anterior,Grupo Resolutor,Urgencia,Impacto,Grupo Remitente
+INC000001,Incidencia de prueba numero 1,Resuelto,01/04/2026 8:00 a,SOP_GRUPO_2,01/04/2026 8:05 a,01/04/2026 10:00 a,Resuelto por soporte,Pendiente de diagnostico,RES_GRUPO_2,Media,Medio,CEP CAU AGI
+INC000002,Incidencia de prueba numero 2,En Progreso,02/04/2026 8:00 a,SOP_GRUPO_3,02/04/2026 8:05 a,02/04/2026 10:00 a,Resuelto por soporte,Pendiente de diagnostico,RES_GRUPO_3,Baja,Bajo,CEP CAU AGI
+INC000003,Incidencia de prueba numero 3,Cerrado,03/04/2026 8:00 a,SOP_GRUPO_4,03/04/2026 8:05 a,03/04/2026 10:00 a,Resuelto por soporte,Pendiente de diagnostico,RES_GRUPO_1,Critica,Masiva,CEP CAU AGI
+INC000004,Incidencia de prueba numero 4,Resuelto,04/04/2026 8:00 a,SOP_GRUPO_5,04/04/2026 8:05 a,04/04/2026 10:00 a,Resuelto por soporte,Pendiente de diagnostico,RES_GRUPO_2,Alta,Medio,CEP CAU AGI
+INC000005,Incidencia de prueba numero 5,Cerrado,05/04/2026 8:00 a,SOP_GRUPO_1,05/04/2026 8:05 a,05/04/2026 10:00 a,Resuelto por soporte,Pendiente de diagnostico,RES_GRUPO_3,Media,Bajo,CEP CAU AGI
+INC000006,Incidencia de prueba numero 6,Resuelto,06/04/2026 8:00 a,SOP_GRUPO_2,06/04/2026 8:05 a,06/04/2026 10:00 a,Resuelto por soporte,Pendiente de diagnostico,RES_GRUPO_1,Baja,Masiva,CEP CAU AGI
+INC000007,Incidencia de prueba numero 7,En Progreso,07/04/2026 8:00 a,SOP_GRUPO_3,07/04/2026 8:05 a,07/04/2026 10:00 a,Resuelto por soporte,Pendiente de diagnostico,RES_GRUPO_2,Critica,Medio,CEP CAU AGI
+INC000008,Incidencia de prueba numero 8,Cerrado,08/04/2026 8:00 a,SOP_GRUPO_4,08/04/2026 8:05 a,08/04/2026 10:00 a,Resuelto por soporte,Pendiente de diagnostico,RES_GRUPO_3,Alta,Bajo,CEP CAU AGI
+INC000009,Incidencia de prueba numero 9,Resuelto,09/04/2026 8:00 a,SOP_GRUPO_5,09/04/2026 8:05 a,09/04/2026 10:00 a,Resuelto por soporte,Pendiente de diagnostico,RES_GRUPO_1,Media,Masiva,CEP CAU AGI
+INC000010,Incidencia de prueba numero 10,Cerrado,10/04/2026 8:00 a,SOP_GRUPO_1,10/04/2026 8:05 a,10/04/2026 10:00 a,Resuelto por soporte,Pendiente de diagnostico,RES_GRUPO_2,Baja,Medio,CEP CAU AGI
+INC000011,Incidencia de prueba numero 11,Resuelto,11/04/2026 8:00 a,SOP_GRUPO_2,11/04/2026 8:05 a,11/04/2026 10:00 a,Resuelto por soporte,Pendiente de diagnostico,RES_GRUPO_3,Critica,Bajo,CEP CAU AGI
+INC000012,Incidencia de prueba numero 12,En Progreso,12/04/2026 8:00 a,SOP_GRUPO_3,12/04/2026 8:05 a,12/04/2026 10:00 a,Resuelto por soporte,Pendiente de diagnostico,RES_GRUPO_1,Alta,Masiva,CEP CAU AGI
+INC000013,Incidencia de prueba numero 13,Cerrado,13/04/2026 8:00 a,SOP_GRUPO_4,13/04/2026 8:05 a,13/04/2026 10:00 a,Resuelto por soporte,Pendiente de diagnostico,RES_GRUPO_2,Media,Medio,CEP CAU AGI
+INC000014,Incidencia de prueba numero 14,Resuelto,14/04/2026 8:00 a,SOP_GRUPO_5,14/04/2026 8:05 a,14/04/2026 10:00 a,Resuelto por soporte,Pendiente de diagnostico,RES_GRUPO_3,Baja,Bajo,CEP CAU AGI
+INC000015,Incidencia de prueba numero 15,Cerrado,15/04/2026 8:00 a,SOP_GRUPO_1,15/04/2026 8:05 a,15/04/2026 10:00 a,Resuelto por soporte,Pendiente de diagnostico,RES_GRUPO_1,Critica,Masiva,CEP CAU AGI
+INC000016,Incidencia de prueba numero 16,Resuelto,16/04/2026 8:00 a,SOP_GRUPO_2,16/04/2026 8:05 a,16/04/2026 10:00 a,Resuelto por soporte,Pendiente de diagnostico,RES_GRUPO_2,Alta,Medio,CEP CAU AGI
+INC000017,Incidencia de prueba numero 17,En Progreso,17/04/2026 8:00 a,SOP_GRUPO_3,17/04/2026 8:05 a,17/04/2026 10:00 a,Resuelto por soporte,Pendiente de diagnostico,RES_GRUPO_3,Media,Bajo,CEP CAU AGI
+INC000018,Incidencia de prueba numero 18,Cerrado,18/04/2026 8:00 a,SOP_GRUPO_4,18/04/2026 8:05 a,18/04/2026 10:00 a,Resuelto por soporte,Pendiente de diagnostico,RES_GRUPO_1,Baja,Masiva,CEP CAU AGI
+INC000019,Incidencia de prueba numero 19,Resuelto,19/04/2026 8:00 a,SOP_GRUPO_5,19/04/2026 8:05 a,19/04/2026 10:00 a,Resuelto por soporte,Pendiente de diagnostico,RES_GRUPO_2,Critica,Medio,CEP CAU AGI
+INC000020,Incidencia de prueba numero 20,Cerrado,20/04/2026 8:00 a,SOP_GRUPO_1,20/04/2026 8:05 a,20/04/2026 10:00 a,Resuelto por soporte,Pendiente de diagnostico,RES_GRUPO_3,Alta,Bajo,CEP CAU AGI
+INC000021,Incidencia de prueba numero 21,Resuelto,21/04/2026 8:00 a,SOP_GRUPO_2,21/04/2026 8:05 a,21/04/2026 10:00 a,Resuelto por soporte,Pendiente de diagnostico,RES_GRUPO_1,Media,Masiva,CEP CAU AGI
+INC000022,Incidencia de prueba numero 22,En Progreso,22/04/2026 8:00 a,SOP_GRUPO_3,22/04/2026 8:05 a,22/04/2026 10:00 a,Resuelto por soporte,Pendiente de diagnostico,RES_GRUPO_2,Baja,Medio,CEP CAU AGI
+INC000023,Incidencia de prueba numero 23,Cerrado,23/04/2026 8:00 a,SOP_GRUPO_4,23/04/2026 8:05 a,23/04/2026 10:00 a,Resuelto por soporte,Pendiente de diagnostico,RES_GRUPO_3,Critica,Bajo,CEP CAU AGI
+INC000024,Incidencia de prueba numero 24,Resuelto,24/04/2026 8:00 a,SOP_GRUPO_5,24/04/2026 8:05 a,24/04/2026 10:00 a,Resuelto por soporte,Pendiente de diagnostico,RES_GRUPO_1,Alta,Masiva,CEP CAU AGI
+INC000025,Incidencia de prueba numero 25,Cerrado,25/04/2026 8:00 a,SOP_GRUPO_1,25/04/2026 8:05 a,25/04/2026 10:00 a,Resuelto por soporte,Pendiente de diagnostico,RES_GRUPO_2,Media,Medio,CEP CAU AGI
+INC000026,Incidencia de prueba numero 26,Resuelto,26/04/2026 8:00 a,SOP_GRUPO_2,26/04/2026 8:05 a,26/04/2026 10:00 a,Resuelto por soporte,Pendiente de diagnostico,RES_GRUPO_3,Baja,Bajo,CEP CAU AGI
+INC000027,Incidencia de prueba numero 27,En Progreso,27/04/2026 8:00 a,SOP_GRUPO_3,27/04/2026 8:05 a,27/04/2026 10:00 a,Resuelto por soporte,Pendiente de diagnostico,RES_GRUPO_1,Critica,Masiva,CEP CAU AGI
+INC000028,Incidencia de prueba numero 28,Cerrado,28/04/2026 8:00 a,SOP_GRUPO_4,28/04/2026 8:05 a,28/04/2026 10:00 a,Resuelto por soporte,Pendiente de diagnostico,RES_GRUPO_2,Alta,Medio,CEP CAU AGI
+INC000029,Incidencia de prueba numero 29,Resuelto,29/04/2026 8:00 a,SOP_GRUPO_5,29/04/2026 8:05 a,29/04/2026 10:00 a,Resuelto por soporte,Pendiente de diagnostico,RES_GRUPO_3,Media,Bajo,CEP CAU AGI
+INC000030,Incidencia de prueba numero 30,Cerrado,30/04/2026 8:00 a,SOP_GRUPO_1,30/04/2026 8:05 a,30/04/2026 10:00 a,Resuelto por soporte,Pendiente de diagnostico,RES_GRUPO_1,Baja,Masiva,CEP CAU AGI
+INC000031,Incidencia de prueba numero 31,Resuelto,02/04/2026 8:00 a,SOP_GRUPO_2,02/04/2026 8:05 a,02/04/2026 10:00 a,Resuelto por soporte,Pendiente de diagnostico,RES_GRUPO_2,Critica,Medio,CEP CAU AGI
+INC000032,Incidencia de prueba numero 32,En Progreso,03/04/2026 8:00 a,SOP_GRUPO_3,03/04/2026 8:05 a,03/04/2026 10:00 a,Resuelto por soporte,Pendiente de diagnostico,RES_GRUPO_3,Alta,Bajo,CEP CAU AGI
+INC000033,Incidencia de prueba numero 33,Cerrado,04/04/2026 8:00 a,SOP_GRUPO_4,04/04/2026 8:05 a,04/04/2026 10:00 a,Resuelto por soporte,Pendiente de diagnostico,RES_GRUPO_1,Media,Masiva,CEP CAU AGI
+INC000034,Incidencia de prueba numero 34,Resuelto,05/04/2026 8:00 a,SOP_GRUPO_5,05/04/2026 8:05 a,05/04/2026 10:00 a,Resuelto por soporte,Pendiente de diagnostico,RES_GRUPO_2,Baja,Medio,CEP CAU AGI
+INC000035,Incidencia de prueba numero 35,Cerrado,06/04/2026 8:00 a,SOP_GRUPO_1,06/04/2026 8:05 a,06/04/2026 10:00 a,Resuelto por soporte,Pendiente de diagnostico,RES_GRUPO_3,Critica,Bajo,CEP CAU AGI
+INC000036,Incidencia de prueba numero 36,Resuelto,07/04/2026 8:00 a,SOP_GRUPO_2,07/04/2026 8:05 a,07/04/2026 10:00 a,Resuelto por soporte,Pendiente de diagnostico,RES_GRUPO_1,Alta,Masiva,CEP CAU AGI
+INC000037,Incidencia de prueba numero 37,En Progreso,08/04/2026 8:00 a,SOP_GRUPO_3,08/04/2026 8:05 a,08/04/2026 10:00 a,Resuelto por soporte,Pendiente de diagnostico,RES_GRUPO_2,Media,Medio,CEP CAU AGI
+INC000038,Incidencia de prueba numero 38,Cerrado,09/04/2026 8:00 a,SOP_GRUPO_4,09/04/2026 8:05 a,09/04/2026 10:00 a,Resuelto por soporte,Pendiente de diagnostico,RES_GRUPO_3,Baja,Bajo,CEP CAU AGI
+INC000039,Incidencia de prueba numero 39,Resuelto,10/04/2026 8:00 a,SOP_GRUPO_5,10/04/2026 8:05 a,10/04/2026 10:00 a,Resuelto por soporte,Pendiente de diagnostico,RES_GRUPO_1,Critica,Masiva,CEP CAU AGI
+INC000040,Incidencia de prueba numero 40,Cerrado,11/04/2026 8:00 a,SOP_GRUPO_1,11/04/2026 8:05 a,11/04/2026 10:00 a,Resuelto por soporte,Pendiente de diagnostico,RES_GRUPO_2,Alta,Medio,CEP CAU AGI
+INC000041,Incidencia de prueba numero 41,Resuelto,12/04/2026 8:00 a,SOP_GRUPO_2,12/04/2026 8:05 a,12/04/2026 10:00 a,Resuelto por soporte,Pendiente de diagnostico,RES_GRUPO_3,Media,Bajo,CEP CAU AGI
+INC000042,Incidencia de prueba numero 42,En Progreso,13/04/2026 8:00 a,SOP_GRUPO_3,13/04/2026 8:05 a,13/04/2026 10:00 a,Resuelto por soporte,Pendiente de diagnostico,RES_GRUPO_1,Baja,Masiva,CEP CAU AGI
+INC000043,Incidencia de prueba numero 43,Cerrado,14/04/2026 8:00 a,SOP_GRUPO_4,14/04/2026 8:05 a,14/04/2026 10:00 a,Resuelto por soporte,Pendiente de diagnostico,RES_GRUPO_2,Critica,Medio,CEP CAU AGI
+INC000044,Incidencia de prueba numero 44,Resuelto,15/04/2026 8:00 a,SOP_GRUPO_5,15/04/2026 8:05 a,15/04/2026 10:00 a,Resuelto por soporte,Pendiente de diagnostico,RES_GRUPO_3,Alta,Bajo,CEP CAU AGI
+INC000045,Incidencia de prueba numero 45,Cerrado,16/04/2026 8:00 a,SOP_GRUPO_1,16/04/2026 8:05 a,16/04/2026 10:00 a,Resuelto por soporte,Pendiente de diagnostico,RES_GRUPO_1,Media,Masiva,CEP CAU AGI
+INC000046,Incidencia de prueba numero 46,Resuelto,17/04/2026 8:00 a,SOP_GRUPO_2,17/04/2026 8:05 a,17/04/2026 10:00 a,Resuelto por soporte,Pendiente de diagnostico,RES_GRUPO_2,Baja,Medio,CEP CAU AGI
+INC000047,Incidencia de prueba numero 47,En Progreso,18/04/2026 8:00 a,SOP_GRUPO_3,18/04/2026 8:05 a,18/04/2026 10:00 a,Resuelto por soporte,Pendiente de diagnostico,RES_GRUPO_3,Critica,Bajo,CEP CAU AGI
+INC000048,Incidencia de prueba numero 48,Cerrado,19/04/2026 8:00 a,SOP_GRUPO_4,19/04/2026 8:05 a,19/04/2026 10:00 a,Resuelto por soporte,Pendiente de diagnostico,RES_GRUPO_1,Alta,Masiva,CEP CAU AGI
+INC000049,Incidencia de prueba numero 49,Resuelto,20/04/2026 8:00 a,SOP_GRUPO_5,20/04/2026 8:05 a,20/04/2026 10:00 a,Resuelto por soporte,Pendiente de diagnostico,RES_GRUPO_2,Media,Medio,CEP CAU AGI
+INC000050,Incidencia de prueba numero 50,Cerrado,21/04/2026 8:00 a,SOP_GRUPO_1,21/04/2026 8:05 a,21/04/2026 10:00 a,Resuelto por soporte,Pendiente de diagnostico,RES_GRUPO_3,Baja,Bajo,CEP CAU AGI
+INC000051,Incidencia de prueba numero 51,Resuelto,22/04/2026 8:00 a,SOP_GRUPO_2,22/04/2026 8:05 a,22/04/2026 10:00 a,Resuelto por soporte,Pendiente de diagnostico,RES_GRUPO_1,Critica,Masiva,CEP CAU AGI
+INC000052,Incidencia de prueba numero 52,En Progreso,23/04/2026 8:00 a,SOP_GRUPO_3,23/04/2026 8:05 a,23/04/2026 10:00 a,Resuelto por soporte,Pendiente de diagnostico,RES_GRUPO_2,Alta,Medio,CEP CAU AGI
+INC000053,Incidencia de prueba numero 53,Cerrado,24/04/2026 8:00 a,SOP_GRUPO_4,24/04/2026 8:05 a,24/04/2026 10:00 a,Resuelto por soporte,Pendiente de diagnostico,RES_GRUPO_3,Media,Bajo,CEP CAU AGI
+INC000054,Incidencia de prueba numero 54,Resuelto,25/04/2026 8:00 a,SOP_GRUPO_5,25/04/2026 8:05 a,25/04/2026 10:00 a,Resuelto por soporte,Pendiente de diagnostico,RES_GRUPO_1,Baja,Masiva,CEP CAU AGI
+INC000055,Incidencia de prueba numero 55,Cerrado,26/04/2026 8:00 a,SOP_GRUPO_1,26/04/2026 8:05 a,26/04/2026 10:00 a,Resuelto por soporte,Pendiente de diagnostico,RES_GRUPO_2,Critica,Medio,CEP CAU AGI
+INC000056,Incidencia de prueba numero 56,Resuelto,27/04/2026 8:00 a,SOP_GRUPO_2,27/04/2026 8:05 a,27/04/2026 10:00 a,Resuelto por soporte,Pendiente de diagnostico,RES_GRUPO_3,Alta,Bajo,CEP CAU AGI
+INC000057,Incidencia de prueba numero 57,En Progreso,28/04/2026 8:00 a,SOP_GRUPO_3,28/04/2026 8:05 a,28/04/2026 10:00 a,Resuelto por soporte,Pendiente de diagnostico,RES_GRUPO_1,Media,Masiva,CEP CAU AGI
+INC000058,Incidencia de prueba numero 58,Cerrado,29/04/2026 8:00 a,SOP_GRUPO_4,29/04/2026 8:05 a,29/04/2026 10:00 a,Resuelto por soporte,Pendiente de diagnostico,RES_GRUPO_2,Baja,Medio,CEP CAU AGI
+INC000059,Incidencia de prueba numero 59,Resuelto,30/04/2026 8:00 a,SOP_GRUPO_5,30/04/2026 8:05 a,30/04/2026 10:00 a,Resuelto por soporte,Pendiente de diagnostico,RES_GRUPO_3,Critica,Bajo,CEP CAU AGI
+INC000060,Incidencia de prueba numero 60,Cerrado,02/04/2026 8:00 a,SOP_GRUPO_1,02/04/2026 8:05 a,02/04/2026 10:00 a,Resuelto por soporte,Pendiente de diagnostico,RES_GRUPO_1,Alta,Masiva,CEP CAU AGI
+INC000061,Incidencia de prueba numero 61,Resuelto,03/04/2026 8:00 a,SOP_GRUPO_2,03/04/2026 8:05 a,03/04/2026 10:00 a,Resuelto por soporte,Pendiente de diagnostico,RES_GRUPO_2,Media,Medio,CEP CAU AGI
+INC000062,Incidencia de prueba numero 62,En Progreso,04/04/2026 8:00 a,SOP_GRUPO_3,04/04/2026 8:05 a,04/04/2026 10:00 a,Resuelto por soporte,Pendiente de diagnostico,RES_GRUPO_3,Baja,Bajo,CEP CAU AGI
+INC000063,Incidencia de prueba numero 63,Cerrado,05/04/2026 8:00 a,SOP_GRUPO_4,05/04/2026 8:05 a,05/04/2026 10:00 a,Resuelto por soporte,Pendiente de diagnostico,RES_GRUPO_1,Critica,Masiva,CEP CAU AGI
+INC000064,Incidencia de prueba numero 64,Resuelto,06/04/2026 8:00 a,SOP_GRUPO_5,06/04/2026 8:05 a,06/04/2026 10:00 a,Resuelto por soporte,Pendiente de diagnostico,RES_GRUPO_2,Alta,Medio,CEP CAU AGI
+INC000065,Incidencia de prueba numero 65,Cerrado,07/04/2026 8:00 a,SOP_GRUPO_1,07/04/2026 8:05 a,07/04/2026 10:00 a,Resuelto por soporte,Pendiente de diagnostico,RES_GRUPO_3,Media,Bajo,CEP CAU AGI
+INC000066,Incidencia de prueba numero 66,Resuelto,08/04/2026 8:00 a,SOP_GRUPO_2,08/04/2026 8:05 a,08/04/2026 10:00 a,Resuelto por soporte,Pendiente de diagnostico,RES_GRUPO_1,Baja,Masiva,CEP CAU AGI
+INC000067,Incidencia de prueba numero 67,En Progreso,09/04/2026 8:00 a,SOP_GRUPO_3,09/04/2026 8:05 a,09/04/2026 10:00 a,Resuelto por soporte,Pendiente de diagnostico,RES_GRUPO_2,Critica,Medio,CEP CAU AGI
+INC000068,Incidencia de prueba numero 68,Cerrado,10/04/2026 8:00 a,SOP_GRUPO_4,10/04/2026 8:05 a,10/04/2026 10:00 a,Resuelto por soporte,Pendiente de diagnostico,RES_GRUPO_3,Alta,Bajo,CEP CAU AGI
+INC000069,Incidencia de prueba numero 69,Resuelto,11/04/2026 8:00 a,SOP_GRUPO_5,11/04/2026 8:05 a,11/04/2026 10:00 a,Resuelto por soporte,Pendiente de diagnostico,RES_GRUPO_1,Media,Masiva,CEP CAU AGI
+INC000070,Incidencia de prueba numero 70,Cerrado,12/04/2026 8:00 a,SOP_GRUPO_1,12/04/2026 8:05 a,12/04/2026 10:00 a,Resuelto por soporte,Pendiente de diagnostico,RES_GRUPO_2,Baja,Medio,CEP CAU AGI
+INC000071,Incidencia de prueba numero 71,Resuelto,13/04/2026 8:00 a,SOP_GRUPO_2,13/04/2026 8:05 a,13/04/2026 10:00 a,Resuelto por soporte,Pendiente de diagnostico,RES_GRUPO_3,Critica,Bajo,CEP CAU AGI
+INC000072,Incidencia de prueba numero 72,En Progreso,14/04/2026 8:00 a,SOP_GRUPO_3,14/04/2026 8:05 a,14/04/2026 10:00 a,Resuelto por soporte,Pendiente de diagnostico,RES_GRUPO_1,Alta,Masiva,CEP CAU AGI
+INC000073,Incidencia de prueba numero 73,Cerrado,15/04/2026 8:00 a,SOP_GRUPO_4,15/04/2026 8:05 a,15/04/2026 10:00 a,Resuelto por soporte,Pendiente de diagnostico,RES_GRUPO_2,Media,Medio,CEP CAU AGI
+INC000074,Incidencia de prueba numero 74,Resuelto,16/04/2026 8:00 a,SOP_GRUPO_5,16/04/2026 8:05 a,16/04/2026 10:00 a,Resuelto por soporte,Pendiente de diagnostico,RES_GRUPO_3,Baja,Bajo,CEP CAU AGI
+INC000075,Incidencia de prueba numero 75,Cerrado,17/04/2026 8:00 a,SOP_GRUPO_1,17/04/2026 8:05 a,17/04/2026 10:00 a,Resuelto por soporte,Pendiente de diagnostico,RES_GRUPO_1,Critica,Masiva,CEP CAU AGI
+INC000076,Incidencia de prueba numero 76,Resuelto,18/04/2026 8:00 a,SOP_GRUPO_2,18/04/2026 8:05 a,18/04/2026 10:00 a,Resuelto por soporte,Pendiente de diagnostico,RES_GRUPO_2,Alta,Medio,CEP CAU AGI
+INC000077,Incidencia de prueba numero 77,En Progreso,19/04/2026 8:00 a,SOP_GRUPO_3,19/04/2026 8:05 a,19/04/2026 10:00 a,Resuelto por soporte,Pendiente de diagnostico,RES_GRUPO_3,Media,Bajo,CEP CAU AGI
+INC000078,Incidencia de prueba numero 78,Cerrado,20/04/2026 8:00 a,SOP_GRUPO_4,20/04/2026 8:05 a,20/04/2026 10:00 a,Resuelto por soporte,Pendiente de diagnostico,RES_GRUPO_1,Baja,Masiva,CEP CAU AGI
+INC000079,Incidencia de prueba numero 79,Resuelto,21/04/2026 8:00 a,SOP_GRUPO_5,21/04/2026 8:05 a,21/04/2026 10:00 a,Resuelto por soporte,Pendiente de diagnostico,RES_GRUPO_2,Critica,Medio,CEP CAU AGI
+INC000080,Incidencia de prueba numero 80,Cerrado,22/04/2026 8:00 a,SOP_GRUPO_1,22/04/2026 8:05 a,22/04/2026 10:00 a,Resuelto por soporte,Pendiente de diagnostico,RES_GRUPO_3,Alta,Bajo,CEP CAU AGI
+INC000081,Incidencia de prueba numero 81,Resuelto,23/04/2026 8:00 a,SOP_GRUPO_2,23/04/2026 8:05 a,23/04/2026 10:00 a,Resuelto por soporte,Pendiente de diagnostico,RES_GRUPO_1,Media,Masiva,CEP CAU AGI
+INC000082,Incidencia de prueba numero 82,En Progreso,24/04/2026 8:00 a,SOP_GRUPO_3,24/04/2026 8:05 a,24/04/2026 10:00 a,Resuelto por soporte,Pendiente de diagnostico,RES_GRUPO_2,Baja,Medio,CEP CAU AGI
+INC000083,Incidencia de prueba numero 83,Cerrado,25/04/2026 8:00 a,SOP_GRUPO_4,25/04/2026 8:05 a,25/04/2026 10:00 a,Resuelto por soporte,Pendiente de diagnostico,RES_GRUPO_3,Critica,Bajo,CEP CAU AGI
+INC000084,Incidencia de prueba numero 84,Resuelto,26/04/2026 8:00 a,SOP_GRUPO_5,26/04/2026 8:05 a,26/04/2026 10:00 a,Resuelto por soporte,Pendiente de diagnostico,RES_GRUPO_1,Alta,Masiva,CEP CAU AGI
+INC000085,Incidencia de prueba numero 85,Cerrado,27/04/2026 8:00 a,SOP_GRUPO_1,27/04/2026 8:05 a,27/04/2026 10:00 a,Resuelto por soporte,Pendiente de diagnostico,RES_GRUPO_2,Media,Medio,CEP CAU AGI
+INC000086,Incidencia de prueba numero 86,Resuelto,28/04/2026 8:00 a,SOP_GRUPO_2,28/04/2026 8:05 a,28/04/2026 10:00 a,Resuelto por soporte,Pendiente de diagnostico,RES_GRUPO_3,Baja,Bajo,CEP CAU AGI
+INC000087,Incidencia de prueba numero 87,En Progreso,29/04/2026 8:00 a,SOP_GRUPO_3,29/04/2026 8:05 a,29/04/2026 10:00 a,Resuelto por soporte,Pendiente de diagnostico,RES_GRUPO_1,Critica,Masiva,CEP CAU AGI
+INC000088,Incidencia de prueba numero 88,Cerrado,30/04/2026 8:00 a,SOP_GRUPO_4,30/04/2026 8:05 a,30/04/2026 10:00 a,Resuelto por soporte,Pendiente de diagnostico,RES_GRUPO_2,Alta,Medio,CEP CAU AGI
+INC000089,Incidencia de prueba numero 89,Resuelto,02/04/2026 8:00 a,SOP_GRUPO_5,02/04/2026 8:05 a,02/04/2026 10:00 a,Resuelto por soporte,Pendiente de diagnostico,RES_GRUPO_3,Media,Bajo,CEP CAU AGI
+INC000090,Incidencia de prueba numero 90,Cerrado,03/04/2026 8:00 a,SOP_GRUPO_1,03/04/2026 8:05 a,03/04/2026 10:00 a,Resuelto por soporte,Pendiente de diagnostico,RES_GRUPO_1,Baja,Masiva,CEP CAU AGI
+INC000091,Incidencia de prueba numero 91,Resuelto,04/04/2026 8:00 a,SOP_GRUPO_2,04/04/2026 8:05 a,04/04/2026 10:00 a,Resuelto por soporte,Pendiente de diagnostico,RES_GRUPO_2,Critica,Medio,CEP CAU AGI
+INC000092,Incidencia de prueba numero 92,En Progreso,05/04/2026 8:00 a,SOP_GRUPO_3,05/04/2026 8:05 a,05/04/2026 10:00 a,Resuelto por soporte,Pendiente de diagnostico,RES_GRUPO_3,Alta,Bajo,CEP CAU AGI
+INC000093,Incidencia de prueba numero 93,Cerrado,06/04/2026 8:00 a,SOP_GRUPO_4,06/04/2026 8:05 a,06/04/2026 10:00 a,Resuelto por soporte,Pendiente de diagnostico,RES_GRUPO_1,Media,Masiva,CEP CAU AGI
+INC000094,Incidencia de prueba numero 94,Resuelto,07/04/2026 8:00 a,SOP_GRUPO_5,07/04/2026 8:05 a,07/04/2026 10:00 a,Resuelto por soporte,Pendiente de diagnostico,RES_GRUPO_2,Baja,Medio,CEP CAU AGI
+INC000095,Incidencia de prueba numero 95,Cerrado,08/04/2026 8:00 a,SOP_GRUPO_1,08/04/2026 8:05 a,08/04/2026 10:00 a,Resuelto por soporte,Pendiente de diagnostico,RES_GRUPO_3,Critica,Bajo,CEP CAU AGI
+INC000096,Incidencia de prueba numero 96,Resuelto,09/04/2026 8:00 a,SOP_GRUPO_2,09/04/2026 8:05 a,09/04/2026 10:00 a,Resuelto por soporte,Pendiente de diagnostico,RES_GRUPO_1,Alta,Masiva,CEP CAU AGI
+INC000097,Incidencia de prueba numero 97,En Progreso,10/04/2026 8:00 a,SOP_GRUPO_3,10/04/2026 8:05 a,10/04/2026 10:00 a,Resuelto por soporte,Pendiente de diagnostico,RES_GRUPO_2,Media,Medio,CEP CAU AGI
+INC000098,Incidencia de prueba numero 98,Cerrado,11/04/2026 8:00 a,SOP_GRUPO_4,11/04/2026 8:05 a,11/04/2026 10:00 a,Resuelto por soporte,Pendiente de diagnostico,RES_GRUPO_3,Baja,Bajo,CEP CAU AGI
+INC000099,Incidencia de prueba numero 99,Resuelto,12/04/2026 8:00 a,SOP_GRUPO_5,12/04/2026 8:05 a,12/04/2026 10:00 a,Resuelto por soporte,Pendiente de diagnostico,RES_GRUPO_1,Critica,Masiva,CEP CAU AGI
+INC000100,Incidencia de prueba numero 100,Cerrado,13/04/2026 8:00 a,SOP_GRUPO_1,13/04/2026 8:05 a,13/04/2026 10:00 a,Resuelto por soporte,Pendiente de diagnostico,RES_GRUPO_2,Alta,Medio,CEP CAU AGI
