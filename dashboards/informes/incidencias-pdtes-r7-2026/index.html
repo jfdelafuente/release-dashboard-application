@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Informe Incidencias Pdtes R7 2026 · Release Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/dashboards/assets/shared.css">
+    <style>
+        /* Estilos específicos de esta página. El framework compartido
+           (barra superior, cabecera, tabla, badges de estado base)
+           vive en assets/shared.css. */
+
+        .report-main {
+            padding: 48px 40px 80px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .project-block {
+            margin-bottom: 48px;
+        }
+
+        .project-block .section-title {
+            margin-top: 0;
+        }
+
+        .piloto-badge {
+            display: inline-block;
+            background: #FF7900;
+            color: #fff;
+            font-size: 11px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            padding: 3px 10px;
+            border-radius: 999px;
+            vertical-align: middle;
+        }
+
+        /* Variante adicional de status-badge propia de esta página
+           (no existe en assets/shared.css): incidencia con solución
+           propuesta y rechazada, sigue abierta. */
+        .status-rechazada {
+            background: #FCE4E1;
+            color: #B3261E;
+            border-color: transparent;
+        }
+
+        .impact-analysis {
+            background: #FFFFFF;
+            border: 1px solid #E2DDD5;
+            border-left: 4px solid #FF7900;
+            border-radius: 10px;
+            padding: 18px 22px;
+            margin-top: 16px;
+        }
+
+        .impact-analysis h3 {
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: #8A857C;
+            margin-bottom: 10px;
+        }
+
+        .impact-analysis ul {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .impact-analysis li {
+            font-size: 13px;
+            line-height: 1.55;
+            color: #3A362F;
+        }
+
+        .impact-analysis strong {
+            color: #0C0B09;
+        }
+    </style>
+</head>
+<body>
+    <!-- MASORANGE Top Bar (inyectada por assets/topbar.js) -->
+    <div id="mo-topbar-root" data-active="informes"></div>
+
+    <!-- Header -->
+    <header class="header">
+        <span class="eyebrow">Fiabilidad de servicio · Customer &amp; Service Operations</span>
+        <h1>Informe de Incidencias Pendientes por Proyecto — R7 2026 (Mesa de Seguimiento, export 30/07/2026)</h1>
+        <p>Informe generado a partir de la pestaña "Incidencias Pdtes" de la Mesa de Seguimiento de Incidencias. Agrupado por proyecto, ordenado por severidad, con análisis de impactos por bloque.</p>
+        <div class="gradient-divider"></div>
+    </header>
+
+    <main class="report-main">
+<section class="project-block">
+<h2 class="section-title">Proyecto: PRJ-10401 CRMB2B: Funcionalidades Finanzas SME <span class="piloto-badge">Piloto</span></h2>
+<div class="table-container"><table><thead><tr>
+<th>Código</th>
+<th>Sistema</th>
+<th>Estado</th>
+<th>Descripción</th>
+<th>Impacto</th>
+<th>Solución</th>
+</tr></thead><tbody>
+<tr>
+<td>INC000004088984</td>
+<td>DES_CRMB2B</td>
+<td><span class="status-badge status-en-progreso">En Análisis</span></td>
+<td>Al paralizar cuenta en CRM B2B, falla la paralización de recibos de fijo: clientes solo-fijo reciben error al confirmar; clientes convergentes (fijo+móvil) no muestran error pero solo paralizan recibo móvil, dejando fijo activo.</td>
+<td>Incapacidad de paralizar recibos de líneas fijas en clientes B2B, afectando gestión de suspensiones de servicio.</td>
+<td>Pendiente de solución</td>
+</tr>
+<tr>
+<td>INC000004084456</td>
+<td>DES_CRMB2B</td>
+<td><span class="status-badge status-pendiente">Pendiente (Estimado: 30/07/2026)</span></td>
+<td>Error al generar Payment Link en CRM B2B durante proceso de pago. Pop-up de error sin detalles adicionales. Afecta a caso de prueba: pago con payment link de recibo vía SMS para cliente PYME Optima marca Orange (OFAC15010, Recibo 0O10000000000000000020726, TMMC-2849).</td>
+<td>Bloqueo funcional en flujo de pago mediante payment link en CRM B2B.</td>
+<td>Pendiente de solución</td>
+</tr>
+<tr>
+<td>INC000004085464</td>
+<td>DES_CRMB2B</td>
+<td><span class="status-badge status-pendiente">Pendiente (Estimado: 30/07/2026)</span></td>
+<td>Error al generar iframe durante cobro parcial de recibo con tarjeta en CRM B2B. El sistema permite continuar y descuenta el importe, pero no genera la interacción asociada.</td>
+<td>Falta de trazabilidad de transacciones parciales por tarjeta. Recibo 0O10000000000000000070726, pasaporte OFAC15019.</td>
+<td>Pendiente de solución</td>
+</tr>
+<tr>
+<td>INC000004086666</td>
+<td>DES_CRMB2B</td>
+<td><span class="status-badge status-pendiente">Pendiente (Estimado: 30/07/2026)</span></td>
+<td>Cliente sin deuda móvil presenta flag de deuda móvil a nivel cliente en SI, mientras que flag a nivel cuenta de facturación está en NO. Inconsistencia en estado de deuda.</td>
+<td>Datos de deuda móvil inconsistentes en CRM B2B para cliente B10654051.</td>
+<td>Pendiente de solución</td>
+</tr>
+<tr>
+<td>INC000004084489</td>
+<td>DES_CRMB2B</td>
+<td><span class="status-badge status-cerrada">Resuelto</span></td>
+<td>Flag de impago (fijo y móvil) no visible en cabecera del cliente para usuarios de CRMB2B sin rol de cobros. Afecta a clientes PYME Optima y convergentes.</td>
+<td>Usuarios sin rol de cobros no visualizan indicadores de impago en consultas de recibos pendientes.</td>
+<td>Comportamiento por diseño: visibilidad de flag restringida a usuarios con rol específico según requisitos del PRJ-10401. No se requiere corrección.</td>
+</tr>
+</tbody></table></div>
+<div class="impact-analysis"><h3>Análisis de impactos</h3><ul>
+<li><strong>Bloqueos funcionales en procesos de cobro</strong> (INC000004088984, INC000004084456): ambas impiden completar operaciones de cobro/pago sobre clientes B2B en producción (paralización de recibos y generación de payment link). <strong>Requiere atención prioritaria</strong> por su impacto directo en la recaudación.</li>
+<li><strong>Trazabilidad e inconsistencia de datos de cobro</strong> (INC000004085464, INC000004086666): no bloquean el flujo pero generan datos incompletos o inconsistentes sobre el estado de cobro del cliente.</li>
+<li><strong>Resuelto sin acción pendiente</strong> (INC000004084489): comportamiento por diseño confirmado, sin impacto real pendiente.</li>
+</ul></div>
+</section>
+<section class="project-block">
+<h2 class="section-title">Proyecto: PRJ-11149 B2B - Mejora proceso provisión Superbono</h2>
+<div class="table-container"><table><thead><tr>
+<th>Código</th>
+<th>Sistema</th>
+<th>Estado</th>
+<th>Descripción</th>
+<th>Impacto</th>
+<th>Solución</th>
+</tr></thead><tbody>
+<tr>
+<td>INC000004090501</td>
+<td>SOP_SMC_OCS</td>
+<td><span class="status-badge status-en-progreso">En Análisis</span></td>
+<td>Validar desactivación automática del Superbono de autoprovisión en OCS pasadas 72 horas desde alta de línea en 4 MSISDN (653661605, 695035121, 653670018, 645370898) tras pruebas de velocidad del PRJ-11149.</td>
+<td>Bloqueo de pruebas de velocidad del proyecto de mejora Superbono. Sin acceso directo a OCS para validación. 30/07/2026: Incidencia creada para validación de desactivación de bono en OCS.</td>
+<td>Pendiente de solución</td>
+</tr>
+</tbody></table></div>
+<div class="impact-analysis"><h3>Análisis de impactos</h3><ul>
+<li><strong>Bloqueo de validación técnica</strong> (INC000004090501): impide completar las pruebas de velocidad necesarias para cerrar el proyecto. <strong>Requiere atención prioritaria</strong> por ser el único bloqueante activo del proyecto y no tener fecha estimada de resolución.</li>
+</ul></div>
+</section>
+<section class="project-block">
+<h2 class="section-title">Proyecto: PRJ-11236 PROYECTO LEGO: EVOLUCIÓN PORFOLIO CONVERGENTE 2026</h2>
+<div class="table-container"><table><thead><tr>
+<th>Código</th>
+<th>Sistema</th>
+<th>Estado</th>
+<th>Descripción</th>
+<th>Impacto</th>
+<th>Solución</th>
+</tr></thead><tbody>
+<tr>
+<td>INC000004090510</td>
+<td>APL_MOV_SOE</td>
+<td><span class="status-badge status-en-progreso">En Análisis</span></td>
+<td>Alta convergente Fibra + 2 líneas ilimitadas + 2 adicionales. Tras pasar VPT de Hermes, líneas adicionales caen en error en Teide: campo LogisticaProvincia ausente en cabecera de orden.</td>
+<td>Bloqueo en captación convergente. Órdenes afectadas: 2-1576285262995 / 2-1576283878936. Pasaporte: MCFRO0208. Dependencia de integración Hermes-Teide: campo LogisticaProvincia no mapeado en cabecera de orden.</td>
+<td>Pendiente de solución</td>
+</tr>
+<tr>
+<td>INC000004083608</td>
+<td>CEP CAU AGI</td>
+<td><span class="status-badge status-cerrada">Resuelto</span></td>
+<td>9 tarifas convergentes vigentes hasta 19/07/2026 no están habilitadas como transiciones seleccionables en procesos de retenciones voluntarias y portabilidad, impidiendo ofrecer estas opciones a clientes.</td>
+<td>Alto. Usuarios sin capacidad de gestionar cambios a tarifas que deberían estar disponibles. Afecta operativa de portabilidad, retenciones voluntarias, cambio domicilio y retenciones proactivas. Bloqueos: pendiente de trazas de APL_MOV_SOE para análisis técnico; requiere datos específicos del cliente, usuario y SFID para validación.</td>
+<td>Pendiente de solución</td>
+</tr>
+<tr>
+<td>INC000004083636</td>
+<td>DES_ESHOP_FRONTEND_OSP</td>
+<td><span class="status-badge status-pendiente">Pendiente (Estimado: sin fecha)</span></td>
+<td>Al realizar cambio de tarifa convergente y seleccionar LA nueva con SIM en configurador, el flujo salta la pantalla de selección de dirección de entrega y pasa directamente a finalizar pedido.</td>
+<td>Bloqueo en proceso de compra para clientes con cambios de tarifa a planes Ilimitada con nuevas líneas de acceso y SIM.</td>
+<td>Pendiente de solución</td>
+</tr>
+<tr>
+<td>INC000004084543</td>
+<td>DES_ESHOP_FRONTEND_OSP</td>
+<td><span class="status-badge status-cerrada">Resuelto</span></td>
+<td>Cambios de tarifa a LEGO desde cualquier sistema aplicaban penalización cuando no debería haber penalización hasta 27/07 con subida de SUB.</td>
+<td>Clientes LEGO recibían penalizaciones indebidas en cambios de tarifa.</td>
+<td>Causa raíz: acción innecesaria en Jira. TEIDE y KRATOS realizaron cambios en sus sistemas. Se cargó nueva tabla de pesos facilitada por TEIDE en Erebor para visualización correcta.</td>
+</tr>
+<tr>
+<td>INC000004088448</td>
+<td>DES_SOE_FICHA</td>
+<td><span class="status-badge status-en-progreso">En Análisis</span></td>
+<td>Cliente con tarifa LEGO+TV no puede contratar OTTs adicionales desde pestaña entretenimiento. Sistema muestra mensaje indicando que debe realizar cambio de tarifa, bloqueando la contratación en postventa.</td>
+<td>Bloqueo funcional en venta cruzada de servicios OTT para clientes LEGO con TV. Afecta experiencia de usuario en ficha de cliente.</td>
+<td>Pendiente de solución</td>
+</tr>
+<tr>
+<td>INC000004084432</td>
+<td>DES_SOE_FICHA</td>
+<td><span class="status-badge status-pendiente">Pendiente (Estimado: 27/09/2026)</span></td>
+<td>Al realizar crosssell MO a convergente con Netflix, el sistema aplica incorrectamente las promociones PROMOTARGET duplicando la promo de entretenimiento (4 promos en lugar de 2), causando error en la orden.</td>
+<td>Órdenes de convergencia con Netflix rechazadas. Cliente afectado. Relacionada con la INC000003976194 y FROCO-2125.</td>
+<td>Pendiente de solución</td>
+</tr>
+<tr>
+<td>INC000004087944</td>
+<td>DES_TEIDE</td>
+<td><span class="status-badge status-pendiente">Pendiente (Estimado: 05/08/2026)</span></td>
+<td>Cliente no recibe SVA DAZN en móvil tras cambio de tarifa a LEGO contratando servicio MOTOR desde EREBOR. Imposibilidad de usar APP DAZN.</td>
+<td>Cliente sin acceso a servicio DAZN contratado. Afecta experiencia usuario en cambios de tarifa con MOTOR.</td>
+<td>Pendiente de solución</td>
+</tr>
+<tr>
+<td>INC000004087406</td>
+<td>SOP_KRATOS</td>
+<td><span class="status-badge status-en-progreso">En Análisis</span></td>
+<td>En Cambios de Tarifa Convergente a tarifas LEGO sin fútbol se está añadiendo DECO incorrectamente. Afecta a 9 órdenes identificadas con estados cerradas en Siebel 8.x y PRM.</td>
+<td>Órdenes de cambio de tarifa procesadas con equipamiento incorrecto hacia LEGO, requiriendo corrección de datos.</td>
+<td>Pendiente de solución</td>
+</tr>
+<tr>
+<td>INC000004082627</td>
+<td>SOP_SMC_BSCS_ONLINE</td>
+<td><span class="status-badge status-pendiente">Pendiente (Estimado: sin fecha)</span></td>
+<td>Al cambiar tarifa de Fibra 1 línea a Fibra 2 líneas Ilimitadas, las líneas incluidas en el pack mantienen incorrectamente el Bono Upsize 60GB en BSCS cuando deberían perderlo tras el reposicionamiento al bono compartido.</td>
+<td>Inconsistencia en provisión de bonos de datos. Líneas adicionales del pack Fibra 2 líneas Ilimitadas retienen bono individual cuando corresponde bono compartido.</td>
+<td>Validación en BSCS confirmó bonos desactivados en ambas líneas. Operaciones BSCS (26069, 26096, 26110) ejecutadas correctamente el 21/07/2026 sin errores.</td>
+</tr>
+<tr>
+<td>INC000004084953</td>
+<td>SOP_SMC_TEIDE</td>
+<td><span class="status-badge status-en-progreso">En Análisis</span></td>
+<td>En cambios de tarifa convergente hacia Fibra 4 líneas Ilimitadas, el sistema no asigna automáticamente el Descodificador TV Infinity HomeBox, mostrándolo como opcional en lugar de obligatorio.</td>
+<td>Proceso de cambio de tarifa incompleto. Afecta a órdenes de convergencia Fibra 4 líneas (ej: orden 2-1575995119883, pasaporte PRSAC7104).</td>
+<td>Pendiente de solución</td>
+</tr>
+<tr>
+<td>INC000004083623</td>
+<td>SOP_SMC_TEIDE</td>
+<td><span class="status-badge status-rechazada">Solución Rechazada</span></td>
+<td>En cambio de tarifa SUDOCU (SUDOKU TOTAL a LEGO), la Ficha de Cliente muestra OTTs contratados en sección Entretenimiento que no fueron seleccionados en el Catálogo de Tarifa.</td>
+<td>Inconsistencia en visualización de servicios contratados para clientes en proceso de cambio de tarifa.</td>
+<td>Pendiente de solución</td>
+</tr>
+<tr>
+<td>INC000004089058</td>
+<td>SOP_TMC_EXCALIBUR</td>
+<td><span class="status-badge status-en-progreso">En Análisis</span></td>
+<td>Tras cambio de tarifa Fibra a Lego, cliente mantiene Amazon Prime activo en Excalibur pero API no reporta OTT. AVA muestra Amazon activo pero sin OTT en tarifa. Discrepancia entre sistemas en estado de baja del servicio.</td>
+<td>Inconsistencia de datos de OTT entre Excalibur y API. Cliente con servicio activo no reflejado en tarifa facturada.</td>
+<td>Pendiente de solución</td>
+</tr>
+<tr>
+<td>INC000004088451</td>
+<td>SOP_TMC_FDCS</td>
+<td><span class="status-badge status-cerrada">Resuelto</span></td>
+<td>Cliente Lego con tarifa Fibra 1 línea ilimitada muestra línea adicional con tarifa Línea Smartphone 0 cent SL (precio por minuto) como incluida en el pack cuando no debería estarlo.</td>
+<td>Visualización incorrecta de servicios incluidos en ficha de cliente. Afecta a facturación y percepción del cliente.</td>
+<td>Validación de BSCS confirmó comportamiento correcto. Caché MDG alineada con backend BSCS. No hay error en sistema.</td>
+</tr>
+<tr>
+<td>INC000004088903</td>
+<td>USU_UATS_SAC</td>
+<td><span class="status-badge status-en-progreso">En Análisis</span></td>
+<td>En cambio de tarifa a LEGO con 4 líneas desde FdC, no se envía automáticamente el Descodificador TV Infinity HomeBox.</td>
+<td>Clientes con cambio de tarifa a LEGO Fibra 4 líneas no reciben el equipamiento TV Infinity esperado.</td>
+<td>Pendiente de solución</td>
+</tr>
+<tr>
+<td>INC000004085904</td>
+<td>DES_SOE_MICROSERVICIOS</td>
+<td><span class="status-badge status-en-progreso">En Análisis</span></td>
+<td>Precios incorrectos al contratar contenidos OTT adicionales en MiOrange APP. Mismo precio devuelto para diferentes configuraciones (1 OTT: 108,99€; 2 OTT: 108,99€). Cambio de motor genera precio inconsistente (89€).</td>
+<td>Cliente Lego Fibra 1Línea Ilimitada no puede contratar correctamente contenidos adicionales. Afecta a iOS 9.8.0 (LU:5.19.2) en iPhone 12.</td>
+<td>Pendiente de solución</td>
+</tr>
+<tr>
+<td>INC000004082445</td>
+<td>SOP_TMC_ACME</td>
+<td><span class="status-badge status-cerrada">Resuelto</span></td>
+<td>Presentan 2 casos de inconsistencia de provisión: tienen activo el paquete Todo Deporte, pero no disponen del SVA DAZN Premium, que figura como expirado. Se considera que podrían estar relacionados con procesos de migración de oferta y/o baja diferida. Casos detectados: 924905247 (cambio de oferta puro), 924905108 (caso asociado a baja diferida LEGO). Impacto no crítico.</td>
+<td>Impacto no especificado</td>
+<td>Pendiente de solución</td>
+</tr>
+<tr>
+<td>INC000004082089</td>
+<td>Soporte MDG</td>
+<td><span class="status-badge status-rechazada">Solución Rechazada</span></td>
+<td>Ficha de Cliente mostraba datos ilimitados para tarifa AbundaNte cuando el límite es 60GB.</td>
+<td>Visualización incorrecta de límite de datos en FdC para clientes con Fibra 1 línea.</td>
+<td>Corrección de mapeo BUCKET_EROS a TARIFA en microservicios para tarifas no ilimitadas. Error de configuración de datos resuelta.</td>
+</tr>
+</tbody></table></div>
+<div class="impact-analysis"><h3>Análisis de impactos</h3><ul>
+<li><strong>Bloqueos comerciales que impiden completar ventas o cambios de tarifa</strong> (INC000004090510, INC000004083608, INC000004083636, INC000004088448, INC000004084432): cortan un proceso de venta o retención en producción (alta convergente, portabilidad/retención, compra online, venta cruzada de OTT, promociones). <strong>Grupo prioritario</strong>: es el que más directamente afecta a la captación/retención de clientes activos en el release LEGO.</li>
+<li><strong>Equipamiento o servicio no entregado en postventa</strong> (INC000004087944, INC000004087406, INC000004084953, INC000004088903): el cambio de tarifa se completa pero el cliente no recibe el servicio o equipo correspondiente (DAZN, DECO, descodificador TV Infinity), generando reclamaciones posteriores.</li>
+<li><strong>Inconsistencias de datos/visualización activas</strong> (INC000004085904, INC000004089058, INC000004083623, INC000004082089): no bloquean la operación pero muestran información incorrecta al cliente o al agente. INC000004083623 e INC000004082089 tienen especial relevancia porque su solución propuesta fue <strong>rechazada</strong> y siguen abiertas.</li>
+<li><strong>Resueltos sin acción pendiente</strong> (INC000004084543, INC000004082627, INC000004088451, INC000004082445): causa raíz confirmada o comportamiento validado como correcto, sin necesidad de seguimiento adicional.</li>
+</ul></div>
+</section>
+<section class="project-block">
+<h2 class="section-title">Proyecto: PRJ-11276 Integración de Schaman en Soporte Técnico Residencial Jazztel</h2>
+<div class="table-container"><table><thead><tr>
+<th>Código</th>
+<th>Sistema</th>
+<th>Estado</th>
+<th>Descripción</th>
+<th>Impacto</th>
+<th>Solución</th>
+</tr></thead><tbody>
+<tr>
+<td>INC000004083958</td>
+<td>SOP_BSS_JAZZTEL</td>
+<td><span class="status-badge status-cerrada">Resuelto</span></td>
+<td>Desde Schaman no se puede generar órdenes de trabajo (OTs) de postventa mediante crtproductorderingmanagement. Se desconoce qué llamada API utilizar.</td>
+<td>Bloqueo funcional en proceso de generación de OTs postventa desde Schaman.</td>
+<td>Pendiente de solución</td>
+</tr>
+</tbody></table></div>
+<div class="impact-analysis"><h3>Análisis de impactos</h3><ul>
+<li><strong>Bloqueo de generación de OTs postventa</strong> (INC000004083958): aunque el estado figura como Resuelto, el texto de seguimiento no registra una solución técnica confirmada, solo la petición de validar en entornos previos a Producción. <strong>Requiere atención prioritaria</strong> para confirmar el cierre real antes de darlo por definitivamente resuelto.</li>
+</ul></div>
+</section>
+<section class="project-block">
+<h2 class="section-title">Proyecto: PRJ-11277 Altas masivas CRM B2B</h2>
+<div class="table-container"><table><thead><tr>
+<th>Código</th>
+<th>Sistema</th>
+<th>Estado</th>
+<th>Descripción</th>
+<th>Impacto</th>
+<th>Solución</th>
+</tr></thead><tbody>
+<tr>
+<td>INC000004089044</td>
+<td>DES_CRMB2B</td>
+<td><span class="status-badge status-en-progreso">En Análisis</span></td>
+<td>Carga masiva de dos líneas (28/07) generó descuentos volumen plus duplicados en pedidos y parque. Carrito CAR-20262907-008259 no funciona. Inicialmente los pedidos se crearon correctamente sin duplicación, pero al consultar posteriormente presentan el descuento duplicado.</td>
+<td>Cliente convergente BigPyme (MCPYM0509) con pedidos incorrectos y carrito inoperativo tras carga masiva.</td>
+<td>Pendiente de solución</td>
+</tr>
+</tbody></table></div>
+<div class="impact-analysis"><h3>Análisis de impactos</h3><ul>
+<li><strong>Bloqueo comercial por carga masiva defectuosa</strong> (INC000004089044): pedidos incorrectos y carrito inoperativo para un cliente BigPyme. <strong>Requiere atención prioritaria</strong> por ser un bloqueo activo sin solución identificada.</li>
+</ul></div>
+</section>
+<section class="project-block">
+<h2 class="section-title">Proyecto: PRJ-11305 Comprobante de Venta en CRMB2B-Conecta Pyme y Big Pyme</h2>
+<div class="table-container"><table><thead><tr>
+<th>Código</th>
+<th>Sistema</th>
+<th>Estado</th>
+<th>Descripción</th>
+<th>Impacto</th>
+<th>Solución</th>
+</tr></thead><tbody>
+<tr>
+<td>INC000004082105</td>
+<td>DES_CRMB2B</td>
+<td><span class="status-badge status-pendiente">Pendiente (Estimado: 04/08/2026)</span></td>
+<td>Error al intentar copiar carrito cancelado en CRMB2B. Mensaje: 'Error Copia - Se ha producido un error, por favor vuelva a intentarlo'. Cliente MCPYM0302.</td>
+<td>Usuario no puede duplicar carritos cancelados en CRMB2B.</td>
+<td>Pendiente de solución</td>
+</tr>
+<tr>
+<td>INC000004084650</td>
+<td>DES_CRMB2B</td>
+<td><span class="status-badge status-cerrada">Resuelto</span></td>
+<td>Carrito de postventa de reserva de puestos móviles genera comprobante de venta (CdV) de forma incorrecta y queda pendiente de firma. Esta funcionalidad no debería generar CdV a cliente.</td>
+<td>Cliente B01032598 afectado. Comprobante de venta generado erróneamente en CAR-20262307-008065.</td>
+<td>Pendiente de solución</td>
+</tr>
+</tbody></table></div>
+<div class="impact-analysis"><h3>Análisis de impactos</h3><ul>
+<li><strong>Bloqueo al duplicar carritos cancelados</strong> (INC000004082105): incidencia activa y aislada, sin relación de impacto con la otra del proyecto. Requiere atención por seguir pendiente.</li>
+<li><strong>Generación indebida de comprobante de venta</strong> (INC000004084650): figura Resuelto pero sin solución técnica registrada; conviene confirmar el cierre real. Cada incidencia forma su propio grupo al no compartir un patrón de impacto común.</li>
+</ul></div>
+</section>
+<section class="project-block">
+<h2 class="section-title">Proyecto: PRJ-11414 Identificación sedes clientes en CRMB2B</h2>
+<div class="table-container"><table><thead><tr>
+<th>Código</th>
+<th>Sistema</th>
+<th>Estado</th>
+<th>Descripción</th>
+<th>Impacto</th>
+<th>Solución</th>
+</tr></thead><tbody>
+<tr>
+<td>INC000004088713</td>
+<td>DES_CRMB2B</td>
+<td><span class="status-badge status-cerrada">Resuelto</span></td>
+<td>Buscador de numeraciones no funciona para clientes con más de 8 numeraciones tras PRJ-11414. Filtro por teléfonos asociados falla si el número buscado no está entre los 8 primeros. Búsqueda por navegador solo localiza numeración si se está en la sede correcta.</td>
+<td>Imposibilidad de identificar producto asociado a numeraciones en clientes con múltiples sedes y numeraciones.</td>
+<td>Limitación de datos en campo de búsqueda por diseño. Las numeraciones restantes no están pobladas en el campo filtrable. Comportamiento esperado según formaciones previas.</td>
+</tr>
+<tr>
+<td>INC000004088462</td>
+<td>DES_CRMB2B</td>
+<td><span class="status-badge status-cerrada">Resuelto</span></td>
+<td>Sedes Big móvil muestran teléfono de acceso (móvil o fijo) cuando no deberían mostrar ninguno. Las sedes móviles no tienen teléfono de acceso asociado.</td>
+<td>Datos incorrectos en CRMB2B para sedes Big móvil del cliente PRPYME594 (sede ECWPPYMECNTRX002).</td>
+<td>Se lanzó regularización para corregir todos los casos afectados. Causa raíz: error puntual derivado de regularización anterior.</td>
+</tr>
+</tbody></table></div>
+<div class="impact-analysis"><h3>Análisis de impactos</h3><ul>
+<li><strong>Resueltos con causa confirmada</strong> (INC000004088713, INC000004088462): ambas están cerradas con causa raíz validada (comportamiento por diseño y regularización aplicada respectivamente). No requieren atención prioritaria adicional.</li>
+</ul></div>
+</section>
+<section class="project-block">
+<h2 class="section-title">Proyecto: PRJ-11437 FASE 1 PRJ-10100 Venta en tienda stock tienda (en mano) y multicanalidad CRM4T OL <span class="piloto-badge">Piloto</span></h2>
+<div class="table-container"><table><thead><tr>
+<th>Código</th>
+<th>Sistema</th>
+<th>Estado</th>
+<th>Descripción</th>
+<th>Impacto</th>
+<th>Solución</th>
+</tr></thead><tbody>
+<tr>
+<td>INC000004088642</td>
+<td>DES_SOE_PANGEA</td>
+<td><span class="status-badge status-rechazada">Solución Rechazada</span></td>
+<td>Al realizar renove de dispositivo fijo con seguro móvil (entrega en mano) desde PANGEA, la inyección acaba en tramitación BO en lugar de CRM4TELCO. Reproducido en 3 pruebas consecutivas.</td>
+<td>Bloqueo en flujo de venta multicanalidad CRM4T OL. Imposibilidad de completar renoves con dispositivo y seguro móvil en modalidad entrega en mano desde PDV.</td>
+<td>Causa raíz: expediente de cambio de marca abierto (260788020) desde 2021 en cliente de prueba. Acción: cancelación del expediente de cambio de marca desde CRM. Resultado: resolución validada tras cancelación.</td>
+</tr>
+<tr>
+<td>INC000004079500</td>
+<td>DES_SOE_PANGEA</td>
+<td><span class="status-badge status-rechazada">Solución Rechazada</span></td>
+<td>Error en inyección de órdenes de renove (Pago Único) móvil. CRM rechaza creación de servicio pedido con excepción: atributo [1289-Tipo stock] no corresponde al Servicio:[id=893]. Componente 893 (Venta Terminal Jazztel) no tiene configurado este atributo según especificación técnica.</td>
+<td>Bloqueo en procesamiento de renoves con pago único para clientes afectados (OJAZ00044, OJAZ00026, OJAZ00022). Órdenes no se inyectan en CRM4T. Múltiples intentos fallidos desde 19/07/2026, escalado a CRM4T y DES_SOE_PANGEA sin resolución.</td>
+<td>Pendiente de solución</td>
+</tr>
+<tr>
+<td>INC000004088371</td>
+<td>DES2_SAP_LO</td>
+<td><span class="status-badge status-en-progreso">En Análisis</span></td>
+<td>Al seleccionar entrega en mano en tipología de entrega y ejecutar reserva, la reserva se procesa en SAP pero el lote permanece en estado disponible en lugar de cambiar a RESERVA_PAN.</td>
+<td>Stock PDV (Pangea NMA) no se reserva correctamente en venta en tienda, afectando multicanalidad CRM4T OL y proceso de renovación de dispositivo fijo.</td>
+<td>Pendiente de solución</td>
+</tr>
+</tbody></table></div>
+<div class="impact-analysis"><h3>Análisis de impactos</h3><ul>
+<li><strong>Bloqueos activos en el flujo de venta/renove en tienda con entrega en mano</strong> (INC000004088642, INC000004079500, INC000004088371): las tres impiden concluir operaciones de venta o renove en el canal de tienda física. <strong>Requiere atención prioritaria conjunta</strong>, especialmente INC000004079500 (múltiples clientes afectados, reintentos fallidos, sin solución) y INC000004088642 (solución ya rechazada pese a causa raíz identificada) — al tratarse de un proyecto piloto, cualquier bloqueo de venta compromete la validación del piloto.</li>
+</ul></div>
+</section>
+<section class="project-block">
+<h2 class="section-title">Proyecto: PRJ-11588 Plan comercialización Despliegue XGSPON Orange_indirecto Fase 2 - NEBA</h2>
+<div class="table-container"><table><thead><tr>
+<th>Código</th>
+<th>Sistema</th>
+<th>Estado</th>
+<th>Descripción</th>
+<th>Impacto</th>
+<th>Solución</th>
+</tr></thead><tbody>
+<tr>
+<td>INC000004081929</td>
+<td>DES_ESHOP_FRONTEND_OSP</td>
+<td><span class="status-badge status-en-progreso">En Análisis</span></td>
+<td>Orden de cambio de oferta de GPON a XGSPON llega sin equipo ONTGRX7 (XGSPON) y con equipo ONTGRA (GPON) para mantener.</td>
+<td>Incapacidad de completar cambio de tecnología. Cliente sin equipamiento correcto para XGSPON. Falta equipamiento ONTGRX7 en orden de cambio.</td>
+<td>Pendiente de solución</td>
+</tr>
+<tr>
+<td>INC000004083683</td>
+<td>SOP_KRATOS</td>
+<td><span class="status-badge status-en-progreso">En Análisis</span></td>
+<td>Orden de cambio de oferta a XGSPON en huella VODAFONE envía equipo ONTGRX7 en lugar de ONTGR6. ONTGRX7 solo debe enviarse para NEBA/VULA.</td>
+<td>Cliente recibirá equipo incorrecto en cambio de oferta FTTH.</td>
+<td>Pendiente de solución</td>
+</tr>
+<tr>
+<td>INC000004084349</td>
+<td>SOP_KRATOS</td>
+<td><span class="status-badge status-en-progreso">En Análisis</span></td>
+<td>Cambios de GPON a XGSPON se lanzan por flujo logístico en lugar de flujo instalador. No llega PA de instalador (PAIF04 = None).</td>
+<td>2 casos afectados. Clientes con cambios de tecnología sin instalación correcta. Discrepancia entre comportamiento esperado (instalador) y actual (logística) sin validación de causa raíz en TEIDE.</td>
+<td>Pendiente de solución</td>
+</tr>
+</tbody></table></div>
+<div class="impact-analysis"><h3>Análisis de impactos</h3><ul>
+<li><strong>Errores de equipamiento y flujo en el despliegue XGSPON</strong> (INC000004081929, INC000004083683, INC000004084349): las tres son errores de asignación de equipo o de flujo logístico en cambios de tecnología GPON→XGSPON. <strong>Se recomienda atender primero</strong> INC000004081929 e INC000004083683 (severidad 3-Medio, afectan directamente el equipamiento entregado al cliente) antes que INC000004084349 (4-Baja, problema de proceso).</li>
+</ul></div>
+</section>
+<section class="project-block">
+<h2 class="section-title">Proyecto: PRJ-11671 Apertura y consulta de incidencias para ATAC en Teide</h2>
+<div class="table-container"><table><thead><tr>
+<th>Código</th>
+<th>Sistema</th>
+<th>Estado</th>
+<th>Descripción</th>
+<th>Impacto</th>
+<th>Solución</th>
+</tr></thead><tbody>
+<tr>
+<td>INC000004080967</td>
+<td>Atlas_Soporte_CLOUD</td>
+<td><span class="status-badge status-en-progreso">En Análisis</span></td>
+<td>Tras volcado de incidencias a Siebel 8 IP24, archivos adjuntos de distribuidores se generan como URLs con acceso denegado. URLs de GED (S3 privado VPC) caducan en 1 hora y requieren acceso a endpoint privado AWS.</td>
+<td>Operativa ATAC TLP Jerez bloqueada. Distribuidores no pueden descargar documentos adjuntos en incidencias. Impacto negocio confirmado.</td>
+<td>Pendiente de solución</td>
+</tr>
+<tr>
+<td>INC000004081412</td>
+<td>CEP CAU AGI</td>
+<td><span class="status-badge status-cerrada">Resuelto</span></td>
+<td>El endpoint bffcase/getAtacIncidents no retorna el identificador largo (2-XXXXXXXXXXXXX) de incidencias en la vista de requestManagement de Pangea, afectando la consulta de peticiones en TLP Jerez.</td>
+<td>Operativa de apertura de incidencias y solicitudes en ATAC. Información esencial no disponible para gestiones. Afecta múltiples usuarios y clientes en sede Jerez.</td>
+<td>Escalado a desarrollo (DES_SOE_PANGEA). Se determina que requiere cambio de alcance. Se abre tarea FRORE-1436. Incidencia cerrada por cambio de scope, no por resolución técnica inmediata.</td>
+</tr>
+<tr>
+<td>INC000004081319</td>
+<td>SOP_SMC_TEIDE</td>
+<td><span class="status-badge status-cerrada">Resuelto</span></td>
+<td>En Siebel 8, las notas registradas en incidencias no viajan a Pangea. Solo aparece pestaña 'notas' pero falta 'notas de distribuidor', impidiendo que distribuidores visualicen la información.</td>
+<td>Pérdida de visibilidad para distribuidores en incidencias. Afecta operativa ATAC Jerez y canal completo. Usuarios: 18250063, 00000011, 49040013, 49040014, 56000338.</td>
+<td>GAP identificado en proyecto release Ágora no contemplado en diseño. Se pacta con JP incluirlo en futuro.</td>
+</tr>
+</tbody></table></div>
+<div class="impact-analysis"><h3>Análisis de impactos</h3><ul>
+<li><strong>Pérdida de acceso/visibilidad de información para distribuidores ATAC</strong> (INC000004080967, INC000004081412, INC000004081319): las tres afectan la operativa de soporte en sede Jerez. <strong>INC000004080967 requiere atención prioritaria</strong> por ser la única aún activa y bloquear la descarga de adjuntos; las otras dos ya se cerraron por decisión de alcance/futuro, sin acción inmediata.</li>
+</ul></div>
+</section>
+<section class="project-block">
+<h2 class="section-title">Proyecto: PRJ-11800 Fase 1: CPs, descuentos, legales y target de captación + vap</h2>
+<div class="table-container"><table><thead><tr>
+<th>Código</th>
+<th>Sistema</th>
+<th>Estado</th>
+<th>Descripción</th>
+<th>Impacto</th>
+<th>Solución</th>
+</tr></thead><tbody>
+<tr>
+<td>INC000004089419</td>
+<td>Soporte_CRM_ARPA_LOCAL</td>
+<td><span class="status-badge status-cerrada">Resuelto</span></td>
+<td>CP CPTE636 asociado incorrectamente en proceso de activación. CP pasado a producción en PAP junio sin vinculación a OT, aplicándose erróneamente en altas de clientes.</td>
+<td>Altas de clientes con CPs no autorizados (CPTE636|CPT136) en tarifa Optima Plus Empresas.</td>
+<td>Se solicitó al peticionario documentación completa (paso a paso, datos de error y pasos para reproducir) para análisis detallado.</td>
+</tr>
+</tbody></table></div>
+<div class="impact-analysis"><h3>Análisis de impactos</h3><ul>
+<li><strong>CP no autorizado aplicado en altas</strong> (INC000004089419): aunque figura Resuelto, la "solución" registrada es en realidad una solicitud de información adicional, no una corrección técnica. <strong>Requiere seguimiento prioritario</strong> para confirmar si el análisis se completó.</li>
+</ul></div>
+</section>
+<section class="project-block">
+<h2 class="section-title">Proyecto: PRJ-11972 Turing: Consulta comprobante de venta y tipo de firma</h2>
+<div class="table-container"><table><thead><tr>
+<th>Código</th>
+<th>Sistema</th>
+<th>Estado</th>
+<th>Descripción</th>
+<th>Impacto</th>
+<th>Solución</th>
+</tr></thead><tbody>
+<tr>
+<td>INC000004090702</td>
+<td>SOP_SMC_TEIDE</td>
+<td><span class="status-badge status-en-progreso">En Análisis</span></td>
+<td>En TURING, al realizar CdT desde S8, el CdV generado muestra líneas adicionales con coste 0.</td>
+<td>Datos incorrectos en documentos de facturación.</td>
+<td>Pendiente de solución</td>
+</tr>
+<tr>
+<td>INC000004090511</td>
+<td>FRONTOFFICE</td>
+<td><span class="status-badge status-en-progreso">En Análisis</span></td>
+<td>Al realizar Cambio de Tarifa desde S8 en TURING, se generan dos Comprobantes de Venta para un mismo acto comercial: uno con tarifa a coste 0 y otro con LA y precios correctos. Solo debería generarse uno.</td>
+<td>Duplicación de comprobantes en facturación, inconsistencia de datos comerciales.</td>
+<td>Pendiente de solución</td>
+</tr>
+<tr>
+<td>INC000004087846</td>
+<td>SOP_TURING_OSP</td>
+<td><span class="status-badge status-cerrada">Resuelto</span></td>
+<td>CDV automático registra precio 189,99€ en comprobante Siebel 8 cuando tarifa Fútbol y Cine con 4 líneas Elige Todo + descuento Pack 50% 12m + CP debe ser 180€.</td>
+<td>Discrepancia de precio en comprobantes generados para cliente con tarifa Fútbol y Cine.</td>
+<td>Identificada causa raíz: DPU 8 Descuentos contiene dos precios para tarifa 4096. Solución requiere modificar precio en DPU o eliminar especificación tecnología FTTH_VULA de fibra hasta 2GBps (pendiente de aplicar).</td>
+</tr>
+</tbody></table></div>
+<div class="impact-analysis"><h3>Análisis de impactos</h3><ul>
+<li><strong>Errores en la generación automática del Comprobante de Venta en TURING</strong> (INC000004090702, INC000004090511, INC000004087846): las tres afectan directamente a documentos de facturación/venta generados automáticamente. <strong>INC000004090702 e INC000004090511 requieren atención prioritaria</strong> por seguir activas sin causa raíz identificada, a diferencia de INC000004087846 que ya tiene causa raíz y solución definida pendiente de aplicar.</li>
+</ul></div>
+</section>
+<section class="project-block">
+<h2 class="section-title">Proyecto: PRJ-12129 Fase 1 - Promotarget Pyme KRTO</h2>
+<div class="table-container"><table><thead><tr>
+<th>Código</th>
+<th>Sistema</th>
+<th>Estado</th>
+<th>Descripción</th>
+<th>Impacto</th>
+<th>Solución</th>
+</tr></thead><tbody>
+<tr>
+<td>INC000004080802</td>
+<td>DES_CRMB2B</td>
+<td><span class="status-badge status-pendiente">Pendiente (Estimado: 06/08/2026)</span></td>
+<td>En flujo de captación desde CRMB2B (Conecta Pyme), al seleccionar avanzar en paso de información contractual se abre diálogo forzando selección de producto adicional. Cierre del diálogo reabre automáticamente; pulsar crear redirige a pestaña no funcional. Reproducible en múltiples intentos.</td>
+<td>Bloqueo en proceso de contratación para cliente MCPYM0504. Impide completar captación de nuevos clientes Pyme.</td>
+<td>Pendiente de solución</td>
+</tr>
+<tr>
+<td>INC000004082196</td>
+<td>DES_CRMB2B</td>
+<td><span class="status-badge status-pendiente">Pendiente (Estimado: 06/08/2026)</span></td>
+<td>Alta Conecta Pyme no crea árbol de productos necesarios. Bloqueo en fase información contractual al seleccionar producto adicional. Descuento convergente Pyme Total no se aplica sobre oferta Conecta.</td>
+<td>Impacto no especificado</td>
+<td>Incidencia duplicada de INC000004080802. Misma causa raíz: error en creación de intermedios en proceso de alta. Diferencia: en este caso el error ocurre en fase distinta permitiendo avance parcial. Revisión centralizada en incidencia matriz.</td>
+</tr>
+</tbody></table></div>
+<div class="impact-analysis"><h3>Análisis de impactos</h3><ul>
+<li><strong>Bloqueo del flujo de contratación Conecta Pyme</strong> (INC000004080802, INC000004082196): ambas bloquean la fase de información contractual con el mismo patrón de error confirmado (INC000004082196 está documentada como duplicado de INC000004080802). <strong>Requiere atención prioritaria</strong>: ambas activas y bloquean la captación de nuevos clientes Pyme.</li>
+</ul></div>
+</section>
+<section class="project-block">
+<h2 class="section-title">Proyecto: REGRESION FICHA</h2>
+<div class="table-container"><table><thead><tr>
+<th>Código</th>
+<th>Sistema</th>
+<th>Estado</th>
+<th>Descripción</th>
+<th>Impacto</th>
+<th>Solución</th>
+</tr></thead><tbody>
+<tr>
+<td>INC000004079494</td>
+<td>SOP_SMC_OCS</td>
+<td><span class="status-badge status-cerrada">Resuelto</span></td>
+<td>Migración prepago a pospago convergente falla al avanzar orden por HERMES. Error en inyección de orden y posterior fallo en OCS con código 20000003 (Subscriber information verification error).</td>
+<td>Bloqueo en flujo de migración de clientes prepago a pospago convergente. Afecta a pruebas de regresión TMMC-2620.</td>
+<td>Causa raíz: Orquestación BOREAL envía orden de tarifa de datos antes que orden de migración a Pospago. Solución: relanzar tarifa de datos tras migración completada. Cliente MSISDN 685058753 ahora es pospago correctamente.</td>
+</tr>
+</tbody></table></div>
+<div class="impact-analysis"><h3>Análisis de impactos</h3><ul>
+<li><strong>Migración prepago→pospago resuelta</strong> (INC000004079494): causa raíz confirmada y solución aplicada. No requiere atención prioritaria.</li>
+</ul></div>
+</section>
+<section class="project-block">
+<h2 class="section-title">Sin proyecto asignado</h2>
+<div class="table-container"><table><thead><tr>
+<th>Código</th>
+<th>Sistema</th>
+<th>Estado</th>
+<th>Descripción</th>
+<th>Impacto</th>
+<th>Solución</th>
+</tr></thead><tbody>
+<tr>
+<td>INC000004082137</td>
+<td>PROC_EDC</td>
+<td><span class="status-badge status-cerrada">Resuelto</span></td>
+<td>Fallo en aplicación de descuentos desde CRMB2B: no aparecen descuentos de Captación, en familia Fide/Rete no se asigna CP automático al seleccionar descuento con permanencia, y lista vacía al intentar selección manual. Posible regresión de R7.</td>
+<td>Usuarios de CRMB2B no pueden aplicar descuentos correctamente, afectando procesos de venta y captación.</td>
+<td>Pendiente de solución</td>
+</tr>
+<tr>
+<td>INC000004083708</td>
+<td>CEP CAU AGI</td>
+<td><span class="status-badge status-cerrada">Resuelto</span></td>
+<td>Botón confirmar no se habilita tras primera confirmación al gestionar altas de líneas móviles en formato E-SIM en Ficha de Cliente.</td>
+<td>Bloquea altas nuevas en modalidad E-SIM. Afecta a +100 usuarios de Televenta en Bosch Vigo.</td>
+<td>Pendiente de solución</td>
+</tr>
+<tr>
+<td>INC000004083955</td>
+<td>DES_SOE_PANGEA</td>
+<td><span class="status-badge status-en-progreso">En Análisis</span></td>
+<td>Pedidos con tipología 71 sin SFID envían channel 002 en lugar de channel 005. Error en traducción de dirección: MyAddress retorna handshake_failure al procesar código de dirección, causando fallo en creación de OT con error -104.</td>
+<td>Fallos en creación de órdenes de trabajo para pedidos de entrega en mano (tipología 71) sin SFID. Afecta a pedidos de nueva línea SIM con dirección de entrega.</td>
+<td>Pendiente de solución</td>
+</tr>
+<tr>
+<td>INC000004082490</td>
+<td>SOP_SMC_BOREAL</td>
+<td><span class="status-badge status-pendiente">Pendiente (Estimado: sin fecha)</span></td>
+<td>Cambio de titularidad Fibra 1 línea hasta 1 Gb con Netflix falla en EXCALIBUR. TEIDE envía productos en acción Modify pero EXCALIBUR espera acciones de baja/alta para activar en titular destino. Error REST ORQERR-00000047.</td>
+<td>Mitigado en producción. LAMBDA realiza regularizaciones diarias en EXCALIBUR compensando el gap. Afecta a cambios de titular con productos OTT.</td>
+<td>Gap identificado en diseño: problema preexistente en BAMBÚ. Sin impacto actual gracias a regularizaciones automáticas de LAMBDA en EXCALIBUR.</td>
+</tr>
+<tr>
+<td>INC000004082965</td>
+<td>APL_MOV_SOE</td>
+<td><span class="status-badge status-cerrada">Resuelto</span></td>
+<td>Detección de casos de envío de decodificador al realizar renovaciones VAP desde ALTAMIRA. Se identificaron 27 órdenes creadas el 21/07/2026 donde aparentemente se añadía un DECO en renovaciones que no lo requerían.</td>
+<td>Potencial envío innecesario de equipamiento en órdenes de renove VAP. Volumetría: casos desde 01/07, pico a partir del 22/07/2026.</td>
+<td>Análisis confirmó que el comportamiento es correcto: el tipo/subtipo renove pospago y la inclusión de equipamiento están contemplados en la especificación ms-shoppingcart.</td>
+</tr>
+<tr>
+<td>INC000004087359</td>
+<td>DES2_SAP_LO</td>
+<td><span class="status-badge status-cerrada">Resuelto</span></td>
+<td>Error en ampliación de material OMV09, AME2-GC01. Volumen elevado: 224 pedidos afectados.</td>
+<td>224 KOs en pedidos. Afecta proceso de ampliación de materiales en SAP Logística.</td>
+<td>Pendiente de solución</td>
+</tr>
+<tr>
+<td>INC000004084578</td>
+<td>CEP CAU AGI</td>
+<td><span class="status-badge status-cerrada">Resuelto</span></td>
+<td>FDC bloquea cualificación y acciones en todas las líneas de cliente cuando existe una orden en vuelo en una sola línea. El bloqueo por campaña se aplica globalmente en lugar de solo en la línea afectada.</td>
+<td>Alto. 100% de errores en operativa de gestión de clientes. Afecta a todos los usuarios y clientes de KONECTA SEVILLA BOLLULLOS. Sin método alternativo disponible.</td>
+<td>Pendiente de solución</td>
+</tr>
+<tr>
+<td>INC000004087017</td>
+<td>DES_CRM4T_GARANTIA</td>
+<td><span class="status-badge status-pendiente">Pendiente (Estimado: 06/08/2026)</span></td>
+<td>Error en creación de pedidos E+R (envíos + recogidas) para IMEIs no reservados. En órdenes de Modificación-Sustitución sin recogida y Modificación-Defecto en transporte, se informa número de serie causando bloqueo en avance de estados posteriores en ICP.</td>
+<td>Incidencia masiva en creación de pedidos Jazztel. Bloqueo en procesamiento de órdenes post-release.</td>
+<td>Pendiente de solución</td>
+</tr>
+<tr>
+<td>INC000004087372</td>
+<td>DES_SOE_FICHA</td>
+<td><span class="status-badge status-en-progreso">En Análisis</span></td>
+<td>Comportamiento incorrecto en Teide (Siebel 8) aplicando penalizaciones indebidas en cambios de tarifa. Sistema penaliza upgrades a tarifas superiores cuando no debería, incrementando facturación del cliente sin justificación. Afecta a múltiples clientes en OEST Oviedo.</td>
+<td>Alto. Penalizaciones indebidas a clientes, aperturas innecesarias a BO, incremento no justificado de ingresos. Afecta a todos los usuarios de la sede.</td>
+<td>Incidencia resuelta en INC000004084543. TEIDE, KRATOS y EREBOR completaron correcciones el 23-24/07/2026, con extracción y solución individual a cada cliente afectado.</td>
+</tr>
+<tr>
+<td>INC000004082837</td>
+<td>DES_SOE_FICHA</td>
+<td><span class="status-badge status-cerrada">Resuelto</span></td>
+<td>Error de información en mosaico de tarifa de solo fijo al dar alta de LA adicional.</td>
+<td>Visualización incorrecta de datos en FICHA DE CLIENTE.</td>
+<td>Pendiente de solución</td>
+</tr>
+<tr>
+<td>INC000004080070</td>
+<td>FIJO EAS-STSIC_BILL. ARBOR</td>
+<td><span class="status-badge status-cerrada">Resuelto</span></td>
+<td>Múltiples errores en cascada: aplicación xplfiberprovision con &gt;50% errores 5xx, respuesta KENAN 80011 con etiqueta no declarada en esquema IC, timeout JDBC en consulta T_ESTADOS_ALTALINEAM2M, validación XML falla en MDW al procesar respuesta de KENAN.</td>
+<td>Fallos 100% en procesamiento de facturas desde cambio en KENAN. Bloqueo de flujos de provisión M2M. Errores de validación en integraciones MDW-KENAN. Consultas a BD lentas afectando SLA.</td>
+<td>Pendiente de solución</td>
+</tr>
+</tbody></table></div>
+<div class="impact-analysis"><h3>Análisis de impactos</h3><ul>
+<li><strong>Bloqueos funcionales activos sin solución confirmada</strong> (INC000004083955, INC000004087017): ambas impiden crear pedidos/órdenes de trabajo por errores de dirección o gestión de IMEI, y siguen sin solución pese a estar en curso. <strong>Requiere la atención más urgente del grupo.</strong></li>
+<li><strong>Marcadas como Resuelto sin una solución técnica verificable en el registro</strong> (INC000004082137, INC000004083708, INC000004087359, INC000004084578, INC000004082837, INC000004080070): el estado dice "Resuelto" pero no hay un bloque de solución confirmado. Dentro de este grupo destacan INC000004084578 (bloqueo global, 100% de errores, afecta a toda una sede) e INC000004080070 (fallos 100% en facturación) por su alto impacto potencial — <strong>se recomienda verificar el cierre real</strong> antes de asumir que no requieren seguimiento.</li>
+<li><strong>Causa raíz identificada con mitigación o solución ya aplicada</strong> (INC000004082490, INC000004082965, INC000004087372): INC000004082490 sigue Pendiente pero ya cuenta con mitigación automática (regularizaciones LAMBDA); INC000004082965 fue confirmado como comportamiento correcto; INC000004087372 indica que la corrección ya se aplicó vía otra incidencia (INC000004084543) pese a figurar "En Análisis".</li>
+</ul></div>
+</section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <p>
+            Release Dashboard Application &middot;
+            <a href="/dashboards/portal/">Volver al portal</a>
+        </p>
+    </footer>
+
+    <script src="/dashboards/assets/topbar.js" defer></script>
+</body>
+</html>
