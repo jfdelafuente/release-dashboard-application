@@ -109,6 +109,7 @@
 <h2 class="section-title">Proyecto: PRJ-10401 CRMB2B: Funcionalidades Finanzas SME <span class="piloto-badge">Piloto</span></h2>
 <div class="table-container"><table><thead><tr>
 <th>Código</th>
+<th>Fecha Apertura</th>
 <th>Sistema</th>
 <th>Estado</th>
 <th>Descripción</th>
@@ -117,6 +118,7 @@
 </tr></thead><tbody>
 <tr>
 <td>INC000004088984</td>
+<td>29/07/2026</td>
 <td>DES_CRMB2B</td>
 <td><span class="status-badge status-en-progreso">En Análisis</span></td>
 <td>Al paralizar cuenta en CRM B2B, falla la paralización de recibos de fijo: clientes solo-fijo reciben error al confirmar; clientes convergentes (fijo+móvil) no muestran error pero solo paralizan recibo móvil, dejando fijo activo.</td>
@@ -125,24 +127,27 @@
 </tr>
 <tr>
 <td>INC000004086666</td>
+<td>27/07/2026</td>
 <td>DES_CRMB2B</td>
-<td><span class="status-badge status-rechazada">Solución Rechazada</span></td>
+<td><span class="status-badge status-rechazada">Solución Rechazada (Estimado: 30/07/2026)</span></td>
 <td>Cliente sin deuda móvil presenta flag de deuda móvil a nivel cliente en SI, mientras que flag a nivel cuenta de facturación está en NO. Inconsistencia en estado de deuda.</td>
 <td>Datos de deuda móvil inconsistentes en CRM B2B para cliente B10654051.</td>
 <td>Pendiente de solución</td>
 </tr>
 <tr>
 <td>INC000004085464</td>
+<td>24/07/2026</td>
 <td>DES_CRMB2B</td>
-<td><span class="status-badge status-rechazada">Solución Rechazada</span></td>
+<td><span class="status-badge status-rechazada">Solución Rechazada (Estimado: 30/07/2026)</span></td>
 <td>Error al generar iframe durante cobro parcial de recibo con tarjeta en CRM B2B. El sistema permite continuar y descuenta el importe, pero no genera la interacción asociada.</td>
 <td>Falta de trazabilidad de transacciones parciales por tarjeta. Recibo 0O10000000000000000070726, pasaporte OFAC15019.</td>
 <td>Pendiente de solución</td>
 </tr>
 <tr>
 <td>INC000004084489</td>
+<td>23/07/2026</td>
 <td>DES_CRMB2B</td>
-<td><span class="status-badge status-cerrada">Resuelto</span></td>
+<td><span class="status-badge status-cerrada">Resuelto (Estimado: 28/07/2026)</span></td>
 <td>Flag de impago (fijo y móvil) no visible en cabecera del cliente para usuarios de CRMB2B sin rol de cobros. Afecta a clientes PYME Optima y convergentes.</td>
 <td>Usuarios sin rol de cobros no visualizan indicadores de impago en consultas de recibos pendientes.</td>
 <td>Comportamiento por diseño: visibilidad de flag restringida a usuarios con rol específico según requisitos del PRJ-10401. No se requiere corrección.</td>
@@ -158,6 +163,7 @@
 <h2 class="section-title">Proyecto: PRJ-11149 B2B - Mejora proceso provisión Superbono</h2>
 <div class="table-container"><table><thead><tr>
 <th>Código</th>
+<th>Fecha Apertura</th>
 <th>Sistema</th>
 <th>Estado</th>
 <th>Descripción</th>
@@ -166,8 +172,9 @@
 </tr></thead><tbody>
 <tr>
 <td>INC000004090501</td>
+<td>30/07/2026</td>
 <td>SOP_SMC_OCS</td>
-<td><span class="status-badge status-cerrada">Resuelto</span></td>
+<td><span class="status-badge status-cerrada">Resuelto (Estimado: 30/07/2026)</span></td>
 <td>Validar desactivación automática del bono de autoprovision en OCS tras 72 horas desde alta de línea en 4 MSISDN (653661605, 695035121, 653670018, 645370898) durante pruebas PRJ-11149.</td>
 <td>Bloqueo de pruebas de velocidad del proyecto Mejora Superbono.</td>
 <td>Revisión de MSISDN confirmó que las FU (Funcionalidades de Usuario) asociadas al bono caducaron correctamente a las 72 horas. El bono se da de baja al recibir la provisión de tarifa Superbono, no a las 72 horas. Validación completada exitosamente.</td>
@@ -182,6 +189,7 @@
 <p class="project-description">LEGO transforma por completo la forma en que los clientes de Orange contratan y gestionan sus tarifas convergentes. Se pasa a un modelo flexible y modular donde el cliente "monta" su tarifa como si fuera un LEGO. Los productos y servicios ya no vienen empaquetados.</p>
 <div class="table-container"><table><thead><tr>
 <th>Código</th>
+<th>Fecha Apertura</th>
 <th>Sistema</th>
 <th>Estado</th>
 <th>Descripción</th>
@@ -190,6 +198,7 @@
 </tr></thead><tbody>
 <tr>
 <td>INC000004090510</td>
+<td>30/07/2026</td>
 <td>APL_MOV_SOE</td>
 <td><span class="status-badge status-en-progreso">En Análisis</span></td>
 <td>Alta convergente Fibra + 2 líneas ilimitadas + 2 adicionales. Tras pasar VPT de Hermes, líneas adicionales caen en error en Teide: campo LogisticaProvincia ausente en cabecera de orden.</td>
@@ -198,6 +207,7 @@
 </tr>
 <tr>
 <td>INC000004083636</td>
+<td>23/07/2026</td>
 <td>DES_ESHOP_FRONTEND_OSP</td>
 <td><span class="status-badge status-pendiente">Pendiente (Estimado: sin fecha)</span></td>
 <td>Al realizar cambio de tarifa convergente y seleccionar LA nueva con SIM en configurador, el flujo salta la pantalla de selección de dirección de entrega y pasa directamente a finalizar pedido.</td>
@@ -206,14 +216,16 @@
 </tr>
 <tr>
 <td>INC000004084543</td>
+<td>23/07/2026</td>
 <td>DES_ESHOP_FRONTEND_OSP</td>
-<td><span class="status-badge status-cerrada">Resuelto</span></td>
+<td><span class="status-badge status-cerrada">Resuelto (Estimado: 24/07/2026)</span></td>
 <td>Cambios de tarifa a LEGO desde cualquier sistema aplicaban penalización cuando no debería haber penalización hasta 27/07 con subida de SUB.</td>
 <td>Clientes LEGO recibían penalizaciones indebidas en cambios de tarifa.</td>
 <td>Causa raíz: acción innecesaria en Jira. TEIDE y KRATOS realizaron cambios en sus sistemas. Se cargó nueva tabla de pesos facilitada por TEIDE en Erebor para visualización correcta.</td>
 </tr>
 <tr>
 <td>INC000004088448</td>
+<td>28/07/2026</td>
 <td>DES_SOE_FICHA</td>
 <td><span class="status-badge status-en-progreso">En Análisis</span></td>
 <td>Cliente con tarifa LEGO+TV no puede contratar OTTs adicionales desde pestaña entretenimiento. Sistema muestra mensaje indicando que debe realizar cambio de tarifa, bloqueando la contratación en postventa.</td>
@@ -222,6 +234,7 @@
 </tr>
 <tr>
 <td>INC000004084432</td>
+<td>23/07/2026</td>
 <td>DES_SOE_FICHA</td>
 <td><span class="status-badge status-pendiente">Pendiente (Estimado: 27/09/2026)</span></td>
 <td>Al realizar crosssell MO a convergente con Netflix, el sistema aplica incorrectamente las promociones PROMOTARGET duplicando la promo de entretenimiento (4 promos en lugar de 2), causando error en la orden.</td>
@@ -230,6 +243,7 @@
 </tr>
 <tr>
 <td>INC000004087944</td>
+<td>28/07/2026</td>
 <td>DES_TEIDE</td>
 <td><span class="status-badge status-pendiente">Pendiente (Estimado: 05/08/2026)</span></td>
 <td>Cliente no recibe SVA DAZN en móvil tras cambio de tarifa a LEGO contratando servicio MOTOR desde EREBOR. Imposibilidad de usar APP DAZN.</td>
@@ -238,6 +252,7 @@
 </tr>
 <tr>
 <td>INC000004087406</td>
+<td>27/07/2026</td>
 <td>SOP_KRATOS</td>
 <td><span class="status-badge status-en-progreso">En Análisis</span></td>
 <td>En Cambios de Tarifa Convergente a tarifas LEGO sin fútbol se está añadiendo DECO incorrectamente. Afecta a 9 órdenes identificadas con estados cerradas en Siebel 8.x y PRM.</td>
@@ -246,6 +261,7 @@
 </tr>
 <tr>
 <td>INC000004082627</td>
+<td>22/07/2026</td>
 <td>SOP_SMC_BSCS_ONLINE</td>
 <td><span class="status-badge status-pendiente">Pendiente (Estimado: sin fecha)</span></td>
 <td>Al cambiar tarifa de Fibra 1 línea a Fibra 2 líneas Ilimitadas, las líneas incluidas en el pack mantienen incorrectamente el Bono Upsize 60GB en BSCS cuando deberían perderlo tras el reposicionamiento al bono compartido.</td>
@@ -254,6 +270,7 @@
 </tr>
 <tr>
 <td>INC000004084953</td>
+<td>24/07/2026</td>
 <td>SOP_SMC_TEIDE</td>
 <td><span class="status-badge status-en-progreso">En Análisis</span></td>
 <td>En cambios de tarifa convergente hacia Fibra 4 líneas Ilimitadas, el sistema no asigna automáticamente el Descodificador TV Infinity HomeBox, mostrándolo como opcional en lugar de obligatorio.</td>
@@ -262,38 +279,43 @@
 </tr>
 <tr>
 <td>INC000004088903</td>
+<td>28/07/2026</td>
 <td>SOP_SMC_TEIDE</td>
-<td><span class="status-badge status-cerrada">Resuelto</span></td>
+<td><span class="status-badge status-cerrada">Resuelto (Estimado: 28/07/2026)</span></td>
 <td>En cambio de tarifa a LEGO con 4 líneas desde FdC, no se envía automáticamente el Descodificador TV Infinity HomeBox.</td>
 <td>Clientes afectados en provisión de equipamiento TV en cambios de tarifa.</td>
 <td>La orden indicada no es inyectada. Incidencia duplicada de INC000004084953 en órdenes de TEIDE.</td>
 </tr>
 <tr>
 <td>INC000004083623</td>
+<td>22/07/2026</td>
 <td>SOP_SMC_TEIDE</td>
-<td><span class="status-badge status-rechazada">Solución Rechazada</span></td>
+<td><span class="status-badge status-rechazada">Solución Rechazada (Estimado: 23/07/2026)</span></td>
 <td>En cambio de tarifa SUDOCU (SUDOKU TOTAL a LEGO), la Ficha de Cliente muestra OTTs contratados en sección Entretenimiento que no fueron seleccionados en el Catálogo de Tarifa.</td>
 <td>Inconsistencia en visualización de servicios contratados para clientes en proceso de cambio de tarifa.</td>
 <td>Pendiente de solución</td>
 </tr>
 <tr>
 <td>INC000004088451</td>
+<td>28/07/2026</td>
 <td>SOP_TMC_BSCS_ONLINE</td>
-<td><span class="status-badge status-rechazada">Solución Rechazada</span></td>
+<td><span class="status-badge status-rechazada">Solución Rechazada (Estimado: 29/07/2026)</span></td>
 <td>Cliente Lego con tarifa Fibra 1 línea ilimitada muestra línea adicional con tarifa Línea Smartphone 0 cent SL (precio por minuto) como incluida en el pack cuando no debería estarlo.</td>
 <td>Visualización incorrecta de servicios incluidos en ficha de cliente. Afecta a facturación y percepción del cliente.</td>
 <td>Validación de BSCS confirmó comportamiento correcto. Caché MDG alineada con backend BSCS. No hay error en sistema.</td>
 </tr>
 <tr>
 <td>INC000004089058</td>
+<td>29/07/2026</td>
 <td>SOP_TMC_EXCALIBUR</td>
-<td><span class="status-badge status-cerrada">Resuelto</span></td>
+<td><span class="status-badge status-cerrada">Resuelto (Estimado: 31/07/2026)</span></td>
 <td>Cliente con tarifa Fibra cambió a Lego. Amazon Prime debería haberse dado de baja pero permanece activo. AVA confirma Amazon activo pero reporta sin OTT en tarifa. API no devuelve OTT pero Excalibur sí lo muestra.</td>
 <td>Inconsistencia en datos de billing entre sistemas. Cliente facturado incorrectamente sin entretenimiento/deporte en tarifa base.</td>
 <td>Incidencia en PADDOCK (INC000004087521) durante ventana de procesamiento de orden impidió correcta ejecución. Reintento de orden resuelve sincronización entre sistemas.</td>
 </tr>
 <tr>
 <td>INC000004085904</td>
+<td>24/07/2026</td>
 <td>DES_SOE_MICROSERVICIOS</td>
 <td><span class="status-badge status-en-progreso">En Análisis</span></td>
 <td>Precios incorrectos al contratar contenidos OTT adicionales en MiOrange APP. Mismo precio devuelto para diferentes configuraciones (1 OTT: 108,99€; 2 OTT: 108,99€). Cambio de motor genera precio inconsistente (89€).</td>
@@ -302,16 +324,18 @@
 </tr>
 <tr>
 <td>INC000004082445</td>
+<td>21/07/2026</td>
 <td>SOP_TMC_ACME</td>
-<td><span class="status-badge status-cerrada">Resuelto</span></td>
+<td><span class="status-badge status-cerrada">Resuelto (Estimado: 24/07/2026)</span></td>
 <td>Error en provisión de servicios SVA (DAZN PREMIUM) durante cambio de oferta. BPM genera operaciones fallidas con error 'Household specified by identifier does not exist' en creación de SVA_001, SVA_002, SVA_003, SVA_005, SVA_012. Última operación registrada es DELETE de SVA_005 (19/07/2026 19:36:13) en lugar de creación/activación.</td>
 <td>Servicio SVA no aprovisionado correctamente en plataforma TV. Requirió regularización manual por equipo LUNA.</td>
 <td>Se solicitó información faltante (NIF/CIF) necesaria para análisis y estudio de la incidencia. Incidencia resuelta tras recopilación de datos requeridos.</td>
 </tr>
 <tr>
 <td>INC000004082089</td>
+<td>21/07/2026</td>
 <td>SOP_TMC_BSCS_ONLINE</td>
-<td><span class="status-badge status-rechazada">Solución Rechazada</span></td>
+<td><span class="status-badge status-rechazada">Solución Rechazada (Estimado: 28/07/2026)</span></td>
 <td>Ficha de Cliente mostraba datos ilimitados para tarifa AbundaNte cuando el límite es 60GB.</td>
 <td>Visualización incorrecta de límite de datos en FdC para clientes con Fibra 1 línea.</td>
 <td>Corrección de mapeo BUCKET_EROS a TARIFA en microservicios para tarifas no ilimitadas. Error de configuración de datos resuelta.</td>
@@ -330,6 +354,7 @@
 <p class="project-description">Integramos la herramienta de diagnóstico Schaman como frontal único de troubleshooting en el Soporte Técnico Residencial de Jazztel, permitiendo al agente realizar desde Schaman el diagnóstico, la tipificación automática de interacciones, la creación de incidencias en Remedy y la consulta de afectaciones masivas (cortinillas).</p>
 <div class="table-container"><table><thead><tr>
 <th>Código</th>
+<th>Fecha Apertura</th>
 <th>Sistema</th>
 <th>Estado</th>
 <th>Descripción</th>
@@ -338,8 +363,9 @@
 </tr></thead><tbody>
 <tr>
 <td>INC000004083958</td>
+<td>23/07/2026</td>
 <td>SOP_BSS_JAZZTEL</td>
-<td><span class="status-badge status-cerrada">Resuelto</span></td>
+<td><span class="status-badge status-cerrada">Resuelto (Estimado: 23/07/2026)</span></td>
 <td>Desde Schaman no se puede generar órdenes de trabajo (OTs) de postventa mediante crtproductorderingmanagement. Se desconoce qué llamada API utilizar.</td>
 <td>Bloqueo funcional en proceso de generación de OTs postventa desde Schaman.</td>
 <td>Pendiente de solución</td>
@@ -353,6 +379,7 @@
 <h2 class="section-title">Proyecto: PRJ-11277 Altas masivas CRM B2B</h2>
 <div class="table-container"><table><thead><tr>
 <th>Código</th>
+<th>Fecha Apertura</th>
 <th>Sistema</th>
 <th>Estado</th>
 <th>Descripción</th>
@@ -361,6 +388,7 @@
 </tr></thead><tbody>
 <tr>
 <td>INC000004089044</td>
+<td>29/07/2026</td>
 <td>DES_CRMB2B</td>
 <td><span class="status-badge status-en-progreso">En Análisis</span></td>
 <td>Carga masiva de dos líneas (28/07) generó descuentos volumen plus duplicados en pedidos y parque. Carrito CAR-20262907-008259 no funciona. Inicialmente los pedidos se crearon correctamente sin duplicación, pero al consultar posteriormente presentan el descuento duplicado.</td>
@@ -377,6 +405,7 @@
 <p class="project-description">Implementamos en CRMB2B el Comprobante de Venta oficial conforme a la LGTEL para Conecta PYME y BIG PYME.</p>
 <div class="table-container"><table><thead><tr>
 <th>Código</th>
+<th>Fecha Apertura</th>
 <th>Sistema</th>
 <th>Estado</th>
 <th>Descripción</th>
@@ -385,6 +414,7 @@
 </tr></thead><tbody>
 <tr>
 <td>INC000004082105</td>
+<td>21/07/2026</td>
 <td>DES_CRMB2B</td>
 <td><span class="status-badge status-pendiente">Pendiente (Estimado: 04/08/2026)</span></td>
 <td>Error al intentar copiar carrito cancelado en CRMB2B. Mensaje: 'Error Copia - Se ha producido un error, por favor vuelva a intentarlo'. Cliente MCPYM0302.</td>
@@ -393,8 +423,9 @@
 </tr>
 <tr>
 <td>INC000004084650</td>
+<td>23/07/2026</td>
 <td>DES_CRMB2B</td>
-<td><span class="status-badge status-cerrada">Resuelto</span></td>
+<td><span class="status-badge status-cerrada">Resuelto (Estimado: 24/07/2026)</span></td>
 <td>Carrito de postventa de reserva de puestos móviles genera comprobante de venta (CdV) de forma incorrecta y queda pendiente de firma. Esta funcionalidad no debería generar CdV a cliente.</td>
 <td>Cliente B01032598 afectado. Comprobante de venta generado erróneamente en CAR-20262307-008065.</td>
 <td>Pendiente de solución</td>
@@ -409,6 +440,7 @@
 <h2 class="section-title">Proyecto: PRJ-11414 Identificación sedes clientes en CRMB2B</h2>
 <div class="table-container"><table><thead><tr>
 <th>Código</th>
+<th>Fecha Apertura</th>
 <th>Sistema</th>
 <th>Estado</th>
 <th>Descripción</th>
@@ -417,16 +449,18 @@
 </tr></thead><tbody>
 <tr>
 <td>INC000004088462</td>
+<td>28/07/2026</td>
 <td>DES_CRMB2B</td>
-<td><span class="status-badge status-cerrada">Resuelto</span></td>
+<td><span class="status-badge status-cerrada">Resuelto (Estimado: 29/07/2026)</span></td>
 <td>Sedes Big móvil muestran teléfono de acceso (móvil o fijo) cuando no deberían mostrar ninguno. Las sedes móviles no tienen teléfono de acceso asociado.</td>
 <td>Datos incorrectos en CRMB2B para sedes Big móvil del cliente PRPYME594 (sede ECWPPYMECNTRX002).</td>
 <td>Se lanzó regularización para corregir todos los casos afectados. Causa raíz: error puntual derivado de regularización anterior.</td>
 </tr>
 <tr>
 <td>INC000004088713</td>
+<td>28/07/2026</td>
 <td>DES_CRMB2B</td>
-<td><span class="status-badge status-cerrada">Resuelto</span></td>
+<td><span class="status-badge status-cerrada">Resuelto (Estimado: 29/07/2026)</span></td>
 <td>Buscador de numeraciones no funciona para clientes con más de 8 numeraciones tras PRJ-11414. Filtro por teléfonos asociados falla si el número buscado no está entre los 8 primeros. Búsqueda por navegador solo localiza numeración si se está en la sede correcta.</td>
 <td>Imposibilidad de identificar producto asociado a numeraciones en clientes con múltiples sedes y numeraciones.</td>
 <td>Limitación de datos en campo de búsqueda por diseño. Las numeraciones restantes no están pobladas en el campo filtrable. Comportamiento esperado según formaciones previas.</td>
@@ -441,6 +475,7 @@
 <p class="project-description">Activación de servicios Jazztel usando el stock en cesión de las tiendas Orange y/o Neksus y así poder entregar el dispositivo en el momento. Esta primera fase permite contratar en PANGEA con tipología de entrega en mano, con stock de tienda y multicanalidad con stock OL.</p>
 <div class="table-container"><table><thead><tr>
 <th>Código</th>
+<th>Fecha Apertura</th>
 <th>Sistema</th>
 <th>Estado</th>
 <th>Descripción</th>
@@ -449,16 +484,18 @@
 </tr></thead><tbody>
 <tr>
 <td>INC000004079500</td>
+<td>19/07/2026</td>
 <td>APL_MOV_SOE</td>
-<td><span class="status-badge status-rechazada">Solución Rechazada</span></td>
+<td><span class="status-badge status-rechazada">Solución Rechazada (Estimado: 23/07/2026)</span></td>
 <td>Error en inyección de órdenes de renove (Pago Único) móvil. CRM rechaza creación de servicio pedido con excepción: atributo [1289-Tipo stock] no corresponde al Servicio:[id=893]. Componente 893 (Venta Terminal Jazztel) no tiene configurado este atributo según especificación técnica.</td>
 <td>Bloqueo en procesamiento de renoves con pago único para clientes afectados (OJAZ00044, OJAZ00026, OJAZ00022). Órdenes no se inyectan en CRM4T. Múltiples intentos fallidos desde 19/07/2026, escalado a CRM4T y DES_SOE_PANGEA sin resolución.</td>
 <td>Pendiente de solución</td>
 </tr>
 <tr>
 <td>INC000004088642</td>
+<td>28/07/2026</td>
 <td>DES_SOE_PANGEA</td>
-<td><span class="status-badge status-rechazada">Solución Rechazada</span></td>
+<td><span class="status-badge status-rechazada">Solución Rechazada (Estimado: 29/07/2026)</span></td>
 <td>Al realizar renove de dispositivo fijo con seguro móvil (entrega en mano) desde PANGEA, la inyección acaba en tramitación BO en lugar de CRM4TELCO. Reproducido en 3 pruebas consecutivas.</td>
 <td>Bloqueo en flujo de venta multicanalidad CRM4T OL. Imposibilidad de completar renoves con dispositivo y seguro móvil en modalidad entrega en mano desde PDV.</td>
 <td>Causa raíz: expediente de cambio de marca abierto (260788020) desde 2021 en cliente de prueba. Acción: cancelación del expediente de cambio de marca desde CRM. Resultado: resolución validada tras cancelación.</td>
@@ -473,6 +510,7 @@
 <p class="project-description">Extendemos la comercialización de fibra indirecta XGSPON para cobertura NEBA, replicando para esta tecnología todas las configuraciones comerciales ya implementadas para VULA.</p>
 <div class="table-container"><table><thead><tr>
 <th>Código</th>
+<th>Fecha Apertura</th>
 <th>Sistema</th>
 <th>Estado</th>
 <th>Descripción</th>
@@ -481,6 +519,7 @@
 </tr></thead><tbody>
 <tr>
 <td>INC000004081929</td>
+<td>21/07/2026</td>
 <td>DES_ESHOP_FRONTEND_OSP</td>
 <td><span class="status-badge status-en-progreso">En Análisis</span></td>
 <td>Orden de cambio de oferta de GPON a XGSPON llega sin equipo ONTGRX7 (XGSPON) y con equipo ONTGRA (GPON) para mantener.</td>
@@ -489,6 +528,7 @@
 </tr>
 <tr>
 <td>INC000004083683</td>
+<td>23/07/2026</td>
 <td>SOP_KRATOS</td>
 <td><span class="status-badge status-en-progreso">En Análisis</span></td>
 <td>Orden de cambio de oferta a XGSPON en huella VODAFONE envía equipo ONTGRX7 en lugar de ONTGR6. ONTGRX7 solo debe enviarse para NEBA/VULA.</td>
@@ -497,6 +537,7 @@
 </tr>
 <tr>
 <td>INC000004084349</td>
+<td>23/07/2026</td>
 <td>SOP_KRATOS</td>
 <td><span class="status-badge status-en-progreso">En Análisis</span></td>
 <td>Cambios de GPON a XGSPON se lanzan por flujo logístico en lugar de flujo instalador. No llega PA de instalador (PAIF04 = None).</td>
@@ -512,6 +553,7 @@
 <h2 class="section-title">Proyecto: PRJ-11671 Apertura y consulta de incidencias para ATAC en Teide</h2>
 <div class="table-container"><table><thead><tr>
 <th>Código</th>
+<th>Fecha Apertura</th>
 <th>Sistema</th>
 <th>Estado</th>
 <th>Descripción</th>
@@ -520,6 +562,7 @@
 </tr></thead><tbody>
 <tr>
 <td>INC000004080967</td>
+<td>20/07/2026</td>
 <td>OPER_COE_CLOUD</td>
 <td><span class="status-badge status-en-progreso">En Análisis</span></td>
 <td>Tras volcado de incidencias a Siebel 8 IP24, archivos adjuntos de distribuidores se generan como URLs con acceso denegado. URLs de GED (S3 privado VPC) caducan en 1 hora y requieren acceso a endpoint privado AWS.</td>
@@ -528,16 +571,18 @@
 </tr>
 <tr>
 <td>INC000004081412</td>
+<td>20/07/2026</td>
 <td>CEP CAU AGI</td>
-<td><span class="status-badge status-cerrada">Resuelto</span></td>
+<td><span class="status-badge status-cerrada">Resuelto (Estimado: 22/07/2026)</span></td>
 <td>El endpoint bffcase/getAtacIncidents no retorna el identificador largo (2-XXXXXXXXXXXXX) de incidencias en la vista de requestManagement de Pangea, afectando la consulta de peticiones en TLP Jerez.</td>
 <td>Operativa de apertura de incidencias y solicitudes en ATAC. Información esencial no disponible para gestiones. Afecta múltiples usuarios y clientes en sede Jerez.</td>
 <td>Escalado a desarrollo (DES_SOE_PANGEA). Se determina que requiere cambio de alcance. Se abre tarea FRORE-1436. Incidencia cerrada por cambio de scope, no por resolución técnica inmediata.</td>
 </tr>
 <tr>
 <td>INC000004081319</td>
+<td>20/07/2026</td>
 <td>SOP_SMC_TEIDE</td>
-<td><span class="status-badge status-cerrada">Resuelto</span></td>
+<td><span class="status-badge status-cerrada">Resuelto (Estimado: 28/07/2026)</span></td>
 <td>En Siebel 8, las notas registradas en incidencias no viajan a Pangea. Solo aparece pestaña 'notas' pero falta 'notas de distribuidor', impidiendo que distribuidores visualicen la información.</td>
 <td>Pérdida de visibilidad para distribuidores en incidencias. Afecta operativa ATAC Jerez y canal completo. Usuarios: 18250063, 00000011, 49040013, 49040014, 56000338.</td>
 <td>GAP identificado en proyecto release Ágora no contemplado en diseño. Se pacta con JP incluirlo en futuro.</td>
@@ -552,6 +597,7 @@
 <p class="project-description">Creación de los compromisos de permanencia y configuración de los nuevos descuentos VAP sobre las tarifas Óptima Plus Empresas y Óptima Plus Empresas Big.</p>
 <div class="table-container"><table><thead><tr>
 <th>Código</th>
+<th>Fecha Apertura</th>
 <th>Sistema</th>
 <th>Estado</th>
 <th>Descripción</th>
@@ -560,8 +606,9 @@
 </tr></thead><tbody>
 <tr>
 <td>INC000004089419</td>
+<td>29/07/2026</td>
 <td>Soporte_CRM_ARPA_LOCAL</td>
-<td><span class="status-badge status-cerrada">Resuelto</span></td>
+<td><span class="status-badge status-cerrada">Resuelto (Estimado: 29/07/2026)</span></td>
 <td>CP CPTE636 asociado incorrectamente en proceso de activación. CP pasado a producción en PAP junio sin vinculación a OT, aplicándose erróneamente en altas de clientes.</td>
 <td>Altas de clientes con CPs no autorizados (CPTE636|CPT136) en tarifa Optima Plus Empresas.</td>
 <td>Se solicitó al peticionario documentación completa (paso a paso, datos de error y pasos para reproducir) para análisis detallado.</td>
@@ -575,6 +622,7 @@
 <h2 class="section-title">Proyecto: PRJ-11972 Turing: Consulta comprobante de venta y tipo de firma</h2>
 <div class="table-container"><table><thead><tr>
 <th>Código</th>
+<th>Fecha Apertura</th>
 <th>Sistema</th>
 <th>Estado</th>
 <th>Descripción</th>
@@ -583,6 +631,7 @@
 </tr></thead><tbody>
 <tr>
 <td>INC000004090702</td>
+<td>30/07/2026</td>
 <td>DES_SOE_PANGEA</td>
 <td><span class="status-badge status-en-progreso">En Análisis</span></td>
 <td>En TURING, al realizar CdT desde S8, el CdV generado muestra líneas adicionales con coste 0.</td>
@@ -591,16 +640,18 @@
 </tr>
 <tr>
 <td>INC000004090511</td>
+<td>30/07/2026</td>
 <td>SOP_TURING_OSP</td>
-<td><span class="status-badge status-cerrada">Resuelto</span></td>
+<td><span class="status-badge status-cerrada">Resuelto (Estimado: 31/07/2026)</span></td>
 <td>Al realizar CdT desde S8 en TURING se generaban dos CdV para el mismo acto comercial: uno con tarifa a coste 0€ y otro con LA con precios correctos. Debería generarse un único comprobante.</td>
 <td>Duplicación de comprobantes de venta en transacciones de cambio de tarifa desde Siebel 8, afectando integridad de datos de billing.</td>
 <td>No era incidencia real. Análisis confirmó que para la combinación tarifa voz 4406 + tarifa datos 5823 no existía DPU cargada en DPU 1 de tarifa móvil, causando visualización con 0€. El comportamiento observado era resultado de configuración incompleta de DPU, no de defecto en TURING. 31/07: Pdte nueva DPU.</td>
 </tr>
 <tr>
 <td>INC000004087846</td>
+<td>28/07/2026</td>
 <td>SOP_TURING_OSP</td>
-<td><span class="status-badge status-cerrada">Resuelto</span></td>
+<td><span class="status-badge status-cerrada">Resuelto (Estimado: 28/07/2026)</span></td>
 <td>CDV automático registra precio 189,99€ en comprobante Siebel 8 cuando tarifa Fútbol y Cine con 4 líneas Elige Todo + descuento Pack 50% 12m + CP debe ser 180€.</td>
 <td>Discrepancia de precio en comprobantes generados para cliente con tarifa Fútbol y Cine.</td>
 <td>Identificada causa raíz: DPU 8 Descuentos contiene dos precios para tarifa 4096. Solución requiere modificar precio en DPU o eliminar especificación tecnología FTTH_VULA|1G/1G|VoIP de fibra hasta 2GBps (pendiente de aplicar).</td>
@@ -615,6 +666,7 @@
 <p class="project-description">Creamos un nuevo mecanismo de Promotarget para asignar automáticamente promociones comerciales a los clientes PYME KRTO (Orange, Euskaltel, R, Telecable) que contraten a través del nuevo CRMB2B.</p>
 <div class="table-container"><table><thead><tr>
 <th>Código</th>
+<th>Fecha Apertura</th>
 <th>Sistema</th>
 <th>Estado</th>
 <th>Descripción</th>
@@ -623,6 +675,7 @@
 </tr></thead><tbody>
 <tr>
 <td>INC000004082196</td>
+<td>22/07/2026</td>
 <td>DES_CRMB2B</td>
 <td><span class="status-badge status-pendiente">Pendiente (Estimado: 06/08/2026)</span></td>
 <td>Alta Conecta Pyme no crea árbol de productos necesarios. Bloqueo en fase información contractual al seleccionar producto adicional. Descuento convergente Pyme Total no se aplica sobre oferta Conecta.</td>
@@ -631,6 +684,7 @@
 </tr>
 <tr>
 <td>INC000004080802</td>
+<td>20/07/2026</td>
 <td>DES_CRMB2B</td>
 <td><span class="status-badge status-pendiente">Pendiente (Estimado: 06/08/2026)</span></td>
 <td>En flujo de captación desde CRMB2B (Conecta Pyme), al seleccionar avanzar en paso de información contractual se abre diálogo forzando selección de producto adicional. Cierre del diálogo reabre automáticamente; pulsar crear redirige a pestaña no funcional. Reproducible en múltiples intentos.</td>
@@ -646,6 +700,7 @@
 <h2 class="section-title">Proyecto: REGRESION FICHA</h2>
 <div class="table-container"><table><thead><tr>
 <th>Código</th>
+<th>Fecha Apertura</th>
 <th>Sistema</th>
 <th>Estado</th>
 <th>Descripción</th>
@@ -654,8 +709,9 @@
 </tr></thead><tbody>
 <tr>
 <td>INC000004079494</td>
+<td>19/07/2026</td>
 <td>SOP_SMC_OCS</td>
-<td><span class="status-badge status-cerrada">Resuelto</span></td>
+<td><span class="status-badge status-cerrada">Resuelto (Estimado: 23/07/2026)</span></td>
 <td>Migración prepago a pospago convergente falla al avanzar orden por HERMES. Error en inyección de orden y posterior fallo en OCS con código 20000003 (Subscriber information verification error).</td>
 <td>Bloqueo en flujo de migración de clientes prepago a pospago convergente. Afecta a pruebas de regresión TMMC-2620.</td>
 <td>Causa raíz: Orquestación BOREAL envía orden de tarifa de datos antes que orden de migración a Pospago. Solución: relanzar tarifa de datos tras migración completada. Cliente MSISDN 685058753 ahora es pospago correctamente.</td>
@@ -669,6 +725,7 @@
 <h2 class="section-title">Sin proyecto asignado</h2>
 <div class="table-container"><table><thead><tr>
 <th>Código</th>
+<th>Fecha Apertura</th>
 <th>Sistema</th>
 <th>Estado</th>
 <th>Descripción</th>
@@ -677,22 +734,25 @@
 </tr></thead><tbody>
 <tr>
 <td>INC000004082137</td>
+<td>21/07/2026</td>
 <td>PROC_EDC</td>
-<td><span class="status-badge status-cerrada">Resuelto</span></td>
+<td><span class="status-badge status-cerrada">Resuelto (Estimado: 29/07/2026)</span></td>
 <td>Fallo en aplicación de descuentos desde CRMB2B: no aparecen descuentos de Captación, en familia Fide/Rete no se asigna CP automático al seleccionar descuento con permanencia, y lista vacía al intentar selección manual. Posible regresión de R7.</td>
 <td>Usuarios de CRMB2B no pueden aplicar descuentos correctamente, afectando procesos de venta y captación.</td>
 <td>Pendiente de solución</td>
 </tr>
 <tr>
 <td>INC000004083708</td>
+<td>22/07/2026</td>
 <td>CEP CAU AGI</td>
-<td><span class="status-badge status-cerrada">Resuelto</span></td>
+<td><span class="status-badge status-cerrada">Resuelto (Estimado: 30/07/2026)</span></td>
 <td>Botón confirmar no se habilita tras primera confirmación al gestionar altas de líneas móviles en formato E-SIM en Ficha de Cliente.</td>
 <td>Bloquea altas nuevas en modalidad E-SIM. Afecta a +100 usuarios de Televenta en Bosch Vigo.</td>
 <td>Pendiente de solución</td>
 </tr>
 <tr>
 <td>INC000004083955</td>
+<td>23/07/2026</td>
 <td>DES_SOE_PANGEA</td>
 <td><span class="status-badge status-pendiente">Pendiente (Estimado: 03/08/2026)</span></td>
 <td>Pedidos con tipología 71 sin SFID envían channel 002 en lugar de channel 005. Error en traducción de dirección: MyAddress retorna handshake_failure al procesar código de dirección, causando fallo en creación de OT con error -104.</td>
@@ -701,6 +761,7 @@
 </tr>
 <tr>
 <td>INC000004082490</td>
+<td>22/07/2026</td>
 <td>SOP_SMC_BOREAL</td>
 <td><span class="status-badge status-pendiente">Pendiente (Estimado: 05/08/2026)</span></td>
 <td>Cambio de titularidad Fibra 1 línea hasta 1 Gb con Netflix falla en EXCALIBUR. TEIDE envía productos en acción Modify pero EXCALIBUR espera acciones de baja/alta para activar en titular destino. Error REST ORQERR-00000047.</td>
@@ -709,22 +770,25 @@
 </tr>
 <tr>
 <td>INC000004082965</td>
+<td>22/07/2026</td>
 <td>APL_MOV_SOE</td>
-<td><span class="status-badge status-cerrada">Resuelto</span></td>
+<td><span class="status-badge status-cerrada">Resuelto (Estimado: 23/07/2026)</span></td>
 <td>Detección de casos de envío de decodificador al realizar renovaciones VAP desde ALTAMIRA. Se identificaron 27 órdenes creadas el 21/07/2026 donde aparentemente se añadía un DECO en renovaciones que no lo requerían.</td>
 <td>Potencial envío innecesario de equipamiento en órdenes de renove VAP. Volumetría: casos desde 01/07, pico a partir del 22/07/2026.</td>
 <td>Análisis confirmó que el comportamiento es correcto: el tipo/subtipo renove pospago y la inclusión de equipamiento están contemplados en la especificación ms-shoppingcart.</td>
 </tr>
 <tr>
 <td>INC000004087359</td>
+<td>27/07/2026</td>
 <td>DES2_SAP_LO</td>
-<td><span class="status-badge status-cerrada">Resuelto</span></td>
+<td><span class="status-badge status-cerrada">Resuelto (Estimado: 29/07/2026)</span></td>
 <td>Error en ampliación de material OMV09, AME2-GC01. Volumen elevado: 224 pedidos afectados.</td>
 <td>224 KOs en pedidos. Afecta proceso de ampliación de materiales en SAP Logística.</td>
 <td>Pendiente de solución</td>
 </tr>
 <tr>
 <td>INC000004091428</td>
+<td>31/07/2026</td>
 <td>SOP_SAP_LO</td>
 <td><span class="status-badge status-en-progreso">En Análisis</span></td>
 <td>GET a micproductorderingjz/v1/productOrder retorna 500 Internal Server Error. Mensaje: 'trackingSapOperacion failed and fallback failed.' Causa raíz: fallo en llamada backend a SAP (sapSalesDocument) con error 401 Unauthorized en sap-gw.si.orange.es. Credenciales Basic de ATC_SCHAMAN rechazadas por SAP.</td>
@@ -733,14 +797,16 @@
 </tr>
 <tr>
 <td>INC000004084578</td>
+<td>24/07/2026</td>
 <td>CEP CAU AGI</td>
-<td><span class="status-badge status-cerrada">Resuelto</span></td>
+<td><span class="status-badge status-cerrada">Resuelto (Estimado: 30/07/2026)</span></td>
 <td>FDC bloquea cualificación y acciones en todas las líneas de cliente cuando existe una orden en vuelo en una sola línea. El bloqueo por campaña se aplica globalmente en lugar de solo en la línea afectada.</td>
 <td>Alto. 100% de errores en operativa de gestión de clientes. Afecta a todos los usuarios y clientes de KONECTA SEVILLA BOLLULLOS. Sin método alternativo disponible.</td>
 <td>Pendiente de solución</td>
 </tr>
 <tr>
 <td>INC000004087017</td>
+<td>27/07/2026</td>
 <td>DES_CRM4T_GARANTIA</td>
 <td><span class="status-badge status-pendiente">Pendiente (Estimado: 06/08/2026)</span></td>
 <td>Error en creación de pedidos E+R (envíos + recogidas) para IMEIs no reservados. En órdenes de Modificación-Sustitución sin recogida y Modificación-Defecto en transporte, se informa número de serie causando bloqueo en avance de estados posteriores en ICP.</td>
@@ -749,6 +815,7 @@
 </tr>
 <tr>
 <td>INC000004087372</td>
+<td>27/07/2026</td>
 <td>DES_SOE_FICHA</td>
 <td><span class="status-badge status-pendiente">Pendiente (Estimado: 06/08/2026)</span></td>
 <td>Comportamiento incorrecto en Teide (Siebel 8) aplicando penalizaciones indebidas en cambios de tarifa. Sistema penaliza upgrades a tarifas superiores cuando no debería, incrementando facturación del cliente sin justificación. Afecta a múltiples clientes en OEST Oviedo.</td>
@@ -757,16 +824,18 @@
 </tr>
 <tr>
 <td>INC000004082837</td>
+<td>22/07/2026</td>
 <td>DES_SOE_FICHA</td>
-<td><span class="status-badge status-cerrada">Resuelto</span></td>
+<td><span class="status-badge status-cerrada">Resuelto (Estimado: 30/07/2026)</span></td>
 <td>Error de información en mosaico de tarifa de solo fijo al dar alta de LA adicional.</td>
 <td>Visualización incorrecta de datos en FICHA DE CLIENTE.</td>
 <td>Pendiente de solución</td>
 </tr>
 <tr>
 <td>INC000004080070</td>
+<td>19/07/2026</td>
 <td>FIJO EAS-STSIC_BILL. ARBOR</td>
-<td><span class="status-badge status-cerrada">Resuelto</span></td>
+<td><span class="status-badge status-cerrada">Resuelto (Estimado: 28/07/2026)</span></td>
 <td>Múltiples errores en cascada: aplicación xplfiberprovision con &gt;50% errores 5xx, respuesta KENAN 80011 con etiqueta no declarada en esquema IC, timeout JDBC en consulta T_ESTADOS_ALTALINEAM2M, validación XML falla en MDW al procesar respuesta de KENAN.</td>
 <td>Fallos 100% en procesamiento de facturas desde cambio en KENAN. Bloqueo de flujos de provisión M2M. Errores de validación en integraciones MDW-KENAN. Consultas a BD lentas afectando SLA.</td>
 <td>Pendiente de solución</td>
