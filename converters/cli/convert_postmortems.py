@@ -47,6 +47,7 @@ from csv_to_json.postmortem_converter import PostmortemConverter
 DATA_ROOT = Path("data")
 DEFAULT_OUTPUT_DIR = DATA_ROOT / "output"
 DEFAULT_ERROR_DIR = DATA_ROOT / "errors"
+DEFAULT_ARCHIVE_DIR = DATA_ROOT / "archive"
 
 # Backward compatibility fallback
 if not DEFAULT_OUTPUT_DIR.exists():
@@ -211,6 +212,50 @@ def show_error_summary(error_path):
         print_warning(f"No se pudo leer reporte de errores: {e}")
 
 
+def archive_existing_release_file(release_name, output_dir, archive_dir, keep_path=None):
+    """Mueve a data/archive/ el -postmortem.json ya indexado para esta misma
+    release, si lo hay, antes de que la nueva subida ocupe su lugar en
+    data/output/.
+
+    Sin esto, cada subida repetida de la misma release (habitual: se
+    re-sube el CSV varias veces mientras avanza el seguimiento) deja un
+    fichero nuevo en data/output/ sin límite, ya que el nombre de salida
+    depende del nombre del CSV original. Solo se archiva cuando hay
+    release_name (los ficheros generados antes de esta feature, con
+    release_name=None, no se tocan: no hay forma fiable de saber si
+    corresponden a la misma release).
+    """
+    if not release_name:
+        return None
+
+    output_dir = Path(output_dir)
+    if not output_dir.exists():
+        return None
+
+    keep_resolved = Path(keep_path).resolve() if keep_path else None
+
+    for file_path in output_dir.glob('*-postmortem.json'):
+        if keep_resolved and file_path.resolve() == keep_resolved:
+            continue
+        try:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                content = json.load(f)
+        except (json.JSONDecodeError, IOError, OSError):
+            continue
+
+        existing_release = content.get('_metadata', {}).get('release_name')
+        if existing_release and existing_release.strip() == release_name.strip():
+            archive_dir = Path(archive_dir)
+            archive_dir.mkdir(parents=True, exist_ok=True)
+            timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
+            archived_path = archive_dir / f"{file_path.stem}_{timestamp}{file_path.suffix}"
+            file_path.rename(archived_path)
+            print_info(f"Versión anterior de la release '{release_name}' archivada: {archived_path.name}")
+            return archived_path
+
+    return None
+
+
 def convert_single_file(csv_file, output_path=None, error_path=None, release_name=None):
     """Convierte un archivo CSV individual."""
     print_info(f"Procesando: {csv_file.name}")
@@ -239,6 +284,12 @@ def convert_single_file(csv_file, output_path=None, error_path=None, release_nam
     output_path.parent.mkdir(parents=True, exist_ok=True)
     if error_path:
         Path(error_path).parent.mkdir(parents=True, exist_ok=True)
+
+    # Archivar la versión anterior de esta release (si existe) antes de que
+    # la nueva subida ocupe su lugar en data/output/
+    archive_existing_release_file(
+        release_name, output_path.parent, DEFAULT_ARCHIVE_DIR, keep_path=output_path
+    )
 
     # Convertir
     try:
