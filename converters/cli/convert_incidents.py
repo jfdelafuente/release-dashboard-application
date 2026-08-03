@@ -38,6 +38,7 @@ from csv_to_json import CsvToJsonConverter
 DATA_ROOT = Path("data")
 DEFAULT_OUTPUT_DIR = DATA_ROOT / "output"
 DEFAULT_ERROR_DIR = DATA_ROOT / "errors"
+DEFAULT_ARCHIVE_DIR = DATA_ROOT / "archive"
 
 # Backward compatibility fallback
 if not DEFAULT_OUTPUT_DIR.exists():
@@ -117,6 +118,36 @@ def get_csv_files(path):
         return []
 
 
+def archive_existing_massive_file(output_dir, archive_dir, keep_path=None):
+    """Mueve a data/archive/ el -massive.json existente en output_dir (si lo
+    hay), antes de que la nueva subida ocupe su lugar en data/output/.
+
+    A diferencia de postmortem, aquí no hay concepto de "release": el
+    dashboard de incidencias masivas siempre carga el fichero más reciente
+    (ver autoLoadLatestData() en dashboards/massive-incidents/index.html),
+    así que nunca hace falta más de un -massive.json activo a la vez. Sin
+    esto, cada subida (normalmente diaria) deja un fichero nuevo en
+    data/output/ sin límite.
+    """
+    output_dir = Path(output_dir)
+    if not output_dir.exists():
+        return None
+
+    keep_resolved = Path(keep_path).resolve() if keep_path else None
+
+    for file_path in output_dir.glob('*-massive.json'):
+        if keep_resolved and file_path.resolve() == keep_resolved:
+            continue
+        archive_dir = Path(archive_dir)
+        archive_dir.mkdir(parents=True, exist_ok=True)
+        timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
+        archived_path = archive_dir / f"{file_path.stem}_{timestamp}{file_path.suffix}"
+        file_path.rename(archived_path)
+        print_info(f"Versión anterior de incidencias masivas archivada: {archived_path.name}")
+
+    return None
+
+
 def convert_single_file(csv_file, output_path=None, error_path=None):
     """Convierte un archivo CSV individual."""
     print_info(f"Procesando: {csv_file.name}")
@@ -146,6 +177,10 @@ def convert_single_file(csv_file, output_path=None, error_path=None):
     output_path.parent.mkdir(parents=True, exist_ok=True)
     if error_path:
         Path(error_path).parent.mkdir(parents=True, exist_ok=True)
+
+    # Archivar la versión anterior (si existe) antes de que la nueva subida
+    # ocupe su lugar en data/output/
+    archive_existing_massive_file(output_path.parent, DEFAULT_ARCHIVE_DIR, keep_path=output_path)
 
     # Convertir
     try:
