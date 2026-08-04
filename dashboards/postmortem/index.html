@@ -558,7 +558,8 @@
                                 <th style="cursor: pointer;" onclick="sortTable('Estatus')">Estado ⇅</th>
                                 <th style="cursor: pointer;" onclick="sortTable('Urgencia')">Urgencia ⇅</th>
                                 <th style="cursor: pointer;" onclick="sortTable('Grupo asignado')">Sistema ⇅</th>
-                                <th style="cursor: pointer;" onclick="sortTable('Despliegue')">Despliegue ⇅</th>
+                                <th style="cursor: pointer;" onclick="sortTable('Fecha de envío')">Fecha de Envío ⇅</th>
+                                <th style="cursor: pointer;" onclick="sortTable('Fecha de última resolución')">Fecha de Última Resolución ⇅</th>
                                 <th style="cursor: pointer;" onclick="sortTable('Motivo de estado')">Solución ⇅</th>
                             </tr>
                         </thead>
@@ -1773,9 +1774,43 @@
                 return statusMatch && deployMatch && urgenciaMatch && sistemaMatch;
             });
 
+            // Parsea "DD/MM/YYYY HH:MM" (formato generado por parsePostmortemDateTime()
+            // en el conversor) para poder ordenar cronológicamente en vez de por texto.
+            function parseSortDateTime(dateStr) {
+                if (!dateStr) return null;
+                const [datePart, timePart] = dateStr.trim().split(' ');
+                if (!datePart || !datePart.includes('/')) return null;
+
+                const dateParts = datePart.split('/');
+                if (dateParts.length < 3) return null;
+
+                const day = parseInt(dateParts[0]);
+                const month = parseInt(dateParts[1]) - 1;
+                const year = parseInt(dateParts[2]);
+                if (isNaN(day) || isNaN(month) || isNaN(year)) return null;
+
+                const timeParts = (timePart || '00:00').split(':');
+                const hour = parseInt(timeParts[0]);
+                const minute = parseInt(timeParts[1]);
+
+                return new Date(year, month, day, isNaN(hour) ? 0 : hour, isNaN(minute) ? 0 : minute);
+            }
+
+            const dateColumns = ['Fecha de envío', 'Fecha de última resolución'];
+
             // Apply sorting
             if (sortColumn) {
                 filteredIncidents.sort((a, b) => {
+                    if (dateColumns.includes(sortColumn)) {
+                        const dateA = parseSortDateTime(a[sortColumn]);
+                        const dateB = parseSortDateTime(b[sortColumn]);
+                        // Sin fecha válida al final, independientemente de la dirección
+                        if (!dateA && !dateB) return 0;
+                        if (!dateA) return 1;
+                        if (!dateB) return -1;
+                        return sortDirection === 'asc' ? dateA - dateB : dateB - dateA;
+                    }
+
                     let aVal = a[sortColumn] || '';
                     let bVal = b[sortColumn] || '';
                     aVal = aVal.toString().toLowerCase();
@@ -1824,7 +1859,8 @@
                     <td><span class="status-badge ${statusClass}">${status}</span></td>
                     <td><span class="impact-badge ${urgencyClass}">${getIncidentValue(incident, 'Urgencia') || '-'}</span></td>
                     <td>${(getIncidentValue(incident, 'Grupo asignado') || '-').substring(0, 20)}</td>
-                    <td>${getIncidentValue(incident, 'Despliegue') || '-'}</td>
+                    <td>${getIncidentValue(incident, 'Fecha de envío') || '-'}</td>
+                    <td>${getIncidentValue(incident, 'Fecha de última resolución') || '-'}</td>
                     <td>${(getIncidentValue(incident, 'Motivo de estado') || '-').substring(0, 15)}</td>
                 `;
                 tbody.appendChild(row);
