@@ -1005,21 +1005,21 @@
             const debugData = [];
 
             // Generate all dates between min and max (including missing dates)
-            // Find absolute min and max dates from all incidents
+            // Find absolute min and max dates. IMPORTANTE: se calculan a partir
+            // de dailyData (que ya incluye tanto "Fecha de envío" como "Fecha de
+            // última resolución"), no solo de "Fecha de envío" — si no, una
+            // incidencia abierta un mes y resuelta el mes siguiente queda con su
+            // resolución fuera del rango del eje X y esa resolución nunca se pinta.
             let absoluteMinDate = null;
             let absoluteMaxDate = null;
 
-            allIncidents.forEach(incident => {
-                const dateStr = getIncidentValue(incident, 'Fecha de envío');
-                if (dateStr) {
-                    const dateObj = parseDate(dateStr);
-                    if (dateObj) {
-                        if (!absoluteMinDate || dateObj < absoluteMinDate) {
-                            absoluteMinDate = dateObj;
-                        }
-                        if (!absoluteMaxDate || dateObj > absoluteMaxDate) {
-                            absoluteMaxDate = dateObj;
-                        }
+            Object.values(dailyData).forEach(day => {
+                if (day.dateObj) {
+                    if (!absoluteMinDate || day.dateObj < absoluteMinDate) {
+                        absoluteMinDate = day.dateObj;
+                    }
+                    if (!absoluteMaxDate || day.dateObj > absoluteMaxDate) {
+                        absoluteMaxDate = day.dateObj;
                     }
                 }
             });
