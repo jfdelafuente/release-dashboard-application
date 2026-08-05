@@ -412,6 +412,22 @@ El script `csv_to_json.py` anterior era un conversor simple sin validación ni n
 
 <!-- SPECKIT START: Active feature implementation plans -->
 
+### Feature: Informe PPT de Postmortem por Release (008-postmortem-ppt-report)
+
+**Status**: 📋 PLANNING COMPLETE (pendiente de `/speckit-tasks` e implementación)
+
+**Branch**: `008-postmortem-ppt-report`
+
+**Objective**: Generar un informe `.pptx` por release, con el estilo visual del dashboard de postmortem, que incluya sus 8 KPIs globales y sus 4 gráficas propias, más las 3 gráficas generales (todas las releases) del dashboard de KPIs de Release.
+
+**Related Documentation**:
+- Specification: [specs/008-postmortem-ppt-report/spec.md](specs/008-postmortem-ppt-report/spec.md)
+- Implementation Plan: [specs/008-postmortem-ppt-report/plan.md](specs/008-postmortem-ppt-report/plan.md)
+- Research: [specs/008-postmortem-ppt-report/research.md](specs/008-postmortem-ppt-report/research.md)
+- Data Model: [specs/008-postmortem-ppt-report/data-model.md](specs/008-postmortem-ppt-report/data-model.md)
+- Contracts: [specs/008-postmortem-ppt-report/contracts/](specs/008-postmortem-ppt-report/contracts/)
+- Quickstart: [specs/008-postmortem-ppt-report/quickstart.md](specs/008-postmortem-ppt-report/quickstart.md)
+
 ### Feature: Dashboards por Release (007-per-release-dashboards)
 
 **Status**: 📋 PLANNING COMPLETE (pendiente de `/speckit-tasks` e implementación)
