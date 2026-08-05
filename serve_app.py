@@ -9,6 +9,7 @@ import json
 import sys
 import http.server
 import socketserver
+import urllib.parse
 from pathlib import Path
 from email.parser import BytesParser
 from email import policy
@@ -19,6 +20,9 @@ os.chdir(PROJECT_ROOT)
 
 sys.path.insert(0, str(PROJECT_ROOT / 'converters' / 'cli'))
 from upload_csv import run_upload  # noqa: E402
+from generate_postmortem_report import generate_report, generate_all_reports  # noqa: E402
+
+REPORTS_PATH_PREFIX = '/api/reports/postmortem/'
 
 PORT = 8000
 
@@ -31,8 +35,14 @@ class CustomHTTPHandler(http.server.SimpleHTTPRequestHandler):
         print(f"POST {self.path}")
         if self.path == '/api/upload':
             self.handle_upload()
+        elif self.path == f'{REPORTS_PATH_PREFIX}batch':
+            self.handle_reports_batch()
         else:
             self.send_error(404, "Not Found")
+
+    def handle_reports_batch(self):
+        result = generate_all_reports()
+        self._send_json(200, result)
 
     def handle_upload(self):
         content_type = self.headers.get('Content-Type', '')
@@ -98,6 +108,32 @@ class CustomHTTPHandler(http.server.SimpleHTTPRequestHandler):
         print(f"  Conversión OK: {filename}")
         self._send_json(200, result)
 
+    def handle_report_download(self):
+        release_name = urllib.parse.unquote(self.path[len(REPORTS_PATH_PREFIX):]).strip()
+        if not release_name:
+            self._send_json(400, {'error': 'Falta el nombre de la release'})
+            return
+
+        try:
+            result = generate_report(release_name)
+        except Exception as e:
+            print(f"  Error generando informe: {e}")
+            self._send_json(500, {'error': 'No se pudo generar el informe', 'details': str(e)[:4000]})
+            return
+
+        if not result['success']:
+            self._send_json(404, {'error': result['error']})
+            return
+
+        pptx_path = Path(result['path'])
+        body = pptx_path.read_bytes()
+        self.send_response(200)
+        self.send_header('Content-Type', 'application/vnd.openxmlformats-officedocument.presentationml.presentation')
+        self.send_header('Content-Disposition', f'attachment; filename="{pptx_path.name}"')
+        self.send_header('Content-Length', str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
     def _send_json(self, status, payload):
         body = json.dumps(payload, ensure_ascii=False).encode('utf-8')
         self.send_response(status)
@@ -109,6 +145,10 @@ class CustomHTTPHandler(http.server.SimpleHTTPRequestHandler):
     def do_GET(self):
         # Debug
         print(f"GET {self.path}")
+
+        if self.path.startswith(REPORTS_PATH_PREFIX):
+            self.handle_report_download()
+            return
 
         # Si es una petición para index.json, sirvirlo dinámicamente
         if 'index.json' in self.path:

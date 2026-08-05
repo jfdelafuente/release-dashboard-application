@@ -414,11 +414,20 @@ El script `csv_to_json.py` anterior era un conversor simple sin validación ni n
 
 ### Feature: Informe PPT de Postmortem por Release (008-postmortem-ppt-report)
 
-**Status**: 📋 PLANNING COMPLETE (pendiente de `/speckit-tasks` e implementación)
+**Status**: ✅ IMPLEMENTATION COMPLETE
 
 **Branch**: `008-postmortem-ppt-report`
 
 **Objective**: Generar un informe `.pptx` por release, con el estilo visual del dashboard de postmortem, que incluya sus 8 KPIs globales y sus 4 gráficas propias, más las 3 gráficas generales (todas las releases) del dashboard de KPIs de Release.
+
+**Delivered**:
+- `converters/src/report_generator/`: `kpi_calculator.py` (réplica de `analyzeData()`), `postmortem_charts.py` (réplica de las 4 gráficas del dashboard de postmortem), `release_kpis_data.py` + `release_kpis_charts.py` (parseo de `releases-data.js` y réplica de las 3 gráficas generales de `release-kpis/app.js`), `pptx_builder.py` (ensamblado con python-pptx), `paths.py`, `chart_utils.py` (Plotly + Kaleido)
+- `converters/cli/generate_postmortem_report.py`: CLI + librería (`generate_report()`, `generate_all_reports()`), mismo patrón que `upload_csv.py`
+- Endpoints `GET /api/reports/postmortem/{release_name}` y `POST /api/reports/postmortem/batch` en `serve_app.py` (local) y en `cso-incident-masivas-report/backend/main.py` (producción, repo hermano)
+- Botón "Descargar informe PPT" en `dashboards/postmortem/index.html` y en cada fila de `dashboards/release-kpis/app.js`
+- 84 tests nuevos (unitarios + integración) en `converters/tests/{unit,integration}/report_generator/`
+
+**Riesgo conocido y aceptado**: la lógica de KPIs y gráficas está duplicada entre JavaScript (dashboards) y Python (`report_generator`) — no hay una forma de compartir literalmente el mismo código entre navegador y servidor sin añadir una dependencia de navegador headless (ver research.md §2-3). Un cambio futuro en la lógica de los dashboards de postmortem o de KPIs de Release debe replicarse manualmente en el módulo Python equivalente.
 
 **Related Documentation**:
 - Specification: [specs/008-postmortem-ppt-report/spec.md](specs/008-postmortem-ppt-report/spec.md)
@@ -427,6 +436,7 @@ El script `csv_to_json.py` anterior era un conversor simple sin validación ni n
 - Data Model: [specs/008-postmortem-ppt-report/data-model.md](specs/008-postmortem-ppt-report/data-model.md)
 - Contracts: [specs/008-postmortem-ppt-report/contracts/](specs/008-postmortem-ppt-report/contracts/)
 - Quickstart: [specs/008-postmortem-ppt-report/quickstart.md](specs/008-postmortem-ppt-report/quickstart.md)
+- Tasks: [specs/008-postmortem-ppt-report/tasks.md](specs/008-postmortem-ppt-report/tasks.md) (35 tareas, 7 fases completas)
 
 ### Feature: Dashboards por Release (007-per-release-dashboards)
 

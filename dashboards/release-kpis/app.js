@@ -274,7 +274,10 @@ function kpiCellHtml(pct) {
 function renderTable(vm) {
   const rows = vm.releaseRows.map(r => `
     <div class="table-grid table-row">
-      <div class="cell-name"><a href="/dashboards/postmortem/?release=${encodeURIComponent(r.name)}">${escapeHtml(r.name)}</a></div>
+      <div class="cell-name">
+        <a href="/dashboards/postmortem/?release=${encodeURIComponent(r.name)}">${escapeHtml(r.name)}</a>
+        <a href="/api/reports/postmortem/${encodeURIComponent(r.name)}" class="cell-download-report" title="Descargar informe PPT">⬇</a>
+      </div>
       <div class="cell-muted">${r.year}</div>
       <div class="cell-muted">${escapeHtml(r.date)}</div>
       <div class="cell-num">${r.totalEntrada}</div>
