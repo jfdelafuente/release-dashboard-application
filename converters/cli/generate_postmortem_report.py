@@ -24,6 +24,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 from report_generator.data_loader import (
     load_postmortem_records,
+    find_postmortem_file,
     list_available_release_names,
     ReleaseNotFoundError,
 )
@@ -34,7 +35,7 @@ from report_generator.postmortem_charts import (
     build_open_incidents_chart,
     build_system_chart,
 )
-from report_generator.release_kpis_data import load_release_kpis_context
+from report_generator.release_kpis_data import load_release_kpis_context, DEFAULT_RELEASES_DATA_PATH
 from report_generator.release_kpis_charts import (
     build_incidencias_por_release_chart,
     build_kpi_pap_chart,
@@ -43,6 +44,21 @@ from report_generator.release_kpis_charts import (
 from report_generator.chart_utils import export_figure_to_png
 from report_generator.pptx_builder import new_presentation, add_kpi_slide, add_chart_slides
 from report_generator.paths import report_output_path
+
+
+def _is_report_up_to_date(report_path, *source_paths):
+    """True si `report_path` ya existe y es más reciente que todas sus
+    fuentes (el JSON de postmortem de la release, releases-data.js) — en
+    ese caso no hace falta regenerar el informe, basta con servir el que
+    ya hay (evita 30-60s de renderizado de gráficas en el caso común: nadie
+    ha vuelto a subir datos desde la última descarga)."""
+    if not report_path.exists():
+        return False
+    report_mtime = report_path.stat().st_mtime
+    for source_path in source_paths:
+        if source_path and Path(source_path).exists() and Path(source_path).stat().st_mtime > report_mtime:
+            return False
+    return True
 
 
 def _build_postmortem_chart_slides(records):
@@ -111,11 +127,24 @@ def _maybe_chdir(project_root):
 def generate_report(release_name, output_path=None, project_root=None):
     """Genera el informe .pptx de una release. Devuelve {"success": bool, ...}.
 
+    Si ya existe un informe generado y es más reciente que sus fuentes de
+    datos (ver _is_report_up_to_date), se devuelve tal cual sin
+    regenerarlo — evita repetir el renderizado de las 7 gráficas cuando
+    nadie ha vuelto a subir datos desde la última descarga.
+
     Misma forma de resultado que converters/cli/upload_csv.py. `project_root`
     es opcional y solo hace falta cuando se invoca desde un proceso con un
     directorio de trabajo distinto al de este repo (ver _maybe_chdir).
     """
     with _maybe_chdir(project_root):
+        source_file = find_postmortem_file(release_name)
+        if source_file is None:
+            return {"success": False, "error": f"No hay datos de postmortem cargados para la release '{release_name}'"}
+
+        final_path = Path(output_path) if output_path else report_output_path(release_name)
+        if _is_report_up_to_date(final_path, source_file, DEFAULT_RELEASES_DATA_PATH):
+            return {"success": True, "path": str(final_path.resolve())}
+
         try:
             records = load_postmortem_records(release_name)
         except ReleaseNotFoundError as e:
@@ -129,7 +158,6 @@ def generate_report(release_name, output_path=None, project_root=None):
         add_chart_slides(prs, _build_postmortem_chart_slides(records))
         add_chart_slides(prs, _build_release_kpis_context_slides())
 
-        final_path = Path(output_path) if output_path else report_output_path(release_name)
         final_path.parent.mkdir(parents=True, exist_ok=True)
         try:
             prs.save(str(final_path))

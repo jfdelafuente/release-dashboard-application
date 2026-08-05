@@ -25,6 +25,10 @@ class TestGenerateAllReports:
         monkeypatch.setattr("generate_postmortem_report.list_available_release_names", fake_list_release_names)
         monkeypatch.setattr("generate_postmortem_report.load_postmortem_records", fake_load_records)
         monkeypatch.setattr(
+            "generate_postmortem_report.find_postmortem_file",
+            lambda release_name, output_dir=None: tmp_path / f"{release_name}-postmortem.json",
+        )
+        monkeypatch.setattr(
             "generate_postmortem_report.load_release_kpis_context",
             lambda path=None: (_ for _ in ()).throw(FileNotFoundError()),
         )

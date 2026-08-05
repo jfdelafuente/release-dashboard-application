@@ -46,6 +46,10 @@ class TestReleaseKpisContextInReport:
             lambda release_name, output_dir=None: records if release_name == "2026R6" else None,
         )
         monkeypatch.setattr(
+            "generate_postmortem_report.find_postmortem_file",
+            lambda release_name, output_dir=None: tmp_path / f"{release_name}-postmortem.json",
+        )
+        monkeypatch.setattr(
             "generate_postmortem_report.load_release_kpis_context",
             lambda path=None: __import__("report_generator.release_kpis_data", fromlist=["load_release_kpis_context"]).load_release_kpis_context(path=releases_data_path),
         )
@@ -75,6 +79,10 @@ class TestReleaseKpisContextInReport:
         monkeypatch.setattr(
             "generate_postmortem_report.load_postmortem_records",
             lambda release_name, output_dir=None: records,
+        )
+        monkeypatch.setattr(
+            "generate_postmortem_report.find_postmortem_file",
+            lambda release_name, output_dir=None: tmp_path / f"{release_name}-postmortem.json",
         )
 
         def _raise(path=None):

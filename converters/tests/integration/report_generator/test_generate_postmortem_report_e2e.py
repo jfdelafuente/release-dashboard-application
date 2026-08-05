@@ -38,11 +38,15 @@ class TestGenerateReportE2E:
         output_dir = tmp_path / "data" / "output"
         output_dir.mkdir(parents=True)
         records = _synthetic_records()
-        _write_release(output_dir, "2026TEST", records)
+        source_path = _write_release(output_dir, "2026TEST", records)
 
         monkeypatch.setattr(
             "generate_postmortem_report.load_postmortem_records",
             lambda release_name, output_dir=None: records if release_name == "2026TEST" else None,
+        )
+        monkeypatch.setattr(
+            "generate_postmortem_report.find_postmortem_file",
+            lambda release_name, output_dir=None: source_path if release_name == "2026TEST" else None,
         )
 
         report_path = tmp_path / "report.pptx"
@@ -88,6 +92,10 @@ class TestGenerateReportE2E:
             lambda release_name, output_dir=None: records,
         )
         monkeypatch.setattr(
+            "generate_postmortem_report.find_postmortem_file",
+            lambda release_name, output_dir=None: tmp_path / "2026TEST-postmortem.json",
+        )
+        monkeypatch.setattr(
             "pptx.presentation.Presentation.save",
             lambda self, path: (_ for _ in ()).throw(PermissionError("[Errno 13] Permission denied")),
         )
@@ -99,3 +107,50 @@ class TestGenerateReportE2E:
         except PermissionError as e:
             assert "abierto en otro programa" in str(e)
             assert report_path.name in str(e)
+
+
+class TestGenerateReportCaching:
+    """El informe no debe regenerarse si ya existe y es más reciente que sus
+    fuentes de datos — evita repetir el renderizado de las 7 gráficas en
+    cada clic cuando nadie ha subido datos nuevos desde la última vez."""
+
+    def test_skips_regeneration_when_report_is_newer_than_source(self, tmp_path, monkeypatch):
+        import time
+
+        output_dir = tmp_path / "data" / "output"
+        output_dir.mkdir(parents=True)
+        records = _synthetic_records()
+        source_path = _write_release(output_dir, "2026TEST", records)
+
+        monkeypatch.setattr(
+            "generate_postmortem_report.find_postmortem_file",
+            lambda release_name, output_dir=None: source_path,
+        )
+        calls = {"count": 0}
+
+        def _counting_load(release_name, output_dir=None):
+            calls["count"] += 1
+            return records
+
+        monkeypatch.setattr("generate_postmortem_report.load_postmortem_records", _counting_load)
+
+        report_path = tmp_path / "report.pptx"
+        first = generate_report("2026TEST", output_path=report_path)
+        assert first["success"] is True
+        assert calls["count"] == 1
+        first_mtime = report_path.stat().st_mtime
+
+        # Segunda llamada sin cambios en la fuente: no debe regenerar.
+        second = generate_report("2026TEST", output_path=report_path)
+        assert second["success"] is True
+        assert calls["count"] == 1  # sigue en 1: no se volvió a llamar a load_postmortem_records
+        assert report_path.stat().st_mtime == first_mtime
+
+        # La fuente cambia (más reciente que el informe): ahora sí debe regenerar.
+        time.sleep(0.05)
+        source_path.write_text(source_path.read_text(encoding="utf-8"), encoding="utf-8")
+        assert source_path.stat().st_mtime > first_mtime
+
+        third = generate_report("2026TEST", output_path=report_path)
+        assert third["success"] is True
+        assert calls["count"] == 2
