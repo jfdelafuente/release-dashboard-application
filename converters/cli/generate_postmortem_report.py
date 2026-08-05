@@ -131,7 +131,14 @@ def generate_report(release_name, output_path=None, project_root=None):
 
         final_path = Path(output_path) if output_path else report_output_path(release_name)
         final_path.parent.mkdir(parents=True, exist_ok=True)
-        prs.save(str(final_path))
+        try:
+            prs.save(str(final_path))
+        except PermissionError:
+            raise PermissionError(
+                f"No se pudo guardar el informe de '{release_name}': el fichero anterior "
+                f"({final_path.name}) está abierto en otro programa (p. ej. PowerPoint). "
+                f"Cierra ese programa e inténtalo de nuevo."
+            ) from None
 
         # Ruta absoluta: si se ha usado project_root, el chdir de _maybe_chdir
         # se revierte al salir de este bloque, y una ruta relativa dejaría de
@@ -186,7 +193,12 @@ def main():
     if not args.release_name:
         parser.error("Falta release_name (o usa --all)")
 
-    result = generate_report(args.release_name, args.output)
+    try:
+        result = generate_report(args.release_name, args.output)
+    except PermissionError as e:
+        print(f"Error: {e}", file=sys.stderr)
+        return 1
+
     if result["success"]:
         print(result["path"])
         return 0

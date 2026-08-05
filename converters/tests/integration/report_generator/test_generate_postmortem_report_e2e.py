@@ -77,3 +77,25 @@ class TestGenerateReportE2E:
         assert result["success"] is False
         assert "NOPE" in result["error"]
         assert not report_path.exists()
+
+    def test_locked_output_file_raises_friendly_message(self, tmp_path, monkeypatch):
+        """Si el .pptx anterior está abierto en otro programa (p. ej.
+        PowerPoint), Windows deniega la escritura con PermissionError. El
+        mensaje debe ser accionable, no el error crudo del sistema."""
+        records = _synthetic_records()
+        monkeypatch.setattr(
+            "generate_postmortem_report.load_postmortem_records",
+            lambda release_name, output_dir=None: records,
+        )
+        monkeypatch.setattr(
+            "pptx.presentation.Presentation.save",
+            lambda self, path: (_ for _ in ()).throw(PermissionError("[Errno 13] Permission denied")),
+        )
+
+        report_path = tmp_path / "2026TEST-postmortem-report.pptx"
+        try:
+            generate_report("2026TEST", output_path=report_path)
+            assert False, "Se esperaba PermissionError"
+        except PermissionError as e:
+            assert "abierto en otro programa" in str(e)
+            assert report_path.name in str(e)
