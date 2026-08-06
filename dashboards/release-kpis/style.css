@@ -100,7 +100,9 @@ body { margin: 0; background: var(--bg-2); font-family: var(--font-body); color:
 .table-head-row { padding:12px 24px; background: var(--bg-2); font-size: var(--fs-12); font-weight:600; text-transform:uppercase; letter-spacing: var(--tracking-caps); color: var(--fg-3); }
 .table-row { padding:16px 24px; border-bottom:1px solid var(--border-1); align-items:center; cursor:pointer; transition: background var(--dur-fast) var(--ease-out); }
 .table-row:hover { background: var(--bg-2); }
-.cell-name { font-weight:700; font-size: var(--fs-16); }
+.cell-name { font-weight:700; font-size: var(--fs-16); display:flex; align-items:center; gap:8px; }
+.cell-download-report { font-size: var(--fs-14); font-weight:400; color: var(--fg-3); text-decoration:none; }
+.cell-download-report:hover { color: var(--mo-orange); }
 .cell-muted { font-size: var(--fs-14); color: var(--fg-2); }
 .cell-num { font-size: var(--fs-14); font-weight:600; }
 .cell-plain { font-size: var(--fs-14); }

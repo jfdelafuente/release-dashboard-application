@@ -1,0 +1,134 @@
+"""Test de integración: las gráficas del informe muestran las últimas 9
+releases terminando EN la release solicitada (no las últimas 9 del
+histórico global) — el informe de una release antigua no debe incluir
+releases posteriores a ella. También comprueba que el informe falla con un
+mensaje claro si releases-data.js no está disponible — desde el rediseño,
+es la única fuente de datos del informe."""
+import generate_postmortem_report
+from generate_postmortem_report import generate_report, CHART_RELEASE_COUNT
+
+
+_RELEASES_JS = """"use strict";
+const RAW_RELEASES = [
+  ["2026R6", 2026, "7-jun.", "Junio", 53, 46, 38, 33],
+  ["2026R7", 2026, "7-jul.", "Julio", 70, 54, 107, 84],
+  ["2026R8", 2026, "7-ago.", "Agosto", 40, 35, 20, 18],
+];
+"""
+
+# 12 releases (> CHART_RELEASE_COUNT=9) para poder comprobar el recorte a las
+# últimas 9 en las gráficas, sin afectar a las tarjetas de KPI de la release
+# seleccionada (que siguen buscándose en la lista completa).
+_RELEASES_JS_MANY = """"use strict";
+const RAW_RELEASES = [
+""" + "\n".join(
+    f'  ["2026R{i}", 2026, "{i}-ene.", "Enero", 10, 8, 5, 4],'
+    for i in range(1, 13)
+) + """
+];
+"""
+
+
+def _write_releases_js(tmp_path, content=_RELEASES_JS):
+    path = tmp_path / "releases-data.js"
+    path.write_text(content, encoding="utf-8")
+    return path
+
+
+def _spy_on_incidencias_chart(monkeypatch):
+    seen_release_names = []
+    real_build_chart = generate_postmortem_report.build_incidencias_por_release_chart
+
+    def _spy_build_chart(releases):
+        seen_release_names.append([r["name"] for r in releases])
+        return real_build_chart(releases)
+
+    monkeypatch.setattr("generate_postmortem_report.build_incidencias_por_release_chart", _spy_build_chart)
+    return seen_release_names
+
+
+class TestReleaseKpisContextInReport:
+    def test_charts_show_last_9_releases_ending_at_the_latest_one(self, tmp_path, monkeypatch):
+        releases_data_path = _write_releases_js(tmp_path, _RELEASES_JS_MANY)
+        monkeypatch.setattr("generate_postmortem_report.DEFAULT_RELEASES_DATA_PATH", releases_data_path)
+        monkeypatch.setattr(
+            "generate_postmortem_report.load_release_kpis_context",
+            lambda: __import__(
+                "report_generator.release_kpis_data", fromlist=["load_release_kpis_context"]
+            ).load_release_kpis_context(path=releases_data_path),
+        )
+        seen_release_names = _spy_on_incidencias_chart(monkeypatch)
+
+        report_path = tmp_path / "report.pptx"
+        result = generate_report("2026R12", output_path=report_path)
+        assert result["success"] is True
+        assert seen_release_names == [[f"2026R{i}" for i in range(4, 13)]]
+        assert len(seen_release_names[0]) == CHART_RELEASE_COUNT
+
+    def test_charts_for_an_old_release_end_at_that_release_not_at_the_latest_one(self, tmp_path, monkeypatch):
+        """Bug reportado: al generar el informe de una release antigua, las
+        gráficas mostraban la ventana de las últimas 9 releases del
+        histórico GLOBAL (incluyendo releases posteriores a la solicitada)
+        en vez de las 9 anteriores a la propia release solicitada."""
+        releases_data_path = _write_releases_js(tmp_path, _RELEASES_JS_MANY)
+        monkeypatch.setattr("generate_postmortem_report.DEFAULT_RELEASES_DATA_PATH", releases_data_path)
+        monkeypatch.setattr(
+            "generate_postmortem_report.load_release_kpis_context",
+            lambda: __import__(
+                "report_generator.release_kpis_data", fromlist=["load_release_kpis_context"]
+            ).load_release_kpis_context(path=releases_data_path),
+        )
+        seen_release_names = _spy_on_incidencias_chart(monkeypatch)
+
+        report_path = tmp_path / "report.pptx"
+        # "2026R9" es la 9ª de 12 releases: su ventana de 9 debe ser R1..R9,
+        # sin incluir R10/R11/R12 (posteriores a ella).
+        result = generate_report("2026R9", output_path=report_path)
+        assert result["success"] is True
+        assert seen_release_names == [[f"2026R{i}" for i in range(1, 10)]]
+
+    def test_charts_for_the_oldest_release_show_only_that_release(self, tmp_path, monkeypatch):
+        """Si la release solicitada es la más antigua, no hay releases
+        anteriores que mostrar — la ventana no debe rellenarse con
+        releases posteriores."""
+        releases_data_path = _write_releases_js(tmp_path, _RELEASES_JS_MANY)
+        monkeypatch.setattr("generate_postmortem_report.DEFAULT_RELEASES_DATA_PATH", releases_data_path)
+        monkeypatch.setattr(
+            "generate_postmortem_report.load_release_kpis_context",
+            lambda: __import__(
+                "report_generator.release_kpis_data", fromlist=["load_release_kpis_context"]
+            ).load_release_kpis_context(path=releases_data_path),
+        )
+        seen_release_names = _spy_on_incidencias_chart(monkeypatch)
+
+        report_path = tmp_path / "report.pptx"
+        # "2026R1" es la release más antigua, fuera de la ventana de las
+        # últimas 9 — su tarjeta de KPI debe seguir generándose igual.
+        result = generate_report("2026R1", output_path=report_path)
+        assert result["success"] is True
+        assert seen_release_names == [["2026R1"]]
+
+        from pptx import Presentation
+
+        prs = Presentation(str(report_path))
+        assert len(prs.slides) == 3
+        kpi_slide_text = "\n".join(
+            s.text_frame.text for s in prs.slides[1].shapes if s.has_text_frame
+        )
+        assert "2026R1" in kpi_slide_text
+
+    def test_report_fails_clearly_when_release_kpis_data_missing(self, tmp_path, monkeypatch):
+        """Ver Edge Cases de spec.md: sin releases-data.js no hay ningún dato
+        que mostrar (KPIs y gráficas comparten esa única fuente), así que el
+        informe debe fallar con un mensaje claro en vez de generarse vacío."""
+        monkeypatch.setattr(
+            "generate_postmortem_report.load_release_kpis_context",
+            lambda: (_ for _ in ()).throw(FileNotFoundError("releases-data.js no encontrado")),
+        )
+
+        report_path = tmp_path / "report.pptx"
+        result = generate_report("2026R6", output_path=report_path)
+
+        assert result["success"] is False
+        assert "KPIs de Release" in result["error"]
+        assert not report_path.exists()

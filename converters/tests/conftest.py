@@ -11,10 +11,16 @@ from pathlib import Path
 
 import pytest
 
-# Add src to Python path so tests can import csv_to_json module
+# Add src to Python path so tests can import csv_to_json / report_generator modules
 src_path = Path(__file__).parent.parent / "src"
 if str(src_path) not in sys.path:
     sys.path.insert(0, str(src_path))
+
+# Add cli to Python path so tests can import generate_postmortem_report
+# directly (documentado como "uso como librería" en su propio contrato)
+cli_path = Path(__file__).parent.parent / "cli"
+if str(cli_path) not in sys.path:
+    sys.path.insert(0, str(cli_path))
 
 
 @pytest.fixture

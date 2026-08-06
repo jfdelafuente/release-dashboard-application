@@ -402,6 +402,7 @@
                     <span class="live-dot"></span>
                     <span id="recordCount">0 registros</span>
                 </div>
+                <button class="reset-btn" id="downloadReportBtn">⬇ Descargar informe PPT</button>
                 <button class="reset-btn" id="resetBtn">↻ Cargar otro archivo</button>
             </div>
 
@@ -586,6 +587,7 @@
         let sortDirection = 'asc';
         let globalBacklogData = null; // Store backlog data to reuse across charts
         let systemChartStatusFilterInitialized = false; // Preselección por defecto del filtro de Estado en "Por Sistema" (solo la primera vez)
+        let currentReleaseName = null; // Release actual, para el botón "Descargar informe PPT"
 
         // Acordeón de las secciones de gráficas (no aplica a Métricas Globales)
         function toggleAccordion(headerEl) {
@@ -1879,6 +1881,12 @@
             const uploadBtn = document.getElementById('uploadBtn');
             const fileInput = document.getElementById('fileInput');
             const resetBtn = document.getElementById('resetBtn');
+            const downloadReportBtn = document.getElementById('downloadReportBtn');
+
+            downloadReportBtn.addEventListener('click', function() {
+                if (!currentReleaseName) return;
+                window.location.href = '/api/reports/postmortem/' + encodeURIComponent(currentReleaseName);
+            });
 
             // Nombre de la release actual, tomado siempre del parámetro ?release=
             // de la URL (nunca de un campo de texto libre — ver research.md R5)
@@ -1964,6 +1972,7 @@
 
                     // Cabecera con el nombre de la release (textContent escapa automáticamente)
                     document.getElementById('releaseHeading').textContent = releaseParam;
+                    currentReleaseName = releaseParam;
 
                     // Mostrar dashboard
                     noReleaseScreen.classList.add('hidden');
