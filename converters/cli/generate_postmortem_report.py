@@ -108,7 +108,12 @@ def generate_report(release_name, output_path=None, project_root=None):
             return {"success": False, "error": f"No hay datos de KPIs de Release para la release '{release_name}'"}
 
         prs = new_presentation(release_name)
-        chart_releases = releases[-CHART_RELEASE_COUNT:]
+        # Ventana de las últimas CHART_RELEASE_COUNT releases terminando EN la
+        # release solicitada (no en la última release existente) — el informe
+        # de una release antigua no debe mostrar releases posteriores a ella.
+        release_index = releases.index(release)
+        window_start = max(0, release_index + 1 - CHART_RELEASE_COUNT)
+        chart_releases = releases[window_start:release_index + 1]
 
         incidencias_chart = export_figure_to_png(build_incidencias_por_release_chart(chart_releases))
         add_kpi_and_chart_slide(prs, release, incidencias_chart, KPI_TARGET_PCT)
