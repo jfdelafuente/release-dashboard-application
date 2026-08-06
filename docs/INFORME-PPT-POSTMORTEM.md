@@ -169,7 +169,9 @@ ldd ~/.local/share/choreographer/deps/chrome-linux64/chrome | grep "not found"
 Instala lo que falte con `sudo apt install` (o `dnf install` en Rocky/RHEL)
 — ver el listado completo de paquetes en la sección "Requisitos previos"
 de `DEPLOYMENT.md` del repo `cso-incident-masivas-report`. Esto sí
-necesita permisos de administrador, a diferencia de `plotly_get_chrome`.
+necesita permisos de administrador, a diferencia de `plotly_get_chrome` —
+si el operador habitual no tiene sudo, es una instalación puntual (una
+sola vez) que tiene que ejecutar alguien que sí lo tenga en el servidor.
 
 ## Documentación relacionada
 
