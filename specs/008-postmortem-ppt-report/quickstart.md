@@ -19,9 +19,9 @@ fichero. Abrirlo y comprobar:
 - Portada con el nombre de la release.
 - Tarjetas con los 8 KPIs, coincidiendo con lo que muestra `dashboards/postmortem/index.html?release=2026R7`
   en ese mismo momento.
-- Las 4 gráficas propias del dashboard de postmortem para esa release.
 - Las 3 gráficas generales del dashboard de KPIs de Release (con todas las releases, no solo
-  "2026R7").
+  "2026R7") — el informe ya no incluye las 4 gráficas propias del dashboard de postmortem
+  (ver FR-003 en spec.md, eliminado tras la implementación).
 
 ## Generar los informes de todas las releases
 

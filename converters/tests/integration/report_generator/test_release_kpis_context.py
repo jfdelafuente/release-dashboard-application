@@ -59,8 +59,8 @@ class TestReleaseKpisContextInReport:
         assert result["success"] is True
 
         prs = Presentation(str(report_path))
-        # Portada + KPIs + 4 postmortem + 3 release-kpis = 9
-        assert len(prs.slides) == 9
+        # Portada + KPIs + 3 release-kpis = 5
+        assert len(prs.slides) == 5
 
         titles = [
             s.text_frame.text
@@ -74,7 +74,7 @@ class TestReleaseKpisContextInReport:
 
     def test_report_still_generates_when_release_kpis_data_missing(self, tmp_path, monkeypatch):
         """Ver Edge Cases de spec.md: si falta la sección de release-kpis, el
-        informe se genera igualmente con la parte de postmortem."""
+        informe se genera igualmente con los KPIs de la release."""
         records = _minimal_records()
         monkeypatch.setattr(
             "generate_postmortem_report.load_postmortem_records",
@@ -95,5 +95,5 @@ class TestReleaseKpisContextInReport:
         assert result["success"] is True
 
         prs = Presentation(str(report_path))
-        # Portada + KPIs + 4 postmortem, sin contexto de release-kpis
-        assert len(prs.slides) == 6
+        # Portada + KPIs, sin contexto de release-kpis
+        assert len(prs.slides) == 2

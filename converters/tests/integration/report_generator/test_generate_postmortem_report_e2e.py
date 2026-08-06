@@ -56,8 +56,10 @@ class TestGenerateReportE2E:
         assert report_path.exists()
 
         prs = Presentation(str(report_path))
-        # Portada + KPIs + 4 gráficas propias de postmortem
-        assert len(prs.slides) == 6
+        # Portada + KPIs (las gráficas propias de postmortem ya no se
+        # incluyen en el informe; releases-data.js no está disponible desde
+        # el cwd de test, así que tampoco hay slides de contexto de release-kpis)
+        assert len(prs.slides) == 2
 
         expected_kpis = calculate_kpis(records)
         kpi_slide = prs.slides[1]

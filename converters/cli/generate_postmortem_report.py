@@ -29,12 +29,6 @@ from report_generator.data_loader import (
     ReleaseNotFoundError,
 )
 from report_generator.kpi_calculator import calculate_kpis
-from report_generator.postmortem_charts import (
-    build_evolution_chart,
-    build_pap_evolution_chart,
-    build_open_incidents_chart,
-    build_system_chart,
-)
 from report_generator.release_kpis_data import load_release_kpis_context, DEFAULT_RELEASES_DATA_PATH
 from report_generator.release_kpis_charts import (
     build_incidencias_por_release_chart,
@@ -59,24 +53,6 @@ def _is_report_up_to_date(report_path, *source_paths):
         if source_path and Path(source_path).exists() and Path(source_path).stat().st_mtime > report_mtime:
             return False
     return True
-
-
-def _build_postmortem_chart_slides(records):
-    """Construye las 4 gráficas propias del dashboard de postmortem como PNG.
-
-    Devuelve una lista de (título, png_bytes) para pptx_builder.add_chart_slides.
-    """
-    evolution_fig, evolution_dates, evolution_backlog = build_evolution_chart(records)
-    pap_fig = build_pap_evolution_chart(records)
-    open_incidents_fig = build_open_incidents_chart(records, evolution_dates, evolution_backlog)
-    system_fig = build_system_chart(records)
-
-    return [
-        ("Entradas, Resoluciones y Backlog", export_figure_to_png(evolution_fig)),
-        ("Abiertas y Cerradas (solo PAP)", export_figure_to_png(pap_fig) if pap_fig else None),
-        ("Incidencias No Cerradas y Backlog Acumulado", export_figure_to_png(open_incidents_fig)),
-        ("Por Sistema", export_figure_to_png(system_fig)),
-    ]
 
 
 def _build_release_kpis_context_slides():
@@ -129,7 +105,7 @@ def generate_report(release_name, output_path=None, project_root=None):
 
     Si ya existe un informe generado y es más reciente que sus fuentes de
     datos (ver _is_report_up_to_date), se devuelve tal cual sin
-    regenerarlo — evita repetir el renderizado de las 7 gráficas cuando
+    regenerarlo — evita repetir el renderizado de las gráficas cuando
     nadie ha vuelto a subir datos desde la última descarga.
 
     Misma forma de resultado que converters/cli/upload_csv.py. `project_root`
@@ -155,7 +131,6 @@ def generate_report(release_name, output_path=None, project_root=None):
 
         prs = new_presentation(release_name)
         add_kpi_slide(prs, report_data)
-        add_chart_slides(prs, _build_postmortem_chart_slides(records))
         add_chart_slides(prs, _build_release_kpis_context_slides())
 
         final_path.parent.mkdir(parents=True, exist_ok=True)
