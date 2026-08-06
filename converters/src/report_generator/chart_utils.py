@@ -16,6 +16,14 @@ COLOR_INK = "#0C0B09"
 COLOR_INK_LIGHT = "#5C5852"
 COLOR_BORDER = "#E2DDD5"
 
+# Verde/rojo de estado (ver dashboards/assets/tokens.css: --success/--danger)
+COLOR_SUCCESS = "#1D8754"
+COLOR_DANGER = "#D43A2F"
+
+# Objetivo de % de resolución (PaP / 1ª semana / Mesa) — igual que
+# KPI_TARGET_PCT en dashboards/release-kpis/app.js.
+KPI_TARGET_PCT = 75
+
 # Paleta cíclica usada por "Por Sistema" (createSystemChart) y "Incidencias No
 # Cerradas" (createOpenIncidentsChart) para desglosar por Estado.
 STATUS_PALETTE = [

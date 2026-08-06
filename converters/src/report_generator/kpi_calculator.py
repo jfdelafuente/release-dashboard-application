@@ -84,7 +84,9 @@ def _pap_day(pap_incidents):
 def calculate_kpis(records):
     """Calcula los 8 KPIs globales para la lista de registros de una release.
 
-    Devuelve un dict con las mismas claves que consume pptx_builder.add_kpi_slide.
+    Ya no se usa en generate_postmortem_report.py (el informe PPT saca sus
+    KPIs de releases-data.js — ver release_kpis_data.py), pero se mantiene
+    junto con sus tests porque replica fielmente analyzeData() del dashboard.
     """
     total = len(records)
     closed = sum(1 for r in records if _is_closed_status(r))

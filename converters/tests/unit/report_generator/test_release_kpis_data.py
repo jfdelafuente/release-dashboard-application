@@ -1,5 +1,7 @@
 """Tests de report_generator.release_kpis_data."""
-from report_generator.release_kpis_data import parse_raw_releases, build_releases, load_release_kpis_context
+from report_generator.release_kpis_data import (
+    parse_raw_releases, build_releases, load_release_kpis_context, find_release,
+)
 
 
 _SAMPLE_JS = """"use strict";
@@ -48,6 +50,23 @@ class TestBuildReleases:
         raw = parse_raw_releases(_SAMPLE_JS)
         releases = build_releases(raw)
         assert releases[1]["date"] == "Marzo 2026"
+
+    def test_total_incidencias_is_pap_plus_post_entrada(self):
+        raw = parse_raw_releases(_SAMPLE_JS)
+        releases = build_releases(raw)
+        assert releases[0]["total_incidencias"] == 58 + 23
+
+
+class TestFindRelease:
+    def test_finds_release_by_exact_name(self):
+        raw = parse_raw_releases(_SAMPLE_JS)
+        releases = build_releases(raw)
+        assert find_release(releases, "2026R3")["name"] == "2026R3"
+
+    def test_returns_none_when_not_found(self):
+        raw = parse_raw_releases(_SAMPLE_JS)
+        releases = build_releases(raw)
+        assert find_release(releases, "NOPE") is None
 
 
 class TestLoadReleaseKpisContext:

@@ -14,7 +14,9 @@ from pptx.dml.color import RGBColor
 from pptx.enum.text import PP_ALIGN
 from pptx.enum.shapes import MSO_SHAPE
 
-from report_generator.chart_utils import COLOR_ORANGE, COLOR_INK, COLOR_INK_LIGHT, COLOR_BORDER
+from report_generator.chart_utils import (
+    COLOR_ORANGE, COLOR_INK, COLOR_INK_LIGHT, COLOR_BORDER, COLOR_SUCCESS, COLOR_DANGER,
+)
 
 SLIDE_WIDTH = Inches(13.333)
 SLIDE_HEIGHT = Inches(7.5)
@@ -24,6 +26,8 @@ _RGB_INK = RGBColor.from_string(COLOR_INK.lstrip("#"))
 _RGB_INK_LIGHT = RGBColor.from_string(COLOR_INK_LIGHT.lstrip("#"))
 _RGB_BORDER = RGBColor.from_string(COLOR_BORDER.lstrip("#"))
 _RGB_WHITE = RGBColor(0xFF, 0xFF, 0xFF)
+_RGB_SUCCESS = RGBColor.from_string(COLOR_SUCCESS.lstrip("#"))
+_RGB_DANGER = RGBColor.from_string(COLOR_DANGER.lstrip("#"))
 
 # Paleta del "hero" del rediseño MASORANGE (fondo negro), distinta de la
 # usada en las tarjetas de KPI (fondo blanco) — ver
@@ -110,7 +114,7 @@ def new_presentation(release_name):
     return prs
 
 
-def _add_kpi_card(slide, left, top, width, height, value_text, label_text, detail_text=None):
+def _add_kpi_card(slide, left, top, width, height, value_text, label_text, detail_lines=None, value_color=None):
     card = slide.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, left, top, width, height)
     card.fill.solid()
     card.fill.fore_color.rgb = _RGB_WHITE
@@ -124,68 +128,92 @@ def _add_kpi_card(slide, left, top, width, height, value_text, label_text, detai
     stripe.line.fill.background()
 
     pad = Inches(0.2)
-    _add_textbox(slide, left + pad, top + Inches(0.15), width - 2 * pad, Inches(0.6), value_text, size=28, color=_RGB_INK, bold=True)
-    _add_textbox(slide, left + pad, top + Inches(0.75), width - 2 * pad, Inches(0.35), label_text, size=11, color=_RGB_INK_LIGHT, bold=True)
-    if detail_text:
-        _add_textbox(slide, left + pad, top + Inches(1.05), width - 2 * pad, Inches(0.35), detail_text, size=9, color=_RGB_INK_LIGHT)
+    _add_textbox(slide, left + pad, top + Inches(0.15), width - 2 * pad, Inches(0.55), value_text, size=28, color=value_color or _RGB_INK, bold=True)
+    _add_textbox(slide, left + pad, top + Inches(0.7), width - 2 * pad, Inches(0.3), label_text, size=11, color=_RGB_INK_LIGHT, bold=True)
+    if detail_lines:
+        box = slide.shapes.add_textbox(left + pad, top + Inches(1.0), width - 2 * pad, height - Inches(1.1))
+        tf = box.text_frame
+        tf.word_wrap = True
+        for idx, line in enumerate(detail_lines):
+            p = tf.paragraphs[0] if idx == 0 else tf.add_paragraph()
+            run = p.add_run()
+            run.text = line
+            run.font.size = Pt(9)
+            run.font.color.rgb = _RGB_INK_LIGHT
+            run.font.name = "Calibri"
 
 
-# (value, label, detail) por tarjeta, mismo orden que Métricas Globales del dashboard
-_KPI_CARD_FIELDS = [
-    ("total_incidencias", "Total Incidencias", None),
-    ("total_pendientes", "Total Pendientes", None),
-    ("pct_cerradas", "% Cerradas", "cerradas_detalle"),
-    ("tiempo_medio_resolucion", "Tiempo Medio de Resolución", "tiempo_medio_detalle"),
-    ("pct_resueltas_pap", "% Resueltas PaP", "pap_detalle"),
-    ("pap_pendientes", "Total Pendientes PaP", None),
-    ("pct_resueltas_mesa", "% Resueltas Mesa", "mesa_detalle"),
-    ("mesa_pendientes", "Total Pendientes Mesa", None),
-]
+def _kpi_status_color(pct, target_pct):
+    """Verde si `pct` alcanza el objetivo, rojo si queda por debajo."""
+    return _RGB_SUCCESS if pct >= target_pct else _RGB_DANGER
 
 
-def add_kpi_slide(prs, report_data):
-    """Añade la diapositiva con las 8 tarjetas de KPI (2 filas x 4 columnas)."""
+def add_kpi_and_chart_slide(prs, release, chart_png, target_pct):
+    """Diapositiva "Métricas Globales": 3 tarjetas de KPI (Total Incidencias,
+    % Resueltas PaP, % Resueltas Mesa — estas dos en verde/rojo según
+    `target_pct`) junto a la gráfica "Incidencias por Release".
+
+    `release` es un dict de release_kpis_data.build_releases()/find_release()
+    — todos los valores vienen de releases-data.js, no del JSON de postmortem.
+    """
     slide = _blank_slide(prs)
-    _add_title_bar(slide, f"Métricas Globales — {report_data['release_name']}")
+    _add_title_bar(slide, f"Métricas Globales — {release['name']}")
 
-    cols, rows = 4, 2
-    gap = Inches(0.25)
-    margin = Inches(0.5)
-    card_w = (SLIDE_WIDTH - 2 * margin - (cols - 1) * gap) / cols
-    card_h = Inches(1.6)
+    card_left = Inches(0.5)
+    card_width = Inches(3.6)
+    card_height = Inches(1.7)
+    card_gap = Inches(0.25)
     top0 = Inches(1.3)
 
-    for idx, (field, label, detail_field) in enumerate(_KPI_CARD_FIELDS):
-        row, col = divmod(idx, cols)
-        left = margin + col * (card_w + gap)
-        top = top0 + row * (card_h + gap)
+    _add_kpi_card(
+        slide, card_left, top0, card_width, card_height,
+        str(release["total_incidencias"]), "Total Incidencias",
+    )
 
-        value = report_data.get(field)
-        value_text = f"{value}%" if field.startswith("pct_") else ("-" if value is None else str(value))
-        detail_text = report_data.get(detail_field) if detail_field else None
-        _add_kpi_card(slide, left, top, card_w, card_h, value_text, label, detail_text)
+    pap_top = top0 + card_height + card_gap
+    _add_kpi_card(
+        slide, card_left, pap_top, card_width, card_height,
+        f"{release['pct_pap']}%", "% Resueltas PaP",
+        detail_lines=[
+            f"{release['pap_resueltas']} de {release['pap_entrada']} incidencias PaP resueltas el día del PaP",
+            f"Objetivo: {target_pct}%",
+        ],
+        value_color=_kpi_status_color(release["pct_pap"], target_pct),
+    )
 
+    mesa_top = pap_top + card_height + card_gap
+    _add_kpi_card(
+        slide, card_left, mesa_top, card_width, card_height,
+        f"{release['pct_first_week']}%", "% Resueltas Mesa",
+        detail_lines=[
+            f"{release['post_resueltas']} de {release['post_entrada']} incidencias Mesa",
+            f"Objetivo: {target_pct}%",
+        ],
+        value_color=_kpi_status_color(release["pct_first_week"], target_pct),
+    )
+
+    chart_left = card_left + card_width + Inches(0.4)
+    chart_width = SLIDE_WIDTH - chart_left - Inches(0.5)
+    slide.shapes.add_picture(io.BytesIO(chart_png), chart_left, top0, width=chart_width)
     return slide
 
 
-def add_chart_image_slide(prs, title, png_bytes):
-    """Añade una diapositiva con un título y una gráfica (imagen PNG) centrada."""
+def add_dual_chart_slide(prs, title, charts):
+    """Diapositiva final con las gráficas de `charts` ([(título, png_bytes), ...])
+    repartidas en columnas iguales, cada una con su propio título."""
     slide = _blank_slide(prs)
     _add_title_bar(slide, title)
 
-    image_stream = io.BytesIO(png_bytes)
-    max_width = SLIDE_WIDTH - Inches(1)
-    max_height = SLIDE_HEIGHT - Inches(1.5)
-    slide.shapes.add_picture(image_stream, Inches(0.5), Inches(1.1), width=max_width, height=max_height)
+    margin = Inches(0.5)
+    gap = Inches(0.4)
+    n = len(charts)
+    col_width = (SLIDE_WIDTH - 2 * margin - (n - 1) * gap) / n
+    top = Inches(1.3)
+    label_height = Inches(0.4)
+
+    for idx, (chart_title, png_bytes) in enumerate(charts):
+        left = margin + idx * (col_width + gap)
+        _add_textbox(slide, left, top, col_width, label_height, chart_title, size=16, color=_RGB_INK, bold=True, align=PP_ALIGN.CENTER)
+        slide.shapes.add_picture(io.BytesIO(png_bytes), left, top + label_height + Inches(0.1), width=col_width)
+
     return slide
-
-
-def add_chart_slides(prs, charts):
-    """Añade una diapositiva por cada (título, png_bytes) de `charts`.
-
-    Entradas con png_bytes=None se omiten (p. ej. la gráfica PaP cuando la
-    release no tiene incidencias PaP).
-    """
-    for title, png_bytes in charts:
-        if png_bytes is not None:
-            add_chart_image_slide(prs, title, png_bytes)

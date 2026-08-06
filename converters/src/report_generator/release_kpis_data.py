@@ -31,7 +31,7 @@ def parse_raw_releases(js_source):
 
 
 def build_releases(raw_releases):
-    """Réplica de buildReleases(): añade pctPaP/pctFirstWeek derivados."""
+    """Réplica de buildReleases(): añade totalEntrada/pctPaP/pctFirstWeek derivados."""
     releases = []
     for name, year, fecha, month, pap_entrada, pap_resueltas, post_entrada, post_resueltas in raw_releases:
         pct_pap = round(100 * pap_resueltas / pap_entrada) if pap_entrada else 0
@@ -44,10 +44,19 @@ def build_releases(raw_releases):
             "pap_resueltas": pap_resueltas,
             "post_entrada": post_entrada,
             "post_resueltas": post_resueltas,
+            "total_incidencias": pap_entrada + post_entrada,
             "pct_pap": pct_pap,
             "pct_first_week": pct_first_week,
         })
     return releases
+
+
+def find_release(releases, release_name):
+    """Busca una release por nombre exacto en la lista devuelta por build_releases(). None si no existe."""
+    for release in releases:
+        if release["name"] == release_name:
+            return release
+    return None
 
 
 def load_release_kpis_context(path=None):

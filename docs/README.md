@@ -14,6 +14,7 @@
 
 ### Usar la aplicación
 - **[TROUBLESHOOTING.md](TROUBLESHOOTING.md)** - Problemas comunes y soluciones
+- **[INFORME-PPT-POSTMORTEM.md](INFORME-PPT-POSTMORTEM.md)** - Cómo generar el informe PPT de postmortem por release (navegador y línea de comandos)
 - **[../converters/docs/API.md](../converters/docs/API.md)** - Referencia de la API de los conversores CSV→JSON
 - **[../converters/docs/CSV-TO-JSON-WORKFLOW.md](../converters/docs/CSV-TO-JSON-WORKFLOW.md)** - Flujo detallado de conversión
 

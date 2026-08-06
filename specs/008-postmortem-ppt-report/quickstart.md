@@ -15,13 +15,19 @@ python converters/cli/generate_postmortem_report.py 2026R7
 ```
 
 Salida esperada: `data/reports/2026R7-postmortem-report.pptx` creado, y por consola la ruta del
-fichero. Abrirlo y comprobar:
+fichero. Abrirlo y comprobar (3 diapositivas en total):
 - Portada con el nombre de la release.
-- Tarjetas con los 8 KPIs, coincidiendo con lo que muestra `dashboards/postmortem/index.html?release=2026R7`
-  en ese mismo momento.
-- Las 3 gráficas generales del dashboard de KPIs de Release (con todas las releases, no solo
-  "2026R7") — el informe ya no incluye las 4 gráficas propias del dashboard de postmortem
-  (ver FR-003 en spec.md, eliminado tras la implementación).
+- Diapositiva "Métricas Globales": 3 tarjetas de KPI (Total Incidencias, % Resueltas PaP,
+  % Resueltas Mesa) junto a la gráfica "Incidencias por Release". % Resueltas PaP y % Resueltas
+  Mesa deben verse en verde si son ≥75% o en rojo si están por debajo, con "Objetivo: 75%" visible
+  en la propia tarjeta. Los 3 valores deben coincidir con la fila de "2026R7" en
+  `dashboards/release-kpis/` (columnas Incid., % PaP, % 1ª sem.) en ese mismo momento.
+- Diapositiva final con las gráficas "KPI % PaP" y "KPI % 1ª semana" lado a lado, con todas las
+  releases (no solo "2026R7").
+
+Todos los KPIs y gráficas del informe se calculan a partir de `releases-data.js` — el JSON de
+postmortem de la release ya no interviene en la generación (ver FR-002/003/004 en spec.md,
+rediseñados).
 
 ## Generar los informes de todas las releases
 

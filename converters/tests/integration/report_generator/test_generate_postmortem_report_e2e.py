@@ -1,53 +1,54 @@
-"""Test end-to-end: dataset sintético -> generate_report() -> abrir el .pptx resultante."""
-import json
+"""Test end-to-end: releases-data.js sintético -> generate_report() -> abrir el .pptx resultante.
 
+Todos los KPIs y gráficas del informe se calculan a partir de
+releases-data.js (ver generate_postmortem_report.py) — el JSON de
+postmortem por release ya no interviene en la generación.
+"""
 from pptx import Presentation
+from pptx.dml.color import RGBColor
 
 from generate_postmortem_report import generate_report
-from report_generator.kpi_calculator import calculate_kpis
+from report_generator.chart_utils import COLOR_SUCCESS, COLOR_DANGER
 
 
-def _write_release(output_dir, release_name, records):
-    path = output_dir / f"{release_name}-postmortem.json"
-    path.write_text(
-        json.dumps({"_metadata": {"release_name": release_name}, "data": records}, ensure_ascii=False),
-        encoding="utf-8",
-    )
+_RELEASES_JS = """"use strict";
+const RAW_RELEASES = [
+  ["2026R6", 2026, "7-jun.", "Junio", 50, 40, 30, 20],
+  ["2026TEST", 2026, "10-jul.", "Julio", 20, 18, 10, 6],
+];
+"""
+# 2026TEST: pct_pap = round(100*18/20) = 90 (>= 75, verde)
+#           pct_first_week = round(100*6/10) = 60 (< 75, rojo)
+#           total_incidencias = 20 + 10 = 30
+
+
+def _write_releases_js(tmp_path, content=_RELEASES_JS):
+    path = tmp_path / "releases-data.js"
+    path.write_text(content, encoding="utf-8")
     return path
 
 
-def _synthetic_records():
-    return [
-        {"ID de incidencia": "INC1", "Estatus": "Cerrado", "Despliegue": "PAP",
-         "Fecha de envío": "10/06/2026 08:00", "Fecha de última resolución": "10/06/2026 10:00",
-         "Grupo asignado": "SOP_A"},
-        {"ID de incidencia": "INC2", "Estatus": "Asignado", "Despliegue": "PAP",
-         "Fecha de envío": "10/06/2026 09:00", "Fecha de última resolución": "",
-         "Grupo asignado": "SOP_B"},
-        {"ID de incidencia": "INC3", "Estatus": "Cerrado", "Despliegue": "MESA",
-         "Fecha de envío": "12/06/2026 08:00", "Fecha de última resolución": "12/06/2026 09:30",
-         "Grupo asignado": "SOP_A"},
-        {"ID de incidencia": "INC4", "Estatus": "Pendiente", "Despliegue": "MESA",
-         "Fecha de envío": "12/06/2026 09:00", "Fecha de última resolución": "",
-         "Grupo asignado": "SOP_B"},
-    ]
+def _patch_releases_source(monkeypatch, releases_path):
+    monkeypatch.setattr("generate_postmortem_report.DEFAULT_RELEASES_DATA_PATH", releases_path)
+    monkeypatch.setattr(
+        "generate_postmortem_report.load_release_kpis_context",
+        lambda: __import__(
+            "report_generator.release_kpis_data", fromlist=["load_release_kpis_context"]
+        ).load_release_kpis_context(path=releases_path),
+    )
+
+
+def _find_run_color(slide, text):
+    for shape in slide.shapes:
+        if shape.has_text_frame and shape.text_frame.text.strip() == text:
+            return shape.text_frame.paragraphs[0].runs[0].font.color.rgb
+    return None
 
 
 class TestGenerateReportE2E:
     def test_generates_pptx_with_expected_slides_and_kpis(self, tmp_path, monkeypatch):
-        output_dir = tmp_path / "data" / "output"
-        output_dir.mkdir(parents=True)
-        records = _synthetic_records()
-        source_path = _write_release(output_dir, "2026TEST", records)
-
-        monkeypatch.setattr(
-            "generate_postmortem_report.load_postmortem_records",
-            lambda release_name, output_dir=None: records if release_name == "2026TEST" else None,
-        )
-        monkeypatch.setattr(
-            "generate_postmortem_report.find_postmortem_file",
-            lambda release_name, output_dir=None: source_path if release_name == "2026TEST" else None,
-        )
+        releases_path = _write_releases_js(tmp_path)
+        _patch_releases_source(monkeypatch, releases_path)
 
         report_path = tmp_path / "report.pptx"
         result = generate_report("2026TEST", output_path=report_path)
@@ -56,26 +57,28 @@ class TestGenerateReportE2E:
         assert report_path.exists()
 
         prs = Presentation(str(report_path))
-        # Portada + KPIs (las gráficas propias de postmortem ya no se
-        # incluyen en el informe; releases-data.js no está disponible desde
-        # el cwd de test, así que tampoco hay slides de contexto de release-kpis)
-        assert len(prs.slides) == 2
+        # Portada + Métricas Globales (3 KPIs + gráfica) + Comparativa (2 gráficas)
+        assert len(prs.slides) == 3
 
-        expected_kpis = calculate_kpis(records)
         kpi_slide = prs.slides[1]
-        slide_text = "\n".join(
-            s.text_frame.text for s in kpi_slide.shapes if s.has_text_frame
-        )
-        assert str(expected_kpis["total_incidencias"]) in slide_text
-        assert f"{expected_kpis['pct_cerradas']}%" in slide_text
+        slide_text = "\n".join(s.text_frame.text for s in kpi_slide.shapes if s.has_text_frame)
+        assert "30" in slide_text  # total_incidencias
+        assert "90%" in slide_text  # pct_pap
+        assert "60%" in slide_text  # pct_first_week ("% Resueltas Mesa")
+        assert "Objetivo: 75%" in slide_text
+        assert "18 de 20 incidencias PaP resueltas el día del PaP" in slide_text
+        assert "6 de 10 incidencias Mesa" in slide_text
+
+        assert _find_run_color(kpi_slide, "90%") == RGBColor.from_string(COLOR_SUCCESS.lstrip("#"))
+        assert _find_run_color(kpi_slide, "60%") == RGBColor.from_string(COLOR_DANGER.lstrip("#"))
+
+        last_slide_text = "\n".join(s.text_frame.text for s in prs.slides[2].shapes if s.has_text_frame)
+        assert "KPI % PaP" in last_slide_text
+        assert "KPI % 1ª semana" in last_slide_text
 
     def test_unknown_release_returns_error_without_creating_file(self, tmp_path, monkeypatch):
-        from report_generator.data_loader import ReleaseNotFoundError
-
-        def _raise(*args, **kwargs):
-            raise ReleaseNotFoundError("No hay datos de postmortem cargados para la release 'NOPE'")
-
-        monkeypatch.setattr("generate_postmortem_report.load_postmortem_records", _raise)
+        releases_path = _write_releases_js(tmp_path)
+        _patch_releases_source(monkeypatch, releases_path)
 
         report_path = tmp_path / "report.pptx"
         result = generate_report("NOPE", output_path=report_path)
@@ -88,15 +91,8 @@ class TestGenerateReportE2E:
         """Si el .pptx anterior está abierto en otro programa (p. ej.
         PowerPoint), Windows deniega la escritura con PermissionError. El
         mensaje debe ser accionable, no el error crudo del sistema."""
-        records = _synthetic_records()
-        monkeypatch.setattr(
-            "generate_postmortem_report.load_postmortem_records",
-            lambda release_name, output_dir=None: records,
-        )
-        monkeypatch.setattr(
-            "generate_postmortem_report.find_postmortem_file",
-            lambda release_name, output_dir=None: tmp_path / "2026TEST-postmortem.json",
-        )
+        releases_path = _write_releases_js(tmp_path)
+        _patch_releases_source(monkeypatch, releases_path)
         monkeypatch.setattr(
             "pptx.presentation.Presentation.save",
             lambda self, path: (_ for _ in ()).throw(PermissionError("[Errno 13] Permission denied")),
@@ -112,29 +108,26 @@ class TestGenerateReportE2E:
 
 
 class TestGenerateReportCaching:
-    """El informe no debe regenerarse si ya existe y es más reciente que sus
-    fuentes de datos — evita repetir el renderizado de las 7 gráficas en
+    """El informe no debe regenerarse si ya existe y es más reciente que
+    releases-data.js — evita repetir el renderizado de las 3 gráficas en
     cada clic cuando nadie ha subido datos nuevos desde la última vez."""
 
     def test_skips_regeneration_when_report_is_newer_than_source(self, tmp_path, monkeypatch):
         import time
 
-        output_dir = tmp_path / "data" / "output"
-        output_dir.mkdir(parents=True)
-        records = _synthetic_records()
-        source_path = _write_release(output_dir, "2026TEST", records)
+        releases_path = _write_releases_js(tmp_path)
+        monkeypatch.setattr("generate_postmortem_report.DEFAULT_RELEASES_DATA_PATH", releases_path)
 
-        monkeypatch.setattr(
-            "generate_postmortem_report.find_postmortem_file",
-            lambda release_name, output_dir=None: source_path,
-        )
         calls = {"count": 0}
+        real_load = __import__(
+            "report_generator.release_kpis_data", fromlist=["load_release_kpis_context"]
+        ).load_release_kpis_context
 
-        def _counting_load(release_name, output_dir=None):
+        def _counting_load():
             calls["count"] += 1
-            return records
+            return real_load(path=releases_path)
 
-        monkeypatch.setattr("generate_postmortem_report.load_postmortem_records", _counting_load)
+        monkeypatch.setattr("generate_postmortem_report.load_release_kpis_context", _counting_load)
 
         report_path = tmp_path / "report.pptx"
         first = generate_report("2026TEST", output_path=report_path)
@@ -142,16 +135,16 @@ class TestGenerateReportCaching:
         assert calls["count"] == 1
         first_mtime = report_path.stat().st_mtime
 
-        # Segunda llamada sin cambios en la fuente: no debe regenerar.
+        # Segunda llamada sin cambios en releases-data.js: no debe regenerar.
         second = generate_report("2026TEST", output_path=report_path)
         assert second["success"] is True
-        assert calls["count"] == 1  # sigue en 1: no se volvió a llamar a load_postmortem_records
+        assert calls["count"] == 1
         assert report_path.stat().st_mtime == first_mtime
 
-        # La fuente cambia (más reciente que el informe): ahora sí debe regenerar.
+        # releases-data.js cambia (más reciente que el informe): ahora sí debe regenerar.
         time.sleep(0.05)
-        source_path.write_text(source_path.read_text(encoding="utf-8"), encoding="utf-8")
-        assert source_path.stat().st_mtime > first_mtime
+        releases_path.write_text(releases_path.read_text(encoding="utf-8"), encoding="utf-8")
+        assert releases_path.stat().st_mtime > first_mtime
 
         third = generate_report("2026TEST", output_path=report_path)
         assert third["success"] is True
