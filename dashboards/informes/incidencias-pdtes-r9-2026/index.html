@@ -109,9 +109,13 @@
 <td>Impacto no especificado</td>
 <td>Pendiente de solución</td>
 </tr>
-<p class="project-description"><em>Análisis de impactos:</em></p>
-<li><strong>Error crítico en generación de anexos documentales</strong> (INC000004142300): incidencia de severidad 1-Crítica asignada a SQA_ALANI en estado En Análisis. Impide generar el anexo contractual en CRM B2B durante la contratación, bloqueando la culminación formal del alta documental. <strong>Es la incidencia de mayor severidad técnica de toda la release</strong>, requiriendo máxima prioridad en resolución.</li>
 </tbody></table></div>
+<div class="impact-analysis">
+<h3>Análisis de impactos:</h3>
+<ul>
+<li><strong>Error crítico en generación de anexos documentales</strong> (INC000004142300): incidencia de severidad 1-Crítica asignada a SQA_ALANI en estado En Análisis. Impide generar el anexo contractual en CRM B2B durante la contratación, bloqueando la culminación formal del alta documental. <strong>Es la incidencia de mayor severidad técnica de toda la release</strong>, requiriendo máxima prioridad en resolución.</li>
+</ul>
+</div>
 </section>
 <section class="project-block">
 <h2 class="section-title">Proyecto: PRJ-11512 Nuevas características porfolios SOHO 2026</h2>
@@ -152,10 +156,14 @@
 <td>Impacto no especificado</td>
 <td>Registro almacenado correctamente en tabla. El reposicionamiento del descuento requiere ejecución de batch planificado. Comportamiento es correcto: batch no ejecuta porque JP del proyecto no ha solicitado ventana de planificación.</td>
 </tr>
-<p class="project-description"><em>Análisis de impactos:</em></p>
+</tbody></table></div>
+<div class="impact-analysis">
+<h3>Análisis de impactos:</h3>
+<ul>
 <li><strong>Bloqueo en contratación de licencias y bienvenida de control horario</strong> (INC000004141171, INC000004139496): error REST en Excalibur (ORQERR-00000047) bloquea la contratación de licencias SVA en cliente Go, mientras que en altas convergentes no se remite el correo de bienvenida con las credenciales del servicio de control horario (previsto 30/09). Afecta la adopción operativa del portfolio SOHO.</li>
 <li><strong>Promoción Fibra Oro validada</strong> (INC000004141830): resuelta tras confirmar la persistencia correcta en base de datos del reposicionamiento de fibra a 1 Gbps, sin impacto residual para los clientes.</li>
-</tbody></table></div>
+</ul>
+</div>
 </section>
 <section class="project-block">
 <h2 class="section-title">Proyecto: PRJ-11715 LEGO MPV3 Baja Diferida en OTT's  LEGO</h2>
@@ -187,9 +195,13 @@
 <td>Cliente no recibe confirmación clara de qué contenidos se han dado de baja. Afecta a experiencia de usuario y trazabilidad de cancelaciones.</td>
 <td>Pendiente de solución</td>
 </tr>
-<p class="project-description"><em>Análisis de impactos:</em></p>
-<li><strong>Inconsistencias en bajas diferidas y comunicaciones de OTTs</strong> (INC000004141131, INC000004141551): órdenes retenidas en Boreal por atributo no permitido en BSCS para productos diferidos sin fecha, junto con omisión de contenidos específicos en la plantilla de email de baja de Netflix Estándar con anuncios. Ambas incidencias continúan en análisis por los equipos de soporte.</li>
 </tbody></table></div>
+<div class="impact-analysis">
+<h3>Análisis de impactos:</h3>
+<ul>
+<li><strong>Inconsistencias en bajas diferidas y comunicaciones de OTTs</strong> (INC000004141131, INC000004141551): órdenes retenidas en Boreal por atributo no permitido en BSCS para productos diferidos sin fecha, junto con omisión de contenidos específicos en la plantilla de email de baja de Netflix Estándar con anuncios. Ambas incidencias continúan en análisis por los equipos de soporte.</li>
+</ul>
+</div>
 </section>
 <section class="project-block">
 <h2 class="section-title">Proyecto: PRJ-11939 Contratación de Seguros en S8 contra OMS - FASE 1 <span class="piloto-badge">Piloto</span></h2>
@@ -221,10 +233,14 @@
 <td>Cliente sin confirmación de contratación de seguro. Afecta a proceso de postventa y experiencia del cliente.</td>
 <td>Pendiente de solución</td>
 </tr>
-<p class="project-description"><em>Análisis de impactos:</em></p>
+</tbody></table></div>
+<div class="impact-analysis">
+<h3>Análisis de impactos:</h3>
+<ul>
 <li><strong>Falta de notificaciones en contratación de seguros</strong> (INC000004141833): clientes sin recepción de emails de solicitud y confirmación de seguro contratado desde Teide/OMS, en análisis técnico.</li>
 <li><strong>Cotización de seguros subsanada</strong> (INC000004140554): solventado en producción mediante ajuste de configuración el error 500 inicial en llamadas a quoteManagement desde Erebor hacia Bolttech, permitiendo la cotización de pólizas.</li>
-</tbody></table></div>
+</ul>
+</div>
 </section>
 <section class="project-block">
 <h2 class="section-title">Proyecto: PRJ-10167 Redes privadas 5G - MPV2</h2>
@@ -247,9 +263,13 @@
 <td>Impacto no especificado</td>
 <td>Requisito no solicitado. El checkbox CAMPUS no era un requerimiento funcional validado para esta orden de modificación.</td>
 </tr>
-<p class="project-description"><em>Análisis de impactos:</em></p>
-<li><strong>Validación de requerimiento en ALC</strong> (INC000004141805): resuelta tras determinar que el checkbox CAMPUS no correspondía funcionalmente a las órdenes de modificación evaluadas, quedando operativo el flujo de redes privadas 5G.</li>
 </tbody></table></div>
+<div class="impact-analysis">
+<h3>Análisis de impactos:</h3>
+<ul>
+<li><strong>Validación de requerimiento en ALC</strong> (INC000004141805): resuelta tras determinar que el checkbox CAMPUS no correspondía funcionalmente a las órdenes de modificación evaluadas, quedando operativo el flujo de redes privadas 5G.</li>
+</ul>
+</div>
 </section>
 <section class="project-block">
 <h2 class="section-title">Proyecto: PRJ-11342 Bajas RCS por API</h2>
@@ -271,9 +291,13 @@
 <td>Integración con Google no operativa en producción. Prioridad Media/Urgencia Medio. Bloqueos Pendiente apertura GGCC (Gestión de Cambios) para aplicar modificación en WebLogic Requiere reinicio controlado de WebLogic y adaptadores MDW Siguiente acción SOP_TMC_SIGMA debe abrir GGCC para viernes-sábado con tarea previa de reinicio controlado de WebLogic y adaptadores MDW. Aplicar Hostname Verification => None en consola WebLogic (ejecución por Atlas_Soporte_srvJ2EE).</td>
 <td>Pendiente de solución</td>
 </tr>
-<p class="project-description"><em>Análisis de impactos:</em></p>
-<li><strong>Bloqueo de integración HTTPS con Google para bajas RCS</strong> (INC000004141134): error SSL/red bloquea peticiones de baja hacia Google desde producción. Con fecha prevista 03/10/2026 y escalado a soporte de red, <strong>es un punto de atención preferente</strong> para evitar desincronizaciones en la mensajería RCS.</li>
 </tbody></table></div>
+<div class="impact-analysis">
+<h3>Análisis de impactos:</h3>
+<ul>
+<li><strong>Bloqueo de integración HTTPS con Google para bajas RCS</strong> (INC000004141134): error SSL/red bloquea peticiones de baja hacia Google desde producción. Con fecha prevista 03/10/2026 y escalado a soporte de red, <strong>es un punto de atención preferente</strong> para evitar desincronizaciones en la mensajería RCS.</li>
+</ul>
+</div>
 </section>
 <section class="project-block">
 <h2 class="section-title">Proyecto: PRJ-11605 FASE 2 - Seguros MKP</h2>
@@ -296,9 +320,13 @@
 <td>Impacto no especificado</td>
 <td>Pendiente de solución</td>
 </tr>
-<p class="project-description"><em>Análisis de impactos:</em></p>
-<li><strong>Inoperatividad en botón de baja de seguro multimedia</strong> (INC000004140353): botón no funcional desde la sección Mis Seguros, impidiendo la autogestión de baja al usuario. Prevista resolución para el 06/10/2026.</li>
 </tbody></table></div>
+<div class="impact-analysis">
+<h3>Análisis de impactos:</h3>
+<ul>
+<li><strong>Inoperatividad en botón de baja de seguro multimedia</strong> (INC000004140353): botón no funcional desde la sección Mis Seguros, impidiendo la autogestión de baja al usuario. Prevista resolución para el 06/10/2026.</li>
+</ul>
+</div>
 </section>
 <section class="project-block">
 <h2 class="section-title">Proyecto: PRJ-11847 Mejoras Roles CRMB2B</h2>
@@ -320,9 +348,13 @@
 <td>3 clientes afectados con pedidos no procesados: 204112277, 204111160, 204113941. Bloqueo en flujo de provisión CRM4T→AFS. Hitos técnicos 28/09/2026: Detección de fallos en provisión de 3 pedidos desde CRM4T 28/09/2026: Confirmación de envío de mensaje XML a AFS con ACK recibido 28/09/2026: Identificación de error en bwInsertTIOrder - codContrato rechazado como no decimal 28/09/2026: Validación de que codContrato siempre fue alfanumérico (ej: E300011160445 en pedido 204063778 del 25/09) 28/09/2026: Escalada a DES_CRM4T por problema en código de aplicación 28/09/2026: Identificación de causa raíz en mapeo PRJ-11847 - campo numérico guardado como alfanumérico 29/09/2026: Solicitud de revisión de código de contratación CRMB2B (máx 14 dígitos numéricos) vs CRM4T (formato E3000) Bloqueos Validación de esquema AFS rechaza codContrato alfanumérico Discrepancia entre formato esperado (numérico) y formato enviado (alfanumérico E3000)</td>
 <td>Pendiente de solución</td>
 </tr>
-<p class="project-description"><em>Análisis de impactos:</em></p>
-<li><strong>Rechazo de solución en provisiones bloqueadas CRM4T-AFS</strong> (INC000004140862): solución rechazada por persistir 3 clientes con pedidos atascados (204112277, 204112340, 204112396) sin avanzar a provisión. Permanece como bloqueo operativo activo en la mesa de seguimiento.</li>
 </tbody></table></div>
+<div class="impact-analysis">
+<h3>Análisis de impactos:</h3>
+<ul>
+<li><strong>Rechazo de solución en provisiones bloqueadas CRM4T-AFS</strong> (INC000004140862): solución rechazada por persistir 3 clientes con pedidos atascados (204112277, 204112340, 204112396) sin avanzar a provisión. Permanece como bloqueo operativo activo en la mesa de seguimiento.</li>
+</ul>
+</div>
 </section>
 <section class="project-block">
 <h2 class="section-title">Proyecto: PRJ-11855 MPV 2 - Comprobante de Venta móvil + funcionalidades pendientes</h2>
@@ -345,9 +377,13 @@
 <td>Cliente B2B (Euskaltel Pyme) sin acceso a comprobante de venta tras cambio de servicio. Hitos técnicos 29/09/2026: Llamada de envío de CdV registrada en CRM B2B. Request GenericCommunicationMessage tipo COMMUNICATION_SENSITIVE_DOC procesado correctamente con respuesta 200. Escalado a SOP_ONURIS para revisión de entrega de email. Bloqueos Pendiente diagnóstico de SOP_ONURIS sobre fallo en envío de email desde servicio de comunicaciones.</td>
 <td>Pendiente de solución</td>
 </tr>
-<p class="project-description"><em>Análisis de impactos:</em></p>
-<li><strong>Fallo en entrega de email con Comprobante de Venta</strong> (INC000004141563): tras cambio de velocidad en fijo firmado vía SMS por cliente Pyme (MCPYM0440), no se entrega el correo con el enlace de descarga del documento CdV. Escalado a SOP_ONURIS para diagnóstico en el servicio de comunicaciones.</li>
 </tbody></table></div>
+<div class="impact-analysis">
+<h3>Análisis de impactos:</h3>
+<ul>
+<li><strong>Fallo en entrega de email con Comprobante de Venta</strong> (INC000004141563): tras cambio de velocidad en fijo firmado vía SMS por cliente Pyme (MCPYM0440), no se entrega el correo con el enlace de descarga del documento CdV. Escalado a SOP_ONURIS para diagnóstico en el servicio de comunicaciones.</li>
+</ul>
+</div>
 </section>
 <section class="project-block">
 <h2 class="section-title">Proyecto: PRJ-12001 Integración Marca Jazztel +Consents (PRJ-10957)</h2>
@@ -370,9 +406,13 @@
 <td>Consentimientos huérfanos en cliente 54097650 tras descarte de expediente 458097152. Inconsistencia entre estado de pedido y datos de privacidad. Bloqueos Escalado a +Consents: Error de autenticación en endpoint /v2/orgs/jazztel/customers/54097650/consents - roles insuficientes Siguiente acción Abrir OPIT a +Consents para revisar permisos de autenticación y validar roles asignados al servicio de descarte de consentimientos: [MCONS-719] Error en captacion desde CRM4T - INC000004139677 - Jira Next</td>
 <td>Pendiente de solución</td>
 </tr>
-<p class="project-description"><em>Análisis de impactos:</em></p>
-<li><strong>Consentimientos huérfanos tras descarte de pedido</strong> (INC000004139677): al descartar un pedido de alta stand alone en CRM4T tras modificar consentimientos, estos quedan asociados al cliente sin anularse, generando riesgo normativo LOPD en análisis.</li>
 </tbody></table></div>
+<div class="impact-analysis">
+<h3>Análisis de impactos:</h3>
+<ul>
+<li><strong>Consentimientos huérfanos tras descarte de pedido</strong> (INC000004139677): al descartar un pedido de alta stand alone en CRM4T tras modificar consentimientos, estos quedan asociados al cliente sin anularse, generando riesgo normativo LOPD en análisis.</li>
+</ul>
+</div>
 </section>
 <section class="project-block">
 <h2 class="section-title">Proyecto: PRJ-12058 PRJ-11469 FASE 1 Impacto en FdC</h2>
@@ -394,9 +434,13 @@
 <td>Imposibilidad de cargar campañas para cliente específico en Ficha Cliente MM. Caso aislado no afecta servicio general. Bloqueos Escalado entre equipos sin resolución: CERES indica caso aislado, DES_SOE_FDCMM requiere revisión específica del cliente</td>
 <td>Pendiente de solución</td>
 </tr>
-<p class="project-description"><em>Análisis de impactos:</em></p>
-<li><strong>Fallo en carga de campañas comerciales</strong> (INC000004139659): error IndexOutOfBounds en endpoint campaignsQualification impide la visualización de ofertas para clientes específicos en Ficha de Cliente (FdC).</li>
 </tbody></table></div>
+<div class="impact-analysis">
+<h3>Análisis de impactos:</h3>
+<ul>
+<li><strong>Fallo en carga de campañas comerciales</strong> (INC000004139659): error IndexOutOfBounds en endpoint campaignsQualification impide la visualización de ofertas para clientes específicos en Ficha de Cliente (FdC).</li>
+</ul>
+</div>
 </section>
 <section class="project-block">
 <h2 class="section-title">Proyecto: PRJ-12130 Fase 2 - Descuentos por volumen</h2>
@@ -418,9 +462,13 @@
 <td>Bloqueo en proceso de alta masiva de 31 líneas. Cliente MCPYM0641 sin poder completar provisioning. Hitos técnicos 28/09/2026: Escalado de SOP_TMC_SIGMA a DES_SOE_MICROSERVICIOS Bloqueos Respuesta genérica del servicio web sin información de validación específica (ZTID: 879cc8d3b0140b9a980ecf69a7fc181bf7f30147)</td>
 <td>Pendiente de solución</td>
 </tr>
-<p class="project-description"><em>Análisis de impactos:</em></p>
-<li><strong>Bloqueo en reserva de numeración para alta masiva</strong> (INC000004141314): error 804 al reservar 31 líneas en CRM B2B para cliente Pyme (MCPYM0435) por fallo en llamadas internas al gestor de numeración.</li>
 </tbody></table></div>
+<div class="impact-analysis">
+<h3>Análisis de impactos:</h3>
+<ul>
+<li><strong>Bloqueo en reserva de numeración para alta masiva</strong> (INC000004141314): error 804 al reservar 31 líneas en CRM B2B para cliente Pyme (MCPYM0435) por fallo en llamadas internas al gestor de numeración.</li>
+</ul>
+</div>
 </section>
 <section class="project-block">
 <h2 class="section-title">Proyecto: PRJ-11600 Bono compartido llamadas internacionales Big PYME</h2>
@@ -443,9 +491,13 @@
 <td>Impacto no especificado</td>
 <td>Se corrigió por configuración el envío de bonos en AFS hacia NABOO.</td>
 </tr>
-<p class="project-description"><em>Análisis de impactos:</em></p>
-<li><strong>Activación y comunicación de bono Big PYME subsanada</strong> (INC000004139692): corregido por configuración el envío de notificaciones y la tarificación del bono compartido de llamadas internacionales, sin incidencias pendientes.</li>
 </tbody></table></div>
+<div class="impact-analysis">
+<h3>Análisis de impactos:</h3>
+<ul>
+<li><strong>Activación y comunicación de bono Big PYME subsanada</strong> (INC000004139692): corregido por configuración el envío de notificaciones y la tarificación del bono compartido de llamadas internacionales, sin incidencias pendientes.</li>
+</ul>
+</div>
 </section>
 <section class="project-block">
 <h2 class="section-title">Proyecto: Sin proyecto asignado</h2>
@@ -566,11 +618,15 @@
 <td>Impacto no especificado</td>
 <td>Pendiente de solución</td>
 </tr>
-<p class="project-description"><em>Análisis de impactos:</em></p>
+</tbody></table></div>
+<div class="impact-analysis">
+<h3>Análisis de impactos:</h3>
+<ul>
 <li><strong>Bloqueos activos en altas y validación de carritos</strong> (INC000004140336, INC000004140329, INC000004142246): fallos funcionales en volcado a facturación de Big Pyme (longitud de GroupID en Kenan), falta de SLA en AFS para clientes con pasaporte, y error al validar contratos en carritos comerciales. Requieren atención preferente en mesa técnica.</li>
 <li><strong>Incidencias operativas en análisis</strong> (INC000004139387, INC000004140888): mapeo incorrecto de líneas móviles en consultas de Pangea y exceso de cuota configurada en API de inventario de seguros (ACME_ORANGE_OSP) bajo monitorización.</li>
 <li><strong>Incidencias resueltas o validadas como comportamiento esperado</strong> (INC000004141270, INC000004140503, INC000004140504, INC000004141137, INC000004140338, INC000004139385, INC000004141267): siete incidencias solventadas o verificadas con éxito en producción (envío de VPT en Teide corregido por Hermes, captura de ICCID/firma digital en Sol Pangea, pedidos del flujo del 9, tipología tienda en CRM4T, beneficio Djingo en Watson y creación de cliente en CRM B2B).</li>
-</tbody></table></div>
+</ul>
+</div>
 </section>
     </main>
     <script src="/dashboards/assets/topbar.js"></script>
