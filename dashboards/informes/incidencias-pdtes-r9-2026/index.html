@@ -136,6 +136,30 @@
         .cell-subblock-text {
             color: inherit;
         }
+        .cell-hitos-list {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            margin-top: 4px;
+        }
+        .cell-hito-item {
+            font-size: 11.5px;
+            line-height: 1.45;
+            color: #3A362F;
+            padding-left: 14px;
+            position: relative;
+        }
+        .cell-hito-item::before {
+            content: "•";
+            position: absolute;
+            left: 2px;
+            color: #8A857C;
+            font-weight: 800;
+        }
+        .hito-date {
+            font-weight: 700;
+            color: #1A1917;
+        }
     </style>
 </head>
 <body>
@@ -407,7 +431,15 @@
 <td>DSI_ANALISIS_AURORA_ACC</td>
 <td><span class="status-badge status-rechazada">Solución Rechazada (28/09/2026)</span></td>
 <td>Tras grabar altas desde CRM4T, las provisiones no llegan a AFS. El campo codContrato se envía como alfanumérico (ej: E30002972000278952) pero AFS espera valor numérico decimal, causando error de validación en bwInsertTIOrder.</td>
-<td><div class="cell-main">3 clientes afectados con pedidos no procesados: 204112277, 204111160, 204113941. Bloqueo en flujo de provisión CRM4T→AFS.</div><div class="cell-subblock cell-hitos"><span class="cell-tag tag-hitos">Hitos técnicos</span><span class="cell-subblock-text">28/09/2026: Detección de fallos en provisión de 3 pedidos desde CRM4T 28/09/2026: Confirmación de envío de mensaje XML a AFS con ACK recibido 28/09/2026: Identificación de error en bwInsertTIOrder - codContrato rechazado como no decimal 28/09/2026: Validación de que codContrato siempre fue alfanumérico (ej: E300011160445 en pedido 204063778 del 25/09) 28/09/2026: Escalada a DES_CRM4T por problema en código de aplicación 28/09/2026: Identificación de causa raíz en mapeo PRJ-11847 - campo numérico guardado como alfanumérico 29/09/2026: Solicitud de revisión de código de contratación CRMB2B (máx 14 dígitos numéricos) vs CRM4T (formato E3000)</span></div><div class="cell-subblock cell-bloqueos"><span class="cell-tag tag-bloqueos">Bloqueos</span><span class="cell-subblock-text">Validación de esquema AFS rechaza codContrato alfanumérico Discrepancia entre formato esperado (numérico) y formato enviado (alfanumérico E3000)</span></div></td>
+<td><div class="cell-main">3 clientes afectados con pedidos no procesados: 204112277, 204111160, 204113941. Bloqueo en flujo de provisión CRM4T→AFS.</div><div class="cell-subblock cell-hitos"><span class="cell-tag tag-hitos">Hitos técnicos</span><div class="cell-hitos-list">
+<div class="cell-hito-item"><span class="hito-date">28/09/2026:</span> Detección de fallos en provisión de 3 pedidos desde CRM4T</div>
+<div class="cell-hito-item"><span class="hito-date">28/09/2026:</span> Confirmación de envío de mensaje XML a AFS con ACK recibido</div>
+<div class="cell-hito-item"><span class="hito-date">28/09/2026:</span> Identificación de error en bwInsertTIOrder - codContrato rechazado como no decimal</div>
+<div class="cell-hito-item"><span class="hito-date">28/09/2026:</span> Validación de que codContrato siempre fue alfanumérico (ej: E300011160445 en pedido 204063778 del 25/09)</div>
+<div class="cell-hito-item"><span class="hito-date">28/09/2026:</span> Escalada a DES_CRM4T por problema en código de aplicación</div>
+<div class="cell-hito-item"><span class="hito-date">28/09/2026:</span> Identificación de causa raíz en mapeo PRJ-11847 - campo numérico guardado como alfanumérico</div>
+<div class="cell-hito-item"><span class="hito-date">29/09/2026:</span> Solicitud de revisión de código de contratación CRMB2B (máx 14 dígitos numéricos) vs CRM4T (formato E3000)</div>
+</div></div><div class="cell-subblock cell-bloqueos"><span class="cell-tag tag-bloqueos">Bloqueos</span><span class="cell-subblock-text">Validación de esquema AFS rechaza codContrato alfanumérico Discrepancia entre formato esperado (numérico) y formato enviado (alfanumérico E3000)</span></div></td>
 <td>Pendiente de solución</td>
 </tr>
 </tbody></table></div>
@@ -436,7 +468,9 @@
 <td>SOP_CRMB2B</td>
 <td><span class="status-badge status-en-progreso">En Análisis</span></td>
 <td>Cliente MCPYM0440 recibe SMS y firma CdV tras cambio de velocidad en fijo, pero no recibe email con enlace de descarga del comprobante. Carrito CAR-20262809-010049.</td>
-<td><div class="cell-main">Cliente B2B (Euskaltel Pyme) sin acceso a comprobante de venta tras cambio de servicio.</div><div class="cell-subblock cell-hitos"><span class="cell-tag tag-hitos">Hitos técnicos</span><span class="cell-subblock-text">29/09/2026: Llamada de envío de CdV registrada en CRM B2B. Request GenericCommunicationMessage tipo COMMUNICATION_SENSITIVE_DOC procesado correctamente con respuesta 200. Escalado a SOP_ONURIS para revisión de entrega de email.</span></div><div class="cell-subblock cell-bloqueos"><span class="cell-tag tag-bloqueos">Bloqueos</span><span class="cell-subblock-text">Pendiente diagnóstico de SOP_ONURIS sobre fallo en envío de email desde servicio de comunicaciones.</span></div></td>
+<td><div class="cell-main">Cliente B2B (Euskaltel Pyme) sin acceso a comprobante de venta tras cambio de servicio.</div><div class="cell-subblock cell-hitos"><span class="cell-tag tag-hitos">Hitos técnicos</span><div class="cell-hitos-list">
+<div class="cell-hito-item"><span class="hito-date">29/09/2026:</span> Llamada de envío de CdV registrada en CRM B2B. Request GenericCommunicationMessage tipo COMMUNICATION_SENSITIVE_DOC procesado correctamente con respuesta 200. Escalado a SOP_ONURIS para revisión de entrega de email.</div>
+</div></div><div class="cell-subblock cell-bloqueos"><span class="cell-tag tag-bloqueos">Bloqueos</span><span class="cell-subblock-text">Pendiente diagnóstico de SOP_ONURIS sobre fallo en envío de email desde servicio de comunicaciones.</span></div></td>
 <td>Pendiente de solución</td>
 </tr>
 </tbody></table></div>
@@ -521,7 +555,9 @@
 <td>GC FACTURACION BBDD</td>
 <td><span class="status-badge status-en-progreso">En Análisis</span></td>
 <td>Error código 804 (Web service call failed) al intentar reservar eSIM en alta masiva de 31 líneas. Petición rechazada con descripción genérica sin detalles de validación.</td>
-<td><div class="cell-main">Bloqueo en proceso de alta masiva de 31 líneas. Cliente MCPYM0641 sin poder completar provisioning.</div><div class="cell-subblock cell-hitos"><span class="cell-tag tag-hitos">Hitos técnicos</span><span class="cell-subblock-text">28/09/2026: Escalado de SOP_TMC_SIGMA a DES_SOE_MICROSERVICIOS</span></div><div class="cell-subblock cell-bloqueos"><span class="cell-tag tag-bloqueos">Bloqueos</span><span class="cell-subblock-text">Respuesta genérica del servicio web sin información de validación específica (ZTID: 879cc8d3b0140b9a980ecf69a7fc181bf7f30147)</span></div></td>
+<td><div class="cell-main">Bloqueo en proceso de alta masiva de 31 líneas. Cliente MCPYM0641 sin poder completar provisioning.</div><div class="cell-subblock cell-hitos"><span class="cell-tag tag-hitos">Hitos técnicos</span><div class="cell-hitos-list">
+<div class="cell-hito-item"><span class="hito-date">28/09/2026:</span> Escalado de SOP_TMC_SIGMA a DES_SOE_MICROSERVICIOS</div>
+</div></div><div class="cell-subblock cell-bloqueos"><span class="cell-tag tag-bloqueos">Bloqueos</span><span class="cell-subblock-text">Respuesta genérica del servicio web sin información de validación específica (ZTID: 879cc8d3b0140b9a980ecf69a7fc181bf7f30147)</span></div></td>
 <td>Pendiente de solución</td>
 </tr>
 </tbody></table></div>
@@ -587,7 +623,9 @@
 <td>DES_SOE_PANGEA</td>
 <td><span class="status-badge status-en-progreso">En Análisis</span></td>
 <td>En flujo de Evolución a pack (porta fijo + porta móvil + alta móvil), el módulo 'Consulta de pedidos enviados' muestra incorrectamente ambas líneas móviles como altas en lugar de porta + alta. CRM4T refleja correctamente los actos (porta móvil + alta móvil).</td>
-<td><div class="cell-main">Visualización incorrecta de detalles de pedidos en PANGEA. Datos correctos en backend (CRM4T) pero inconsistencia en presentación frontend afecta validación de órdenes.</div><div class="cell-subblock cell-hitos"><span class="cell-tag tag-hitos">Hitos técnicos</span><span class="cell-subblock-text">27/09/2026: Reporte de discrepancia en visualización de actos comerciales en Gestor de Órdenes con cliente de prueba OJAZ00942</span></div><div class="cell-subblock cell-siguiente-accion"><span class="cell-tag tag-siguiente-accion">Siguiente acción</span><span class="cell-subblock-text">Validar lógica de mapeo de actos en módulo 'Consulta de pedidos enviados' de PANGEA. Revisar transformación de datos entre CRM4T y presentación frontend. 29/09: Quitamos de Release</span></div></td>
+<td><div class="cell-main">Visualización incorrecta de detalles de pedidos en PANGEA. Datos correctos en backend (CRM4T) pero inconsistencia en presentación frontend afecta validación de órdenes.</div><div class="cell-subblock cell-hitos"><span class="cell-tag tag-hitos">Hitos técnicos</span><div class="cell-hitos-list">
+<div class="cell-hito-item"><span class="hito-date">27/09/2026:</span> Reporte de discrepancia en visualización de actos comerciales en Gestor de Órdenes con cliente de prueba OJAZ00942</div>
+</div></div><div class="cell-subblock cell-siguiente-accion"><span class="cell-tag tag-siguiente-accion">Siguiente acción</span><span class="cell-subblock-text">Validar lógica de mapeo de actos en módulo 'Consulta de pedidos enviados' de PANGEA. Revisar transformación de datos entre CRM4T y presentación frontend. 29/09: Quitamos de Release</span></div></td>
 <td>Pendiente de solución</td>
 </tr>
 <tr>
@@ -596,7 +634,11 @@
 <td>DSI_ANALISIS_AURORA_ACC</td>
 <td><span class="status-badge status-pendiente">Pendiente (Estimado: sin fecha)</span></td>
 <td>Error en generación de OS desde CRMB2B. Tabla T_CFG_ACTIVITY_SLA sin registro para combinación orderType=ALTA y comercialOperation=PROVIDE. Cliente enviado con tipo documento PASAPORTE (autónomo) pero sin configuración en BBDD de AFS.</td>
-<td><div class="cell-main">Bloqueo en procesamiento de alta BIGPYME. Orden 263949626 no genera OS.</div><div class="cell-subblock cell-hitos"><span class="cell-tag tag-hitos">Hitos técnicos</span><span class="cell-subblock-text">27/09/2026: Identificación de falta de configuración en tabla T_CFG_ACTIVITY_SLA 27/09/2026: Confirmación de cliente como autónomo (DocumentType=PASAPORTE) sin configuración en BBDD 28/09/2026: Detección de condición en AFS con orden incorrecta. Evaluación de autónomo no contempla segmento PYME. Cambio impactaría a todos los clientes desde CRMB2B tratándolos como PYME independientemente de segmento. Pendiente consulta a negocio.</span></div></td>
+<td><div class="cell-main">Bloqueo en procesamiento de alta BIGPYME. Orden 263949626 no genera OS.</div><div class="cell-subblock cell-hitos"><span class="cell-tag tag-hitos">Hitos técnicos</span><div class="cell-hitos-list">
+<div class="cell-hito-item"><span class="hito-date">27/09/2026:</span> Identificación de falta de configuración en tabla T_CFG_ACTIVITY_SLA</div>
+<div class="cell-hito-item"><span class="hito-date">27/09/2026:</span> Confirmación de cliente como autónomo (DocumentType=PASAPORTE) sin configuración en BBDD</div>
+<div class="cell-hito-item"><span class="hito-date">28/09/2026:</span> Detección de condición en AFS con orden incorrecta. Evaluación de autónomo no contempla segmento PYME. Cambio impactaría a todos los clientes desde CRMB2B tratándolos como PYME independientemente de segmento. Pendiente consulta a negocio.</div>
+</div></div></td>
 <td>Pendiente de solución</td>
 </tr>
 <tr>
@@ -641,7 +683,10 @@
 <td>SOP_TMC_ACME</td>
 <td><span class="status-badge status-en-progreso">En Análisis</span></td>
 <td>Consumidor ACME_ORANGE_OSP ha superado cuota configurada de 3500 peticiones/hora en API excProductInventoryInsurance, alcanzando pico de 3606 peticiones.</td>
-<td><div class="cell-main">Exceso de consumo en API de inventario de seguros. Riesgo de pérdida de peticiones si no se regulariza tráfico o aumenta cuota.</div><div class="cell-subblock cell-hitos"><span class="cell-tag tag-hitos">Hitos técnicos</span><span class="cell-subblock-text">28/09/2026: Detección de superación de cuota mediante incidencia INC000004140964 28/09/2026: Escalado a consumidor para revisión de pico anómalo y definición de solución (aumento cuota, regularización o exclusión de alerta)</span></div><div class="cell-subblock cell-bloqueos"><span class="cell-tag tag-bloqueos">Bloqueos</span><span class="cell-subblock-text">Requiere decisión del consumidor: aumento de cuota a 4000 pet/hora (con petición formal en Confluence), regularización de tráfico o desactivación de alarma</span></div></td>
+<td><div class="cell-main">Exceso de consumo en API de inventario de seguros. Riesgo de pérdida de peticiones si no se regulariza tráfico o aumenta cuota.</div><div class="cell-subblock cell-hitos"><span class="cell-tag tag-hitos">Hitos técnicos</span><div class="cell-hitos-list">
+<div class="cell-hito-item"><span class="hito-date">28/09/2026:</span> Detección de superación de cuota mediante incidencia INC000004140964</div>
+<div class="cell-hito-item"><span class="hito-date">28/09/2026:</span> Escalado a consumidor para revisión de pico anómalo y definición de solución (aumento cuota, regularización o exclusión de alerta)</div>
+</div></div><div class="cell-subblock cell-bloqueos"><span class="cell-tag tag-bloqueos">Bloqueos</span><span class="cell-subblock-text">Requiere decisión del consumidor: aumento de cuota a 4000 pet/hora (con petición formal en Confluence), regularización de tráfico o desactivación de alarma</span></div></td>
 <td>Pendiente de solución</td>
 </tr>
 <tr>
