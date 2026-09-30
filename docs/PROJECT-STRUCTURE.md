@@ -95,12 +95,13 @@ dashboards/
 ├── massive-incidents/index.html
 ├── postmortem/index.html
 ├── release-kpis/             # index.html, app.js, style.css, colors_and_type.css, releases-data.js
-├── assets/                   # Compartido por los 4 dashboards
+├── assets/                   # Compartido por los dashboards
+│   ├── orange-logo.svg
 │   ├── masorange-logo-negative.svg
 │   ├── masorange-logo-positive.svg
 │   ├── masorange-mark.svg
 │   ├── tokens.css            # Variables de diseño (única fuente de tokens)
-│   ├── topbar.css            # Barra superior MASORANGE
+│   ├── topbar.css            # Barra superior con logo
 │   ├── topbar.js             # Inyecta la barra superior con la nav activa marcada
 │   └── shared.css            # Framework de los 3 dashboards "clásicos" (importa tokens.css/topbar.css)
 └── README.md

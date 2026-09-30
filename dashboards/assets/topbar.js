@@ -35,7 +35,7 @@
     }).join('');
     root.innerHTML =
       '<div class="mo-topbar">' +
-        '<img src="/dashboards/assets/masorange-logo-positive.svg" alt="MASORANGE">' +
+        '<img src="/dashboards/assets/orange-logo.svg" alt="Orange">' +
         '<div class="mo-topbar-sep"></div>' +
         '<span class="mo-topbar-dept">Customer &amp; Service Operations</span>' +
         '<nav class="mo-topbar-nav">' + navLinks + '</nav>' +

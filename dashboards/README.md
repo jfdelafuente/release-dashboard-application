@@ -20,11 +20,12 @@ dashboards/
 │   ├── colors_and_type.css              # Tipografía global propia de este dashboard
 │   └── style.css
 ├── assets/                               # Compartido por TODOS los dashboards
-│   ├── masorange-logo-positive.svg      # Logo (fondo oscuro)
-│   ├── masorange-logo-negative.svg      # Logo (fondo claro)
-│   ├── masorange-mark.svg               # Isotipo reducido
-│   ├── tokens.css                       # Variables de diseño MASORANGE — fuente única de tokens
-│   ├── topbar.css                       # Barra superior MASORANGE (usada por los 4 dashboards)
+│   ├── orange-logo.svg                  # Logo Orange oficial
+│   ├── masorange-logo-positive.svg      # Logo (retrocompatibilidad)
+│   ├── masorange-logo-negative.svg      # Logo (retrocompatibilidad)
+│   ├── masorange-mark.svg               # Isotipo
+│   ├── tokens.css                       # Variables de diseño — fuente única de tokens
+│   ├── topbar.css                       # Barra superior (usada por los dashboards)
 │   ├── topbar.js                        # Inyecta la barra superior con la pestaña activa marcada
 │   └── shared.css                       # Resto del framework de los 3 dashboards "clásicos"
 └── README.md                            # Este archivo

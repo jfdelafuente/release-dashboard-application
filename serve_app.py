@@ -31,9 +31,66 @@ class CustomHTTPHandler(http.server.SimpleHTTPRequestHandler):
     # Asegurar que sirve desde el PROJECT_ROOT
     directory = str(PROJECT_ROOT)
 
+    def proxy_to_nextjs(self):
+        target_url = f"http://localhost:3001{self.path}"
+        try:
+            excluded = {'host', 'connection', 'keep-alive', 'accept-encoding', 'content-length'}
+            headers = {k: v for k, v in self.headers.items() if k.lower() not in excluded}
+            headers['Connection'] = 'close'
+
+            req = urllib.request.Request(
+                target_url,
+                method=self.command,
+                headers=headers,
+            )
+            if self.command in ('POST', 'PUT', 'PATCH'):
+                content_length = int(self.headers.get('Content-Length', 0))
+                req.data = self.rfile.read(content_length) if content_length > 0 else None
+
+            with urllib.request.urlopen(req, timeout=120) as resp:
+                self.send_response(resp.status)
+                for header, val in resp.getheaders():
+                    if header.lower() not in ('transfer-encoding', 'content-length', 'connection'):
+                        self.send_header(header, val)
+                self.send_header('Connection', 'close')
+                content = resp.read()
+                self.send_header('Content-Length', str(len(content)))
+                self.end_headers()
+                self.wfile.write(content)
+        except urllib.error.HTTPError as e:
+            self.send_response(e.code)
+            for header, val in e.headers.items():
+                if header.lower() not in ('transfer-encoding', 'content-length', 'connection'):
+                    self.send_header(header, val)
+            self.send_header('Connection', 'close')
+            body = e.read()
+            self.send_header('Content-Length', str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+        except Exception as e:
+            print(f"  Error proxy Next.js: {e}")
+            msg = (
+                "<!DOCTYPE html><html><head><meta charset='utf-8'><title>502 Bad Gateway - Gestión de Problemas</title>"
+                "<style>body{font-family:sans-serif;max-width:600px;margin:50px auto;line-height:1.6;color:#222;}"
+                "code,pre{background:#f4f4f4;padding:3px 6px;border-radius:4px;}pre{padding:12px;}</style></head><body>"
+                "<h2>502 - Servicio Gestión de Problemas no disponible</h2>"
+                "<p>No se pudo conectar con el servidor Next.js en <code>http://localhost:3001</code>.</p>"
+                "<p>Para arrancarlo en local:</p>"
+                "<pre>cd ../gestion-problemas-dashboard\n$env:NEXT_PUBLIC_BASE_PATH='/problemas'\nnpm run dev -- -p 3001</pre>"
+                "</body></html>"
+            ).encode('utf-8')
+            self.send_response(502)
+            self.send_header('Content-Type', 'text/html; charset=utf-8')
+            self.send_header('Content-Length', str(len(msg)))
+            self.send_header('Connection', 'close')
+            self.end_headers()
+            self.wfile.write(msg)
+
     def do_POST(self):
         print(f"POST {self.path}")
-        if self.path == '/api/upload':
+        if self.path.startswith('/problemas'):
+            self.proxy_to_nextjs()
+        elif self.path == '/api/upload':
             self.handle_upload()
         elif self.path == f'{REPORTS_PATH_PREFIX}batch':
             self.handle_reports_batch()
@@ -150,6 +207,10 @@ class CustomHTTPHandler(http.server.SimpleHTTPRequestHandler):
             self.handle_report_download()
             return
 
+        if self.path.startswith('/problemas'):
+            self.proxy_to_nextjs()
+            return
+
         # Si es una petición para index.json, sirvirlo dinámicamente
         if 'index.json' in self.path:
             try:
@@ -183,6 +244,7 @@ print(f"Release Dashboard Server")
 print(f"Sirviendo desde: {PROJECT_ROOT}")
 print(f"URL: http://localhost:{PORT}/")
 print(f"Dashboard Portal: http://localhost:{PORT}/dashboards/portal/")
+print(f"Gestión de Problemas (proxy :3001): http://localhost:{PORT}/problemas")
 print(f"\nPresiona Ctrl+C para detener el servidor\n")
 
 with socketserver.TCPServer(("", PORT), CustomHTTPHandler) as httpd:
