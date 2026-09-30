@@ -3,501 +3,816 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Release Dashboard - Portal Principal</title>
+    <title>Portal de Fiabilidad y Releases - Customer &amp; Service Operations</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/dashboards/assets/shared.css">
     <style>
-        /* Estilos específicos de esta página. El framework compartido
-           (barra superior, reset, telemetría numérica, foco/animación)
-           vive en assets/shared.css. */
-        body {
-            min-height: 100vh;
+        :root {
+            --portal-bg: #F5F3F0;
+            --portal-card-bg: #FFFFFF;
+            --portal-text-main: #0C0B09;
+            --portal-text-muted: #4A4640;
+            --portal-text-light: #6E6860;
+            --portal-border: #DEDAD3;
+            --portal-border-subtle: #EAE6DF;
+            --portal-orange: #FF7900;
+            --portal-orange-dark: #C95600;
+            --portal-orange-light: #FFF4E8;
+            --portal-focus: #FF7900;
+            --radius-md: 10px;
+            --radius-lg: 14px;
+            --shadow-subtle: 0 2px 6px rgba(12, 11, 9, 0.04);
+            --shadow-card-hover: 0 8px 20px rgba(12, 11, 9, 0.08);
         }
 
-        .stat-card .value, .data-file .details {
-            font-family: var(--mono);
-            font-variant-numeric: tabular-nums;
-            font-feature-settings: "tnum" 1;
+        body {
+            background-color: var(--portal-bg);
+            color: var(--portal-text-main);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            line-height: 1.5;
+        }
+
+        /* Skip link accesible para navegación por teclado */
+        .skip-link {
+            position: absolute;
+            top: -100px;
+            left: 20px;
+            background: var(--portal-text-main);
+            color: #FFFFFF;
+            padding: 10px 18px;
+            font-weight: 700;
+            font-size: 14px;
+            border-radius: 6px;
+            z-index: 10000;
+            text-decoration: none;
+            transition: top 0.2s ease-out;
+            border: 2px solid var(--portal-orange);
+        }
+        .skip-link:focus {
+            top: 16px;
+        }
+
+        /* Foco visible y accesible */
+        a:focus-visible,
+        button:focus-visible,
+        select:focus-visible,
+        summary:focus-visible {
+            outline: 3px solid var(--portal-focus) !important;
+            outline-offset: 3px !important;
         }
 
         .container {
-            max-width: 1200px;
+            max-width: 1240px;
+            width: 100%;
             margin: 0 auto;
-            padding: 20px;
+            padding: 0 24px;
+            box-sizing: border-box;
         }
 
-        /* Header */
-        header {
-            background: #000;
-            color: #fff;
-            padding: 32px 20px 28px;
-            margin-bottom: 24px;
-            animation: slideDown 0.5s var(--ease);
-        }
-
-        header .header-inner {
-            max-width: 1160px;
-            margin: 0 auto;
-        }
-
-        header .eyebrow-light {
-            display: inline-block;
-            font-size: 11px;
-            font-weight: 600;
-            letter-spacing: 0.14em;
-            text-transform: uppercase;
-            color: #FF7900;
-            margin-bottom: 16px;
-        }
-
-        header h1 {
-            font-size: clamp(1.7rem, 3.2vw, 2.4rem);
-            font-weight: 800;
-            color: #fff;
-            letter-spacing: -0.02em;
-            line-height: 1.1;
-            margin-bottom: 12px;
-        }
-
-        /* Stats Section */
-        .stats {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-            gap: 12px;
-            margin-bottom: 32px;
-        }
-
-        .stat-card {
+        /* Cabecera compacta y no intrusiva */
+        .portal-header {
             background: #FFFFFF;
-            border: 1px solid #E2DDD5;
-            border-radius: 10px;
-            padding: 12px;
-            text-align: center;
-            transition: all 0.25s var(--ease);
-            animation: fadeIn 0.6s ease-out;
+            border-bottom: 1px solid var(--portal-border);
+            padding: 18px 0;
+            margin-bottom: 24px;
         }
 
-        .stat-card:hover {
-            border-color: #FF7900;
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
-            transform: translateY(-3px);
+        .portal-header-inner {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+            flex-wrap: wrap;
         }
 
-        .stat-card .value {
-            font-size: 1.6em;
+        .portal-eyebrow {
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: var(--portal-orange-dark);
+            margin-bottom: 2px;
+        }
+
+        .portal-title {
+            font-size: 21px;
             font-weight: 800;
-            color: #FF7900;
-            margin: 4px 0;
+            letter-spacing: -0.02em;
+            color: var(--portal-text-main);
+            margin: 0;
+            line-height: 1.2;
         }
 
-        .stat-card .label {
-            color: #8A857C;
-            font-size: 0.8em;
+        .portal-header-meta {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12.5px;
+            color: var(--portal-text-muted);
+            background: var(--portal-bg);
+            border: 1px solid var(--portal-border);
+            padding: 6px 14px;
+            border-radius: 20px;
         }
 
-        /* Dashboards Grid */
-        .dashboards-section h2 {
-            font-size: 1.5em;
-            margin-bottom: 18px;
-            color: #0C0B09;
+        .status-live-indicator {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background-color: #2E7D32;
+            box-shadow: 0 0 0 3px rgba(46, 125, 50, 0.18);
+            display: inline-block;
         }
 
-        .dashboards-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        /* Separador entre filas de contenido */
+        .row-divider {
+            display: flex;
+            align-items: center;
             gap: 14px;
+            margin: 12px 0 16px;
+        }
+
+        .row-divider-label {
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: var(--portal-text-light);
+            white-space: nowrap;
+        }
+
+        .row-divider-line {
+            flex-grow: 1;
+            height: 1px;
+            background-color: var(--portal-border-subtle);
+        }
+
+        /* Línea 1: 3 columnas (Operación y Monitorización) */
+        .row-operational {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-bottom: 28px;
+        }
+
+        /* Línea 2: 2 columnas (KPIs de Release y Selector de Informes) */
+        .row-releases {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
             margin-bottom: 36px;
         }
 
-        .dashboard-card {
-            background: #FFFFFF;
-            border: 1px solid #E2DDD5;
-            border-radius: 12px;
-            overflow: hidden;
-            transition: all 0.25s var(--ease);
-            animation: fadeIn 0.6s ease-out;
-            cursor: pointer;
+        /* Tarjeta base accesible */
+        .card {
+            background: var(--portal-card-bg);
+            border: 1.5px solid var(--portal-border);
+            border-radius: var(--radius-lg);
+            padding: 22px 24px 20px;
             display: flex;
             flex-direction: column;
-            color: inherit;
+            justify-content: space-between;
+            position: relative;
             text-decoration: none;
+            color: inherit;
+            box-shadow: var(--shadow-subtle);
+            transition: transform 0.16s ease-out, border-color 0.16s ease-out, box-shadow 0.16s ease-out;
         }
 
-        .dashboard-card:hover {
-            border-color: #FF7900;
-            transform: translateY(-6px);
-            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.08);
+        .card:hover {
+            transform: translateY(-3px);
+            border-color: var(--portal-orange);
+            box-shadow: var(--shadow-card-hover);
         }
 
-        .dashboard-header {
-            background: #FF7900;
-            padding: 12px 14px;
-            color: white;
+        .card:focus-visible {
+            border-color: var(--portal-orange);
+        }
+
+        .card-top {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 14px;
+            margin-bottom: 12px;
+        }
+
+        .card-icon-wrapper {
+            width: 42px;
+            height: 42px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
             flex-shrink: 0;
+            background: #F5F3F0;
+            border: 1px solid var(--portal-border-subtle);
         }
 
-        .dashboard-header h3 {
-            font-size: 1.05em;
-            margin-bottom: 2px;
+        .card-tag {
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            padding: 3px 9px;
+            border-radius: 6px;
+            white-space: nowrap;
+        }
+
+        /* Badges semánticos de alto contraste */
+        .tag-realtime {
+            background: #E8F5E9;
+            color: #1B5E20;
+            border: 1px solid #C8E6C9;
+        }
+
+        .tag-jira {
+            background: #EDE7F6;
+            color: #4A148C;
+            border: 1px solid #D1C4E9;
+        }
+
+        .tag-active {
+            background: #FFF3E0;
+            color: #B24000;
+            border: 1px solid #FFE0B2;
+        }
+
+        .tag-report {
+            background: #E3F2FD;
+            color: #0D47A1;
+            border: 1px solid #BBDEFB;
+        }
+
+        .tag-history {
+            background: #ECEFF1;
+            color: #37474F;
+            border: 1px solid #CFD8DC;
+        }
+
+        .card-title {
+            font-size: 17px;
+            font-weight: 700;
+            color: var(--portal-text-main);
+            margin: 0 0 4px 0;
+            line-height: 1.25;
+            letter-spacing: -0.015em;
+        }
+
+        .card-subtitle {
+            font-size: 12.5px;
+            font-weight: 600;
+            color: var(--portal-orange-dark);
+            margin: 0 0 10px 0;
+            display: block;
+        }
+
+        .card-desc {
+            font-size: 13.5px;
+            color: var(--portal-text-muted);
+            margin: 0 0 16px 0;
+            line-height: 1.48;
+            flex-grow: 1;
+        }
+
+        .card-action {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--portal-orange-dark);
+            border-top: 1px solid var(--portal-border-subtle);
+            padding-top: 13px;
+            margin-top: auto;
+            text-decoration: none;
+            transition: gap 0.15s ease-out, color 0.15s ease-out;
+        }
+
+        .card:hover .card-action,
+        .card-action:hover {
+            gap: 10px;
+            color: var(--portal-orange);
+        }
+
+        .card-action svg {
+            transition: transform 0.15s ease-out;
+        }
+        .card:hover .card-action svg,
+        .card-action:hover svg {
+            transform: translateX(3px);
+        }
+
+        /* Estilos del selector interactivo de releases */
+        .release-select-group {
+            margin: 10px 0 14px;
+        }
+
+        .release-select-label {
+            display: block;
+            font-size: 11.5px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--portal-text-light);
+            margin-bottom: 6px;
+        }
+
+        .select-wrapper {
+            position: relative;
+        }
+
+        .release-select-control {
+            width: 100%;
+            padding: 10px 36px 10px 14px;
+            font-size: 13.5px;
+            font-weight: 600;
+            font-family: inherit;
+            color: var(--portal-text-main);
+            background-color: var(--portal-bg);
+            border: 1.5px solid var(--portal-border);
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            appearance: none;
+            -webkit-appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%234A4640' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 14px center;
+            transition: border-color 0.15s ease, background-color 0.15s ease;
+        }
+
+        .release-select-control:hover {
+            border-color: var(--portal-orange);
+            background-color: #FFFFFF;
+        }
+
+        /* Panel de Estado y Datasets */
+        .system-status-section {
+            background: #FFFFFF;
+            border: 1px solid var(--portal-border);
+            border-radius: var(--radius-lg);
+            padding: 18px 22px;
+            margin-bottom: 36px;
+            box-shadow: var(--shadow-subtle);
+        }
+
+        .status-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 14px;
+            margin-bottom: 14px;
+        }
+
+        .status-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--portal-text-main);
+            margin: 0;
             display: flex;
             align-items: center;
             gap: 8px;
         }
 
-        .dashboard-icon {
-            font-size: 1.2em;
+        .status-cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 12px;
         }
 
-        .dashboard-header p {
-            font-size: 0.78em;
-            opacity: 0.95;
-        }
-
-        .dashboard-content {
-            padding: 12px 14px 14px;
-            flex-grow: 1;
+        .status-mini-card {
+            background: var(--portal-bg);
+            border: 1px solid var(--portal-border);
+            border-radius: var(--radius-md);
+            padding: 10px 14px;
             display: flex;
             flex-direction: column;
+            gap: 2px;
         }
 
-        .dashboard-description {
-            color: #5C5852;
-            margin-bottom: 10px;
-            font-size: 0.85em;
-            line-height: 1.45;
-            flex-grow: 1;
-        }
-
-        .dashboard-link {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            color: #FF7900;
-            font-weight: 700;
-            font-size: 0.85em;
-            transition: gap 0.2s var(--ease);
-        }
-
-        .dashboard-card:hover .dashboard-link {
-            gap: 10px;
-        }
-
-        /* Data Info Section */
-        .data-info {
-            background: #FFFFFF;
-            border: 1px solid #E2DDD5;
-            border-left: 4px solid #FF7900;
-            border-radius: 10px;
-            padding: 14px 16px;
-            margin-bottom: 32px;
-        }
-
-        .data-info h3 {
-            margin-bottom: 10px;
-            font-size: 0.95em;
-            color: #0C0B09;
-        }
-
-        .data-files {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-            gap: 10px;
-        }
-
-        .data-file {
-            background: #F5F3F0;
-            padding: 10px;
-            border-radius: 8px;
-            border: 1px solid #E2DDD5;
-            font-size: 0.8em;
-        }
-
-        .data-file .filename {
-            color: #FF7900;
+        .status-mini-card .label {
+            font-size: 11px;
             font-weight: 600;
-            margin-bottom: 3px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--portal-text-light);
         }
 
-        .data-file .details {
-            color: #8A857C;
-            font-size: 0.8em;
+        .status-mini-card .value {
+            font-size: 17px;
+            font-weight: 800;
+            color: var(--portal-text-main);
+            font-family: var(--mono);
+            font-variant-numeric: tabular-nums;
+        }
+
+        .status-mini-card .details {
+            font-size: 12px;
+            color: var(--portal-text-muted);
+        }
+
+        /* Detalle técnico desplegable */
+        .technical-details {
+            margin-top: 14px;
+            border-top: 1px solid var(--portal-border-subtle);
+            padding-top: 10px;
+        }
+
+        .technical-details summary {
+            font-size: 12.5px;
+            font-weight: 600;
+            color: var(--portal-text-muted);
+            cursor: pointer;
+            user-select: none;
+            padding: 4px 0;
+        }
+
+        .technical-details summary:hover {
+            color: var(--portal-orange-dark);
+        }
+
+        .files-list-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .file-chip {
+            background: #FFFFFF;
+            border: 1px solid var(--portal-border);
+            border-radius: 6px;
+            padding: 8px 12px;
+            font-size: 12px;
+            line-height: 1.35;
+        }
+
+        .file-chip-name {
+            font-weight: 600;
+            color: var(--portal-orange-dark);
+            word-break: break-all;
+        }
+
+        .file-chip-meta {
+            font-size: 11px;
+            color: var(--portal-text-light);
+            font-family: var(--mono);
+            margin-top: 2px;
         }
 
         /* Footer */
-        footer {
-            text-align: center;
-            padding-top: 30px;
-            border-top: 1px solid #E2DDD5;
-            color: #8A857C;
-            font-size: 0.9em;
+        .portal-footer {
+            margin-top: auto;
+            border-top: 1px solid var(--portal-border);
+            padding: 22px 0 28px;
+            background: #FFFFFF;
+            color: var(--portal-text-light);
+            font-size: 13px;
         }
 
-        footer a {
-            color: #FF7900;
+        .footer-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 14px;
+        }
+
+        .footer-content a {
+            color: var(--portal-text-muted);
             text-decoration: none;
+            font-weight: 600;
         }
-
-        footer a:hover {
+        .footer-content a:hover {
+            color: var(--portal-orange);
             text-decoration: underline;
         }
 
-        /* Animations */
-        @keyframes slideDown {
-            from {
-                opacity: 0;
-                transform: translateY(-30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        /* Responsive */
-        @media (max-width: 768px) {
-            header h1 {
-                font-size: 1.6em;
-            }
-
-            .dashboards-grid {
+        @media (max-width: 1024px) {
+            .row-operational {
                 grid-template-columns: 1fr;
             }
-
-            .stats {
-                grid-template-columns: 1fr 1fr;
+            .row-releases {
+                grid-template-columns: 1fr;
             }
-        }
-
-        /* Loading spinner */
-        .spinner {
-            display: inline-block;
-            width: 12px;
-            height: 12px;
-            border: 2px solid rgba(255, 121, 0, 0.3);
-            border-top-color: #FF7900;
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        .loading {
-            text-align: center;
-            padding: 40px;
-            color: #8A857C;
+            .portal-header {
+                padding: 16px 0;
+            }
+            .portal-title {
+                font-size: 1.3rem;
+            }
         }
     </style>
 </head>
 <body>
-    <!-- MASORANGE Top Bar (inyectada por assets/topbar.js) -->
+    <!-- Skip link para navegación rápida y accesible por teclado -->
+    <a href="#main-content" class="skip-link">Saltar al contenido principal</a>
+
+    <!-- Barra de navegación corporativa común -->
     <div id="mo-topbar-root" data-active="portal"></div>
 
-    <!-- Header -->
-    <header>
-        <div class="header-inner">
-            <span class="eyebrow-light">Fiabilidad de servicio · Customer &amp; Service Operations</span>
-            <h1>Backlog, incidencias y postmortems de release.</h1>
+    <!-- Cabecera compacta y no intrusiva -->
+    <header class="portal-header">
+        <div class="container portal-header-inner">
+            <div>
+                <div class="portal-eyebrow">Customer &amp; Service Operations</div>
+                <h1 class="portal-title">Portal de Fiabilidad y Releases</h1>
+            </div>
+            <div class="portal-header-meta">
+                <span class="status-live-indicator" aria-hidden="true"></span>
+                <span>Última sincronización: <strong id="update-time" class="num" style="font-family: var(--mono); color: var(--portal-text-main);">—</strong></span>
+            </div>
         </div>
     </header>
 
-    <div class="container">
-        <!-- Dashboards -->
-        <section class="dashboards-section">
-            <h2>Elige un panel</h2>
-            <div class="dashboards-grid">
-                <!-- Dashboard 1: Massive Incidents -->
-                <a class="dashboard-card" href="/dashboards/massive-incidents/">
-                    <div class="dashboard-header">
-                        <h3>
-                            <span class="dashboard-icon">📈</span>
-                            Incidencias Masivas
-                        </h3>
-                        <p>Análisis temporal en tiempo real</p>
-                    </div>
-                    <div class="dashboard-content">
-                        <div class="dashboard-description">
-                            Evolución temporal, tendencias y backlog de incidencias masivas.
-                        </div>
-                        <span class="dashboard-link">Acceder →</span>
-                    </div>
-                </a>
+    <!-- Contenido Principal -->
+    <main id="main-content" class="container">
 
-                <!-- Dashboard 2: Reportes de Incidencias -->
-                <a class="dashboard-card" href="/reportes-incidencias/index.html">
-                    <div class="dashboard-header">
-                        <h3>
-                            <span class="dashboard-icon">📝</span>
-                            Reportes de Incidencias
-                        </h3>
-                        <p>Gestión de informes semanales</p>
-                    </div>
-                    <div class="dashboard-content">
-                        <div class="dashboard-description">
-                            Editor de informes semanales por departamento, con seguimiento de estado.
-                        </div>
-                        <span class="dashboard-link">Acceder →</span>
-                    </div>
-                </a>
+        <!-- Fila 1: Plataformas Operativas (3 tarjetas en la misma línea) -->
+        <div class="row-divider">
+            <span class="row-divider-label">Plataformas Operativas y Seguimiento</span>
+            <span class="row-divider-line" aria-hidden="true"></span>
+        </div>
 
-                <!-- Dashboard 3: Gestión de Problemas -->
-                <a class="dashboard-card" href="/problemas">
-                    <div class="dashboard-header">
-                        <h3>
-                            <span class="dashboard-icon">🧩</span>
-                            Gestión de Problemas
-                        </h3>
-                        <p>Análisis de causa raíz</p>
-                    </div>
-                    <div class="dashboard-content">
-                        <div class="dashboard-description">
-                            Problemas vinculados a incidencias recurrentes, con causa raíz y plan de resolución.
-                        </div>
-                        <span class="dashboard-link">Acceder →</span>
-                    </div>
-                </a>
+        <section class="row-operational" aria-label="Plataformas operativas">
 
-                <!-- Dashboard 4: KPIs de Release (histórico) -->
-                <a class="dashboard-card" href="/dashboards/release-kpis/">
-                    <div class="dashboard-header">
-                        <h3>
-                            <span class="dashboard-icon">🎯</span>
-                            KPIs de Release (Histórico)
-                        </h3>
-                        <p>Evolución de KPIs por release</p>
+            <!-- Card 1: Incidencias Masivas -->
+            <a href="/dashboards/massive-incidents/" class="card" aria-label="Abrir panel Incidencias Masivas: Evolución temporal y backlog en tiempo real">
+                <div>
+                    <div class="card-top">
+                        <div class="card-icon-wrapper" aria-hidden="true">📈</div>
+                        <span class="card-tag tag-realtime">Tiempo Real</span>
                     </div>
-                    <div class="dashboard-content">
-                        <div class="dashboard-description">
-                            Serie histórica de incidencias PaP/Post por release, % de resolución y umbral de KPI (75%).
-                        </div>
-                        <span class="dashboard-link">Acceder →</span>
-                    </div>
-                </a>
+                    <h2 class="card-title">Incidencias Masivas</h2>
+                    <span class="card-subtitle">Análisis temporal y volumen P1, P2 y P3</span>
+                    <p class="card-desc">
+                        Evolución en tiempo real, tasas de apertura y cierre, backlog activo y distribución por criticidad.
+                    </p>
+                </div>
+                <div class="card-action">
+                    <span>Abrir panel</span>
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                        <path d="M5 12h14"></path>
+                        <path d="M12 5l7 7-7 7"></path>
+                    </svg>
+                </div>
+            </a>
 
-                <!-- Dashboard 5: Informe Incidencias Pdtes por Proyecto (R7) -->
-                <a class="dashboard-card" href="/dashboards/informes/incidencias-pdtes-r7-2026/">
-                    <div class="dashboard-header">
-                        <h3>
-                            <span class="dashboard-icon">📋</span>
-                            Informe Incidencias Pdtes (R7 2026)
-                        </h3>
-                        <p>Agrupado por proyecto, con análisis de impactos</p>
+            <!-- Card 2: Gestión de Problemas (Jira) -->
+            <a href="/problemas" class="card" aria-label="Abrir Gestión de Problemas: Análisis de causa raíz, postmortems y action points en Jira">
+                <div>
+                    <div class="card-top">
+                        <div class="card-icon-wrapper" aria-hidden="true">🧩</div>
+                        <span class="card-tag tag-jira">Jira CSO</span>
                     </div>
-                    <div class="dashboard-content">
-                        <div class="dashboard-description">
-                            Incidencias pendientes de la Mesa de Seguimiento, agrupadas por proyecto y ordenadas por severidad, con análisis de impactos y proyectos piloto marcados.
-                        </div>
-                        <span class="dashboard-link">Acceder →</span>
-                    </div>
-                </a>
+                    <h2 class="card-title">Gestión de Problemas</h2>
+                    <span class="card-subtitle">Causa raíz, postmortems y action points</span>
+                    <p class="card-desc">
+                        Seguimiento integrado con Jira para problemas recurrentes, postmortems asociados, tareas de PM y planes de mitigación.
+                    </p>
+                </div>
+                <div class="card-action">
+                    <span>Abrir panel</span>
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                        <path d="M5 12h14"></path>
+                        <path d="M12 5l7 7-7 7"></path>
+                    </svg>
+                </div>
+            </a>
 
-                <!-- Dashboard 6: Informe Incidencias Pdtes por Proyecto (R9) -->
-                <a class="dashboard-card" href="/dashboards/informes/incidencias-pdtes-r9-2026/">
-                    <div class="dashboard-header">
-                        <h3>
-                            <span class="dashboard-icon">📋</span>
-                            Informe Incidencias Pdtes (R9 2026)
-                        </h3>
-                        <p>Agrupado por proyecto, con análisis de impactos</p>
+            <!-- Card 3: Reportes de Incidencias (Editor) -->
+            <a href="/reportes-incidencias/index.html" class="card" aria-label="Abrir Editor de Reportes de Incidencias">
+                <div>
+                    <div class="card-top">
+                        <div class="card-icon-wrapper" aria-hidden="true">📝</div>
+                        <span class="card-tag tag-report">Editor Semanal</span>
                     </div>
-                    <div class="dashboard-content">
-                        <div class="dashboard-description">
-                            Incidencias pendientes de la Mesa de Seguimiento, agrupadas por proyecto y ordenadas por severidad, con análisis de impactos.
-                        </div>
-                        <span class="dashboard-link">Acceder →</span>
-                    </div>
-                </a>
+                    <h2 class="card-title">Reportes de Incidencias</h2>
+                    <span class="card-subtitle">Gestor y editor de informes por departamento</span>
+                    <p class="card-desc">
+                        Herramienta de redacción y edición para informes semanales de incidencias por área, estados y preparación ejecutiva.
+                    </p>
+                </div>
+                <div class="card-action">
+                    <span>Abrir editor</span>
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                        <path d="M5 12h14"></path>
+                        <path d="M12 5l7 7-7 7"></path>
+                    </svg>
+                </div>
+            </a>
 
-            </div>
         </section>
 
-        <!-- Stats -->
-        <div class="stats" id="stats-container">
-            <div class="stat-card">
-                <div class="label">Incidencias Masivas</div>
-                <div class="value" id="massive-count">-</div>
-                <div class="label" id="massive-date">Cargando...</div>
-            </div>
-            <div class="stat-card">
-                <div class="label">Postmortems</div>
-                <div class="value" id="postmortem-count">-</div>
-                <div class="label" id="postmortem-date">Cargando...</div>
-            </div>
-            <div class="stat-card">
-                <div class="label">Datasets Disponibles</div>
-                <div class="value" id="total-files">-</div>
-                <div class="label">archivos JSON</div>
-            </div>
+        <!-- Fila 2: Gestión de Releases (KPIs y Selector de Informes) -->
+        <div class="row-divider">
+            <span class="row-divider-label">Gobierno y Calidad de Releases</span>
+            <span class="row-divider-line" aria-hidden="true"></span>
         </div>
 
-        <!-- Data Info -->
-        <div class="data-info" id="data-info">
-            <h3>Archivos cargados</h3>
-            <div class="data-files" id="data-files-list">
-                <div class="loading">
-                    <div class="spinner"></div> Cargando índice...
+        <section class="row-releases" aria-label="Gobierno y calidad de releases">
+
+            <!-- Card 4: KPIs de Release (Histórico) -->
+            <a href="/dashboards/release-kpis/" class="card" aria-label="Abrir KPIs de Release: Serie histórica y umbral del 75%">
+                <div>
+                    <div class="card-top">
+                        <div class="card-icon-wrapper" aria-hidden="true">🎯</div>
+                        <span class="card-tag tag-history">Histórico</span>
+                    </div>
+                    <h2 class="card-title">KPIs de Release</h2>
+                    <span class="card-subtitle">Serie histórica por release y umbral 75%</span>
+                    <p class="card-desc">
+                        Evolución histórica de incidencias PaP / Post por release, porcentaje de resolución alcanzado y cumplimiento del umbral de calidad.
+                    </p>
+                </div>
+                <div class="card-action">
+                    <span>Consultar KPIs</span>
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                        <path d="M5 12h14"></path>
+                        <path d="M12 5l7 7-7 7"></path>
+                    </svg>
+                </div>
+            </a>
+
+            <!-- Card 5: Selector de Informes de Incidencias por Release -->
+            <div class="card" id="release-card-container">
+                <div>
+                    <div class="card-top">
+                        <div class="card-icon-wrapper" aria-hidden="true">📋</div>
+                        <span class="card-tag tag-active" id="selected-release-tag">Release R9 · Actual</span>
+                    </div>
+                    <h2 class="card-title">Informes de Incidencias por Release</h2>
+                    <span class="card-subtitle">Mesa de seguimiento con análisis de impactos</span>
+
+                    <!-- Selector desplegable de release -->
+                    <div class="release-select-group">
+                        <label for="release-select" class="release-select-label">Seleccionar Release:</label>
+                        <div class="select-wrapper">
+                            <select id="release-select" class="release-select-control" aria-label="Seleccionar informe de release">
+                                <option
+                                    value="/dashboards/informes/incidencias-pdtes-r9-2026/"
+                                    data-tag="Release R9 · Actual"
+                                    data-tag-class="tag-active"
+                                    data-desc="Incidencias pendientes agrupadas por proyecto, ordenadas por severidad, con análisis detallado de impacto en negocio y clientes."
+                                    data-action="Ver informe Release R9 (2026)"
+                                    selected
+                                >
+                                    Release R9 (2026) — Actual
+                                </option>
+                                <option
+                                    value="/dashboards/informes/incidencias-pdtes-r7-2026/"
+                                    data-tag="Release R7"
+                                    data-tag-class="tag-report"
+                                    data-desc="Reporte histórico de incidencias de la Mesa R7 agrupadas por proyecto, con identificación de pilotos y bloques de resolución."
+                                    data-action="Ver informe Release R7 (2026)"
+                                >
+                                    Release R7 (2026)
+                                </option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <p class="card-desc" id="selected-release-desc">
+                        Incidencias pendientes agrupadas por proyecto, ordenadas por severidad, con análisis detallado de impacto en negocio y clientes.
+                    </p>
+                </div>
+
+                <a id="release-action-link" href="/dashboards/informes/incidencias-pdtes-r9-2026/" class="card-action" aria-label="Abrir informe seleccionado de Release R9">
+                    <span id="release-action-text">Ver informe Release R9 (2026)</span>
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                        <path d="M5 12h14"></path>
+                        <path d="M12 5l7 7-7 7"></path>
+                    </svg>
+                </a>
+            </div>
+
+        </section>
+
+        <!-- Sección de Estado y Telemetría de Datasets -->
+        <section class="system-status-section" aria-labelledby="status-title">
+            <div class="status-header">
+                <h2 id="status-title" class="status-title">
+                    <span class="status-live-indicator" aria-hidden="true"></span>
+                    Estado de Sincronización y Datasets
+                </h2>
+                <span style="font-size: 12px; color: var(--portal-text-light);">
+                    Actualización periódica automática
+                </span>
+            </div>
+
+            <div class="status-cards-grid">
+                <div class="status-mini-card">
+                    <span class="label">Incidencias Masivas</span>
+                    <span class="value" id="massive-count">—</span>
+                    <span class="details" id="massive-date">Comprobando...</span>
+                </div>
+                <div class="status-mini-card">
+                    <span class="label">Postmortems y Mesas</span>
+                    <span class="value" id="postmortem-count">—</span>
+                    <span class="details" id="postmortem-date">Comprobando...</span>
+                </div>
+                <div class="status-mini-card">
+                    <span class="label">Datasets JSON</span>
+                    <span class="value" id="total-files">—</span>
+                    <span class="details">Disponibles en el sistema</span>
                 </div>
             </div>
+
+            <!-- Desplegable técnico opcional -->
+            <details class="technical-details">
+                <summary>Ver detalle técnico de archivos cargados</summary>
+                <div class="files-list-container" id="data-files-list">
+                    <span style="font-size: 12px; color: var(--portal-text-light);">Cargando catálogo...</span>
+                </div>
+            </details>
+        </section>
+    </main>
+
+    <!-- Pie de página -->
+    <footer class="portal-footer">
+        <div class="container footer-content">
+            <div>
+                <strong>Release Dashboard Application</strong> · Customer &amp; Service Operations
+            </div>
+            <div>
+                <a href="/dashboards/README.md">Documentación técnica</a>
+            </div>
         </div>
+    </footer>
 
-        <!-- Footer -->
-        <footer>
-            <p>
-                Release Dashboard Application &middot;
-                <a href="/dashboards/README.md">Documentación</a> &middot;
-                Última actualización: <span id="update-time" class="num">-</span>
-            </p>
-        </footer>
-    </div>
-
+    <!-- Lógica de Interacción del Selector y Carga de Datos -->
     <script>
-        // Load data from index.json
+        // --- 1. Controlador del Selector de Releases ---
+        const releaseSelect = document.getElementById('release-select');
+        const releaseTag = document.getElementById('selected-release-tag');
+        const releaseDesc = document.getElementById('selected-release-desc');
+        const releaseLink = document.getElementById('release-action-link');
+        const releaseActionText = document.getElementById('release-action-text');
+
+        function updateSelectedRelease() {
+            const selectedOpt = releaseSelect.options[releaseSelect.selectedIndex];
+            const url = selectedOpt.value;
+            const tag = selectedOpt.getAttribute('data-tag');
+            const tagClass = selectedOpt.getAttribute('data-tag-class') || 'tag-active';
+            const desc = selectedOpt.getAttribute('data-desc');
+            const actionText = selectedOpt.getAttribute('data-action') || 'Ver informe';
+
+            // Actualizar etiqueta
+            releaseTag.textContent = tag;
+            releaseTag.className = 'card-tag ' + tagClass;
+
+            // Actualizar descripción
+            releaseDesc.textContent = desc;
+
+            // Actualizar enlace y texto del botón
+            releaseLink.href = url;
+            releaseLink.setAttribute('aria-label', actionText);
+            releaseActionText.textContent = actionText;
+        }
+
+        releaseSelect.addEventListener('change', updateSelectedRelease);
+
+        // --- 2. Carga Asíncrona de Datos de Datasets ---
         async function loadDashboardData() {
             try {
-                const response = await fetch('/data/output/index.json');
+                const response = await fetch('/data/output/index.json?t=' + Date.now());
+                if (!response.ok) throw new Error('HTTP ' + response.status);
                 const data = await response.json();
 
                 updateStats(data);
                 updateDataInfo(data);
                 updateTimestamp(data);
             } catch (error) {
-                console.error('Error cargando datos:', error);
-                document.getElementById('data-files-list').innerHTML =
-                    '<div class="loading" style="grid-column: 1/-1;">⚠️ No se pudieron cargar los datos. Asegúrate de que index.json existe en data/output/</div>';
+                console.warn('Información de datasets no disponible:', error);
+                document.getElementById('massive-date').textContent = 'No disponible';
+                document.getElementById('postmortem-date').textContent = 'No disponible';
             }
         }
 
         function updateStats(data) {
-            // Massive incidents
             const massiveCount = data.massive?.count || 0;
             const massiveFile = data.massive?.files?.[0];
-            const massiveDate = massiveFile?.modified ? new Date(massiveFile.modified).toLocaleDateString('es-ES') : '-';
+            const massiveDate = massiveFile?.modified ? new Date(massiveFile.modified).toLocaleDateString('es-ES') : '—';
 
             document.getElementById('massive-count').textContent = massiveCount;
-            document.getElementById('massive-date').textContent = `Última: ${massiveDate}`;
+            document.getElementById('massive-date').textContent = massiveCount > 0 ? `Último: ${massiveDate}` : 'Sin datos';
 
-            // Postmortems
             const postmortemCount = data.postmortem?.count || 0;
             const postmortemFile = data.postmortem?.files?.[0];
-            const postmortemDate = postmortemFile?.modified ? new Date(postmortemFile.modified).toLocaleDateString('es-ES') : '-';
+            const postmortemDate = postmortemFile?.modified ? new Date(postmortemFile.modified).toLocaleDateString('es-ES') : '—';
 
             document.getElementById('postmortem-count').textContent = postmortemCount;
-            document.getElementById('postmortem-date').textContent = `Última: ${postmortemDate}`;
+            document.getElementById('postmortem-date').textContent = postmortemCount > 0 ? `Último: ${postmortemDate}` : 'Sin datos';
 
-            // Total files
             const totalFiles = massiveCount + postmortemCount;
             document.getElementById('total-files').textContent = totalFiles;
         }
@@ -506,45 +821,27 @@
             const filesList = document.getElementById('data-files-list');
             filesList.innerHTML = '';
 
-            // Massive incidents files
-            if (data.massive?.files?.length > 0) {
-                data.massive.files.forEach(file => {
-                    const fileEl = document.createElement('div');
-                    fileEl.className = 'data-file';
-                    const size = (file.size / 1024).toFixed(1);
-                    const date = new Date(file.modified).toLocaleDateString('es-ES');
-                    fileEl.innerHTML = `
-                        <div class="filename">${file.name}</div>
-                        <div class="details">
-                            Tamaño: ${size} KB<br>
-                            Modificado: ${date}
-                        </div>
-                    `;
-                    filesList.appendChild(fileEl);
-                });
+            const allFiles = [
+                ...(data.massive?.files || []).map(f => ({ ...f, type: 'Incidencias' })),
+                ...(data.postmortem?.files || []).map(f => ({ ...f, type: 'Postmortem' }))
+            ];
+
+            if (allFiles.length === 0) {
+                filesList.innerHTML = '<span style="font-size: 12px; color: var(--portal-text-light);">No hay datasets JSON cargados actualmente en data/output/.</span>';
+                return;
             }
 
-            // Postmortem files
-            if (data.postmortem?.files?.length > 0) {
-                data.postmortem.files.forEach(file => {
-                    const fileEl = document.createElement('div');
-                    fileEl.className = 'data-file';
-                    const size = (file.size / 1024).toFixed(1);
-                    const date = new Date(file.modified).toLocaleDateString('es-ES');
-                    fileEl.innerHTML = `
-                        <div class="filename">${file.name}</div>
-                        <div class="details">
-                            Tamaño: ${size} KB<br>
-                            Modificado: ${date}
-                        </div>
-                    `;
-                    filesList.appendChild(fileEl);
-                });
-            }
-
-            if (!data.massive?.files?.length && !data.postmortem?.files?.length) {
-                filesList.innerHTML = '<div class="loading" style="grid-column: 1/-1;">ℹ️ No hay datasets disponibles. Ejecuta los converters para generar datos.</div>';
-            }
+            allFiles.forEach(file => {
+                const chip = document.createElement('div');
+                chip.className = 'file-chip';
+                const sizeKB = (file.size / 1024).toFixed(1);
+                const date = new Date(file.modified).toLocaleString('es-ES');
+                chip.innerHTML = `
+                    <div class="file-chip-name">${escapeHtml(file.name)}</div>
+                    <div class="file-chip-meta">${file.type} · ${sizeKB} KB · ${date}</div>
+                `;
+                filesList.appendChild(chip);
+            });
         }
 
         function updateTimestamp(data) {
@@ -554,21 +851,33 @@
             );
 
             if (latestDate > 0) {
-                const date = new Date(latestDate).toLocaleDateString('es-ES', {
+                const date = new Date(latestDate).toLocaleString('es-ES', {
                     year: 'numeric',
-                    month: 'long',
+                    month: 'short',
                     day: 'numeric',
                     hour: '2-digit',
                     minute: '2-digit'
                 });
                 document.getElementById('update-time').textContent = date;
+            } else {
+                document.getElementById('update-time').textContent = new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
             }
         }
 
-        // Load data on page load
-        document.addEventListener('DOMContentLoaded', loadDashboardData);
+        function escapeHtml(str) {
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
 
-        // Refresh data every 30 seconds
+        // Carga inicial y refresco periódico
+        document.addEventListener('DOMContentLoaded', () => {
+            updateSelectedRelease();
+            loadDashboardData();
+        });
         setInterval(loadDashboardData, 30000);
     </script>
     <script src="/dashboards/assets/topbar.js" defer></script>
