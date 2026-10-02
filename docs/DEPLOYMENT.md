@@ -27,7 +27,7 @@ Por tanto, desplegar este repo **no reinicia ni afecta** a esos otros servicios;
 
 ## Arquitectura de despliegue (VPS)
 
-Configuración real, ver `nginx.conf` en la raíz del repo (fichero local, no versionado — está en `.gitignore`, pero existe una copia igual en el VPS):
+Configuración real, ver `nginx.conf` en la raíz del repo (la copia activa que Nginx lee en el VPS está en `/infocodes/nginx/conf/nginx.conf`):
 
 ```nginx
 server {
@@ -107,12 +107,14 @@ Puntos clave:
    > ```
 
 4. **Si cambió `nginx.conf`**:
-   Nginx corre en espacio de usuario bajo `/infocodes/` (escuchando en el puerto 8081 y con PID en `/infocodes/var/run/nginx.pid`), por lo que **no se requiere `sudo` ni `systemctl`** para gestionarlo:
+   Nginx corre en espacio de usuario bajo `/infocodes/` (escuchando en el puerto 8081 y con PID en `/infocodes/var/run/nginx.pid`), por lo que **no se requiere `sudo` ni `systemctl`**.
+   El fichero de configuración activo que Nginx lee en el VPS está ubicado en `/infocodes/nginx/conf/nginx.conf`. Por tanto, tras el `git pull`, se debe sincronizar el fichero y recargar:
    ```bash
-   nginx -t               # Validar sintaxis antes de recargar
+   cp /infocodes/project/release-dashboard-application/nginx.conf /infocodes/nginx/conf/nginx.conf
+   nginx -t               # Validar sintaxis
    nginx -s reload        # Recargar Nginx en caliente sin cortar conexiones
    ```
-   *(Alternativa si requiere especificar la ruta del fichero explícitamente: `nginx -c /infocodes/project/release-dashboard-application/nginx.conf -s reload`, o enviando señal directa: `kill -HUP $(cat /infocodes/var/run/nginx.pid)`).*
+   *(Alternativa enviando señal directa: `kill -HUP $(cat /infocodes/var/run/nginx.pid)`).*
 
    > ℹ️ **Nota sobre cambios en Dashboards**: Los cambios en HTML, CSS y JS (`dashboards/` como `index.html`, `resumen-ia.css` o `resumen-ia.js`) se aplican **inmediatamente tras el `git pull`** sin necesidad de recargar Nginx, ya que se sirven por `alias` directo al sistema de archivos. La recarga con `nginx -s reload` solo es necesaria si se ha modificado `nginx.conf` (por ejemplo, para añadir bloques de proxy como `/api/epsilon/`).
 5. **Si cambió algo en `converters/` o en dependencias Python**: reinstalar dependencias si aplica.

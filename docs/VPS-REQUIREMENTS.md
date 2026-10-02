@@ -283,7 +283,7 @@ sudo chown <usuario-deploy>:<grupo-deploy> /infocodes/project/release-dashboard-
 
 ### 5.2 Configuración de Nginx
 
-Este es un extracto fiel de la configuración real (`nginx.conf` en la raíz del repo, no versionado — copia idéntica en el VPS). Nginx escucha en el puerto **8081** (no 80/443) y sirve, en el mismo `server{}`, este repo **y** sus aplicaciones hermanas:
+Este es un extracto fiel de la configuración real (`nginx.conf` en la raíz del repo, con copia activa en `/infocodes/nginx/conf/nginx.conf` en el VPS). Nginx escucha en el puerto **8081** (no 80/443) y sirve, en el mismo `server{}`, este repo **y** sus aplicaciones hermanas:
 
 ```nginx
 upstream fastapi_backend {
@@ -339,12 +339,13 @@ server {
 
 No hay `location /static/` ni `root /var/www/...` para este proyecto: `alias` apunta directamente al checkout git, sin copia intermedia. Ver el `nginx.conf` completo en la raíz del repo para el resto de bloques (caché, la ruta `/` que delega a otra aplicación vía socket Unix, etc.) — todos ajenos a este repositorio.
 
-Tras cambiar `nginx.conf` en el VPS (proceso en espacio de usuario `/infocodes`, sin `sudo` ni `systemctl`):
+Tras cambiar `nginx.conf` en el VPS (fichero activo en `/infocodes/nginx/conf/nginx.conf`, proceso en espacio de usuario `/infocodes`, sin `sudo` ni `systemctl`):
 ```bash
+cp /infocodes/project/release-dashboard-application/nginx.conf /infocodes/nginx/conf/nginx.conf
 nginx -t
 nginx -s reload
 ```
-*(Opcionalmente especificando la ruta si fuera necesario: `nginx -c /infocodes/project/release-dashboard-application/nginx.conf -s reload` o `kill -HUP $(cat /infocodes/var/run/nginx.pid)`).*
+*(Alternativa enviando señal directa: `kill -HUP $(cat /infocodes/var/run/nginx.pid)`).*
 
 ### 5.3 Supervisor / pm2 (procesos de los backends hermanos)
 

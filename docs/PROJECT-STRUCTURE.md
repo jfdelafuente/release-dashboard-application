@@ -24,7 +24,7 @@ release-dashboard-application/
 ├── 📄 project.json
 ├── 📄 skills-lock.json
 ├── 📄 serve_app.py                  # Servidor de desarrollo (estáticos + POST /api/upload)
-├── 📄 nginx.conf                    # Config Nginx real usada en el VPS (gitignored, solo local)
+├── 📄 nginx.conf                    # Config Nginx del proyecto (copia activa en /infocodes/nginx/conf/nginx.conf)
 │
 ├── 📁 converters/                   # Todo el código Python (CLI, lógica, tests, docs, specs)
 ├── 📁 dashboards/                   # Todo el frontend estático (HTML/CSS/JS in-line)
@@ -183,7 +183,7 @@ Aviso de coherencia interna en `lint.yml` y `tests.yml`: ambos siguen invocando 
 
 A diferencia de lo que describían versiones anteriores de este documento, **no existe** una estructura `/var/www/release-dashboard/{static,app}` ni un paso de "copia" de archivos al servidor. En producción, Nginx apunta **directamente** al checkout de este repositorio (actualizado con `git pull` manual) mediante `alias`, sin build ni etapa intermedia.
 
-Datos confirmados leyendo `nginx.conf` (archivo local, no versionado — está en `.gitignore`):
+Datos confirmados leyendo `nginx.conf` (copia activa del VPS en `/infocodes/nginx/conf/nginx.conf`):
 
 - El repo vive en el VPS en `/infocodes/project/release-dashboard-application` (coincide con `PROJECT_ROOT` de `generate-dashboards.sh`).
 - Nginx escucha en el puerto `8081`, `server_name 10.132.68.85 infocodes.si.orange.es`.
