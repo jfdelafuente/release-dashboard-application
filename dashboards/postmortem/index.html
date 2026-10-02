@@ -7,6 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/dashboards/assets/shared.css">
+    <link rel="stylesheet" href="/dashboards/assets/resumen-ia.css">
     <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
     <style>
         /* Estilos específicos de esta página. El framework compartido
@@ -1852,7 +1853,7 @@
 
                 const codigoIncidencia = getIncidentValue(incident, 'ID de incidencia') || '-';
                 const codigoLink = codigoIncidencia !== '-'
-                    ? `<a href="https://soptmc.si.orange.es/MonTMC/epsilon/remedyC/${codigoIncidencia}" target="_blank" style="color: #FF7900; text-decoration: none; font-weight: 700; cursor: pointer;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">${codigoIncidencia}</a>`
+                    ? `<a href="javascript:void(0)" onclick="openResumenIA('${codigoIncidencia}'); return false;" style="color: #FF7900; text-decoration: none; font-weight: 700; cursor: pointer;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">${codigoIncidencia}</a>`
                     : '-';
 
                 row.innerHTML = `
@@ -2074,6 +2075,7 @@
             }
         });
     </script>
+    <script src="/dashboards/assets/resumen-ia.js" defer></script>
     <script src="/dashboards/assets/topbar.js" defer></script>
 </body>
 </html>

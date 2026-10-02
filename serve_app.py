@@ -86,6 +86,46 @@ class CustomHTTPHandler(http.server.SimpleHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(msg)
 
+    def proxy_to_epsilon_ia(self, codigo):
+        import ssl
+        target_url = f"https://soptmc.si.orange.es/MonTMC/api/epsilon/resumenIA/{codigo}"
+        print(f"  Proxy Epsilon IA: {target_url}")
+        try:
+            ctx = ssl.create_default_context()
+            ctx.check_hostname = False
+            ctx.verify_mode = ssl.CERT_NONE
+            req = urllib.request.Request(
+                target_url,
+                headers={'User-Agent': 'ReleaseDashboard/1.0', 'Accept': 'application/json'}
+            )
+            with urllib.request.urlopen(req, context=ctx, timeout=15) as resp:
+                content = resp.read()
+                self.send_response(resp.status)
+                self.send_header('Content-Type', 'application/json; charset=utf-8')
+                self.send_header('Access-Control-Allow-Origin', '*')
+                self.send_header('Access-Control-Allow-Methods', 'GET, OPTIONS')
+                self.send_header('Access-Control-Allow-Headers', '*')
+                self.send_header('Content-Length', str(len(content)))
+                self.send_header('Cache-Control', 'no-cache')
+                self.end_headers()
+                self.wfile.write(content)
+        except Exception as e:
+            print(f"  Error proxy Epsilon IA: {e}")
+            err_payload = json.dumps({"success": False, "error": str(e)}, ensure_ascii=False).encode('utf-8')
+            self.send_response(502)
+            self.send_header('Content-Type', 'application/json; charset=utf-8')
+            self.send_header('Access-Control-Allow-Origin', '*')
+            self.send_header('Content-Length', str(len(err_payload)))
+            self.end_headers()
+            self.wfile.write(err_payload)
+
+    def do_OPTIONS(self):
+        self.send_response(204)
+        self.send_header('Access-Control-Allow-Origin', '*')
+        self.send_header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+        self.send_header('Access-Control-Allow-Headers', '*')
+        self.end_headers()
+
     def do_POST(self):
         print(f"POST {self.path}")
         if self.path.startswith('/problemas'):
@@ -205,6 +245,11 @@ class CustomHTTPHandler(http.server.SimpleHTTPRequestHandler):
 
         if self.path.startswith(REPORTS_PATH_PREFIX):
             self.handle_report_download()
+            return
+
+        if self.path.startswith('/api/epsilon/resumenIA/'):
+            codigo = self.path[len('/api/epsilon/resumenIA/'):].split('?')[0].strip()
+            self.proxy_to_epsilon_ia(codigo)
             return
 
         if self.path.startswith('/problemas'):
