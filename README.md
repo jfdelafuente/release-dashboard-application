@@ -29,10 +29,11 @@ python serve_app.py
 ```
 
 > ⚠️ **No uses `python -m http.server` ni Live Server.** Solo sirven
-> archivos estáticos: no implementan `POST`, así que la subida de CSV
-> desde el navegador falla con "Failed to fetch". `serve_app.py` añade el
-> endpoint `/api/upload`, imprescindible para poder subir un CSV desde la
-> interfaz.
+> archivos estáticos: no implementan `POST` (la subida de CSV
+> desde el navegador fallaría con "Failed to fetch") ni el proxy para evitar
+> restricciones CORS al consultar Epsilon IA. `serve_app.py` añade los
+> endpoints `/api/upload` y `/api/epsilon/resumenIA/<codigo>`, imprescindibles
+> para el funcionamiento completo en local.
 
 ### 2️⃣ Carga un CSV
 
@@ -69,8 +70,8 @@ Con `serve_app.py` corriendo, ve a `http://localhost:8000/dashboards/portal/` (o
 
 ### 4️⃣ Los dashboards cargan automáticamente los datos más recientes
 
-- **Incidencias Masivas** (`massive-incidents/`): evolución temporal, backlog, tendencias, filtros por estado/sistema/urgencia.
-- **Postmortem / Release** (`postmortem/`): análisis por despliegue (PAP/MESA), KPIs de resolución.
+- **Incidencias Masivas** (`massive-incidents/`): evolución temporal, backlog, tendencias, filtros por estado/sistema/urgencia y pantalla flotante con Resumen IA (Epsilon) al pulsar sobre el código de una incidencia.
+- **Postmortem / Release** (`postmortem/`): análisis por despliegue (PAP/MESA), KPIs de resolución y pantalla flotante con Resumen IA (Epsilon) al pulsar sobre el código de una incidencia.
 
 Desde el Portal también se enlaza a **Reportes de Incidencias** y **Gestión de Problemas**, que son aplicaciones de los repos hermanos (`cso-incident-masivas-report` y el backend de gestión de problemas), no parte de este repositorio.
 
@@ -278,7 +279,7 @@ release-dashboard-application/
 │   ├── massive-incidents/        # Dashboard de incidencias masivas
 │   ├── postmortem/               # Dashboard de postmortem / release
 │   ├── release-kpis/             # Dashboard de KPIs históricos de release
-│   └── assets/                   # Logos, tokens.css, topbar.css/topbar.js, shared.css
+│   └── assets/                   # Logos, tokens.css, topbar.css/topbar.js, shared.css, resumen-ia.css/js
 ├── converters/                   # Módulo Python de conversión CSV→JSON
 │   ├── cli/                      # convert_incidents.py, convert_postmortems.py, build_index.py
 │   ├── src/csv_to_json/          # Lógica de conversión (encoding, normalización, validación)
@@ -308,7 +309,7 @@ JSON (data/output/) + build_index.py → index.json
     ↓
 Portal (dashboards/portal/)
     ↓
-Incidencias Masivas · Postmortem/Release
+Incidencias Masivas · Postmortem/Release  <-- [Resumen IA vía Epsilon]
 ```
 
 ---
@@ -330,4 +331,4 @@ Incidencias Masivas · Postmortem/Release
 
 ---
 
-**Última actualización**: 2026-07-09
+**Última actualización**: 2026-10-02

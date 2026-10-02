@@ -103,7 +103,9 @@ dashboards/
 │   ├── tokens.css            # Variables de diseño (única fuente de tokens)
 │   ├── topbar.css            # Barra superior con logo
 │   ├── topbar.js             # Inyecta la barra superior con la nav activa marcada
-│   └── shared.css            # Framework de los 3 dashboards "clásicos" (importa tokens.css/topbar.css)
+│   ├── shared.css            # Framework de los 3 dashboards "clásicos" (importa tokens.css/topbar.css)
+│   ├── resumen-ia.css        # Estilos visuales del modal flotante Resumen IA (Epsilon)
+│   └── resumen-ia.js         # Lógica interactiva y cliente API de Epsilon IA
 └── README.md
 ```
 
@@ -187,13 +189,14 @@ Datos confirmados leyendo `nginx.conf` (archivo local, no versionado — está e
 - Nginx escucha en el puerto `8081`, `server_name 10.132.68.85 infocodes.si.orange.es`.
 - `location /dashboards` → `alias /infocodes/project/release-dashboard-application/dashboards;` (sirve el HTML estático directamente desde el repo).
 - `location /data` → `alias /infocodes/project/release-dashboard-application/data;` con `autoindex off` (sirve los JSON generados por los conversores).
+- `location /api/epsilon/` → `proxy_pass https://soptmc.si.orange.es/MonTMC/api/epsilon/;` (proxy reverso con soporte CORS hacia el servicio Epsilon IA para la pantalla flotante de incidencias masivas y postmortem).
 - `location /api` → `proxy_pass http://fastapi_backend;` con `upstream fastapi_backend { server localhost:8000; }`. Este backend FastAPI vive en el repo hermano `cso-incident-masivas-report` (**no confirmado directamente desde `nginx.conf`**, que solo define el upstream por puerto; la asociación con ese repo se da por indicación externa a este documento).
 - `location /reportes-incidencias` → `alias /infocodes/project/cso-incident-masivas-report/app;` — app estática de otro repo hermano, ajena a este proyecto.
 - `location /problemas` → `proxy_pass http://gestion_problemas_backend;` con `upstream gestion_problemas_backend { server localhost:3001; }`. Es una app Next.js con `basePath=/problemas`, gestionada con `pm2` (según comentario en el propio `nginx.conf`); tampoco pertenece a este repositorio.
 - `location /static` → `alias /infocodes/project/dashboardsonar-application-python/infocodest/static;` — de otra aplicación distinta (`dashboardsonar-application-python`), no relacionada con este proyecto.
 - `location /` (raíz) → `proxy_pass http://unix:/infocodes/var/run/infocodes.sock;` con `proxy_cache`, es decir, delega a otra aplicación vía socket Unix; este proyecto no ocupa la raíz del dominio.
 
-En resumen, este repositorio solo controla `/dashboards` (estático) y `/data` (JSON generados); todo lo demás en `nginx.conf` pertenece a aplicaciones hermanas que conviven en el mismo VPS y mismo dominio.
+En resumen, este repositorio controla `/dashboards` (estático), `/data` (JSON generados) y `/api/epsilon/` (proxy hacia Epsilon IA); todo lo demás en `nginx.conf` pertenece a aplicaciones hermanas que conviven en el mismo VPS y mismo dominio.
 
 **Generación de los JSON en el VPS**: no vía CI/CD, sino por `scripts/generate-dashboards.sh` ejecutado periódicamente (cron — la periodicidad exacta configurada en el `crontab` real del VPS **no está confirmada**; `scripts/README.md` solo documenta opciones sugeridas).
 
@@ -204,8 +207,9 @@ En resumen, este repositorio solo controla `/dashboards` (estático) y `/data` (
 | Recurso | Ubicación en el repo | Quién lo sirve en producción |
 |---|---|---|
 | `portal/index.html`, resto de `*.html` de `dashboards/` | `dashboards/` | Nginx, `alias /dashboards` |
-| Logos SVG | `dashboards/assets/` | Nginx, `alias /dashboards` |
+| Logos SVG, `resumen-ia.css/js`, assets | `dashboards/assets/` | Nginx, `alias /dashboards` |
 | `index.json`, `*-massive.json`, `*-postmortem.json` | `data/output/` | Nginx, `alias /data` (autoindex off) |
+| `/api/epsilon/*` | Proxy en `nginx.conf` | Nginx proxy pass a `https://soptmc.si.orange.es/MonTMC/api/epsilon/` |
 | CSVs de origen | `data/input/` | No se sirven vía Nginx; los escribe `serve_app.py` (dev) o se colocan manualmente (VPS) |
 | Conversores Python | `converters/` | Se ejecutan por `scripts/generate-dashboards.sh` (cron) en el VPS, o manualmente/vía `serve_app.py` en local |
 | `/api/*` | Fuera de este repo | Backend FastAPI de otro repo (proxy Nginx a `localhost:8000`) |
@@ -214,8 +218,8 @@ En resumen, este repositorio solo controla `/dashboards` (estático) y `/data` (
 
 ## 🚀 Local vs Producción, en una frase
 
-- **Local (desarrollo)**: `python serve_app.py` desde la raíz sirve todo el repo (`dashboards/`, `data/`) y añade `POST /api/upload` para convertir CSVs desde el navegador. Alternativa de solo lectura: `python -m http.server 8000` o Live Server (sin subida de CSV).
-- **Producción (VPS)**: Nginx sirve `dashboards/` y `data/` directamente desde el checkout git del repo vía `alias` (sin copiar archivos a otra ruta); los JSON de `data/output/` se regeneran periódicamente con `scripts/generate-dashboards.sh` vía cron; no hay backend propio de este repo para `/api` (es de un repo hermano) ni pipeline de despliegue automático (no hay `deploy.yml`).
+- **Local (desarrollo)**: `python serve_app.py` desde la raíz sirve todo el repo (`dashboards/`, `data/`), añade `POST /api/upload` para convertir CSVs y `GET /api/epsilon/resumenIA/<codigo>` como proxy para el modal de IA.
+- **Producción (VPS)**: Nginx sirve `dashboards/` y `data/` directamente desde el checkout git del repo vía `alias` (sin copiar archivos a otra ruta), y redirige `/api/epsilon/` hacia Epsilon IA; los JSON de `data/output/` se regeneran periódicamente con `scripts/generate-dashboards.sh` vía cron.
 
 ---
 
@@ -230,4 +234,4 @@ En resumen, este repositorio solo controla `/dashboards` (estático) y `/data` (
 
 ---
 
-**Última actualización**: 2026-07-09
+**Última actualización**: 2026-10-02

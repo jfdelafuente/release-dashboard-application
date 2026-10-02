@@ -77,7 +77,7 @@ Períodos predefinidos que afectan TODOS los componentes:
 
 #### 6. **Tabla de Incidencias**
 Columnas (todas ordenables con click):
-- **Código**: Link a Remedy (https://soptmc.si.orange.es/MonTMC/epsilon/remedyC/{ID})
+- **Código**: Abre la pantalla flotante interactiva con el Resumen IA de Epsilon (consulta `/api/epsilon/resumenIA/{ID}` / `https://soptmc.si.orange.es/MonTMC/api/epsilon/resumenIA/{ID}`) con enlace secundario directo a Remedy
 - **Descripción**: Texto del incidente
 - **Estado**: Badge con color según status
 - **Urgencia**: Nivel de urgencia
@@ -590,5 +590,6 @@ data/errors/CS_Masiva_20260514_errors.json
 
 - Campo de filtro de tiempo: "Fecha de envío"
 - URL Remedy: https://soptmc.si.orange.es/MonTMC/epsilon/remedyC/{ID}
+- URL Epsilon IA: https://soptmc.si.orange.es/MonTMC/api/epsilon/resumenIA/{ID} (proxy local en `/api/epsilon/resumenIA/{ID}` vía `serve_app.py` y bloque proxy en `nginx.conf`)
 - Paleta MASORANGE/Orange: #FF7900 (acento principal/solucionadas), #FFC08A (entradas/tono claro), #0C0B09 (tinta/backlog), #F5F3F0 (fondo página), #E2DDD5 (bordes)
 - Formato fecha: dd/mm/yyyy HH:mm a (parseDate() lo convierte a Date)

@@ -27,7 +27,9 @@ dashboards/
 │   ├── tokens.css                       # Variables de diseño — fuente única de tokens
 │   ├── topbar.css                       # Barra superior (usada por los dashboards)
 │   ├── topbar.js                        # Inyecta la barra superior con la pestaña activa marcada
-│   └── shared.css                       # Resto del framework de los 3 dashboards "clásicos"
+│   ├── shared.css                       # Resto del framework de los 3 dashboards "clásicos"
+│   ├── resumen-ia.css                   # Estilos del modal flotante de Resumen IA (Epsilon)
+│   └── resumen-ia.js                    # Controlador del modal y cliente API de Epsilon IA
 └── README.md                            # Este archivo
 ```
 
@@ -40,8 +42,9 @@ dashboards/
 ## 🚀 Características
 
 - 🧭 **Portal**: punto de acceso único, con tarjetas clicables a cada dashboard (incluye enlaces a Reportes de Incidencias y Gestión de Problemas, que son apps de los repos hermanos, no de este repositorio)
-- 📈 **Incidencias Masivas**: filtro de tiempo global, KPIs con tendencias, gráficas temporales (entradas/solucionadas/backlog), incidencias abiertas por estado, tabla filtrable y ordenable con enlaces a Remedy
-- 🔍 **Postmortem / Release**: un dashboard por release (identificado por su nombre), con análisis por despliegue (PAP/MESA), KPIs de resolución, distribución por sistema y por estado, tabla filtrable y ordenable — se accede desde la tabla de KPIs de Release, no como vista combinada
+- 🤖 **Resumen IA en Pantalla Flotante (Epsilon IA)**: en Incidencias Masivas y Postmortem, al hacer clic sobre el código de una incidencia se despliega una pantalla flotante interactiva con la síntesis generada por IA (problema, impacto en negocio, causa raíz/solución, bloqueos, siguiente acción y cronología técnica de hitos), manteniendo además el acceso directo a Remedy
+- 📈 **Incidencias Masivas**: filtro de tiempo global, KPIs con tendencias, gráficas temporales (entradas/solucionadas/backlog), incidencias abiertas por estado, tabla filtrable y ordenable con Resumen IA integrado
+- 🔍 **Postmortem / Release**: un dashboard por release (identificado por su nombre), con análisis por despliegue (PAP/MESA), KPIs de resolución, distribución por sistema y por estado, tabla filtrable y ordenable con Resumen IA integrado
 - 🎯 **KPIs de Release (Histórico)**: serie histórica de KPIs de release (volumen y % de resolución PaP/1ª semana) con indicador de umbral del 75%, sobre un dataset estático mantenido a mano
 - 📤 **Subida de CSV desde el navegador**: arrastra o selecciona un CSV y se convierte automáticamente (requiere `serve_app.py`, ver más abajo)
 - 🎨 **Identidad MASORANGE**: barra superior negra con logo, acento naranja `#FF7900` sobre neutros cálidos, tipografía Inter (interfaz) + IBM Plex Mono (cifras/datos)
@@ -111,7 +114,7 @@ En producción, `dashboards/` se sirve como alias estático y `/api` se enruta a
 - KPI cards con tendencias (7d/15d/30d, color-coded)
 - Gráficas temporales: entradas/solucionadas/backlog, incidencias abiertas por estado
 - Filtros de tabla (Estado, Grupo asignado, Urgencia)
-- Tabla ordenable con enlaces a Remedy
+- Tabla ordenable: al hacer clic sobre el código de incidencia se despliega la **pantalla flotante de Resumen IA** (con opción de apertura directa en Remedy)
 
 **Entrada:** JSON con estructura de incidencias masivas, p. ej.:
 ```json
@@ -134,9 +137,24 @@ En producción, `dashboards/` se sirve como alias estático y `/api` se enruta a
 - Gráfica temporal de entradas/resoluciones/backlog
 - Gráfica de evolución de incidencias PAP en intervalos de 30 minutos (usa la hora de "Fecha de envío"/"Fecha de última resolución", preservada por el conversor junto con la fecha)
 - Distribución por sistema y por estado
-- Filtros de tabla (Estado, Despliegue, Urgencia, Sistema) y tabla ordenable
+- Filtros de tabla (Estado, Despliegue, Urgencia, Sistema) y tabla ordenable con **pantalla flotante de Resumen IA** en la columna de código
 - **Tres estados según el parámetro `release`**: sin parámetro → mensaje pidiendo acceder desde KPIs de Release; con parámetro y datos ya cargados → dashboard normal con el nombre de la release en la cabecera; con parámetro pero sin datos todavía → pantalla de subida de CSV con el nombre de la release ya asociado (no hay que escribirlo a mano)
 - El nombre de release se asocia al subir el CSV: `data/output/index.json` guarda `release_name` por archivo (leído de `_metadata.release_name`), y el JS de este dashboard busca ahí el archivo que corresponde al `?release=` de la URL
+
+### 🤖 Pantalla Flotante de Resumen IA (`assets/resumen-ia.css` / `assets/resumen-ia.js`)
+
+Componente interactivo modal que consulta la API de Epsilon IA (`https://soptmc.si.orange.es/MonTMC/api/epsilon/resumenIA/${codigo}`) para presentar un resumen ejecutivo estructurado sin abandonar el dashboard:
+
+- **Estructura sintetizada**:
+  - Título y estado actual con semántica de color (Cerrado/Resuelto en verde esmeralda, Asignado/En curso en ámbar, Pendiente en coral).
+  - Sistemas afectados identificados como chips interactivos.
+  - Bloques temáticos destacados con código de color: *Problema detectado* (naranja), *Impacto en servicio y negocio* (rubí), *Causa raíz y solución* (esmeralda), *Bloqueos e impedimentos* (ámbar), y *Siguiente acción recomendada* (azul).
+  - Cronología técnica de hitos con línea de tiempo y fechas formateadas.
+- **Acceso rápido**: Enlace directo "Abrir en Remedy" en nueva pestaña para ver la ficha completa.
+- **Bypass de CORS**:
+  - En desarrollo: `serve_app.py` expone el endpoint proxy `/api/epsilon/resumenIA/<codigo>` con contexto SSL permisivo y cabeceras CORS.
+  - En producción (Nginx): bloque `location /api/epsilon/` en `nginx.conf` que reenvía hacia `https://soptmc.si.orange.es/MonTMC/api/epsilon/`.
+  - Fallback: En caso de no existir el proxy local, ejecuta la consulta directa a `soptmc.si.orange.es`.
 
 ### KPIs Release — Histórico (`release-kpis/index.html`)
 
