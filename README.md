@@ -272,7 +272,9 @@ isort --check-only src/ cli/
 
 ```
 release-dashboard-application/
+├── deploy.sh                     # Script de despliegue automatizado y seguro para VPS
 ├── serve_app.py                  # Servidor local (dashboards + /api/upload)
+├── nginx.conf                    # Configuración de Nginx para el servidor VPS
 ├── dashboards/                   # Dashboards (HTML/CSS/JS), cada uno en su subcarpeta
 │   ├── index.html                # Redirige a /dashboards/portal/
 │   ├── portal/                   # Portal principal
@@ -311,6 +313,19 @@ Portal (dashboards/portal/)
     ↓
 Incidencias Masivas · Postmortem/Release  <-- [Resumen IA vía Epsilon]
 ```
+
+---
+
+## 🚀 Despliegue en Producción (VPS)
+
+Para desplegar de forma segura y desatendida en el servidor VPS (con backup automático, stash preventivo, actualización git, validación/rollback de `nginx.conf` y smoke tests):
+
+```bash
+cd /infocodes/project/release-dashboard-application
+./deploy.sh
+```
+
+Ver [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) y [scripts/README.md](scripts/README.md) para más detalles.
 
 ---
 

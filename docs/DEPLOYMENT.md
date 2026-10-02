@@ -1,6 +1,6 @@
 # Guía de Despliegue
 
-Procedimiento real de despliegue de Release Dashboard Application. El despliegue es **manual**: no existe script de deploy, ni de rollback, ni de health-check, ni un workflow de GitHub Actions que despliegue automáticamente.
+Procedimiento de despliegue de Release Dashboard Application en el VPS. Se cuenta con el script automatizado `./deploy.sh` que gestiona backups preventivos, stash seguro de datos locales, pull de `production`, sincronización y validación de `nginx.conf` con rollback automático, y pruebas de salud (smoke tests).
 
 ---
 
@@ -12,6 +12,7 @@ Este repositorio aporta **contenido estático** (dashboards HTML/CSS/JS) y **dat
 |---|---|---|
 | `/dashboards` | `dashboards/` del repo | Portal (`dashboards/portal/`), Incidencias Masivas, Postmortem/Release, KPIs Release |
 | `/data` | `data/` del repo | JSONs generados por los conversores (`data/output/`) |
+| `/api/epsilon/*` | Proxy en Nginx | Proxy reverso hacia `https://soptmc.si.orange.es/MonTMC/api/epsilon/` |
 
 Lo que **no** se despliega desde este repo (corren aparte, en otros procesos/repos hermanos):
 
@@ -21,67 +22,35 @@ Lo que **no** se despliega desde este repo (corren aparte, en otros procesos/rep
 
 Por tanto, desplegar este repo **no reinicia ni afecta** a esos otros servicios; son despliegues independientes que no están documentados aquí.
 
-> `serve_app.py` (servidor HTTP con endpoint `POST /api/upload` para subir CSV desde el navegador) es una utilidad de **desarrollo local** (ver README.md, sección "Inicio Rápido"). En producción, `/api` lo gestiona el nginx del VPS apuntando al backend FastAPI del repo hermano, no a `serve_app.py`. **No confirmado**: si en producción existe alguna forma equivalente de subir un CSV desde el navegador para este repo, o si la única vía de entrada de datos en producción es el cron de conversión batch descrito más abajo.
-
 ---
 
-## Arquitectura de despliegue (VPS)
+## ⚡ Despliegue Automatizado (Recomendado)
 
-Configuración real, ver `nginx.conf` en la raíz del repo (la copia activa que Nginx lee en el VPS está en `/infocodes/nginx/conf/nginx.conf`):
+El script `./deploy.sh` realiza todo el proceso de forma desatendida y segura:
 
-```nginx
-server {
-    listen 8081 default_server;
-    server_name 10.132.68.85 infocodes.si.orange.es;
-
-    location /dashboards {
-        alias /infocodes/project/release-dashboard-application/dashboards;
-        index index.html index.htm;
-        try_files $uri $uri/ /index.html;
-    }
-
-    location /data {
-        alias /infocodes/project/release-dashboard-application/data;
-        autoindex off;
-    }
-
-    location /reportes-incidencias {
-        alias /infocodes/project/cso-incident-masivas-report/app;
-        index index.html index.htm;
-        try_files $uri $uri/ /index.html;
-    }
-
-    location /problemas {
-        proxy_pass http://gestion_problemas_backend;   # localhost:3001, vía pm2
-        ...
-    }
-
-    location /api {
-        proxy_pass http://fastapi_backend;              # localhost:8000
-        ...
-    }
-}
+```bash
+cd /infocodes/project/release-dashboard-application
+./deploy.sh
 ```
 
-Puntos clave:
-
-- El checkout del repo en el VPS vive en `/infocodes/project/release-dashboard-application`. Nginx sirve `dashboards/` y `data/` **directamente desde ahí** vía `alias` — no hay una carpeta `static/` separada ni un paso de copiado/build.
-- El puerto expuesto es **8081**, no 80/443 directamente (`server_name 10.132.68.85 infocodes.si.orange.es`).
-- No hay entorno de "staging" con URL propia: solo existe esta configuración de producción.
-
----
-
-## Requisitos previos
-
-- Acceso SSH al VPS con el usuario que tiene permisos sobre `/infocodes/project/release-dashboard-application`.
-- El checkout en el VPS debe estar en la rama `production` (rama existente en el repo, separada de `main`).
-- Python instalado en el VPS (usado por los conversores CSV→JSON y por el cron de `generate-dashboards.sh`; ver `converters/requirements.txt`).
-
-**No confirmado**: la versión exacta de Python requerida en el VPS, y si el entorno usa un virtualenv específico o el intérprete de sistema.
+### ¿Qué hace `./deploy.sh` automáticamente?
+1. **Backup preventivo**: Guarda copia de seguridad de `data/output/` y del fichero activo `/infocodes/nginx/conf/nginx.conf` en `backups/deploy-YYYYMMDD_HHMMSS/`.
+2. **Stash automático**: Si hay modificaciones locales en el servidor, las guarda con `git stash` y las restaura tras el pull para evitar bloqueos.
+3. **Git pull**: Descarga y aplica los commits de `origin/production`.
+4. **Sincronización inteligente de Nginx**:
+   - Compara el `nginx.conf` del repo con el activo en `/infocodes/nginx/conf/nginx.conf`.
+   - Si cambió, lo copia y ejecuta `nginx -t`.
+   - Si la sintaxis es correcta, recarga en caliente con `nginx -s reload`.
+   - **Rollback automático**: Si `nginx -t` detecta algún error de sintaxis, restaura inmediatamente la copia de seguridad previa para que el servidor nunca quede caído.
+5. **Smoke tests**: Comprueba mediante `curl` interno que el portal y el proxy `/api/epsilon/` respondan `200 OK`.
+6. **Mantenimiento**: Rota automáticamente las copias de seguridad conservando las últimas 5.
+7. **Logging completo**: Registra la salida en `logs/deploy-YYYYMMDD.log`.
 
 ---
 
-## Procedimiento de despliegue (manual)
+## Procedimiento Manual (Paso a paso alternativo)
+
+Si por alguna razón prefieres realizar el despliegue manualmente paso a paso:
 
 1. **Verificar antes de desplegar**:
    - Los tests pasan localmente/en CI (`tests.yml` en `.github/workflows/`).

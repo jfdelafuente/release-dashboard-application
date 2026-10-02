@@ -133,3 +133,32 @@ grep generate-dashboards /var/log/syslog  # En sistemas Linux
 ```bash
 ls -lh /infocodes/project/release-dashboard-application/data/output/
 ```
+
+---
+
+## 🚀 deploy.sh
+
+Script para desplegar de forma segura las nuevas versiones del repositorio en el VPS.
+
+### Características
+
+- ✅ **Backup preventivo**: Copia de seguridad de `data/output/` y de la configuración activa de Nginx en `backups/deploy-YYYYMMDD_HHMMSS`.
+- ✅ **Stash automático**: Si hay cambios locales en el servidor (p. ej. en `data/output/`), los guarda en stash antes del pull y los restaura después.
+- ✅ **Pull de production**: Actualiza la rama `production` desde GitHub.
+- ✅ **Sincronización inteligente de Nginx**: Compara `nginx.conf` del repo con el activo en `/infocodes/nginx/conf/nginx.conf`. Si hay cambios, lo sincroniza y valida sintaxis con `nginx -t`.
+- ✅ **Rollback automático de Nginx**: Si `nginx -t` falla, restaura la configuración anterior de inmediato.
+- ✅ **Recarga en caliente**: Ejecuta `nginx -s reload` sin necesidad de `sudo` ni `systemctl`.
+- ✅ **Smoke Tests**: Comprueba que el portal y el proxy `/api/epsilon/` respondan `200 OK`.
+- ✅ **Rotación**: Mantiene los últimos 5 backups y elimina los antiguos automáticamente.
+
+### Uso
+
+Desde la raíz del repositorio:
+```bash
+./deploy.sh
+```
+
+O directamente:
+```bash
+./scripts/deploy.sh
+```
