@@ -339,11 +339,12 @@ server {
 
 No hay `location /static/` ni `root /var/www/...` para este proyecto: `alias` apunta directamente al checkout git, sin copia intermedia. Ver el `nginx.conf` completo en la raíz del repo para el resto de bloques (caché, la ruta `/` que delega a otra aplicación vía socket Unix, etc.) — todos ajenos a este repositorio.
 
-Tras cambiar `nginx.conf` en el VPS:
+Tras cambiar `nginx.conf` en el VPS (proceso en espacio de usuario `/infocodes`, sin `sudo` ni `systemctl`):
 ```bash
-sudo nginx -t
-sudo systemctl reload nginx   # o el mecanismo equivalente — no confirmado si nginx corre como servicio systemd estándar en este VPS
+nginx -t
+nginx -s reload
 ```
+*(Opcionalmente especificando la ruta si fuera necesario: `nginx -c /infocodes/project/release-dashboard-application/nginx.conf -s reload` o `kill -HUP $(cat /infocodes/var/run/nginx.pid)`).*
 
 ### 5.3 Supervisor / pm2 (procesos de los backends hermanos)
 
@@ -534,9 +535,9 @@ ls -la /infocodes/project/release-dashboard-application/data/
 # 4. Firewall activo
 sudo ufw status
 
-# 5. Nginx activo y config válida
-sudo nginx -t
-sudo systemctl status nginx
+# 5. Nginx activo y config válida (sin sudo ni systemctl)
+nginx -t
+ps -ef | grep nginx
 
 # 6. Acceso HTTP al portal (puerto real: 8081)
 curl -I http://infocodes.si.orange.es:8081/dashboards/portal/
@@ -631,7 +632,7 @@ pip3 install -r converters/requirements.txt
 
 ```bash
 # Verificar configuración Nginx
-sudo nginx -t
+nginx -t
 
 # Verificar que el checkout y el alias apuntan al mismo sitio
 ls -la /infocodes/project/release-dashboard-application/dashboards/

@@ -94,12 +94,27 @@ Puntos clave:
    git checkout production
    git pull origin production
    ```
-4. **Si cambió `nginx.conf`**: copiar/aplicar los cambios a la configuración real de nginx en el VPS y recargar:
+   > 💡 **Si `git pull` da error por cambios sin commitear en `data/output/`** (p. ej. archivos JSON generados o eliminados localmente en el servidor):
+   > ```bash
+   > git stash
+   > git pull origin production
+   > git stash pop
+   > ```
+   > O si no necesitas conservar las modificaciones locales de esos JSONs:
+   > ```bash
+   > git restore data/output/
+   > git pull origin production
+   > ```
+
+4. **Si cambió `nginx.conf`**:
+   Nginx corre en espacio de usuario bajo `/infocodes/` (escuchando en el puerto 8081 y con PID en `/infocodes/var/run/nginx.pid`), por lo que **no se requiere `sudo` ni `systemctl`** para gestionarlo:
    ```bash
-   sudo nginx -t          # validar sintaxis antes de recargar
-   sudo systemctl reload nginx
+   nginx -t               # Validar sintaxis antes de recargar
+   nginx -s reload        # Recargar Nginx en caliente sin cortar conexiones
    ```
-   (o el comando equivalente según cómo esté gestionado nginx en ese servidor — **no confirmado** si es un servicio `systemd` estándar o un nginx compilado a medida bajo `/infocodes`).
+   *(Alternativa si requiere especificar la ruta del fichero explícitamente: `nginx -c /infocodes/project/release-dashboard-application/nginx.conf -s reload`, o enviando señal directa: `kill -HUP $(cat /infocodes/var/run/nginx.pid)`).*
+
+   > ℹ️ **Nota sobre cambios en Dashboards**: Los cambios en HTML, CSS y JS (`dashboards/` como `index.html`, `resumen-ia.css` o `resumen-ia.js`) se aplican **inmediatamente tras el `git pull`** sin necesidad de recargar Nginx, ya que se sirven por `alias` directo al sistema de archivos. La recarga con `nginx -s reload` solo es necesaria si se ha modificado `nginx.conf` (por ejemplo, para añadir bloques de proxy como `/api/epsilon/`).
 5. **Si cambió algo en `converters/` o en dependencias Python**: reinstalar dependencias si aplica.
    ```bash
    pip install -r converters/requirements.txt
