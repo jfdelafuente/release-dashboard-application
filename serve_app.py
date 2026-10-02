@@ -23,6 +23,7 @@ from upload_csv import run_upload  # noqa: E402
 from generate_postmortem_report import generate_report, generate_all_reports  # noqa: E402
 
 REPORTS_PATH_PREFIX = '/api/reports/postmortem/'
+EPSILON_CACHE = {}  # { codigo: (timestamp, content, status) }
 
 PORT = 8000
 
@@ -88,8 +89,25 @@ class CustomHTTPHandler(http.server.SimpleHTTPRequestHandler):
 
     def proxy_to_epsilon_ia(self, codigo):
         import ssl
+        import time
+
+        no_cache = 'no-cache' in self.headers.get('Cache-Control', '')
+        now = time.time()
+        if not no_cache and codigo in EPSILON_CACHE:
+            cached_time, cached_content, cached_status = EPSILON_CACHE[codigo]
+            if now - cached_time < 900:  # 15 minutos de caché
+                print(f"  Proxy Epsilon IA (cache HIT): {codigo}")
+                self.send_response(cached_status)
+                self.send_header('Content-Type', 'application/json; charset=utf-8')
+                self.send_header('Access-Control-Allow-Origin', '*')
+                self.send_header('X-Cache-Status', 'HIT')
+                self.send_header('Content-Length', str(len(cached_content)))
+                self.end_headers()
+                self.wfile.write(cached_content)
+                return
+
         target_url = f"https://soptmc.si.orange.es/MonTMC/api/epsilon/resumenIA/{codigo}"
-        print(f"  Proxy Epsilon IA: {target_url}")
+        print(f"  Proxy Epsilon IA (cache MISS/LIVE): {target_url}")
         try:
             ctx = ssl.create_default_context()
             ctx.check_hostname = False
@@ -100,11 +118,14 @@ class CustomHTTPHandler(http.server.SimpleHTTPRequestHandler):
             )
             with urllib.request.urlopen(req, context=ctx, timeout=15) as resp:
                 content = resp.read()
+                if resp.status == 200:
+                    EPSILON_CACHE[codigo] = (now, content, resp.status)
                 self.send_response(resp.status)
                 self.send_header('Content-Type', 'application/json; charset=utf-8')
                 self.send_header('Access-Control-Allow-Origin', '*')
                 self.send_header('Access-Control-Allow-Methods', 'GET, OPTIONS')
                 self.send_header('Access-Control-Allow-Headers', '*')
+                self.send_header('X-Cache-Status', 'MISS')
                 self.send_header('Content-Length', str(len(content)))
                 self.send_header('Cache-Control', 'no-cache')
                 self.end_headers()

@@ -11,6 +11,47 @@
     let lastFocusedElement = null;
     let currentIncidentCode = null;
 
+    // Caché en cliente (memoria y sessionStorage) para no saturar la API
+    const clientCache = new Map();
+    const inFlightRequests = new Map();
+    const CLIENT_CACHE_TTL_MS = 15 * 60 * 1000; // 15 minutos en cliente
+
+    function getCachedData(code) {
+        const mem = clientCache.get(code);
+        if (mem && (Date.now() - mem.timestamp < CLIENT_CACHE_TTL_MS)) {
+            return mem;
+        }
+        try {
+            const raw = sessionStorage.getItem(`resumen_ia_${code}`);
+            if (raw) {
+                const parsed = JSON.parse(raw);
+                if (parsed && (Date.now() - parsed.timestamp < CLIENT_CACHE_TTL_MS)) {
+                    clientCache.set(code, parsed);
+                    return parsed;
+                }
+            }
+        } catch (_) {}
+        return null;
+    }
+
+    function setCachedData(code, data) {
+        const item = {
+            timestamp: Date.now(),
+            data: data
+        };
+        clientCache.set(code, item);
+        try {
+            sessionStorage.setItem(`resumen_ia_${code}`, JSON.stringify(item));
+        } catch (_) {}
+    }
+
+    function clearCachedData(code) {
+        clientCache.delete(code);
+        try {
+            sessionStorage.removeItem(`resumen_ia_${code}`);
+        } catch (_) {}
+    }
+
     function getRemedyUrl(code) {
         return `https://soptmc.si.orange.es/MonTMC/epsilon/remedyC/${encodeURIComponent(code)}`;
     }
@@ -247,10 +288,19 @@
                         <span class="resumen-ia-ai-tag">✨ Resumen IA · Epsilon</span>
                         <span class="resumen-ia-code-badge">${escapeHtml(code)}</span>
                         <span class="resumen-ia-status-badge ${statusClass}">${escapeHtml(estado)}</span>
+                        ${data._cached ? `<span class="resumen-ia-cache-pill" title="Respuesta guardada en caché local">⚡ En caché (${data._cacheAgeMinutes === 0 ? 'reciente' : `${data._cacheAgeMinutes}m`})</span>` : ''}
                     </div>
                     <div class="resumen-ia-header-actions">
+                        <button type="button" class="resumen-ia-refresh-btn" onclick="window.ResumenIAModal.refresh()" title="Consultar última versión en tiempo real desde Epsilon IA (evitar caché)">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <polyline points="23 4 23 10 17 10"></polyline>
+                                <polyline points="1 20 1 14 7 14"></polyline>
+                                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                            </svg>
+                            <span>Refrescar</span>
+                        </button>
                         <a href="${getRemedyUrl(code)}" target="_blank" rel="noopener noreferrer" class="resumen-ia-remedy-btn" title="Abrir ficha completa en Remedy">
-                            <span>Abrir en Remedy</span>
+                            <span>Remedy</span>
                             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                                 <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
                                 <polyline points="15 3 21 3 21 9"></polyline>
@@ -289,7 +339,7 @@
                 ${hitosHtml}
             </div>
             <div class="resumen-ia-footer">
-                <span class="resumen-ia-footer-note">Sintetizado por el motor de IA de Epsilon (soptmc.si.orange.es)</span>
+                <span class="resumen-ia-footer-note">Sintetizado por el motor de IA de Epsilon (soptmc.si.orange.es)${data._cached ? ' · Servido desde caché local' : ' · En tiempo real'}</span>
                 <div class="resumen-ia-footer-actions">
                     <button type="button" class="resumen-ia-btn-secondary" onclick="window.ResumenIAModal.close()">Cerrar</button>
                     <a href="${getRemedyUrl(code)}" target="_blank" rel="noopener noreferrer" class="resumen-ia-btn-primary">
@@ -305,47 +355,85 @@
         `;
     }
 
-    async function fetchResumenIA(code) {
-        // 1. Intentar primero a través del proxy local /api/epsilon/resumenIA/ (evita problemas de CORS)
-        const proxyUrl = `/api/epsilon/resumenIA/${encodeURIComponent(code)}`;
-        const directUrl = `https://soptmc.si.orange.es/MonTMC/api/epsilon/resumenIA/${encodeURIComponent(code)}`;
-
-        let proxyErrorMsg = null;
-        try {
-            const resp = await fetch(proxyUrl, { headers: { 'Accept': 'application/json' } });
-            if (resp.ok) {
-                const data = await resp.json();
-                if (data && data.success) return data;
-                if (data && data.error) throw new Error(data.error);
-                return data;
-            } else {
-                proxyErrorMsg = `El proxy local devolvió HTTP ${resp.status} (${resp.statusText || 'Error'})`;
-                console.warn('Proxy local no devolvió 200 OK:', resp.status, resp.statusText);
+    async function fetchResumenIA(code, forceRefresh = false) {
+        if (!forceRefresh) {
+            const cached = getCachedData(code);
+            if (cached && cached.data) {
+                return {
+                    ...cached.data,
+                    _cached: true,
+                    _cacheAgeMinutes: Math.round((Date.now() - cached.timestamp) / 60000)
+                };
             }
-        } catch (proxyErr) {
-            proxyErrorMsg = proxyErr.message || 'Error de conexión con el proxy local';
-            console.warn('Proxy local no disponible o con error:', proxyErr);
+        } else {
+            clearCachedData(code);
         }
 
-        // 2. Fallback: consulta directa a soptmc.si.orange.es
+        // Deduplicación de peticiones concurrentes para el mismo código
+        if (inFlightRequests.has(code)) {
+            return inFlightRequests.get(code);
+        }
+
+        const fetchPromise = (async () => {
+            const proxyUrl = `/api/epsilon/resumenIA/${encodeURIComponent(code)}`;
+            const directUrl = `https://soptmc.si.orange.es/MonTMC/api/epsilon/resumenIA/${encodeURIComponent(code)}`;
+
+            const headers = { 'Accept': 'application/json' };
+            if (forceRefresh) {
+                headers['Cache-Control'] = 'no-cache';
+            }
+
+            let proxyErrorMsg = null;
+            try {
+                const resp = await fetch(proxyUrl, { headers });
+                if (resp.ok) {
+                    const data = await resp.json();
+                    if (data && data.success) {
+                        setCachedData(code, data);
+                        return data;
+                    }
+                    if (data && data.error) throw new Error(data.error);
+                    setCachedData(code, data);
+                    return data;
+                } else {
+                    proxyErrorMsg = `El proxy local devolvió HTTP ${resp.status} (${resp.statusText || 'Error'})`;
+                    console.warn('Proxy local no devolvió 200 OK:', resp.status, resp.statusText);
+                }
+            } catch (proxyErr) {
+                proxyErrorMsg = proxyErr.message || 'Error de conexión con el proxy local';
+                console.warn('Proxy local no disponible o con error:', proxyErr);
+            }
+
+            // 2. Fallback: consulta directa a soptmc.si.orange.es
+            try {
+                const respDirect = await fetch(directUrl, { headers });
+                if (!respDirect.ok) {
+                    throw new Error(`Error HTTP ${respDirect.status} al consultar Epsilon IA`);
+                }
+                const dataDirect = await respDirect.json();
+                if (dataDirect && dataDirect.success) {
+                    setCachedData(code, dataDirect);
+                    return dataDirect;
+                }
+                throw new Error(dataDirect.error || 'La respuesta de la IA no marcó success: true');
+            } catch (directErr) {
+                console.error('Error al consultar Epsilon IA directamente:', directErr);
+                if (proxyErrorMsg) {
+                    throw new Error(`${proxyErrorMsg}. (Consulta directa falló: ${directErr.message || 'CORS / Sin conexión'})`);
+                }
+                throw directErr;
+            }
+        })();
+
+        inFlightRequests.set(code, fetchPromise);
         try {
-            const respDirect = await fetch(directUrl, { headers: { 'Accept': 'application/json' } });
-            if (!respDirect.ok) {
-                throw new Error(`Error HTTP ${respDirect.status} al consultar Epsilon IA`);
-            }
-            const dataDirect = await respDirect.json();
-            if (dataDirect && dataDirect.success) return dataDirect;
-            throw new Error(dataDirect.error || 'La respuesta de la IA no marcó success: true');
-        } catch (directErr) {
-            console.error('Error al consultar Epsilon IA directamente:', directErr);
-            if (proxyErrorMsg) {
-                throw new Error(`${proxyErrorMsg}. (Consulta directa falló: ${directErr.message || 'CORS / Sin conexión'})`);
-            }
-            throw directErr;
+            return await fetchPromise;
+        } finally {
+            inFlightRequests.delete(code);
         }
     }
 
-    async function openModal(code) {
+    async function openModal(code, forceRefresh = false) {
         if (!code || code === '-') return;
 
         createModalDOM();
@@ -356,11 +444,24 @@
         document.body.style.overflow = 'hidden';
         overlayEl.classList.add('is-open');
 
-        // Mostrar estado de carga inicial
+        // Si tenemos datos en caché y no se pide refrescar a la fuerza, mostrar de inmediato
+        if (!forceRefresh) {
+            const cached = getCachedData(code);
+            if (cached && cached.data) {
+                renderContent(code, {
+                    ...cached.data,
+                    _cached: true,
+                    _cacheAgeMinutes: Math.round((Date.now() - cached.timestamp) / 60000)
+                });
+                return;
+            }
+        }
+
+        // Mostrar estado de carga si hay que consultar por red
         renderLoading(code);
 
         try {
-            const data = await fetchResumenIA(code);
+            const data = await fetchResumenIA(code, forceRefresh);
             if (currentIncidentCode === code) {
                 renderContent(code, data);
             }
@@ -384,7 +485,12 @@
     // Exponer API global
     window.ResumenIAModal = {
         open: openModal,
-        close: closeModal
+        close: closeModal,
+        refresh: () => {
+            if (currentIncidentCode) {
+                openModal(currentIncidentCode, true);
+            }
+        }
     };
 
     // Alias directo
