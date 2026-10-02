@@ -156,6 +156,37 @@ Componente interactivo modal que consulta la API de Epsilon IA (`https://soptmc.
   - En producción (Nginx): bloque `location /api/epsilon/` en `nginx.conf` que reenvía hacia `https://soptmc.si.orange.es/MonTMC/api/epsilon/`.
   - Fallback: En caso de no existir el proxy local, ejecuta la consulta directa a `soptmc.si.orange.es`.
 
+#### 🛡️ Protección de Doble Capa contra Saturación de API (Anti-Rate Limit & Caché)
+
+Para evitar sobrecargar el backend de Epsilon IA cuando múltiples usuarios interactúan con los dashboards o revisan las mismas incidencias, se implementa una arquitectura de caché y resiliencia en dos capas:
+
+```
+Usuario (Navegador)
+  │
+  ├── 1. Caché Local (Map en memoria + sessionStorage, TTL 15m)
+  │      └─ Re-aperturas instantáneas (0 ms) sin tráfico de red
+  │      └─ Deduplicación de peticiones concurrentes (inFlightRequests)
+  │
+  └── 2. Servidor VPS (Nginx proxy_cache: my_cache, TTL 15m)
+         ├─ Caché compartida para todo el equipo (1 llamada a Epsilon para N usuarios)
+         ├─ proxy_cache_lock on: evita colapso si varios usuarios pulsan a la vez
+         ├─ proxy_cache_use_stale: si Epsilon se cae o tarda, entrega la versión en caché
+         └─ Botón "Refrescar": el cliente envía Cache-Control: no-cache para forzar actualización
+```
+
+1. **Capa 1: En el Navegador del Cliente (`assets/resumen-ia.js`)**:
+   - **Caché en Memoria y `sessionStorage`**: Las respuestas exitosas se almacenan con timestamp durante 15 minutos (`CLIENT_CACHE_TTL_MS = 15 * 60 * 1000`). Si el usuario cierra y vuelve a abrir el modal de la misma incidencia, se carga de forma instantánea.
+   - **Deduplicación en Vuelo (`inFlightRequests`)**: Si el usuario hace doble clic o clics repetidos sobre la misma incidencia mientras está en curso una llamada de red, se reutiliza la misma Promesa sin lanzar peticiones HTTP redundantes.
+   - **Indicador de Estado**: Los datos cacheados muestran una insignia `⚡ En caché (hace Xm)` y pie de modal explicativo.
+   - **Botón "Refrescar"**: Permite omitir la caché intencionadamente mediante `window.ResumenIAModal.refresh()`, enviando `Cache-Control: no-cache`.
+
+2. **Capa 2: En el Servidor Web (Nginx `proxy_cache` / Local `serve_app.py`)**:
+   - **Caché Compartida a Nivel de Servidor**: Configurado en la zona `my_cache` con validez de 15 minutos para respuestas HTTP 200 y 1 minuto para HTTP 404. Si 20 operadores consultan la misma incidencia masiva, Epsilon solo recibe **1 petición**.
+   - **`proxy_cache_lock on`**: Agrupa ráfagas concurrentes; solo una petición viaja a Epsilon IA y el resto espera el resultado.
+   - **`proxy_cache_use_stale`**: Alta resiliencia ante errores `http_500`, `http_502`, `http_503`, `http_504`, timeouts o caídas de red de la API externa.
+   - **`proxy_cache_bypass $http_cache_control`**: Respeta la orden de refresco enviada desde el botón del frontend.
+   - **`serve_app.py`**: Para desarrollo local, mantiene un diccionario de caché en memoria (`EPSILON_CACHE`, TTL 15m) que simula el comportamiento de Nginx (`HIT` / `MISS`).
+
 ### KPIs Release — Histórico (`release-kpis/index.html`)
 
 **Vista histórica de KPIs de release (volumen y % de resolución PaP/1ª semana), con indicador de umbral del 75%.**

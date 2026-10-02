@@ -48,6 +48,39 @@ cd /infocodes/project/release-dashboard-application
 
 ---
 
+## 🛡️ Proxy y Caché de Epsilon IA (Nginx)
+
+Nginx actúa como proxy seguro y protector de la API de Epsilon IA mediante una caché compartida (`keys_zone=my_cache:10m`):
+
+```nginx
+location /api/epsilon/ {
+    proxy_pass https://soptmc.si.orange.es/MonTMC/api/epsilon/;
+    proxy_ssl_verify off;
+    proxy_ssl_server_name on;
+    proxy_set_header Host soptmc.si.orange.es;
+    proxy_connect_timeout 15s;
+    proxy_read_timeout 30s;
+
+    # Caché compartida para no saturar la API de Epsilon IA
+    proxy_cache my_cache;
+    proxy_cache_valid 200 15m;
+    proxy_cache_valid 404 1m;
+    proxy_cache_use_stale error timeout updating http_500 http_502 http_503 http_504;
+    proxy_cache_lock on;
+    proxy_cache_lock_timeout 5s;
+    proxy_ignore_headers Cache-Control Expires Set-Cookie;
+    proxy_cache_bypass $http_cache_control;
+    add_header X-Cache-Status $upstream_cache_status always;
+}
+```
+
+- **TTL de 15 minutos (`proxy_cache_valid 200 15m`)**: Nginx responde en milisegundos directamente sin saturar Epsilon.
+- **`proxy_cache_lock on`**: Evita avalanchas concurrentes agrupando peticiones en vuelo.
+- **`proxy_cache_use_stale`**: Resiliencia total ante caídas o lentitud de la API externa (sirve caché en lugar de error).
+- **`add_header X-Cache-Status`**: Inspeccionable en DevTools (`HIT` o `MISS`).
+
+---
+
 ## Procedimiento Manual (Paso a paso alternativo)
 
 Si por alguna razón prefieres realizar el despliegue manualmente paso a paso:
