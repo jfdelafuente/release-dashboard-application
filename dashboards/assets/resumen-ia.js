@@ -310,15 +310,21 @@
         const proxyUrl = `/api/epsilon/resumenIA/${encodeURIComponent(code)}`;
         const directUrl = `https://soptmc.si.orange.es/MonTMC/api/epsilon/resumenIA/${encodeURIComponent(code)}`;
 
+        let proxyErrorMsg = null;
         try {
             const resp = await fetch(proxyUrl, { headers: { 'Accept': 'application/json' } });
             if (resp.ok) {
                 const data = await resp.json();
                 if (data && data.success) return data;
                 if (data && data.error) throw new Error(data.error);
+                return data;
+            } else {
+                proxyErrorMsg = `El proxy local devolvió HTTP ${resp.status} (${resp.statusText || 'Error'})`;
+                console.warn('Proxy local no devolvió 200 OK:', resp.status, resp.statusText);
             }
         } catch (proxyErr) {
-            console.warn('Proxy local no disponible o con error, intentando consulta directa:', proxyErr);
+            proxyErrorMsg = proxyErr.message || 'Error de conexión con el proxy local';
+            console.warn('Proxy local no disponible o con error:', proxyErr);
         }
 
         // 2. Fallback: consulta directa a soptmc.si.orange.es
@@ -332,6 +338,9 @@
             throw new Error(dataDirect.error || 'La respuesta de la IA no marcó success: true');
         } catch (directErr) {
             console.error('Error al consultar Epsilon IA directamente:', directErr);
+            if (proxyErrorMsg) {
+                throw new Error(`${proxyErrorMsg}. (Consulta directa falló: ${directErr.message || 'CORS / Sin conexión'})`);
+            }
             throw directErr;
         }
     }
