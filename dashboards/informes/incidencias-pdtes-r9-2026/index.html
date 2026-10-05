@@ -3,20 +3,57 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Informe Incidencias Pdtes R9 2026 · Release Dashboard</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/dashboards/assets/shared.css">
+    <title>R9 2026 (Mesa de Seguimiento, export 05/10/2026) - Dashboard Release</title>
+    <link rel="stylesheet" href="../../assets/shared.css">
     <style>
+        body {
+            background: #F2EFE9;
+            color: #0C0B09;
+        }
+        .header {
+            margin-bottom: 24px;
+        }
+        .eyebrow {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #8A857C;
+        }
+        .header h1 {
+            font-size: 26px;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            margin: 6px 0 12px;
+            color: #0C0B09;
+        }
+        .gradient-divider {
+            height: 3px;
+            background: linear-gradient(90deg, #FF7900 0%, #FFB066 50%, transparent 100%);
+            border-radius: 2px;
+            margin-top: 12px;
+        }
         .report-main {
-            padding: 48px 40px 80px;
             max-width: 1400px;
             margin: 0 auto;
+            padding: 24px;
         }
         .project-block {
-            margin-bottom: 48px;
+            background: #FFFFFF;
+            border: 1px solid #E2DDD5;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 32px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
         }
-        .project-block .section-title {
+        .project-block:hover {
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+            border-color: #D4CEBF;
+        }
+        .section-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: #0C0B09;
             margin-top: 0;
         }
         .project-description {
@@ -74,8 +111,6 @@
         .impact-analysis strong {
             color: #0C0B09;
         }
-
-        /* Subbloques dentro de celdas de tabla (Impacto / Solución) */
         .cell-main {
             line-height: 1.5;
             color: #3A362F;
@@ -192,17 +227,19 @@
         }
         .kpi-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
             gap: 16px;
             margin-bottom: 20px;
         }
         .kpi-total { border-left-color: #0C0B09; }
+        .kpi-resuelto { border-left-color: #1D8754; }
+        .kpi-resuelto .kpi-value { color: #1D8754 !important; }
         .kpi-analisis { border-left-color: #D97706; }
         .kpi-analisis .kpi-value { color: #D97706 !important; }
         .kpi-pendiente { border-left-color: #EA580C; }
         .kpi-pendiente .kpi-value { color: #EA580C !important; }
-        .kpi-resuelto { border-left-color: #1D8754; }
-        .kpi-resuelto .kpi-value { color: #1D8754 !important; }
+        .kpi-rechazada { border-left-color: #B3261E; }
+        .kpi-rechazada .kpi-value { color: #B3261E !important; }
         .distribution-bar-wrapper {
             margin-top: 12px;
         }
@@ -214,9 +251,10 @@
             background: #EAE6DF;
         }
         .dist-segment { height: 100%; transition: width 0.3s ease; }
+        .dist-resuelto { background: #1D8754; }
         .dist-analisis { background: #D97706; }
         .dist-pendiente { background: #EA580C; }
-        .dist-resuelto { background: #1D8754; }
+        .dist-rechazada { background: #B3261E; }
         .distribution-legend {
             display: flex;
             flex-wrap: wrap;
@@ -235,9 +273,10 @@
             height: 9px;
             border-radius: 2px;
         }
+        .dot-resuelto { background: #1D8754; }
         .dot-analisis { background: #D97706; }
         .dot-pendiente { background: #EA580C; }
-        .dot-resuelto { background: #1D8754; }
+        .dot-rechazada { background: #B3261E; }
         .section-divider {
             height: 1px;
             background: linear-gradient(90deg, #FF7900 0%, #E2DDD5 40%, transparent 100%);
@@ -252,7 +291,7 @@
     <!-- Header -->
     <header class="header">
         <span class="eyebrow">Fiabilidad de servicio · Customer &amp; Service Operations</span>
-        <h1>R9 2026 (Mesa de Seguimiento, export 01/10/2026)</h1>
+        <h1>R9 2026 (Mesa de Seguimiento, export 05/10/2026)</h1>
         <div class="gradient-divider"></div>
     </header>
 
@@ -262,48 +301,57 @@
         <section class="summary-section">
             <div class="summary-header">
                 <h2 class="summary-title">Resumen de Incidencias por Estado</h2>
-                <span class="summary-meta">Mesa de Seguimiento · Export 01/10/2026</span>
+                <span class="summary-meta">Mesa de Seguimiento · Export 05/10/2026</span>
             </div>
             <div class="kpi-grid">
                 <div class="kpi-card kpi-total">
                     <div class="kpi-content">
                         <span class="kpi-label">Total Incidencias</span>
-                        <span class="kpi-value">35</span>
+                        <span class="kpi-value">32</span>
                         <span class="kpi-subtitle">Activas en seguimiento</span>
-                    </div>
-                </div>
-                <div class="kpi-card kpi-analisis">
-                    <div class="kpi-content">
-                        <span class="kpi-label">En Análisis</span>
-                        <span class="kpi-value">13</span>
-                        <span class="kpi-subtitle">37.1% del total</span>
-                    </div>
-                </div>
-                <div class="kpi-card kpi-pendiente">
-                    <div class="kpi-content">
-                        <span class="kpi-label">Pendiente</span>
-                        <span class="kpi-value">8</span>
-                        <span class="kpi-subtitle">22.9% del total</span>
                     </div>
                 </div>
                 <div class="kpi-card kpi-resuelto">
                     <div class="kpi-content">
                         <span class="kpi-label">Resuelto</span>
-                        <span class="kpi-value">14</span>
-                        <span class="kpi-subtitle">40.0% del total</span>
+                        <span class="kpi-value">13</span>
+                        <span class="kpi-subtitle">40.6% del total</span>
+                    </div>
+                </div>
+                <div class="kpi-card kpi-analisis">
+                    <div class="kpi-content">
+                        <span class="kpi-label">En Análisis</span>
+                        <span class="kpi-value">10</span>
+                        <span class="kpi-subtitle">31.3% del total</span>
+                    </div>
+                </div>
+                <div class="kpi-card kpi-pendiente">
+                    <div class="kpi-content">
+                        <span class="kpi-label">Pendiente</span>
+                        <span class="kpi-value">7</span>
+                        <span class="kpi-subtitle">21.9% del total</span>
+                    </div>
+                </div>
+                <div class="kpi-card kpi-rechazada">
+                    <div class="kpi-content">
+                        <span class="kpi-label">Solución Rechazada</span>
+                        <span class="kpi-value">2</span>
+                        <span class="kpi-subtitle">6.3% del total</span>
                     </div>
                 </div>
             </div>
             <div class="distribution-bar-wrapper">
                 <div class="distribution-bar">
-                    <div class="dist-segment dist-analisis" style="width: 37.14%;" title="En Análisis: 13 (37.1%)"></div>
-                    <div class="dist-segment dist-pendiente" style="width: 22.86%;" title="Pendiente: 8 (22.9%)"></div>
-                    <div class="dist-segment dist-resuelto" style="width: 40.00%;" title="Resuelto: 14 (40.0%)"></div>
+                    <div class="dist-segment dist-resuelto" style="width: 40.63%;" title="Resuelto: 13 (40.6%)"></div>
+                    <div class="dist-segment dist-analisis" style="width: 31.25%;" title="En Análisis: 10 (31.3%)"></div>
+                    <div class="dist-segment dist-pendiente" style="width: 21.87%;" title="Pendiente: 7 (21.9%)"></div>
+                    <div class="dist-segment dist-rechazada" style="width: 6.25%;" title="Solución Rechazada: 2 (6.3%)"></div>
                 </div>
                 <div class="distribution-legend">
-                    <span class="legend-item"><span class="legend-dot dot-analisis"></span> En Análisis: <strong>13</strong> (37.1%)</span>
-                    <span class="legend-item"><span class="legend-dot dot-pendiente"></span> Pendiente: <strong>8</strong> (22.9%)</span>
-                    <span class="legend-item"><span class="legend-dot dot-resuelto"></span> Resuelto: <strong>14</strong> (40.0%)</span>
+                    <span class="legend-item"><span class="legend-dot dot-resuelto"></span> Resuelto: <strong>13</strong> (40.6%)</span>
+                    <span class="legend-item"><span class="legend-dot dot-analisis"></span> En Análisis: <strong>10</strong> (31.3%)</span>
+                    <span class="legend-item"><span class="legend-dot dot-pendiente"></span> Pendiente: <strong>7</strong> (21.9%)</span>
+                    <span class="legend-item"><span class="legend-dot dot-rechazada"></span> Solución Rechazada: <strong>2</strong> (6.3%)</span>
                 </div>
             </div>
         </section>
@@ -323,22 +371,11 @@
 <tr>
 <td>INC000004145070</td>
 <td>01/10/2026</td>
-<td>APL_MOV_SOE</td>
-<td><span class="status-badge status-en-progreso">En Análisis</span></td>
-<td>FdCMM no interpreta correctamente el cambio de consentimiento WhatsApp a modelo de oposición (PRJ-12001). Sistema no consulta consentimiento en +Consents antes de enviar push.</td>
-<td><div class="cell-main">Envíos WhatsApp no validados contra consentimiento actualizado; riesgo de incumplimiento normativo. Sistemas afectados FdCMM +Consents</div><div class="cell-subblock cell-hitos"><span class="cell-tag tag-hitos">Hitos técnicos</span><div class="cell-hitos-list">
-<div class="cell-hito-item"><span class="hito-date">01/10/2026:</span> Identificación cambio comportamiento consentimiento WhatsApp en PRJ-12001 a modelo oposición</div>
-</div></div><div class="cell-subblock cell-bloqueos"><span class="cell-tag tag-bloqueos">Bloqueos</span><span class="cell-subblock-text">Desarrollo FdCMM pendiente de implementación (estimado semana siguiente a 01/10/2026)</span></div><div class="cell-subblock cell-siguiente-accion"><span class="cell-tag tag-siguiente-accion">Siguiente acción</span><span class="cell-subblock-text">Validar implementación de cambio en FdCMM y consulta a +Consents una vez desplegado</span></div></td>
-<td>Pendiente de solución</td>
-</tr>
-<tr>
-<td>INC000004139677</td>
-<td>27/09/2026</td>
-<td>SQA_APLIC_INTERNAS</td>
-<td><span class="status-badge status-cerrada">Resuelto (30/09/2026)</span></td>
-<td>Al descartar un pedido de alta stand alone en CRM4T (cliente 00658120-K), los consentimientos no se borraban. Llamadas a +Consents retornaban error 401 INVALID_AUTHN_HEADER_ERROR por rol insuficiente (consents-front-operator corporaterisk.fraudMasstack.confirmationOsp).</td>
-<td>Incapacidad de eliminar consentimientos tras descarte de pedidos de alta en CRM4T.</td>
-<td>Causa raiz: rol incorrecto asignado al grupo SQA_APLIC_INTERNAS en +Consents. Accion correctora: CPD asignó el rol correcto durante proceso de migración. Resultado: operacion de borrado de consentimientos funcional tras asignacion de permisos.</td>
+<td>DES_SOE_FDCMM</td>
+<td><span class="status-badge status-cerrada">Resuelto (05/10/2026)</span></td>
+<td>FdCMM no interpretaba correctamente el cambio de consentimiento WhatsApp a modelo de oposición en PRJ-12001. Faltaba consulta del consentimiento en +Consents antes de enviar push.</td>
+<td>Envíos push WhatsApp no validaban consentimiento de oposición, incumpliendo lógica de negocio del proyecto.</td>
+<td>Integración API +Consents en FdCMM para validar consentimiento de oposición WhatsApp antes de envío push. Error de código corregido.</td>
 </tr>
 <tr>
 <td>INC000004143031</td>
@@ -362,38 +399,8 @@
 <div class="impact-analysis">
 <h3>Análisis de impactos:</h3>
 <ul>
-<li><strong>Riesgo normativo en envíos de WhatsApp por falta de validación de consentimiento</strong> (INC000004145070): incidencia de severidad 2-Alta al no consultar FdCMM el consentimiento en +Consents bajo el modelo de oposición antes de lanzar comunicaciones push, con riesgo de incumplimiento legal; pendiente de desarrollo correctivo en FdCMM. Es el foco crítico de atención.</li>
+<li><strong>Resolución del riesgo normativo en envíos de WhatsApp</strong> (INC000004145070): subsanada la incidencia de severidad 2-Alta al validar el consentimiento en +Consents antes de emitir comunicaciones push.</li>
 <li><strong>Bloqueos operativos en captura y acceso a consentimientos</strong> (INC000004143031, INC000004143815): ausencia de botón para registrar política de privacidad en minigrabaciones de altas solo fijo en CRM4TELCO (previsto 08/10/2026) e imposibilidad de acceder a la ventana de gestión de consentimientos desde FMM por error en API de +Consents.</li>
-<li><strong>Borrado de consentimientos en pedidos descartados resuelto</strong> (INC000004139677): subsanada tras la asignación por CPD de los roles requeridos en +Consents para descarte de expedientes.</li>
-</ul>
-</div>
-</section>
-<section class="project-block">
-<h2 class="section-title">Proyecto: PRJ-10167 Redes privadas 5G - MPV2</h2>
-<p class="project-description">Introducción de mejoras en el proceso de estandarización técnica de <em>Network Slicing</em> y MPNS 5G Stand Alone (SA) para Grandes Empresas (GGEE).</p>
-<div class="table-container"><table><thead><tr>
-<th>Código</th>
-<th>Fecha Apertura</th>
-<th>Sistema</th>
-<th>Estado</th>
-<th>Descripción</th>
-<th>Impacto</th>
-<th>Solución</th>
-</tr></thead><tbody>
-<tr>
-<td>INC000004141805</td>
-<td>28/09/2026</td>
-<td>DES_ALCE</td>
-<td><span class="status-badge status-cerrada">Resuelto (29/09/2026)</span></td>
-<td>PRJ-10167 Falta checkbox en orden de modificación en ALCE</td>
-<td>Impacto no especificado</td>
-<td>Requisito no solicitado. El checkbox CAMPUS no era un requerimiento funcional validado para esta orden de modificación.</td>
-</tr>
-</tbody></table></div>
-<div class="impact-analysis">
-<h3>Análisis de impactos:</h3>
-<ul>
-<li><strong>Validación de requerimiento en ALC</strong> (INC000004141805): resuelta tras determinar que el checkbox CAMPUS no correspondía funcionalmente a las órdenes de modificación evaluadas, quedando operativo el flujo de redes privadas 5G.</li>
 </ul>
 </div>
 </section>
@@ -413,8 +420,17 @@
 <td>28/09/2026</td>
 <td>SOP_TMC_SIGMA</td>
 <td><span class="status-badge status-pendiente">Pendiente (Estimado: 03/10/2026)</span></td>
-<td>Fallo en peticiones HTTPS a Google desde producción tras release con nuevo certificado. Error SSLException (NullPointerException) en JaSSLContextImpl de WebLogic. Modificación de cacerts en PRE funcionó correctamente, pero en producción persiste el error.</td>
-<td><div class="cell-main">Integración con Google no operativa en producción. Prioridad Media/Urgencia Medio.</div><div class="cell-subblock cell-bloqueos"><span class="cell-tag tag-bloqueos">Bloqueos</span><span class="cell-subblock-text">Pendiente apertura GGCC (Gestión de Cambios) para aplicar modificación en WebLogic Requiere reinicio controlado de WebLogic y adaptadores MDW</span></div><div class="cell-subblock cell-siguiente-accion"><span class="cell-tag tag-siguiente-accion">Siguiente acción</span><span class="cell-subblock-text">SOP_TMC_SIGMA debe abrir GGCC para viernes-sábado con tarea previa de reinicio controlado de WebLogic y adaptadores MDW. Aplicar Hostname Verification => None en consola WebLogic (ejecución por Atlas_Soporte_srvJ2EE).</span></div></td>
+<td>Fallo en peticiones HTTPS a Google desde WebLogic de producción tras release con nuevo certificado. Error SSLException: NullPointerException en JaSSLContextImpl. Mismo cambio funcionó en PRE (WO0000001316485).</td>
+<td><div class="cell-main">Integración con Google bloqueada en producción. Afecta a SIGMA tras release de madrugada.</div><div class="cell-subblock cell-hitos"><span class="cell-tag tag-hitos">Hitos técnicos</span><div class="cell-hitos-list">
+<div class="cell-hito-item"><span class="hito-date">28/09/2026:</span> WO0000001318914 solicitada para modificar cacerts en producción</div>
+<div class="cell-hito-item"><span class="hito-date">28/09/2026:</span> Asignación inicial errónea a GC FACTURACION BBDD, reasignada a Atlas_Soporte_srvJ2EE</div>
+<div class="cell-hito-item"><span class="hito-date">28/09/2026:</span> Escalado a SOP_TMC_SIGMA para apertura de GGCC</div>
+<div class="cell-hito-item"><span class="hito-date">28/09/2026:</span> Confirmación que GGCC debe abrirse desde SOP_TMC_SIGMA (responsable de instancia)</div>
+<div class="cell-hito-item"><span class="hito-date">29/09/2026:</span> GGCC planificado para 03/10/2026 00:00h - CRQ000000187644</div>
+<div class="cell-hito-item"><span class="hito-date">03/10/2026:</span> Ejecución de GGCC con cambio Hostname Verification => None</div>
+<div class="cell-hito-item"><span class="hito-date">05/10/2026:</span> Post-GGCC: peticiones a Google siguen fallando por SSL</div>
+<div class="cell-hito-item"><span class="hito-date">05/10/2026:</span> Diagnóstico: producción carece de parámetros TLS en JAVA_OPTIONS (-Dhttps.protocols=TLSv1.2 -Djdk.tls.client.protocols=TLSv1.2) presentes en PRE. Probable negociación con protocolo TLS inferior a 1.2 rechazado por Google</div>
+</div></div><div class="cell-subblock cell-bloqueos"><span class="cell-tag tag-bloqueos">Bloqueos</span><span class="cell-subblock-text">Cambio de JAVA_OPTIONS en producción requiere nueva GGCC</span></div></td>
 <td>Pendiente de solución</td>
 </tr>
 <tr>
@@ -435,37 +451,6 @@
 </div>
 </section>
 <section class="project-block">
-<h2 class="section-title">Proyecto: PRJ-11457 EREBOR - SOHO PI3: Capta Convergente + Multi-sede <span class="piloto-badge">Piloto</span></h2>
-<p class="project-description">Habilitación en la plataforma digital EREBOR del nuevo <em>Customer Journey</em> para empresas SOHO, cubriendo tanto la captación convergente como la funcionalidad de gestión multisede para clientes con múltiples ubicaciones geográficas.</p>
-<div class="table-container"><table><thead><tr>
-<th>Código</th>
-<th>Fecha Apertura</th>
-<th>Sistema</th>
-<th>Estado</th>
-<th>Descripción</th>
-<th>Impacto</th>
-<th>Solución</th>
-</tr></thead><tbody>
-<tr>
-<td>INC000004144409</td>
-<td>01/10/2026</td>
-<td>SOP_TMC_ESHOP_FRONTEND_OSP</td>
-<td><span class="status-badge status-pendiente">Pendiente (Estimado: 01/10/2026)</span></td>
-<td>Error en captación convergente (Negocio Extra 1 línea) con beneficios TV+Netflix y TV+Prime. Pedido falla en Salesforce. Configuración envía TV duplicada en lugar de una única instancia.</td>
-<td><div class="cell-main">Bloqueo de captaciones convergentes multi-beneficio en canal ESHOP para clientes autónomos.</div><div class="cell-subblock cell-hitos"><span class="cell-tag tag-hitos">Hitos técnicos</span><div class="cell-hitos-list">
-<div class="cell-hito-item"><span class="hito-date">01/10/2026:</span> Incidencia abierta - fallo en pedido convergente con duplicación de TV</div>
-</div></div><div class="cell-subblock cell-bloqueos"><span class="cell-tag tag-bloqueos">Bloqueos</span><span class="cell-subblock-text">Dependencia de validación/corrección en configuración de beneficios TV en Salesforce</span></div><div class="cell-subblock cell-siguiente-accion"><span class="cell-tag tag-siguiente-accion">Siguiente acción</span><span class="cell-subblock-text">Revisar mapeo de beneficios TV+Netflix y TV+Prime en flujo de captación convergente. Validar orden ESH-PR00002163 y pasaporte MBPO00410.</span></div></td>
-<td>Pendiente de solución</td>
-</tr>
-</tbody></table></div>
-<div class="impact-analysis">
-<h3>Análisis de impactos:</h3>
-<ul>
-<li><strong>Bloqueo en captación convergente multibeneficio para autónomos</strong> (INC000004144409): error de configuración en Salesforce que duplica la instancia de TV al tramitar altas Negocio Extra con paquetes TV+Netflix y TV+Prime desde el canal ESHOP, bloqueando las captaciones del piloto; pendiente de ajuste en mapeo de beneficios.</li>
-</ul>
-</div>
-</section>
-<section class="project-block">
 <h2 class="section-title">Proyecto: PRJ-11512 Nuevas características porfolios SOHO 2026</h2>
 <p class="project-description">Para acompañar la actualización de precios del porfolio SOHO se introducen nuevas ventajas que enriquecen la propuesta de valor para nuestros clientes: nuevo control horario multilicencia, fibra oro gratuita y packs de contenidos de Amazon y Disney.</p>
 <div class="table-container"><table><thead><tr>
@@ -477,6 +462,17 @@
 <th>Impacto</th>
 <th>Solución</th>
 </tr></thead><tbody>
+<tr>
+<td>INC000004145308</td>
+<td>01/10/2026</td>
+<td>SOP_TMC_EXCALIBUR</td>
+<td><span class="status-badge status-cerrada">Resuelto (04/10/2026)</span></td>
+<td>Al modificar cliente de Control Horario 5 a Control Horario Multilicencia (3 licencias), el sistema envía la configuración antigua en lugar de la nueva. Error 101 al asignar licencias (StatusCode 400).</td>
+<td><div class="cell-main">Cliente con configuración incorrecta de licencias. Servicio no operativo según nueva contratación.</div><div class="cell-subblock cell-hitos"><span class="cell-tag tag-hitos">Hitos técnicos</span><div class="cell-hitos-list">
+<div class="cell-hito-item"><span class="hito-date">01/10/2026:</span> Incidencia creada. Modificación de cliente PRSAC5557 (Orden Teide 2-1579638037707) detecta envío de aplicación antigua (Control Horario 5) en lugar de nueva (Multilicencia con 3 licencias)</div>
+</div></div><div class="cell-subblock cell-bloqueos"><span class="cell-tag tag-bloqueos">Bloqueos</span><span class="cell-subblock-text">Validación de lógica de actualización de aplicaciones en EXCALIBUR Investigación de error 101 en asignación de licencias</span></div></td>
+<td>Pendiente de solución</td>
+</tr>
 <tr>
 <td>INC000004143187</td>
 <td>30/09/2026</td>
@@ -492,7 +488,7 @@
 <div class="impact-analysis">
 <h3>Análisis de impactos:</h3>
 <ul>
-<li><strong>Visualización de servicios cancelados en notificaciones resuelta</strong> (INC000004143187): solventada la omisión de la tabla de servicios dados de baja en las plantillas de comunicación al cliente, regularizando la información contractual remitida tras modificaciones de portfolio SOHO.</li>
+<li><strong>Resolución de incidencias en portfolio SOHO y Control Horario</strong> (INC000004143187, INC000004145308): solventada la omisión de la tabla de servicios en plantillas de comunicación al cliente y regularizada la configuración de Control Horario Multilicencia.</li>
 </ul>
 </div>
 </section>
@@ -520,12 +516,12 @@
 <td>Pendiente de solución</td>
 </tr>
 <tr>
-<td>INC000004143043</td>
-<td>30/09/2026</td>
-<td>DES_CRMB2B</td>
+<td>INC000004145698</td>
+<td>02/10/2026</td>
+<td>SOP_CRMB2B</td>
 <td><span class="status-badge status-en-progreso">En Análisis</span></td>
-<td>Error en provision al procesar caso de modificación administrativa de datos del cliente desde CRM B2B. Cliente MCPYM0500, caso CAS-03669-M6B9H8.</td>
-<td><div class="cell-main">Bloqueo en modificación de datos administrativos del cliente en CRM B2B.</div><div class="cell-subblock cell-siguiente-accion"><span class="cell-tag tag-siguiente-accion">Siguiente acción</span><span class="cell-subblock-text">Revisar logs de provision para identificar causa del error en caso CAS-03669-M6B9H8 y validar datos de entrada desde CRM B2B.</span></div></td>
+<td>Usuario no puede avanzar a la siguiente fase tras subir documentación en caso de modificación de datos de contacto de cuenta de facturación (Caso 13 CRMB2B). Cliente MCPYM0665, caso CAS-03739-V4G6R1. Impacto Bloqueo en flujo de proceso de modificación de datos de titular de cuenta. Afecta a gestión de casos B2B. Bloqueos Bloqueo funcional en transición de fase tras carga de documentación</td>
+<td>Impacto no especificado</td>
 <td>Pendiente de solución</td>
 </tr>
 <tr>
@@ -537,11 +533,20 @@
 <td>Cambio de telefono del cliente MCPYM0097 bloqueado en provision.</td>
 <td>Pendiente de solución</td>
 </tr>
+<tr>
+<td>INC000004143043</td>
+<td>30/09/2026</td>
+<td>DES_CRMB2B</td>
+<td><span class="status-badge status-en-progreso">En Análisis</span></td>
+<td>Error en provision al procesar caso de modificación administrativa de datos del cliente desde CRM B2B. Cliente MCPYM0500, caso CAS-03669-M6B9H8.</td>
+<td><div class="cell-main">Bloqueo en modificación de datos administrativos del cliente en CRM B2B.</div><div class="cell-subblock cell-siguiente-accion"><span class="cell-tag tag-siguiente-accion">Siguiente acción</span><span class="cell-subblock-text">Revisar logs de provision para identificar causa del error en caso CAS-03669-M6B9H8 y validar datos de entrada desde CRM B2B.</span></div></td>
+<td>Pendiente de solución</td>
+</tr>
 </tbody></table></div>
 <div class="impact-analysis">
 <h3>Análisis de impactos:</h3>
 <ul>
-<li><strong>Bloqueos recurrentes en tramitación de modificaciones administrativas en CRM B2B</strong> (INC000004143043, INC000004144247, INC000004144445): fallos en el flujo de provisión que provocan bloqueos en actualización de datos, casos atrapados en estado Rollback sin avanzar al cambiar teléfono de contacto e imposibilidad de cancelar o finalizar expedientes de facturación. Es un foco prioritario al impactar la operativa diaria de frontales B2B.</li>
+<li><strong>Bloqueos recurrentes en tramitación de modificaciones administrativas en CRM B2B</strong> (INC000004143043, INC000004144247, INC000004144445, INC000004145698): fallos en el flujo de provisión que provocan bloqueos en actualización de datos, casos atrapados en estado Rollback sin avanzar al cambiar teléfono de contacto, imposibilidad de cancelar o finalizar expedientes de facturación, y bloqueo para avanzar de fase tras subir documentación en el frontal. Es un foco prioritario al impactar la operativa diaria de frontales B2B.</li>
 </ul>
 </div>
 </section>
@@ -589,8 +594,8 @@
 <tr>
 <td>INC000004141551</td>
 <td>29/09/2026</td>
-<td>Tecnologia</td>
-<td><span class="status-badge status-cerrada">Resuelto (01/10/2026)</span></td>
+<td>SOP_TMC_EXCALIBUR</td>
+<td><span class="status-badge status-rechazada">Solución Rechazada (01/10/2026)</span></td>
 <td>Al dar de baja Netflix plan Estándar con anuncios, el email de confirmación no muestra el contenido cancelado. Devuelve array vacío [] en lugar del listado de servicios.</td>
 <td>Cliente no recibe confirmación clara de qué contenidos se han dado de baja. Afecta a experiencia de usuario y trazabilidad de cancelaciones.</td>
 <td>Causa raíz: Recursos de prueba son no facturables y carecen de Ciclo de Facturación. BSCS notifica la baja diferida con fecha del mismo día a las 00h como baja definitiva. Al no existir OTT con baja diferida, la tabla no se rellena. Comportamiento esperado para recursos de prueba.</td>
@@ -599,26 +604,26 @@
 <td>INC000004143411</td>
 <td>30/09/2026</td>
 <td>SOP_SMC_TEIDE</td>
-<td><span class="status-badge status-en-progreso">En Análisis</span></td>
+<td><span class="status-badge status-cerrada">Resuelto (05/10/2026)</span></td>
 <td>Servicio Netflix en baja diferida pasa a baja inmediata tras intercambio de líneas. En parque TEIDE permanece visible en estado Desactivo en lugar de eliminarse.</td>
 <td>Inconsistencia en gestión de servicios: Netflix no se elimina del inventario tras intercambio de líneas, generando discrepancia entre sistemas de billing y parque.</td>
-<td>Pendiente de solución</td>
+<td>Se solicitó nueva prueba de intercambio de líneas. Funcionamiento verificado como correcto tras validación.</td>
 </tr>
 <tr>
 <td>INC000004141131</td>
 <td>28/09/2026</td>
 <td>DES_Boreal</td>
 <td><span class="status-badge status-cerrada">Resuelto (29/09/2026)</span></td>
-<td>[#CR BOREAL# ERROR BSCS - NL8569 Error BSCS Desc: El atributo recibido no está permitido</td>
-<td>Impacto no especificado</td>
-<td>Corrección desplegada en PaP durante la noche del 28 al 29 de septiembre 2026.</td>
+<td>Error en ejecución BSCS: atributo recibido no permitido para la operación o producto. Afectadas 4 órdenes (2-K5NSH572, 2-K5NPYM0X, 2-K5O9A7JK, 2-K5NQGV5J).</td>
+<td>Bloqueo de procesamiento de órdenes en Boreal.</td>
+<td>Corrección desplegada en PaP durante la noche del 28 al 29 de septiembre 2026. Causa raíz: validación de atributos incorrecta en BSCS para operaciones Boreal.</td>
 </tr>
 </tbody></table></div>
 <div class="impact-analysis">
 <h3>Análisis de impactos:</h3>
 <ul>
-<li><strong>Persistencia indebida de Netflix en inventario tras baja diferida</strong> (INC000004143411): inconsistencia en TEIDE donde el servicio Netflix pasa a estado Desactivo tras intercambio de líneas pero no se elimina del parque, bajo análisis técnico preferente.</li>
-<li><strong>Comunicaciones y bajas diferidas en Boreal subsanadas</strong> (INC000004141551, INC000004141131): resuelta la omisión de detalles del plan en los correos de confirmación de baja de Netflix Estándar y desplegada en PaP la corrección de errores BSCS en Boreal.</li>
+<li><strong>Solución rechazada en confirmaciones de baja de Netflix</strong> (INC000004141551): rechazada la resolución técnica que catalogaba como comportamiento esperado el array vacío en emails de baja de Netflix Estándar, manteniéndose en seguimiento la falta de información de contenidos cancelados al cliente.</li>
+<li><strong>Resolución de persistencia de Netflix y errores en Boreal</strong> (INC000004143411, INC000004141131): solventada la permanencia indebida de Netflix en TEIDE tras intercambio de líneas y desplegada la corrección de errores BSCS en Boreal.</li>
 </ul>
 </div>
 </section>
@@ -646,25 +651,28 @@
 <td>INC000004140862</td>
 <td>28/09/2026</td>
 <td>DSI_ANALISIS_AURORA_ACC</td>
-<td><span class="status-badge status-pendiente">Pendiente (Estimado: 01/10/2026)</span></td>
-<td>Tras grabar altas desde CRM4T, las provisiones no llegan a AFS. El campo codContrato se envía como alfanumérico (ej: E30002972000278952) pero AFS espera valor numérico decimal, causando error de validación en bwInsertTIOrder.</td>
-<td><div class="cell-main">3 clientes afectados con pedidos no procesados: 204112277, 204111160, 204113941. Bloqueo en flujo de provisión CRM4T→AFS.</div><div class="cell-subblock cell-hitos"><span class="cell-tag tag-hitos">Hitos técnicos</span><div class="cell-hitos-list">
-<div class="cell-hito-item"><span class="hito-date">28/09/2026:</span> Detección de fallos en provisión de 3 pedidos desde CRM4T</div>
-<div class="cell-hito-item"><span class="hito-date">28/09/2026:</span> Confirmación de envío de mensaje XML a AFS con ACK recibido</div>
-<div class="cell-hito-item"><span class="hito-date">28/09/2026:</span> Identificación de error en bwInsertTIOrder - codContrato rechazado como no decimal</div>
-<div class="cell-hito-item"><span class="hito-date">28/09/2026:</span> Validación de que codContrato siempre fue alfanumérico (ej: E300011160445 en pedido 204063778 del 25/09)</div>
-<div class="cell-hito-item"><span class="hito-date">28/09/2026:</span> Escalada a DES_CRM4T por problema en código de aplicación</div>
-<div class="cell-hito-item"><span class="hito-date">28/09/2026:</span> Identificación de causa raíz en mapeo PRJ-11847 - campo numérico guardado como alfanumérico</div>
-<div class="cell-hito-item"><span class="hito-date">29/09/2026:</span> Solicitud de revisión de código de contratación CRMB2B (máx 14 dígitos numéricos) vs CRM4T (formato E3000)</div>
-</div></div><div class="cell-subblock cell-bloqueos"><span class="cell-tag tag-bloqueos">Bloqueos</span><span class="cell-subblock-text">Validación de esquema AFS rechaza codContrato alfanumérico Discrepancia entre formato esperado (numérico) y formato enviado (alfanumérico E3000)</span></div></td>
+<td><span class="status-badge status-cerrada">Resuelto (01/10/2026)</span></td>
+<td>Tras grabar altas desde CRM4T, las provisiones no llegan a AFS. Error de validación en AFS: campo codContrato recibe valor alfanumérico (E30002972000278952) cuando espera numérico decimal. Afecta a 3 clientes con pedidos 204112277, 204111160, 204113941.</td>
+<td>Fallos en provisión de órdenes PYME. Órdenes quedan sin procesar en AFS. Bloquea altas de servicios.</td>
+<td>Causa raíz: mapeo incorrecto de codContrato en CRM4T. El campo debe ser numérico (máx 14 dígitos) pero se guardaba alfanumérico con prefijo E3000. Acción: validar en contratación que codContrato sea numérico. Corrección aplicada en PaP del 01/10/2026. Coordinación con equipo de contratación para futuras órdenes.</td>
+</tr>
+<tr>
+<td>INC000004142654</td>
+<td>29/09/2026</td>
+<td>DSI_ANALISIS_AURORA_ACC</td>
+<td><span class="status-badge status-pendiente">Pendiente (Estimado: 04/10/2026)</span></td>
+<td>Alta de BIG Pyme (PRPYME603) en CRM B2B. Los datos del Titular del Contrato que llegan a AFS (263975974) corresponden al Rol de Contacto Técnico en lugar del Titular. Datos de Apoderado no volcados.</td>
+<td><div class="cell-main">Inconsistencia de datos maestros entre CRM B2B y AFS. Titular incorrecto en sistema de facturación.</div><div class="cell-subblock cell-hitos"><span class="cell-tag tag-hitos">Hitos técnicos</span><div class="cell-hitos-list">
+<div class="cell-hito-item"><span class="hito-date">29/09/2026:</span> Reporte de fallo en mapeo de datos Titular vs Contacto Técnico en integración CRM B2B-AFS</div>
+</div></div></td>
 <td>Pendiente de solución</td>
 </tr>
 </tbody></table></div>
 <div class="impact-analysis">
 <h3>Análisis de impactos:</h3>
 <ul>
-<li><strong>Revisión de provisión bloqueada CRM4T-AFS</strong> (INC000004140862): pendiente de ajuste en desarrollo (previsto 01/10/2026) para validar codContrato alfanumérico en bwInsertTIOrder y permitir el procesado de los 3 pedidos bloqueados. Es la incidencia de mayor impacto operativo del proyecto.</li>
-<li><strong>Mapeo de roles en Alta Conecta Pyme derivado</strong> (INC000004143139): resuelta y derivada a INC000004128684 para la corrección estructural en el mapeo de roles (Titular vs Contacto Técnico) en altas CP2023 hacia AFS.</li>
+<li><strong>Seguimiento de comunicación CRM B2B con AFS</strong> (INC000004142654): pendiente de regularización el mapeo de datos entre CRM B2B y AFS que ocasiona inconsistencias en la titularidad de facturación (previsto 04/10/2026).</li>
+<li><strong>Provisión y mapeo en AFS resueltos</strong> (INC000004140862, INC000004143139): corregido el procesado de pedidos bloqueados con codContrato alfanumérico y derivado el mapeo estructural de roles en Alta Conecta Pyme.</li>
 </ul>
 </div>
 </section>
@@ -681,19 +689,10 @@
 <th>Solución</th>
 </tr></thead><tbody>
 <tr>
-<td>INC000004140554</td>
-<td>28/09/2026</td>
-<td>SOP_TMC_EXCALIBUR</td>
-<td><span class="status-badge status-cerrada">Resuelto (29/09/2026)</span></td>
-<td>excQuoteManagement - Error 500 Internal Server Error desde ESHOP_FRONTEND_OSP</td>
-<td>Impacto no especificado</td>
-<td>Corregido en PROD vía configuración. Errores evolucionaron de 500 a 404, indicando resolución parcial de la incidencia.</td>
-</tr>
-<tr>
 <td>INC000004141833</td>
 <td>29/09/2026</td>
-<td>SOP_SMC_TEIDE</td>
-<td><span class="status-badge status-pendiente">Pendiente (Estimado: sin fecha)</span></td>
+<td>DES_TEIDE</td>
+<td><span class="status-badge status-pendiente">Pendiente (Estimado: 08/10/2026)</span></td>
 <td>Cliente no recibe comunicaciones de Solicitud y Confirmación tras contratar Seguro Multimedia sobre producto LG SMART TV 65 NU85 4K. Orden de Modificación: 2-1579656989769.</td>
 <td>Cliente sin confirmación de contratación de seguro. Afecta a proceso de postventa y experiencia del cliente.</td>
 <td>Pendiente de solución</td>
@@ -713,8 +712,8 @@
 <div class="impact-analysis">
 <h3>Análisis de impactos:</h3>
 <ul>
-<li><strong>Pendiente de regularización el envío de comunicaciones de seguro</strong> (INC000004141833): falta de envío de correos de solicitud y confirmación tras la contratación de pólizas móviles, en seguimiento para asegurar la experiencia del cliente durante el piloto.</li>
-<li><strong>Activación de pólizas y cotización subsanadas</strong> (INC000004143030, INC000004140554): resuelta la omisión de ORDER_ITEM_ID permitiendo la activación conjunta de terminal y seguro, y solventado previamente el error 500 en cotizaciones hacia Bolttech.</li>
+<li><strong>Pendiente de regularización el envío de comunicaciones de seguro</strong> (INC000004141833): falta de envío de correos de solicitud y confirmación tras la contratación de pólizas móviles, en seguimiento para asegurar la experiencia del cliente durante el piloto (previsto 08/10/2026).</li>
+<li><strong>Activación conjunta de terminal y seguro subsanada</strong> (INC000004143030): resuelta la omisión de ORDER_ITEM_ID.</li>
 </ul>
 </div>
 </section>
@@ -733,7 +732,7 @@
 <tr>
 <td>INC000004139659</td>
 <td>27/09/2026</td>
-<td>DES_SOE_FDCMM</td>
+<td>NEG_CERES_JAZZ</td>
 <td><span class="status-badge status-en-progreso">En Análisis</span></td>
 <td>Endpoint campaignsQualification retorna error 'Index 0 out of bounds for length 0' (code 999) al consultar campañas para cliente específico 90002670-J con parámetros: qualificationType=Generalista, channel=FdC, skill=Fide recepción, ccc=PANGEAFUT1, risk=RIESGO BAJO.</td>
 <td><div class="cell-main">Imposibilidad de cargar campañas para cliente específico en Ficha Cliente MM. Caso aislado no afecta servicio general.</div><div class="cell-subblock cell-bloqueos"><span class="cell-tag tag-bloqueos">Bloqueos</span><span class="cell-subblock-text">Escalado entre equipos sin resolución: CERES indica caso aislado, DES_SOE_FDCMM requiere revisión específica del cliente. Se indica que el cliente no recibe ofertas porque es cliente en impago.</span></div></td>
@@ -742,17 +741,18 @@
 <tr>
 <td>INC000004144201</td>
 <td>30/09/2026</td>
-<td>APL_MOV_SOE</td>
-<td><span class="status-badge status-en-progreso">En Análisis</span></td>
-<td>Al lanzar campaña de renove en cliente con 4 VAPs, el sistema no valida ni avisa del límite de renoves. Permite continuar al carrito y tramitar en CRM4TELCO sin requerir amortización del VAP1.</td>
-<td>Flujo de renove incorrecto. Cliente puede procesar renoves sin cumplir restricciones de límite de VAPs.</td>
-<td>Pendiente de solución</td>
+<td>NEG_CAMP_CERES</td>
+<td><span class="status-badge status-rechazada">Solución Rechazada (01/10/2026)</span></td>
+<td>Cliente con 4 VAPs. Al lanzar campaña de renove y seleccionar otro renove, no se muestra aviso de límite alcanzado ni obliga a amortizar VAP1. Permite continuar al carrito y tramitar en CRM4TELCO.</td>
+<td>Flujo de renove sin validación de límite de VAPs activos. Riesgo de tramitaciones incorrectas.</td>
+<td>Reproducción exitosa del flujo de renove confirmó que el aviso de límite SÍ se genera correctamente. No se detectó incidencia real. Se solicita al peticionario validar si el aviso mostrado coincide con el esperado.</td>
 </tr>
 </tbody></table></div>
 <div class="impact-analysis">
 <h3>Análisis de impactos:</h3>
 <ul>
-<li><strong>Falta de control en límites de renove y carga de campañas comerciales</strong> (INC000004144201, INC000004139659): omisión de validación de topes de terminales asociados (4 VAPs) permitiendo tramitaciones sin amortización previa de dispositivos antiguos, junto con error de índice fuera de rango en endpoint campaignsQualification que impide mostrar ofertas en FdC MásMóvil. Ambas en análisis prioritario.</li>
+<li><strong>Solución rechazada en validación de límite de renoves de terminales</strong> (INC000004144201): rechazada la consideración de ausencia de fallo funcional, manteniéndose en revisión la necesidad de avisar y bloquear la tramitación cuando se alcanza el tope de 4 VAPs.</li>
+<li><strong>Error en consulta de campañas comerciales</strong> (INC000004139659): error de índice fuera de rango en endpoint campaignsQualification que impide mostrar ofertas en FdC MásMóvil, bajo análisis técnico.</li>
 </ul>
 </div>
 </section>
@@ -770,7 +770,7 @@
 <tr>
 <td>INC000004141314</td>
 <td>28/09/2026</td>
-<td>SIGMA Provisión</td>
+<td>SOP_CRMB2B</td>
 <td><span class="status-badge status-en-progreso">En Análisis</span></td>
 <td>Error código 804 (Web service call failed) al intentar reservar eSIM en alta masiva de 31 líneas. Petición rechazada con descripción genérica sin detalles de validación.</td>
 <td><div class="cell-main">Bloqueo en proceso de alta masiva de 31 líneas. Cliente MCPYM0641 sin poder completar provisioning.</div><div class="cell-subblock cell-hitos"><span class="cell-tag tag-hitos">Hitos técnicos</span><div class="cell-hitos-list">
@@ -787,8 +787,7 @@
 </div>
 </section>
 <section class="project-block">
-<h2 class="section-title">Proyecto: PRJ-11600 Bono compartido llamadas internacionales Big PYME</h2>
-<p class="project-description">Activación de un nuevo Bono Compartido de llamadas internacionales orientado a clientes de la tipología Big PYME.</p>
+<h2 class="section-title">Proyecto: PRJ-9507 Creación estado intermedio reservas terminales Pangea BO</h2>
 <div class="table-container"><table><thead><tr>
 <th>Código</th>
 <th>Fecha Apertura</th>
@@ -799,19 +798,29 @@
 <th>Solución</th>
 </tr></thead><tbody>
 <tr>
-<td>INC000004139692</td>
-<td>27/09/2026</td>
-<td>SOP_CRMB2B</td>
-<td><span class="status-badge status-cerrada">Resuelto (27/09/2026)</span></td>
-<td>No se envían comunicaciones en las altas de los bonos</td>
-<td>Impacto no especificado</td>
-<td>Se corrigió por configuración el envío de bonos en AFS hacia NABOO. RELACIONADA CON LA INC000004140329</td>
+<td>INC000004144938</td>
+<td>01/10/2026</td>
+<td>DES_SOE_PANGEA</td>
+<td><span class="status-badge status-en-progreso">En Análisis</span></td>
+<td>Campo ICCID bloqueado (gris) en formulario de entrega multicanalidad de SIM. Pedidos en estado M301 (PENDIENTE AUTORIZACIÓN) no permiten edición del ICCID ni progresión a estado entregable M304.</td>
+<td><div class="cell-main">Imposibilidad de completar entregas de SIM en TLP Jerez. Clientes incomunicados. Operativa ATAC paralizada.</div><div class="cell-subblock cell-hitos"><span class="cell-tag tag-hitos">Hitos técnicos</span><div class="cell-hitos-list">
+<div class="cell-hito-item"><span class="hito-date">01/10/2026:</span> Detección en TLP Jerez. Pedido 1035953831 en estado M301 con expirationDate 30/09/2026.</div>
+<div class="cell-hito-item"><span class="hito-date">01/10/2026:</span> APL_MOV_SOE identifica pedido sin cambio de estado M301→M304 desde backend SAP.</div>
+<div class="cell-hito-item"><span class="hito-date">01/10/2026:</span> SOP_SAP_LO confirma no recibió POST desde Pangea para progresión de estado.</div>
+<div class="cell-hito-item"><span class="hito-date">01/10/2026:</span> eContrato valida procesos correctamente (resultado 00-OK). SFID 16000284 con código 22 (BAD_QUALITY).</div>
+<div class="cell-hito-item"><span class="hito-date">01/10/2026:</span> APL_MOV_SOE solicita revisión de statusReason M301 en respuesta SAP.</div>
+<div class="cell-hito-item"><span class="hito-date">02/10/2026:</span> DES_SOE_PANGEA reproduce incidencia. Cuestiona si PRJ R9 modificó lógica de habilitación de campos.</div>
+<div class="cell-hito-item"><span class="hito-date">02/10/2026:</span> Resolución inicial: funcionalidad esperada. Requiere revalidar token/DOI.</div>
+<div class="cell-hito-item"><span class="hito-date">02/10/2026:</span> ATAC rechaza solución. Validación de token/DOI no habilita campo ICCID.</div>
+<div class="cell-hito-item"><span class="hito-date">05/10/2026:</span> ATAC reporta nuevos casos con mismo síntoma.</div>
+</div></div><div class="cell-subblock cell-bloqueos"><span class="cell-tag tag-bloqueos">Bloqueos</span><span class="cell-subblock-text">Pedidos en estado M301 sin progresión a M304 desde SAP POST de actualización de estado no enviado desde Pangea a SAP Solución propuesta inefectiva</span></div><div class="cell-subblock cell-siguiente-accion"><span class="cell-tag tag-siguiente-accion">Siguiente acción</span><span class="cell-subblock-text">Revisar lógica de habilitación de campo ICCID en Pangea post-R9. Validar si condición de estado M304 es correcta. Investigar por qué POST de progresión de estado no se envía desde Pangea a SAP.</span></div></td>
+<td>Pendiente de solución</td>
 </tr>
 </tbody></table></div>
 <div class="impact-analysis">
 <h3>Análisis de impactos:</h3>
 <ul>
-<li><strong>Activación y comunicación de bono Big PYME subsanada</strong> (INC000004139692): corregido por configuración el envío de notificaciones y la tarificación del bono compartido de llamadas internacionales, sin incidencias pendientes.</li>
+<li><strong>Bloqueo en entrega multicanal de SIM en Pangea</strong> (INC000004144938): campo ICCID bloqueado en pedidos M301 que impide completar la entrega de tarjetas SIM en TLP Jerez, paralizando la operativa de ATAC; en análisis técnico conjunto entre Pangea y SAP.</li>
 </ul>
 </div>
 </section>
@@ -827,14 +836,12 @@
 <th>Solución</th>
 </tr></thead><tbody>
 <tr>
-<td>INC000004145308</td>
-<td>01/10/2026</td>
-<td>SOP_TMC_EXCALIBUR</td>
+<td>INC000004146612</td>
+<td>02/10/2026</td>
+<td>SOP_CRMB2B</td>
 <td><span class="status-badge status-en-progreso">En Análisis</span></td>
-<td>Al modificar cliente de Control Horario 5 a Control Horario Multilicencia (3 licencias), el sistema envía la configuración antigua en lugar de la nueva. Error 101 al asignar licencias (StatusCode 400).</td>
-<td><div class="cell-main">Cliente con configuración incorrecta de licencias. Servicio no operativo según nueva contratación.</div><div class="cell-subblock cell-hitos"><span class="cell-tag tag-hitos">Hitos técnicos</span><div class="cell-hitos-list">
-<div class="cell-hito-item"><span class="hito-date">01/10/2026:</span> Incidencia creada. Modificación de cliente PRSAC5557 (Orden Teide 2-1579638037707) detecta envío de aplicación antigua (Control Horario 5) en lugar de nueva (Multilicencia con 3 licencias)</div>
-</div></div><div class="cell-subblock cell-bloqueos"><span class="cell-tag tag-bloqueos">Bloqueos</span><span class="cell-subblock-text">Validación de lógica de actualización de aplicaciones en EXCALIBUR Investigación de error 101 en asignación de licencias</span></div></td>
+<td>Solicitud de baja de CP2023 (caso CAS-03738-G9Z2J9) en CRM B2B para cliente PRPYME606 (AFS 264019705) genera mensaje de validación sobre backup 4G en Fibra Oro, pero el cliente no tiene contratado ni Fibra Oro ni servicio móvil. Caso queda en borrador sin completar la baja. Impacto Incapacidad de procesar baja de servicio. Caso bloqueado en estado borrador. Bloqueos Validación de negocio en CRM B2B impide completar baja sin resolver condición de Fibra Oro/móvil Siguiente Acción Recomendada Revisar lógica de validación en CRM B2B para caso de baja sin Fibra Oro/móvil contratados. Validar datos de cliente en AFS.</td>
+<td>Impacto no especificado</td>
 <td>Pendiente de solución</td>
 </tr>
 <tr>
@@ -860,15 +867,6 @@
 <td>Pendiente de solución</td>
 </tr>
 <tr>
-<td>INC000004141137</td>
-<td>28/09/2026</td>
-<td>DES2_SAP_LO</td>
-<td><span class="status-badge status-cerrada">Resuelto (29/09/2026)</span></td>
-<td>Error en pedido creados con flujo del 9</td>
-<td>Impacto no especificado</td>
-<td>Identificado fallo de configuración en flujo de pedidos. Corregida configuración y actualizados pedidos afectados (IDs: 6006655911, 6006656342, 6006656351, 6006656391, 6006656314, 6006656407, 6006656413, 6006655994, 6006656421, 6006656450, 6006656849, 6006656888, 6006656889, 6006656923, 6006656944, 6006657010). Pedidos validados correctamente.</td>
-</tr>
-<tr>
 <td>INC000004142493</td>
 <td>29/09/2026</td>
 <td>SOP_SMC_GIROS</td>
@@ -878,37 +876,22 @@
 <td>Se dieron de alta los tres modelos de terminal en Physis. Orden de alta de puestos ejecutada correctamente.</td>
 </tr>
 <tr>
-<td>INC000004140329</td>
-<td>27/09/2026</td>
-<td>DSI_ANALISIS_AURORA_ACC</td>
-<td><span class="status-badge status-pendiente">Pendiente (Estimado: 08/10/2026)</span></td>
-<td>Error en generación de OS desde CRMB2B. Tabla T_CFG_ACTIVITY_SLA sin registro para combinación orderType=ALTA y comercialOperation=PROVIDE. Cliente enviado con tipo documento PASAPORTE (autónomo) pero sin configuración en BBDD de AFS.</td>
-<td><div class="cell-main">Bloqueo en procesamiento de alta BIGPYME. Orden 263949626 no genera OS.</div><div class="cell-subblock cell-hitos"><span class="cell-tag tag-hitos">Hitos técnicos</span><div class="cell-hitos-list">
-<div class="cell-hito-item"><span class="hito-date">27/09/2026:</span> Identificación de falta de configuración en tabla T_CFG_ACTIVITY_SLA</div>
-<div class="cell-hito-item"><span class="hito-date">27/09/2026:</span> Confirmación de cliente como autónomo (DocumentType=PASAPORTE) sin configuración en BBDD</div>
-<div class="cell-hito-item"><span class="hito-date">28/09/2026:</span> Detección de condición en AFS con orden incorrecta. Evaluación de autónomo no contempla segmento PYME. Cambio impactaría a todos los clientes desde CRMB2B tratándolos como PYME independientemente de segmento. Pendiente consulta a negocio.</div>
-</div></div></td>
-<td>Pendiente de solución</td>
-</tr>
-<tr>
 <td>INC000004143416</td>
 <td>30/09/2026</td>
 <td>DES_CRMB2B</td>
-<td><span class="status-badge status-en-progreso">En Análisis</span></td>
+<td><span class="status-badge status-pendiente">Pendiente (Estimado: sin fecha)</span></td>
 <td>Orden de postventa Fast Track para cliente MCPYM0357 (carrito CAR-20262909-010134) bloqueada en estado 'solicitada provision'. No se visualiza servicio activo ni pendiente en BSCS.</td>
 <td><div class="cell-main">Servicio Fast Track no provisionado. Cliente sin acceso al servicio contratado.</div><div class="cell-subblock cell-siguiente-accion"><span class="cell-tag tag-siguiente-accion">Siguiente acción</span><span class="cell-subblock-text">Reasignar incidencia a equipo CRM B2B para investigacion de estado de orden y provision en origen</span></div></td>
 <td>Pendiente de solución</td>
 </tr>
 <tr>
-<td>INC000004142654</td>
-<td>29/09/2026</td>
+<td>INC000004140329</td>
+<td>27/09/2026</td>
 <td>DSI_ANALISIS_AURORA_ACC</td>
-<td><span class="status-badge status-en-progreso">En Análisis</span></td>
-<td>Alta de BIG Pyme (PRPYME603) en CRM B2B. Los datos del Titular del Contrato que llegan a AFS (263975974) corresponden al Rol de Contacto Técnico en lugar del Titular. Datos de Apoderado no volcados.</td>
-<td><div class="cell-main">Inconsistencia de datos maestros entre CRM B2B y AFS. Titular incorrecto en sistema de facturación.</div><div class="cell-subblock cell-hitos"><span class="cell-tag tag-hitos">Hitos técnicos</span><div class="cell-hitos-list">
-<div class="cell-hito-item"><span class="hito-date">29/09/2026:</span> Reporte de fallo en mapeo de datos Titular vs Contacto Técnico en integración CRM B2B-AFS</div>
-</div></div></td>
-<td>Pendiente de solución</td>
+<td><span class="status-badge status-cerrada">Resuelto (04/10/2026)</span></td>
+<td>Error en generación de OS desde CRMB2B. Tabla T_CFG_ACTIVITY_SLA sin registro para combinación orderType=ALTA y comercialOperation=PROVIDE. Cliente enviado con tipo documento PASAPORTE (autónomo) pero sin configuración en BBDD de AFS.</td>
+<td>Bloqueo en procesamiento de alta BIGPYME. Orden 263949626 no genera OS.</td>
+<td>Corrección de lógica condicional en AFS (TIAFAC-1835). Reordenamiento de evaluación de condiciones para que clientes desde CRMB2B con orderType=ALTA sean tratados como PYME. Validado en ASEG el 02/10/2026.</td>
 </tr>
 <tr>
 <td>INC000004142246</td>
@@ -932,12 +915,17 @@
 <div class="impact-analysis">
 <h3>Análisis de impactos:</h3>
 <ul>
-<li><strong>Bloqueos e inconsistencias operativas en análisis</strong> (INC000004145308, INC000004140329, INC000004143416, INC000004140888, INC000004142654): envío de configuración obsoleta y error 101 al migrar a Control Horario Multilicencia (INC000004145308), falta de parametrización SLA en AFS para clientes con pasaporte (INC000004140329, previsto 08/10), orden Fast Track atascada en provisión (INC000004143416), exceso de cuota en API de inventario de seguros (INC000004140888) y discrepancia de titular en facturación AFS de Big Pyme (INC000004142654). Foco preferente de soporte.</li>
-<li><strong>Incidencias resueltas o validadas como comportamiento esperado</strong> (INC000004142493, INC000004141137, INC000004142661, INC000004142246, INC000004141267): alta de nuevos terminales en Physis (INC000004142493), pedidos del flujo del 9 (INC000004141137), verificación de criterios de generación de CdV (INC000004142661), validación de contratos en carritos (INC000004142246) y creación de clientes en CRM B2B (INC000004141267).</li>
+<li><strong>Bloqueos e inconsistencias operativas en análisis</strong> (INC000004146612, INC000004143416, INC000004140888): fallo de comunicación entre CRM B2B y AFS (INC000004146612), orden Fast Track atascada en estado de provisión (INC000004143416) y exceso de cuota en API de inventario de seguros en Apigee (INC000004140888).</li>
+<li><strong>Incidencias resueltas o validadas como comportamiento esperado</strong> (INC000004140329, INC000004142493, INC000004142661, INC000004142246, INC000004141267): subsanado el error de generación de OS en altas BIGPYME para clientes con pasaporte (INC000004140329), alta de nuevos terminales en Physis (INC000004142493), verificación de criterios de generación de CdV (INC000004142661), validación de contratos en carritos (INC000004142246) y creación de clientes en CRM B2B (INC000004141267).</li>
 </ul>
 </div>
 </section>
     </main>
-    <script src="/dashboards/assets/topbar.js"></script>
+
+    <footer class="footer">
+        <span>Mesa de Seguimiento de Incidencias · Release R9 2026 · MASORANGE</span>
+    </footer>
+
+    <script src="../../assets/topbar.js"></script>
 </body>
 </html>
