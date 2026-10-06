@@ -412,6 +412,22 @@ El script `csv_to_json.py` anterior era un conversor simple sin validación ni n
 
 <!-- SPECKIT START: Active feature implementation plans -->
 
+### Feature: Buscador de Incidencias con Resumen IA en Portal Principal (009-portal-incident-search)
+
+**Status**: 📋 PLANNING COMPLETE (pendiente de `/speckit-tasks` e implementación)
+
+**Branch**: `009-portal-incident-search`
+
+**Objective**: Incluir en la parte superior del portal principal (`dashboards/portal/index.html`) un buscador hero de incidencias que permita consultar cualquier código (ej. `INC000004141215` o `4141215`), con normalización automática y validación accesible, abriendo la pantalla flotante de Resumen IA mediante la reutilización de `dashboards/assets/resumen-ia.js` y `dashboards/assets/resumen-ia.css` con protección de doble capa de caché.
+
+**Related Documentation**:
+- Specification: [specs/009-portal-incident-search/spec.md](specs/009-portal-incident-search/spec.md)
+- Implementation Plan: [specs/009-portal-incident-search/plan.md](specs/009-portal-incident-search/plan.md)
+- Research: [specs/009-portal-incident-search/research.md](specs/009-portal-incident-search/research.md)
+- Data Model: [specs/009-portal-incident-search/data-model.md](specs/009-portal-incident-search/data-model.md)
+- Contracts: [specs/009-portal-incident-search/contracts/](specs/009-portal-incident-search/contracts/)
+- Quickstart: [specs/009-portal-incident-search/quickstart.md](specs/009-portal-incident-search/quickstart.md)
+
 ### Feature: Informe PPT de Postmortem por Release (008-postmortem-ppt-report)
 
 **Status**: ✅ IMPLEMENTATION COMPLETE
