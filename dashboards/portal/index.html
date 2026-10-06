@@ -8,6 +8,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/dashboards/assets/shared.css">
+    <link rel="stylesheet" href="/dashboards/assets/resumen-ia.css">
     <style>
         :root {
             --portal-bg: #F5F3F0;
@@ -497,6 +498,193 @@
             text-decoration: underline;
         }
 
+        /* ==========================================================================
+           Buscador de Incidencias con Resumen IA (Hero)
+           ========================================================================== */
+        .portal-search-hero {
+            background: #FFFFFF;
+            border: 1px solid var(--portal-border-subtle);
+            border-radius: var(--radius-lg);
+            padding: 24px 28px;
+            margin-bottom: 24px;
+            box-shadow: 0 4px 16px rgba(12, 11, 9, 0.04);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .portal-search-hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--portal-orange) 0%, #FF9E40 50%, var(--portal-orange) 100%);
+        }
+
+        .portal-search-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: var(--portal-orange-light);
+            color: var(--portal-orange-dark);
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding: 4px 10px;
+            border-radius: 20px;
+            margin-bottom: 10px;
+            border: 1px solid rgba(255, 121, 0, 0.25);
+        }
+
+        .portal-search-title {
+            font-size: 1.25rem;
+            font-weight: 800;
+            color: var(--portal-text-main);
+            margin: 0 0 6px 0;
+            letter-spacing: -0.02em;
+        }
+
+        .portal-search-subtitle {
+            font-size: 13.5px;
+            color: var(--portal-text-muted);
+            margin: 0 0 16px 0;
+            max-width: 720px;
+            line-height: 1.45;
+        }
+
+        .portal-search-form {
+            max-width: 780px;
+        }
+
+        .portal-search-input-wrapper {
+            display: flex;
+            align-items: center;
+            background: #FFFFFF;
+            border: 2px solid var(--portal-border);
+            border-radius: var(--radius-md);
+            padding: 4px 6px 4px 14px;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+            box-shadow: inset 0 1px 2px rgba(12, 11, 9, 0.04);
+        }
+
+        .portal-search-input-wrapper:focus-within {
+            border-color: var(--portal-orange);
+            box-shadow: 0 0 0 3px rgba(255, 121, 0, 0.18);
+        }
+
+        .portal-search-input-wrapper.is-invalid {
+            border-color: #DC2626 !important;
+            box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.18) !important;
+        }
+
+        .portal-search-icon {
+            width: 18px;
+            height: 18px;
+            color: var(--portal-text-light);
+            flex-shrink: 0;
+            margin-right: 8px;
+        }
+
+        .portal-search-input {
+            flex: 1;
+            min-width: 0;
+            border: none;
+            background: transparent;
+            font-size: 14.5px;
+            font-family: 'IBM Plex Mono', monospace;
+            font-weight: 600;
+            color: var(--portal-text-main);
+            outline: none;
+            padding: 8px 4px;
+        }
+
+        .portal-search-input::placeholder {
+            font-family: 'Inter', sans-serif;
+            font-weight: 400;
+            color: var(--portal-text-light);
+            font-size: 13.5px;
+        }
+
+        .portal-search-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: linear-gradient(135deg, #FF7900 0%, #E66A00 100%);
+            color: #FFFFFF;
+            border: none;
+            border-radius: 8px;
+            padding: 9px 20px;
+            font-size: 13.5px;
+            font-weight: 700;
+            font-family: 'Inter', sans-serif;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        .portal-search-btn:hover {
+            background: linear-gradient(135deg, #E66A00 0%, #C95600 100%);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(255, 121, 0, 0.35);
+        }
+
+        .portal-search-btn:active {
+            transform: translateY(0);
+        }
+
+        .portal-search-btn:focus-visible {
+            outline: 2px solid var(--portal-orange-dark);
+            outline-offset: 2px;
+        }
+
+        .portal-search-btn svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        .portal-search-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 8px;
+            font-size: 12px;
+        }
+
+        .portal-search-hint {
+            color: var(--portal-text-light);
+        }
+
+        .portal-search-error {
+            color: #DC2626;
+            font-weight: 600;
+            background: #FEF2F2;
+            padding: 2px 8px;
+            border-radius: 4px;
+            border: 1px solid rgba(220, 38, 38, 0.2);
+        }
+
+        @media (max-width: 640px) {
+            .portal-search-hero {
+                padding: 18px 16px;
+            }
+            .portal-search-input-wrapper {
+                flex-direction: column;
+                align-items: stretch;
+                padding: 10px;
+                gap: 10px;
+            }
+            .portal-search-btn {
+                justify-content: center;
+                width: 100%;
+                padding: 11px;
+            }
+        }
+
         @media (max-width: 1024px) {
             .row-operational {
                 grid-template-columns: 1fr;
@@ -536,6 +724,48 @@
 
     <!-- Contenido Principal -->
     <main id="main-content" class="container">
+
+        <!-- Buscador de Incidencias con Resumen IA (Hero) -->
+        <section class="portal-search-hero" aria-label="Buscador rápido de incidencias con Resumen IA">
+            <div class="portal-search-hero-content">
+                <div class="portal-search-badge">
+                    <span class="portal-search-badge-icon" aria-hidden="true">🤖</span>
+                    <span>Inteligencia Artificial Epsilon · Orange</span>
+                </div>
+                <h2 class="portal-search-title">Consulta de Incidencias y Resumen IA</h2>
+                <p class="portal-search-subtitle">
+                    Obtén en tiempo real el resumen ejecutivo, diagnóstico técnico, causa raíz y acciones recomendadas para cualquier incidencia de Remedy.
+                </p>
+
+                <form id="incident-search-form" class="portal-search-form" novalidate>
+                    <div class="portal-search-input-wrapper">
+                        <svg class="portal-search-icon" aria-hidden="true" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M9 3.5a5.5 5.5 0 100 11 5.5 5.5 0 000-11zM2 9a7 7 0 1112.452 4.391l3.328 3.329a.75.75 0 11-1.06 1.06l-3.329-3.328A7 7 0 012 9z" clip-rule="evenodd" />
+                        </svg>
+                        <input 
+                            type="text" 
+                            id="incident-search-input" 
+                            class="portal-search-input" 
+                            placeholder="Introduce código de incidencia (ej. INC000004141215 o 4141215)..." 
+                            autocomplete="off" 
+                            spellcheck="false"
+                            aria-label="Código de incidencia a consultar"
+                            aria-describedby="search-hint search-error"
+                        />
+                        <button type="submit" id="incident-search-btn" class="portal-search-btn">
+                            <span>Consultar</span>
+                            <svg aria-hidden="true" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M3 10a.75.75 0 01.75-.75h10.638L10.23 5.29a.75.75 0 111.04-1.08l5.5 5.25a.75.75 0 010 1.08l-5.5 5.25a.75.75 0 11-1.04-1.08l4.158-3.96H3.75A.75.75 0 013 10z" clip-rule="evenodd" />
+                            </svg>
+                        </button>
+                    </div>
+                    <div class="portal-search-footer">
+                        <span id="search-hint" class="portal-search-hint">💡 Acepta códigos completos o solo números (se completará el prefijo INC y ceros automáticamente).</span>
+                        <span id="search-error" class="portal-search-error" role="alert" aria-live="polite" style="display: none;"></span>
+                    </div>
+                </form>
+            </div>
+        </section>
 
         <!-- Fila 1: Plataformas Operativas (3 tarjetas en la misma línea) -->
         <div class="row-divider">
@@ -873,13 +1103,91 @@
                 .replace(/'/g, '&#39;');
         }
 
+        // ==========================================================================
+        // Buscador de Incidencias con Resumen IA
+        // ==========================================================================
+        function sanitizeIncidentCode(input) {
+            if (!input || typeof input !== 'string') return '';
+            const clean = input.trim().toUpperCase();
+            if (!clean) return '';
+
+            // Si contiene solo dígitos (ej. "4141215"), añadir prefijo INC y ceros hasta 12 dígitos
+            if (/^\d+$/.test(clean)) {
+                return 'INC' + clean.padStart(12, '0');
+            }
+
+            // Si empieza por INC seguido de dígitos (ej. "INC4141215"), rellenar ceros hasta 12 dígitos
+            const incMatch = clean.match(/^INC(\d+)$/);
+            if (incMatch) {
+                const digits = incMatch[1];
+                if (digits.length < 12) {
+                    return 'INC' + digits.padStart(12, '0');
+                }
+            }
+
+            return clean;
+        }
+
+        function initIncidentSearch() {
+            const form = document.getElementById('incident-search-form');
+            const input = document.getElementById('incident-search-input');
+            const wrapper = input ? input.closest('.portal-search-input-wrapper') : null;
+            const errorEl = document.getElementById('search-error');
+            if (!form || !input) return;
+
+            function showError(msg) {
+                if (wrapper) wrapper.classList.add('is-invalid');
+                if (errorEl) {
+                    errorEl.textContent = msg;
+                    errorEl.style.display = 'inline-block';
+                }
+                input.focus();
+            }
+
+            function clearError() {
+                if (wrapper) wrapper.classList.remove('is-invalid');
+                if (errorEl) {
+                    errorEl.textContent = '';
+                    errorEl.style.display = 'none';
+                }
+            }
+
+            input.addEventListener('input', () => {
+                clearError();
+            });
+
+            form.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const raw = input.value;
+                const code = sanitizeIncidentCode(raw);
+
+                if (!code) {
+                    showError('Por favor, introduce un código de incidencia.');
+                    return;
+                }
+
+                clearError();
+
+                // Abrir modal de Resumen IA
+                if (window.ResumenIAModal && typeof window.ResumenIAModal.open === 'function') {
+                    window.ResumenIAModal.open(code);
+                } else if (typeof window.openResumenIA === 'function') {
+                    window.openResumenIA(code);
+                } else {
+                    showError('El servicio de Resumen IA no está disponible en este momento.');
+                }
+            });
+        }
+
         // Carga inicial y refresco periódico
         document.addEventListener('DOMContentLoaded', () => {
+            initIncidentSearch();
             updateSelectedRelease();
             loadDashboardData();
         });
         setInterval(loadDashboardData, 30000);
     </script>
+    <script src="/dashboards/assets/resumen-ia.js" defer></script>
     <script src="/dashboards/assets/topbar.js" defer></script>
 </body>
 </html>

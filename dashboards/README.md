@@ -41,8 +41,8 @@ dashboards/
 
 ## 🚀 Características
 
-- 🧭 **Portal**: punto de acceso único, con tarjetas clicables a cada dashboard (incluye enlaces a Reportes de Incidencias y Gestión de Problemas, que son apps de los repos hermanos, no de este repositorio)
-- 🤖 **Resumen IA en Pantalla Flotante (Epsilon IA)**: en Incidencias Masivas y Postmortem, al hacer clic sobre el código de una incidencia se despliega una pantalla flotante interactiva con la síntesis generada por IA (problema, impacto en negocio, causa raíz/solución, bloqueos, siguiente acción y cronología técnica de hitos), manteniendo además el acceso directo a Remedy
+- 🧭 **Portal**: punto de acceso único, con buscador directo de incidencias y Resumen IA en la parte superior, además de tarjetas clicables a cada dashboard (incluye enlaces a Reportes de Incidencias y Gestión de Problemas, que son apps de los repos hermanos, no de este repositorio)
+- 🤖 **Resumen IA en Pantalla Flotante (Epsilon IA)**: disponible tanto desde el buscador directo del portal principal como al hacer clic sobre el código de una incidencia en Incidencias Masivas y Postmortem. Despliega una pantalla flotante interactiva con la síntesis generada por IA (problema, impacto en negocio, causa raíz/solución, bloqueos, siguiente acción y cronología técnica de hitos), manteniendo además el acceso directo a Remedy
 - 📈 **Incidencias Masivas**: filtro de tiempo global, KPIs con tendencias, gráficas temporales (entradas/solucionadas/backlog), incidencias abiertas por estado, tabla filtrable y ordenable con Resumen IA integrado
 - 🔍 **Postmortem / Release**: un dashboard por release (identificado por su nombre), con análisis por despliegue (PAP/MESA), KPIs de resolución, distribución por sistema y por estado, tabla filtrable y ordenable con Resumen IA integrado
 - 🎯 **KPIs de Release (Histórico)**: serie histórica de KPIs de release (volumen y % de resolución PaP/1ª semana) con indicador de umbral del 75%, sobre un dataset estático mantenido a mano

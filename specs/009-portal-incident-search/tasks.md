@@ -24,8 +24,8 @@
 
 **Purpose**: Preparación de dependencias frontend y verificación de assets compartidos en el proyecto
 
-- [ ] T001 Verificar la disponibilidad de los recursos compartidos [`dashboards/assets/resumen-ia.js`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/dashboards/assets/resumen-ia.js) y [`dashboards/assets/resumen-ia.css`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/dashboards/assets/resumen-ia.css)
-- [ ] T002 [P] Comprobar el funcionamiento del proxy local de Epsilon en [`serve_app.py`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/serve_app.py) para simulación de respuestas de Resumen IA
+- [x] T001 Verificar la disponibilidad de los recursos compartidos [`dashboards/assets/resumen-ia.js`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/dashboards/assets/resumen-ia.js) y [`dashboards/assets/resumen-ia.css`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/dashboards/assets/resumen-ia.css)
+- [x] T002 [P] Comprobar el funcionamiento del proxy local de Epsilon en [`serve_app.py`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/serve_app.py) para simulación de respuestas de Resumen IA
 
 ---
 
@@ -35,8 +35,8 @@
 
 **⚠️ CRITICAL**: Ninguna historia de usuario puede funcionar sin enlazar previamente los assets del modal en el portal
 
-- [ ] T003 Enlazar la hoja de estilos [`dashboards/assets/resumen-ia.css`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/dashboards/assets/resumen-ia.css) en el `<head>` de [`dashboards/portal/index.html`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/dashboards/portal/index.html)
-- [ ] T004 Enlazar el script [`dashboards/assets/resumen-ia.js`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/dashboards/assets/resumen-ia.js) con atributo `defer` antes del cierre de `</body>` en [`dashboards/portal/index.html`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/dashboards/portal/index.html)
+- [x] T003 Enlazar la hoja de estilos [`dashboards/assets/resumen-ia.css`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/dashboards/assets/resumen-ia.css) en el `<head>` de [`dashboards/portal/index.html`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/dashboards/portal/index.html)
+- [x] T004 Enlazar el script [`dashboards/assets/resumen-ia.js`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/dashboards/assets/resumen-ia.js) con atributo `defer` antes del cierre de `</body>` en [`dashboards/portal/index.html`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/dashboards/portal/index.html)
 
 **Checkpoint**: El singleton global `window.ResumenIAModal` queda disponible en el contexto del portal.
 
@@ -50,10 +50,10 @@
 
 ### Implementation for User Story 1
 
-- [ ] T005 [P] [US1] Añadir la estructura HTML del bloque hero `<section class="portal-search-hero">` dentro de `<main id="main-content">` en [`dashboards/portal/index.html`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/dashboards/portal/index.html) según el contrato [`specs/009-portal-incident-search/contracts/search-component-contract.md`](contracts/search-component-contract.md)
-- [ ] T006 [P] [US1] Añadir estilos CSS corporativos de Orange (`#FF7900`) para la tarjeta hero, el formulario de búsqueda, el input y el botón de acción en `<style>` de [`dashboards/portal/index.html`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/dashboards/portal/index.html)
-- [ ] T007 [US1] Implementar el manejador del evento `submit` en el formulario `#incident-search-form` en [`dashboards/portal/index.html`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/dashboards/portal/index.html) para invocar `window.ResumenIAModal.open(code)`
-- [ ] T008 [US1] Asegurar soporte nativo de navegación y confirmación por teclado (tecla `Enter` para enviar formulario y tecla `Escape` para cerrar el modal) en [`dashboards/portal/index.html`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/dashboards/portal/index.html)
+- [x] T005 [P] [US1] Añadir la estructura HTML del bloque hero `<section class="portal-search-hero">` dentro de `<main id="main-content">` en [`dashboards/portal/index.html`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/dashboards/portal/index.html) según el contrato [`specs/009-portal-incident-search/contracts/search-component-contract.md`](contracts/search-component-contract.md)
+- [x] T006 [P] [US1] Añadir estilos CSS corporativos de Orange (`#FF7900`) para la tarjeta hero, el formulario de búsqueda, el input y el botón de acción en `<style>` de [`dashboards/portal/index.html`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/dashboards/portal/index.html)
+- [x] T007 [US1] Implementar el manejador del evento `submit` en el formulario `#incident-search-form` en [`dashboards/portal/index.html`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/dashboards/portal/index.html) para invocar `window.ResumenIAModal.open(code)`
+- [x] T008 [US1] Asegurar soporte nativo de navegación y confirmación por teclado (tecla `Enter` para enviar formulario y tecla `Escape` para cerrar el modal) en [`dashboards/portal/index.html`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/dashboards/portal/index.html)
 
 **Checkpoint**: User Story 1 (MVP) completamente operativa: el usuario ya puede buscar y visualizar incidencias desde el portal.
 
@@ -67,9 +67,9 @@
 
 ### Implementation for User Story 2
 
-- [ ] T009 [US2] Implementar la función de normalización pura `sanitizeIncidentCode(input)` en [`dashboards/portal/index.html`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/dashboards/portal/index.html) siguiendo las reglas definidas en [`specs/009-portal-incident-search/research.md`](research.md)
-- [ ] T010 [US2] Integrar la normalización en el flujo de envío de `#incident-search-form` antes de la llamada a `window.ResumenIAModal.open()` en [`dashboards/portal/index.html`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/dashboards/portal/index.html)
-- [ ] T011 [P] [US2] Crear un script de pruebas unitarias/verificación de normalización en [`tests/test_sanitize_incident_code.js`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/tests/test_sanitize_incident_code.js) para verificar todas las casuísticas de entrada (numéricas, con espacios, minúsculas y caracteres especiales)
+- [x] T009 [US2] Implementar la función de normalización pura `sanitizeIncidentCode(input)` en [`dashboards/portal/index.html`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/dashboards/portal/index.html) siguiendo las reglas definidas en [`specs/009-portal-incident-search/research.md`](research.md)
+- [x] T010 [US2] Integrar la normalización en el flujo de envío de `#incident-search-form` antes de la llamada a `window.ResumenIAModal.open()` en [`dashboards/portal/index.html`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/dashboards/portal/index.html)
+- [x] T011 [P] [US2] Crear un script de pruebas unitarias/verificación de normalización en [`tests/test_sanitize_incident_code.js`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/tests/test_sanitize_incident_code.js) para verificar todas las casuísticas de entrada (numéricas, con espacios, minúsculas y caracteres especiales)
 
 **Checkpoint**: User Stories 1 y 2 plenamente operativas y robustas ante errores tipográficos comunes.
 
@@ -83,9 +83,9 @@
 
 ### Implementation for User Story 3
 
-- [ ] T012 [US3] Implementar la comprobación de campo vacío en el envío de `#incident-search-form` en [`dashboards/portal/index.html`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/dashboards/portal/index.html) previniendo el envío si `!sanitizedCode`
-- [ ] T013 [US3] Añadir clases de error `.is-invalid` y mensaje de alerta accesible `#search-error` con `role="alert"` y `aria-live="polite"` en [`dashboards/portal/index.html`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/dashboards/portal/index.html)
-- [ ] T014 [US3] Añadir listener de evento `input` en `#incident-search-input` para limpiar automáticamente el estado de error en cuanto el usuario vuelve a escribir en [`dashboards/portal/index.html`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/dashboards/portal/index.html)
+- [x] T012 [US3] Implementar la comprobación de campo vacío en el envío de `#incident-search-form` en [`dashboards/portal/index.html`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/dashboards/portal/index.html) previniendo el envío si `!sanitizedCode`
+- [x] T013 [US3] Añadir clases de error `.is-invalid` y mensaje de alerta accesible `#search-error` con `role="alert"` y `aria-live="polite"` en [`dashboards/portal/index.html`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/dashboards/portal/index.html)
+- [x] T014 [US3] Añadir listener de evento `input` en `#incident-search-input` para limpiar automáticamente el estado de error en cuanto el usuario vuelve a escribir en [`dashboards/portal/index.html`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/dashboards/portal/index.html)
 
 **Checkpoint**: Validación local accesible y sin recargas de página completada.
 
@@ -95,9 +95,9 @@
 
 **Purpose**: Perfeccionamiento de la interfaz, responsive design, validación completa del flujo y documentación final
 
-- [ ] T015 [P] Validar el diseño responsive del bloque hero en resoluciones móviles (<768px), tablet y escritorio en [`dashboards/portal/index.html`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/dashboards/portal/index.html)
-- [ ] T016 Ejecutar todas las pruebas descritas en [`specs/009-portal-incident-search/quickstart.md`](quickstart.md) sobre `http://localhost:8000/dashboards/portal/`
-- [ ] T017 [P] Actualizar la documentación de dashboards en [`dashboards/README.md`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/dashboards/README.md) reflejando la nueva funcionalidad de búsqueda directa desde el portal
+- [x] T015 [P] Validar el diseño responsive del bloque hero en resoluciones móviles (<768px), tablet y escritorio en [`dashboards/portal/index.html`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/dashboards/portal/index.html)
+- [x] T016 Ejecutar todas las pruebas descritas en [`specs/009-portal-incident-search/quickstart.md`](quickstart.md) sobre `http://localhost:8000/dashboards/portal/`
+- [x] T017 [P] Actualizar la documentación de dashboards en [`dashboards/README.md`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/dashboards/README.md) reflejando la nueva funcionalidad de búsqueda directa desde el portal
 
 ---
 
@@ -133,3 +133,4 @@ Phase 1: Setup ────► Phase 2: Foundational ────► Phase 3: Us
 2. **Incremento 2**: Completar Fase 4 (Normalización inteligente y tolerancia a formatos abreviados o numéricos).
 3. **Incremento 3**: Completar Fase 5 (Validación local accesible sin peticiones erróneas).
 4. **Incremento 4**: Completar Fase 6 (Responsive polish, ejecución de quickstart y actualización de documentación).
+
