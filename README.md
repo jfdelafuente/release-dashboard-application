@@ -2,7 +2,7 @@
 
 Aplicación web para análisis y visualización de incidencias masivas y postmortems de release, con conversión automática de CSV a JSON.
 
-**Portal** (`dashboards/portal/`) es el **punto de acceso principal**: enlaza a los dashboards de este repo (Incidencias Masivas, Postmortem/Release) y a los paneles de los repos hermanos (Reportes de Incidencias, Gestión de Problemas).
+**Portal** (`dashboards/portal/`) es el **punto de acceso principal**: incorpora un **buscador de incidencias con Resumen IA en tiempo real** (Epsilon IA) en su parte superior y enlaza a los dashboards de este repo (Incidencias Masivas, Postmortem/Release) y a los paneles de los repos hermanos (Reportes de Incidencias, Gestión de Problemas).
 
 ---
 
@@ -69,7 +69,8 @@ Los JSONs se generan en `data/output/` e `index.json` se actualiza automáticame
 Con `serve_app.py` corriendo, ve a `http://localhost:8000/dashboards/portal/` (o simplemente `/dashboards/`, que redirige ahí vía `dashboards/index.html`).
 
 ### 4️⃣ Los dashboards cargan automáticamente los datos más recientes
-
+ 
+- **Portal** (`portal/`): buscador directo de incidencias de Remedy con pantalla flotante interactiva de Resumen IA (Epsilon IA), normalización inteligente de códigos (ej. `4141215` o `INC000004141215`), validación accesible y protección con doble capa de caché (15 min).
 - **Incidencias Masivas** (`massive-incidents/`): evolución temporal, backlog, tendencias, filtros por estado/sistema/urgencia y pantalla flotante con Resumen IA (Epsilon) al pulsar sobre el código de una incidencia.
 - **Postmortem / Release** (`postmortem/`): análisis por despliegue (PAP/MESA), KPIs de resolución y pantalla flotante con Resumen IA (Epsilon) al pulsar sobre el código de una incidencia.
 

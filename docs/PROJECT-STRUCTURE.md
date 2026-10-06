@@ -109,7 +109,7 @@ dashboards/
 └── README.md
 ```
 
-Sin build step: cada dashboard es un `.html` con su CSS y JavaScript propios en línea (salvo Plotly.js y Google Fonts, vía CDN), más el framework compartido de `assets/`. El portal (`dashboards/portal/`) es el punto de acceso único, con tarjetas hacia cada dashboard y hacia los paneles hermanos (`/reportes-incidencias`, `/problemas`), que **no** forman parte de este repositorio.
+Sin build step: cada dashboard es un `.html` con su CSS y JavaScript propios en línea (salvo Plotly.js y Google Fonts, vía CDN), más el framework compartido de `assets/`. El portal (`dashboards/portal/`) es el punto de acceso único, con buscador directo de incidencias y Resumen IA en la cabecera hero, tarjetas hacia cada dashboard y enlaces hacia los paneles hermanos (`/reportes-incidencias`, `/problemas`), que **no** forman parte de este repositorio.
 
 Ver [`dashboards/README.md`](../dashboards/README.md) para el detalle funcional de cada dashboard.
 
