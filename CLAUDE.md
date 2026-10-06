@@ -412,6 +412,23 @@ El script `csv_to_json.py` anterior era un conversor simple sin validación ni n
 
 <!-- SPECKIT START: Active feature implementation plans -->
 
+### Feature: Informe Ejecutivo de Incidencias Postmortem (010-incident-executive-report)
+
+**Status**: 📋 SPECIFICATION READY FOR PLANNING
+
+**Branch**: `010-incident-executive-report`
+
+**Objective**: Construir un informe ejecutivo descargable en formato PowerPoint (`.pptx`) basado en la plantilla corporativa `20260609 Incidencia IVR ExMM.pptx` (Diapositiva 1: Resumen con Inicio/Duración, Impacto, Causa, Solución y tabla de 4 columnas de Puntos de Acción; Diapositivas 2 y 3: Cronología detallada de hitos y eventos). La fuente de datos es una página de Confluence del postmortem solicitada bajo demanda mediante un botón interactivo por fila en la tabla de candidatos a postmortem del dashboard de Gestión de Problemas.
+
+**Decisiones de Clarificación**:
+- Q1 (Formato): Archivo PowerPoint (`.pptx`) fiel a la plantilla de referencia.
+- Q2 (Ingesta Confluence): Modal interactivo con sesión activa del operador para validar o introducir la URL.
+- Q3 (Interacción UI): Botón de acción por fila en la tabla de candidatos a postmortem con descarga directa y regeneración forzada.
+
+**Related Documentation**:
+- Specification: [specs/010-incident-executive-report/spec.md](specs/010-incident-executive-report/spec.md)
+- Requirements Checklist: [specs/010-incident-executive-report/checklists/requirements.md](specs/010-incident-executive-report/checklists/requirements.md)
+
 ### Feature: Buscador de Incidencias con Resumen IA en Portal Principal (009-portal-incident-search)
 
 **Status**: ✅ IMPLEMENTATION COMPLETE
