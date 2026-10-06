@@ -414,7 +414,7 @@ El script `csv_to_json.py` anterior era un conversor simple sin validación ni n
 
 ### Feature: Informe Ejecutivo de Incidencias Postmortem (010-incident-executive-report)
 
-**Status**: 📋 SPECIFICATION READY FOR PLANNING
+**Status**: 📐 PLANNING COMPLETE
 
 **Branch**: `010-incident-executive-report`
 
@@ -427,6 +427,11 @@ El script `csv_to_json.py` anterior era un conversor simple sin validación ni n
 
 **Related Documentation**:
 - Specification: [specs/010-incident-executive-report/spec.md](specs/010-incident-executive-report/spec.md)
+- Implementation Plan: [specs/010-incident-executive-report/plan.md](specs/010-incident-executive-report/plan.md)
+- Research & Technical Decisions: [specs/010-incident-executive-report/research.md](specs/010-incident-executive-report/research.md)
+- Data Model: [specs/010-incident-executive-report/data-model.md](specs/010-incident-executive-report/data-model.md)
+- Contracts: [specs/010-incident-executive-report/contracts/](specs/010-incident-executive-report/contracts/)
+- Quickstart: [specs/010-incident-executive-report/quickstart.md](specs/010-incident-executive-report/quickstart.md)
 - Requirements Checklist: [specs/010-incident-executive-report/checklists/requirements.md](specs/010-incident-executive-report/checklists/requirements.md)
 
 ### Feature: Buscador de Incidencias con Resumen IA en Portal Principal (009-portal-incident-search)
