@@ -43,3 +43,4 @@
 - Soporte total para teclado: tecla `Escape` cierra el modal, tecla `Enter` envía el formulario.
 - Atributos `aria-modal="true"`, `role="dialog"` y foco automático en el botón de confirmación o campo de entrada.
 - Anuncio dinámico para lectores de pantalla mediante `aria-live="polite"` al completarse la generación o producirse un error.
+

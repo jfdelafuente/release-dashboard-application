@@ -120,3 +120,4 @@ classDiagram
    - Si existen más de 40 eventos, se generan diapositivas dinámicas adicionales clonando la estructura de la Diapositiva 3.
 4. **Puntos de Acción**:
    - La tabla de la Diapositiva 1 admite hasta 6 filas de puntos de acción. Si hay más, las filas sobrantes se paginan o se registran en una diapositiva anexa sin deformar el slide de resumen.
+

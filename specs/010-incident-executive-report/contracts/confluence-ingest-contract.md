@@ -44,3 +44,4 @@ Tabla en Confluence con encabezados coincidentes o equivalentes a:
 | Tabla cronológica muy extensa (>38 filas) | Se reparte ordenadamente: 18 filas en Slide 2, 20 filas en Slide 3, y diapositivas adicionales si supera 38 filas |
 | Bloques de impacto/causa vacíos | Se inserta texto por defecto `"Pendiente de detallar en postmortem"` |
 | Página no accesible por falta de sesión | La UI muestra mensaje claro invitando a iniciar sesión o a pegar el contenido en el modal |
+

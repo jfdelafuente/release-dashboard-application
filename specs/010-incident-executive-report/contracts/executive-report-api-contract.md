@@ -126,3 +126,4 @@ Consulta si el informe ya está generado en el servidor para activar el botón d
   "incidentRef": "2606S77393"
 }
 ```
+

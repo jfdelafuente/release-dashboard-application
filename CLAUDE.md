@@ -433,6 +433,7 @@ El script `csv_to_json.py` anterior era un conversor simple sin validación ni n
 - Contracts: [specs/010-incident-executive-report/contracts/](specs/010-incident-executive-report/contracts/)
 - Quickstart: [specs/010-incident-executive-report/quickstart.md](specs/010-incident-executive-report/quickstart.md)
 - Requirements Checklist: [specs/010-incident-executive-report/checklists/requirements.md](specs/010-incident-executive-report/checklists/requirements.md)
+- Tasks: [specs/010-incident-executive-report/tasks.md](specs/010-incident-executive-report/tasks.md)
 
 ### Feature: Buscador de Incidencias con Resumen IA en Portal Principal (009-portal-incident-search)
 

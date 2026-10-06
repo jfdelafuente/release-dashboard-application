@@ -47,3 +47,4 @@ Abre tu navegador en `http://localhost:8000/problemas` y dirígete a la pestaña
 4. Verifica que el archivo `.pptx` se descarga automáticamente en tu navegador.
 5. Abre el `.pptx` en PowerPoint y valida que conserva la estética corporativa de Orange, los bloques narrativos y las tablas formateadas.
 6. Regresa al dashboard y comprueba que la fila ahora muestra el botón **"⬇️ Descargar PPT"** para descargas instantáneas sin recálculo.
+

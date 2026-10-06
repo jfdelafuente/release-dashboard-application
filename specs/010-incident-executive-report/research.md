@@ -88,3 +88,4 @@ Exponer una API REST ligera y estandarizada en el servicio backend (`serve_app.p
 | **Ingesta Confluence** | Diálogo interactivo con URL y soporte de sesión | Evita bloqueos por firewalls y no exige tokens de servicio globales. |
 | **Punto de Entrada UI** | Botón por fila en tabla de Postmortems (`IssuesTable.tsx`) | Acceso contextual directo donde el operador evalúa los postmortems candidatos. |
 | **Persistencia** | `data/reports/executive/` en disco | Caché inmediata para descargas repetidas y soporte de regeneración bajo demanda. |
+
