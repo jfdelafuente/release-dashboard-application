@@ -138,6 +138,41 @@ Faltan las dependencias del generador de informes:
 pip install -r converters/requirements.txt
 ```
 
+### "Kaleido requires Google Chrome to be installed"
+Desde `kaleido` 1.x, la librería que renderiza las gráficas del informe a
+PNG ya no trae un navegador propio: necesita Chrome instalado por separado
+en la máquina donde corre el proceso que genera el informe (local:
+`serve_app.py`; producción: el backend de `cso-incident-masivas-report`).
+Instálalo con:
+
+```bash
+plotly_get_chrome -y
+```
+
+Este comando lo instala en el propio entorno de Python (sin necesitar
+permisos de administrador ni `sudo`). En producción, `deploy.sh` ya
+ejecuta este paso automáticamente en cada despliegue — si el error
+aparece de todas formas, ejecútalo a mano en el servidor (ver
+`DEPLOYMENT.md` del repo `cso-incident-masivas-report`) y reinicia el
+backend.
+
+### "The browser seemed to close immediately after starting"
+Chrome se instaló pero no puede arrancar — típico de un servidor Linux
+mínimo al que le faltan librerías del sistema que Chrome headless
+necesita (`libnss3`, `libgtk-3`, etc.). Comprueba qué falta (sin sudo, no
+llega a ejecutar Chrome):
+
+```bash
+ldd ~/.local/share/choreographer/deps/chrome-linux64/chrome | grep "not found"
+```
+
+Instala lo que falte con `sudo apt install` (o `dnf install` en Rocky/RHEL)
+— ver el listado completo de paquetes en la sección "Requisitos previos"
+de `DEPLOYMENT.md` del repo `cso-incident-masivas-report`. Esto sí
+necesita permisos de administrador, a diferencia de `plotly_get_chrome` —
+si el operador habitual no tiene sudo, es una instalación puntual (una
+sola vez) que tiene que ejecutar alguien que sí lo tenga en el servidor.
+
 ## Documentación relacionada
 
 - [Especificación de la feature](../specs/008-postmortem-ppt-report/spec.md)
