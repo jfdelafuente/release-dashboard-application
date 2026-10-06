@@ -18,8 +18,8 @@
 
 **Purpose**: Inicialización del entorno de plantillas corporativas y directorios de almacenamiento.
 
-- [ ] T001 Copiar y registrar la plantilla corporativa `20260609 Incidencia IVR ExMM.pptx` en `converters/src/report_generator/assets/executive_template.pptx`
-- [ ] T002 Crear el directorio de persistencia para informes ejecutivos generados en `data/reports/executive/.gitkeep`
+- [X] T001 Copiar y registrar la plantilla corporativa `20260609 Incidencia IVR ExMM.pptx` en `converters/src/report_generator/assets/executive_template.pptx`
+- [X] T002 Crear el directorio de persistencia para informes ejecutivos generados en `data/reports/executive/.gitkeep`
 
 ---
 
@@ -29,8 +29,8 @@
 
 **⚠️ CRITICAL**: Completar esta fase antes de comenzar la implementación de las historias de usuario.
 
-- [ ] T003 Definir modelos y esquemas de datos tipados en `converters/src/report_generator/executive_models.py`
-- [ ] T004 [P] Implementar resolución de rutas y sanitización de nombres de informe en `converters/src/report_generator/executive_paths.py`
+- [X] T003 Definir modelos y esquemas de datos tipados en `converters/src/report_generator/executive_models.py`
+- [X] T004 [P] Implementar resolución de rutas y sanitización de nombres de informe en `converters/src/report_generator/executive_paths.py`
 
 **Checkpoint**: Base de datos e infraestructura común lista. Las historias de usuario pueden proceder.
 
@@ -44,14 +44,14 @@
 
 ### Tests para User Story 1
 
-- [ ] T005 [P] [US1] Implementar tests unitarios para el generador de presentaciones ejecutivas en `converters/tests/unit/report_generator/test_executive_report_builder.py`
+- [X] T005 [P] [US1] Implementar tests unitarios para el generador de presentaciones ejecutivas en `converters/tests/unit/report_generator/test_executive_report_builder.py`
 
 ### Implementación para User Story 1
 
-- [ ] T006 [US1] Implementar el generador de presentaciones `ExecutiveReportBuilder` en `converters/src/report_generator/executive_report_builder.py` (mapeo de diapositiva 1 con resumen, cajas y tabla de acciones; diapositivas 2 y 3 con cronología)
-- [ ] T007 [US1] Implementar endpoints de generación y descarga (`POST /api/reports/executive-incident` y `GET /api/reports/executive-incident/{incidentRef}`) en `serve_app.py`
-- [ ] T008 [P] [US1] Crear componente interactivo `ExecutiveReportModal.tsx` en `../gestion-problemas-dashboard/components/ExecutiveReportModal.tsx`
-- [ ] T009 [US1] Integrar el botón "Generar PPT" en las filas de postmortems de `../gestion-problemas-dashboard/components/IssuesTable.tsx` conectado con `ExecutiveReportModal.tsx`
+- [X] T006 [US1] Implementar el generador de presentaciones `ExecutiveReportBuilder` en `converters/src/report_generator/executive_report_builder.py` (mapeo de diapositiva 1 con resumen, cajas y tabla de acciones; diapositivas 2 y 3 con cronología)
+- [X] T007 [US1] Implementar endpoints de generación y descarga (`POST /api/reports/executive-incident` y `GET /api/reports/executive-incident/{incidentRef}`) en `serve_app.py`
+- [X] T008 [P] [US1] Crear componente interactivo `ExecutiveReportModal.tsx` en `../gestion-problemas-dashboard/components/ExecutiveReportModal.tsx`
+- [X] T009 [US1] Integrar el botón "Generar PPT" en las filas de postmortems de `../gestion-problemas-dashboard/components/IssuesTable.tsx` conectado con `ExecutiveReportModal.tsx`
 
 **Checkpoint**: User Story 1 (MVP) completamente funcional e independientemente verificable.
 
@@ -65,12 +65,12 @@
 
 ### Tests para User Story 2
 
-- [ ] T010 [P] [US2] Implementar tests unitarios para el parser de Confluence en `converters/tests/unit/report_generator/test_confluence_parser.py`
+- [X] T010 [P] [US2] Implementar tests unitarios para el parser de Confluence en `converters/tests/unit/report_generator/test_confluence_parser.py`
 
 ### Implementación para User Story 2
 
-- [ ] T011 [US2] Implementar el módulo `confluence_parser.py` en `converters/src/report_generator/confluence_parser.py` para extracción y normalización de bloques y tablas
-- [ ] T012 [US2] Conectar el parser en `../gestion-problemas-dashboard/components/ExecutiveReportModal.tsx` y en el backend para auto-cargar datos desde la URL o contenido pegado
+- [X] T011 [US2] Implementar el módulo `confluence_parser.py` en `converters/src/report_generator/confluence_parser.py` para extracción y normalización de bloques y tablas
+- [X] T012 [US2] Conectar el parser en `../gestion-problemas-dashboard/components/ExecutiveReportModal.tsx` y en el backend para auto-cargar datos desde la URL o contenido pegado
 
 **Checkpoint**: Ingesta automatizada desde Confluence conectada de extremo a extremo.
 
@@ -84,9 +84,9 @@
 
 ### Implementación para User Story 3
 
-- [ ] T013 [P] [US3] Implementar endpoint de comprobación de estado `GET /api/reports/executive-incident/{incidentRef}/status` en `serve_app.py`
-- [ ] T014 [US3] Actualizar estados dinámicos del botón en `../gestion-problemas-dashboard/components/IssuesTable.tsx` (Generar / Descargar directo / Regenerar)
-- [ ] T015 [US3] Implementar soporte para parámetro `force=true` en el backend para regeneración y reemplazo del archivo en disco
+- [X] T013 [P] [US3] Implementar endpoint de comprobación de estado `GET /api/reports/executive-incident/{incidentRef}/status` en `serve_app.py`
+- [X] T014 [US3] Actualizar estados dinámicos del botón en `../gestion-problemas-dashboard/components/IssuesTable.tsx` (Generar / Descargar directo / Regenerar)
+- [X] T015 [US3] Implementar soporte para parámetro `force=true` en el backend para regeneración y reemplazo del archivo en disco
 
 **Checkpoint**: Ciclo de vida completo del informe (creación, caché, descarga directa y actualización forzada) operativo.
 
@@ -96,9 +96,9 @@
 
 **Purpose**: Herramientas de automatización CLI, documentación técnica y validación final.
 
-- [ ] T016 [P] Implementar script CLI de generación directa en `converters/cli/generate_executive_report.py`
-- [ ] T017 [P] Crear documentación de uso y arquitectura en `docs/INFORME-EJECUTIVO-POSTMORTEM.md` y actualizar `README.md`
-- [ ] T018 Ejecutar validación de aceptación de extremo a extremo conforme a `specs/010-incident-executive-report/quickstart.md`
+- [X] T016 [P] Implementar script CLI de generación directa en `converters/cli/generate_executive_report.py`
+- [X] T017 [P] Crear documentación de uso y arquitectura en `docs/INFORME-EJECUTIVO-POSTMORTEM.md` y actualizar `README.md`
+- [X] T018 Ejecutar validación de aceptación de extremo a extremo conforme a `specs/010-incident-executive-report/quickstart.md`
 
 ---
 
@@ -139,3 +139,4 @@
 2. Ingesta inteligente y parsing de páginas de Confluence (US2).
 3. Caché de informes generados y regeneración bajo demanda en la UI (US3).
 4. Herramienta CLI y documentación consolidada (Fase 6).
+

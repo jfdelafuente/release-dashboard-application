@@ -57,6 +57,7 @@ csv/
 incidencias/
 datos/
 data/
+!data/reports/executive/.gitkeep
 output/
 archive/
 
