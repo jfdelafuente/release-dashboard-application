@@ -56,3 +56,4 @@ Devuelve el JSON estructurado con la síntesis del motor Epsilon IA.
 ### Código 404 Not Found
 Devuelve error informativo cuando la incidencia no existe o no dispone aún de resumen procesado por el motor de IA.
 - Cacheado en Nginx durante 1 minuto (`proxy_cache_valid 404 1m`) para mitigar peticiones repetitivas erróneas.
+

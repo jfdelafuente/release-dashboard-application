@@ -52,3 +52,4 @@ Abre tu navegador en:
    - El campo se resalta con borde de advertencia y se muestra el mensaje de que debe introducirse un código.
    - El cursor permanece activo dentro del campo para seguir escribiendo.
    - Al escribir cualquier carácter, la advertencia desaparece inmediatamente.
+

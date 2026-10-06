@@ -73,3 +73,4 @@ Este documento define el contrato de interfaz HTML, atributos de accesibilidad, 
 
 ### Evento `input` en `#incident-search-input`
 - Si el input tenía la clase `is-invalid`, retirarla y ocultar el mensaje de error para una experiencia limpia mientras el usuario escribe.
+

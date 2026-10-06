@@ -117,3 +117,4 @@ La Constitución del proyecto exige accesibilidad por teclado y feedback compren
 
 ## Conclusión
 La solución es limpia, modular, de muy bajo riesgo y de alto impacto operativo. No requiere dependencias externas nuevas ni cambios en el backend.
+

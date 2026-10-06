@@ -68,3 +68,4 @@ Representa la respuesta estructurada devuelta por la API de Epsilon IA a través
                 ├── Modal resuelve y muestra datos sintetizados (o error)
                 └── [ IDLE ] (Input listo para siguiente búsqueda)
 ```
+
