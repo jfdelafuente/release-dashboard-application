@@ -17,7 +17,11 @@ from converters.src.report_generator.executive_models import (
     ExecutiveActionPoint,
     ExecutiveTimelineEvent,
 )
-from converters.src.report_generator.executive_report_builder import ExecutiveReportBuilder
+from converters.src.report_generator.executive_report_builder import (
+    ExecutiveReportBuilder,
+    extract_business_areas,
+    format_impact_content,
+)
 
 
 @pytest.fixture
@@ -90,4 +94,91 @@ def test_builder_handles_large_timeline(sample_incident_data, tmp_path):
     prs = pptx.Presentation(str(output_path))
     # Debe haber al menos 3 diapositivas (incluso 4 por paginación dinámica)
     assert len(prs.slides) >= 3
+
+
+def test_extract_business_areas_and_format_impact():
+    # Caso 1: Síntesis desde business_impact dedicado
+    biz_raw = "- Ventas: no se tramitaron 200 altas.\n- Provisión: cola de pedidos atascada."
+    areas = extract_business_areas(biz_raw)
+    assert any("Venta" in a for a in areas)
+    assert any("Provisi" in a for a in areas)
+
+    impact_clean, biz_line = format_impact_content("Caída del servicio de voz durante 3 horas.", biz_raw)
+    assert "Caída del servicio de voz" in impact_clean
+    assert "Impacto en Negocio:" in biz_line
+    assert any("Venta" in a for a in areas)
+
+    # Caso 2: Sin impacto de negocio detectado
+    impact_no_biz, biz_line_no_biz = format_impact_content("Avería menor sin impacto en clientes.", "")
+    assert impact_no_biz == "Avería menor sin impacto en clientes."
+    assert biz_line_no_biz == ""
+
+
+def test_anti_overlap_bounds(sample_incident_data, tmp_path):
+    output_path = tmp_path / "ANTI_OVERLAP_TEST.pptx"
+    builder = ExecutiveReportBuilder()
+    builder.generate(sample_incident_data, output_path)
+
+    prs = pptx.Presentation(str(output_path))
+    slide1 = prs.slides[0]
+
+    shape_11 = None
+    shape_9 = None
+    shape_22 = None
+    shape_23 = None
+
+    for s in slide1.shapes:
+        if s.shape_id == 11:
+            shape_11 = s
+        elif s.shape_id == 9:
+            shape_9 = s
+        elif s.shape_id == 22:
+            shape_22 = s
+        elif s.shape_id == 23:
+            shape_23 = s
+
+    assert shape_11 is not None, "CuadroTexto 10 (Impacto, shape_id=11) debe existir"
+    assert shape_22 is not None, "CuadroTexto 21 (Causa, shape_id=22) debe existir"
+    assert shape_23 is not None, "CuadroTexto 22 (Solución, shape_id=23) debe existir"
+
+    # Verificar que el fondo de Impacto no colisiona con Causa (top de causa >= bottom de impacto)
+    impact_bottom = shape_11.top + shape_11.height
+    assert impact_bottom <= shape_22.top, f"Impacto bottom ({impact_bottom}) se superpone con Causa top ({shape_22.top})"
+
+    # Verificar que Causa y Solución no se superponen horizontalmente
+    causa_right = shape_22.left + shape_22.width
+    assert causa_right <= shape_23.left, f"Causa right ({causa_right}) se superpone con Solución left ({shape_23.left})"
+
+    # Verificar que TextBox 11 (shape_id=9) fue limpiado para evitar texto fantasma
+    if shape_9 and shape_9.has_text_frame:
+        full_text = "".join(p.text for p in shape_9.text_frame.paragraphs).strip()
+        assert full_text == "", "TextBox 11 (shape_id=9) debe estar vacío"
+
+
+def test_save_permission_error_fallback(sample_incident_data, tmp_path, monkeypatch):
+    from pptx.presentation import Presentation as PresentationClass
+
+    locked_path = tmp_path / "INFORME_BLOQUEADO.pptx"
+    builder = ExecutiveReportBuilder()
+
+    original_save = PresentationClass.save
+    call_count = 0
+
+    def mock_save(self, path):
+        nonlocal call_count
+        call_count += 1
+        if call_count == 1:
+            raise PermissionError("El archivo está bloqueado por otro proceso.")
+        return original_save(self, path)
+
+    monkeypatch.setattr(PresentationClass, "save", mock_save)
+
+    meta = builder.generate(sample_incident_data, locked_path)
+
+    # Debe haberse recuperado guardando con sufijo timestamp
+    assert call_count == 2
+    assert meta.file_path != str(locked_path)
+    assert Path(meta.file_path).exists()
+    assert meta.size_bytes > 0
+
 

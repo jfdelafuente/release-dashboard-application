@@ -77,6 +77,7 @@ class ExecutiveIncidentData:
     start_time: str = ""
     duration: str = ""
     impact_text: str = ""
+    business_impact: str = ""
     cause_text: str = ""
     solution_text: str = ""
     action_points: List[ExecutiveActionPoint] = field(default_factory=list)
@@ -96,6 +97,7 @@ class ExecutiveIncidentData:
         start_time = str(data.get("startTime") or data.get("start_time") or data.get("inicio") or "").strip()
         duration = str(data.get("duration") or data.get("duracion") or "").strip()
         impact = str(data.get("impactText") or data.get("impact_text") or data.get("impacto") or "").strip()
+        business_impact = str(data.get("businessImpact") or data.get("business_impact") or data.get("impacto_negocio") or "").strip()
         cause = str(data.get("causeText") or data.get("cause_text") or data.get("causa") or "").strip()
         solution = str(data.get("solutionText") or data.get("solution_text") or data.get("solucion") or "").strip()
         source_url = str(data.get("sourceUrl") or data.get("source_url") or data.get("confluenceUrl") or "").strip()
@@ -112,6 +114,7 @@ class ExecutiveIncidentData:
             start_time=start_time,
             duration=duration,
             impact_text=impact,
+            business_impact=business_impact,
             cause_text=cause,
             solution_text=solution,
             action_points=action_points,
@@ -126,6 +129,7 @@ class ExecutiveIncidentData:
             "startTime": self.start_time,
             "duration": self.duration,
             "impactText": self.impact_text,
+            "businessImpact": self.business_impact,
             "causeText": self.cause_text,
             "solutionText": self.solution_text,
             "sourceUrl": self.source_url,

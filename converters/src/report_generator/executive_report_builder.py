@@ -3,10 +3,11 @@ Generador de informes ejecutivos PowerPoint basados en la plantilla corporativa 
 Feature 010: 010-incident-executive-report
 """
 
+import re
 from copy import deepcopy
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
 import pptx
 from pptx.util import Inches, Pt
@@ -23,6 +24,76 @@ from converters.src.report_generator.executive_paths import (
     get_executive_report_path,
     get_executive_report_filename,
 )
+
+
+def extract_business_areas(business_impact: str) -> List[str]:
+    """
+    Extrae los nombres clave de áreas de negocio afectadas (ej. 'Ventas', 'Provisión', 'Atención al Cliente')
+    a partir del texto de impacto en negocio, omitiendo descripciones operacionales largas.
+    """
+    if not business_impact or business_impact.strip() in ["—", "-", "N/A", "None"]:
+        return []
+
+    cleaned = re.sub(r'^(?:###?\s*)?Impacto\s+(?:en|de)\s+Negocio\s*[:\n]?', '', business_impact.strip(), flags=re.I)
+    cleaned = cleaned.replace('**', '').replace('__', '')
+
+    areas: List[str] = []
+    matches = re.findall(
+        r'(?:^|[\n\r•\-\*]|(?:Afecci[oó]n\s+(?:a|en)|Afectaci[oó]n\s+(?:a|en)|Impacto\s+en))\s*([A-Za-zÀ-ÿ\s/()]{2,40}?)\s*:\s*',
+        cleaned,
+        flags=re.I
+    )
+    for a in matches:
+        a = a.strip()
+        a = re.sub(r'^(?:Afecci[oó]n\s+(?:a|en)|Afectaci[oó]n\s+(?:a|en)|Impacto\s+en)\s+', '', a, flags=re.I).strip()
+        if a and a.lower() not in ['negocio', 'impacto', 'clientes', 'general', 'servicio', 'servicios', 'nota'] and a not in areas:
+            areas.append(a)
+
+    if not areas:
+        parts = [p.strip().rstrip('.') for p in re.split(r'[,;]\s*|\s+y\s+', cleaned) if p.strip()]
+        cleaned_parts = []
+        for p in parts:
+            p_clean = re.sub(r'^(?:Afecci[oó]n\s+(?:a|en)|Afectaci[oó]n\s+(?:a|en)|Impacto\s+en)\s+', '', p, flags=re.I).strip()
+            if p_clean and p_clean.lower() not in ['negocio', 'impacto'] and len(p_clean) < 40:
+                cleaned_parts.append(p_clean)
+        if cleaned_parts:
+            areas = cleaned_parts
+
+    return areas
+
+
+def format_impact_content(impact_raw: str, business_impact_raw: str = "") -> Tuple[str, str]:
+    """
+    Formatea la sección de impacto para la presentación ejecutiva:
+    - main_impact: Texto completo del impacto general (sin truncar).
+    - business_summary: Referencia concisa de áreas afectadas (ej: 'Impacto en Negocio: Ventas, Provisión y Facturación.').
+    """
+    if not impact_raw:
+        return ("Detalle de impacto no disponible.", "")
+
+    # Retrocompatibilidad: si el impacto de negocio venía embebido dentro de impact_raw
+    split_m = re.split(r'(?:###?\s*)?Impacto\s+(?:en|de)\s+Negocio\s*[:\n]?', impact_raw, flags=re.I)
+    main_text = split_m[0].strip()
+    embedded_biz = split_m[1].strip() if len(split_m) > 1 else ""
+
+    main_clean = re.sub(r'^#{1,6}\s+.*$', '', main_text, flags=re.MULTILINE)
+    main_lines = [l.strip() for l in main_clean.splitlines() if l.strip()]
+    main_impact = " ".join(main_lines) if main_lines else (main_text or "Detalle de impacto no disponible.")
+
+    biz_source = business_impact_raw if (business_impact_raw and business_impact_raw.strip() not in ["—", "-", "N/A"]) else embedded_biz
+    areas = extract_business_areas(biz_source)
+
+    business_summary = ""
+    if areas:
+        if len(areas) > 4:
+            areas_str = ", ".join(areas[:3]) + ", etc."
+        elif len(areas) > 1:
+            areas_str = ", ".join(areas[:-1]) + " y " + areas[-1]
+        else:
+            areas_str = areas[0]
+        business_summary = f"Impacto en Negocio: {areas_str}."
+
+    return (main_impact, business_summary)
 
 
 def _set_run_text_preserving_style(paragraph, text: str):
@@ -94,10 +165,17 @@ class ExecutiveReportBuilder:
         # 2. Rellenar Diapositivas 2 y 3+ (Cronología de eventos)
         self._populate_timeline_slides(prs, data.timeline_events, title_text)
 
-        # Guardar archivo
+        # Guardar archivo con tolerancia a bloqueos de Windows (PermissionError)
         dest_path = Path(output_path) if output_path else get_executive_report_path(data.incident_ref)
         dest_path.parent.mkdir(parents=True, exist_ok=True)
-        prs.save(str(dest_path))
+        try:
+            prs.save(str(dest_path))
+        except PermissionError:
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            fallback_name = f"{dest_path.stem}_{timestamp}{dest_path.suffix}"
+            dest_path = dest_path.parent / fallback_name
+            prs.save(str(dest_path))
+            print(f"[AVISO] El fichero estaba en uso por otra aplicación. Se guardó como: {dest_path.name}")
 
         size_bytes = dest_path.stat().st_size
         generated_at = datetime.now(timezone.utc).isoformat()
@@ -123,20 +201,116 @@ class ExecutiveReportBuilder:
                 sub_text = f"Inicio: {data.start_time or 'No especificado'}\nDuración: {data.duration or 'No especificada'}"
                 _set_run_text_preserving_style(shape.text_frame.paragraphs[0], sub_text)
 
-            # 3. IMPACTO (shape_id 11 o texto explicativo de impacto)
+            # Limpiar TextBox 11 si existe para evitar textos residuales
+            elif shape.shape_id == 9 and shape.has_text_frame:
+                shape.text_frame.clear()
+
+            # 3. IMPACTO (shape_id 11 - CuadroTexto 10)
             elif shape.shape_id == 11:
-                txt = data.impact_text or "Detalle de impacto no disponible."
-                _set_run_text_preserving_style(shape.text_frame.paragraphs[0], txt)
+                # Fijar coordenadas y dimensiones para evitar solapamientos con Causa y Solución
+                shape.left = Inches(0.40)
+                shape.top = Inches(0.91)
+                shape.width = Inches(9.20)
+                shape.height = Inches(0.58)
 
-            # 4. CAUSA (shape_id 22)
+                tf = shape.text_frame
+                tf.word_wrap = True
+                tf.margin_left = Pt(2)
+                tf.margin_right = Pt(2)
+                tf.margin_top = Pt(1)
+                tf.margin_bottom = Pt(1)
+                tf.clear()
+
+                main_impact, biz_summary = format_impact_content(data.impact_text, data.business_impact)
+
+                total_chars = len(main_impact) + len(biz_summary)
+                if total_chars > 360:
+                    font_size = Pt(7.5)
+                elif total_chars > 260:
+                    font_size = Pt(8.0)
+                else:
+                    font_size = Pt(8.5)
+
+                p1 = tf.paragraphs[0]
+                p1.space_after = Pt(2) if biz_summary else Pt(0)
+                p1.line_spacing = 1.05
+                run1 = p1.add_run()
+                run1.text = main_impact
+                run1.font.size = font_size
+                run1.font.bold = False
+
+                if biz_summary:
+                    p2 = tf.add_paragraph()
+                    p2.space_after = Pt(0)
+                    p2.line_spacing = 1.05
+                    label_match = re.match(r'^(Impacto\s+en\s+Negocio\s*:\s*)(.*)', biz_summary, flags=re.I)
+                    if label_match:
+                        lbl_run = p2.add_run()
+                        lbl_run.text = label_match.group(1)
+                        lbl_run.font.size = font_size
+                        lbl_run.font.bold = True
+
+                        val_run = p2.add_run()
+                        val_run.text = label_match.group(2)
+                        val_run.font.size = font_size
+                        val_run.font.bold = False
+                    else:
+                        r2 = p2.add_run()
+                        r2.text = biz_summary
+                        r2.font.size = font_size
+                        r2.font.bold = False
+
+            # 4. CAUSA (shape_id 22 - CuadroTexto 21)
             elif shape.shape_id == 22:
-                txt = data.cause_text or "Detalle de causa raíz no disponible."
-                _set_run_text_preserving_style(shape.text_frame.paragraphs[0], txt)
+                shape.left = Inches(0.40)
+                shape.top = Inches(1.95)
+                shape.width = Inches(4.70)
+                shape.height = Inches(1.25)
 
-            # 5. SOLUCION (shape_id 23)
+                tf = shape.text_frame
+                tf.word_wrap = True
+                tf.margin_left = Pt(2)
+                tf.margin_right = Pt(2)
+                tf.margin_top = Pt(1)
+                tf.margin_bottom = Pt(1)
+                tf.clear()
+
+                txt = data.cause_text or "Detalle de causa raíz no disponible."
+                font_size = Pt(7.5) if len(txt) > 300 else Pt(8.5)
+
+                p = tf.paragraphs[0]
+                p.space_after = Pt(2)
+                p.line_spacing = 1.05
+                run = p.add_run()
+                run.text = txt
+                run.font.size = font_size
+                run.font.bold = False
+
+            # 5. SOLUCION (shape_id 23 - CuadroTexto 22)
             elif shape.shape_id == 23:
+                shape.left = Inches(5.25)
+                shape.top = Inches(1.95)
+                shape.width = Inches(4.45)
+                shape.height = Inches(1.25)
+
+                tf = shape.text_frame
+                tf.word_wrap = True
+                tf.margin_left = Pt(2)
+                tf.margin_right = Pt(2)
+                tf.margin_top = Pt(1)
+                tf.margin_bottom = Pt(1)
+                tf.clear()
+
                 txt = data.solution_text or "Detalle de solución aplicada no disponible."
-                _set_run_text_preserving_style(shape.text_frame.paragraphs[0], txt)
+                font_size = Pt(7.5) if len(txt) > 300 else Pt(8.5)
+
+                p = tf.paragraphs[0]
+                p.space_after = Pt(2)
+                p.line_spacing = 1.05
+                run = p.add_run()
+                run.text = txt
+                run.font.size = font_size
+                run.font.bold = False
 
             # 6. TABLA DE PUNTOS DE ACCION (4 columnas: Pain Point | Description | Owner | Forecast)
             elif shape.has_table and len(shape.table.columns) == 4:

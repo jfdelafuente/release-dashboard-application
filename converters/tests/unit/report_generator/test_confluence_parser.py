@@ -122,3 +122,85 @@ def test_fallback_graceful_on_empty():
     assert data.action_points == []
     assert data.timeline_events == []
 
+
+def test_parse_html_with_business_impact_section():
+    html = """
+    <html>
+    <body>
+    <h1>Incidencia 2606S77393 - Caída IVR</h1>
+    <p><strong>Inicio:</strong> 09/06/2026 14:45:00</p>
+    <p><strong>Duración:</strong> 3h 25m</p>
+    <h2>Impacto</h2>
+    <p>Degradación progresiva en la atención de llamadas entrantes.</p>
+    <h2>Impacto en Negocio</h2>
+    <ul>
+      <li>Ventas: 150 llamadas de contratación perdidas.</li>
+      <li>Provisión: Imposibilidad de tramitar activaciones.</li>
+    </ul>
+    <h2>Causa</h2>
+    <p>Saturación de prefijos BGP contra AWS.</p>
+    <h2>Solución</h2>
+    <p>Ampliación del cupo a 30K.</p>
+    </body>
+    </html>
+    """
+    parser = ConfluenceParser()
+    data = parser.parse(html, fallback_ref="2606S77393")
+
+    assert data.incident_ref == "2606S77393"
+    assert "Degradación" in data.impact_text
+    assert "Ventas" in data.business_impact
+    assert "Provisión" in data.business_impact
+    assert "- Ventas:" in data.business_impact
+    assert "Ventas" not in data.impact_text
+
+
+def test_parse_html_with_inline_business_impact():
+    html = """
+    <html>
+    <body>
+    <h1>Incidencia 2606S77393</h1>
+    <h2>Impacto</h2>
+    <p>Corte del servicio de voz para usuarios de atención.</p>
+    <p>Impacto en Negocio: Cancelación masiva de citas y retraso en operaciones.</p>
+    <h2>Causa</h2>
+    <p>Error en configuración de enlace.</p>
+    <h2>Solución</h2>
+    <p>Reversión de la política.</p>
+    </body>
+    </html>
+    """
+    parser = ConfluenceParser()
+    data = parser.parse(html, fallback_ref="2606S77393")
+
+    assert "Corte del servicio de voz" in data.impact_text
+    assert "Cancelación masiva de citas" in data.business_impact
+    assert "Cancelación masiva" not in data.impact_text
+
+
+def test_parse_plain_text_with_business_impact():
+    text = """
+    INCIDENCIA: 2606S77393
+    Inicio: 09/06/2026 14:45:00
+    Duración: 3h 25m
+
+    IMPACTO:
+    Caída de servicio en centralitas regionales.
+
+    IMPACTO EN NEGOCIO:
+    Pérdida de pedidos en canal telefónico y quejas en facturación.
+
+    CAUSA:
+    Fallo de enrutador primario.
+
+    SOLUCION:
+    Conmutación a secundario.
+    """
+    parser = ConfluenceParser()
+    data = parser.parse(text, fallback_ref="2606S77393")
+
+    assert "Caída de servicio" in data.impact_text
+    assert "Pérdida de pedidos" in data.business_impact
+    assert "Fallo de enrutador" in data.cause_text
+
+
