@@ -269,3 +269,4 @@ class ConfluenceParser:
                 if idx + 1 < len(lines):
                     return lines[idx + 1].strip()
         return ""
+

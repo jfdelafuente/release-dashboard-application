@@ -41,3 +41,4 @@ def test_cache_and_force_regeneration(tmp_path):
     meta2 = builder.generate(data, output_path)
     assert output_path.exists()
     assert meta2.slide_count >= 3
+

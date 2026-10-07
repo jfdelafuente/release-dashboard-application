@@ -153,3 +153,4 @@ class ReportMetadata:
             "sizeBytes": self.size_bytes,
             "slideCount": self.slide_count,
         }
+

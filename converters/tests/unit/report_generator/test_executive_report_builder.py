@@ -90,3 +90,4 @@ def test_builder_handles_large_timeline(sample_incident_data, tmp_path):
     prs = pptx.Presentation(str(output_path))
     # Debe haber al menos 3 diapositivas (incluso 4 por paginación dinámica)
     assert len(prs.slides) >= 3
+

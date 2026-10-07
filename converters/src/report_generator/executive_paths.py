@@ -49,3 +49,4 @@ def get_executive_report_path(incident_ref: str) -> Path:
     Retorna la ruta completa al archivo de informe para una incidencia dada.
     """
     return get_executive_reports_dir() / get_executive_report_filename(incident_ref)
+

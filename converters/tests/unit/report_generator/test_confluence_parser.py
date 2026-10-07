@@ -121,3 +121,4 @@ def test_fallback_graceful_on_empty():
     assert data.title != ""
     assert data.action_points == []
     assert data.timeline_events == []
+

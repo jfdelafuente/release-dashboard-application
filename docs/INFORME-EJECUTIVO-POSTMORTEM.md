@@ -67,3 +67,4 @@ Ejecutar las pruebas unitarias:
 ```bash
 pytest converters/tests/unit/report_generator/test_executive* converters/tests/unit/report_generator/test_confluence* -v
 ```
+
