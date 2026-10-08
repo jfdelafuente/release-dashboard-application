@@ -3,8 +3,9 @@ Gestión de rutas y archivos para el informe ejecutivo de incidencias postmortem
 Feature 010: 010-incident-executive-report
 """
 
+import time
 from pathlib import Path
-from typing import Optional
+from typing import List, Optional
 from converters.src.report_generator.executive_models import sanitize_incident_ref
 
 # Directorio base del proyecto release-dashboard-application
@@ -49,4 +50,40 @@ def get_executive_report_path(incident_ref: str) -> Path:
     Retorna la ruta completa al archivo de informe para una incidencia dada.
     """
     return get_executive_reports_dir() / get_executive_report_filename(incident_ref)
+
+
+def cleanup_old_executive_reports(max_age_days: int = 14, keep_min: int = 5) -> List[str]:
+    """
+    Elimina archivos de informe ejecutivo generados con antigüedad superior a max_age_days,
+    asegurando conservar al menos keep_min archivos más recientes.
+    Ignora archivos especiales como .gitkeep y directorios.
+    Retorna la lista de nombres de archivos eliminados.
+    """
+    reports_dir = get_executive_reports_dir()
+    if not reports_dir.is_dir():
+        return []
+
+    pptx_files = [
+        f for f in reports_dir.iterdir()
+        if f.is_file() and f.suffix.lower() == ".pptx" and not f.name.startswith(".")
+    ]
+    # Ordenar por fecha de modificación descendente (más nuevos primero)
+    pptx_files.sort(key=lambda x: x.stat().st_mtime, reverse=True)
+
+    removed: List[str] = []
+    now = time.time()
+    cutoff_time = now - (max_age_days * 86400)
+
+    # Conservar al menos keep_min archivos más nuevos
+    candidates_to_clean = pptx_files[keep_min:]
+    for file_path in candidates_to_clean:
+        try:
+            if file_path.stat().st_mtime < cutoff_time:
+                file_path.unlink()
+                removed.append(file_path.name)
+        except Exception as e:
+            print(f"[Cleanup] No se pudo eliminar informe antiguo {file_path.name}: {e}")
+
+    return removed
+
 

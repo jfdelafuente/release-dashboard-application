@@ -198,8 +198,16 @@ class ExecutiveReportBuilder:
 
             # 2. Subtítulo (Inicio y Duración)
             elif shape.shape_id == 3 or (shape.has_text_frame and "Inicio:" in shape.text_frame.text):
-                sub_text = f"Inicio: {data.start_time or 'No especificado'}\nDuración: {data.duration or 'No especificada'}"
-                _set_run_text_preserving_style(shape.text_frame.paragraphs[0], sub_text)
+                tf = shape.text_frame
+                start_str = f"Inicio: {data.start_time or 'No especificado'}"
+                dur_str = f"Duración: {data.duration or 'No especificada'}"
+                if len(tf.paragraphs) >= 2:
+                    _set_run_text_preserving_style(tf.paragraphs[0], start_str)
+                    _set_run_text_preserving_style(tf.paragraphs[1], dur_str)
+                    for extra_p in tf.paragraphs[2:]:
+                        extra_p.text = ""
+                else:
+                    _set_run_text_preserving_style(tf.paragraphs[0], f"{start_str}\n{dur_str}")
 
             # Limpiar TextBox 11 si existe para evitar textos residuales
             elif shape.shape_id == 9 and shape.has_text_frame:

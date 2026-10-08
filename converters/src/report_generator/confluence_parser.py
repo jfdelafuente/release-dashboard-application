@@ -1,7 +1,4 @@
-"""
-Parser y extractor de información postmortem desde Confluence (HTML o texto).
-Feature 010: 010-incident-executive-report
-"""
+from __future__ import annotations
 
 import re
 from html.parser import HTMLParser
@@ -12,6 +9,8 @@ try:
     BS4_AVAILABLE = True
 except ImportError:
     BS4_AVAILABLE = False
+    BeautifulSoup = Any
+    Tag = Any
 
 from converters.src.report_generator.executive_models import (
     ExecutiveIncidentData,

@@ -5,6 +5,7 @@ Resuelve problemas de sincronización de archivos en Windows
 """
 
 import os
+import re
 import json
 import sys
 import http.server
@@ -21,8 +22,16 @@ os.chdir(PROJECT_ROOT)
 sys.path.insert(0, str(PROJECT_ROOT / 'converters' / 'cli'))
 from upload_csv import run_upload  # noqa: E402
 from generate_postmortem_report import generate_report, generate_all_reports  # noqa: E402
-from converters.src.report_generator.executive_models import ExecutiveIncidentData, sanitize_incident_ref  # noqa: E402
-from converters.src.report_generator.executive_paths import get_executive_report_path, get_executive_report_filename  # noqa: E402
+from converters.src.report_generator.executive_models import (  # noqa: E402
+    ExecutiveIncidentData,
+    sanitize_incident_ref,
+    extract_fields_from_jira_description,
+)
+from converters.src.report_generator.executive_paths import (  # noqa: E402
+    get_executive_report_path,
+    get_executive_report_filename,
+    cleanup_old_executive_reports,
+)
 from converters.src.report_generator.executive_report_builder import ExecutiveReportBuilder  # noqa: E402
 from converters.src.report_generator.confluence_parser import ConfluenceParser  # noqa: E402
 
@@ -30,7 +39,11 @@ REPORTS_PATH_PREFIX = '/api/reports/postmortem/'
 EXECUTIVE_REPORT_PREFIX = '/api/reports/executive-incident'
 EPSILON_CACHE = {}  # { codigo: (timestamp, content, status) }
 
-PORT = 8000
+# Puerto por defecto: 8080 para no colisionar con FastAPI (puerto 8000).
+# Configurable vía variable de entorno PORT/SERVE_APP_PORT o argumento --port
+DEFAULT_PORT = int(os.environ.get("SERVE_APP_PORT", os.environ.get("PORT", 8080)))
+PORT = DEFAULT_PORT
+
 
 
 class CustomHTTPHandler(http.server.SimpleHTTPRequestHandler):
@@ -38,59 +51,73 @@ class CustomHTTPHandler(http.server.SimpleHTTPRequestHandler):
     directory = str(PROJECT_ROOT)
 
     def proxy_to_nextjs(self):
-        target_url = f"http://localhost:3001{self.path}"
-        try:
-            excluded = {'host', 'connection', 'keep-alive', 'accept-encoding', 'content-length'}
-            headers = {k: v for k, v in self.headers.items() if k.lower() not in excluded}
-            headers['Connection'] = 'close'
+        candidate_ports = [3001, 3000]
+        excluded = {'host', 'connection', 'keep-alive', 'accept-encoding', 'content-length'}
+        headers = {k: v for k, v in self.headers.items() if k.lower() not in excluded}
+        headers['Connection'] = 'close'
 
+        body_data = None
+        if self.command in ('POST', 'PUT', 'PATCH'):
+            try:
+                content_length = int(self.headers.get('Content-Length', 0))
+            except ValueError:
+                content_length = 0
+            body_data = self.rfile.read(content_length) if content_length > 0 else None
+
+        last_error = None
+        for port in candidate_ports:
+            target_url = f"http://localhost:{port}{self.path}"
             req = urllib.request.Request(
                 target_url,
                 method=self.command,
                 headers=headers,
+                data=body_data,
             )
-            if self.command in ('POST', 'PUT', 'PATCH'):
-                content_length = int(self.headers.get('Content-Length', 0))
-                req.data = self.rfile.read(content_length) if content_length > 0 else None
-
-            with urllib.request.urlopen(req, timeout=120) as resp:
-                self.send_response(resp.status)
-                for header, val in resp.getheaders():
+            try:
+                with urllib.request.urlopen(req, timeout=120) as resp:
+                    self.send_response(resp.status)
+                    for header, val in resp.getheaders():
+                        if header.lower() not in ('transfer-encoding', 'content-length', 'connection'):
+                            self.send_header(header, val)
+                    self.send_header('Connection', 'close')
+                    content = resp.read()
+                    self.send_header('Content-Length', str(len(content)))
+                    self.end_headers()
+                    self.wfile.write(content)
+                    return
+            except urllib.error.HTTPError as e:
+                self.send_response(e.code)
+                for header, val in e.headers.items():
                     if header.lower() not in ('transfer-encoding', 'content-length', 'connection'):
                         self.send_header(header, val)
                 self.send_header('Connection', 'close')
-                content = resp.read()
-                self.send_header('Content-Length', str(len(content)))
+                body = e.read()
+                self.send_header('Content-Length', str(len(body)))
                 self.end_headers()
-                self.wfile.write(content)
-        except urllib.error.HTTPError as e:
-            self.send_response(e.code)
-            for header, val in e.headers.items():
-                if header.lower() not in ('transfer-encoding', 'content-length', 'connection'):
-                    self.send_header(header, val)
-            self.send_header('Connection', 'close')
-            body = e.read()
-            self.send_header('Content-Length', str(len(body)))
-            self.end_headers()
-            self.wfile.write(body)
-        except Exception as e:
-            print(f"  Error proxy Next.js: {e}")
-            msg = (
-                "<!DOCTYPE html><html><head><meta charset='utf-8'><title>502 Bad Gateway - Gestión de Problemas</title>"
-                "<style>body{font-family:sans-serif;max-width:600px;margin:50px auto;line-height:1.6;color:#222;}"
-                "code,pre{background:#f4f4f4;padding:3px 6px;border-radius:4px;}pre{padding:12px;}</style></head><body>"
-                "<h2>502 - Servicio Gestión de Problemas no disponible</h2>"
-                "<p>No se pudo conectar con el servidor Next.js en <code>http://localhost:3001</code>.</p>"
-                "<p>Para arrancarlo en local:</p>"
-                "<pre>cd ../gestion-problemas-dashboard\n$env:NEXT_PUBLIC_BASE_PATH='/problemas'\nnpm run dev -- -p 3001</pre>"
-                "</body></html>"
-            ).encode('utf-8')
-            self.send_response(502)
-            self.send_header('Content-Type', 'text/html; charset=utf-8')
-            self.send_header('Content-Length', str(len(msg)))
-            self.send_header('Connection', 'close')
-            self.end_headers()
-            self.wfile.write(msg)
+                self.wfile.write(body)
+                return
+            except Exception as e:
+                last_error = e
+                continue
+
+        print(f"  Error proxy Next.js (ningún puerto disponible {candidate_ports}): {last_error}")
+        msg = (
+            "<!DOCTYPE html><html><head><meta charset='utf-8'><title>502 Bad Gateway - Gestión de Problemas</title>"
+            "<style>body{font-family:sans-serif;max-width:600px;margin:50px auto;line-height:1.6;color:#222;}"
+            "code,pre{background:#f4f4f4;padding:3px 6px;border-radius:4px;}pre{padding:12px;}</style></head><body>"
+            "<h2>502 - Servicio Gestión de Problemas no disponible</h2>"
+            "<p>No se pudo conectar con el servidor Next.js en <code>http://localhost:3001</code> ni en <code>http://localhost:3000</code>.</p>"
+            "<p>Para arrancarlo en local, simplemente ejecuta en la carpeta del proyecto:</p>"
+            "<pre>cd ../gestion-problemas-dashboard\nnpm run dev</pre>"
+            "<p><i>(Este comando arranca automáticamente en el puerto 3001 con la ruta base /problemas)</i></p>"
+            "</body></html>"
+        ).encode('utf-8')
+        self.send_response(502)
+        self.send_header('Content-Type', 'text/html; charset=utf-8')
+        self.send_header('Content-Length', str(len(msg)))
+        self.send_header('Connection', 'close')
+        self.end_headers()
+        self.wfile.write(msg)
 
     def proxy_to_epsilon_ia(self, codigo):
         import ssl
@@ -309,6 +336,14 @@ class CustomHTTPHandler(http.server.SimpleHTTPRequestHandler):
             except Exception as ce:
                 print(f"  Nota: No se pudo obtener Confluence automáticamente ({ce}). Se usarán datos base.")
 
+        # Fallback a datos de Jira si no se obtuvieron o faltan secciones en data_dict
+        jira_desc = data_dict.get('description') or payload.get('description') or ''
+        if jira_desc and (not data_dict.get('impactText') or not data_dict.get('causeText') or not data_dict.get('solutionText')):
+            extracted = extract_fields_from_jira_description(jira_desc)
+            for ek, ev in extracted.items():
+                if not data_dict.get(ek):
+                    data_dict[ek] = ev
+
         force = payload.get('force', False)
         target_path = get_executive_report_path(incident_ref)
 
@@ -327,6 +362,15 @@ class CustomHTTPHandler(http.server.SimpleHTTPRequestHandler):
             incident_data = ExecutiveIncidentData.from_dict(data_dict)
             builder = ExecutiveReportBuilder()
             metadata = builder.generate(incident_data, target_path)
+
+            # Higiene automática: limpiar informes con más de 14 días
+            try:
+                cleaned = cleanup_old_executive_reports(max_age_days=14, keep_min=5)
+                if cleaned:
+                    print(f"  [Cleanup] Eliminados {len(cleaned)} informes ejecutivos antiguos: {', '.join(cleaned)}")
+            except Exception as clean_err:
+                print(f"  [Cleanup] Aviso no bloqueante: {clean_err}")
+
             self._send_json(200, {
                 'success': True,
                 'incidentRef': metadata.incident_ref,
@@ -449,15 +493,32 @@ class CustomHTTPHandler(http.server.SimpleHTTPRequestHandler):
     def log_message(self, format, *args):
         print(f"[{self.client_address[0]}] {format % args}")
 
-print(f"Release Dashboard Server")
-print(f"Sirviendo desde: {PROJECT_ROOT}")
-print(f"URL: http://localhost:{PORT}/")
-print(f"Dashboard Portal: http://localhost:{PORT}/dashboards/portal/")
-print(f"Gestión de Problemas (proxy :3001): http://localhost:{PORT}/problemas")
-print(f"\nPresiona Ctrl+C para detener el servidor\n")
+if __name__ == '__main__':
+    import argparse
+    parser = argparse.ArgumentParser(description="Release Dashboard Static Server")
+    parser.add_argument(
+        "--port", "-p",
+        type=int,
+        default=PORT,
+        help=f"Puerto del servidor HTTP estático (default: {PORT})"
+    )
+    args, _ = parser.parse_known_args()
+    PORT = args.port
 
-with socketserver.TCPServer(("", PORT), CustomHTTPHandler) as httpd:
-    try:
-        httpd.serve_forever()
-    except KeyboardInterrupt:
-        print("\nServidor detenido")
+    print("==================================================")
+    print("Release Dashboard Server (Estático & Provisión)")
+    print(f"Sirviendo desde: {PROJECT_ROOT}")
+    print(f"URL: http://localhost:{PORT}/")
+    print(f"Dashboard Portal: http://localhost:{PORT}/dashboards/portal/")
+    print(f"Gestión de Problemas (proxy :3001): http://localhost:{PORT}/problemas")
+    print(f"Nota: API principal FastAPI disponible en http://localhost:8000/docs")
+    print("==================================================\n")
+    print("Presiona Ctrl+C para detener el servidor\n")
+
+    socketserver.TCPServer.allow_reuse_address = True
+    with socketserver.TCPServer(("", PORT), CustomHTTPHandler) as httpd:
+        try:
+            httpd.serve_forever()
+        except KeyboardInterrupt:
+            print("\nServidor detenido")
+
