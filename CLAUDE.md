@@ -412,6 +412,41 @@ El script `csv_to_json.py` anterior era un conversor simple sin validación ni n
 
 <!-- SPECKIT START: Active feature implementation plans -->
 
+### Feature: Informe Ejecutivo de Incidencias Postmortem (010-incident-executive-report)
+
+**Status**: ✅ IMPLEMENTATION COMPLETE
+
+**Branch**: `010-incident-executive-report`
+
+**Objective**: Construir un informe ejecutivo descargable en formato PowerPoint (`.pptx`) basado en la plantilla corporativa `20260609 Incidencia IVR ExMM.pptx` (Diapositiva 1: Resumen con Inicio/Duración, Impacto, Causa, Solución y tabla de 4 columnas de Puntos de Acción; Diapositivas 2 y 3: Cronología detallada de hitos y eventos). La fuente de datos es una página de Confluence del postmortem solicitada bajo demanda mediante un botón interactivo por fila en la tabla de candidatos a postmortem del dashboard de Gestión de Problemas.
+
+**Decisiones de Clarificación**:
+- Q1 (Formato): Archivo PowerPoint (`.pptx`) fiel a la plantilla de referencia.
+- Q2 (Ingesta Confluence): Modal interactivo con sesión activa del operador para validar o introducir la URL.
+- Q3 (Interacción UI): Botón de acción por fila en la tabla de candidatos a postmortem con descarga directa y regeneración forzada.
+
+**Delivered**:
+- Plantilla corporativa oficial registrada en `converters/src/report_generator/assets/executive_template.pptx`.
+- Modelos de datos tipados y funciones de serialización y sanitización en `converters/src/report_generator/executive_models.py` y `executive_paths.py`.
+- Generador de presentaciones `ExecutiveReportBuilder` con preservación de estilos de celda, fuentes y colores, así como paginación automática de hitos cronológicos extensos en `converters/src/report_generator/executive_report_builder.py`.
+- Parser resiliente de Confluence (HTML y texto plano) en `converters/src/report_generator/confluence_parser.py`.
+- Endpoints en `serve_app.py`: `POST /api/reports/executive-incident` (generación y caché con soporte `force=true`), `GET /api/reports/executive-incident/{incidentRef}` (descarga binaria `.pptx`) y `GET /api/reports/executive-incident/{incidentRef}/status` (comprobación de existencia).
+- Modal interactivo accesible `ExecutiveReportModal.tsx` con precarga de URL Confluence, enlace de validación, alternativa para pegar texto/HTML y comprobación inteligente de versión en servidor en `../gestion-problemas-dashboard/components/ExecutiveReportModal.tsx`.
+- Integración del botón `📊 Generar PPT` en `../gestion-problemas-dashboard/components/IssuesTable.tsx`.
+- CLI autónomo de generación en `converters/cli/generate_executive_report.py`.
+- Documentación técnica y de arquitectura en `docs/INFORME-EJECUTIVO-POSTMORTEM.md` y actualización en `README.md`.
+- Suite de pruebas unitarias al 100% (71 tests passing en `pytest converters/tests/unit/report_generator/`).
+
+**Related Documentation**:
+- Specification: [specs/010-incident-executive-report/spec.md](specs/010-incident-executive-report/spec.md)
+- Implementation Plan: [specs/010-incident-executive-report/plan.md](specs/010-incident-executive-report/plan.md)
+- Research & Technical Decisions: [specs/010-incident-executive-report/research.md](specs/010-incident-executive-report/research.md)
+- Data Model: [specs/010-incident-executive-report/data-model.md](specs/010-incident-executive-report/data-model.md)
+- Contracts: [specs/010-incident-executive-report/contracts/](specs/010-incident-executive-report/contracts/)
+- Quickstart: [specs/010-incident-executive-report/quickstart.md](specs/010-incident-executive-report/quickstart.md)
+- Requirements Checklist: [specs/010-incident-executive-report/checklists/requirements.md](specs/010-incident-executive-report/checklists/requirements.md)
+- Tasks: [specs/010-incident-executive-report/tasks.md](specs/010-incident-executive-report/tasks.md)
+
 ### Feature: Buscador de Incidencias con Resumen IA en Portal Principal (009-portal-incident-search)
 
 **Status**: ✅ IMPLEMENTATION COMPLETE

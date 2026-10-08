@@ -317,6 +317,15 @@ Incidencias Masivas · Postmortem/Release  <-- [Resumen IA vía Epsilon]
 
 ---
 
+## 📊 Informe Ejecutivo de Incidencias Postmortem (PowerPoint)
+
+Genera bajo demanda presentaciones PowerPoint corporativas (`.pptx`) con el diseño y formato oficial de Orange a partir de datos de postmortem o páginas de Confluence:
+- **UI en Gestión de Problemas**: Botón `📊 Generar PPT` en cada incidencia en `/problemas`.
+- **CLI**: `python converters/cli/generate_executive_report.py --ref <CODIGO> --title "<TITULO>"`
+- **Detalles y arquitectura**: Ver [docs/INFORME-EJECUTIVO-POSTMORTEM.md](docs/INFORME-EJECUTIVO-POSTMORTEM.md).
+
+---
+
 ## 🚀 Despliegue en Producción (VPS)
 
 Para desplegar de forma segura y desatendida en el servidor VPS (con backup automático, stash preventivo, actualización git, validación/rollback de `nginx.conf` y smoke tests):

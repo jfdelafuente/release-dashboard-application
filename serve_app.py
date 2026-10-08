@@ -21,8 +21,13 @@ os.chdir(PROJECT_ROOT)
 sys.path.insert(0, str(PROJECT_ROOT / 'converters' / 'cli'))
 from upload_csv import run_upload  # noqa: E402
 from generate_postmortem_report import generate_report, generate_all_reports  # noqa: E402
+from converters.src.report_generator.executive_models import ExecutiveIncidentData, sanitize_incident_ref  # noqa: E402
+from converters.src.report_generator.executive_paths import get_executive_report_path, get_executive_report_filename  # noqa: E402
+from converters.src.report_generator.executive_report_builder import ExecutiveReportBuilder  # noqa: E402
+from converters.src.report_generator.confluence_parser import ConfluenceParser  # noqa: E402
 
 REPORTS_PATH_PREFIX = '/api/reports/postmortem/'
+EXECUTIVE_REPORT_PREFIX = '/api/reports/executive-incident'
 EPSILON_CACHE = {}  # { codigo: (timestamp, content, status) }
 
 PORT = 8000
@@ -155,6 +160,8 @@ class CustomHTTPHandler(http.server.SimpleHTTPRequestHandler):
             self.handle_upload()
         elif self.path == f'{REPORTS_PATH_PREFIX}batch':
             self.handle_reports_batch()
+        elif self.path == EXECUTIVE_REPORT_PREFIX or self.path == f'{EXECUTIVE_REPORT_PREFIX}/':
+            self.handle_executive_report_generate()
         else:
             self.send_error(404, "Not Found")
 
@@ -252,10 +259,142 @@ class CustomHTTPHandler(http.server.SimpleHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(body)
 
+    def handle_executive_report_generate(self):
+        try:
+            content_length = int(self.headers.get('Content-Length', 0))
+            body = self.rfile.read(content_length) if content_length > 0 else b'{}'
+            payload = json.loads(body.decode('utf-8'))
+        except Exception as e:
+            self._send_json(400, {'success': False, 'error': f'JSON inválido: {e}'})
+            return
+
+        incident_ref = payload.get('incidentRef') or payload.get('incident_ref') or payload.get('id')
+        if not incident_ref:
+            self._send_json(400, {'success': False, 'error': 'Falta el código de incidencia (incidentRef)'})
+            return
+
+        data_dict = payload.get('data') if isinstance(payload.get('data'), dict) else payload
+        if 'incidentRef' not in data_dict:
+            data_dict['incidentRef'] = incident_ref
+
+        # Ingesta o parseo de Confluence si se incluye contenido o URL
+        raw_content = payload.get('rawContent') or data_dict.get('rawContent') or ''
+        confluence_url = payload.get('confluenceUrl') or data_dict.get('sourceUrl') or ''
+
+        if raw_content:
+            try:
+                parser = ConfluenceParser()
+                parsed_data = parser.parse(raw_content, fallback_ref=incident_ref, source_url=confluence_url)
+                base_dict = parsed_data.to_dict()
+                # Preservar campos explícitos no vacíos
+                for k, v in data_dict.items():
+                    if v and k != 'rawContent':
+                        base_dict[k] = v
+                data_dict = base_dict
+            except Exception as pe:
+                print(f"  Aviso al parsear contenido Confluence: {pe}")
+        elif confluence_url and not data_dict.get('impactText'):
+            try:
+                import urllib.request
+                req = urllib.request.Request(confluence_url, headers={'User-Agent': 'Mozilla/5.0'})
+                with urllib.request.urlopen(req, timeout=2.5) as resp:
+                    html_content = resp.read().decode('utf-8', errors='ignore')
+                    parser = ConfluenceParser()
+                    parsed_data = parser.parse(html_content, fallback_ref=incident_ref, source_url=confluence_url)
+                    base_dict = parsed_data.to_dict()
+                    for k, v in data_dict.items():
+                        if v:
+                            base_dict[k] = v
+                    data_dict = base_dict
+            except Exception as ce:
+                print(f"  Nota: No se pudo obtener Confluence automáticamente ({ce}). Se usarán datos base.")
+
+        force = payload.get('force', False)
+        target_path = get_executive_report_path(incident_ref)
+
+        if target_path.is_file() and not force:
+            self._send_json(200, {
+                'success': True,
+                'incidentRef': sanitize_incident_ref(incident_ref),
+                'filename': target_path.name,
+                'downloadUrl': f"{EXECUTIVE_REPORT_PREFIX}/{sanitize_incident_ref(incident_ref)}",
+                'sizeBytes': target_path.stat().st_size,
+                'cached': True,
+            })
+            return
+
+        try:
+            incident_data = ExecutiveIncidentData.from_dict(data_dict)
+            builder = ExecutiveReportBuilder()
+            metadata = builder.generate(incident_data, target_path)
+            self._send_json(200, {
+                'success': True,
+                'incidentRef': metadata.incident_ref,
+                'filename': metadata.filename,
+                'downloadUrl': f"{EXECUTIVE_REPORT_PREFIX}/{metadata.incident_ref}",
+                'generatedAt': metadata.generated_at,
+                'sizeBytes': metadata.size_bytes,
+                'slideCount': metadata.slide_count,
+            })
+        except Exception as e:
+            print(f"  Error generando informe ejecutivo: {e}")
+            self._send_json(500, {
+                'success': False,
+                'error': 'Error generando informe ejecutivo PowerPoint',
+                'details': str(e),
+            })
+
+    def handle_executive_report_get(self):
+        path_without_prefix = self.path[len(EXECUTIVE_REPORT_PREFIX):].split('?')[0]
+        parts = [p for p in path_without_prefix.split('/') if p]
+
+        if not parts:
+            self._send_json(400, {'success': False, 'error': 'Falta el código de incidencia'})
+            return
+
+        incident_ref = sanitize_incident_ref(parts[0])
+
+        # Caso 1: Comprobación de estado /status
+        if len(parts) >= 2 and parts[1] == 'status':
+            report_path = get_executive_report_path(incident_ref)
+            if report_path.is_file():
+                self._send_json(200, {
+                    'exists': True,
+                    'incidentRef': incident_ref,
+                    'filename': report_path.name,
+                    'downloadUrl': f"{EXECUTIVE_REPORT_PREFIX}/{incident_ref}",
+                    'sizeBytes': report_path.stat().st_size,
+                })
+            else:
+                self._send_json(200, {'exists': False, 'incidentRef': incident_ref})
+            return
+
+        # Caso 2: Descarga del archivo binario
+        report_path = get_executive_report_path(incident_ref)
+        if not report_path.is_file():
+            self._send_json(404, {
+                'success': False,
+                'error': f'No existe informe generado para la incidencia {incident_ref}. Debe solicitarlo primero.',
+            })
+            return
+
+        try:
+            body = report_path.read_bytes()
+            self.send_response(200)
+            self.send_header('Content-Type', 'application/vnd.openxmlformats-officedocument.presentationml.presentation')
+            self.send_header('Content-Disposition', f'attachment; filename="{report_path.name}"')
+            self.send_header('Access-Control-Allow-Origin', '*')
+            self.send_header('Content-Length', str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+        except Exception as e:
+            self._send_json(500, {'success': False, 'error': f'Error al leer archivo: {str(e)}'})
+
     def _send_json(self, status, payload):
         body = json.dumps(payload, ensure_ascii=False).encode('utf-8')
         self.send_response(status)
         self.send_header('Content-Type', 'application/json; charset=utf-8')
+        self.send_header('Access-Control-Allow-Origin', '*')
         self.send_header('Content-Length', str(len(body)))
         self.end_headers()
         self.wfile.write(body)
@@ -263,6 +402,10 @@ class CustomHTTPHandler(http.server.SimpleHTTPRequestHandler):
     def do_GET(self):
         # Debug
         print(f"GET {self.path}")
+
+        if self.path.startswith(f"{EXECUTIVE_REPORT_PREFIX}/") or self.path == EXECUTIVE_REPORT_PREFIX:
+            self.handle_executive_report_get()
+            return
 
         if self.path.startswith(REPORTS_PATH_PREFIX):
             self.handle_report_download()
