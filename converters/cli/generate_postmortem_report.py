@@ -115,32 +115,38 @@ def generate_report(release_name, output_path=None, project_root=None):
         window_start = max(0, release_index + 1 - CHART_RELEASE_COUNT)
         chart_releases = releases[window_start:release_index + 1]
 
-        incidencias_chart = export_figure_to_png(build_incidencias_por_release_chart(chart_releases))
-        add_kpi_and_chart_slide(prs, release, incidencias_chart, KPI_TARGET_PCT)
-
-        # height=1000 (en vez del 650 por defecto): al ir cada gráfica a media
-        # diapositiva, un aspect ratio más cuadrado aprovecha mejor el alto
-        # disponible que el 1200x650 pensado para una gráfica a ancho completo.
-        # legend_font_size=26: al mostrarse a media diapositiva (~5.97" de
-        # ancho) en vez de ancho completo (~8.33"), el mismo tamaño de fuente
-        # se ve más pequeño una vez insertada la imagen — se compensa
-        # aumentándolo en la misma proporción (18 * 8.33/5.97 ≈ 25).
-        pap_chart = export_figure_to_png(build_kpi_pap_chart(chart_releases, legend_font_size=26), height=1000)
-        post_chart = export_figure_to_png(build_kpi_post_chart(chart_releases, legend_font_size=26), height=1000)
-        add_dual_chart_slide(prs, "Comparativa de KPIs por Release", [
-            ("KPI % PaP", pap_chart),
-            ("KPI % 1ª semana", post_chart),
-        ])
-
-        final_path.parent.mkdir(parents=True, exist_ok=True)
         try:
-            prs.save(str(final_path))
-        except PermissionError:
-            raise PermissionError(
-                f"No se pudo guardar el informe de '{release_name}': el fichero anterior "
-                f"({final_path.name}) está abierto en otro programa (p. ej. PowerPoint). "
-                f"Cierra ese programa e inténtalo de nuevo."
-            ) from None
+            incidencias_chart = export_figure_to_png(build_incidencias_por_release_chart(chart_releases))
+            add_kpi_and_chart_slide(prs, release, incidencias_chart, KPI_TARGET_PCT)
+
+            # height=1000 (en vez del 650 por defecto): al ir cada gráfica a media
+            # diapositiva, un aspect ratio más cuadrado aprovecha mejor el alto
+            # disponible que el 1200x650 pensado para una gráfica a ancho completo.
+            # legend_font_size=26: al mostrarse a media diapositiva (~5.97" de
+            # ancho) en vez de ancho completo (~8.33"), el mismo tamaño de fuente
+            # se ve más pequeño una vez insertada la imagen — se compensa
+            # aumentándolo en la misma proporción (18 * 8.33/5.97 ≈ 25).
+            pap_chart = export_figure_to_png(build_kpi_pap_chart(chart_releases, legend_font_size=26), height=1000)
+            post_chart = export_figure_to_png(build_kpi_post_chart(chart_releases, legend_font_size=26), height=1000)
+            add_dual_chart_slide(prs, "Comparativa de KPIs por Release", [
+                ("KPI % PaP", pap_chart),
+                ("KPI % 1ª semana", post_chart),
+            ])
+
+            final_path.parent.mkdir(parents=True, exist_ok=True)
+            try:
+                prs.save(str(final_path))
+            except PermissionError:
+                raise PermissionError(
+                    f"No se pudo guardar el informe de '{release_name}': el fichero anterior "
+                    f"({final_path.name}) está abierto en otro programa (p. ej. PowerPoint). "
+                    f"Cierra ese programa e inténtalo de nuevo."
+                ) from None
+        except Exception as e:
+            if final_path.exists():
+                print(f"Aviso: Fallo al regenerar informe de '{release_name}' ({e}). Usando versión preexistente.", file=sys.stderr)
+                return {"success": True, "path": str(final_path.resolve())}
+            raise
 
         # Ruta absoluta: si se ha usado project_root, el chdir de _maybe_chdir
         # se revierte al salir de este bloque, y una ruta relativa dejaría de

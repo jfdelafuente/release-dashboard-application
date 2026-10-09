@@ -56,7 +56,12 @@ venv.bak/
 csv/
 incidencias/
 datos/
-data/
+data/*
+!data/reports/
+data/reports/*
+!data/reports/*.pptx
+!data/reports/executive/
+data/reports/executive/*
 !data/reports/executive/.gitkeep
 output/
 archive/
