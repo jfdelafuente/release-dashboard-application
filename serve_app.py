@@ -348,12 +348,16 @@ class CustomHTTPHandler(http.server.SimpleHTTPRequestHandler):
         target_path = get_executive_report_path(incident_ref)
 
         if target_path.is_file() and not force:
+            clean_ref = sanitize_incident_ref(incident_ref)
             self._send_json(200, {
                 'success': True,
-                'incidentRef': sanitize_incident_ref(incident_ref),
+                'incidentRef': clean_ref,
+                'incident_ref': clean_ref,
                 'filename': target_path.name,
-                'downloadUrl': f"{EXECUTIVE_REPORT_PREFIX}/{sanitize_incident_ref(incident_ref)}",
+                'downloadUrl': f"{EXECUTIVE_REPORT_PREFIX}/{clean_ref}",
+                'download_url': f"{EXECUTIVE_REPORT_PREFIX}/{clean_ref}",
                 'sizeBytes': target_path.stat().st_size,
+                'size_bytes': target_path.stat().st_size,
                 'cached': True,
             })
             return
@@ -374,11 +378,16 @@ class CustomHTTPHandler(http.server.SimpleHTTPRequestHandler):
             self._send_json(200, {
                 'success': True,
                 'incidentRef': metadata.incident_ref,
+                'incident_ref': metadata.incident_ref,
                 'filename': metadata.filename,
                 'downloadUrl': f"{EXECUTIVE_REPORT_PREFIX}/{metadata.incident_ref}",
+                'download_url': f"{EXECUTIVE_REPORT_PREFIX}/{metadata.incident_ref}",
                 'generatedAt': metadata.generated_at,
+                'generated_at': metadata.generated_at,
                 'sizeBytes': metadata.size_bytes,
+                'size_bytes': metadata.size_bytes,
                 'slideCount': metadata.slide_count,
+                'slide_count': metadata.slide_count,
             })
         except Exception as e:
             print(f"  Error generando informe ejecutivo: {e}")
@@ -405,12 +414,15 @@ class CustomHTTPHandler(http.server.SimpleHTTPRequestHandler):
                 self._send_json(200, {
                     'exists': True,
                     'incidentRef': incident_ref,
+                    'incident_ref': incident_ref,
                     'filename': report_path.name,
                     'downloadUrl': f"{EXECUTIVE_REPORT_PREFIX}/{incident_ref}",
+                    'download_url': f"{EXECUTIVE_REPORT_PREFIX}/{incident_ref}",
                     'sizeBytes': report_path.stat().st_size,
+                    'size_bytes': report_path.stat().st_size,
                 })
             else:
-                self._send_json(200, {'exists': False, 'incidentRef': incident_ref})
+                self._send_json(200, {'exists': False, 'incidentRef': incident_ref, 'incident_ref': incident_ref})
             return
 
         # Caso 2: Descarga del archivo binario
