@@ -1,18 +1,13 @@
 /* ============================================================
-   Release Dashboard — barra superior MASORANGE (componente JS)
+   MASORANGE — Barra Superior Unificada (Portal Shell)
    ============================================================
-   Fuente única de la navegación cruzada entre los 4 dashboards.
-   Cada página incluye un <div id="mo-topbar-root" data-active="...">
-   vacío; este script lo rellena con el markup .mo-topbar (estilos
-   en assets/topbar.css) marcando la pestaña activa.
-
-   Para páginas estáticas (portal, massive-incidents, postmortem):
-   basta con incluir este script; se renderiza en DOMContentLoaded.
-
-   Para release-kpis, que reconstruye su DOM en cada render() propio
-   (ver app.js), este script se carga como <script> normal (sin
-   defer) ANTES de app.js, y app.js llama a window.MoTopbar.render()
-   explícitamente después de cada re-render suyo.
+   Fuente única y canónica de la navegación cruzada entre plataformas:
+   - Portal (/dashboards/portal/)
+   - Incidencias masivas (/dashboards/massive-incidents/)
+   - Release (/dashboards/postmortem/)
+   - KPIs Release (/dashboards/release-kpis/)
+   - Reportes de Incidencias (/reportes-incidencias/index.html)
+   - Gestión de Problemas (/problemas)
    ============================================================ */
 
 (function () {
@@ -28,20 +23,32 @@
   function render() {
     var root = document.getElementById('mo-topbar-root');
     if (!root) return;
-    var active = root.dataset.active;
+    var active = root.dataset.active || '';
+
     var navLinks = NAV_ITEMS.map(function (item) {
-      var cls = item.id === active ? ' class="active"' : '';
+      var isActive = item.id === active;
+      var cls = isActive ? ' class="active" aria-current="page"' : '';
       return '<a href="' + item.href + '"' + cls + '>' + item.label + '</a>';
     }).join('');
+
+    var logoSrc = root.dataset.logo || '/dashboards/assets/orange-logo.svg';
+
     root.innerHTML =
-      '<div class="mo-topbar">' +
-        '<img src="/dashboards/assets/orange-logo.svg" alt="Orange">' +
-        '<div class="mo-topbar-sep"></div>' +
+      '<div class="mo-topbar" role="banner">' +
+        '<a href="/dashboards/portal/" class="mo-topbar-brand" aria-label="Ir al Portal de Fiabilidad">' +
+          '<img src="' + logoSrc + '" onerror="if(this.src!=\'/dashboards/assets/orange-logo.svg\')this.src=\'/dashboards/assets/orange-logo.svg\'" alt="Orange">' +
+        '</a>' +
+        '<div class="mo-topbar-sep" aria-hidden="true"></div>' +
         '<span class="mo-topbar-dept">Customer &amp; Service Operations</span>' +
-        '<nav class="mo-topbar-nav">' + navLinks + '</nav>' +
+        '<nav class="mo-topbar-nav" aria-label="Navegación principal">' + navLinks + '</nav>' +
       '</div>';
   }
 
-  window.MoTopbar = { render: render };
-  document.addEventListener('DOMContentLoaded', render);
+  window.MoTopbar = { render: render, navItems: NAV_ITEMS };
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', render);
+  } else {
+    render();
+  }
 })();
