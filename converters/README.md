@@ -1,195 +1,196 @@
-# CSV-to-JSON Converters
+# Converters & Report Generators
 
-Conversores Python independientes para transformar archivos CSV de incidencias masivas y postmortems al formato JSON compatible con dashboards.
+Módulo backend en Python para el procesamiento, validación y normalización de datos (CSV a JSON) y generación automatizada de informes ejecutivos en presentaciones PowerPoint (`.pptx`).
 
-## 🚀 Características
+---
 
-- ✅ Auto-detección de encoding (UTF-8, UTF-8-sig, Windows-1252, Latin-1, ISO-8859-15)
-- ✅ Auto-detección de delimitadores (coma, punto y coma, tabulación)
-- ✅ Normalización automática de campos (Urgencia, Estatus, fechas)
-- ✅ Validación de datos con reportes detallados
-- ✅ KPI pre-calculadas en metadata
-- ✅ 477 tests con cobertura de código
+## 🏛️ Arquitectura: Motor (`src/`) vs Interfaz de Consola (`cli/`)
 
-## 📦 Instalación
+El módulo sigue una estricta separación de responsabilidades:
+
+```text
+Usuario / Web Server (serve_app.py) / CI-CD
+                   │
+                   ▼
+       ┌────────────────────────┐
+       │     converters/cli/    │  <- Interfaces de consola, orquestación,
+       │   (Ejecutables / CLIs) │     parámetros, archivado e interactividad
+       └───────────┬────────────┘
+                   │ invoca
+                   ▼
+       ┌────────────────────────┐
+       │     converters/src/    │  <- Lógica de negocio pura (agnóstica a consola),
+       │  (Librerías / Motores) │     parseo, normalización, validación, PPTX
+       └────────────────────────┘
+```
+
+1. **`src/` (Core Libraries)**: Contiene los algoritmos, validaciones, cálculos matemáticos de KPIs, parsers y constructores de presentaciones. No gestiona argumentos de línea de comandos ni imprime directamente a consola.
+2. **`cli/` (Command Line Interfaces)**: Scripts delgados ejecutables (`argparse`/`sys.argv`) que gestionan la interacción con el usuario o con el servidor web (`serve_app.py`), administran el histórico en `data/archive/`, controlan códigos de salida (`exit codes`) y formatean la salida por terminal.
+
+---
+
+## 📂 Estructura de Directorios
+
+```text
+converters/
+├── cli/                  # Herramientas ejecutables de línea de comandos
+│   ├── build_index.py               # Genera catálogo data/output/index.json
+│   ├── cleanup_output.py            # Limpieza y archivado en data/archive/
+│   ├── convert_incidents.py         # Conversión de incidencias masivas
+│   ├── convert_postmortems.py       # Conversión de postmortems de releases
+│   ├── generate_executive_report.py # Generación PPTX de informe ejecutivo puntual
+│   ├── generate_postmortem_report.py# Generación PPTX de postmortem de release
+│   ├── upload_csv.py                # Enrutador único para subidas desde la web
+│   └── validate_kpis.py             # Auditoría y verificación de paridad de KPIs
+│
+├── src/                  # Motores de negocio y librerías reutilizables
+│   ├── csv_to_json/      # Módulo de ingesta y normalización de datos
+│   │   ├── converter.py             # Motor CsvToJsonConverter (incidencias)
+│   │   ├── postmortem_converter.py  # Motor PostmortemConverter (releases)
+│   │   ├── delimiter.py             # Detección automática de delimitador (, ; \t)
+│   │   ├── encoding.py              # Detección de encoding (UTF-8, Latin-1, CP1252...)
+│   │   ├── normalizers.py           # Normalización de fechas, estados y grupos
+│   │   ├── schemas.py               # Esquemas y cálculo de KPIs para masivas
+│   │   ├── postmortem_schemas.py    # Esquemas y cálculo de KPIs para postmortem
+│   │   └── validators.py            # Reglas de validación de campos
+│   │
+│   └── report_generator/ # Módulo de generación de informes y presentaciones (.pptx)
+│       ├── assets/                  # Plantillas (.pptx) y recursos corporativos
+│       ├── chart_utils.py           # Utilidades gráficas y paleta Orange/MasOrange
+│       ├── confluence_parser.py     # Parser HTML/Confluence para postmortems
+│       ├── data_loader.py           # Cargador de datos de releases
+│       ├── executive_models.py      # Modelos de datos para informes ejecutivos
+│       ├── executive_paths.py       # Resolución de rutas de informes ejecutivos
+│       ├── executive_report_builder.py # Constructor PPTX informe ejecutivo Orange
+│       ├── kpi_calculator.py        # Cálculo de los 8 KPIs globales
+│       ├── paths.py                 # Resolución de rutas y nombres seguros
+│       ├── postmortem_charts.py     # Gráficas Plotly para postmortem
+│       ├── pptx_builder.py          # Constructor base de presentaciones PPTX
+│       ├── release_kpis_charts.py   # Gráficas Plotly de KPIs de release
+│       └── release_kpis_data.py     # Lector de datos históricos de releases
+│
+├── scripts/bin/          # Lanzadores rápidos para Windows (.bat) y Linux/Mac (.sh)
+│   ├── convert_incidents.bat / .sh
+│   └── convert_postmortems.bat / .sh
+│
+├── tests/                # Suite de pruebas automatizadas (+470 tests)
+│   ├── unit/             # Pruebas unitarias de parsers, normalizadores y esquemas
+│   ├── integration/      # Pruebas de integración con I/O de ficheros
+│   ├── e2e/              # Pruebas extremo a extremo y rendimiento
+│   └── conftest.py       # Fixtures y configuración de pytest
+│
+├── docs/                 # Documentación técnica y guías de arquitectura
+├── specs/                # Especificaciones funcionales de features
+├── requirements.txt      # Dependencias de producción
+├── requirements-dev.txt  # Dependencias para testing y desarrollo
+└── pytest.ini            # Configuración de pruebas
+```
+
+---
+
+## 🛠️ Herramientas CLI en Detalle (`cli/`)
+
+| Script CLI | Motor Asociado en `src/` | Propósito Principal |
+| :--- | :--- | :--- |
+| **`convert_incidents.py`** | `src/csv_to_json/converter.py` | Convierte CSVs de **incidencias masivas** a JSON con KPIs. Archiva versiones anteriores en `data/archive/` y actualiza `index.json`. |
+| **`convert_postmortems.py`** | `src/csv_to_json/postmortem_converter.py` | Convierte CSVs de **postmortems** agrupando por `--release-name`, calculando métricas de resolución y actualizando el índice. |
+| **`upload_csv.py`** | N/A (Router de CLIs) | **Enrutador web**: llamado por el servidor backend al recibir un archivo desde la UI para despachar la ejecución a `convert_incidents.py` o `convert_postmortems.py`. |
+| **`generate_executive_report.py`** | `src/report_generator/executive_report_builder.py` | Genera una presentación PPTX ejecutiva de **una incidencia concreta** a partir de Confluence o un archivo HTML/texto (Feature 010). |
+| **`generate_postmortem_report.py`** | `src/report_generator/pptx_builder.py` | Genera el informe PPTX completo de **una release** con gráficas de rendimiento generadas mediante Plotly. |
+| **`build_index.py`** | N/A (Catálogo) | Escanea `data/output/` y genera `index.json` que alimenta el Dashboard Hub con todos los datasets disponibles. |
+| **`cleanup_output.py`** | N/A (Mantenimiento) | Traslada versiones obsoletas de `data/output/` a `data/archive/` sin pérdida de información. |
+| **`validate_kpis.py`** | `src/csv_to_json/schemas.py` | Comprueba y valida la paridad matemática de los KPIs calculados en Python frente a la implementación en JS. |
+
+---
+
+## 🚀 Instalación y Requisitos
+
+Requiere **Python 3.10+**.
 
 ```bash
 cd converters
-pip install -r requirements.txt
-```
 
-Para desarrollo (incluye pytest, coverage, linting):
-```bash
+# Dependencias de producción (conversión y PPTX)
+pip install -r requirements.txt
+
+# Dependencias para desarrollo y testing (pytest, coverage...)
 pip install -r requirements-dev.txt
 ```
 
-## 🔧 Uso
+---
 
-### Convertir Incidencias Masivas
+## 💻 Guía de Uso
 
+### 1. Ingesta de Incidencias Masivas
 ```bash
-# Windows
-./scripts/bin/convert_incidents.bat ../data/input/incidencias.csv
+# Mediante el CLI directamente:
+python cli/convert_incidents.py data/input/incidencias.csv -o data/output/
 
-# Linux/Mac
-./scripts/bin/convert_incidents.sh ../data/input/incidencias.csv
+# O con el lanzador rápido:
+./scripts/bin/convert_incidents.bat data/input/incidencias.csv  # Windows
+./scripts/bin/convert_incidents.sh data/input/incidencias.csv   # Linux / Mac
 ```
 
-**Opciones disponibles:**
+### 2. Ingesta de Postmortem por Release
 ```bash
-# Especificar output
-./scripts/bin/convert_incidents.bat ../data/input/datos.csv -o ../data/output/custom.json
-
-# Especificar error report
-./scripts/bin/convert_incidents.bat ../data/input/datos.csv -e ../data/errors/errors.json
-
-# Ver help
-./scripts/bin/convert_incidents.bat --help
+python cli/convert_postmortems.py data/input/postmortem.csv --release-name "2026R7"
 ```
 
-### Convertir Postmortems
-
+### 3. Generación de Informes Ejecutivos PowerPoint (.pptx)
 ```bash
-# Windows
-./scripts/bin/convert_postmortems.bat ../data/input/postmortem.csv
+# A partir de una referencia de incidencia y URL de Confluence:
+python cli/generate_executive_report.py --ref 2606S77393 --url "https://confluence.si.orange.es/..."
 
-# Linux/Mac
-./scripts/bin/convert_postmortems.sh ../data/input/postmortem.csv
+# A partir de un archivo exportado HTML local:
+python cli/generate_executive_report.py --ref 2606S77393 --file postmortem.html --title "Caída IVR"
 ```
 
-### Generar Index para Dashboard Hub
-
+### 4. Generación de Informe PPT de Release
 ```bash
-python cli/build_index.py ../data/output/
+# Para una release específica:
+python cli/generate_postmortem_report.py 2026R7
+
+# Para todas las releases disponibles:
+python cli/generate_postmortem_report.py --all
 ```
 
-## 📊 Salida
-
-Los converters generan:
-
-1. **JSON validado**: `../data/output/{nombre}-massive.json` o `{nombre}-postmortem.json`
-   - Contiene registros validados y normalizados
-   - Incluye `_metadata` con KPIs pre-calculadas
-
-2. **Reporte de errores**: `../data/errors/{nombre}_errors.json`
-   - Solo si hay registros inválidos
-   - Incluye número de línea y detalles del error
-
-3. **Index.json**: `../data/output/index.json`
-   - Auto-generado por converters
-   - Catalog de datasets disponibles para Dashboard Hub
-
-## 🧪 Testing
-
-### Ejecutar todos los tests
-
+### 5. Actualización del Catálogo del Dashboard Hub
 ```bash
-pytest tests/ -v
+python cli/build_index.py data/output/
 ```
 
-### Ejecutar por categoría
+---
 
-```bash
-# Solo tests unitarios (lógica pura)
-pytest tests/unit/ -v
+## 📄 Contrato de Datos (JSON Output)
 
-# Solo tests de integración (con I/O)
-pytest tests/integration/ -v
-
-# Solo tests E2E y performance
-pytest tests/e2e/ -v
-```
-
-### Con coverage
-
-```bash
-pytest tests/ --cov=src --cov-report=html
-# Abre htmlcov/index.html para ver reporte visual
-```
-
-### En paralelo (más rápido)
-
-```bash
-pytest tests/ -n auto  # Auto-detecta número de CPUs
-```
-
-## 📚 Documentación
-
-- [API Reference](docs/API.md) - Referencia técnica de los conversores
-- [Architecture](docs/ARCHITECTURE.md) - Arquitectura interna
-- [Performance Guide](docs/PERFORMANCE.md) - Optimizaciones y benchmarks
-- [Test Structure](docs/TEST_STRUCTURE.md) - Organización de tests
-- [Testing Best Practices](docs/TESTING_BEST_PRACTICES.md) - Guía de testing
-- [Code Quality](docs/CODE_QUALITY.md) - Linting y formatting
-
-## 📋 Especificaciones
-
-- [001: CSV-to-JSON Workflow](specs/001-csv-to-json-workflow/) - Especificación completa
-- [004: Postmortem Converter](specs/004-postmortem-converter/) - Conversor postmortem
-- [006: Optimize CSV Converters](specs/006-optimize-csv-converters/) - Optimizaciones
-
-## 🔌 Uso Programático
-
-```python
-from csv_to_json import CsvToJsonConverter
-
-converter = CsvToJsonConverter()
-success, report = converter.convert_file(
-    input_path='../data/input/datos.csv',
-    output_path='../data/output/datos-massive.json',
-    error_report_path='../data/errors/datos_errors.json'
-)
-
-if success:
-    stats = report['stats']
-    print(f"Procesados: {stats['total_records']}")
-    print(f"Exitosos: {stats['successful']}")
-    print(f"Fallidos: {stats['failed']}")
-    print(f"Tasa éxito: {stats['success_rate']:.1f}%")
-```
-
-### Postmortem Converter
-
-```python
-from csv_to_json.postmortem_converter import PostmortemConverter
-
-converter = PostmortemConverter()
-success, report = converter.convert_file(
-    input_path='../data/input/postmortem.csv',
-    output_path='../data/output/postmortem.json',
-    error_report_path='../data/errors/postmortem_errors.json'
-)
-```
-
-## 📄 Contrato JSON
-
-Ambos converters generan JSON en este formato:
+Los conversores estructuran la salida JSON con el siguiente esquema estándar:
 
 ```json
 {
   "_metadata": {
     "type": "massive" | "postmortem",
     "version": "1.0",
-    "created": "ISO timestamp",
+    "created": "2026-10-14T10:00:00",
     "encoding_detected": "UTF-8",
-    "delimiter_detected": ",",
-    "record_count": 100,
+    "delimiter_detected": ";",
+    "record_count": 120,
+    "release_name": "2026R7",
     "kpis": {
-      "total": 100,
-      "pending": 23,
-      "trend_7d": 5.2,
-      "trend_15d": -3.1,
-      "trend_30d": 12.8
+      "total": 120,
+      "pending": 15,
+      "trend_7d": -5.2,
+      "trend_15d": 2.1,
+      "trend_30d": 10.4
     }
   },
   "data": [
     {
       "ID de incidencia": "INC000003884945",
-      "Descripción": "...",
+      "Descripción": "Corte de servicio en pasarela...",
       "Estatus": "Cerrado",
       "Fecha de envío": "02/01/2026 8:14 a",
       "Grupo asignado": "CEP CAU AGI",
-      "Urgencia": "Baja",
+      "Urgencia": "Alta",
       "Impacto": "Masiva",
       "Fecha de última resolución": "12/01/2026 8:24 a"
     }
@@ -197,96 +198,33 @@ Ambos converters generan JSON en este formato:
 }
 ```
 
-## 🤝 Desarrollo
+---
 
-### Estructura del código
+## 🧪 Testing y Calidad
 
-```
-src/csv_to_json/
-├── __init__.py           # Exporta CsvToJsonConverter
-├── converter.py          # Orquestador principal (masivas)
-├── postmortem_converter.py # Conversor postmortem
-├── encoding.py           # Detección de encoding
-├── delimiter.py          # Detección de delimitador
-├── normalizers.py        # Normalización de campos
-├── validators.py         # Validación de datos
-├── schemas.py            # Esquemas (masivas)
-└── postmortem_schemas.py # Esquemas (postmortem)
-```
-
-### Flujo de conversión
-
-```
-CSV Input
-  ↓
-Detección de Encoding
-  ↓
-Detección de Delimitador
-  ↓
-Parsing CSV
-  ↓
-Normalización de Campos
-  ↓
-Validación de Datos
-  ↓
-Cálculo de KPIs
-  ↓
-Generación de JSON
-  ↓
-Reporte de Errores (si hay)
-```
-
-### Ejecutar en desarrollo
+El módulo cuenta con una suite completa de pruebas automatizadas:
 
 ```bash
-# Instalar en modo editable
-pip install -e .
+# Ejecutar todos los tests
+pytest tests/ -v
 
-# Ejecutar converter desde CLI
-python cli/convert_incidents.py ../data/input/datos.csv
+# Ejecutar tests unitarios solamente
+pytest tests/unit/ -v
 
-# O importar en scripts
-python -c "from csv_to_json import CsvToJsonConverter; ..."
+# Ejecutar tests de integración y E2E
+pytest tests/integration/ -v
+pytest tests/e2e/ -v
+
+# Medir cobertura de código
+pytest tests/ --cov=src --cov-report=term-missing
 ```
-
-## 📊 Estadísticas
-
-- **Módulos**: 9 archivos Python
-- **Tests**: 477 tests (unit + integration + e2e)
-- **Ejecución**: ~2.5 segundos
-- **Cobertura**: 86%
-- **Sin dependencias externas**: Solo stdlib Python
-
-## 🔐 Seguridad
-
-- Datos de entrada/salida en `../data/` (git-ignored)
-- Manejo seguro de encoding y caracteres especiales
-- Validación exhaustiva de entrada
-- Reportes detallados de errores
-
-## 📞 Soporte
-
-Para problemas o preguntas:
-1. Consultar [documentación](docs/)
-2. Revisar [especificaciones](specs/)
-3. Ejecutar tests para diagnóstico: `pytest tests/ -v`
-
-## 🤖 Uso con CI/CD
-
-El conversor está diseñado para usarse en pipelines automatizados:
-
-```bash
-# En GitHub Actions o similar
-cd converters
-pip install -r requirements.txt
-python cli/convert_incidents.py ./input/*.csv -o ./output/
-python cli/build_index.py ./output/
-```
-
-## 📝 Licencia
-
-Parte del proyecto Release Dashboard Application.
 
 ---
 
-**Última actualización**: 2026-06-01
+## 📚 Documentación Adicional
+
+- [Arquitectura Detallada](docs/ARCHITECTURE.md)
+- [Referencia de la API](docs/API.md)
+- [Guía de Rendimiento](docs/PERFORMANCE.md)
+- [Estructura y Buenas Prácticas de Pruebas](docs/TEST_STRUCTURE.md)
+- Especificaciones: [001 Workflow](specs/001-csv-to-json-workflow/) | [004 Postmortem](specs/004-postmortem-converter/) | [010 Executive Report](../specs/010-incident-executive-report/)

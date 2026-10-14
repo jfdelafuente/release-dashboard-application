@@ -20,6 +20,7 @@
 
 ### Arquitectura y diseño
 - **[PROJECT-STRUCTURE.md](PROJECT-STRUCTURE.md)** - Estructura del proyecto y de producción
+- **[DASHBOARDS-API.md](DASHBOARDS-API.md)** - Catálogo de APIs e integraciones de los dashboards
 - **[../converters/docs/ARCHITECTURE.md](../converters/docs/ARCHITECTURE.md)** - Arquitectura del módulo de conversión
 
 ### Operaciones y despliegue
