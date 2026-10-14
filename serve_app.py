@@ -22,21 +22,30 @@ os.chdir(PROJECT_ROOT)
 sys.path.insert(0, str(PROJECT_ROOT / 'converters' / 'cli'))
 from upload_csv import run_upload  # noqa: E402
 from generate_postmortem_report import generate_report, generate_all_reports  # noqa: E402
-from converters.src.report_generator.executive_models import (  # noqa: E402
+
+# Single Source of Truth (Fase 1.1): Motor de informes ejecutivos en cso-incident-masivas-report/backend
+CSO_BACKEND_ROOT = Path(os.environ.get(
+    "CSO_BACKEND_ROOT",
+    str(PROJECT_ROOT.parent / "cso-incident-masivas-report" / "backend")
+))
+if CSO_BACKEND_ROOT.is_dir() and str(CSO_BACKEND_ROOT) not in sys.path:
+    sys.path.insert(0, str(CSO_BACKEND_ROOT))
+
+from report_generator import (  # noqa: E402
     ExecutiveIncidentData,
     sanitize_incident_ref,
     extract_fields_from_jira_description,
-)
-from converters.src.report_generator.executive_paths import (  # noqa: E402
     get_executive_report_path,
     get_executive_report_filename,
     cleanup_old_executive_reports,
+    ExecutiveReportBuilder,
+    ConfluenceParser,
 )
-from converters.src.report_generator.executive_report_builder import ExecutiveReportBuilder  # noqa: E402
-from converters.src.report_generator.confluence_parser import ConfluenceParser  # noqa: E402
 
 REPORTS_PATH_PREFIX = '/api/reports/postmortem/'
 EXECUTIVE_REPORT_PREFIX = '/api/reports/executive-incident'
+EXECUTIVE_REPORT_V1_PREFIX = '/api/v1/reports/executive-incident'
+FASTAPI_BACKEND_URL = os.environ.get("FASTAPI_BACKEND_URL", "http://127.0.0.1:8000").rstrip("/")
 EPSILON_CACHE = {}  # { codigo: (timestamp, content, status) }
 
 # Puerto por defecto: 8080 para no colisionar con FastAPI (puerto 8000).
@@ -187,7 +196,12 @@ class CustomHTTPHandler(http.server.SimpleHTTPRequestHandler):
             self.handle_upload()
         elif self.path == f'{REPORTS_PATH_PREFIX}batch':
             self.handle_reports_batch()
-        elif self.path == EXECUTIVE_REPORT_PREFIX or self.path == f'{EXECUTIVE_REPORT_PREFIX}/':
+        elif self.path in (
+            EXECUTIVE_REPORT_PREFIX,
+            f'{EXECUTIVE_REPORT_PREFIX}/',
+            EXECUTIVE_REPORT_V1_PREFIX,
+            f'{EXECUTIVE_REPORT_V1_PREFIX}/',
+        ):
             self.handle_executive_report_generate()
         else:
             self.send_error(404, "Not Found")
@@ -286,10 +300,69 @@ class CustomHTTPHandler(http.server.SimpleHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(body)
 
+    def proxy_to_fastapi_executive(self, body_data: bytes = None) -> bool:
+        """
+        Delega la petición de informe ejecutivo al backend propietario FastAPI
+        (http://127.0.0.1:8000). Si FastAPI responde (cualquier código HTTP),
+        transmite la respuesta y devuelve True. Si FastAPI no está levantado en local
+        (ConnectionRefusedError / URLError), devuelve False para ejecutar el fallback
+        usando el mismo módulo Single Source of Truth de cso-incident-masivas-report.
+        """
+        import urllib.request
+        import urllib.error
+
+        excluded = {'host', 'connection', 'keep-alive', 'accept-encoding', 'content-length'}
+        headers = {k: v for k, v in self.headers.items() if k.lower() not in excluded}
+        headers['Connection'] = 'close'
+
+        target_url = f"{FASTAPI_BACKEND_URL}{self.path}"
+        req = urllib.request.Request(
+            target_url,
+            method=self.command,
+            headers=headers,
+            data=body_data,
+        )
+        try:
+            with urllib.request.urlopen(req, timeout=60) as resp:
+                self.send_response(resp.status)
+                for header, val in resp.getheaders():
+                    if header.lower() not in ('transfer-encoding', 'content-length', 'connection'):
+                        self.send_header(header, val)
+                self.send_header('Connection', 'close')
+                content = resp.read()
+                self.send_header('Content-Length', str(len(content)))
+                self.end_headers()
+                self.wfile.write(content)
+                return True
+        except urllib.error.HTTPError as e:
+            self.send_response(e.code)
+            for header, val in e.headers.items():
+                if header.lower() not in ('transfer-encoding', 'content-length', 'connection'):
+                    self.send_header(header, val)
+            self.send_header('Connection', 'close')
+            body = e.read()
+            self.send_header('Content-Length', str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+            return True
+        except Exception as e:
+            print(f"  [FastAPI Proxy] FastAPI ({FASTAPI_BACKEND_URL}) no alcanzable ({e}); ejecutando fallback local sobre Single Source of Truth.")
+            return False
+
     def handle_executive_report_generate(self):
         try:
             content_length = int(self.headers.get('Content-Length', 0))
             body = self.rfile.read(content_length) if content_length > 0 else b'{}'
+        except Exception as e:
+            self._send_json(400, {'success': False, 'error': f'Error leyendo cuerpo HTTP: {e}'})
+            return
+
+        # 1. Intentar delegar primero a FastAPI (Single Source of Truth en ejecución)
+        if self.proxy_to_fastapi_executive(body_data=body):
+            return
+
+        # 2. Fallback en proceso (cuando FastAPI no está arrancado en local)
+        try:
             payload = json.loads(body.decode('utf-8'))
         except Exception as e:
             self._send_json(400, {'success': False, 'error': f'JSON inválido: {e}'})
@@ -398,7 +471,17 @@ class CustomHTTPHandler(http.server.SimpleHTTPRequestHandler):
             })
 
     def handle_executive_report_get(self):
-        path_without_prefix = self.path[len(EXECUTIVE_REPORT_PREFIX):].split('?')[0]
+        # 1. Intentar delegar primero a FastAPI (Single Source of Truth en ejecución)
+        if self.proxy_to_fastapi_executive():
+            return
+
+        # 2. Fallback en proceso
+        active_prefix = (
+            EXECUTIVE_REPORT_V1_PREFIX
+            if self.path.startswith(EXECUTIVE_REPORT_V1_PREFIX)
+            else EXECUTIVE_REPORT_PREFIX
+        )
+        path_without_prefix = self.path[len(active_prefix):].split('?')[0]
         parts = [p for p in path_without_prefix.split('/') if p]
 
         if not parts:
@@ -459,7 +542,12 @@ class CustomHTTPHandler(http.server.SimpleHTTPRequestHandler):
         # Debug
         print(f"GET {self.path}")
 
-        if self.path.startswith(f"{EXECUTIVE_REPORT_PREFIX}/") or self.path == EXECUTIVE_REPORT_PREFIX:
+        if (
+            self.path.startswith(f"{EXECUTIVE_REPORT_PREFIX}/")
+            or self.path == EXECUTIVE_REPORT_PREFIX
+            or self.path.startswith(f"{EXECUTIVE_REPORT_V1_PREFIX}/")
+            or self.path == EXECUTIVE_REPORT_V1_PREFIX
+        ):
             self.handle_executive_report_get()
             return
 
