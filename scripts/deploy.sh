@@ -44,6 +44,11 @@ BACKUP_DIR="${PROJECT_ROOT}/backups/deploy-${TIMESTAMP}"
 LOG_DIR="${PROJECT_ROOT}/logs"
 LOG_FILE="${LOG_DIR}/deploy-$(date +%Y%m%d).log"
 
+# Asegurar que el binario de Nginx del servidor esté en PATH
+if [ -d "/infocodes/nginx/sbin" ]; then
+    export PATH="/infocodes/nginx/sbin:$PATH"
+fi
+
 NGINX_CONF_REPO="${PROJECT_ROOT}/nginx.conf"
 NGINX_CONF_ACTIVE="/infocodes/nginx/conf/nginx.conf"
 NGINX_PID_FILE="/infocodes/var/run/nginx.pid"
