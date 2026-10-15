@@ -101,7 +101,7 @@ Si por alguna razón prefieres realizar el despliegue manualmente paso a paso:
 
 1. **Verificar antes de desplegar**:
    - Los tests pasan localmente/en CI (`tests.yml` en `.github/workflows/`).
-   - El cambio está fusionado en `main` (o en la rama desde la que se promueve a `production`).
+   - Los cambios están integrados en la rama operativa `production`.
 2. **Conectar al VPS por SSH.**
 3. **Actualizar el checkout de la rama `production`**:
    ```bash
@@ -184,7 +184,7 @@ Los datos (`data/output/*.json`) no se versionan en git (`data/` está en `.giti
 
 ## Checklist pre-deploy
 
-- [ ] Cambios fusionados en `main` y, si aplica, promovidos a `production`.
+- [ ] Cambios integrados y listos en la rama operativa `production`.
 - [ ] Tests pasando (`tests.yml`) y linting sin errores (`lint.yml`).
 - [ ] Si el cambio afecta a `nginx.conf`: validado con `nginx -t` antes de recargar.
 - [ ] Si el cambio afecta a los conversores (`converters/`): probado localmente con un CSV de ejemplo.
