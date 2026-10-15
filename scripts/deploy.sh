@@ -226,6 +226,15 @@ else
     warn "Proxy Epsilon IA (/api/epsilon/...): HTTP ${EPSILON_HTTP}"
 fi
 
+# Test 3: Reportes de Incidencias
+REPORTES_HTTP=$(curl -s -o /dev/null -w "%{http_code}" "http://localhost:8081/dashboards/reportes-incidencias/" 2>/dev/null || echo "000")
+if [ "${REPORTES_HTTP}" = "200" ]; then
+    success "Reportes de Incidencias (/dashboards/reportes-incidencias/): HTTP 200 OK"
+else
+    warn "Reportes de Incidencias (/dashboards/reportes-incidencias/): HTTP ${REPORTES_HTTP}"
+fi
+
+
 # -------------------------------------------------------------------
 # 5. Rotación de backups antiguos (mantiene los últimos 5)
 # -------------------------------------------------------------------

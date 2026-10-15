@@ -28,19 +28,36 @@ CSO_BACKEND_ROOT = Path(os.environ.get(
     "CSO_BACKEND_ROOT",
     str(PROJECT_ROOT.parent / "cso-incident-masivas-report" / "backend")
 ))
-if CSO_BACKEND_ROOT.is_dir() and str(CSO_BACKEND_ROOT) not in sys.path:
-    sys.path.insert(0, str(CSO_BACKEND_ROOT))
+import importlib.util
 
-from report_generator import (  # noqa: E402
-    ExecutiveIncidentData,
-    sanitize_incident_ref,
-    extract_fields_from_jira_description,
-    get_executive_report_path,
-    get_executive_report_filename,
-    cleanup_old_executive_reports,
-    ExecutiveReportBuilder,
-    ConfluenceParser,
-)
+cso_init_py = CSO_BACKEND_ROOT / "report_generator" / "__init__.py"
+if cso_init_py.is_file():
+    spec = importlib.util.spec_from_file_location(
+        "cso_report_generator",
+        str(cso_init_py),
+        submodule_search_locations=[str(CSO_BACKEND_ROOT / "report_generator")]
+    )
+    cso_mod = importlib.util.module_from_spec(spec)
+    sys.modules["cso_report_generator"] = cso_mod
+    spec.loader.exec_module(cso_mod)
+
+    ExecutiveIncidentData = getattr(cso_mod, "ExecutiveIncidentData", None)
+    sanitize_incident_ref = getattr(cso_mod, "sanitize_incident_ref", None)
+    extract_fields_from_jira_description = getattr(cso_mod, "extract_fields_from_jira_description", None)
+    get_executive_report_path = getattr(cso_mod, "get_executive_report_path", None)
+    get_executive_report_filename = getattr(cso_mod, "get_executive_report_filename", None)
+    cleanup_old_executive_reports = getattr(cso_mod, "cleanup_old_executive_reports", None)
+    ExecutiveReportBuilder = getattr(cso_mod, "ExecutiveReportBuilder", None)
+    ConfluenceParser = getattr(cso_mod, "ConfluenceParser", None)
+else:
+    ExecutiveIncidentData = None
+    sanitize_incident_ref = None
+    extract_fields_from_jira_description = None
+    get_executive_report_path = None
+    get_executive_report_filename = None
+    cleanup_old_executive_reports = None
+    ExecutiveReportBuilder = None
+    ConfluenceParser = None
 
 REPORTS_PATH_PREFIX = '/api/reports/postmortem/'
 EXECUTIVE_REPORT_PREFIX = '/api/reports/executive-incident'
@@ -184,7 +201,7 @@ class CustomHTTPHandler(http.server.SimpleHTTPRequestHandler):
     def do_OPTIONS(self):
         self.send_response(204)
         self.send_header('Access-Control-Allow-Origin', '*')
-        self.send_header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+        self.send_header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
         self.send_header('Access-Control-Allow-Headers', '*')
         self.end_headers()
 
@@ -196,6 +213,11 @@ class CustomHTTPHandler(http.server.SimpleHTTPRequestHandler):
             self.handle_upload()
         elif self.path == f'{REPORTS_PATH_PREFIX}batch':
             self.handle_reports_batch()
+        elif self.path.startswith('/api/reports') and not self.path.startswith(REPORTS_PATH_PREFIX):
+            content_length = int(self.headers.get('Content-Length', 0))
+            body = self.rfile.read(content_length) if content_length > 0 else b'{}'
+            if not self.proxy_to_fastapi_executive(body_data=body):
+                self._send_json(502, {'success': False, 'error': f'FastAPI backend ({FASTAPI_BACKEND_URL}) no disponible'})
         elif self.path in (
             EXECUTIVE_REPORT_PREFIX,
             f'{EXECUTIVE_REPORT_PREFIX}/',
@@ -203,6 +225,26 @@ class CustomHTTPHandler(http.server.SimpleHTTPRequestHandler):
             f'{EXECUTIVE_REPORT_V1_PREFIX}/',
         ):
             self.handle_executive_report_generate()
+        else:
+            self.send_error(404, "Not Found")
+
+    def do_PUT(self):
+        print(f"PUT {self.path}")
+        if self.path.startswith('/api/reports') or self.path.startswith('/api/'):
+            content_length = int(self.headers.get('Content-Length', 0))
+            body = self.rfile.read(content_length) if content_length > 0 else b'{}'
+            if not self.proxy_to_fastapi_executive(body_data=body):
+                self._send_json(502, {'success': False, 'error': f'FastAPI backend ({FASTAPI_BACKEND_URL}) no disponible'})
+        else:
+            self.send_error(404, "Not Found")
+
+    def do_DELETE(self):
+        print(f"DELETE {self.path}")
+        if self.path.startswith('/api/reports') or self.path.startswith('/api/'):
+            content_length = int(self.headers.get('Content-Length', 0))
+            body = self.rfile.read(content_length) if content_length > 0 else None
+            if not self.proxy_to_fastapi_executive(body_data=body):
+                self._send_json(502, {'success': False, 'error': f'FastAPI backend ({FASTAPI_BACKEND_URL}) no disponible'})
         else:
             self.send_error(404, "Not Found")
 
@@ -553,6 +595,12 @@ class CustomHTTPHandler(http.server.SimpleHTTPRequestHandler):
 
         if self.path.startswith(REPORTS_PATH_PREFIX):
             self.handle_report_download()
+            return
+
+        if self.path.startswith('/api/reports') or self.path.startswith('/api/departments') or self.path in ('/healthz', '/readyz'):
+            if self.proxy_to_fastapi_executive():
+                return
+            self._send_json(502, {'success': False, 'error': f'FastAPI backend ({FASTAPI_BACKEND_URL}) no disponible'})
             return
 
         if self.path.startswith('/api/epsilon/resumenIA/'):
