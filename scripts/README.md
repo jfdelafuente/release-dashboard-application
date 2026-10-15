@@ -1,188 +1,89 @@
-# Scripts de Automatización
+# Scripts de Automatización y Operación
 
-Scripts para ejecutar los converters y generar dashboards automáticamente.
+Scripts para el despliegue, operación y conversión de datos de Release Dashboard Application.
 
-## 📜 generate-dashboards.sh
+---
 
-Script principal que ejecuta todo el proceso de conversión de datos.
+## ⚡ deploy-production.ps1 (Despliegue en 1 Clic desde Windows)
 
-### Características
+Script principal de despliegue desde la máquina local Windows a producción (`infocodes@10.132.26.96`).
 
-- ✅ Procesa todos los CSV en `data/input/`
-- ✅ Ejecuta converters de incidencias masivas
-- ✅ Ejecuta converters de postmortems
-- ✅ Genera `index.json`
-- ✅ Logging detallado
-- ✅ Manejo de errores
-- ✅ Validación de salida
+### Características:
+- Empaquetado selectivo de runtime en `dist/release-dashboard-runtime.tar.gz` (~2.3 MB).
+- Cero `git pull`, `git stash` o clonación en el servidor de producción.
+- Protección total del directorio `data/` (persistencia estricta).
+- Backup preventivo automático con rotación de las últimas 5 copias en `/infocodes/var/backups/release-dashboard-application/`.
+- Validación de sintaxis Nginx (`nginx -t`) y recarga suave en caliente (`nginx -s reload`) con rollback automático.
+- Ejecución desatendida de sondas de salud HTTP al finalizar.
 
-### Instalación
+### Uso:
+```powershell
+# Despliegue estándar completo:
+.\scripts\deploy-production.ps1
 
-1. **Hacer el script ejecutable:**
-```bash
-chmod +x /infocodes/project/release-dashboard-application/scripts/generate-dashboards.sh
+# Solo verificar salud y estado del servidor sin modificar nada:
+.\scripts\deploy-production.ps1 -VerifyOnly
+
+# Rollback instantáneo a la copia preventiva anterior:
+.\scripts\deploy-production.ps1 -Rollback
+
+# Desplegar sin hacer git push previo:
+.\scripts\deploy-production.ps1 -SkipPush
+
+# Simulación sin aplicar cambios (DryRun):
+.\scripts\deploy-production.ps1 -DryRun
 ```
 
-2. **Configurar Python (en el VPS):**
+---
+
+## 📊 status.sh (Sondas de Salud en el Servidor)
+
+Script de consulta rápida de estado en el VPS (`/infocodes/project/release-dashboard-application/status.sh`):
+
+### Uso:
 ```bash
-cd /infocodes/project/release-dashboard-application
-pip install -r converters/requirements.txt
+./status.sh
 ```
 
-### Uso Manual
+### Qué comprueba:
+- Versión actual (`VERSION`).
+- Sintaxis y estado de configuración de Nginx.
+- Conteo de archivos de datos (`data/input/*.csv`, `data/output/*.json`, `data/reports/*.pptx`).
+- Códigos HTTP (200 OK) de todos los dashboards y proxies locales.
 
+---
+
+## ↺ rollback.sh (Reversión Inmediata en el Servidor)
+
+Script para restaurar una versión previa desde los backups preventivos (`/infocodes/project/release-dashboard-application/rollback.sh`):
+
+### Uso:
+```bash
+# Restaurar la copia más reciente:
+./rollback.sh
+
+# Restaurar una copia específica:
+./rollback.sh backup_20261015_145000.tar.gz
+```
+
+---
+
+## 📜 generate-dashboards.sh (Conversión Batch)
+
+Script para procesar CSVs y generar los archivos JSON para los dashboards estáticos.
+
+### Características:
+- Procesa todos los CSV en `data/input/`
+- Ejecuta converters de incidencias masivas y postmortems
+- Genera `index.json`
+- Logging detallado en `logs/dashboards-generation-YYYYMMDD.log`
+
+### Uso Manual:
 ```bash
 ./scripts/generate-dashboards.sh
 ```
 
-### Configurar en Crontab
-
-**Opción A: Diariamente a las 2 AM**
+### Configuración en Crontab (VPS):
 ```bash
-0 2 * * * /infocodes/project/release-dashboard-application/scripts/generate-dashboards.sh >> /var/log/dashboards-cron.log 2>&1
-```
-
-**Opción B: Cada 6 horas**
-```bash
-0 */6 * * * /infocodes/project/release-dashboard-application/scripts/generate-dashboards.sh >> /var/log/dashboards-cron.log 2>&1
-```
-
-**Opción C: Cada hora**
-```bash
-0 * * * * /infocodes/project/release-dashboard-application/scripts/generate-dashboards.sh >> /var/log/dashboards-cron.log 2>&1
-```
-
-### Agregar a Crontab
-
-```bash
-# Editar crontab
-crontab -e
-
-# Pegar la línea deseada y guardar (Ctrl+X, Y, Enter en nano)
-```
-
-### Logs
-
-Los logs se guardan en:
-- `logs/dashboards-generation-YYYYMMDD.log` (dentro del proyecto)
-- Además el cron puede redirigir a `/var/log/dashboards-cron.log`
-
-Ver logs:
-```bash
-tail -f /infocodes/project/release-dashboard-application/logs/dashboards-generation-*.log
-```
-
-### Estructura de Directorios Esperada
-
-```
-/infocodes/project/release-dashboard-application/
-├── converters/
-│   ├── cli/
-│   │   ├── convert_incidents.py
-│   │   ├── convert_postmortems.py
-│   │   └── build_index.py
-│   └── requirements.txt
-├── data/
-│   ├── input/          ← CSV files a procesar
-│   ├── output/         ← JSON files generados
-│   └── errors/         ← Reportes de error
-├── logs/               ← Logs del script (se crea automáticamente)
-└── scripts/
-    ├── generate-dashboards.sh
-    └── README.md
-```
-
-### Solución de Problemas
-
-**El script no ejecuta:**
-```bash
-# Verificar permisos
-ls -la scripts/generate-dashboards.sh
-
-# Debe mostrar: -rwxr-xr-x
-# Si no, ejecutar:
-chmod +x scripts/generate-dashboards.sh
-```
-
-**Error: "No such file or directory"**
-- Verificar que el path `/infocodes/project/release-dashboard-application/` es correcto
-- Ajustar la variable `PROJECT_ROOT` en el script si es diferente
-
-**Error: "Python not found"**
-- Instalar Python en el VPS
-- O usar el path completo: `/usr/bin/python3` o similar
-
-**Los converters no generan datos:**
-- Verificar que existen archivos CSV en `data/input/`
-- Ver logs en `logs/dashboards-generation-*.log`
-- Probar manualmente: `python converters/cli/convert_incidents.py data/input/archivo.csv`
-
-### Monitoreo
-
-**Ver último log:**
-```bash
-tail /infocodes/project/release-dashboard-application/logs/dashboards-generation-$(date +%Y%m%d).log
-```
-
-**Ver ejecuciones de cron:**
-```bash
-grep generate-dashboards /var/log/syslog  # En sistemas Linux
-```
-
-**Ver estado de los datos:**
-```bash
-ls -lh /infocodes/project/release-dashboard-application/data/output/
-```
-
----
-
-## 🚀 deploy.sh
-
-Script para desplegar de forma segura las nuevas versiones del repositorio en el VPS.
-
-### Características
-
-- ✅ **Backup preventivo**: Copia de seguridad de `data/output/` y de la configuración activa de Nginx en `backups/deploy-YYYYMMDD_HHMMSS`.
-- ✅ **Stash automático**: Si hay cambios locales en el servidor (p. ej. en `data/output/`), los guarda en stash antes del pull y los restaura después.
-- ✅ **Pull de production**: Actualiza la rama `production` desde GitHub.
-- ✅ **Sincronización inteligente de Nginx**: Compara `nginx.conf` del repo con el activo en `/infocodes/nginx/conf/nginx.conf`. Si hay cambios, lo sincroniza y valida sintaxis con `nginx -t`.
-- ✅ **Rollback automático de Nginx**: Si `nginx -t` falla, restaura la configuración anterior de inmediato.
-- ✅ **Recarga en caliente**: Ejecuta `nginx -s reload` sin necesidad de `sudo` ni `systemctl`.
-- ✅ **Smoke Tests**: Comprueba que el portal y el proxy `/api/epsilon/` respondan `200 OK`.
-- ✅ **Rotación**: Mantiene los últimos 5 backups y elimina los antiguos automáticamente.
-
-### Uso
-
-Desde la raíz del repositorio:
-```bash
-./deploy.sh
-```
-
-O directamente:
-```bash
-./scripts/deploy.sh
-```
-
----
-
-## ⚡ deploy-production.ps1 (1 Clic desde Windows)
-
-Script de PowerShell para automatizar el ciclo completo de despliegue desde la máquina de desarrollo Windows:
-
-### Características:
-- Valida que la rama local sea `production` y no haya cambios pendientes sin commitear.
-- Ejecuta `git push origin production` automáticamente.
-- Se conecta vía SSH al VPS (`infocodes@10.132.26.96`) y lanza `scripts/deploy.sh`.
-- Soporta comprobación rápida de estado con `-VerifyOnly`.
-
-### Uso:
-```powershell
-# Despliegue completo (push + deploy en VPS):
-.\scripts\deploy-production.ps1
-
-# Solo verificar salud de los dashboards y proxies en el VPS:
-.\scripts\deploy-production.ps1 -VerifyOnly
-
-# Ejecutar deploy en el VPS sin hacer git push previo:
-.\scripts\deploy-production.ps1 -SkipPush
+0 2 * * * /infocodes/project/release-dashboard-application/scripts/generate-dashboards.sh >> /infocodes/project/release-dashboard-application/logs/dashboards-cron.log 2>&1
 ```
