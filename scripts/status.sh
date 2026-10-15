@@ -6,21 +6,31 @@
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-if [ -f "$SCRIPT_DIR/../nginx.conf" ]; then
+if [ -d "$SCRIPT_DIR/releases" ] || [ -L "$SCRIPT_DIR/current" ]; then
+    APP_DIR="$SCRIPT_DIR"
+elif [ -f "$SCRIPT_DIR/../nginx.conf" ]; then
     APP_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 else
     APP_DIR="/infocodes/project/release-dashboard-application"
 fi
 
+ACTIVE_REL="desconocida"
+if [ -L "$APP_DIR/current" ]; then
+    ACTIVE_REL="$(readlink "$APP_DIR/current" 2>/dev/null || true)"
+fi
+
 VERSION="desconocida"
-if [ -f "$APP_DIR/VERSION" ]; then
+if [ -f "$APP_DIR/current/VERSION" ]; then
+    VERSION="$(cat "$APP_DIR/current/VERSION" 2>/dev/null)"
+elif [ -f "$APP_DIR/VERSION" ]; then
     VERSION="$(cat "$APP_DIR/VERSION" 2>/dev/null)"
 fi
 
 echo "================================================================="
 echo "   Release Dashboard Application - Estado del Servicio"
-echo "   Ruta    : $APP_DIR"
-echo "   Versión : $VERSION"
+echo "   Ruta           : $APP_DIR"
+echo "   Release Activa : $ACTIVE_REL"
+echo "   Versión        : $VERSION"
 echo "================================================================="
 
 # Estado de Nginx
@@ -31,11 +41,18 @@ else
     echo "ERROR EN CONFIGURACIÓN"
 fi
 
-# Estadísticas de datos
-if [ -d "$APP_DIR/data" ]; then
-    CSV_COUNT=$(find "$APP_DIR/data/input" -name "*.csv" 2>/dev/null | wc -l)
-    JSON_COUNT=$(find "$APP_DIR/data/output" -name "*.json" 2>/dev/null | wc -l)
-    PPTX_COUNT=$(find "$APP_DIR/data/reports" -name "*.pptx" 2>/dev/null | wc -l)
+# Estadísticas de datos persistentes
+DATA_DIR=""
+if [ -d "$APP_DIR/shared/data" ]; then
+    DATA_DIR="$APP_DIR/shared/data"
+elif [ -d "$APP_DIR/data" ]; then
+    DATA_DIR="$APP_DIR/data"
+fi
+
+if [ -n "$DATA_DIR" ]; then
+    CSV_COUNT=$(find "$DATA_DIR/input" -name "*.csv" 2>/dev/null | wc -l)
+    JSON_COUNT=$(find "$DATA_DIR/output" -name "*.json" 2>/dev/null | wc -l)
+    PPTX_COUNT=$(find "$DATA_DIR/reports" -name "*.pptx" 2>/dev/null | wc -l)
     echo "Datos persistentes: $CSV_COUNT CSVs en input | $JSON_COUNT JSONs en output | $PPTX_COUNT informes PPTX"
 fi
 
@@ -64,4 +81,3 @@ check_endpoint "Proxy API Epsilon" "http://localhost:8081/api/epsilon/resumenIA/
 check_endpoint "Backend CSO Health" "http://localhost:8081/api/health"
 
 echo "================================================================="
-

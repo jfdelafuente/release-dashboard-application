@@ -303,10 +303,9 @@ set -e
 REMOTE_DIR="$RemoteDir"
 TMP_TAR="$RemoteTmpTarball"
 BACKUP_BASE="/infocodes/var/backups/release-dashboard-application"
-LOGS_DIR="`$REMOTE_DIR/logs"
-TIMESTAMP="`$(date +%Y%m%d_%H%M%S)"
-BACKUP_ARCHIVE="`$BACKUP_BASE/backup_`$TIMESTAMP.tar.gz"
-
+RELEASES_DIR="`$REMOTE_DIR/releases"
+SHARED_DIR="`$REMOTE_DIR/shared"
+CURRENT_LINK="`$REMOTE_DIR/current"
 NGINX_CONF_ACTIVE="/infocodes/nginx/conf/nginx.conf"
 NGINX_BIN="/infocodes/nginx/sbin/nginx"
 NGINX_CONF_D="/infocodes/nginx/conf/conf.d"
@@ -315,68 +314,101 @@ if [ -d "/infocodes/nginx/sbin" ]; then
     export PATH="/infocodes/nginx/sbin:`$PATH"
 fi
 
-echo "--> [Remoto] Asegurando directorios persistentes y de copias de seguridad..."
-mkdir -p "`$REMOTE_DIR" "`$BACKUP_BASE" "`$LOGS_DIR" "`$NGINX_CONF_D"
-mkdir -p "`$REMOTE_DIR/data/input" "`$REMOTE_DIR/data/output" "`$REMOTE_DIR/data/reports" "`$REMOTE_DIR/data/errors" "`$REMOTE_DIR/data/archive"
+echo "--> [Remoto] Asegurando estructura de releases y directorios compartidos..."
+mkdir -p "`$REMOTE_DIR" "`$BACKUP_BASE" "`$RELEASES_DIR" "`$SHARED_DIR" "`$SHARED_DIR/data" "`$SHARED_DIR/logs" "`$NGINX_CONF_D"
 
 if [ ! -f "`$TMP_TAR" ]; then
     echo "ERROR: No se encuentra `$TMP_TAR en el servidor."
     exit 1
 fi
 
-# 1. Copia de seguridad preventiva
+# 1. Preservar y migrar datos locales existentes a shared/data/ (solo si data no es ya un symlink)
+if [ -d "`$REMOTE_DIR/data" ] && [ ! -L "`$REMOTE_DIR/data" ]; then
+    echo "--> [Remoto] Migrando datos existentes a `$SHARED_DIR/data/..."
+    cp -rn "`$REMOTE_DIR/data"/* "`$SHARED_DIR/data/" 2>/dev/null || true
+fi
+if [ -d "`$REMOTE_DIR/logs" ] && [ ! -L "`$REMOTE_DIR/logs" ]; then
+    echo "--> [Remoto] Migrando logs existentes a `$SHARED_DIR/logs/..."
+    cp -rn "`$REMOTE_DIR/logs"/* "`$SHARED_DIR/logs/" 2>/dev/null || true
+fi
+
+# Asegurar subcarpetas esperadas en shared/data
+mkdir -p "`$SHARED_DIR/data/input" "`$SHARED_DIR/data/output" "`$SHARED_DIR/data/reports" "`$SHARED_DIR/data/errors" "`$SHARED_DIR/data/archive"
+
+# 2. Copia de seguridad preventiva
+TIMESTAMP="`$(date +%Y%m%d_%H%M%S)"
+BACKUP_ARCHIVE="`$BACKUP_BASE/backup_`$TIMESTAMP.tar.gz"
 echo "--> [Remoto] Creando backup preventivo en `$BACKUP_ARCHIVE..."
 (
     cd "`$REMOTE_DIR"
-    ITEMS_TO_BACKUP=""
-    [ -d "data" ] && ITEMS_TO_BACKUP="`$ITEMS_TO_BACKUP data"
-    [ -f "nginx.conf" ] && ITEMS_TO_BACKUP="`$ITEMS_TO_BACKUP nginx.conf"
-    [ -f "dashboards/release-kpis/releases-data.js" ] && ITEMS_TO_BACKUP="`$ITEMS_TO_BACKUP dashboards/release-kpis/releases-data.js"
-    [ -f "VERSION" ] && ITEMS_TO_BACKUP="`$ITEMS_TO_BACKUP VERSION"
-
-    if [ -n "`$ITEMS_TO_BACKUP" ]; then
-        tar -czf "`$BACKUP_ARCHIVE" `$ITEMS_TO_BACKUP 2>/dev/null || true
-        echo "--> [Remoto] Backup preventivo generado: `$(ls -lh "`$BACKUP_ARCHIVE" | awk '{print `$5}')"
-    fi
+    tar -czf "`$BACKUP_ARCHIVE" shared/data nginx.conf 2>/dev/null || true
+    echo "--> [Remoto] Backup preventivo generado: `$(ls -lh "`$BACKUP_ARCHIVE" 2>/dev/null | awk '{print `$5}')"
 )
 
-# 2. Extracción selectiva del nuevo runtime
-echo "--> [Remoto] Extrayendo runtime actualizado en `$REMOTE_DIR..."
-tar -xzf "`$TMP_TAR" -C "`$REMOTE_DIR"
+# 3. Extraer nueva release en releases/<TIMESTAMP>
+RELEASE_ID="`$(date +%Y%m%d_%H%M%S)"
+NEW_RELEASE_DIR="`$RELEASES_DIR/`$RELEASE_ID"
+mkdir -p "`$NEW_RELEASE_DIR"
+echo "--> [Remoto] Extrayendo nueva release en `$NEW_RELEASE_DIR..."
+tar -xzf "`$TMP_TAR" -C "`$NEW_RELEASE_DIR"
 rm -f "`$TMP_TAR"
 
-# 3. Normalizar permisos y saltos de línea (evitar problemas de CRLF de Windows)
-sed -i 's/\r$//' "`$REMOTE_DIR"/scripts/*.sh "`$REMOTE_DIR"/*.sh 2>/dev/null || true
-chmod +x "`$REMOTE_DIR"/scripts/*.sh "`$REMOTE_DIR"/*.sh 2>/dev/null || true
+# 4. Enlazar datos y logs compartidos dentro de la nueva release
+ln -sfn "`$SHARED_DIR/data" "`$NEW_RELEASE_DIR/data"
+ln -sfn "`$SHARED_DIR/logs" "`$NEW_RELEASE_DIR/logs"
 
-# 4. Asegurar scripts de control accesibles en la raíz
-cp -f "`$REMOTE_DIR/scripts/status.sh" "`$REMOTE_DIR/status.sh" 2>/dev/null || true
-cp -f "`$REMOTE_DIR/scripts/rollback.sh" "`$REMOTE_DIR/rollback.sh" 2>/dev/null || true
-chmod +x "`$REMOTE_DIR/status.sh" "`$REMOTE_DIR/rollback.sh" 2>/dev/null || true
+# 5. Normalizar permisos y saltos de línea (CRLF -> LF)
+sed -i 's/\r$//' "`$NEW_RELEASE_DIR"/scripts/*.sh "`$NEW_RELEASE_DIR"/*.sh 2>/dev/null || true
+chmod +x "`$NEW_RELEASE_DIR"/scripts/*.sh "`$NEW_RELEASE_DIR"/*.sh 2>/dev/null || true
 
-# 5. Limpieza de elementos obsoletos de desarrollo en el servidor
-for obsolete in tests specs "MASORANGE dashboard redesign" "20260609 Incidencia IVR ExMM.pptx"; do
-    if [ -e "`$REMOTE_DIR/`$obsolete" ]; then
-        rm -rf "`$REMOTE_DIR/`$obsolete" 2>/dev/null || true
-        echo "--> [Remoto] Limpiado elemento no runtime: `$obsolete"
-    fi
+# 6. Switch atómico del enlace simbólico 'current'
+echo "--> [Remoto] Activando symlink atómico: current -> releases/`$RELEASE_ID"
+ln -sfn "releases/`$RELEASE_ID" "`$CURRENT_LINK"
+
+# 7. Sincronizar scripts de control y metadatos en la raíz de `$REMOTE_DIR
+cp -f "`$NEW_RELEASE_DIR/status.sh" "`$REMOTE_DIR/status.sh"
+cp -f "`$NEW_RELEASE_DIR/rollback.sh" "`$REMOTE_DIR/rollback.sh"
+if [ -f "`$NEW_RELEASE_DIR/VERSION" ]; then
+    cp -f "`$NEW_RELEASE_DIR/VERSION" "`$REMOTE_DIR/VERSION"
+fi
+chmod +x "`$REMOTE_DIR/status.sh" "`$REMOTE_DIR/rollback.sh"
+
+# 8. Compatibilidad transparente en la raíz (symlinks a current y shared)
+ln -sfn "current/dashboards" "`$REMOTE_DIR/dashboards"
+ln -sfn "current/converters" "`$REMOTE_DIR/converters"
+ln -sfn "current/scripts" "`$REMOTE_DIR/scripts"
+ln -sfn "shared/data" "`$REMOTE_DIR/data"
+ln -sfn "shared/logs" "`$REMOTE_DIR/logs"
+
+# 9. Limpiar elementos residuales del antiguo clon en la raíz de `$REMOTE_DIR
+#    Solo deben quedar: current, releases, shared, status.sh, rollback.sh, VERSION, dashboards, converters, scripts, data, logs
+echo "--> [Remoto] Limpiando elementos residuales del antiguo clon en `$REMOTE_DIR..."
+for entry in `$(ls -A "`$REMOTE_DIR"); do
+    case "`$entry" in
+        current|releases|shared|status.sh|rollback.sh|VERSION|dashboards|converters|scripts|data|logs)
+            ;;
+        *)
+            rm -rf "`$REMOTE_DIR/`$entry" 2>/dev/null || true
+            echo "--> [Remoto] Limpiado elemento residual: `$entry"
+            ;;
+    esac
 done
 
-# 6. Sincronización y validación sintáctica de Nginx
+# 10. Sincronización y validación de Nginx
 echo "--> [Remoto] Comprobando configuración de Nginx..."
 NGINX_CHANGED=false
-if [ -f "`$REMOTE_DIR/nginx.conf" ] && [ -f "`$NGINX_CONF_ACTIVE" ]; then
-    if ! cmp -s "`$REMOTE_DIR/nginx.conf" "`$NGINX_CONF_ACTIVE"; then
+if [ -f "`$CURRENT_LINK/nginx.conf" ] && [ -f "`$NGINX_CONF_ACTIVE" ]; then
+    if ! cmp -s "`$CURRENT_LINK/nginx.conf" "`$NGINX_CONF_ACTIVE"; then
         NGINX_CHANGED=true
     fi
-elif [ -f "`$REMOTE_DIR/nginx.conf" ]; then
+elif [ -f "`$CURRENT_LINK/nginx.conf" ]; then
     NGINX_CHANGED=true
 fi
 
 if [ "`$NGINX_CHANGED" = true ]; then
     echo "--> [Remoto] Se detectaron cambios en nginx.conf. Sincronizando con `$NGINX_CONF_ACTIVE..."
     cp -f "`$NGINX_CONF_ACTIVE" "`$NGINX_CONF_ACTIVE.bak" 2>/dev/null || true
-    cp -f "`$REMOTE_DIR/nginx.conf" "`$NGINX_CONF_ACTIVE"
+    cp -f "`$CURRENT_LINK/nginx.conf" "`$NGINX_CONF_ACTIVE"
 
     echo "--> [Remoto] Validando sintaxis de Nginx (nginx -t)..."
     if "`$NGINX_BIN" -t; then
@@ -394,7 +426,18 @@ else
     echo "--> [Remoto] nginx.conf sin cambios. No requiere recarga."
 fi
 
-# 7. Rotación de backups antiguos (conservar los últimos 5)
+# 11. Rotación de releases antiguas (conservar las últimas 3 releases)
+if [ -d "`$RELEASES_DIR" ]; then
+    OLD_RELEASES=`$(ls -1 "`$RELEASES_DIR" 2>/dev/null | sort | head -n -3 || true)
+    for old_rel in `$OLD_RELEASES; do
+        if [ -n "`$old_rel" ] && [ "`$old_rel" != "`$RELEASE_ID" ]; then
+            echo "--> [Remoto] Rotación: eliminando release antigua `$old_rel..."
+            rm -rf "`$RELEASES_DIR/`$old_rel" 2>/dev/null || true
+        fi
+    done
+fi
+
+# 12. Rotación de backups antiguos (conservar los últimos 5)
 BACKUPS_COUNT=`$(find "`$BACKUP_BASE" -maxdepth 1 -name "backup_*.tar.gz" -type f | wc -l)
 if [ "`$BACKUPS_COUNT" -gt 5 ]; then
     find "`$BACKUP_BASE" -maxdepth 1 -name "backup_*.tar.gz" -type f | sort | head -n -5 | while read -r OLD_BKP; do
@@ -403,6 +446,7 @@ if [ "`$BACKUPS_COUNT" -gt 5 ]; then
     done
 fi
 
+# 13. Verificación de Sondas de Salud HTTP
 echo ""
 echo "=== Verificación de Sondas de Salud HTTP ==="
 if [ -x "`$REMOTE_DIR/status.sh" ]; then
