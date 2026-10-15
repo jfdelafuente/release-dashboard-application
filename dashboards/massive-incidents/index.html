@@ -10,6 +10,7 @@
     <link rel="stylesheet" href="/dashboards/assets/shared.css">
     <link rel="stylesheet" href="/dashboards/assets/resumen-ia.css">
     <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+    <script src="/dashboards/assets/ui-feedback.js"></script>
     <style>
         /* Estilos específicos de esta página. El framework compartido
            (barra superior, pantalla de subida, cabecera, tarjetas KPI,
@@ -1194,7 +1195,14 @@
 
             if (!filteredIncidents || filteredIncidents.length === 0) {
                 const row = document.createElement('tr');
-                row.innerHTML = '<td colspan="7" style="text-align: center; padding: 20px; color: #8A857C;">No hay datos para mostrar</td>';
+                row.innerHTML = `
+                    <td colspan="7" class="table-empty-cell">
+                        <div class="table-empty-state">
+                            <div class="empty-icon">🔍</div>
+                            <div class="empty-title">No se encontraron incidencias masivas</div>
+                            <div class="empty-desc">No hay incidencias que coincidan con los filtros seleccionados o el rango temporal activo.</div>
+                        </div>
+                    </td>`;
                 tbody.appendChild(row);
                 document.getElementById('filteredCount').textContent = '0';
                 return;
@@ -1352,7 +1360,8 @@
 
             function loadFile(file) {
                 if (!file.name.toLowerCase().endsWith('.csv')) {
-                    alert('Por favor selecciona un archivo CSV');
+                    if (window.Toast) Toast.warning('Por favor selecciona un archivo CSV válido (.csv)');
+                    else alert('Por favor selecciona un archivo CSV válido (.csv)');
                     return;
                 }
 
@@ -1370,10 +1379,12 @@
                         if (!ok || !data.success) {
                             throw new Error(data.error || 'Error al subir el archivo');
                         }
+                        if (window.Toast) Toast.success('Incidencias masivas subidas y procesadas con éxito');
                         return autoLoadLatestData();
                     })
                     .catch(error => {
-                        alert('Error: ' + error.message);
+                        if (window.Toast) Toast.error('Error: ' + error.message);
+                        else alert('Error: ' + error.message);
                     })
                     .finally(() => {
                         uploadBtn.disabled = false;
