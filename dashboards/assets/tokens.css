@@ -110,4 +110,15 @@
 
   --container:          1200px;
   --gutter:             24px;
+
+  /* Fondos y bordes oscuros corporativos (armonización editor & topbar) */
+  --mo-grey-750:        #26241F;
+  --mo-grey-800:        #1A1815;
+  --mo-border-dark:     #3C3934;
+  --mo-border-dark-subtle: #2A2723;
+
+  /* Resplandores y estados LED */
+  --mo-glow-orange:     0 0 8px rgba(255, 121, 0, 0.6);
+  --mo-glow-green:      0 0 8px rgba(34, 197, 94, 0.6);
+  --mo-glow-red:        0 0 8px rgba(239, 68, 68, 0.6);
 }

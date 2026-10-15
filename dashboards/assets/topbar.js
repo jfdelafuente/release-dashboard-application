@@ -41,10 +41,68 @@
         '<div class="mo-topbar-sep" aria-hidden="true"></div>' +
         '<span class="mo-topbar-dept">Customer &amp; Service Operations</span>' +
         '<nav class="mo-topbar-nav" aria-label="Navegación principal">' + navLinks + '</nav>' +
+        '<div class="mo-topbar-right">' +
+          '<div class="mo-status-badge" id="mo-api-status" title="Comprobando conexión con backend...">' +
+            '<span class="mo-status-dot" id="mo-api-status-dot"></span>' +
+            '<span class="mo-status-text" id="mo-api-status-text">API</span>' +
+          '</div>' +
+        '</div>' +
       '</div>';
+
+    checkApiHealth();
   }
 
-  window.MoTopbar = { render: render, navItems: NAV_ITEMS };
+  function checkApiHealth() {
+    var dot = document.getElementById('mo-api-status-dot');
+    var text = document.getElementById('mo-api-status-text');
+    var badge = document.getElementById('mo-api-status');
+    if (!dot || !text) return;
+
+    var controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
+    var timer = setTimeout(function () {
+      if (controller) controller.abort();
+    }, 3500);
+
+    fetch('/api/health', { signal: controller ? controller.signal : undefined })
+      .then(function (r) {
+        if (r.ok) return r.json();
+        throw new Error('HTTP ' + r.status);
+      })
+      .then(function (data) {
+        clearTimeout(timer);
+        dot.className = 'mo-status-dot online';
+        text.textContent = 'API OK';
+        if (badge) badge.title = 'API Backend Operativa (' + (data.service || 'FastAPI') + ')';
+      })
+      .catch(function () {
+        clearTimeout(timer);
+        fetch('/healthz')
+          .then(function (r) {
+            if (r.ok) return r.json();
+            throw new Error('HTTP ' + r.status);
+          })
+          .then(function (data) {
+            dot.className = 'mo-status-dot online';
+            text.textContent = 'API OK';
+            if (badge) badge.title = 'API Backend Operativa';
+          })
+          .catch(function () {
+            dot.className = 'mo-status-dot offline';
+            text.textContent = 'API Offline';
+            if (badge) badge.title = 'API Backend no accesible en puerto 8000';
+          });
+      });
+  }
+
+  // Carga automática del sistema central de feedback si no está presente
+  if (typeof window !== 'undefined' && !window.Toast && !document.querySelector('script[src*="ui-feedback.js"]')) {
+    var fbScript = document.createElement('script');
+    fbScript.src = '/dashboards/assets/ui-feedback.js';
+    fbScript.async = true;
+    document.head.appendChild(fbScript);
+  }
+
+  window.MoTopbar = { render: render, navItems: NAV_ITEMS, checkHealth: checkApiHealth };
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', render);

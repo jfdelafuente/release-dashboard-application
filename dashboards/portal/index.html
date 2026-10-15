@@ -717,6 +717,7 @@
                 <h1 class="portal-title">Portal de Fiabilidad y Releases</h1>
             </div>
             <div class="portal-header-meta">
+                <span class="badge-current-week" id="portal-current-week-badge" title="Semana del año ISO 8601">Semana...</span>
                 <span class="status-live-indicator" aria-hidden="true"></span>
                 <span>Última sincronización: <strong id="update-time" class="num" style="font-family: var(--mono); color: var(--portal-text-main);">—</strong></span>
             </div>
@@ -1204,6 +1205,9 @@
 
                 if (!code) {
                     showError('Por favor, introduce un código de incidencia.');
+                    if (window.Toast && typeof window.Toast.warning === 'function') {
+                        window.Toast.warning('Por favor, introduce un código de incidencia.');
+                    }
                     return;
                 }
 
@@ -1216,18 +1220,36 @@
                     window.openResumenIA(code);
                 } else {
                     showError('El servicio de Resumen IA no está disponible en este momento.');
+                    if (window.Toast && typeof window.Toast.error === 'function') {
+                        window.Toast.error('El servicio de Resumen IA no está disponible.');
+                    }
                 }
             });
+        }
+
+        function initWeekBadge() {
+            var badge = document.getElementById('portal-current-week-badge');
+            if (!badge) return;
+            if (window.MODate && typeof window.MODate.getIsoYearWeek === 'function') {
+                var info = window.MODate.getIsoYearWeek();
+                var range = window.MODate.getWeekDateRange(info.year, info.week);
+                badge.textContent = 'Semana ' + info.week + ' · ' + range;
+                badge.title = 'Semana ISO ' + info.week + ' (' + range + ')';
+            } else {
+                badge.textContent = 'Semana en curso';
+            }
         }
 
         // Carga inicial y refresco periódico
         document.addEventListener('DOMContentLoaded', () => {
             initIncidentSearch();
+            initWeekBadge();
             updateSelectedRelease();
             loadDashboardData();
         });
         setInterval(loadDashboardData, 30000);
     </script>
+    <script src="/dashboards/assets/date.js" defer></script>
     <script src="/dashboards/assets/resumen-ia.js" defer></script>
     <script src="/dashboards/assets/topbar.js" defer></script>
 </body>
