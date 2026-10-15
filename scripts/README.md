@@ -162,3 +162,27 @@ O directamente:
 ```bash
 ./scripts/deploy.sh
 ```
+
+---
+
+## ⚡ deploy-production.ps1 (1 Clic desde Windows)
+
+Script de PowerShell para automatizar el ciclo completo de despliegue desde la máquina de desarrollo Windows:
+
+### Características:
+- Valida que la rama local sea `production` y no haya cambios pendientes sin commitear.
+- Ejecuta `git push origin production` automáticamente.
+- Se conecta vía SSH al VPS (`infocodes@10.132.26.96`) y lanza `scripts/deploy.sh`.
+- Soporta comprobación rápida de estado con `-VerifyOnly`.
+
+### Uso:
+```powershell
+# Despliegue completo (push + deploy en VPS):
+.\scripts\deploy-production.ps1
+
+# Solo verificar salud de los dashboards y proxies en el VPS:
+.\scripts\deploy-production.ps1 -VerifyOnly
+
+# Ejecutar deploy en el VPS sin hacer git push previo:
+.\scripts\deploy-production.ps1 -SkipPush
+```

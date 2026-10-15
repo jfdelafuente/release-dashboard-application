@@ -24,9 +24,23 @@ Por tanto, desplegar este repo **no reinicia ni afecta** a esos otros servicios;
 
 ---
 
-## ⚡ Despliegue Automatizado (Recomendado)
+## ⚡ Despliegue en 1 Clic desde Windows (Recomendado)
 
-El script `./deploy.sh` realiza todo el proceso de forma desatendida y segura:
+Desde tu entorno local en PowerShell, dispones del script automatizado que realiza el push y la ejecución en el VPS en un único paso:
+
+```powershell
+.\scripts\deploy-production.ps1
+```
+
+Opciones útiles del script de PowerShell:
+- `.\scripts\deploy-production.ps1 -VerifyOnly`: Comprueba el estado HTTP (200 OK) de todos los dashboards y proxies sin modificar nada en el servidor.
+- `.\scripts\deploy-production.ps1 -SkipPush`: Salta el `git push` local y ejecuta directamente el script de despliegue remoto en el VPS.
+
+---
+
+## ⚡ Despliegue Automatizado en el Servidor (deploy.sh)
+
+En el servidor VPS, el script `./scripts/deploy.sh` (o el symlink en la raíz `./deploy.sh`) realiza todo el proceso de forma desatendida y segura:
 
 ```bash
 cd /infocodes/project/release-dashboard-application
@@ -190,4 +204,4 @@ Los datos (`data/output/*.json`) no se versionan en git (`data/` está en `.giti
 
 - [`scripts/README.md`](../scripts/README.md) — instalación y crontab de `generate-dashboards.sh`.
 - [`README.md`](../README.md) — arranque local con `serve_app.py`, estructura del proyecto.
-- `nginx.conf` (raíz del repo, no versionado) — configuración real servida en el VPS.
+- `nginx.conf` (raíz del repo) — configuración central sincronizada y servida en el VPS.
