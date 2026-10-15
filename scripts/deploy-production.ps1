@@ -475,4 +475,5 @@ Write-Host "   Incidencias Masivas  : http://infocodes.si.orange.es:8081/dashboa
 Write-Host "   Postmortem           : http://infocodes.si.orange.es:8081/dashboards/postmortem/" -ForegroundColor Cyan
 Write-Host "   Release KPIs         : http://infocodes.si.orange.es:8081/dashboards/release-kpis/" -ForegroundColor Cyan
 Write-Host "   Reportes Incidencias : http://infocodes.si.orange.es:8081/dashboards/reportes-incidencias/" -ForegroundColor Cyan
+Write-Host "   Gestión de Problemas : http://infocodes.si.orange.es:8081/problemas" -ForegroundColor Cyan
 Write-Host "=================================================================" -ForegroundColor DarkGreen
