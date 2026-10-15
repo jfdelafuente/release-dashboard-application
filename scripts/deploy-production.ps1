@@ -373,19 +373,12 @@ if [ -f "`$NEW_RELEASE_DIR/VERSION" ]; then
 fi
 chmod +x "`$REMOTE_DIR/status.sh" "`$REMOTE_DIR/rollback.sh"
 
-# 8. Compatibilidad transparente en la raíz (symlinks a current y shared)
-ln -sfn "current/dashboards" "`$REMOTE_DIR/dashboards"
-ln -sfn "current/converters" "`$REMOTE_DIR/converters"
-ln -sfn "current/scripts" "`$REMOTE_DIR/scripts"
-ln -sfn "shared/data" "`$REMOTE_DIR/data"
-ln -sfn "shared/logs" "`$REMOTE_DIR/logs"
-
-# 9. Limpiar elementos residuales del antiguo clon en la raíz de `$REMOTE_DIR
-#    Solo deben quedar: current, releases, shared, status.sh, rollback.sh, VERSION, dashboards, converters, scripts, data, logs
-echo "--> [Remoto] Limpiando elementos residuales del antiguo clon en `$REMOTE_DIR..."
+# 8. Limpiar elementos residuales en la raíz de `$REMOTE_DIR
+#    Solo deben quedar: current, releases, shared, status.sh, rollback.sh, VERSION
+echo "--> [Remoto] Limpiando elementos residuales en la raíz de `$REMOTE_DIR..."
 for entry in `$(ls -A "`$REMOTE_DIR"); do
     case "`$entry" in
-        current|releases|shared|status.sh|rollback.sh|VERSION|dashboards|converters|scripts|data|logs)
+        current|releases|shared|status.sh|rollback.sh|VERSION)
             ;;
         *)
             rm -rf "`$REMOTE_DIR/`$entry" 2>/dev/null || true
