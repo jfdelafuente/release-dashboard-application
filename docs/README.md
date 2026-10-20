@@ -24,9 +24,9 @@
 - **[../converters/docs/ARCHITECTURE.md](../converters/docs/ARCHITECTURE.md)** - Arquitectura del módulo de conversión
 
 ### Operaciones y despliegue
-- **[DEPLOYMENT.md](DEPLOYMENT.md)** - Procedimiento de despliegue (manual, vía SSH)
-- **[DEPLOYMENT-LOG-FORMAT.md](DEPLOYMENT-LOG-FORMAT.md)** - Formato y plantilla del log de despliegues
-- **[CI-CD.md](CI-CD.md)** - Qué automatiza CI (tests y linting) y qué no (el despliegue)
+- **[DEPLOYMENT.md](DEPLOYMENT.md)** - Procedimiento de despliegue automatizado (Standalone Runtime vía `deploy-production.ps1`)
+- **[../scripts/README.md](../scripts/README.md)** - Referencia de scripts de despliegue, status, rollback y cron
+- **[CI-CD.md](CI-CD.md)** - Integración continua (tests y linters) y pipeline de despliegue
 - **[VERSION-MANAGEMENT.md](VERSION-MANAGEMENT.md)** - Versionado semántico
 - **[VPS-REQUIREMENTS.md](VPS-REQUIREMENTS.md)** - Requisitos del servidor
 - **[../SECURITY.md](../SECURITY.md)** - Prácticas de seguridad
@@ -43,10 +43,12 @@
 
 | Dashboard | Archivo | Propósito |
 |-----------|------|---------|
-| **Portal** (entrada principal) | `dashboards/portal/index.html` | Punto de acceso único, con tarjetas a cada dashboard |
-| **Incidencias Masivas** | `dashboards/massive-incidents/index.html` | Análisis temporal de incidencias masivas |
-| **Postmortem / Release** | `dashboards/postmortem/index.html` | Análisis por despliegue (PAP/MESA) |
-| **KPIs Release (Histórico)** | `dashboards/release-kpis/index.html` | Serie histórica de KPIs por release, dataset estático |
+| **Portal** (entrada principal) | `dashboards/portal/index.html` | Punto de acceso único, con buscador Remedy y Resumen IA |
+| **Incidencias Masivas** | `dashboards/massive-incidents/index.html` | Análisis temporal y evolutivo de incidencias masivas |
+| **Postmortem / Release** | `dashboards/postmortem/index.html` | Análisis por despliegue (PAP/MESA) y KPIs |
+| **KPIs Release (Histórico)** | `dashboards/release-kpis/index.html` | Serie histórica de KPIs por release y exportación PPT |
+| **Reportes de Incidencias** | `dashboards/reportes-incidencias/index.html` | Gestión tabular, reportes de impacto y exportación PDF/PPTX |
+| **Informes Específicos** | `dashboards/informes/incidencias-pdtes-r9-2026/` | Informe ejecutivo de incidencias pendientes R9 |
 
 `dashboards/index.html` redirige automáticamente al Portal.
 
@@ -59,32 +61,34 @@ CSV (subido desde el navegador, o en data/input/)
     ↓
 serve_app.py [/api/upload]  o  converters/cli/convert_incidents.py / convert_postmortems.py
     ↓
-JSON (data/output/) + build_index.py → index.json
+JSON estructurado (data/output/) + build_index.py → index.json
     ↓
-Portal (dashboards/portal/)
+Portal Hub (dashboards/portal/)  <-- [Consultas en tiempo real a Epsilon IA]
     ↓
-Incidencias Masivas · Postmortem/Release
+Incidencias Masivas · Postmortem/Release · KPIs · Reportes de Incidencias
+    ↓
+Generación de Informes PPTX / PDF (report_generator / python-pptx)
 ```
 
 ---
 
 ## 📊 Stack Tecnológico
 
-- **Conversores**: Python 3.8+
-- **Dashboards**: HTML5, CSS3, JavaScript ES6+ (sin framework, sin build step)
-- **Visualización**: Plotly.js (vía CDN)
+- **Conversores y Backend**: Python 3.8+ (FastAPI en `:8000`, `serve_app.py` en local)
+- **Dashboards**: HTML5, CSS3, JavaScript ES6+ (sin framework pesado, sin build step)
+- **Visualización**: Plotly.js (vía CDN), tokens oficiales Orange
 - **Testing**: pytest (ver [converters/docs/TEST_STRUCTURE.md](../converters/docs/TEST_STRUCTURE.md))
 
 ---
 
 ## ✅ Estado del Proyecto
 
-- **Dashboards**: ✅ Portal, Incidencias Masivas y Postmortem/Release funcionales
-- **Subida de CSV desde el navegador**: ✅ vía `serve_app.py` (`/api/upload`)
-- **Conversores**: ✅ Incidencias masivas + Postmortems
+- **Dashboards**: ✅ Suite completa de portales, incidencias masivas, postmortems y reportes operativos
+- **Subida de CSV desde el navegador**: ✅ vía `serve_app.py` (`/api/upload`) y CLI
+- **Conversores**: ✅ Incidencias masivas, Postmortems e informes ejecutivos PPTX
 - **CI**: ✅ tests y linting automatizados en cada PR (ver [CI-CD.md](CI-CD.md))
-- **Despliegue**: manual (SSH + git pull), ver [DEPLOYMENT.md](DEPLOYMENT.md)
+- **Despliegue**: ✅ Automatizado en 1 clic vía `deploy-production.ps1` con backup rotativo y rollback automático (ver [DEPLOYMENT.md](DEPLOYMENT.md))
 
 ---
 
-**Última actualización**: 2026-07-09
+**Última actualización**: 2026-10-20

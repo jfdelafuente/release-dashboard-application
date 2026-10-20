@@ -25,9 +25,9 @@ release-dashboard-application/
 ├── 📄 nginx.conf                    # Config Nginx del proyecto (copia activa en /infocodes/nginx/conf/nginx.conf)
 │
 ├── 📁 converters/                   # Todo el código Python (CLI, lógica, tests, docs, specs)
-├── 📁 dashboards/                   # Todo el frontend estático (HTML/CSS/JS in-line)
+├── 📁 dashboards/                   # Todo el frontend estático (HTML/CSS/JS in-line y assets compartidos)
 ├── 📁 data/                         # input/output/errors — gitignored, datos reales de incidencias
-├── 📁 scripts/                      # Automatización de la conversión batch en el VPS
+├── 📁 scripts/                      # Scripts de despliegue (PowerShell/Bash), salud, rollback y conversión batch
 ├── 📁 docs/                         # Documentación del proyecto (este archivo incluido)
 ├── 📁 specs/                        # Specs de features a nivel de repo (spec-kit)
 ├── 📁 config/                       # .env.example, .env.development, hook de pre-commit
@@ -126,22 +126,23 @@ Los tres subdirectorios están cubiertos por `.gitignore` (línea `data/` en `.g
 
 ---
 
-## 📁 `scripts/` — Automatización
+## 📁 `scripts/` — Automatización y Despliegue
 
 ```
 scripts/
+├── deploy-production.ps1    # Script principal de despliegue en 1 clic desde Windows (Standalone Runtime)
+├── status.sh                # Sondas de salud Nginx, endpoints HTTP y conteo de datos en el VPS
+├── rollback.sh              # Restauración inmediata a backups preventivos en el VPS
 ├── generate-dashboards.sh   # Cron de conversión batch en el VPS
-└── README.md
+├── deploy.sh                # Script informativo / deprecado en servidor (redirige a status.sh)
+└── README.md                # Guía y referencia completa de scripts
 ```
 
-Es el único script que queda en `scripts/` (las anteriores menciones a `health-check.sh`, `backup.sh`, `watch-and-convert.sh` ya no existen). `generate-dashboards.sh`:
-
-- Define `PROJECT_ROOT="/infocodes/project/release-dashboard-application"` (corregido recientemente, ver commit `df2550d`).
-- Recorre `data/input/*.csv`; si el nombre de archivo contiene `postmortem` usa `convert_postmortems.py`, en caso contrario `convert_incidents.py`.
-- Al terminar, regenera `data/output/index.json` con `build_index.py`.
-- Pensado para ejecutarse por `crontab` en el VPS (ver ejemplos en [`scripts/README.md`](../scripts/README.md)).
-
-**Nota de coherencia**: `scripts/README.md` todavía muestra algunos ejemplos con la ruta `/infocodes/release-dashboard-application/` (sin `/project/`), que no coincide con el `PROJECT_ROOT` real del script ni con las rutas de `nginx.conf`. La ruta correcta y confirmada es `/infocodes/project/release-dashboard-application/`.
+Responsabilidades:
+- **`deploy-production.ps1`**: Empaqueta el runtime selectivo (~2.3 MB), transfiere por SCP, genera copia preventiva en `/infocodes/var/backups/release-dashboard-application/`, preserva `data/`, valida `nginx -t`, recarga en caliente y ejecuta sondas de salud HTTP.
+- **`status.sh`**: Consulta rápida en el VPS de la versión desplegada, configuración Nginx, conteo de ficheros en `data/` y códigos HTTP.
+- **`rollback.sh`**: Reversión instantánea en el VPS a la copia de seguridad previa en caso de contingencia.
+- **`generate-dashboards.sh`**: Procesa periódicamente los CSV de `data/input/*.csv` y genera `data/output/*.json` e `index.json` (ejecutado por crontab en el VPS).
 
 ---
 
@@ -179,7 +180,7 @@ Aviso de coherencia interna en `lint.yml` y `tests.yml`: ambos siguen invocando 
 
 ## 🌐 Producción (VPS) — configuración real de `nginx.conf`
 
-A diferencia de lo que describían versiones anteriores de este documento, **no existe** una estructura `/var/www/release-dashboard/{static,app}` ni un paso de "copia" de archivos al servidor. En producción, Nginx apunta **directamente** al checkout de este repositorio (actualizado con `git pull` manual) mediante `alias`, sin build ni etapa intermedia.
+En producción, el servidor aloja el runtime de la aplicación desplegado de forma desatendida mediante el artefacto empaquetado selectivo (`deploy-production.ps1`), sin requerir Git en el servidor. Nginx apunta directamente a los directorios del runtime desplegado mediante `alias`, con preservación estricta del directorio `data/`.
 
 Datos confirmados leyendo `nginx.conf` (copia activa del VPS en `/infocodes/nginx/conf/nginx.conf`):
 
@@ -189,7 +190,7 @@ Datos confirmados leyendo `nginx.conf` (copia activa del VPS en `/infocodes/ngin
 - `location /data` → `alias /infocodes/project/release-dashboard-application/data;` con `autoindex off` (sirve los JSON generados por los conversores).
 - `location /api/epsilon/` → `proxy_pass https://soptmc.si.orange.es/MonTMC/api/epsilon/;` (proxy reverso con soporte CORS hacia el servicio Epsilon IA para la pantalla flotante de incidencias masivas y postmortem).
 - `location /api` → `proxy_pass http://fastapi_backend;` con `upstream fastapi_backend { server localhost:8000; }`. Este backend FastAPI vive en el repo hermano `cso-incident-masivas-report` (**no confirmado directamente desde `nginx.conf`**, que solo define el upstream por puerto; la asociación con ese repo se da por indicación externa a este documento).
-- `location /reportes-incidencias` → `alias /infocodes/project/cso-incident-masivas-report/app;` — app estática de otro repo hermano, ajena a este proyecto.
+- `location /dashboards/reportes-incidencias` → `alias /infocodes/project/release-dashboard-application/dashboards/reportes-incidencias;` — frontend de gestión y análisis de reportes de incidencias, integrado en este repositorio.
 - `location /problemas` → `proxy_pass http://gestion_problemas_backend;` con `upstream gestion_problemas_backend { server localhost:3001; }`. Es una app Next.js con `basePath=/problemas`, gestionada con `pm2` (según comentario en el propio `nginx.conf`); tampoco pertenece a este repositorio.
 - `location /static` → `alias /infocodes/project/dashboardsonar-application-python/infocodest/static;` — de otra aplicación distinta (`dashboardsonar-application-python`), no relacionada con este proyecto.
 - `location /` (raíz) → `proxy_pass http://unix:/infocodes/var/run/infocodes.sock;` con `proxy_cache`, es decir, delega a otra aplicación vía socket Unix; este proyecto no ocupa la raíz del dominio.

@@ -36,12 +36,13 @@ El despliegue está basado en un **artefacto empaquetado selectivo (Standalone R
 | `/dashboards/massive-incidents/` | `dashboards/massive-incidents/` | Dashboard de Incidencias Masivas |
 | `/dashboards/postmortem/` | `dashboards/postmortem/` | Dashboard de Informes Postmortem / Releases |
 | `/dashboards/release-kpis/` | `dashboards/release-kpis/` | Dashboard de KPIs por Release |
+| `/dashboards/reportes-incidencias/` | `dashboards/reportes-incidencias/` | Frontend de gestión y análisis de reportes de incidencias |
+| `/dashboards/informes/` | `dashboards/informes/` | Informes específicos (p. ej. incidencias pendientes R9) |
 | `/data/` | `data/` del servidor | JSONs de incidencias/postmortems y reportes PPTX |
 | `/api/epsilon/*` | Proxy en Nginx | Proxy reverso con caché a la API de Epsilon IA |
 
 Servicios hermanos en el mismo Nginx (despliegues independientes):
 - **`/api`** → Proxy al backend FastAPI (`localhost:8000`), del repositorio hermano `cso-incident-masivas-report`.
-- **`/dashboards/reportes-incidencias/`** → Alias servido desde el frontend de `cso-incident-masivas-report`.
 - **`/problemas`** → Proxy al backend Next.js (`localhost:3001`) de Gestión de Problemas.
 
 ---

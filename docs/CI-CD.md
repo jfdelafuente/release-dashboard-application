@@ -115,54 +115,38 @@ Por lo observado, `production` es la rama que refleja el estado que efectivament
 
 ---
 
-## Despliegue a Producción (Manual)
+## Despliegue a Producción (Automatizado vía deploy-production.ps1)
 
-No hay ningún paso de CI/CD que despliegue código automáticamente. El despliegue es un procedimiento manual que ejecuta un operador:
+El despliegue a producción **no se realiza mediante GitHub Actions ni mediante `git pull` en el servidor VPS**. Se ejecuta de forma automatizada y desatendida en 1 clic desde la máquina de desarrollo de Windows sobre la rama `production`:
 
-1. Conectarse por SSH al VPS
-2. Ir al checkout del repositorio en el servidor
-3. Hacer `git pull` (normalmente sobre la rama `production`)
-4. Reiniciar lo que corresponda:
-   - Los archivos estáticos de `/dashboards` los sirve nginx directamente mediante `alias` — **no requieren reinicio**, un `git pull` ya los actualiza
-   - El backend Python (FastAPI, detrás de `/api`) no necesita reinicio si su proceso usa reload automático; si no lo usa, hay que reiniciarlo manualmente (`systemctl` o similar, según cómo esté desplegado en ese servidor)
-   - El backend Next.js de Gestión de Problemas (`/problemas`), gestionado con `pm2` en el puerto 3001, se reinicia manualmente con `pm2 restart` si el cambio lo requiere
-
-**No confirmado**: el mecanismo exacto de gestión de proceso del backend FastAPI (si usa `systemctl`, `pm2`, un proceso en foreground, o reload automático tipo `--reload`/`uvicorn` con watcher). Se documenta la lógica ("si usa reload automático no hace falta reiniciar; si no, hay que reiniciarlo a mano") pero no el comando exacto porque no se ha podido verificar en este repo.
-
-### Arquitectura servida por nginx
-
-La configuración real de nginx para este entorno vive en `nginx.conf` en la raíz del repositorio. Ese archivo **no está versionado en git** (está en `.gitignore`); solo existe en local/en el servidor. Resumen de lo que hace, según el archivo tal como está en este checkout:
-
-| Ruta | Tipo | Destino |
-|------|------|---------|
-| `/dashboards` | `alias` (estáticos) | `.../release-dashboard-application/dashboards` — nginx sirve los HTML/JS de este propio repo directamente, sin backend |
-| `/data` | `alias` (estáticos, sin autoindex) | `.../release-dashboard-application/data` |
-| `/api` | `proxy_pass` | Backend FastAPI en `localhost:8000` (upstream `fastapi_backend`), con timeouts ampliados (60s) pensados para uploads |
-| `/reportes-incidencias` | `alias` (estáticos) | `.../cso-incident-masivas-report/app` — repo hermano, no este repositorio |
-| `/problemas` | `proxy_pass` | Backend Next.js en `localhost:3001` (upstream `gestion_problemas_backend`), gestionado con `pm2`. El `proxy_pass` no lleva barra final a propósito, porque Next.js usa `basePath=/problemas` y espera recibir la URI completa |
-| `/static` | `alias` (estáticos) | Assets de otra aplicación (`dashboardsonar-application-python`), no relacionada directamente con este repo |
-| `/` (raíz) | `proxy_pass` | Socket Unix `infocodes.sock`, con `proxy_cache` — aplicación distinta a las anteriores |
-
-Es decir: **los dashboards de este repositorio (`/dashboards`) se sirven como archivos estáticos directamente desde el checkout git en el VPS**. Por eso un `git pull` es suficiente para publicarlos sin reiniciar nada — nginx los relee en cada petición.
-
-### Pasos del despliegue manual
-
-```bash
-# En el VPS, dentro del checkout del repositorio
-ssh usuario@vps
-cd /ruta/al/checkout/release-dashboard-application
-git pull origin production
-
-# Los estáticos de /dashboards ya están actualizados (nginx los sirve directo)
-
-# Si el cambio afecta al backend FastAPI y no tiene reload automático:
-# reiniciar el proceso correspondiente (mecanismo exacto no confirmado en este repo)
-
-# Si el cambio afecta al backend Next.js de /problemas (pm2):
-pm2 restart <nombre-del-proceso>
+```powershell
+.\scripts\deploy-production.ps1
 ```
 
-No hay backups automáticos ni health checks tras el despliegue: si se necesitan, hay que hacerlos a mano (por ejemplo, `curl` a las rutas afectadas después del `git pull`/restart).
+### Arquitectura de Despliegue: Standalone Runtime
+
+1. **Empaquetado selectivo local**:
+   - Genera el artefacto `dist/release-dashboard-runtime.tar.gz` (~2.3 MB) conteniendo únicamente el código productivo (`dashboards/`, `converters/`, `scripts/`, `nginx.conf`, `requirements.txt`, `VERSION`).
+   - Se excluyen suites de test, specs de desarrollo, historial `.git/` y archivos binarios pesados.
+2. **Cero Git en el VPS**:
+   - No se realiza `git pull`, `git clone` ni `git stash` en el servidor de producción.
+   - Sin dependencias de conectividad externa entre el VPS y GitHub.
+3. **Persistencia estricta de datos**:
+   - El directorio `data/` del servidor (`data/input/`, `data/output/`, `data/reports/`, `data/errors/`) es estrictamente persistente y **nunca** se sobreescribe con el despliegue.
+4. **Copia preventiva y rollback automático**:
+   - Antes de aplicar cambios, se genera una copia en `/infocodes/var/backups/release-dashboard-application/backup_YYYYMMDD_HHMMSS.tar.gz` (rotación automática de las últimas 5 copias).
+   - `nginx.conf` (que **sí está versionado en Git** y forma parte del paquete) se valida sintácticamente (`nginx -t`) antes de recargar (`nginx -s reload`). Si la sintaxis falla, se restaura automáticamente la copia previa.
+5. **Sondas de salud HTTP**:
+   - Al finalizar, el script ejecuta sondas de salud HTTP automáticas hacia todos los dashboards y endpoints de proxy.
+
+### Herramientas de Operación en el Servidor
+
+En `/infocodes/project/release-dashboard-application`:
+- `./status.sh`: Comprobación de versión, sintaxis Nginx, conteo de ficheros de datos y sondas HTTP locales.
+- `./rollback.sh`: Reversión inmediata a la copia de seguridad más reciente o a una específica.
+- `scripts/generate-dashboards.sh`: Conversión batch periódica de CSVs vía cron.
+
+Ver [DEPLOYMENT.md](DEPLOYMENT.md) y [scripts/README.md](../scripts/README.md) para el manual completo de despliegue.
 
 ---
 

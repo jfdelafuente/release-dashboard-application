@@ -343,12 +343,22 @@ Genera bajo demanda presentaciones PowerPoint corporativas (`.pptx`) con el dise
 
 ## 🚀 Despliegue en Producción (VPS)
 
-Para desplegar de forma segura y desatendida en el servidor VPS (con backup automático, stash preventivo, actualización git, validación/rollback de `nginx.conf` y smoke tests):
+El despliegue se realiza en 1 clic de forma segura y desatendida desde tu terminal local de Windows (PowerShell en rama `production`), mediante un artefacto comprimido (*Standalone Runtime*, ~2.3 MB) transferido por SCP, con persistencia estricta de `data/`, backup automático en rotación de 5 copias, validación sintáctica de Nginx (`nginx -t`) y sondas de salud HTTP:
 
-```bash
-cd /infocodes/project/release-dashboard-application
-./deploy.sh
+```powershell
+.\scripts\deploy-production.ps1
 ```
+
+Opciones comunes:
+```powershell
+.\scripts\deploy-production.ps1 -VerifyOnly   # Consultar sondas de salud y estado en el VPS sin desplegar
+.\scripts\deploy-production.ps1 -Rollback     # Revertir a la copia de seguridad anterior
+.\scripts\deploy-production.ps1 -DryRun       # Simular el proceso sin aplicar cambios
+```
+
+En el propio servidor (`/infocodes/project/release-dashboard-application`), se dispone de herramientas de consulta rápida:
+- `./status.sh`: Sondas de salud Nginx y comprobación de endpoints HTTP.
+- `./rollback.sh`: Reversión inmediata a una copia previa si fuera necesario.
 
 Ver [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) y [scripts/README.md](scripts/README.md) para más detalles.
 

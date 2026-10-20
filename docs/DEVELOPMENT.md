@@ -127,6 +127,8 @@ pytest tests/ --cov=src --cov-report=html
 ### 4. Format Code
 
 ```bash
+cd converters
+
 # Auto-format code
 black src/ tests/
 
@@ -140,7 +142,7 @@ pylint src/ tests/
 ### 5. Commit Changes
 
 ```bash
-git add src/your_file.py tests/test_your_file.py
+git add converters/src/... converters/tests/...
 git commit -m "feat: describe your change"
 ```
 
@@ -156,9 +158,9 @@ git push origin feature/your-feature-name
 
 See [PROJECT-STRUCTURE.md](PROJECT-STRUCTURE.md) for the full layout. In short:
 - Python converters: `converters/cli/` (entry points) + `converters/src/csv_to_json/` (logic)
-- Dashboards (HTML/CSS/JS, inline per file, no shared assets folder): `dashboards/`
+- Dashboards (HTML/CSS/JS con diseño Orange y assets compartidos en `dashboards/assets/`): `dashboards/`
 - Converter tests: `converters/tests/` (there's no top-level `tests/`)
-- Batch/cron script: `scripts/generate-dashboards.sh` (there's no `scripts/bin/` or `scripts/deploy/`)
+- Batch/cron & deployment scripts: `scripts/` (`deploy-production.ps1`, `status.sh`, `rollback.sh`, `generate-dashboards.sh`)
 
 ## Common Tasks
 
