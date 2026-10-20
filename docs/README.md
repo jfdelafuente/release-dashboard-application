@@ -25,6 +25,7 @@
 
 ### Operaciones y despliegue
 - **[DEPLOYMENT.md](DEPLOYMENT.md)** - Procedimiento de despliegue (manual, vía SSH)
+- **[DEPLOYMENT-LOG-FORMAT.md](DEPLOYMENT-LOG-FORMAT.md)** - Formato y plantilla del log de despliegues
 - **[CI-CD.md](CI-CD.md)** - Qué automatiza CI (tests y linting) y qué no (el despliegue)
 - **[VERSION-MANAGEMENT.md](VERSION-MANAGEMENT.md)** - Versionado semántico
 - **[VPS-REQUIREMENTS.md](VPS-REQUIREMENTS.md)** - Requisitos del servidor

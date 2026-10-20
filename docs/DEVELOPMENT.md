@@ -320,7 +320,7 @@ python -m cProfile -s cumulative src/converters/convert_incidents.py data/input/
 ## Next Steps
 
 1. Read [CONTRIBUTING.md](CONTRIBUTING.md) for coding standards
-2. Review [DIRECTORY-STRUCTURE.md](../DIRECTORY-STRUCTURE.md) for file organization
+2. Review [PROJECT-STRUCTURE.md](PROJECT-STRUCTURE.md) for file organization
 3. Check [converters/docs/API.md](../converters/docs/API.md) for API documentation
 4. Explore existing code in `src/` for patterns
 

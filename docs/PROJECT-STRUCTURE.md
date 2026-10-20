@@ -16,14 +16,12 @@ release-dashboard-application/
 ├── 📄 CHANGELOG.md
 ├── 📄 CONTRIBUTING.md
 ├── 📄 SECURITY.md
-├── 📄 DIRECTORY-STRUCTURE.md        # Otro documento de estructura (histórico; ver nota más abajo)
-├── 📄 DEPLOYMENT-LOG.md
 ├── 📄 VERSION
 ├── 📄 requirements.txt              # Dependencias Python de producción (raíz del repo)
 ├── 📄 requirements-dev.txt
-├── 📄 project.json
 ├── 📄 skills-lock.json
-├── 📄 serve_app.py                  # Servidor de desarrollo (estáticos + POST /api/upload)
+├── 📄 serve_app.py                  # Servidor de desarrollo (estáticos + POST /api/upload + PPT gen)
+├── 📄 deploy.sh                     # Script de despliegue en servidor VPS
 ├── 📄 nginx.conf                    # Config Nginx del proyecto (copia activa en /infocodes/nginx/conf/nginx.conf)
 │
 ├── 📁 converters/                   # Todo el código Python (CLI, lógica, tests, docs, specs)
@@ -38,7 +36,7 @@ release-dashboard-application/
 └── 📁 .agents/                      # Skills de agente instaladas localmente (frontend-design, etc.)
 ```
 
-**Nota sobre `DIRECTORY-STRUCTURE.md`**: existe otro documento de estructura en la raíz del repo, además de este. No se ha verificado si está alineado con la realidad actual; si contradice lo que dice este documento, este documento (`docs/PROJECT-STRUCTURE.md`) es el que se acaba de auditar contra el repo real.
+**Nota sobre saneamiento de la raíz**: se eliminaron archivos obsoletos (DIRECTORY-STRUCTURE.md, project.json), se reubicó la plantilla PowerPoint de referencia a specs/010-incident-executive-report/, los tests de frontend a dashboards/tests/, y el formato de bitácora a docs/DEPLOYMENT-LOG-FORMAT.md. Este documento (docs/PROJECT-STRUCTURE.md) es la referencia única y auditada de la estructura del repositorio.
 
 **Cambio importante respecto a versiones anteriores de este documento**: ya no existe un directorio `src/` con `src/converters/`, `src/dashboards/` y `src/scripts/`. El repo se reorganizó (ver `specs/005-project-organization/`) y ahora `converters/` y `dashboards/` son carpetas de primer nivel, independientes entre sí. Tampoco existe ya el concepto de "Dashboard Hub" (`dashboard-hub.html/css/js`): el punto de entrada real es `dashboards/portal/`.
 

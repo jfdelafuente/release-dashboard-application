@@ -215,7 +215,7 @@ Example semantic versioning:
 ## Questions?
 
 - Check [TROUBLESHOOTING.md](TROUBLESHOOTING.md) for common issues
-- Review [DIRECTORY-STRUCTURE.md](../DIRECTORY-STRUCTURE.md) for file organization
+- Review [PROJECT-STRUCTURE.md](PROJECT-STRUCTURE.md) for file organization
 - Read existing code for patterns and conventions
 
 ## Code of Conduct
