@@ -31,7 +31,12 @@ CSO_BACKEND_ROOT = Path(os.environ.get(
 import importlib.util
 
 cso_init_py = CSO_BACKEND_ROOT / "report_generator" / "__init__.py"
-if cso_init_py.is_file():
+try:
+    cso_is_file = cso_init_py.is_file()
+except OSError:
+    cso_is_file = False
+
+if cso_is_file:
     spec = importlib.util.spec_from_file_location(
         "cso_report_generator",
         str(cso_init_py),
@@ -64,6 +69,19 @@ EXECUTIVE_REPORT_PREFIX = '/api/reports/executive-incident'
 EXECUTIVE_REPORT_V1_PREFIX = '/api/v1/reports/executive-incident'
 FASTAPI_BACKEND_URL = os.environ.get("FASTAPI_BACKEND_URL", "http://127.0.0.1:8000").rstrip("/")
 EPSILON_CACHE = {}  # { codigo: (timestamp, content, status) }
+
+
+def get_storage_dir() -> Path:
+    env_dir = os.environ.get("RELEASE_DASHBOARD_STORAGE_DIR", "").strip()
+    if env_dir:
+        return Path(env_dir)
+    prod_storage = Path("/infocodes/var/storage/release-dashboard")
+    if os.name != "nt" and prod_storage.is_dir():
+        return prod_storage
+    return PROJECT_ROOT / "data"
+
+
+STORAGE_DIR = get_storage_dir()
 
 # Puerto por defecto: 8080 para no colisionar con FastAPI (puerto 8000).
 # Configurable vía variable de entorno PORT/SERVE_APP_PORT o argumento --port
@@ -300,7 +318,7 @@ class CustomHTTPHandler(http.server.SimpleHTTPRequestHandler):
             self._send_json(400, {'success': False, 'error': 'El archivo debe tener extensión .csv'})
             return
 
-        input_dir = PROJECT_ROOT / 'data' / 'input'
+        input_dir = STORAGE_DIR / 'input'
         input_dir.mkdir(parents=True, exist_ok=True)
         csv_path = input_dir / filename
         csv_path.write_bytes(file_bytes)
@@ -612,10 +630,32 @@ class CustomHTTPHandler(http.server.SimpleHTTPRequestHandler):
             self.proxy_to_nextjs()
             return
 
-        # Si es una petición para index.json, sirvirlo dinámicamente
+        # Servir archivos desde STORAGE_DIR si se solicita /data/
+        if self.path.startswith('/data/'):
+            clean_rel = self.path[len('/data/'):].split('?')[0].lstrip('/')
+            file_on_storage = STORAGE_DIR / clean_rel
+            if file_on_storage.is_file():
+                try:
+                    content = file_on_storage.read_bytes()
+                    content_type = self.guess_type(str(file_on_storage))
+                    self.send_response(200)
+                    self.send_header('Content-type', content_type)
+                    self.send_header('Content-Length', str(len(content)))
+                    self.send_header('Access-Control-Allow-Origin', '*')
+                    if 'index.json' in clean_rel:
+                        self.send_header('Cache-Control', 'no-cache')
+                    self.end_headers()
+                    self.wfile.write(content)
+                    return
+                except Exception as e:
+                    print(f"  Error sirviendo {file_on_storage}: {e}")
+
+        # Si es una petición para index.json, servirlo dinámicamente
         if 'index.json' in self.path:
             try:
-                actual_path = PROJECT_ROOT / 'data' / 'output' / 'index.json'
+                actual_path = STORAGE_DIR / 'output' / 'index.json'
+                if not actual_path.exists():
+                    actual_path = PROJECT_ROOT / 'data' / 'output' / 'index.json'
                 print(f"  Intentando servir: {actual_path}")
                 print(f"  Existe: {actual_path.exists()}")
 

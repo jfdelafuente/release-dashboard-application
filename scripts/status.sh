@@ -41,9 +41,11 @@ else
     echo "ERROR EN CONFIGURACIÓN"
 fi
 
-# Estadísticas de datos persistentes
+# Estadísticas de datos persistentes (almacenamiento desacoplado)
 DATA_DIR=""
-if [ -d "$APP_DIR/shared/data" ]; then
+if [ -d "/infocodes/var/storage/release-dashboard" ]; then
+    DATA_DIR="/infocodes/var/storage/release-dashboard"
+elif [ -d "$APP_DIR/shared/data" ]; then
     DATA_DIR="$APP_DIR/shared/data"
 elif [ -d "$APP_DIR/data" ]; then
     DATA_DIR="$APP_DIR/data"
@@ -53,7 +55,15 @@ if [ -n "$DATA_DIR" ]; then
     CSV_COUNT=$(find "$DATA_DIR/input" -name "*.csv" 2>/dev/null | wc -l)
     JSON_COUNT=$(find "$DATA_DIR/output" -name "*.json" 2>/dev/null | wc -l)
     PPTX_COUNT=$(find "$DATA_DIR/reports" -name "*.pptx" 2>/dev/null | wc -l)
-    echo "Datos persistentes: $CSV_COUNT CSVs en input | $JSON_COUNT JSONs en output | $PPTX_COUNT informes PPTX"
+    EXEC_COUNT=0
+    if [ -d "/infocodes/var/storage/executive_pptx" ]; then
+        EXEC_COUNT=$(find "/infocodes/var/storage/executive_pptx" -name "*.pptx" 2>/dev/null | wc -l)
+    fi
+    echo "Datos persistentes ($DATA_DIR):"
+    echo "  - Input CSVs       : $CSV_COUNT"
+    echo "  - Output JSONs     : $JSON_COUNT"
+    echo "  - Informes Release : $PPTX_COUNT"
+    echo "  - Informes Ejecutivos (/infocodes/var/storage/executive_pptx): $EXEC_COUNT"
 fi
 
 echo ""

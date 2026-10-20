@@ -131,8 +131,11 @@ El despliegue a producción **no se realiza mediante GitHub Actions ni mediante 
 2. **Cero Git en el VPS**:
    - No se realiza `git pull`, `git clone` ni `git stash` en el servidor de producción.
    - Sin dependencias de conectividad externa entre el VPS y GitHub.
-3. **Persistencia estricta de datos**:
-   - El directorio `data/` del servidor (`data/input/`, `data/output/`, `data/reports/`, `data/errors/`) es estrictamente persistente y **nunca** se sobreescribe con el despliegue.
+3. **Persistencia estricta y desacoplamiento de datos**:
+   - Los datos dinámicos están completamente desacoplados del código en `/infocodes/var/storage/release-dashboard/` (`input/`, `output/`, `reports/`, `errors/`, `archive/`).
+   - Los informes ejecutivos PPTX se almacenan de manera unificada en `/infocodes/var/storage/executive_pptx`.
+   - Los logs se guardan fuera del código en `/infocodes/var/log/release-dashboard/`.
+   - El despliegue mantiene enlaces simbólicos retrocompatibles en el raíz del proyecto y en cada release, protegiendo al 100% los datos históricos y garantizando cero sobreescritura accidental.
 4. **Copia preventiva y rollback automático**:
    - Antes de aplicar cambios, se genera una copia en `/infocodes/var/backups/release-dashboard-application/backup_YYYYMMDD_HHMMSS.tar.gz` (rotación automática de las últimas 5 copias).
    - `nginx.conf` (que **sí está versionado en Git** y forma parte del paquete) se valida sintácticamente (`nginx -t`) antes de recargar (`nginx -s reload`). Si la sintaxis falla, se restaura automáticamente la copia previa.

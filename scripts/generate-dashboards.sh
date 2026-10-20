@@ -7,17 +7,48 @@
 # Crontab: 0 2 * * * /infocodes/project/release-dashboard-application/scripts/generate-dashboards.sh
 #####################################################################
 
-# Configuración
+# Configuración y resolución de rutas desacopladas
 PROJECT_ROOT="/infocodes/project/release-dashboard-application"
-CONVERTERS_DIR="${PROJECT_ROOT}/converters"
-DATA_INPUT_DIR="${PROJECT_ROOT}/data/input"
-DATA_OUTPUT_DIR="${PROJECT_ROOT}/data/output"
-DATA_ERRORS_DIR="${PROJECT_ROOT}/data/errors"
-LOG_DIR="${PROJECT_ROOT}/logs"
+
+# 1. Localizar converters (priorizar release activa 'current', fallback a raíz)
+if [ -d "${PROJECT_ROOT}/current/converters" ]; then
+    CONVERTERS_DIR="${PROJECT_ROOT}/current/converters"
+elif [ -d "${PROJECT_ROOT}/converters" ]; then
+    CONVERTERS_DIR="${PROJECT_ROOT}/converters"
+else
+    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    CONVERTERS_DIR="$(cd "${SCRIPT_DIR}/../converters" && pwd)"
+fi
+
+# 2. Localizar almacenamiento persistente desacoplado (/infocodes/var/storage/release-dashboard)
+if [ -n "${RELEASE_DASHBOARD_STORAGE_DIR}" ] && [ -d "${RELEASE_DASHBOARD_STORAGE_DIR}" ]; then
+    STORAGE_DIR="${RELEASE_DASHBOARD_STORAGE_DIR}"
+elif [ -d "/infocodes/var/storage/release-dashboard" ]; then
+    STORAGE_DIR="/infocodes/var/storage/release-dashboard"
+elif [ -d "${PROJECT_ROOT}/data" ]; then
+    STORAGE_DIR="${PROJECT_ROOT}/data"
+elif [ -d "${PROJECT_ROOT}/shared/data" ]; then
+    STORAGE_DIR="${PROJECT_ROOT}/shared/data"
+else
+    STORAGE_DIR="${PROJECT_ROOT}/data"
+fi
+
+DATA_INPUT_DIR="${STORAGE_DIR}/input"
+DATA_OUTPUT_DIR="${STORAGE_DIR}/output"
+DATA_ERRORS_DIR="${STORAGE_DIR}/errors"
+
+# 3. Localizar directorio de logs
+if [ -d "/infocodes/var/log/release-dashboard" ]; then
+    LOG_DIR="/infocodes/var/log/release-dashboard"
+elif [ -d "${PROJECT_ROOT}/shared/logs" ]; then
+    LOG_DIR="${PROJECT_ROOT}/shared/logs"
+else
+    LOG_DIR="${PROJECT_ROOT}/logs"
+fi
 LOG_FILE="${LOG_DIR}/dashboards-generation-$(date +%Y%m%d).log"
 
-# Crear directorio de logs si no existe
-mkdir -p "${LOG_DIR}"
+# Crear directorios necesarios si no existen
+mkdir -p "${LOG_DIR}" "${DATA_INPUT_DIR}" "${DATA_OUTPUT_DIR}" "${DATA_ERRORS_DIR}"
 
 # Función para logging
 log() {

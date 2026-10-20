@@ -310,38 +310,63 @@ NGINX_CONF_ACTIVE="/infocodes/nginx/conf/nginx.conf"
 NGINX_BIN="/infocodes/nginx/sbin/nginx"
 NGINX_CONF_D="/infocodes/nginx/conf/conf.d"
 
+# Desacoplamiento de almacenamiento persistente a /infocodes/var/storage (Single Source of Truth)
+STORAGE_BASE="/infocodes/var/storage/release-dashboard"
+EXECUTIVE_STORAGE="/infocodes/var/storage/executive_pptx"
+LOGS_BASE="/infocodes/var/log/release-dashboard"
+
 if [ -d "/infocodes/nginx/sbin" ]; then
     export PATH="/infocodes/nginx/sbin:`$PATH"
 fi
 
-echo "--> [Remoto] Asegurando estructura de releases y directorios compartidos..."
-mkdir -p "`$REMOTE_DIR" "`$BACKUP_BASE" "`$RELEASES_DIR" "`$SHARED_DIR" "`$SHARED_DIR/data" "`$SHARED_DIR/logs" "`$NGINX_CONF_D"
+echo "--> [Remoto] Asegurando estructura en /infocodes/var/storage y directorios de release..."
+mkdir -p "`$REMOTE_DIR" "`$BACKUP_BASE" "`$RELEASES_DIR" "`$SHARED_DIR" "`$NGINX_CONF_D"
+mkdir -p "`$STORAGE_BASE/input" "`$STORAGE_BASE/output" "`$STORAGE_BASE/reports" "`$STORAGE_BASE/errors" "`$STORAGE_BASE/archive"
+mkdir -p "`$EXECUTIVE_STORAGE" "`$LOGS_BASE"
+
+# Enlace de sinergia entre informes ejecutivos y release dashboard
+ln -sfn "`$EXECUTIVE_STORAGE" "`$STORAGE_BASE/reports/executive"
 
 if [ ! -f "`$TMP_TAR" ]; then
     echo "ERROR: No se encuentra `$TMP_TAR en el servidor."
     exit 1
 fi
 
-# 1. Preservar y migrar datos locales existentes a shared/data/ (solo si data no es ya un symlink)
+# 1. Preservar y migrar datos históricos hacia /infocodes/var/storage/release-dashboard
+if [ -d "`$SHARED_DIR/data" ] && [ ! -L "`$SHARED_DIR/data" ]; then
+    echo "--> [Remoto] Migrando datos existentes desde `$SHARED_DIR/data/ a `$STORAGE_BASE/..."
+    cp -rn "`$SHARED_DIR/data"/* "`$STORAGE_BASE/" 2>/dev/null || true
+    rm -rf "`$SHARED_DIR/data"
+fi
 if [ -d "`$REMOTE_DIR/data" ] && [ ! -L "`$REMOTE_DIR/data" ]; then
-    echo "--> [Remoto] Migrando datos existentes a `$SHARED_DIR/data/..."
-    cp -rn "`$REMOTE_DIR/data"/* "`$SHARED_DIR/data/" 2>/dev/null || true
+    echo "--> [Remoto] Migrando datos locales desde `$REMOTE_DIR/data/ a `$STORAGE_BASE/..."
+    cp -rn "`$REMOTE_DIR/data"/* "`$STORAGE_BASE/" 2>/dev/null || true
+    rm -rf "`$REMOTE_DIR/data"
+fi
+if [ -d "`$SHARED_DIR/logs" ] && [ ! -L "`$SHARED_DIR/logs" ]; then
+    echo "--> [Remoto] Migrando logs existentes desde `$SHARED_DIR/logs/ a `$LOGS_BASE/..."
+    cp -rn "`$SHARED_DIR/logs"/* "`$LOGS_BASE/" 2>/dev/null || true
+    rm -rf "`$SHARED_DIR/logs"
 fi
 if [ -d "`$REMOTE_DIR/logs" ] && [ ! -L "`$REMOTE_DIR/logs" ]; then
-    echo "--> [Remoto] Migrando logs existentes a `$SHARED_DIR/logs/..."
-    cp -rn "`$REMOTE_DIR/logs"/* "`$SHARED_DIR/logs/" 2>/dev/null || true
+    echo "--> [Remoto] Migrando logs existentes desde `$REMOTE_DIR/logs/ a `$LOGS_BASE/..."
+    cp -rn "`$REMOTE_DIR/logs"/* "`$LOGS_BASE/" 2>/dev/null || true
+    rm -rf "`$REMOTE_DIR/logs"
 fi
 
-# Asegurar subcarpetas esperadas en shared/data
-mkdir -p "`$SHARED_DIR/data/input" "`$SHARED_DIR/data/output" "`$SHARED_DIR/data/reports" "`$SHARED_DIR/data/errors" "`$SHARED_DIR/data/archive"
+# Enlaces de compatibilidad hacia el almacenamiento desacoplado
+ln -sfn "`$STORAGE_BASE" "`$SHARED_DIR/data"
+ln -sfn "`$LOGS_BASE" "`$SHARED_DIR/logs"
+ln -sfn "`$STORAGE_BASE" "`$REMOTE_DIR/data"
+ln -sfn "`$LOGS_BASE" "`$REMOTE_DIR/logs"
 
 # 2. Copia de seguridad preventiva
 TIMESTAMP="`$(date +%Y%m%d_%H%M%S)"
 BACKUP_ARCHIVE="`$BACKUP_BASE/backup_`$TIMESTAMP.tar.gz"
 echo "--> [Remoto] Creando backup preventivo en `$BACKUP_ARCHIVE..."
 (
-    cd "`$REMOTE_DIR"
-    tar -czf "`$BACKUP_ARCHIVE" shared/data nginx.conf 2>/dev/null || true
+    cd "`$STORAGE_BASE"
+    tar -czf "`$BACKUP_ARCHIVE" output "`$REMOTE_DIR/nginx.conf" 2>/dev/null || tar -czf "`$BACKUP_ARCHIVE" output 2>/dev/null || true
     echo "--> [Remoto] Backup preventivo generado: `$(ls -lh "`$BACKUP_ARCHIVE" 2>/dev/null | awk '{print `$5}')"
 )
 
@@ -353,9 +378,9 @@ echo "--> [Remoto] Extrayendo nueva release en `$NEW_RELEASE_DIR..."
 tar -xzf "`$TMP_TAR" -C "`$NEW_RELEASE_DIR"
 rm -f "`$TMP_TAR"
 
-# 4. Enlazar datos y logs compartidos dentro de la nueva release
-ln -sfn "`$SHARED_DIR/data" "`$NEW_RELEASE_DIR/data"
-ln -sfn "`$SHARED_DIR/logs" "`$NEW_RELEASE_DIR/logs"
+# 4. Enlazar datos desacoplados y logs dentro de la nueva release
+ln -sfn "`$STORAGE_BASE" "`$NEW_RELEASE_DIR/data"
+ln -sfn "`$LOGS_BASE" "`$NEW_RELEASE_DIR/logs"
 
 # 5. Normalizar permisos y saltos de línea (CRLF -> LF)
 sed -i 's/\r$//' "`$NEW_RELEASE_DIR"/scripts/*.sh "`$NEW_RELEASE_DIR"/*.sh 2>/dev/null || true
@@ -374,11 +399,11 @@ fi
 chmod +x "`$REMOTE_DIR/status.sh" "`$REMOTE_DIR/rollback.sh"
 
 # 8. Limpiar elementos residuales en la raíz de `$REMOTE_DIR
-#    Solo deben quedar: current, releases, shared, status.sh, rollback.sh, VERSION
+#    Solo deben quedar: current, releases, shared, data, logs, status.sh, rollback.sh, VERSION
 echo "--> [Remoto] Limpiando elementos residuales en la raíz de `$REMOTE_DIR..."
 for entry in `$(ls -A "`$REMOTE_DIR"); do
     case "`$entry" in
-        current|releases|shared|status.sh|rollback.sh|VERSION)
+        current|releases|shared|data|logs|status.sh|rollback.sh|VERSION)
             ;;
         *)
             rm -rf "`$REMOTE_DIR/`$entry" 2>/dev/null || true

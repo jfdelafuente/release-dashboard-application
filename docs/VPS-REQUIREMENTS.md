@@ -107,48 +107,50 @@ sudo apt install -y docker.io docker-compose
 
 ## 3. Estructura de Directorios
 
-### 3.1 Directorio de la Aplicación
+### 3.1 Directorio de la Aplicación y Almacenamiento Desacoplado
 
-No hay una carpeta `/var/www/...` separada: en el VPS real, la aplicación **es** el checkout git del repo, y Nginx sirve `dashboards/` y `data/` directamente desde ahí vía `alias` (ver `nginx.conf` y `docs/PROJECT-STRUCTURE.md`). El único directorio a preparar es el checkout en sí:
+La aplicación se despliega mediante el modelo **Standalone Runtime** gestionado por releases atómicas (`releases/YYYYMMDD_HHMMSS`) enlazadas mediante el symlink `current`. Los datos persistentes y los logs residen completamente desacoplados del código del proyecto en `/infocodes/var/`, siguiendo la arquitectura estándar compartida con `cso-incident-masivas-report`:
 
-```bash
-# Clonar/ubicar el checkout del repo (rama `production`)
-sudo mkdir -p /infocodes/project
-cd /infocodes/project
-git clone <url-del-repo> release-dashboard-application
-cd release-dashboard-application
-git checkout production
-
-# Los subdirectorios de datos los crean los propios conversores al ejecutarse
-# (data/ está en .gitignore, no se versiona):
-#   data/input/    - CSV de origen
-#   data/output/   - JSON generados (servidos por Nginx en /data)
-#   data/errors/   - reportes de error de conversión
-# Los logs de la conversión batch se escriben dentro del propio repo en:
-#   logs/dashboards-generation-YYYYMMDD.log
-
-# Establecer permisos (ajustar el usuario/grupo real de despliegue)
-sudo chown -R <usuario-deploy>:<grupo-deploy> /infocodes/project/release-dashboard-application
-sudo chmod -R 755 /infocodes/project/release-dashboard-application
+```text
+/infocodes/
+├── project/
+│   └── release-dashboard-application/
+│       ├── current -> releases/YYYYMMDD_HHMMSS/
+│       ├── releases/
+│       │   └── 20261020_.../
+│       ├── shared/
+│       │   ├── data -> /infocodes/var/storage/release-dashboard
+│       │   └── logs -> /infocodes/var/log/release-dashboard
+│       ├── status.sh
+│       ├── rollback.sh
+│       └── VERSION
+└── var/
+    ├── storage/
+    │   ├── release-dashboard/         # Almacenamiento persistente desacoplado
+    │   │   ├── input/                 # CSVs de origen
+    │   │   ├── output/                # JSONs procesados servidos en /data
+    │   │   ├── reports/               # Informes PPTX (con symlink reports/executive)
+    │   │   ├── errors/                # Reportes de error de conversión
+    │   │   └── archive/               # Archivo histórico
+    │   └── executive_pptx/            # Presentaciones ejecutivas compartidas con cso-incident
+    ├── log/
+    │   └── release-dashboard/         # Logs de cron y generación batch
+    └── backups/
+        └── release-dashboard-application/ # Copias de seguridad preventivas (.tar.gz)
 ```
 
-**No confirmado**: el usuario/grupo real bajo el que corre Nginx y con el que se hace el `git pull` en el VPS; qué grupo de sistema es propietario de `/infocodes/`. No existen (ni están documentados en este repo) directorios separados de tipo `/var/backups/release-dashboard`, `/var/log/release-dashboard` o `/etc/release-dashboard` — si el VPS los usa para otros fines, es ajeno a este proyecto.
+En el despliegue automático (`scripts/deploy-production.ps1`):
+- Los datos se alojan de forma permanente en `/infocodes/var/storage/release-dashboard`.
+- Las presentaciones ejecutivas PPTX se unifican en `/infocodes/var/storage/executive_pptx`.
+- Los logs se redirigen a `/infocodes/var/log/release-dashboard`.
+- Para garantizar retrocompatibilidad total con scripts locales, cron jobs históricos y URLs, se mantienen symlinks transparentes (`data` y `logs`) tanto en la raíz del proyecto como dentro de cada release activa.
 
-### 3.2 Usuario de Aplicación
+### 3.2 Usuario de Aplicación y Servidor
 
-**No confirmado**: qué usuario real se usa en el VPS para el checkout, el `git pull` manual y la ejecución del cron `generate-dashboards.sh`. Los comandos siguientes usan `app` como nombre de ejemplo; sustitúyelo por el usuario real de despliegue.
-
-```bash
-# Crear usuario 'app' (no-login, para seguridad) — ejemplo, ajustar al usuario real
-sudo useradd -m -s /bin/bash app
-
-# O si quieres que sea login:
-sudo useradd -m -s /bin/bash app
-sudo passwd app  # Establecer contraseña
-
-# Añadir a sudoers si necesita permisos especiales
-sudo usermod -aG sudo app
-```
+El despliegue opera sobre el servidor de producción mediante SSH:
+- **Host**: `10.132.26.96` (`infocodes.si.orange.es`)
+- **Usuario**: `infocodes`
+- **Árbol base**: `/infocodes/project/release-dashboard-application` y `/infocodes/var/`
 
 ---
 
@@ -306,9 +308,9 @@ server {
         try_files $uri $uri/ /index.html;
     }
 
-    # JSON generados por los conversores de este repo
+    # JSON generados por los conversores de este repo (almacenamiento desacoplado)
     location /data {
-        alias /infocodes/project/release-dashboard-application/data;
+        alias /infocodes/var/storage/release-dashboard;
         autoindex off;
     }
 
@@ -437,13 +439,13 @@ sudo -u <usuario-deploy> crontab -e
 
 ```bash
 # Logs de la conversión batch (generados por scripts/generate-dashboards.sh)
-tail -f /infocodes/project/release-dashboard-application/logs/dashboards-generation-$(date +%Y%m%d).log
+tail -f /infocodes/var/log/release-dashboard/dashboards-generation-$(date +%Y%m%d).log
 
 # Logs de Nginx (ruta real, ver nginx.conf: worker_processes/error_log relativos a /infocodes)
 tail -f /infocodes/var/log/nginx/infocodes.access.log
 
 # Buscar errores en los logs de conversión
-grep ERROR /infocodes/project/release-dashboard-application/logs/*.log
+grep ERROR /infocodes/var/log/release-dashboard/*.log
 ```
 
 **No confirmado**: no hay logs de "Supervisor" ni de "app.log" para este repo, porque no hay proceso de aplicación propio corriendo de forma continua.

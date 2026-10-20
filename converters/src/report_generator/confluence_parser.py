@@ -15,8 +15,11 @@ _CSO_BACKEND = Path(os.environ.get(
     "CSO_BACKEND_ROOT",
     str(Path(__file__).resolve().parents[4] / "cso-incident-masivas-report" / "backend")
 ))
-if _CSO_BACKEND.is_dir() and str(_CSO_BACKEND) not in sys.path:
-    sys.path.insert(0, str(_CSO_BACKEND))
+try:
+    if _CSO_BACKEND.is_dir() and str(_CSO_BACKEND) not in sys.path:
+        sys.path.insert(0, str(_CSO_BACKEND))
+except OSError:
+    pass
 
 from report_generator.confluence_parser import (  # noqa: F401, E402
     ConfluenceParser,

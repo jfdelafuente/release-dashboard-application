@@ -51,10 +51,20 @@ if [ -d "$RELEASES_DIR" ]; then
         echo "--> Conmutando symlink atómico hacia releases/$PREV_RELEASE..."
         ln -sfn "releases/$PREV_RELEASE" "$CURRENT_LINK"
 
-        # Compatibilidad en raíz
+        # Compatibilidad en raíz y persistencia desacoplada
+        STORAGE_BASE="/infocodes/var/storage/release-dashboard"
+        LOGS_BASE="/infocodes/var/log/release-dashboard"
         ln -sfn "$CURRENT_LINK/dashboards" "$APP_DIR/dashboards" 2>/dev/null || true
         ln -sfn "$CURRENT_LINK/converters" "$APP_DIR/converters" 2>/dev/null || true
         ln -sfn "$CURRENT_LINK/scripts" "$APP_DIR/scripts" 2>/dev/null || true
+        if [ -d "$STORAGE_BASE" ]; then
+            ln -sfn "$STORAGE_BASE" "$APP_DIR/data" 2>/dev/null || true
+            ln -sfn "$STORAGE_BASE" "$CURRENT_LINK/data" 2>/dev/null || true
+        fi
+        if [ -d "$LOGS_BASE" ]; then
+            ln -sfn "$LOGS_BASE" "$APP_DIR/logs" 2>/dev/null || true
+            ln -sfn "$LOGS_BASE" "$CURRENT_LINK/logs" 2>/dev/null || true
+        fi
 
         # Sincronizar y recargar Nginx si procede
         if [ -f "$CURRENT_LINK/nginx.conf" ]; then

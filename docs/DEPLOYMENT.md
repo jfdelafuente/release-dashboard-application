@@ -15,8 +15,11 @@ El despliegue está basado en un **artefacto empaquetado selectivo (Standalone R
 2. **Cero Git en Producción**:
    - Sin dependencias de conectividad de red externa desde el VPS a GitHub.
    - Sin riesgo de conflictos de merge, `git stash`, o sobreescritura accidental de datos dinámicos.
-3. **Persistencia Estricta de Datos**:
-   - El directorio `data/` (`data/input/`, `data/output/`, `data/reports/`, `data/errors/`, `data/archive/`) es **estrictamente persistente** y **nunca** se sobreescribe ni se incluye en el artefacto.
+3. **Persistencia Estricta y Desacoplamiento de Datos**:
+   - Los datos dinámicos están completamente desacoplados del código del proyecto en `/infocodes/var/storage/release-dashboard/` (`input/`, `output/`, `reports/`, `errors/`, `archive/`).
+   - Los informes ejecutivos PPTX se unifican en `/infocodes/var/storage/executive_pptx` (enlazados simbólicamente en `reports/executive`).
+   - Los logs residen fuera del árbol de releases en `/infocodes/var/log/release-dashboard/`.
+   - En el directorio del proyecto y en cada release se mantienen symlinks transparentes hacia estas ubicaciones para garantizar 100% de retrocompatibilidad con scripts existentes, cron jobs y URLs.
 4. **Copia Preventiva y Rollback Instantáneo**:
    - Cada despliegue genera automáticamente una copia de seguridad comprimida en `/infocodes/var/backups/release-dashboard-application/backup_YYYYMMDD_HHMMSS.tar.gz`.
    - Se mantiene una política de rotación automática conservando los últimos 5 backups.
@@ -38,7 +41,7 @@ El despliegue está basado en un **artefacto empaquetado selectivo (Standalone R
 | `/dashboards/release-kpis/` | `dashboards/release-kpis/` | Dashboard de KPIs por Release |
 | `/dashboards/reportes-incidencias/` | `dashboards/reportes-incidencias/` | Frontend de gestión y análisis de reportes de incidencias |
 | `/dashboards/informes/` | `dashboards/informes/` | Informes específicos (p. ej. incidencias pendientes R9) |
-| `/data/` | `data/` del servidor | JSONs de incidencias/postmortems y reportes PPTX |
+| `/data/` | `/infocodes/var/storage/release-dashboard/` | JSONs de incidencias/postmortems y reportes PPTX |
 | `/api/epsilon/*` | Proxy en Nginx | Proxy reverso con caché a la API de Epsilon IA |
 
 Servicios hermanos en el mismo Nginx (despliegues independientes):
@@ -133,5 +136,5 @@ La generación periódica de los JSONs que consumen los dashboards se realiza co
 
 ```bash
 # Ejecución diaria a las 2 AM:
-0 2 * * * /infocodes/project/release-dashboard-application/scripts/generate-dashboards.sh >> /infocodes/project/release-dashboard-application/logs/dashboards-cron.log 2>&1
+0 2 * * * /infocodes/project/release-dashboard-application/scripts/generate-dashboards.sh >> /infocodes/var/log/release-dashboard/dashboards-cron.log 2>&1
 ```

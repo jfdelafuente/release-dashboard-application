@@ -1,8 +1,19 @@
 """Rutas y saneado de nombres de fichero para los informes PPT de postmortem."""
+import os
 import re
 from pathlib import Path
 
-DEFAULT_REPORTS_DIR = Path("data") / "reports"
+def get_default_reports_dir() -> Path:
+    env_dir = os.environ.get("RELEASE_DASHBOARD_STORAGE_DIR", "").strip()
+    if env_dir:
+        return Path(env_dir) / "reports"
+    prod_storage = Path("/infocodes/var/storage/release-dashboard/reports")
+    if os.name != "nt" and prod_storage.parent.is_dir():
+        return prod_storage
+    return Path("data") / "reports"
+
+
+DEFAULT_REPORTS_DIR = get_default_reports_dir()
 
 
 def sanitize_release_name(release_name):
