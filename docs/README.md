@@ -25,6 +25,7 @@
 
 ### Operaciones y despliegue
 - **[DEPLOYMENT.md](DEPLOYMENT.md)** - Procedimiento de despliegue automatizado (Standalone Runtime vía `deploy-production.ps1`)
+- **[LOGS.md](LOGS.md)** - Gestión de logs, auditoría y trazabilidad en servidor y desarrollo
 - **[../scripts/README.md](../scripts/README.md)** - Referencia de scripts de despliegue, status, rollback y cron
 - **[CI.md](CI.md)** - Integración continua (tests unitarios, cobertura y linters en GitHub Actions)
 - **[VERSION-MANAGEMENT.md](VERSION-MANAGEMENT.md)** - Versionado semántico
@@ -88,6 +89,7 @@ Generación de Informes PPTX / PDF (report_generator / python-pptx)
 - **Conversores**: ✅ Incidencias masivas, Postmortems e informes ejecutivos PPTX
 - **CI**: ✅ tests y linting automatizados en cada PR (ver [CI.md](CI.md))
 - **Despliegue**: ✅ Automatizado en 1 clic vía `deploy-production.ps1` con backup rotativo y rollback automático (ver [DEPLOYMENT.md](DEPLOYMENT.md))
+- **Logs y Auditoría**: ✅ Desacoplados en /infocodes/var/log/ y rotación de backups (ver [LOGS.md](LOGS.md))
 
 ---
 
