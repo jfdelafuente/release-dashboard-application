@@ -1,21 +1,23 @@
 # Release Dashboard Application
 
-Aplicación web para análisis y visualización de incidencias masivas y postmortems de release, con conversión automática de CSV a JSON.
+Plataforma analítica y de reporting para la monitorización de calidad técnica en despliegues (*releases*), gestión de incidencias masivas y análisis postmortem operativo (entorno MASORANGE / Orange).
 
-**Portal** (`dashboards/portal/`) es el **punto de acceso principal**: incorpora un **buscador de incidencias con Resumen IA en tiempo real** (Epsilon IA) en su parte superior y enlaza a los dashboards de este repo (Incidencias Masivas, Postmortem/Release) y a los paneles de los repos hermanos (Reportes de Incidencias, Gestión de Problemas).
+El repositorio centraliza:
+1. **La suite completa de frontends web (dashboards)**: Portal unificado con buscador y Resumen IA en tiempo real (Epsilon IA), Incidencias Masivas, Postmortem/Release, KPIs Históricos de Release y el editor/visor de **Reportes de Incidencias**.
+2. **El motor de conversión y normalización en Python**: Ingesta por lotes o web de CSVs de Remedy, detección de encoding/delimitador y pre-cálculo de KPIs analíticas.
+3. **El generador de presentaciones ejecutivas en PowerPoint (`.pptx`)**: Informes corporativos de release e incidencias individuales bajo demanda.
+4. **Infraestructura de servidor local y producción**: Servidor de desarrollo [`serve_app.py`](serve_app.py) con proxy CORS para Epsilon IA y backend FastAPI, y configuración Nginx para el servidor VPS.
 
 ---
 
-## 📦 Estructura: 2 Componentes Independientes
-
-El proyecto está dividido en **2 partes claramente diferenciadas**:
+## 📦 Arquitectura de Componentes
 
 | Componente | Ubicación | Descripción | Tecnología |
 |-----------|-----------|-------------|-----------|
-| **Converters** | [`converters/`](converters/) | Scripts de conversión CSV→JSON | Python 3.8+ |
-| **Dashboards** | [`dashboards/`](dashboards/) | Visualización web de datos | HTML5/CSS3/JavaScript |
-
-Cada componente puede funcionar **independientemente**.
+| **Dashboards** | [`dashboards/`](dashboards/) | Frontends web estáticos: Portal, Incidencias Masivas, Postmortem/Release, Release KPIs y **Reportes de Incidencias** | HTML5 / CSS3 / JavaScript (Vanilla ES6+) |
+| **Converters** | [`converters/`](converters/) | Motor de procesamiento CSV→JSON, saneamiento, validación y métricas pre-calculadas | Python 3.8+ |
+| **Report Generator** | [`converters/src/report_generator/`](converters/src/report_generator/) | Generación programática de presentaciones ejecutivas corporativas (`.pptx`) | `python-pptx`, `matplotlib`, `plotly` |
+| **Servidor / Gateway** | [`serve_app.py`](serve_app.py) / [`nginx.conf`](nginx.conf) | Servidor local con endpoints de subida `/api/upload`, proxy Epsilon IA y FastAPI, y config Nginx VPS | Python / Nginx |
 
 ---
 
@@ -68,13 +70,17 @@ Los JSONs se generan en `data/output/` e `index.json` se actualiza automáticame
 
 Con `serve_app.py` corriendo, ve a `http://localhost:8000/dashboards/portal/` (o simplemente `/dashboards/`, que redirige ahí vía `dashboards/index.html`).
 
-### 4️⃣ Los dashboards cargan automáticamente los datos más recientes
- 
-- **Portal** (`portal/`): buscador directo de incidencias de Remedy con pantalla flotante interactiva de Resumen IA (Epsilon IA), normalización inteligente de códigos (ej. `4141215` o `INC000004141215`), validación accesible y protección con doble capa de caché (15 min).
-- **Incidencias Masivas** (`massive-incidents/`): evolución temporal, backlog, tendencias, filtros por estado/sistema/urgencia y pantalla flotante con Resumen IA (Epsilon) al pulsar sobre el código de una incidencia.
-- **Postmortem / Release** (`postmortem/`): análisis por despliegue (PAP/MESA), KPIs de resolución y pantalla flotante con Resumen IA (Epsilon) al pulsar sobre el código de una incidencia.
+### 4️⃣ Paneles y Dashboards Disponibles
 
-Desde el Portal también se enlaza a **Reportes de Incidencias** y **Gestión de Problemas**, que son aplicaciones de los repos hermanos (`cso-incident-masivas-report` y el backend de gestión de problemas), no parte de este repositorio.
+El directorio [`dashboards/`](dashboards/) aloja las interfaces web estáticas del ecosistema (sin necesidad de build step ni frameworks pesados):
+
+- **[Portal Hub](dashboards/portal/)** (`dashboards/portal/`): Punto de entrada y acceso central. Incluye un **buscador directo de incidencias de Remedy** con panel modal interactivo de **Resumen IA en tiempo real** (conectado a Epsilon IA con doble capa de caché de 15 min), normalización inteligente de códigos (ej. `4141215` o `INC000004141215`) y tarjetas de acceso directo a todos los módulos.
+- **[Incidencias Masivas](dashboards/massive-incidents/)** (`dashboards/massive-incidents/`): Monitorización analítica del backlog de incidencias masivas: tendencias temporales, distribución por estado/sistema/urgencia y consulta de Resumen IA al pulsar sobre cualquier incidencia.
+- **[Postmortem / Release](dashboards/postmortem/)** (`dashboards/postmortem/`): Análisis de incidencias surgidas en ventanas de despliegue operativo (PAP/MESA), seguimiento de SLAs y tiempos de resolución.
+- **[KPIs de Release](dashboards/release-kpis/)** (`dashboards/release-kpis/`): Serie histórica comparativa de métricas de calidad, incidencias y estabilidad entre distintas releases.
+- **[Reportes de Incidencias](dashboards/reportes-incidencias/)** (`dashboards/reportes-incidencias/`): Frontend del editor y visor de reportes semanales de incidencias de MASORANGE. Incluye catálogo histórico (`index.html`), editor interactivo con selector de marcas (`editor.html`) y vista previa con exportación a PDF y PowerPoint (`preview.html`). Se comunica vía API REST con el backend FastAPI de `cso-incident-masivas-report`.
+
+> **Integración con otros sistemas**: Desde el Portal y la barra superior compartida también se enlaza a **Gestión de Problemas** (`/problemas`), aplicación servida por el backend de otro repositorio hermano en el mismo servidor VPS.
 
 ---
 
@@ -196,9 +202,10 @@ console.log(`Tendencia 7 días: ${metadata.kpis.trend_7d}%`);
 ## ✅ Estado del Proyecto
 
 - **Tests**: ✅ passing (>80% coverage) — ver `converters/tests/`
-- **Dashboards**: ✅ Portal, Incidencias Masivas y Postmortem/Release funcionales
+- **Dashboards**: ✅ Portal, Incidencias Masivas, Postmortem/Release, Release KPIs y Reportes de Incidencias funcionales
 - **Subida de CSV desde el navegador**: ✅ vía `serve_app.py` (`/api/upload`)
-- **Conversores**: ✅ Incidencias masivas + Postmortems
+- **Conversores**: ✅ Incidencias masivas + Postmortems (CLI y batch)
+- **Informes Ejecutivos**: ✅ Generación PPTX bajo demanda y exportación PDF en cliente
 
 ---
 
@@ -274,19 +281,22 @@ isort --check-only src/ cli/
 ```
 release-dashboard-application/
 ├── deploy.sh                     # Script de despliegue automatizado y seguro para VPS
-├── serve_app.py                  # Servidor local (dashboards + /api/upload)
+├── serve_app.py                  # Servidor local (dashboards + /api/upload + proxies IA y FastAPI + PPT gen)
 ├── nginx.conf                    # Configuración de Nginx para el servidor VPS
-├── dashboards/                   # Dashboards (HTML/CSS/JS), cada uno en su subcarpeta
+├── dashboards/                   # Suite de Dashboards (HTML/CSS/JS)
 │   ├── index.html                # Redirige a /dashboards/portal/
-│   ├── portal/                   # Portal principal
+│   ├── portal/                   # Portal principal con buscador y Resumen IA
 │   ├── massive-incidents/        # Dashboard de incidencias masivas
 │   ├── postmortem/               # Dashboard de postmortem / release
 │   ├── release-kpis/             # Dashboard de KPIs históricos de release
-│   └── assets/                   # Logos, tokens.css, topbar.css/topbar.js, shared.css, resumen-ia.css/js
-├── converters/                   # Módulo Python de conversión CSV→JSON
-│   ├── cli/                      # convert_incidents.py, convert_postmortems.py, build_index.py
+│   ├── reportes-incidencias/     # Frontend de reportes de incidencias (listado, editor, preview PDF/PPTX)
+│   ├── tests/                    # Tests unitarios JavaScript para lógica de dashboards
+│   └── assets/                   # Logos corporativos, tokens.css, topbar.css/js, resumen-ia.css/js
+├── converters/                   # Módulo Python de conversión CSV→JSON y reporting
+│   ├── cli/                      # convert_incidents.py, convert_postmortems.py, build_index.py, etc.
 │   ├── src/csv_to_json/          # Lógica de conversión (encoding, normalización, validación)
-│   ├── scripts/bin/               # Wrappers .bat/.sh para los CLI
+│   ├── src/report_generator/     # Motor de generación de presentaciones PPTX
+│   ├── scripts/bin/              # Wrappers .bat/.sh para los CLI
 │   ├── tests/                    # Suite de tests (unit/integration/e2e)
 │   ├── docs/                     # Documentación técnica de los converters
 │   └── specs/                    # Especificaciones de features de los converters
@@ -296,7 +306,7 @@ release-dashboard-application/
 │   └── errors/                   # Reportes de error de conversión
 ├── scripts/                      # Scripts de operación (cron, generación batch)
 ├── docs/                         # Documentación general del proyecto
-└── config/                       # Configuración
+└── config/                       # Configuración (.env.example, hook pre-commit)
 ```
 
 ---
@@ -304,15 +314,20 @@ release-dashboard-application/
 ## 💡 Flujo de Datos
 
 ```
-CSV (subido desde el navegador, o en data/input/)
+CSVs de Remedy (subidos vía web o en data/input/)
     ↓
-serve_app.py [/api/upload]  o  convert_incidents.py / convert_postmortems.py
+serve_app.py [/api/upload]  o  converters/cli/convert_incidents.py / convert_postmortems.py
     ↓
-JSON (data/output/) + build_index.py → index.json
+JSON estructurado + KPIs en metadata (data/output/) + build_index.py → index.json
     ↓
-Portal (dashboards/portal/)
+Portal Hub (dashboards/portal/)  <-- [Consultas en tiempo real a Epsilon IA]
     ↓
-Incidencias Masivas · Postmortem/Release  <-- [Resumen IA vía Epsilon]
+├── Incidencias Masivas (dashboards/massive-incidents/)
+├── Postmortem / Release (dashboards/postmortem/)
+├── KPIs de Release (dashboards/release-kpis/)
+└── Reportes de Incidencias (dashboards/reportes-incidencias/)  <-- [CRUD vía FastAPI :8000]
+    ↓
+Generación de Informes PPTX / PDF (report_generator / html2pdf / pptxgen)
 ```
 
 ---
