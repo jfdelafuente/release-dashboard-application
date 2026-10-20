@@ -1,48 +1,49 @@
-# CSV-to-JSON Converter Migration Guide
+# Guía de Migración de Conversores CSV a JSON
 
-## Overview
+Guía técnica sobre la evolución del formato de datos generado por los conversores CSV→JSON en **Release Dashboard Application**, el nuevo esquema con metadatos enriquecidos, las reglas de normalización y las pautas de compatibilidad para los dashboards frontend.
 
-The CSV-to-JSON converter module has been significantly improved with enhanced validation, normalization, and KPI aggregation. This guide documents the changes and migration path for existing deployments.
+---
 
-## Version Changes
+## 📌 Contexto de la Evolución
 
-### Old Version (Deprecated)
-- Simple CSV-to-JSON script without validation
-- No field normalization
-- No KPI calculation
-- Limited error handling
+El módulo de conversión de datos ([`converters/`](../converters/)) evolucionó desde scripts sencillos de transformación hacia un motor robusto con validación exhaustiva de esquemas, detección automática de codificación (`UTF-8`, `Windows-1252`, `Latin-1`), normalización de campos y precalculado de KPIs.
 
-### New Version (006-optimize-csv-converters)
-- Comprehensive field validation framework
-- Automatic field normalization (Urgencia extraction, title case, etc.)
-- Pre-calculated KPIs for both Massive Incidents and Postmortem data
-- Detailed error reporting with row numbers and field-level messages
-- Automatic encoding and delimiter detection
-- 86% code coverage with 264 passing tests
+### Comparativa de Versiones
 
-## Output Format Changes
+| Característica | Versión Antigua (Legacy) | Versión Actual Optimizada |
+|---|---|---|
+| **Estructura JSON** | Array plano simple `[ { ... } ]` | Objeto envolvente con `_metadata` y array `data` |
+| **Normalización** | Ninguna (valores crudos del CSV) | Normalización semántica de `Urgencia`, `Estatus`, `Impacto` y derivación de `Despliegue` |
+| **Cálculo de KPIs** | Calculado en tiempo de ejecución por el navegador | Precalculado en Python (`_metadata.kpis`) optimizando la carga del frontend |
+| **Detección de formato** | Delimitador y encoding manuales | Detección automática transparente de encoding (`BOM`, `UTF-8`, `cp1252`) y delimitador (`,`, `;`, `\t`) |
+| **Gestión de Errores** | Excepciones no controladas o descarte silencioso | Informe detallado fila por fila en el directorio desacoplado `errors/` |
+| **Suite de Pruebas** | Tests unitarios básicos | **> 516 tests** (unitarios, integración y e2e) con cobertura $\ge$ 80% vigilada por CI |
 
-### Metadata Addition
+---
 
-**Before (Old Format)**:
+## 📄 Cambios en el Formato de Salida
+
+### 1. Inclusión del Envoltorio de Metadatos (`_metadata`)
+
+#### Formato Antiguo (Array Plano)
 ```json
 [
   {
     "ID de incidencia": "INC000003884945",
-    "Descripción": "...",
+    "Descripción": "Error de autenticación portal",
     "Estatus": "Cerrado",
-    ...
+    "Urgencia": "4-Baja"
   }
 ]
 ```
 
-**After (New Format)**:
+#### Formato Actual (Envoltorio Estructurado)
 ```json
 {
   "_metadata": {
     "type": "massive",
     "version": "1.0",
-    "created": "2026-06-01T10:30:00.000000",
+    "created": "2026-10-20T10:30:00.000000",
     "record_count": 95,
     "kpis": {
       "total": 100,
@@ -55,201 +56,157 @@ The CSV-to-JSON converter module has been significantly improved with enhanced v
   "data": [
     {
       "ID de incidencia": "INC000003884945",
-      "Descripción": "...",
+      "Descripción": "Error de autenticación portal",
       "Estatus": "Cerrado",
-      ...
+      "Urgencia": "Baja"
     }
   ]
 }
 ```
 
-### Key Changes
+### 2. Contenido del Objeto `_metadata`
 
-1. **Metadata Wrapper**: All JSON output now includes a `_metadata` object with:
-   - `type`: Either "massive" or "postmortem"
-   - `version`: Schema version (currently "1.0")
-   - `created`: ISO timestamp of conversion
-   - `record_count`: Total number of valid records
-   - `kpis`: Pre-calculated KPI metrics
+- **`type`**: Tipo de datos procesados (`"massive"` para incidencias masivas o `"postmortem"` para postmortems de releases).
+- **`version`**: Versión del esquema del conversor (actualmente `"1.0"`).
+- **`created`**: Marca de tiempo ISO 8601 del momento exacto de la conversión.
+- **`record_count`**: Número total de registros válidos incluidos en el array `data`.
+- **`kpis`**: Métricas e indicadores clave precalculados:
+  - *Incidencias Masivas*: `total`, `pending`, y tendencias porcentuales `trend_7d`, `trend_15d`, `trend_30d`.
+  - *Postmortems*: Bloque `kpis.dashboard_hub` con porcentajes de cierre (`cerradas_percent`), resolución en PaP (`pap_resueltas_percent`) y resolución en Mesa (`mesa_resueltas_percent`).
 
-2. **Data Extraction**: Access incident records via `data` array instead of root array
+---
 
-3. **Field Normalization**:
-   - **Urgencia**: "4-Baja" → "Baja" (prefix removed, title case applied)
-   - **Estatus**: "cerrado" → "Cerrado" (title case applied)
-   - **Impacto**: "masiva" → "Masiva" (title case applied)
-   - All fields: Whitespace trimmed
+## 🔄 Reglas de Normalización de Campos
 
-4. **Postmortem-Specific Changes**:
-   - **Despliegue field added**: Automatically derived from dates
-     - "PAP": Oldest date
-     - "MESA": All other dates with deterministic tie-breaking
-   - **Dashboard Hub KPIs**: Added under `kpis.dashboard_hub`
-     - `cerradas_percent`: Percentage of closed incidents
-     - `pap_resueltas_percent`: Percentage of PAP incidents resolved
-     - `mesa_resueltas_percent`: Percentage of MESA incidents resolved
+Los conversores limpian y estandarizan automáticamente los valores antes de volcarlos al JSON:
 
-## Migration Steps
+1. **Campo `Urgencia`**:
+   - Se elimina el prefijo numérico del origen de datos Remedy y se aplica formato título:
+     - `"4-Baja"` $\rightarrow$ **`"Baja"`**
+     - `"3-Medio"` $\rightarrow$ **`"Medio"`**
+     - `"2-Alta"` $\rightarrow$ **`"Alta"`**
+     - `"1-Crítica"` $\rightarrow$ **`"Crítica"`**
+2. **Campo `Estatus`**:
+   - Homogeneización tipográfica: `"cerrado"`, `"CERRADO"` $\rightarrow$ **`"Cerrado"`** (aplica a *"Resuelto"*, *"Cancelado"*, *"Asignado"*, etc.).
+3. **Campo `Impacto`**:
+   - Corrección de mayúsculas: `"masiva"` $\rightarrow$ **`"Masiva"`**.
+4. **Espacios en blanco**:
+   - Aplicación de `strip()` en todos los campos textuales para eliminar espacios iniciales o finales invisibles.
+5. **Derivación determinista del campo `Despliegue` (Postmortems)**:
+   - Se añade automáticamente a cada registro de postmortem analizando las fechas:
+     - **`"PAP"`**: Para la fecha más antigua de inicio del despliegue (Puesta a Producción).
+     - **`"MESA"`**: Para las fechas subsiguientes (seguimiento en Mesa).
 
-### Step 1: Update JSON Parsing Code
+---
 
-**Old Code**:
+## 💻 Pautas de Adaptación en el Frontend (JavaScript)
+
+Para asegurar compatibilidad con archivos históricos y archivos generados con el nuevo esquema, se debe emplear el siguiente patrón de extracción:
+
+### Paso 1: Extracción Segura de Registros (Patrón Fallback)
+
 ```javascript
-// Load JSON directly as array
-const incidents = JSON.parse(jsonText);
-incidents.forEach(incident => {
-  // Process incident
-});
-```
-
-**New Code**:
-```javascript
-// Extract data from metadata wrapper
+// Carga del JSON y extracción transparente
 const result = JSON.parse(jsonText);
-const incidents = result.data || result; // Fallback for compatibility
-incidents.forEach(incident => {
-  // Process incident
-});
 
-// Access KPIs if needed
-const metadata = result._metadata;
-if (metadata) {
-  console.log(`Processed ${metadata.record_count} records`);
-  console.log(`KPIs:`, metadata.kpis);
-}
-```
-
-### Step 2: Update Field References
-
-Ensure code handles normalized field values:
-
-**Urgencia Field**:
-- Old: May contain "4-Baja", "3-Medio", "2-Alta", "1-Crítica"
-- New: Always "Baja", "Medio", "Alta", "Crítica" (no prefix)
-
-**Estatus Field**:
-- Old: May be mixed case ("cerrado", "CERRADO", "Cerrado")
-- New: Always title case ("Cerrado", "Resuelto", "Cancelado", etc.)
-
-### Step 3: Update KPI Calculations (If Applicable)
-
-If your code calculates KPIs from the JSON, you can now use pre-calculated values:
-
-```javascript
-// Old: Manual calculation
-let totalIncidents = incidents.length;
-let pendingIncidents = incidents.filter(i => !['Cerrado', 'Resuelto', 'Cancelado'].includes(i.Estatus)).length;
-
-// New: Use pre-calculated values
-const kpis = result._metadata.kpis;
-const totalIncidents = kpis.total;
-const pendingIncidents = kpis.pending;
-
-// Trends also available
-const trend7d = kpis.trend_7d; // percentage change vs 7 days ago
-```
-
-### Step 4: Update Error Handling
-
-Error reports now have enhanced structure:
-
-```javascript
-const errors = JSON.parse(errorReportText);
-console.log(`Success rate: ${errors.summary.success_rate}%`);
-errors.errors.forEach(error => {
-  console.log(`Row ${error.row}: Invalid fields:`, Object.keys(error.fields));
-  Object.entries(error.fields).forEach(([field, details]) => {
-    console.log(`  ${field}: ${details.error}`);
-  });
-});
-```
-
-## Backward Compatibility
-
-### Fallback Support
-
-If you need to support both old and new formats temporarily:
-
-```javascript
-function loadIncidents(jsonText) {
-  const result = JSON.parse(jsonText);
-
-  // Check if new format (has _metadata)
-  if (result._metadata) {
-    return result.data;
-  }
-
-  // Old format (direct array)
-  return result;
-}
-```
-
-### Dashboard Compatibility
-
-The Massive Incidents Dashboard automatically supports both formats:
-- New format: Extracts data from `data` array, uses pre-calculated KPIs
-- Old format: Uses array directly, calculates KPIs dynamically
-
-## Breaking Changes
-
-⚠️ **These changes are breaking and require code updates:**
-
-1. **Root structure changed**: JSON is no longer a plain array
-2. **Urgencia normalization**: "4-Baja" now always "Baja"
-3. **Estatus normalization**: All lowercase/uppercase converted to title case
-4. **Field names unchanged**: All field names remain the same (Spanish names preserved)
-
-## Non-Breaking Features
-
-✅ **These features are fully backward compatible:**
-
-1. All incident data fields preserved (nothing removed or renamed)
-2. Optional fields remain optional
-3. Extra/unknown fields are passed through unchanged
-4. Encoding auto-detection transparent to consumers
-
-## Testing Migration
-
-1. **Load new JSON in dashboards**: Verify KPI cards display correctly
-2. **Test with old code**: Confirm fallback parsing works
-3. **Verify field values**: Check that normalized values are handled correctly
-4. **Error handling**: Test that error reports are processed correctly
-
-## Performance Impact
-
-- **Conversion speed**: ⚡ Improved - 264 tests pass in 1.3 seconds
-- **File size**: Minimal increase (~2-3%) due to metadata
-- **Memory usage**: Optimized with streaming CSV parsing
-- **Encoding detection**: Automatic, no performance penalty
-
-## Troubleshooting
-
-### Issue: "data is undefined"
-**Solution**: Check if JSON has `_metadata` wrapper. Use fallback parsing:
-```javascript
+// Si tiene envoltorio _metadata, se usa result.data; si es un array clásico, se usa directamente
 const incidents = result.data || result;
+
+// Iteración ordinaria sobre los registros
+incidents.forEach(incident => {
+  console.log(incident['ID de incidencia'], incident.Estatus);
+});
 ```
 
-### Issue: Field normalization breaking comparisons
-**Solution**: Update comparison logic to use normalized values:
+### Paso 2: Consumo de KPIs Precalculados
+
+En lugar de recalcular manualmente los totales en el navegador, aprovecha los valores precalculados:
+
 ```javascript
-// Old (may fail)
-if (incident.Urgencia === "4-Baja") { }
+// Obtener metadatos si están presentes
+const metadata = result._metadata;
 
-// New (correct)
-if (incident.Urgencia === "Baja") { }
+if (metadata && metadata.kpis) {
+  // KPIs directos precalculados desde backend
+  const total = metadata.kpis.total;
+  const pendientes = metadata.kpis.pending;
+  const tendenciaSemanal = metadata.kpis.trend_7d;
+  
+  actualizarTarjetasKPI(total, pendientes, tendenciaSemanal);
+} else {
+  // Fallback para archivos legacy sin metadatos
+  const total = incidents.length;
+  const pendientes = incidents.filter(i => !['Cerrado', 'Resuelto', 'Cancelado'].includes(i.Estatus)).length;
+  actualizarTarjetasKPI(total, pendientes, 0);
+}
 ```
 
-### Issue: KPI calculations don't match
-**Solution**: Use pre-calculated KPIs from metadata instead of manual calculation:
+### Paso 3: Filtros por Campo Normalizado
+
+Si tu código realizaba comprobaciones literales incluyendo el prefijo numérico de Remedy, actualiza las condiciones:
+
 ```javascript
-const kpis = result._metadata.kpis;
-// Don't recalculate, use provided values
+// ❌ Código antiguo (fallará con el nuevo esquema)
+if (incident.Urgencia === "4-Baja") { ... }
+
+// ✅ Código adaptado
+if (incident.Urgencia === "Baja") { ... }
+
+// ✅ O compatible con ambos durante transición
+if (incident.Urgencia === "Baja" || incident.Urgencia === "4-Baja") { ... }
 ```
 
-## Questions?
+---
 
-Refer to:
-- [Implementation Plan](../converters/specs/006-optimize-csv-converters/plan.md)
-- [Specification](../converters/specs/006-optimize-csv-converters/spec.md)
-- [Data Model](../converters/specs/006-optimize-csv-converters/data-model.md)
+## 📁 Persistencia Desacoplada de Salidas y Errores
+
+El conversor almacena los archivos transformados y los reportes de validación en rutas desacopladas:
+
+| Tipo de Archivo | Ruta en VPS Producción | Ruta en Desarrollo Local |
+|---|---|---|
+| **Salida JSON Válida** | `/infocodes/var/storage/release-dashboard/output/` | `data/output/` |
+| **Índice Global (`index.json`)** | `/infocodes/var/storage/release-dashboard/output/index.json` | `data/output/index.json` |
+| **Reportes de Errores** | `/infocodes/var/storage/release-dashboard/errors/` | `data/errors/` |
+
+### Estructura de los Informes de Error (`data/errors/`)
+
+Cuando un CSV contiene filas que violan el esquema o tienen fechas corruptas, las filas inválidas se segregan a un reporte de errores sin descartar las filas válidas:
+
+```json
+{
+  "summary": {
+    "total_records": 100,
+    "valid_records": 95,
+    "invalid_records": 5,
+    "success_rate": 95.0
+  },
+  "errors": [
+    {
+      "row": 14,
+      "fields": {
+        "Fecha": {
+          "value": "2026/99/99",
+          "error": "Formato de fecha inválido (esperado DD/MM/YYYY o ISO 8601)"
+        }
+      }
+    }
+  ]
+}
+```
+
+---
+
+## ⚡ Rendimiento y Cobertura
+
+- **Velocidad de procesamiento**: Procesamiento en streaming de bajo consumo de memoria. Conversión de archivos de miles de registros en menos de 2 segundos.
+- **Calidad garantizada**: El módulo de conversores cuenta con más de **516 pruebas automatizadas** en [`converters/tests/`](../converters/tests/) que validan delimitadores, encodings, esquemas y límites numéricos, con cobertura obligatoria $\ge$ 80% en GitHub Actions.
+
+---
+
+## 🔗 Documentación Relacionada
+
+- [**`DASHBOARDS-API.md`**](DASHBOARDS-API.md): Especificación de APIs, rutas y persistencia de ficheros.
+- [**`PROJECT-STRUCTURE.md`**](PROJECT-STRUCTURE.md): Estructura del repositorio y desacoplamiento de `/infocodes/var/storage/`.
+- [**`CI.md`**](CI.md): Pipeline de Integración Continua y validación de cobertura.
+- [**`DEVELOPMENT.md`**](DEVELOPMENT.md): Entorno de desarrollo local y pruebas con pytest.
+- [**`converters/docs/API.md`**](../converters/docs/API.md): Referencia detallada de la API interna de los conversores.
