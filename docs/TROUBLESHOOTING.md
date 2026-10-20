@@ -1,447 +1,288 @@
-# Troubleshooting Guide
+# Guía de Resolución de Problemas (Troubleshooting)
 
-Solutions for common issues when setting up and running the Release Dashboard Application.
-
-## CSV Upload Issues
-
-### "Failed to fetch" When Uploading a CSV
-
-**Symptom**: Clicking "Seleccionar archivo" / dragging a CSV shows an alert `Error: Failed to fetch`.
-
-**Cause**: The dashboard is being served by something that doesn't implement `POST` — usually `python -m http.server` or VS Code's Live Server. Both only serve static files, so the browser's request to `/api/upload` never gets a response at all.
-
-**Solution**:
-```bash
-# Stop whatever is serving port 8000, then from the project root:
-python serve_app.py
-# Open: http://localhost:8000/dashboards/portal/
-```
-
-`serve_app.py` adds the `POST /api/upload` handler (saves the CSV to `data/input/`, runs the matching converter via `converters/cli/upload_csv.py`). If you only need to view already-generated JSON and don't need to upload anything, `http.server`/Live Server are fine.
-
-### Upload Succeeds but Shows "Falló la conversión a JSON"
-
-**Symptom**: The upload response has `"success": false` with a `details` field showing converter output.
-
-**Cause**: The CSV itself failed validation (wrong columns, bad encoding, invalid enum values, etc.) — the `details` field is the converter's own stdout/stderr, truncated to 4000 characters.
-
-**Solution**: Read the `details` text — it names the exact row/field that failed. Check [converters/docs/API.md](../converters/docs/API.md) for the expected column names and allowed values.
-
-## Setup Issues
-
-### Python Not Found
-
-**Symptom**: "python: command not found" or "python is not recognized"
-
-**Cause**: Python 3.8+ is not installed or not in system PATH
-
-**Solution**:
-```bash
-# Check if Python is installed
-python --version
-python3 --version
-
-# If neither works, install Python from: https://www.python.org/
-# Windows: Download installer, check "Add Python to PATH" during installation
-# Mac: brew install python3
-# Linux: sudo apt install python3
-```
-
-### Virtual Environment Activation Failed
-
-**Symptom**: "venv\Scripts\activate.bat" fails or "activate: command not found"
-
-**Cause**: Virtual environment wasn't created properly
-
-**Solution**:
-```bash
-# Delete old venv and recreate
-rm -rf venv/  # Linux/Mac: rm -rf venv
-
-# Create new virtual environment
-python -m venv venv
-
-# Activate properly
-# Windows: venv\Scripts\activate
-# Linux/Mac: source venv/bin/activate
-
-# Verify
-python --version  # Should show Python 3.6+
-```
-
-### "No module named 'csv_to_json'"
-
-**Symptom**: ModuleNotFoundError when running converter
-
-**Cause**: Running from wrong directory or Python path issue
-
-**Solution**:
-```bash
-# Ensure you're in project root
-cd /path/to/release-dashboard-application
-
-# Verify you're in the right place
-ls converters/src/csv_to_json/
-
-# Try running from project root
-python converters/cli/convert_incidents.py data/input/sample.csv
-```
-
-### Pip Install Fails
-
-**Symptom**: "ERROR: Could not find a version that satisfies the requirement"
-
-**Cause**: Internet connectivity or Python version mismatch
-
-**Solution**:
-```bash
-# Update pip first
-python -m pip install --upgrade pip
-
-# Install with verbose output to see errors
-pip install -r requirements.txt -v
-
-# If specific package fails, install it individually
-pip install python-dotenv
-
-# Check Python version compatibility
-python --version  # Should be 3.8+
-```
-
-## Converter Issues
-
-### Converter Script Not Found
-
-**Symptom**: "command not found: convert_incidents.sh" or ".bat file not found"
-
-**Cause**: Scripts are in wrong location or permissions issue
-
-**Solution**:
-
-**Windows**:
-```batch
-REM Scripts are in converters\scripts\bin\
-converters\scripts\bin\convert_incidents.bat data\input\sample.csv
-```
-
-**Linux/Mac**:
-```bash
-# Make scripts executable
-chmod +x converters/scripts/bin/*.sh
-
-# Run from project root
-./converters/scripts/bin/convert_incidents.sh data/input/sample.csv
-```
-
-Cross-platform alternative, no wrapper script needed: `python converters/cli/convert_incidents.py data/input/sample.csv`.
-
-### "Input file not found"
-
-**Symptom**: Error when running converter, says input CSV not found
-
-**Cause**: CSV file doesn't exist at specified path
-
-**Solution**:
-```bash
-# List files in input directory
-ls data/input/
-
-# Create input directory if it doesn't exist
-mkdir -p data/input/
-
-# Place CSV file in data/input/
-cp your-file.csv data/input/
-
-# Run converter with correct path
-convert_incidents.bat data/input/your-file.csv
-```
-
-### Encoding Error: "UnicodeDecodeError"
-
-**Symptom**: "UnicodeDecodeError: 'utf-8' codec can't decode byte"
-
-**Cause**: CSV file has unsupported encoding
-
-**Solution**:
-```bash
-# The converter auto-detects encoding, but if it fails:
-# 1. Open the CSV file in your editor
-# 2. Save it as UTF-8 encoding:
-#    - VS Code: Select "UTF-8" in bottom right
-#    - Excel: File > Save As > CSV UTF-8
-#    - LibreOffice: File > Save As > Character Set: UTF-8
-
-# 3. Try conversion again
-convert_incidents.bat data/input/your-file.csv -v
-```
-
-### "Invalid delimiter"
-
-**Symptom**: JSON output looks wrong (columns merged or missing)
-
-**Cause**: CSV uses unusual delimiter that auto-detector missed
-
-**Solution**:
-```bash
-# The converter tries to auto-detect: comma, semicolon, tab
-# If that doesn't work:
-# 1. Open CSV in text editor (not Excel)
-# 2. Look at first line to identify delimiter
-# 3. Convert to use comma or semicolon
-# 4. Re-run converter
-
-# If using custom delimiter, report in docs/
-convert_incidents.bat data/input/file.csv --verbose
-```
-
-### Validation Errors: "X records failed"
-
-**Symptom**: Conversion completes but says "X records have validation errors"
-
-**Cause**: CSV contains invalid data values
-
-**Solution**:
-```bash
-# Check error report
-cat data/errors/your-file_errors.json
-
-# Or display error summary
-convert_incidents.bat data/input/your-file.csv --show-errors
-
-# Fix errors according to rules (see docs/API.md):
-# - Urgencia: must be Baja, Media, Alta, or Crítica
-# - Estatus: must be Abierto, Cerrado, Resuelto, or Pendiente
-# - Fecha: must be dd/mm/yyyy HH:mm AM/PM
-
-# Re-run after fixing CSV
-convert_incidents.bat data/input/your-file.csv
-```
-
-## Dashboard Issues
-
-### Dashboard Won't Load
-
-**Symptom**: Blank page or "Cannot find file" in browser
-
-**Cause**: JSON file not in correct location
-
-**Solution**:
-```bash
-# Verify JSON was created
-ls data/output/
-
-# If no JSON files, run converter first
-converters/scripts/bin/convert_incidents.sh data/input/sample.csv
-
-# Serve the dashboards over HTTP — do NOT open the .html file directly
-# (file://): fetch() calls to /data/output/index.json need a real server.
-# `python -m http.server` works for read-only viewing (run it from the
-# repo root, not from dashboards/), but only serve_app.py implements the
-# /api/upload endpoint needed to upload a CSV from the browser.
-python serve_app.py
-# Then open: http://localhost:8000/dashboards/portal/
-```
-
-### Dashboard Showing Empty Data
-
-**Symptom**: Dashboard loads but shows no incidents
-
-**Cause**: JSON format mismatch or wrong file location
-
-**Solution**:
-```bash
-# Verify JSON file is in data/output/
-ls -la data/output/
-
-# Check JSON format
-cat data/output/your-file.json | head -20
-
-# Should start with: [{ "ID de incidencia": "...", ...
-
-# If JSON is invalid, check error report
-cat data/errors/your-file_errors.json
-
-# Re-generate if needed
-convert_incidents.bat data/input/your-file.csv -v
-```
-
-## Testing Issues
-
-### Tests Failing
-
-**Symptom**: "FAILED tests/..." when running `pytest`
-
-**Cause**: Missing dependencies or test data
-
-**Solution**:
-```bash
-# Ensure dev dependencies are installed
-pip install -r requirements-dev.txt
-
-# Run tests with verbose output
-python -m pytest tests/ -v
-
-# Run specific test
-python -m pytest tests/unit/test_encoding.py -v
-
-# Check coverage
-python -m pytest --cov=csv_to_json tests/
-```
-
-### Coverage Below 80%
-
-**Symptom**: "Coverage failure: total of X% is less than fail-under=80%"
-
-**Cause**: New code without tests
-
-**Solution**:
-```bash
-# View coverage report
-open htmlcov/index.html
-
-# Write tests for uncovered code
-# Place in tests/unit/test_<module>.py
-
-# Run coverage again
-python -m pytest --cov=csv_to_json --cov-report=html tests/
-```
-
-## Configuration Issues
-
-### .env File Not Found
-
-**Symptom**: "FileNotFoundError: [Errno 2] No such file or directory: '.env'"
-
-**Cause**: .env file doesn't exist
-
-**Solution**:
-```bash
-# Create .env from template
-cp config/.env.example config/.env
-
-# Or copy to root if needed
-cp config/.env.example .env
-
-# Edit with your settings
-# nano config/.env  # or use your editor
-```
-
-### Environment Variables Not Loading
-
-**Symptom**: Config values are None or default values
-
-**Cause**: .env file not in right location or not loaded
-
-**Solution**:
-```bash
-# .env should be in project root or config/ directory
-ls config/.env
-ls .env
-
-# Check that python-dotenv is installed
-pip list | grep python-dotenv
-
-# If not installed
-pip install python-dotenv
-```
-
-## Performance Issues
-
-### Converter Very Slow
-
-**Symptom**: Takes >5 seconds to convert 1000 records
-
-**Cause**: Disk I/O or system resources
-
-**Solution**:
-```bash
-# Use verbose mode to see progress
-convert_incidents.bat data/input/large-file.csv -v
-
-# Normal speed: ~1000 records/second
-# If much slower, check:
-# 1. Disk space (should have >100MB free)
-# 2. System RAM (check Task Manager/Activity Monitor)
-# 3. File size (if >1GB, may be slow)
-
-# Split large files
-# Convert smaller chunks instead of entire file
-```
-
-### Dashboard Very Slow with Large JSON
-
-**Symptom**: Dashboard sluggish with 10,000+ incidents
-
-**Cause**: Browser memory or rendering performance
-
-**Solution**:
-```bash
-# Browser performance limits:
-# Chrome/Firefox: ~50,000 incidents max
-# Try splitting data:
-
-# Option 1: Use filtering in dashboard
-# Filter by Status, Urgency, etc.
-
-# Option 2: Create multiple smaller JSON files
-# Convert by month or team
-
-# Option 3: Use index.json
-# Dashboard can load from index for faster navigation
-```
-
-## Git & Version Control Issues
-
-### Git Configuration Issues
-
-**Symptom**: Can't commit or ".gitignore not working"
-
-**Cause**: Git configuration problem
-
-**Solution**:
-```bash
-# Verify .gitignore exists
-ls -la .gitignore
-
-# Check if data/ and .env are ignored
-git status
-
-# If still showing, clear git cache
-git rm -r --cached data/
-git rm -r --cached .env
-git add .gitignore
-git commit -m "fix: update gitignore"
-```
-
-## Getting Help
-
-### Still Having Issues?
-
-1. **Check the logs**:
-   ```bash
-   # Converter logs
-   cat data/errors/your-file_errors.json
-
-   # Test output
-   python -m pytest -v
-   ```
-
-2. **Enable verbose mode**:
-   ```bash
-   convert_incidents.bat data/input/file.csv -v --show-errors
-   ```
-
-3. **Check documentation**:
-   - [../converters/docs/API.md](../converters/docs/API.md) - Converter API reference
-   - [DEVELOPMENT.md](DEVELOPMENT.md) - Setup guide
-   - [docs/](.) - Complete documentation
-
-4. **Create issue with details**:
-   - Include error message
-   - Show sample CSV (without sensitive data)
-   - List Python version and OS
-   - Attach error report JSON
+Diagnóstico, causas raíz y soluciones paso a paso para incidencias comunes durante el desarrollo local, ejecución de conversores, visualización de dashboards y despliegue en producción (VPS).
 
 ---
 
-**Last Updated**: 2026-05-14
+## 📑 Índice de Contenidos
+
+1. [Servidor Local y Carga de CSVs](#1-servidor-local-y-carga-de-csvs)
+2. [Conversores CLI (Python)](#2-conversores-cli-python)
+3. [Dashboards Frontend](#3-dashboards-frontend)
+4. [Informes Ejecutivos PowerPoint](#4-informes-ejecutivos-powerpoint)
+5. [Proxy de Resumen IA (Epsilon)](#5-proxy-de-resumen-ia-epsilon)
+6. [Suite de Tests Automatizados](#6-suite-de-tests-automatizados)
+7. [Producción y Despliegue en VPS (10.132.26.96)](#7-producción-y-despliegue-en-vps-101322696)
+8. [Control de Versiones y Git](#8-control-de-versiones-y-git)
+
+---
+
+## 1. Servidor Local y Carga de CSVs
+
+### Error: "Failed to fetch" al subir un archivo CSV
+
+- **Síntoma**: Al arrastrar un archivo o hacer clic en "Seleccionar archivo" en los dashboards, el navegador muestra una alerta `Error: Failed to fetch`.
+- **Causa**: Se está sirviendo el frontend mediante un servidor estático genérico (`python -m http.server`, Live Server de VSCode o apertura directa `file:///...`). Estos servidores solo admiten peticiones de lectura `GET` y carecen del endpoint `POST /api/upload`.
+- **Solución**:
+  1. Detén el servidor en ejecución (`Ctrl + C`).
+  2. Desde la raíz del repositorio, inicia el servidor oficial de la aplicación:
+     ```bash
+     python serve_app.py
+     ```
+  3. Abre en tu navegador la URL:
+     ```text
+     http://localhost:8080/dashboards/portal/
+     ```
+
+### Error: "Address already in use" o puerto 8080 ocupado
+
+- **Síntoma**: Al ejecutar `python serve_app.py`, se produce un error `OSError: [WinError 10048] Solo se permite un uso de cada dirección de socket`.
+- **Causa**: Existe otra instancia del servidor abierta en segundo plano o el puerto 8080 está reservado por otra aplicación.
+- **Solución**:
+  - **Opción A: Cambiar de puerto temporalmente**:
+    ```bash
+    python serve_app.py --port 8090
+    ```
+  - **Opción B: Liberar el puerto 8080 en Windows**:
+    ```powershell
+    # Localizar el identificador del proceso (PID)
+    netstat -ano | findstr :8080
+    # Finalizar el proceso por su PID
+    Stop-Process -Id <PID> -Force
+    ```
+
+### Mensaje: "Falló la conversión a JSON" tras subir un CSV
+
+- **Síntoma**: El modal de subida responde con `"success": false` y muestra un desglose de error en el campo `details`.
+- **Causa**: El archivo CSV no cumple con el esquema requerido (cabeceras incorrectas, delimitador incompatible, valores no permitidos en campos clave o codificación corrupta).
+- **Solución**:
+  1. Lee el mensaje detallado en pantalla o revisa el informe generado en `data/errors/<nombre-archivo>_errors.json`.
+  2. Verifica que las columnas obligatorias existan conforme a la especificación en [converters/docs/API.md](../converters/docs/API.md).
+  3. Asegúrate de que los campos normalizados contengan valores válidos (p. ej. *Urgencia*: `Baja`, `Media`, `Alta`, `Crítica`).
+
+---
+
+## 2. Conversores CLI (Python)
+
+### Error: "ModuleNotFoundError: No module named 'src'" o 'csv_to_json'
+
+- **Síntoma**: Al ejecutar un conversor desde la terminal, Python no localiza los submódulos de conversión.
+- **Causa**: El comando se ejecuta desde un directorio no reconocido sin configurar la variable `PYTHONPATH`.
+- **Solución**:
+  - Ejecuta siempre invocando el script desde la raíz del proyecto:
+    ```bash
+    python converters/cli/convert_incidents.py data/input/mi-archivo.csv
+    ```
+  - O bien utiliza los wrappers ejecutables provistos en `converters/scripts/bin/`:
+    ```bash
+    # En Windows
+    converters\scripts\bin\convert_incidents.bat data/input/mi-archivo.csv
+    # En Linux / macOS
+    ./converters/scripts/bin/convert_incidents.sh data/input/mi-archivo.csv
+    ```
+
+### Error de Codificación: "UnicodeDecodeError"
+
+- **Síntoma**: `UnicodeDecodeError: 'utf-8' codec can't decode byte 0x... in position ...`.
+- **Causa**: El archivo CSV fue exportado con codificación Windows-1252 o ISO-8859-1 (Latin-1) y contiene caracteres especiales que confunden la autodetección.
+- **Solución**:
+  1. Abre el archivo CSV en VSCode o Notepad++.
+  2. Vuelve a guardarlo seleccionando codificación **UTF-8** (sin BOM).
+  3. Ejecuta el conversor con la opción de depuración detallada (`-v`) para identificar la línea exacta:
+     ```bash
+     converters\scripts\bin\convert_incidents.bat data/input/archivo.csv -v
+     ```
+
+### Error de Delimitador: Columnas agrupadas en un único campo
+
+- **Síntoma**: El JSON generado tiene una única clave enorme con todas las columnas unidas por punto y coma.
+- **Causa**: El archivo tiene delimitadores mixtos o comillas sin cerrar en celdas multilínea que impiden al analizador heurístico deducir el separador adecuado.
+- **Solución**:
+  1. Inspecciona la primera fila (cabecera) del CSV.
+  2. Asegúrate de que el delimitador sea consistente (punto y coma `;` o coma `,`).
+  3. Comprueba que las cadenas de texto que contienen el delimitador estén correctamente entrecomilladas con comillas dobles (`"..."`).
+
+---
+
+## 3. Dashboards Frontend
+
+### Pantalla en blanco o "Cannot GET /data/output/index.json"
+
+- **Síntoma**: El dashboard carga la estructura visual pero no muestra tablas, gráficos ni selectores de datos.
+- **Causa**:
+  - Estás visualizando los ficheros abriéndolos con doble clic en el explorador (`file:///...`), lo cual bloquea las peticiones `fetch()` por política de seguridad del navegador (CORS).
+  - O bien aún no se ha generado el archivo de catálogo `data/output/index.json`.
+- **Solución**:
+  1. Inicia `python serve_app.py`.
+  2. Accede siempre a través del protocolo HTTP: `http://localhost:8080/dashboards/portal/`.
+  3. Si la carpeta `data/output/` está vacía, convierte al menos un CSV para crear los JSON iniciales y el índice.
+
+### Datos desactualizados tras una nueva conversión
+
+- **Síntoma**: Tras procesar un nuevo CSV, el dashboard sigue mostrando métricas anteriores.
+- **Causa**: La caché del navegador retiene una versión previa del catálogo `index.json`.
+- **Solución**:
+  - `serve_app.py` envía la cabecera `Cache-Control: no-cache` automáticamente.
+  - En el navegador, realiza una recarga forzada pulsando `Ctrl + F5` (o `Cmd + Shift + R` en macOS).
+
+---
+
+## 4. Informes Ejecutivos PowerPoint
+
+### Error: No se localiza el motor de reportes CSO
+
+- **Síntoma**: Al solicitar un informe ejecutivo postmortem (`/api/v1/reports/executive-incident/...`), la respuesta es un error 500 o `ExecutiveReportBuilder no disponible`.
+- **Causa**: En el entorno local, `serve_app.py` busca el motor de reportes en el repositorio hermano `cso-incident-masivas-report/backend`. Si la carpeta no está en la misma raíz, el módulo no se importa.
+- **Solución**:
+  - Define la variable de entorno `CSO_BACKEND_ROOT` indicando la ruta absoluta hacia el backend CSO:
+    ```powershell
+    $env:CSO_BACKEND_ROOT = "C:\ruta\hacia\cso-incident-masivas-report\backend"
+    python serve_app.py
+    ```
+
+### Error de permisos al guardar el informe `.pptx`
+
+- **Síntoma**: `PermissionError: [Errno 13] Permission denied: '.../informe.pptx'`.
+- **Causa**: El archivo PowerPoint generado está actualmente abierto en Microsoft PowerPoint, lo que bloquea su sobrescritura en disco.
+- **Solución**: Cierra Microsoft PowerPoint y vuelve a solicitar la generación del informe.
+
+---
+
+## 5. Proxy de Resumen IA (Epsilon)
+
+### Error 502 Bad Gateway o Timeout al consultar el Resumen IA
+
+- **Síntoma**: El modal flotante de Resumen IA en los dashboards muestra un mensaje de fallo de conexión o tiempo de espera agotado.
+- **Causa**:
+  - En local: Falta de conexión a la red corporativa de Orange para alcanzar `https://soptmc.si.orange.es/MonTMC/api/epsilon/`.
+  - En producción: Problemas transitorios en el servicio remoto de Epsilon.
+- **Solución**:
+  1. Asegúrate de tener la VPN corporativa de Orange activa.
+  2. En producción, Nginx cuenta con una directiva de caché de 15 minutos (`proxy_cache_use_stale`) que devuelve la última respuesta disponible si el servicio remoto se degrada.
+
+---
+
+## 6. Suite de Tests Automatizados
+
+### Comando `pytest` no reconocido
+
+- **Síntoma**: `pytest: command not found` o `'pytest' is not recognized`.
+- **Causa**: El entorno virtual no está activo o no se han instalado las dependencias de desarrollo.
+- **Solución**:
+  ```bash
+  # Activar entorno virtual
+  .\venv\Scripts\Activate.ps1  # Windows
+  # Instalar herramientas de desarrollo
+  pip install -r requirements-dev.txt
+  ```
+
+### Fallo en cobertura de código (< 80%)
+
+- **Síntoma**: `Coverage failure: total coverage of X% is less than fail-under=80%`.
+- **Causa**: Se han introducido nuevas funciones en `converters/src/` sin añadir sus respectivos tests unitarios.
+- **Solución**:
+  1. Ejecuta pytest con desglose de líneas sin cubrir:
+     ```bash
+     cd converters
+     pytest tests/ -v --cov=src --cov-report=term-missing
+     ```
+  2. Localiza los archivos y números de línea reportados en la columna `Missing`.
+  3. Añade los casos de prueba necesarios en `converters/tests/unit/`.
+
+---
+
+## 7. Producción y Despliegue en VPS (10.132.26.96)
+
+### Fallo de autenticación SSH / SCP en `deploy-production.ps1`
+
+- **Síntoma**: `Permission denied (publickey)` o tiempo de espera agotado al conectar a `infocodes@10.132.26.96`.
+- **Causa**:
+  - La clave SSH privada no está cargada en el agente SSH de Windows (`ssh-agent`).
+  - La máquina de desarrollo no tiene acceso de red a la IP del VPS (VPN desconectada).
+- **Solución**:
+  1. Verifica conectividad con el VPS:
+     ```powershell
+     Test-NetConnection -ComputerName 10.132.26.96 -Port 22
+     ```
+  2. Inicia el agente SSH y añade tu clave:
+     ```powershell
+     Get-Service ssh-agent | Set-Service -StartupType Automatic -PassThru | Start-Service
+     ssh-add ~\.ssh\id_rsa
+     ```
+
+### Error de sintaxis en Nginx (`nginx -t` falla)
+
+- **Síntoma**: Durante el despliegue, el script aborta con el mensaje `nginx: configuration file /infocodes/nginx/conf/nginx.conf test failed`.
+- **Causa**: La configuración de Nginx contiene directivas inválidas o rutas inexistentes.
+- **Solución**:
+  - El script `deploy-production.ps1` aborta la recarga de forma automática para no interrumpir el servicio.
+  - Conéctate al servidor y revisa el diagnóstico detallado:
+    ```bash
+    ssh infocodes@10.132.26.96
+    /infocodes/nginx/sbin/nginx -t
+    ```
+  - Corrige el archivo `nginx.conf` en local, prueba la sintaxis y relanza el despliegue.
+
+### Rutas de datos vacías en producción (`/data/` devuelve 404 o sin contenido)
+
+- **Síntoma**: Nginx devuelve 404 para `/data/output/index.json` en producción.
+- **Causa**: El symlink hacia el almacenamiento persistente desacoplado (`/infocodes/var/storage/release-dashboard`) está roto o no se creó correctamente en la release activa.
+- **Solución**:
+  1. Accede al VPS por SSH:
+     ```bash
+     ssh infocodes@10.132.26.96
+     ```
+  2. Comprueba el estado del symlink:
+     ```bash
+     ls -la /infocodes/project/release-dashboard-application/current/data
+     ```
+  3. Si apunta a una ruta incorrecta, restablécelo manualmente:
+     ```bash
+     ln -sfn /infocodes/var/storage/release-dashboard /infocodes/project/release-dashboard-application/current/data
+     ```
+
+### Procedimiento de Rollback Inmediato ante Emergencia
+
+Si un despliegue produce una anomalía crítica en producción:
+- **Desde tu terminal local (PowerShell)**:
+  ```powershell
+  .\scripts\deploy-production.ps1 -Rollback
+  ```
+- **Directamente en el VPS (SSH)**:
+  ```bash
+  ssh infocodes@10.132.26.96
+  /infocodes/project/release-dashboard-application/scripts/rollback.sh
+  ```
+
+---
+
+## 8. Control de Versiones y Git
+
+### Archivos de datos o temporales rastreados por Git indebidamente
+
+- **Síntoma**: Archivos de `data/output/` o `data/input/` aparecen como modificados en `git status`.
+- **Causa**: Fueron añadidos al índice de Git antes de que `.gitignore` estuviera activo.
+- **Solución**:
+  1. Limpia el índice de Git manteniendo los archivos en disco:
+     ```bash
+     git rm -r --cached data/
+     git status
+     ```
+  2. Confirma la exclusión:
+     ```bash
+     git commit -m "chore: eliminar tracking indebido de directorio data/"
+     ```
+
+---
+
+## Documentación Relacionada
+
+- [QUICKSTART.md](QUICKSTART.md) — Guía rápida de configuración en 5 minutos.
+- [DEVELOPMENT.md](DEVELOPMENT.md) — Flujos de trabajo y directrices de desarrollo local.
+- [DEPLOYMENT.md](DEPLOYMENT.md) — Manual integral de despliegue y topología del VPS.
+- [PROJECT-STRUCTURE.md](PROJECT-STRUCTURE.md) — Arquitectura y mapa exhaustivo de directorios.
+- [LOGS.md](LOGS.md) — Registro unificado de bitácora técnica e intervenciones.
+
+---
+
+**Última actualización**: 2026-10-20
