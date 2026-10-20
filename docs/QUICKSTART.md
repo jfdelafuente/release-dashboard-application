@@ -1,286 +1,217 @@
 # Guía de Inicio Rápido
 
-Pon en marcha Release Dashboard Application en 5 minutos.
+Pon en marcha Release Dashboard Application en 5 minutos en tu entorno local.
 
-## Configuración en 5 minutos
+---
+
+## ⚡ Configuración en 5 Minutos
 
 ### Requisitos previos
-- Python 3.8+ instalado
-- git instalado (opcional, para clonar el repositorio)
+- **Python 3.10+** instalado (recomendado **Python 3.11**).
+- **Git** instalado (para clonar y versionar).
+- Navegador web moderno (Chrome, Firefox, Edge).
+
+---
 
 ### Paso 1: Clona o descarga el proyecto
+
 ```bash
-# Opción A: Clonar con git
+# Opción A: Clonar con git (rama production recomendada para despliegue)
 git clone <repository-url> release-dashboard-application
 cd release-dashboard-application
 
 # Opción B: Descargar y descomprimir el ZIP
-# Descomprime la carpeta del proyecto y navega hasta ella
 cd release-dashboard-application
 ```
 
-### Paso 2: (Opcional) Crea un entorno virtual
-```bash
-# Windows
-python -m venv venv
-venv\Scripts\activate
+---
 
-# Linux/Mac
+### Paso 2: Crea un entorno virtual
+
+```bash
+# En Windows (PowerShell / CMD)
+python -m venv venv
+.\venv\Scripts\Activate.ps1   # En PowerShell
+# o bien: venv\Scripts\activate.bat en CMD
+
+# En Linux / macOS
 python3 -m venv venv
 source venv/bin/activate
 ```
 
+---
+
 ### Paso 3: Instala las dependencias
+
 ```bash
+pip install --upgrade pip
 pip install -r requirements.txt
 pip install -r requirements-dev.txt
 ```
 
-> Los dashboards en sí no necesitan dependencias Python (son HTML/CSS/JS con
-> Plotly.js vía CDN). Estas dependencias son para `serve_app.py` y para los
-> conversores/tests en `converters/`.
+> **Nota**: El frontend es estático (HTML5, CSS3, JavaScript ES6+ con Plotly.js vía CDN) y no requiere Node.js ni build step. Las dependencias Python se utilizan exclusivamente para el servidor local (`serve_app.py`), el motor conversor CLI (`converters/`) y la suite de pruebas automatizadas.
+
+---
 
 ### Paso 4: (Opcional) Configura variables de entorno
+
 ```bash
-# Copia la plantilla a un archivo local
+# Copia la plantilla base
 cp config/.env.example config/.env
 
-# Edita config/.env con tus valores (opcional para desarrollo local)
+# El archivo .env incluye configuraciones por defecto listas para funcionar en local:
+# PORT=8080
+# FASTAPI_BACKEND_URL=http://127.0.0.1:8000
 ```
 
-### Paso 5: Arranca el servidor local
+---
+
+### Paso 5: Arranca el servidor local de desarrollo
+
 ```bash
 python serve_app.py
-# Abre: http://localhost:8000/dashboards/portal/
 ```
 
-> ⚠️ **No uses `python -m http.server` ni Live Server de VSCode.** Ambos
-> solo sirven archivos estáticos: no implementan `POST`, así que la subida
-> de CSV desde el navegador fallará con "Failed to fetch". `serve_app.py`
-> añade el endpoint `/api/upload`, necesario para poder subir un CSV desde
-> la interfaz web.
+La consola confirmará el inicio del servicio:
+```text
+==================================================
+Release Dashboard Server (Estático & Provisión)
+Sirviendo desde: C:\...\release-dashboard-application
+URL: http://localhost:8080/
+Dashboard Portal: http://localhost:8080/dashboards/portal/
+Gestión de Problemas (proxy :3001): http://localhost:8080/problemas
+Nota: API principal FastAPI disponible en http://localhost:8000/docs
+==================================================
+```
+
+> ⚠️ **Importante**: No utilices `python -m http.server` ni Live Server de VSCode. Estos servidores genéricos no implementan métodos `POST` (la subida de archivos fallará con `Failed to fetch`), ni configuran los proxies locales hacia Epsilon IA o el backend de generación PowerPoint. Utiliza siempre `serve_app.py`.
+
+---
 
 ### Paso 6: Carga tu primer CSV
 
-**Opción A: Desde el navegador (recomendado)**
+#### Opción A: Desde el navegador (Recomendado)
+1. Con `serve_app.py` en ejecución, abre en tu navegador el **Dashboard de Incidencias Masivas** o **Postmortem**.
+2. Si no existen datos previos, aparecerá automáticamente el panel interactivo de carga.
+3. Arrastra tu archivo CSV o haz clic para examinarlo.
+4. El servidor guardará el CSV en `data/input/`, ejecutará el conversor correspondiente y generará de inmediato el JSON normalizado en `data/output/` refrescando el catálogo `index.json`.
 
-Con `serve_app.py` corriendo, entra en el dashboard de Incidencias Masivas o
-de Postmortem/Release. Si no hay datos cargados, cada uno muestra una
-pantalla de subida: arrastra el CSV o haz clic para seleccionarlo. El
-servidor lo guarda en `data/input/` y ejecuta automáticamente el conversor
-correspondiente, dejando el JSON en `data/output/`.
+#### Opción B: Desde la línea de comandos (CLI)
 
-**Opción B: Manualmente, con los scripts de conversión**
 ```bash
-# Windows - Incidencias Masivas
+# Windows - Conversión de Incidencias Masivas
 converters\scripts\bin\convert_incidents.bat data/input/tu-archivo.csv
 
-# Windows - Postmortems
+# Windows - Conversión de Postmortems
 converters\scripts\bin\convert_postmortems.bat data/input/postmortem.csv
 
-# Linux/Mac - Incidencias Masivas
+# Linux/macOS - Incidencias Masivas
 ./converters/scripts/bin/convert_incidents.sh data/input/tu-archivo.csv
 
-# Linux/Mac - Postmortems
+# Linux/macOS - Postmortems
 ./converters/scripts/bin/convert_postmortems.sh data/input/postmortem.csv
 ```
 
-**✅ Listo.** Tus archivos JSON estarán en `data/output/`.
+Los JSON generados se depositarán en `data/output/`.
 
-### Paso 7: Abre el Portal
+---
 
-Con `serve_app.py` corriendo, ve a:
+### Paso 7: Explora el Portal y los Dashboards
+
+Con el servidor corriendo, accede a:
+```text
+http://localhost:8080/dashboards/portal/
 ```
-http://localhost:8000/dashboards/portal/
-```
-(o simplemente `http://localhost:8000/dashboards/`, que redirige ahí a
-través de `dashboards/index.html`).
+*(O `http://localhost:8080/dashboards/`, que redirige automáticamente al portal).*
 
-**El Portal enlaza a:**
-- 📊 **Incidencias Masivas** (`dashboards/massive-incidents/`): evolución
-  temporal, backlog, tendencias, filtros por estado/sistema/urgencia.
-- 📋 **Postmortem / Release** (`dashboards/postmortem/`): análisis por
-  despliegue (PAP/MESA), KPIs de resolución.
-- 🔗 Enlaces a los paneles de los repos hermanos (Reportes de Incidencias,
-  Gestión de Problemas), que no forman parte de este repositorio.
+El ecosistema cuenta con los siguientes paneles integrados:
 
-Cada dashboard carga automáticamente los datos más recientes de
-`data/output/` (vía `index.json`) al abrirse.
+- 🚪 **Portal General** (`dashboards/portal/`): Punto de entrada único con buscador global de incidencias, métricas agregadas y accesos rápidos.
+- 📊 **Incidencias Masivas** (`dashboards/massive-incidents/`): Seguimiento temporal de volumen, backlog, SLA, filtros dinámicos por estado/sistema/urgencia y gráficos Plotly.
+- 📋 **Postmortem y Despliegues** (`dashboards/postmortem/`): Análisis de incidencias por ventana de despliegue (PAP/MESA) y tiempos de resolución.
+- 📈 **Release KPIs** (`dashboards/release-kpis/`): Métricas de calidad y estabilidad de releases.
+- 📑 **Reportes de Incidencias** (`dashboards/reportes-incidencias/`): Panel de consulta y gestión de informes de incidencias.
+- 🤖 **Resumen IA (Epsilon)**: Modal flotante inteligente disponible en los dashboards para generar resúmenes automáticos de incidencias.
 
-## Siguientes pasos
+---
 
-### Opción A: Explora los dashboards especializados
-Desde el Portal, haz clic en "Incidencias Masivas" o "Postmortem/Release"
-para el análisis detallado de cada uno.
+## 🛠️ Tareas Comunes
 
-### Opción B: Procesa tus propios datos
+### Procesamiento batch de múltiples CSVs
 ```bash
-# Coloca tu CSV en data/input/
-cp tu-archivo.csv data/input/
-
-# Conviértelo (o simplemente súbelo desde el navegador, ver Paso 6)
-converters\scripts\bin\convert_incidents.bat data/input/tu-archivo.csv
-
-# Revisa el resultado en data/output/
-```
-
-### Opción C: Desarrollo
-```bash
-# Lee la guía de desarrollo
-cat docs/DEVELOPMENT.md
-
-# O la guía de contribución
-cat CONTRIBUTING.md
-```
-
-## Tareas comunes
-
-### Convertir todos los CSV de un directorio
-```bash
+# Procesa todos los CSVs ubicados en data/input/ y emite a data/output/
 converters\scripts\bin\convert_incidents.bat data/input/ -o data/output/
 ```
 
-### Ver el resumen de errores de conversión
+### Visualizar errores y discrepancias de validación
 ```bash
 converters\scripts\bin\convert_incidents.bat data/input/archivo.csv --show-errors
 ```
 
-### Salida detallada (verbose)
+### Generación de Informes Ejecutivos PowerPoint
 ```bash
-converters\scripts\bin\convert_incidents.bat data/input/archivo.csv -v
+python converters/cli/generate_postmortem_report.py --input data/output/incidencias.json --output data/reports/informe_ejecutivo.pptx
 ```
 
-### Ver la ayuda del conversor
-```bash
-converters\scripts\bin\convert_incidents.bat --help
+### Ejecución de la Suite de Tests Automatizados
+La suite cuenta con más de **516 tests** automatizados (unitarios, de integración y end-to-end):
 
-# Documentación técnica completa
-cat converters/docs/API.md
-```
-
-### Ejecutar la suite de tests de los conversores
 ```bash
+# Ejecutar desde el subdirectorio converters
 cd converters
 pytest tests/ -v
 
-# Con reporte de cobertura
-pytest tests/ --cov=src --cov-report=html
+# Ejecutar con reporte de cobertura (gate mínimo del 80%)
+pytest tests/ -v --cov=src --cov-report=term-missing
+cd ..
 ```
-
-## Solución de problemas
-
-### "Python no encontrado"
-```bash
-# Verifica que Python está instalado
-python --version
-
-# Si no aparece, instálalo desde: https://www.python.org/
-```
-
-### "Module not found" / "No module named ..."
-```bash
-# Asegúrate de tener el entorno virtual activado
-# Windows
-venv\Scripts\activate
-
-# Linux/Mac
-source venv/bin/activate
-```
-
-### "Permission denied" (Linux/Mac)
-```bash
-# Da permisos de ejecución a los scripts
-chmod +x converters/scripts/bin/*.sh
-```
-
-### Errores de conversión
-```bash
-# Revisa el reporte de errores generado
-cat data/errors/tu-archivo_errors.json
-
-# Para más detalle
-cat docs/TROUBLESHOOTING.md
-```
-
-### El dashboard no carga datos / "Failed to fetch" al subir un CSV
-```bash
-# Causa más común: estás usando `python -m http.server` o Live Server,
-# que no soportan POST. Usa `python serve_app.py` en su lugar (Paso 5).
-
-# ✅ Correcto:  http://localhost:8000/dashboards/portal/
-# ❌ Incorrecto: file:///C:/Users/.../dashboards/portal/index.html (bloquea CORS)
-
-# Verifica que data/output/ tiene archivos JSON
-ls data/output/
-# Debería mostrar: *.json y un index.json
-
-# Revisa la consola del navegador (F12) por errores
-# - Abre DevTools → Console
-# - Busca errores de fetch o 404
-# - Verifica: GET http://localhost:8000/data/output/index.json (debería ser 200)
-```
-
-## Documentación
-
-- **Setup completo / desarrollo**: [DEVELOPMENT.md](DEVELOPMENT.md)
-- **Solución de problemas**: [TROUBLESHOOTING.md](TROUBLESHOOTING.md)
-- **Despliegue**: [DEPLOYMENT.md](DEPLOYMENT.md)
-- **Contribución**: [CONTRIBUTING.md](CONTRIBUTING.md) (o [../CONTRIBUTING.md](../CONTRIBUTING.md))
-- **API de los conversores**: [../converters/docs/API.md](../converters/docs/API.md)
-- **Arquitectura de los conversores**: [../converters/docs/ARCHITECTURE.md](../converters/docs/ARCHITECTURE.md)
-- **Seguridad**: [../SECURITY.md](../SECURITY.md)
-
-## Estructura del proyecto
-
-```
-release-dashboard-application/
-├── serve_app.py             # Servidor local (dashboards + /api/upload)
-├── dashboards/               # Dashboards HTML/CSS/JS, cada uno en su subcarpeta
-│   ├── index.html            # Redirige a /dashboards/portal/
-│   ├── portal/                # Portal principal
-│   ├── massive-incidents/
-│   ├── postmortem/
-│   └── release-kpis/
-├── converters/                # Módulo Python de conversión CSV→JSON
-│   ├── cli/                   # convert_incidents.py, convert_postmortems.py, upload_csv.py
-│   ├── src/csv_to_json/       # Lógica de conversión (encoding, normalización, validación)
-│   ├── scripts/bin/           # Wrappers .bat/.sh para los CLI
-│   ├── tests/                 # Suite de tests (unit/integration/e2e)
-│   └── docs/                  # Documentación técnica de los conversores
-├── data/
-│   ├── input/                 # Coloca aquí tus archivos CSV
-│   ├── output/                 # JSON generados + index.json
-│   └── errors/                 # Reportes de error de validación
-├── config/                    # Plantillas de configuración
-├── docs/                      # Documentación general del proyecto
-└── requirements.txt / requirements-dev.txt
-```
-
-## Archivos clave
-
-| Archivo | Propósito |
-|---------|-----------|
-| `serve_app.py` | Servidor local recomendado (soporta subida de CSV vía `/api/upload`) |
-| `dashboards/portal/index.html` | **Portal principal** - punto de acceso a los dashboards |
-| `dashboards/massive-incidents/index.html` | Dashboard de incidencias masivas |
-| `dashboards/postmortem/index.html` | Dashboard de postmortem/release |
-| `converters/scripts/bin/convert_incidents.bat` / `.sh` | Conversor de incidencias masivas |
-| `converters/scripts/bin/convert_postmortems.bat` / `.sh` | Conversor de postmortems |
-| `config/.env.example` | Plantilla de configuración de entorno |
-| `data/input/` | Carpeta de entrada de CSV |
-| `data/output/` | JSON generados (salida) |
-
-## Siguiente paso: despliegue a producción
-
-Cuando te sientas cómodo con el uso local:
-
-1. Lee [DEPLOYMENT.md](DEPLOYMENT.md) para los procedimientos de despliegue.
-2. Revisa [../SECURITY.md](../SECURITY.md) para la gestión de secretos en producción.
-3. Consulta [CONTRIBUTING.md](CONTRIBUTING.md) para los estándares de código.
-4. ¡Empieza a contribuir!
 
 ---
 
-**Tiempo estimado**: 5 minutos
-**Dificultad**: Principiante
-**Última actualización**: 2026-07-09
+## ❓ Solución de Problemas Frecuentes
+
+### 1. "Python no encontrado" o comando no reconocido
+Comprueba que Python 3.10+ esté instalado y registrado en la variable de entorno `PATH`:
+```bash
+python --version
+```
+
+### 2. "Failed to fetch" al arrastrar o subir un CSV
+- **Causa**: Estás usando `python -m http.server`, una extensión Live Server o abriendo el HTML directamente con doble clic (`file:///...`).
+- **Solución**: Detén el proceso y arranca con `python serve_app.py`. Accede a través de `http://localhost:8080/dashboards/portal/`.
+
+### 3. El puerto 8080 ya está en uso
+Puedes especificar un puerto alternativo:
+```bash
+python serve_app.py --port 8090
+```
+
+### 4. "ModuleNotFoundError: No module named 'src'" o fallos de importación
+Asegúrate de tener activado el entorno virtual (`venv`) con todas las dependencias instaladas:
+```bash
+pip install -r requirements.txt -r requirements-dev.txt
+```
+
+---
+
+## 📁 Datos: Local vs Producción
+
+- **Entorno Local**: Los datos se almacenan en la carpeta local `data/` (`input/`, `output/`, `reports/`, `errors/`, `archive/`). Esta carpeta está ignorada por Git (`.gitignore`).
+- **Entorno Producción (VPS `10.132.26.96`)**: El almacenamiento está estrictamente desacoplado en `/infocodes/var/storage/release-dashboard/` y `/infocodes/var/storage/executive_pptx/`. Las nuevas releases se conectan a estos datos mediante symlinks persistentes.
+
+---
+
+## 🚀 Siguiente Paso: Despliegue a Producción
+
+Cuando tus cambios estén listos y probados localmente:
+
+1. Consulta [DEPLOYMENT.md](DEPLOYMENT.md) para el flujo de despliegue mediante el script `deploy-production.ps1` (Standalone Runtime).
+2. Revisa [DEVELOPMENT.md](DEVELOPMENT.md) para estándares de desarrollo, linting y Git hooks.
+3. Consulta [GITHUB-BRANCH-PROTECTION.md](GITHUB-BRANCH-PROTECTION.md) para las reglas de PR y ramas protegidas (`main` y `production`).
+4. Revisa [LOGS.md](LOGS.md) para el formato unificado de bitácora técnica.
+
+---
+
+**Tiempo estimado de configuración**: 5 minutos  
+**Dificultad**: Principiante / Intermedio  
+**Última actualización**: 2026-10-20
