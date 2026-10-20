@@ -1,332 +1,313 @@
-# Development Setup Guide
+# Guía del Entorno de Desarrollo
 
-Complete guide for setting up a development environment.
-
-## Prerequisites
-
-- Python 3.8 or higher: `python --version`
-- Git: `git --version`
-- Text editor or IDE (VS Code, PyCharm, Sublime, etc.)
-
-## Step 1: Clone Repository
-
-```bash
-git clone <repository-url>
-cd release-dashboard-application
-```
-
-## Step 2: Create Virtual Environment
-
-### Windows
-```bash
-python -m venv venv
-venv\Scripts\activate
-```
-
-### macOS / Linux
-```bash
-python3 -m venv venv
-source venv/bin/activate
-```
-
-Expected prompt: `(venv) $ `
-
-## Step 3: Install Dependencies
-
-```bash
-# Install production dependencies
-pip install -r requirements.txt
-
-# Install development dependencies
-pip install -r requirements-dev.txt
-```
-
-Verify installation:
-```bash
-pip list | grep pytest
-pip list | grep black
-```
-
-## Step 4: Configure Development Environment
-
-```bash
-# Copy example environment file
-cp config/.env.example .env
-
-# Edit .env if needed (most defaults are good for development)
-# .env is git-ignored, never committed
-```
-
-## Step 5: Verify Installation
-
-Run tests:
-```bash
-pytest tests/ -v
-```
-
-Expected output:
-```
-tests/... PASSED                           [100%]
-============ X passed in Xs ============
-```
-
-## Running the Application
-
-### Start Dashboard Server
-
-```bash
-python serve_app.py
-# Then visit: http://localhost:8000/dashboards/portal/
-```
-
-> ⚠️ Don't use `python -m http.server` or Live Server: they only serve
-> static files and don't implement `POST`, so uploading a CSV from the
-> browser fails with "Failed to fetch". `serve_app.py` adds the
-> `/api/upload` endpoint that the dashboards need.
-
-### Convert CSV to JSON
-
-```bash
-# Convert incidents CSV
-python converters/cli/convert_incidents.py data/input/sample.csv
-
-# Output location: data/output/sample-massive.json
-```
-
-See [converters/docs/API.md](../converters/docs/API.md) for detailed converter documentation.
-
-## Development Workflow
-
-### 1. Create Feature Branch
-
-```bash
-git checkout -b feature/your-feature-name
-```
-
-Branch naming: `feature/`, `bugfix/`, `docs/`, `refactor/`, `test/`
-
-### 2. Make Changes
-
-Edit code in your favorite editor.
-
-### 3. Run Tests
-
-```bash
-cd converters
-
-# Run all tests
-pytest tests/ -v
-
-# Run specific test
-pytest tests/unit/ -v
-
-# Run with coverage
-pytest tests/ --cov=src --cov-report=html
-```
-
-### 4. Format Code
-
-```bash
-cd converters
-
-# Auto-format code
-black src/ tests/
-
-# Check formatting
-flake8 src/ tests/
-
-# Check style
-pylint src/ tests/
-```
-
-### 5. Commit Changes
-
-```bash
-git add converters/src/... converters/tests/...
-git commit -m "feat: describe your change"
-```
-
-### 6. Push and Create PR
-
-```bash
-git push origin feature/your-feature-name
-
-# Then create pull request on GitHub
-```
-
-## Code Organization
-
-See [PROJECT-STRUCTURE.md](PROJECT-STRUCTURE.md) for the full layout. In short:
-- Python converters: `converters/cli/` (entry points) + `converters/src/csv_to_json/` (logic)
-- Dashboards (HTML/CSS/JS con diseño Orange y assets compartidos en `dashboards/assets/`): `dashboards/`
-- Converter tests: `converters/tests/` (there's no top-level `tests/`)
-- Batch/cron & deployment scripts: `scripts/` (`deploy-production.ps1`, `status.sh`, `rollback.sh`, `generate-dashboards.sh`)
-
-## Common Tasks
-
-### Adding a New Converter
-
-1. Create file: `converters/cli/convert_new_data.py`
-2. Implement converter function
-3. Add tests: `converters/tests/unit/test_convert_new_data.py`
-4. Update [converters/docs/API.md](../converters/docs/API.md) with usage
-
-### Modifying a Dashboard
-
-1. Edit the dashboard's `.html` directly (styles and JS live inline in the same file): `dashboards/dashboard-name.html`
-2. Test with `python serve_app.py` (not `http.server`/Live Server — see the warning above): http://localhost:8000/dashboards/dashboard-name.html
-3. Update [docs/](.) with any new features
-
-### Running Specific Tests
-
-Run these from `converters/` (that's where `pytest.ini` lives):
-
-```bash
-cd converters
-
-# Test file
-pytest tests/unit/test_csv_reader.py -v
-
-# Test function
-pytest tests/unit/encoding/test_encoding.py::TestEncodingDetection::test_detect_utf8 -v
-
-# By pattern
-pytest tests/ -k "csv" -v
-```
-
-## Git Hooks (Pre-commit)
-
-The repository includes pre-commit hooks to prevent committing secrets:
-
-```bash
-# Install the hook (one-time setup)
-cp config/pre-commit-hook.sh .git/hooks/pre-commit
-chmod +x .git/hooks/pre-commit
-
-# Runs automatically on: git commit
-
-# To run manually:
-bash config/pre-commit-hook.sh
-```
-
-The hook prevents committing:
-- `.env` files
-- Files containing API keys or passwords
-- Secrets or credentials
-
-## Troubleshooting
-
-### Python Version Error
-
-```bash
-# If python command not found, try python3
-python3 --version
-python3 -m venv venv
-
-# Or set alias
-alias python=python3
-```
-
-### Virtual Environment Not Activating
-
-```bash
-# Windows - try different activation method
-venv\Scripts\activate.bat    # Command Prompt
-venv\Scripts\Activate.ps1    # PowerShell
-
-# macOS / Linux
-source venv/bin/activate
-```
-
-### Permission Denied
-
-```bash
-# Make scripts executable
-chmod +x converters/scripts/bin/*.sh
-chmod +x scripts/generate-dashboards.sh
-```
-
-### Pytest Not Found
-
-```bash
-# Make sure venv is activated
-which python  # Should be in venv directory
-pip install -r requirements-dev.txt
-```
-
-### Port Already in Use
-
-```bash
-# Use different port
-python -m http.server 9000
-
-# Visit http://localhost:9000
-```
-
-## IDE Setup
-
-### VS Code
-
-Install extensions:
-- Python
-- Pylance
-- Python Docstring Generator
-- Black Formatter
-- Flake8
-
-Create `.vscode/settings.json`:
-```json
-{
-  "python.formatting.provider": "black",
-  "python.linting.flake8Enabled": true,
-  "python.linting.pylintEnabled": true,
-  "[python]": {
-    "editor.formatOnSave": true
-  }
-}
-```
-
-### PyCharm
-
-- Automatically configures Python venv
-- Configure code formatter: Settings → Code Style → Python
-- Configure linting: Settings → Tools → Python Integrated Tools
-
-## Performance Testing
-
-### Check Converter Speed
-
-```bash
-import time
-start = time.time()
-# run converter
-end = time.time()
-print(f"Conversion took {end - start:.2f}s")
-
-# Target: < 5 seconds for 1000+ records
-```
-
-### Profile Code
-
-```bash
-python -m cProfile -s cumulative src/converters/convert_incidents.py data/input/sample.csv
-```
-
-## Learning Resources
-
-- [Python Official Docs](https://docs.python.org/3/)
-- [Pytest Documentation](https://docs.pytest.org/)
-- [Git Documentation](https://git-scm.com/doc)
-- [Markdown Guide](https://www.markdownguide.org/)
-
-## Next Steps
-
-1. Read [CONTRIBUTING.md](CONTRIBUTING.md) for coding standards
-2. Review [PROJECT-STRUCTURE.md](PROJECT-STRUCTURE.md) for file organization
-3. Check [converters/docs/API.md](../converters/docs/API.md) for API documentation
-4. Explore existing code in `src/` for patterns
+Guía completa para la configuración, ejecución local, pruebas y flujo de trabajo de desarrollo en **Release Dashboard Application**.
 
 ---
 
-**Setup Time**: 15-30 minutes
-**Last Updated**: 2026-05-14
+## 📋 Requisitos Previos
+
+- **Python 3.10 o superior** (compatible con Python 3.8+):
+  ```bash
+  python --version
+  ```
+- **Git**:
+  ```bash
+  git --version
+  ```
+- **PowerShell 5.1+** (Windows) o **Bash** (Linux/macOS).
+- Editor de código recomendado: **Visual Studio Code** o **PyCharm**.
+
+---
+
+## 🚀 Configuración Inicial Paso a Paso
+
+### Paso 1: Clonar el Repositorio
+
+```bash
+git clone <url-del-repositorio> release-dashboard-application
+cd release-dashboard-application
+```
+
+### Paso 2: Crear y Activar el Entorno Virtual (`venv`)
+
+#### Windows (PowerShell)
+```powershell
+python -m venv venv
+venv\Scripts\Activate.ps1
+```
+
+> [!TIP]
+> Si PowerShell bloquea la activación por directiva de scripts, ejecuta en la sesión actual:
+> `Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass`
+
+#### Linux / macOS (Bash)
+```bash
+python3 -m venv venv
+source venv/bin/activate
+```
+
+El indicador de la terminal mostrará el prefijo `(venv)`.
+
+### Paso 3: Instalar Dependencias de Desarrollo
+
+El archivo [`requirements-dev.txt`](../requirements-dev.txt) incluye tanto las dependencias del servidor y generación de informes de producción (`python-pptx`, `matplotlib`, `plotly`, `kaleido`, `beautifulsoup4`) como las herramientas de test y calidad (`pytest`, `pytest-cov`, `black`, `flake8`, `pylint`, `bandit`):
+
+```bash
+pip install --upgrade pip
+pip install -r requirements-dev.txt
+```
+
+### Paso 4: Configurar Variables de Entorno Locales
+
+Copia la plantilla de configuración para tu entorno local:
+
+```bash
+# Windows (PowerShell)
+Copy-Item config/.env.example .env
+
+# Linux / macOS
+cp config/.env.example .env
+```
+
+El archivo `.env` está en `.gitignore` para prevenir cualquier filtración de credenciales. Los valores por defecto son válidos para desarrollo local.
+
+### Paso 5: Instalar el Hook de Pre-Commit Anti-Secretos
+
+El repositorio incluye un hook que bloquea commits accidentales de credenciales, claves privadas o ficheros `.env`:
+
+#### Linux / macOS / Git Bash
+```bash
+cp config/pre-commit-hook.sh .git/hooks/pre-commit
+chmod +x .git/hooks/pre-commit
+```
+
+#### Windows (PowerShell con Git)
+```powershell
+Copy-Item config/pre-commit-hook.sh .git/hooks/pre-commit
+```
+
+---
+
+## 💻 Ejecución del Servidor Local (`serve_app.py`)
+
+Para probar los dashboards en local se utiliza [`serve_app.py`](../serve_app.py), el servidor HTTP especializado del proyecto.
+
+```bash
+python serve_app.py
+```
+
+Acceso principal en el navegador:
+👉 **`http://localhost:8080/dashboards/portal/`**
+
+### ¿Por qué NO usar `python -m http.server` o Live Server?
+
+> [!WARNING]
+> No utilices servidores estáticos genéricos como `http.server` o extensiones de Live Server. Solo sirven archivos estáticos y rechazan peticiones `POST`. La subida interactiva de CSV (`/api/upload`) y la generación de reportes fallará con `Failed to fetch`.
+
+### Capacidades del Servidor de Desarrollo (`serve_app.py`)
+
+- **Puerto por defecto `8080`**: Evita colisiones con la API FastAPI hermana (`cso-incident-masivas-report`) que corre en el puerto `8000`.
+- **Cambio de puerto si está ocupado**:
+  ```bash
+  python serve_app.py --port 8081
+  ```
+- **Persistencia inteligente (Fallback local)**: Si no detecta la ruta del VPS (`/infocodes/var/storage/`), redirige automáticamente la lectura y escritura a las carpetas locales `data/` (`data/input/`, `data/output/`, `data/reports/`).
+- **Endpoint de subida `/api/upload`**: Recibe CSVs desde la interfaz del portal y dispara la conversión automática.
+- **Proxy hacia microservicios hermanos**:
+  - Redirige `/problemas` hacia la aplicación Next.js en `:3001` (o `:3000`).
+  - Coexiste con la API FastAPI en `http://localhost:8000/docs`.
+
+---
+
+## 🔄 Ejecución y Depuración de Conversores (CLI)
+
+Puedes ejecutar los scripts de conversión directamente desde la consola para depurar transformaciones de datos o procesar archivos de prueba:
+
+### 1. Conversor de Incidencias Masivas
+Transforma el CSV de incidencias operativas a formato JSON consumible por los dashboards:
+
+```bash
+# Ejecución estándar
+python converters/cli/convert_incidents.py data/input/sample.csv
+
+# Especificando destino personalizado
+python converters/cli/convert_incidents.py data/input/sample.csv -o data/output/sample-massive.json
+```
+
+### 2. Conversor de Postmortems de Release
+Procesa ficheros CSV de postmortem y genera los índices de releases:
+
+```bash
+python converters/cli/convert_postmortem.py data/input/sample_postmortem.csv
+```
+
+### 3. Pipeline de Generación por Lotes
+Simula el proceso batch que ejecuta el cron de producción:
+
+```bash
+# Linux / Git Bash
+./scripts/generate-dashboards.sh
+```
+
+---
+
+## 🧪 Pruebas Automatizadas (Testing)
+
+La suite de pruebas y su configuración ([`converters/pytest.ini`](../converters/pytest.ini)) residen en el directorio `converters/tests/`.
+
+### Ejecutar Pruebas
+
+Debes situarte en `converters/` para ejecutar `pytest`:
+
+```bash
+cd converters
+
+# Ejecutar toda la suite de tests
+pytest tests/ -v
+
+# Ejecutar una categoría específica
+pytest tests/unit/ -v
+pytest tests/integration/ -v
+pytest tests/e2e/ -v
+
+# Filtrar tests por nombre o patrón
+pytest tests/ -k "encoding" -v
+pytest tests/ -k "postmortem" -v
+```
+
+### Cobertura de Código (Mínimo 80% requerido en CI)
+
+Tal como exige el pipeline de GitHub Actions ([`docs/CI.md`](CI.md)), la cobertura mínima de código requerida es del **80%**:
+
+```bash
+cd converters
+
+# Generar reporte de cobertura en consola y en HTML
+pytest tests/ --cov=src --cov-report=term-missing --cov-report=html
+
+# Abrir el informe visual generado
+# Windows:
+Start-Process htmlcov/index.html
+# Linux/macOS:
+xdg-open htmlcov/index.html || open htmlcov/index.html
+```
+
+---
+
+## 🎨 Estilo y Calidad de Código (Linters)
+
+El proyecto utiliza un conjunto estricto de comprobaciones alineadas con el workflow [`.github/workflows/lint.yml`](../.github/workflows/lint.yml):
+
+```bash
+cd converters
+
+# 1. Comprobar estilo con Flake8 (PEP 8)
+flake8 src cli tests --statistics
+
+# 2. Verificar formato con Black
+black --check src cli tests --diff
+
+# Para auto-formatear con Black:
+black src cli tests
+
+# 3. Comprobar orden de imports con isort
+isort --check-only src cli tests --diff
+
+# Para ordenar automáticamente los imports:
+isort src cli tests
+
+# 4. Análisis estático con Pylint
+pylint src cli tests --disable=missing-docstring,too-many-arguments,too-few-public-methods
+
+# 5. Auditoría de seguridad con Bandit
+bandit -r src cli --skip B101,B601
+```
+
+---
+
+## 🌿 Flujo de Trabajo con Git
+
+El desarrollo sigue un ciclo de vida basado en ramas cortas y revisión rigurosa:
+
+```mermaid
+flowchart LR
+    BRANCH["1. Rama feature<br/>(018-mi-mejora)"] --> DEV["2. Desarrollo & Tests<br/>(pytest >= 80%)"]
+    DEV --> LINT["3. Linters<br/>(flake8, black)"]
+    LINT --> PR["4. Pull Request<br/>(hacia production)"]
+    PR --> CI["5. GitHub Actions<br/>(tests & lint)"]
+    CI --> MERGE["6. Merge & Deploy<br/>(deploy-production.ps1)"]
+```
+
+### 1. Crear Rama de Trabajo
+Nombra las ramas según la especificación o tarea:
+```bash
+git checkout -b 018-portal-enhancements
+```
+
+### 2. Confirmar Cambios (Commits Convencionales)
+```bash
+git add converters/src/... dashboards/...
+git commit -m "feat(portal): incorporar filtro por release en incidencias"
+```
+
+### 3. Validar Localmente Antes de Subir
+Asegúrate de que los tests pasen y no haya fallos de linter antes de hacer push:
+```bash
+cd converters
+pytest tests/
+flake8 src cli tests
+```
+
+### 4. Publicar y Abrir Pull Request
+```bash
+git push origin 018-portal-enhancements
+```
+Abre el Pull Request hacia la rama `production`. El pipeline de CI validará automáticamente la cobertura y calidad.
+
+---
+
+## 🛠️ Solución de Problemas Comunes (Troubleshooting)
+
+### El puerto 8080 ya está en uso
+Si otro proceso tiene ocupado el puerto `8080`:
+```bash
+# Levantar en otro puerto alternativo (ej. 8081 o 9000):
+python serve_app.py --port 8081
+```
+> Recuerda: **nunca** uses `python -m http.server`, ya que no procesará las subidas de CSV.
+
+### No se encuentra el módulo `pytest` o dependencias
+Verifica que el entorno virtual esté activo y vuelve a instalar las dependencias:
+```bash
+# Asegurarse de que el binario de python pertenece al venv:
+where python     # En Windows
+which python     # En Linux / macOS
+
+pip install -r requirements-dev.txt
+```
+
+### Error de permisos al ejecutar scripts `.sh` en Linux / Git Bash
+Otorga permisos de ejecución a los scripts:
+```bash
+chmod +x scripts/*.sh
+chmod +x converters/scripts/bin/*.sh
+```
+
+### Los tests fallan con `ModuleNotFoundError`
+Asegúrate de ejecutar `pytest` desde el subdirectorio `converters/`:
+```bash
+cd converters
+pytest tests/ -v
+```
+
+---
+
+## 🔗 Documentación Relacionada
+
+- [**`CI.md`**](CI.md): Pipeline de Integración Continua, cobertura y linters en GitHub Actions.
+- [**`DEPLOYMENT.md`**](DEPLOYMENT.md): Despliegue en 1 clic a producción (`deploy-production.ps1`), topología VPS y rollback atómico.
+- [**`LOGS.md`**](LOGS.md): Arquitectura de logs, auditoría y comandos de diagnóstico en producción.
+- [**`DASHBOARDS-API.md`**](DASHBOARDS-API.md): Catálogo de APIs, rutas y servicios consumidos por los frontends.
+- [**`PROJECT-STRUCTURE.md`**](PROJECT-STRUCTURE.md): Organización física del repositorio y convenciones de estructura.
+- [**`VERSION-MANAGEMENT.md`**](VERSION-MANAGEMENT.md): Política de versionado semántico y etiquetado git.
+- [**`QUICKSTART.md`**](QUICKSTART.md): Inicio rápido en 5 minutos para visualización local.
