@@ -478,7 +478,7 @@ El script `csv_to_json.py` anterior era un conversor simple sin validación ni n
 
 **Branch**: `008-postmortem-ppt-report`
 
-**Objective**: Generar un informe `.pptx` por release, con el estilo visual MASORANGE, con 3 diapositivas: portada, Métricas Globales (3 KPIs + gráfica "Incidencias por Release") y Comparativa de KPIs (gráficas "KPI % PaP" y "KPI % 1ª semana"). Rediseñado tras la implementación inicial: todos los KPIs y gráficas se calculan a partir de `dashboards/release-kpis/releases-data.js` (única fuente de datos); el JSON de postmortem por release ya no interviene.
+**Objective**: Generar un informe `.pptx` por release, con el estilo visual Orange, con 3 diapositivas: portada, Métricas Globales (3 KPIs + gráfica "Incidencias por Release") y Comparativa de KPIs (gráficas "KPI % PaP" y "KPI % 1ª semana"). Rediseñado tras la implementación inicial: todos los KPIs y gráficas se calculan a partir de `dashboards/release-kpis/releases-data.js` (única fuente de datos); el JSON de postmortem por release ya no interviene.
 
 **Delivered**:
 - `converters/src/report_generator/`: `release_kpis_data.py` (parseo de `releases-data.js`, `build_releases()` con `total_incidencias`/`pct_pap`/`pct_first_week`, `find_release()`) + `release_kpis_charts.py` (réplica de las 3 gráficas de `release-kpis/app.js`), `pptx_builder.py` (portada + `add_kpi_and_chart_slide()` con 3 tarjetas de KPI en verde/rojo según `KPI_TARGET_PCT` + `add_dual_chart_slide()`), `chart_utils.py` (Plotly + Kaleido, colores y `KPI_TARGET_PCT` compartidos), `paths.py`
@@ -651,5 +651,5 @@ data/errors/CS_Masiva_20260514_errors.json
 - Campo de filtro de tiempo: "Fecha de envío"
 - URL Remedy: https://soptmc.si.orange.es/MonTMC/epsilon/remedyC/{ID}
 - URL Epsilon IA: https://soptmc.si.orange.es/MonTMC/api/epsilon/resumenIA/{ID} (proxy local en `/api/epsilon/resumenIA/{ID}` vía `serve_app.py` y bloque proxy en `nginx.conf`)
-- Paleta MASORANGE/Orange: #FF7900 (acento principal/solucionadas), #FFC08A (entradas/tono claro), #0C0B09 (tinta/backlog), #F5F3F0 (fondo página), #E2DDD5 (bordes)
+- Paleta Orange: #FF7900 (acento principal/solucionadas), #FFC08A (entradas/tono claro), #0C0B09 (tinta/backlog), #F5F3F0 (fondo página), #E2DDD5 (bordes)
 - Formato fecha: dd/mm/yyyy HH:mm a (parseDate() lo convierte a Date)

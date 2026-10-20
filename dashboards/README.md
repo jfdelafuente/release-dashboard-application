@@ -1,6 +1,6 @@
 # Release Dashboards
 
-Dashboards web interactivos para análisis y visualización de incidencias masivas y postmortems de release, con la identidad visual de MASORANGE.
+Dashboards web interactivos para análisis y visualización de incidencias masivas y postmortems de release, con la identidad visual de Orange.
 
 ## 📂 Estructura
 
@@ -47,7 +47,7 @@ dashboards/
 - 🔍 **Postmortem / Release**: un dashboard por release (identificado por su nombre), con análisis por despliegue (PAP/MESA), KPIs de resolución, distribución por sistema y por estado, tabla filtrable y ordenable con Resumen IA integrado
 - 🎯 **KPIs de Release (Histórico)**: serie histórica de KPIs de release (volumen y % de resolución PaP/1ª semana) con indicador de umbral del 75%, sobre un dataset estático mantenido a mano
 - 📤 **Subida de CSV desde el navegador**: arrastra o selecciona un CSV y se convierte automáticamente (requiere `serve_app.py`, ver más abajo)
-- 🎨 **Identidad MASORANGE**: barra superior negra con logo, acento naranja `#FF7900` sobre neutros cálidos, tipografía Inter (interfaz) + IBM Plex Mono (cifras/datos)
+- 🎨 **Identidad Orange**: barra superior negra con logo, acento naranja `#FF7900` sobre neutros cálidos, tipografía Inter (interfaz) + IBM Plex Mono (cifras/datos)
 - 📱 **Responsive**: funciona en desktop, tablet y móvil
 - ⚡ **Sin dependencias propias**: HTML5, CSS3 y JavaScript vanilla (Plotly.js vía CDN)
 

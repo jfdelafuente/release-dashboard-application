@@ -1,6 +1,6 @@
 # Release Dashboard Application
 
-Plataforma analítica y de reporting para la monitorización de calidad técnica en despliegues (*releases*), gestión de incidencias masivas y análisis postmortem operativo (entorno MASORANGE / Orange).
+Plataforma analítica y de reporting para la monitorización de calidad técnica en despliegues (*releases*), gestión de incidencias masivas y análisis postmortem operativo (entorno Orange).
 
 El repositorio centraliza:
 1. **La suite completa de frontends web (dashboards)**: Portal unificado con buscador y Resumen IA en tiempo real (Epsilon IA), Incidencias Masivas, Postmortem/Release, KPIs Históricos de Release y el editor/visor de **Reportes de Incidencias**.
@@ -78,7 +78,7 @@ El directorio [`dashboards/`](dashboards/) aloja las interfaces web estáticas d
 - **[Incidencias Masivas](dashboards/massive-incidents/)** (`dashboards/massive-incidents/`): Monitorización analítica del backlog de incidencias masivas: tendencias temporales, distribución por estado/sistema/urgencia y consulta de Resumen IA al pulsar sobre cualquier incidencia.
 - **[Postmortem / Release](dashboards/postmortem/)** (`dashboards/postmortem/`): Análisis de incidencias surgidas en ventanas de despliegue operativo (PAP/MESA), seguimiento de SLAs y tiempos de resolución.
 - **[KPIs de Release](dashboards/release-kpis/)** (`dashboards/release-kpis/`): Serie histórica comparativa de métricas de calidad, incidencias y estabilidad entre distintas releases.
-- **[Reportes de Incidencias](dashboards/reportes-incidencias/)** (`dashboards/reportes-incidencias/`): Frontend del editor y visor de reportes semanales de incidencias de MASORANGE. Incluye catálogo histórico (`index.html`), editor interactivo con selector de marcas (`editor.html`) y vista previa con exportación a PDF y PowerPoint (`preview.html`). Se comunica vía API REST con el backend FastAPI de `cso-incident-masivas-report`.
+- **[Reportes de Incidencias](dashboards/reportes-incidencias/)** (`dashboards/reportes-incidencias/`): Frontend del editor y visor de reportes semanales de incidencias de Orange. Incluye catálogo histórico (`index.html`), editor interactivo con selector de marcas (`editor.html`) y vista previa con exportación a PDF y PowerPoint (`preview.html`). Se comunica vía API REST con el backend FastAPI de `cso-incident-masivas-report`.
 
 > **Integración con otros sistemas**: Desde el Portal y la barra superior compartida también se enlaza a **Gestión de Problemas** (`/problemas`), aplicación servida por el backend de otro repositorio hermano en el mismo servidor VPS.
 

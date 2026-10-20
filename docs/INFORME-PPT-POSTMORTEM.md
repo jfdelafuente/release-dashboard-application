@@ -5,7 +5,7 @@ como a mano desde la línea de comandos.
 
 ## Qué es este informe
 
-Un `.pptx` de 3 diapositivas con el estilo visual MASORANGE:
+Un `.pptx` de 3 diapositivas con el estilo visual Orange:
 
 1. **Portada** — nombre de la release.
 2. **Métricas Globales** — 3 tarjetas de KPI (Total Incidencias, % Resueltas

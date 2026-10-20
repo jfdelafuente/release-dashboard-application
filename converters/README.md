@@ -56,7 +56,7 @@ converters/
 │   │
 │   └── report_generator/ # Módulo de generación de informes y presentaciones (.pptx)
 │       ├── assets/                  # Plantillas (.pptx) y recursos corporativos
-│       ├── chart_utils.py           # Utilidades gráficas y paleta Orange/MasOrange
+│       ├── chart_utils.py           # Utilidades gráficas y paleta Orange
 │       ├── confluence_parser.py     # Parser HTML/Confluence para postmortems
 │       ├── data_loader.py           # Cargador de datos de releases
 │       ├── executive_models.py      # Modelos de datos para informes ejecutivos

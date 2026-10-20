@@ -100,7 +100,7 @@ def new_presentation(release_name):
 
     _add_textbox(
         slide, Inches(0.6), Inches(2.9), SLIDE_WIDTH - Inches(1.2), Inches(0.4),
-        "POSTMORTEM · MASORANGE", size=13, color=_RGB_ORANGE, bold=True,
+        "POSTMORTEM · ORANGE", size=13, color=_RGB_ORANGE, bold=True,
     )
     _add_textbox(
         slide, Inches(0.55), Inches(3.3), SLIDE_WIDTH - Inches(1.2), Inches(1.3),
