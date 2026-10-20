@@ -1,4 +1,4 @@
-# CI/CD — Integración Continua y Pipeline de Calidad
+# CI — Integración Continua y Pipeline de Calidad
 
 Este documento describe la automatización de **Integración Continua (CI)** mediante GitHub Actions en este repositorio, los controles de calidad exigidos para fusionar cambios y cómo ejecutar estas validaciones en local.
 

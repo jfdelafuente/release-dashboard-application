@@ -26,7 +26,7 @@
 ### Operaciones y despliegue
 - **[DEPLOYMENT.md](DEPLOYMENT.md)** - Procedimiento de despliegue automatizado (Standalone Runtime vía `deploy-production.ps1`)
 - **[../scripts/README.md](../scripts/README.md)** - Referencia de scripts de despliegue, status, rollback y cron
-- **[CI-CD.md](CI-CD.md)** - Integración continua (tests y linters) y pipeline de despliegue
+- **[CI.md](CI.md)** - Integración continua (tests unitarios, cobertura y linters en GitHub Actions)
 - **[VERSION-MANAGEMENT.md](VERSION-MANAGEMENT.md)** - Versionado semántico
 - **[VPS-REQUIREMENTS.md](VPS-REQUIREMENTS.md)** - Requisitos del servidor
 - **[../SECURITY.md](../SECURITY.md)** - Prácticas de seguridad
@@ -86,7 +86,7 @@ Generación de Informes PPTX / PDF (report_generator / python-pptx)
 - **Dashboards**: ✅ Suite completa de portales, incidencias masivas, postmortems y reportes operativos
 - **Subida de CSV desde el navegador**: ✅ vía `serve_app.py` (`/api/upload`) y CLI
 - **Conversores**: ✅ Incidencias masivas, Postmortems e informes ejecutivos PPTX
-- **CI**: ✅ tests y linting automatizados en cada PR (ver [CI-CD.md](CI-CD.md))
+- **CI**: ✅ tests y linting automatizados en cada PR (ver [CI.md](CI.md))
 - **Despliegue**: ✅ Automatizado en 1 clic vía `deploy-production.ps1` con backup rotativo y rollback automático (ver [DEPLOYMENT.md](DEPLOYMENT.md))
 
 ---

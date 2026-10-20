@@ -258,7 +258,7 @@ has `lint.yml` and `tests.yml` (tests + coverage + style checks on push/PR)
 GitHub Release. A `deploy.yml` workflow that did some of this existed at
 one point but was removed (unused, and broken: it packaged a `src/`
 directory that no longer exists in the repo). See
-[CI-CD.md](CI-CD.md) for what actually runs today.
+[CI.md](CI.md) for what actually runs today.
 
 GitHub Releases, if you want them, currently have to be created manually
 (`gh release create v0.2.0` or via the GitHub UI) after pushing the tag.
