@@ -1,682 +1,321 @@
-# Requisitos de VPS para Release Dashboard Application
+# Requisitos y Arquitectura del VPS para Release Dashboard Application
 
-Documento que especifica los requisitos de infraestructura, software y configuración del VPS donde se despliega la aplicación.
-
-**Importante sobre el alcance real** (ver [`DEPLOYMENT.md`](DEPLOYMENT.md) y [`PROJECT-STRUCTURE.md`](PROJECT-STRUCTURE.md)):
-
-- Solo existe **producción**. No hay un entorno de staging con URL propia.
-- Este repositorio aporta **contenido estático** (dashboards HTML/CSS/JS) y **datos JSON**; Nginx los sirve directamente desde el checkout git (`/infocodes/project/release-dashboard-application/`), sin backend propio, sin build y sin Gunicorn/Flask/FastAPI de este repo.
-- El VPS es **compartido** con aplicaciones hermanas (backend FastAPI de `cso-incident-masivas-report`, app estática `reportes-incidencias`, backend Next.js/pm2 de "Gestión de Problemas", y otra aplicación distinta que ocupa la raíz del dominio vía socket Unix — ver `nginx.conf`). Este documento solo cubre lo necesario para servir `/dashboards` y `/data` de este repo; el resto de servicios del mismo VPS tiene sus propios requisitos, no documentados aquí.
+Este documento especifica los requisitos de infraestructura, sistema operativo, software, seguridad y arquitectura de almacenamiento del servidor VPS de producción donde opera Release Dashboard Application.
 
 ---
 
-## 1. Requisitos de Hardware y Sistema Operativo
+## 1. Alcance y Contexto de Producción
 
-### Hardware Mínimo
-
-| Componente | Producción (VPS compartido) |
-|-----------|-----------|
-| CPU | 4+ cores |
-| RAM | 8+ GB |
-| Almacenamiento | 50+ GB SSD |
-| Ancho de banda | 1 Gbps |
-
-**No confirmado**: estas cifras son una referencia orientativa, no las specs reales del VPS. El servidor real (`10.132.68.85` / `infocodes.si.orange.es`) es **compartido con varias aplicaciones hermanas** (ver `nginx.conf`), por lo que el dimensionamiento real depende de la carga conjunta de todas ellas, no solo de este repositorio. No se ha verificado el hardware real asignado a esta máquina.
-
-### Sistema Operativo Soportado
-
-- **Ubuntu 20.04 LTS** (recomendado)
-- **Ubuntu 22.04 LTS** (más reciente)
-- **Debian 11** (compatible)
-- **Rocky Linux 8** (compatible)
-
-**NO soportado**: Windows Server, CentOS < 7
+- **Entorno Único**: Producción en el host **`10.132.26.96`** (`infocodes.si.orange.es`).
+- **Servidor Compartido**: El VPS aloja de forma consolidada varios servicios del ecosistema técnico de Orange:
+  1. **Release Dashboard Application** (este repositorio): Dashboards estáticos en `/dashboards`, catálogo y datasets JSON en `/data`, y proxy de Resumen IA en `/api/epsilon/`.
+  2. **CSO Incident Masivas Report** (backend FastAPI en `:8000` y frontend en `/reportes-incidencias`).
+  3. **Gestión de Problemas** (aplicación Next.js gestionada con `pm2` en `:3001` servida en `/problemas`).
+  4. **Aplicación Raíz** (atendida vía socket Unix en `/infocodes/var/run/infocodes.sock`).
+- **Modelo de Despliegue**: **Standalone Runtime sin Git en el VPS**. El servidor no realiza operaciones Git ni checkouts; recibe artefactos selectivos atómicos transferidos vía SCP/SSH y gestionados por enlaces simbólicos.
+- **Identidad Corporativa**: Todos los dashboards y activos visuales se rigen estrictamente por la identidad corporativa **Orange**.
 
 ---
 
-## 2. Software Requerido
+## 2. Requisitos de Hardware y Sistema Operativo
 
-### 2.1 Python y Dependencias Base
+### Hardware Recomendado (Entorno Compartido)
 
-```bash
-# Actualizar sistema
-sudo apt update
-sudo apt upgrade -y
+| Recurso | Especificación Mínima | Justificación |
+|---|---|---|
+| **CPU** | 4 Cores | Concurrencia de Nginx, conversiones batch Python y backends Node/FastAPI. |
+| **RAM** | 8 GB | Soporte conjunto para Nginx, buffers de caché proxy, pm2 y scripts de análisis. |
+| **Almacenamiento** | 50+ GB SSD | Espacio para datasets históricos, informes PPTX, backups rotativos y logs. |
+| **Red** | 1 Gbps | Conectividad fluida dentro de la intranet y VPN corporativa de Orange. |
 
-# Instalar Python 3.10 (recomendado)
-sudo apt install -y python3.10 python3.10-venv python3.10-dev
-sudo apt install -y python3-pip
+### Sistema Operativo y Usuario de Servicio
 
-# Verificar instalación
-python3 --version
-pip3 --version
+- **Distribución**: **Ubuntu 20.04 LTS / 22.04 LTS** o distribución Linux compatible (Debian / Rocky Linux).
+- **Usuario de Sistema**: **`infocodes`**.
+- **Permisos**: Toda la infraestructura de la aplicación reside bajo la jerarquía `/infocodes/`. Las operaciones de despliegue, ejecución de cron jobs y recarga de Nginx operan bajo el usuario `infocodes` sin requerir elevación de privilegios `sudo`.
 
-# Instalar herramientas de sistema necesarias
-sudo apt install -y \
-    build-essential \
-    curl \
-    wget \
-    git \
-    net-tools \
-    htop \
-    unzip
-```
+---
 
-### 2.2 Dependencias del Proyecto
+## 3. Software Requerido en el Servidor
 
-Python en el VPS se usa **únicamente** para ejecutar los conversores CSV→JSON (`converters/`), invocados por el cron `scripts/generate-dashboards.sh` — no hay una app Python corriendo de forma continua para este repo. Las dependencias están repartidas en `requirements.txt` (raíz) y `converters/requirements.txt`:
+### 3.1 Intérprete Python y Dependencias
+Python en el VPS se utiliza **únicamente para la ejecución de conversores CSV→JSON en modo batch** (orquestados por cron) y scripts de soporte. No existe ningún daemon o servicio web Python continuo correspondiente a este repositorio.
 
 ```bash
-# En el servidor, sobre el checkout real del repo
-cd /infocodes/project/release-dashboard-application
+# Versión de Python recomendada: 3.10+ / 3.11
+python3 --version   # >= 3.10.0
+
+# Paquetes requeridos para conversores y reportes
 pip3 install -r requirements.txt
-pip3 install -r converters/requirements.txt
 ```
 
-**Dependencias principales**: `pandas` (u otra librería de procesamiento de CSV usada por los conversores) y las de `converters/requirements.txt`. **No hay `Flask` ni `Gunicorn` en este repositorio**: no es una aplicación web Python con proceso propio.
+### 3.2 Servidor Web Nginx
+Nginx opera como servidor frontal único en el VPS:
+- Binario: `/infocodes/nginx/sbin/nginx`
+- Archivo de configuración maestro: `/infocodes/nginx/conf/nginx.conf`
+- Directorio de configuraciones modulares: `/infocodes/nginx/conf/conf.d/*.conf`
+- PID: `/infocodes/var/run/nginx.pid`
+- Escucha: Puerto **`8081`**
 
-**No confirmado**: si el VPS usa el intérprete de sistema o un virtualenv dedicado para estas dependencias (ver también `docs/DEPLOYMENT.md`, sección "Requisitos previos").
+### 3.3 Utilidades del Sistema
+- `curl` / `wget`: Sondas de salud HTTP locales.
+- `tar`: Extracción de artefactos runtime y empaquetado de copias de seguridad.
+- `cron`: Planificador de tareas batch (`cron` o `crond`).
+- `OpenSSH Server`: Para recepción de artefactos vía SCP y comandos remotos SSH.
 
-### 2.3 Servidor Web
-
-Los dashboards son archivos estáticos servidos por Nginx, que **ya está instalado y corriendo en el VPS** (sirve, en el mismo dominio/puerto, tanto este repo como sus aplicaciones hermanas — ver `nginx.conf`). Este repositorio no requiere Gunicorn, uWSGI ni ningún servidor de aplicaciones propio:
-
-```bash
-# Nginx (si no estuviera ya instalado en el VPS)
-sudo apt install -y nginx
-```
-
-**Backends reales del dominio (fuera de este repo)**: un backend **FastAPI** (repo hermano `cso-incident-masivas-report`, escuchando en `localhost:8000`, al que Nginx hace `proxy_pass` en `/api`) y un backend **Next.js** gestionado con **pm2** (escuchando en `localhost:3001`, `proxy_pass` en `/problemas`). Ambos se instalan, ejecutan y mantienen desde sus propios repos/procesos; no forman parte del alcance de este documento ni de este repositorio.
-
-### 2.4 Herramientas Opcionales
-
-No confirmado que este repositorio necesite alguna de estas herramientas — no usa caché Redis, base de datos relacional ni contenedores. Se listan solo por si el VPS las requiere para otras aplicaciones hermanas que conviven en el mismo servidor:
-
-```bash
-# Redis (usado, si acaso, por otra aplicación del VPS — no por este repo)
-sudo apt install -y redis-server
-
-# PostgreSQL (usado, si acaso, por otra aplicación del VPS — no por este repo)
-sudo apt install -y postgresql postgresql-contrib
-
-# Docker (si se decide containerizar en el futuro; no es el estado actual)
-sudo apt install -y docker.io docker-compose
-```
+> **Importante**: Git **no** es necesario ni se utiliza en el servidor de producción.
 
 ---
 
-## 3. Estructura de Directorios
+## 4. Estructura de Directorios en el VPS
 
-### 3.1 Directorio de la Aplicación y Almacenamiento Desacoplado
-
-La aplicación se despliega mediante el modelo **Standalone Runtime** gestionado por releases atómicas (`releases/YYYYMMDD_HHMMSS`) enlazadas mediante el symlink `current`. Los datos persistentes y los logs residen completamente desacoplados del código del proyecto en `/infocodes/var/`, siguiendo la arquitectura estándar compartida con `cso-incident-masivas-report`:
+La arquitectura desacopla estrictamente el código inmutable, los datos de negocio persistentes, los registros y las copias de seguridad:
 
 ```text
 /infocodes/
+├── nginx/
+│   ├── sbin/nginx                      # Binario ejecutable de Nginx
+│   └── conf/
+│       ├── nginx.conf                  # Configuración activa de Nginx
+│       └── conf.d/                     # Módulos de configuración (cso-incident.conf)
+│
 ├── project/
-│   └── release-dashboard-application/
-│       ├── current -> releases/YYYYMMDD_HHMMSS/
+│   └── release-dashboard-application/  # Raíz del proyecto en el servidor
+│       ├── current ───────────────────► Enlace simbólico atómico a la release activa
 │       ├── releases/
-│       │   └── 20261020_.../
-│       ├── shared/
-│       │   ├── data -> /infocodes/var/storage/release-dashboard
-│       │   └── logs -> /infocodes/var/log/release-dashboard
-│       ├── status.sh
-│       ├── rollback.sh
-│       └── VERSION
+│       │   ├── 20261015_120000/        # Releases históricas inmutables
+│       │   └── 20261020_164500/        # Release activa desplegada
+│       │       ├── dashboards/         # HTML/CSS/JS estático
+│       │       ├── converters/         # Motor CLI de conversión
+│       │       ├── scripts/            # Scripts operacionales
+│       │       ├── data ──────────────► Enlace a /infocodes/var/storage/release-dashboard
+│       │       ├── logs ──────────────► Enlace a /infocodes/var/log/release-dashboard
+│       │       └── VERSION             # Versión semántica del release
+│       ├── status.sh                   # Sonda de salud y diagnóstico
+│       └── rollback.sh                 # Reversión rápida por symlink
+│
 └── var/
-    ├── storage/
-    │   ├── release-dashboard/         # Almacenamiento persistente desacoplado
-    │   │   ├── input/                 # CSVs de origen
-    │   │   ├── output/                # JSONs procesados servidos en /data
-    │   │   ├── reports/               # Informes PPTX (con symlink reports/executive)
-    │   │   ├── errors/                # Reportes de error de conversión
-    │   │   └── archive/               # Archivo histórico
-    │   └── executive_pptx/            # Presentaciones ejecutivas compartidas con cso-incident
+    ├── storage/                        # Almacenamiento persistente desacoplado (Single Source of Truth)
+    │   ├── release-dashboard/
+    │   │   ├── input/                  # Archivos CSV origen depositados
+    │   │   ├── output/                 # JSONs convertidos (*-massive.json, index.json)
+    │   │   ├── reports/                # Informes generados
+    │   │   │   └── executive ─────────► Enlace sinérgico a ../executive_pptx
+    │   │   ├── errors/                 # Logs de discrepancias y errores de validación
+    │   │   └── archive/                # Histórico de datasets
+    │   └── executive_pptx/             # Informes PowerPoint ejecutivos (.pptx)
+    │
     ├── log/
-    │   └── release-dashboard/         # Logs de cron y generación batch
-    └── backups/
-        └── release-dashboard-application/ # Copias de seguridad preventivas (.tar.gz)
-```
-
-En el despliegue automático (`scripts/deploy-production.ps1`):
-- Los datos se alojan de forma permanente en `/infocodes/var/storage/release-dashboard`.
-- Las presentaciones ejecutivas PPTX se unifican en `/infocodes/var/storage/executive_pptx`.
-- Los logs se redirigen a `/infocodes/var/log/release-dashboard`.
-- Para garantizar retrocompatibilidad total con scripts locales, cron jobs históricos y URLs, se mantienen symlinks transparentes (`data` y `logs`) tanto en la raíz del proyecto como dentro de cada release activa.
-
-### 3.2 Usuario de Aplicación y Servidor
-
-El despliegue opera sobre el servidor de producción mediante SSH:
-- **Host**: `10.132.26.96` (`infocodes.si.orange.es`)
-- **Usuario**: `infocodes`
-- **Árbol base**: `/infocodes/project/release-dashboard-application` y `/infocodes/var/`
-
----
-
-## 4. Configuración de Seguridad
-
-### 4.1 SSH (Acceso Remoto)
-
-```bash
-# Editar configuración de SSH
-sudo nano /etc/ssh/sshd_config
-
-# Cambios recomendados:
-Port 22                          # o puerto personalizado
-PermitRootLogin no              # ¡IMPORTANTE!
-PasswordAuthentication no       # Solo key-based auth
-PubkeyAuthentication yes        # Autenticación por clave
-MaxAuthTries 3
-MaxSessions 10
-ClientAliveInterval 300
-ClientAliveCountMax 2
-```
-
-**Configurar clave SSH para despliegue**:
-
-```bash
-# Como usuario 'app', crear directorio SSH
-sudo -u app mkdir -p /home/app/.ssh
-sudo -u app chmod 700 /home/app/.ssh
-
-# Añadir clave pública de GitHub Actions
-# (la que generaste con ssh-keygen)
-echo "ssh-rsa AAAA..." | sudo tee -a /home/app/.ssh/authorized_keys
-sudo -u app chmod 600 /home/app/.ssh/authorized_keys
-
-# Reiniciar SSH
-sudo systemctl restart sshd
-```
-
-### 4.2 Firewall
-
-```bash
-# Habilitar UFW (Uncomplicated Firewall)
-sudo ufw enable
-
-# Permitir SSH
-sudo ufw allow 22/tcp
-
-# Permitir HTTP y HTTPS
-sudo ufw allow 80/tcp
-sudo ufw allow 443/tcp
-
-# Bloquear todo lo demás por defecto
-sudo ufw default deny incoming
-sudo ufw default allow outgoing
-
-# Ver estado
-sudo ufw status verbose
-```
-
-### 4.3 Fail2Ban (Protección contra ataques SSH)
-
-```bash
-# Instalar
-sudo apt install -y fail2ban
-
-# Crear configuración local
-sudo cp /etc/fail2ban/jail.conf /etc/fail2ban/jail.local
-sudo nano /etc/fail2ban/jail.local
-
-# Cambios recomendados en [DEFAULT] section:
-bantime = 3600          # Ban por 1 hora
-findtime = 600          # Ventana de tiempo (10 min)
-maxretry = 5            # Intentos máximos
-
-# En [sshd] section:
-enabled = true
-
-# Reiniciar
-sudo systemctl restart fail2ban
-sudo systemctl enable fail2ban
-```
-
-### 4.4 Certificado SSL/TLS
-
-**No confirmado**: el `nginx.conf` real de este proyecto escucha en el puerto `8081` (no en 80/443) y su bloque `server { listen 443 ssl; ... }` está comentado/deshabilitado (ver `nginx.conf`, líneas finales). No está confirmado si el VPS termina TLS en otra capa (otro Nginx/balanceador delante de este, o directamente no hay HTTPS para `infocodes.si.orange.es:8081`). Lo siguiente es la referencia genérica de cómo se configuraría Let's Encrypt si este Nginx fuera el punto de terminación TLS; no asumas que ya está así configurado sin verificarlo en el VPS real.
-
-```bash
-# Opción 1: Let's Encrypt (gratuito, recomendado)
-sudo apt install -y certbot python3-certbot-nginx
-
-# Obtener certificado (ejemplo genérico; el dominio real es infocodes.si.orange.es,
-# pero no está confirmado que este Nginx sea el punto de terminación TLS — ver nota arriba)
-sudo certbot certonly --standalone -d example.com
-
-# Auto-renovación (automática con apt)
-sudo systemctl enable certbot.timer
-sudo systemctl start certbot.timer
-
-# Opción 2: Certificado autofirmado (solo testing)
-sudo openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
-  -keyout /etc/ssl/private/server.key \
-  -out /etc/ssl/certs/server.crt
+    │   ├── release-dashboard/          # Logs de cron batch y conversiones
+    │   └── nginx/                      # infocodes.access.log y infocodes.error.log
+    │
+    ├── backups/
+    │   └── release-dashboard-application/ # Copias de seguridad preventivas (backup_*.tar.gz)
+    │
+    └── cache/
+        └── nginx/                      # Caché compartida para Epsilon IA y proxies
 ```
 
 ---
 
-## 5. Configuración de la Aplicación
+## 5. Configuración de Red, Puertos y Firewall
 
-### 5.1 Variables de Entorno
+### Puertos de Red
 
-**No confirmado**: si en el VPS de producción se usa realmente un archivo `.env` para este repo. El repo incluye una plantilla (`config/.env.example`) pensada para configuración local/desarrollo de los conversores, pero `docs/DEPLOYMENT.md` no menciona ningún `.env` como parte del procedimiento de despliegue en el VPS. Las variables reales que aparecen en `config/.env.example` son estas (no `FLASK_ENV`/`SECRET_KEY`, que no existen en este repo):
+| Puerto | Protocolo | Servicio | Acceso |
+|---|---|---|---|
+| **22** | TCP | SSH (acceso remoto y despliegue SCP) | Restringido a red corporativa Orange / VPN. |
+| **8081** | TCP | Nginx (Release Dashboard y servicios web) | Acceso institucional / intranet Orange. |
+| **8000** | TCP | Backend FastAPI (`cso-incident-masivas-report`) | Interno (`localhost` únicamente). |
+| **3001** | TCP | Backend Next.js (`Gestión de Problemas`) | Interno (`localhost` únicamente). |
 
-```bash
-# config/.env.example (plantilla real del repo)
-APP_ENV=development
-DEBUG=True
-LOG_LEVEL=debug
-LOG_FORMAT=standard
-CACHE_TTL=60
-FEATURE_FLAGS={"advanced_filters": true, "experimental_features": false}
-DATABASE_URL=sqlite:///incidents.db
-VERSION=0.1.0
-DEPLOYMENT_ENVIRONMENT=development
+### DNS y Resolución
+
+```text
+infocodes.si.orange.es ──► 10.132.26.96
 ```
 
-Si se decide usar un `.env` equivalente en el VPS, debería vivir en el checkout real y no en `/var/www/...`:
+---
 
-```bash
-sudo chmod 600 /infocodes/project/release-dashboard-application/.env
-sudo chown <usuario-deploy>:<grupo-deploy> /infocodes/project/release-dashboard-application/.env
-```
+## 6. Configuración de Nginx (`nginx.conf`)
 
-### 5.2 Configuración de Nginx
-
-Este es un extracto fiel de la configuración real (`nginx.conf` en la raíz del repo, con copia activa en `/infocodes/nginx/conf/nginx.conf` en el VPS). Nginx escucha en el puerto **8081** (no 80/443) y sirve, en el mismo `server{}`, este repo **y** sus aplicaciones hermanas:
+Extracto de la configuración activa en `/infocodes/nginx/conf/nginx.conf`:
 
 ```nginx
-upstream fastapi_backend {
-    server localhost:8000;
+worker_processes 1;
+error_log /infocodes/var/log/nginx/error.log info;
+pid /infocodes/var/run/nginx.pid;
+
+events {
+    worker_connections 1024;
 }
 
-upstream gestion_problemas_backend {
-    server localhost:3001;
+http {
+    include mime.types;
+    default_type application/octet-stream;
+    sendfile on;
+    keepalive_timeout 65;
+    gzip on;
+
+    proxy_cache_path /infocodes/var/cache/nginx levels=1:2 keys_zone=my_cache:10m max_size=1g inactive=60m use_temp_path=off;
+
+    upstream fastapi_backend {
+        server localhost:8000;
+    }
+
+    upstream gestion_problemas_backend {
+        server localhost:3001;
+    }
+
+    server {
+        listen 8081 default_server;
+        server_name 10.132.26.96 infocodes.si.orange.es;
+        access_log /infocodes/var/log/nginx/infocodes.access.log;
+
+        # Cabeceras de seguridad
+        add_header X-Content-Type-Options "nosniff" always;
+        add_header X-Frame-Options "SAMEORIGIN" always;
+        add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+
+        # Dashboards estáticos del release activo
+        location /dashboards {
+            alias /infocodes/project/release-dashboard-application/current/dashboards;
+            index index.html index.htm;
+            try_files $uri $uri/ /index.html;
+        }
+
+        # Datasets JSON desde almacenamiento desacoplado persistente
+        location /data {
+            alias /infocodes/var/storage/release-dashboard;
+            autoindex off;
+        }
+
+        # Proxy hacia servicio Epsilon IA (con caché compartida resiliente)
+        location /api/epsilon/ {
+            proxy_pass https://soptmc.si.orange.es/MonTMC/api/epsilon/;
+            proxy_ssl_verify off;
+            proxy_ssl_server_name on;
+            proxy_set_header Host soptmc.si.orange.es;
+            proxy_connect_timeout 15s;
+            proxy_read_timeout 30s;
+            proxy_cache my_cache;
+            proxy_cache_valid 200 15m;
+            proxy_cache_valid 404 1m;
+            proxy_cache_use_stale error timeout updating http_500 http_502 http_503 http_504;
+            proxy_cache_lock on;
+            proxy_cache_lock_timeout 5s;
+            proxy_ignore_headers Cache-Control Expires Set-Cookie;
+            add_header X-Cache-Status $upstream_cache_status always;
+        }
+
+        # Aplicación Gestión de Problemas (Next.js con pm2)
+        location /problemas {
+            proxy_pass http://gestion_problemas_backend;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+        }
+
+        # Módulos hermanos (conf.d/cso-incident.conf -> /reportes-incidencias y /api)
+        include /infocodes/nginx/conf/conf.d/*.conf;
+
+        # Aplicación raíz delegada a socket Unix
+        location / {
+            proxy_pass http://unix:/infocodes/var/run/infocodes.sock;
+            proxy_cache my_cache;
+        }
+    }
 }
-
-server {
-    listen 8081 default_server;
-    server_name 10.132.68.85 infocodes.si.orange.es;
-    access_log /infocodes/var/log/nginx/infocodes.access.log;
-
-    # Dashboards de este repo (contenido estático, servido directo desde el checkout)
-    location /dashboards {
-        alias /infocodes/project/release-dashboard-application/dashboards;
-        index index.html index.htm;
-        try_files $uri $uri/ /index.html;
-    }
-
-    # JSON generados por los conversores de este repo (almacenamiento desacoplado)
-    location /data {
-        alias /infocodes/var/storage/release-dashboard;
-        autoindex off;
-    }
-
-    # Lo siguiente pertenece a repos/servicios hermanos, fuera de este proyecto:
-    location /reportes-incidencias {
-        alias /infocodes/project/cso-incident-masivas-report/app;
-        index index.html index.htm;
-        try_files $uri $uri/ /index.html;
-    }
-
-    location /problemas {
-        proxy_pass http://gestion_problemas_backend;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-    }
-
-    # Proxy hacia API Epsilon Resumen IA (con caché compartida para evitar saturación)
-    location /api/epsilon/ {
-        proxy_pass https://soptmc.si.orange.es/MonTMC/api/epsilon/;
-        proxy_ssl_verify off;
-        proxy_ssl_server_name on;
-        proxy_set_header Host soptmc.si.orange.es;
-        proxy_connect_timeout 15s;
-        proxy_read_timeout 30s;
-        proxy_cache my_cache;
-        proxy_cache_valid 200 15m;
-        proxy_cache_valid 404 1m;
-        proxy_cache_use_stale error timeout updating http_500 http_502 http_503 http_504;
-        proxy_cache_lock on;
-        proxy_cache_lock_timeout 5s;
-        proxy_ignore_headers Cache-Control Expires Set-Cookie;
-        proxy_cache_bypass $http_cache_control;
-        add_header X-Cache-Status $upstream_cache_status always;
-    }
-
-    location /api {
-        proxy_pass http://fastapi_backend;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-    }
-}
 ```
 
-No hay `location /static/` ni `root /var/www/...` para este proyecto: `alias` apunta directamente al checkout git, sin copia intermedia. Ver el `nginx.conf` completo en la raíz del repo para el resto de bloques (caché, la ruta `/` que delega a otra aplicación vía socket Unix, etc.) — todos ajenos a este repositorio.
-
-Tras cambiar `nginx.conf` en el VPS (fichero activo en `/infocodes/nginx/conf/nginx.conf`, proceso en espacio de usuario `/infocodes`, sin `sudo` ni `systemctl`):
-```bash
-cp /infocodes/project/release-dashboard-application/nginx.conf /infocodes/nginx/conf/nginx.conf
-nginx -t
-nginx -s reload
-```
-*(Alternativa enviando señal directa: `kill -HUP $(cat /infocodes/var/run/nginx.pid)`).*
-
-### 5.3 Supervisor / pm2 (procesos de los backends hermanos)
-
-Este repositorio **no tiene backend propio que mantener vivo** con Supervisor, systemd ni Gunicorn: los dashboards son estáticos y los conversores solo se ejecutan puntualmente vía cron (`scripts/generate-dashboards.sh`), no como proceso persistente.
-
-Los dos backends que sí necesitan un supervisor de procesos son de repos hermanos y quedan **fuera del alcance de este documento**:
-- El backend **FastAPI** (`cso-incident-masivas-report`, puerto 8000) — su gestión de proceso (Supervisor, systemd o similar) se documenta en ese repo, no en este.
-- El backend **Next.js** de "Gestión de Problemas" (puerto 3001) — gestionado con **pm2** según el propio `nginx.conf`; su configuración de pm2 vive en ese otro repo/proceso.
-
-Si se necesita reiniciar o inspeccionar esos procesos, hay que hacerlo en el contexto de esos repos hermanos (`pm2 status`, `pm2 restart ...` para el de Next.js; el mecanismo del backend FastAPI **no confirmado** desde este repositorio).
-
----
-
-## 6. Health Checks y Monitoreo
-
-**No confirmado / no implementado actualmente**: `scripts/` en este repo solo contiene `generate-dashboards.sh` (ver `docs/PROJECT-STRUCTURE.md`) — no existe ningún `health-check.sh` real. Lo que sigue es una propuesta de referencia, no algo ya desplegado.
-
-### 6.1 Script de Health Check (propuesta, no existente hoy)
-
-Si se decide crear uno, debería vivir en `scripts/health-check.sh` dentro del propio checkout (no en `/var/www/...`), y no depende de ningún proceso Python persistente porque este repo no tiene uno:
+### Comandos de Operación de Nginx (Usuario `infocodes`)
 
 ```bash
-#!/bin/bash
+# Validar sintaxis de configuración
+/infocodes/nginx/sbin/nginx -t
 
-# Health check para la aplicación (propuesta — no implementado en el repo actualmente)
-
-REPO_DIR="/infocodes/project/release-dashboard-application"
-LOG_FILE="$REPO_DIR/logs/health-check.log"
-
-check_disk_space() {
-    USAGE=$(df "$REPO_DIR" | awk 'NR==2 {print $5}' | sed 's/%//')
-    if [ "$USAGE" -gt 85 ]; then
-        echo "[$(date)] ERROR: Disk usage ${USAGE}% > 85%" >> "$LOG_FILE"
-        return 1
-    fi
-    echo "[$(date)] OK: Disk usage ${USAGE}%" >> "$LOG_FILE"
-    return 0
-}
-
-check_http_status() {
-    # Puerto real del Nginx que sirve este repo (ver nginx.conf): 8081, no 80
-    STATUS=$(curl -s -o /dev/null -w "%{http_code}" "http://localhost:8081/dashboards/portal/")
-    if [ "$STATUS" != "200" ]; then
-        echo "[$(date)] ERROR: HTTP status $STATUS" >> "$LOG_FILE"
-        return 1
-    fi
-    echo "[$(date)] OK: HTTP status 200" >> "$LOG_FILE"
-    return 0
-}
-
-# Este repo no tiene proceso Python persistente que comprobar (los conversores
-# solo corren puntualmente vía cron); no incluir un check de tipo "gunicorn running".
-
-check_disk_space
-check_http_status
-
-exit 0
-```
-
-### 6.2 Cron Job para Health Check (si se implementa)
-
-```bash
-sudo -u <usuario-deploy> crontab -e
-
-# Ejecutar cada 5 minutos
-*/5 * * * * /infocodes/project/release-dashboard-application/scripts/health-check.sh
-```
-
-### 6.3 Monitoreo de Logs
-
-```bash
-# Logs de la conversión batch (generados por scripts/generate-dashboards.sh)
-tail -f /infocodes/var/log/release-dashboard/dashboards-generation-$(date +%Y%m%d).log
-
-# Logs de Nginx (ruta real, ver nginx.conf: worker_processes/error_log relativos a /infocodes)
-tail -f /infocodes/var/log/nginx/infocodes.access.log
-
-# Buscar errores en los logs de conversión
-grep ERROR /infocodes/var/log/release-dashboard/*.log
-```
-
-**No confirmado**: no hay logs de "Supervisor" ni de "app.log" para este repo, porque no hay proceso de aplicación propio corriendo de forma continua.
-
----
-
-## 7. Backups y Restauración
-
-**No confirmado / no implementado actualmente**: no existe hoy ningún script de backup en este repo (`scripts/` solo tiene `generate-dashboards.sh`), ni un mecanismo de backup automático documentado en `docs/DEPLOYMENT.md`. Según esa guía, el rollback real es solo `git checkout <commit-anterior>` / `git revert` sobre el código; **no hay backup ni restauración de `data/`** (no se versiona, está en `.gitignore`) — si hace falta recuperar datos, se regeneran desde los CSV de `data/input/` con `scripts/generate-dashboards.sh`. Lo que sigue es una propuesta de referencia, no algo ya desplegado.
-
-### 7.1 Script de Backup (propuesta, no existente hoy)
-
-```bash
-#!/bin/bash
-# Propuesta de scripts/backup.sh — no implementado en el repo actualmente
-
-REPO_DIR="/infocodes/project/release-dashboard-application"
-BACKUP_DIR="/infocodes/backups/release-dashboard"   # ruta de ejemplo, no confirmada
-DATA_DIR="$REPO_DIR/data"
-TIMESTAMP=$(date +%Y%m%d-%H%M%S)
-BACKUP_PATH="$BACKUP_DIR/$TIMESTAMP"
-
-echo "[$(date)] Starting backup..."
-
-mkdir -p "$BACKUP_PATH"
-
-# Backup de datos (data/output, data/input, data/errors — no versionados en git)
-tar -czf "$BACKUP_PATH/data.tar.gz" -C "$DATA_DIR" . 2>/dev/null
-
-# Mantener solo últimos 30 días
-find "$BACKUP_DIR" -type d -mtime +30 -exec rm -rf {} \; 2>/dev/null
-
-echo "[$(date)] Backup completed: $BACKUP_PATH"
-```
-
-El código no necesita backup propio más allá de git (es un checkout de la rama `production`); no hay `.env` de producción confirmado que respaldar (ver sección 5.1).
-
-### 7.2 Cron Job de Backup (si se implementa)
-
-```bash
-sudo crontab -e
-
-# Backup diario a las 2am
-0 2 * * * /infocodes/project/release-dashboard-application/scripts/backup.sh
-```
-
-### 7.3 Restauración de datos
-
-No hay `systemctl stop/start release-dashboard` que ejecutar (no hay servicio propio de este repo). Restaurar datos es simplemente extraer el `tar.gz` sobre `data/`, o —la vía real usada hoy— regenerar desde los CSV originales:
-
-```bash
-# Opción A: desde un backup (si existiera)
-tar -xzf "$BACKUP_PATH/data.tar.gz" -C /infocodes/project/release-dashboard-application/data
-
-# Opción B: regenerar desde los CSV de origen (vía real documentada en DEPLOYMENT.md)
-cd /infocodes/project/release-dashboard-application
-./scripts/generate-dashboards.sh
+# Recargar configuración en caliente sin caída de conexiones
+/infocodes/nginx/sbin/nginx -s reload
 ```
 
 ---
 
-## 8. Requisitos de Conectividad
+## 7. Automatización Batch y Cron Jobs
 
-### 8.1 Puertos Requeridos
+El procesamiento batch de los archivos CSV depositados en `input/` se ejecuta de forma desatendida mediante el crontab del usuario `infocodes`:
 
-```
-22/TCP    - SSH (acceso remoto, esencial)
-8081/TCP  - Nginx (puerto real donde escucha este VPS, ver nginx.conf;
-            no 80/443 directamente para este dominio/servidor)
-```
-
-**No confirmado**: si 80/443 están expuestos por delante de este Nginx (p. ej. otro balanceador que redirige a 8081) para servir HTTPS al público; el `nginx.conf` de este proyecto no lo gestiona (ver sección 4.4).
-
-**Puertos internos usados por servicios hermanos** (no de este repo, no deberían exponerse fuera del VPS):
-```
-8000/TCP - Backend FastAPI (cso-incident-masivas-report)
-3001/TCP - Backend Next.js / pm2 (Gestión de Problemas)
+```bash
+# Editar crontab del usuario
+crontab -e
 ```
 
-### 8.2 DNS
-
+**Entrada configurada**:
+```cron
+# Procesamiento periódico de incidencias cada 15 minutos
+*/15 * * * * /infocodes/project/release-dashboard-application/current/scripts/generate-dashboards.sh >> /infocodes/var/log/release-dashboard/cron-generate.log 2>&1
 ```
-A record:
-  infocodes.si.orange.es → 10.132.68.85   (según server_name en nginx.conf)
-```
-
-No hay entorno de staging, por lo que no aplica ningún registro DNS adicional para este proyecto.
-
-### 8.3 Bandwidth Requerido
-
-**No confirmado**: no se ha medido el tráfico real. Al ser un VPS compartido con varias aplicaciones (ver introducción de este documento), el ancho de banda necesario depende del conjunto, no solo de este repo.
 
 ---
 
-## 9. Verificación Post-Deploy
+## 8. Sondas de Salud, Backups y Contingencia
 
-Después de desplegar (ver también el checklist real de `docs/DEPLOYMENT.md`), verifica:
+### 8.1 Sondas de Salud (`status.sh`)
+El servidor dispone de una herramienta de diagnóstico rápido ejecutable local o remotamente:
 
 ```bash
-# 1. Acceso SSH
-ssh app@infocodes.si.orange.es "echo OK"
-
-# 2. Checkout en la rama correcta
-cd /infocodes/project/release-dashboard-application && git log -1 && git branch --show-current
-
-# 3. Directorios de datos presentes
-ls -la /infocodes/project/release-dashboard-application/data/
-
-# 4. Firewall activo
-sudo ufw status
-
-# 5. Nginx activo y config válida (sin sudo ni systemctl)
-nginx -t
-ps -ef | grep nginx
-
-# 6. Acceso HTTP al portal (puerto real: 8081)
-curl -I http://infocodes.si.orange.es:8081/dashboards/portal/
-
-# 7. Datos accesibles vía Nginx
-curl -I http://infocodes.si.orange.es:8081/data/index.json
-
-# 8. Servicios hermanos no afectados (comparten el mismo Nginx)
-curl -I http://infocodes.si.orange.es:8081/reportes-incidencias
-curl -I http://infocodes.si.orange.es:8081/problemas
+/infocodes/project/release-dashboard-application/scripts/status.sh
 ```
 
-No hay `pip3 list | grep -i flask` que comprobar (no hay Flask en este repo) ni URL de staging que verificar.
+El script comprueba:
+- Estado del proceso y sintaxis de Nginx (`nginx -t`).
+- Versión activa en `current/VERSION`.
+- Conteo de archivos en `/infocodes/var/storage/release-dashboard/` (`input`, `output`, `reports`).
+- Códigos de respuesta HTTP (200) de `/dashboards/portal/`, `/data/index.json` y proxies.
+
+### 8.2 Backups Preventivos
+En cada despliegue ejecutado por `deploy-production.ps1`:
+- Se genera un paquete comprimido en `/infocodes/var/backups/release-dashboard-application/backup_<TIMESTAMP>.tar.gz` respaldando el catálogo actual de `output/` y la configuración de `nginx.conf`.
+- Se aplica rotación automática reteniendo las últimas **5 copias**.
+
+### 8.3 Protocolo de Rollback Inmediato
+Si una release presenta problemas:
+1. **Reversión por Symlink (`rollback.sh`)**:
+   ```bash
+   /infocodes/project/release-dashboard-application/scripts/rollback.sh
+   ```
+   Conmuta de inmediato el enlace `current` a la release previa y recarga Nginx.
+2. **Reversión por Copia de Seguridad**:
+   ```powershell
+   .\scripts\deploy-production.ps1 -Rollback
+   ```
 
 ---
 
-## 10. Requisitos de Aplicación en Ejecución
+## 9. Checklist de Preparación y Auditoría del VPS
 
-### Este repositorio: solo Dashboards HTML + datos JSON (estado real, no hipotético)
+Antes de poner en marcha o auditar el servidor, verificar:
 
-✅ **Suficiente con**:
-- Nginx (ya instalado y corriendo en el VPS, compartido con las apps hermanas) sirviendo `dashboards/` y `data/` directamente desde el checkout git vía `alias` (ver `nginx.conf`, sección 5.2 de este documento).
-- Python **solo para la ejecución puntual** de los conversores CSV→JSON, disparada por el cron `scripts/generate-dashboards.sh` — no hay ningún proceso Python de este repo que deba mantenerse corriendo de forma continua.
-- Los JSON consumidos por los dashboards viven en `data/output/` del propio checkout.
-
-```bash
-# Nginx ya debería estar activo para el resto de apps del VPS; si no lo estuviera:
-sudo systemctl start nginx
-sudo systemctl enable nginx
-```
-
-### Los backends reales (FastAPI + Next.js) — fuera del alcance de este repo
-
-El dominio sí tiene backends con proceso persistente, pero **viven en repos/procesos hermanos, no en este**:
-
-- **FastAPI** (repo `cso-incident-masivas-report`, puerto 8000, `proxy_pass` en `/api`). Su gestión de proceso (Gunicorn/Uvicorn + Supervisor o systemd) se documenta y despliega desde ese repo.
-- **Next.js con pm2** (puerto 3001, `proxy_pass` en `/problemas`), de la aplicación de Gestión de Problemas. Se gestiona con comandos `pm2` desde ese otro proyecto.
-
-No hay que montar Gunicorn, uWSGI, Supervisor ni una unidad `systemd` para *este* repositorio: no tiene ni tendrá (salvo cambio de arquitectura futuro, no planificado a fecha de este documento) un backend propio. Si en algún momento se añadiera uno, habría que actualizar tanto este documento como `nginx.conf`, `docs/DEPLOYMENT.md` y `docs/PROJECT-STRUCTURE.md` para reflejarlo — hoy no es el caso.
+- [ ] Conectividad SSH a `infocodes@10.132.26.96` operativa con autenticación por clave pública.
+- [ ] Directorios persistentes `/infocodes/var/storage/release-dashboard/` y `/infocodes/var/storage/executive_pptx/` creados con permisos para el usuario `infocodes`.
+- [ ] Directorio de logs `/infocodes/var/log/release-dashboard/` disponible.
+- [ ] Intérprete Python 3.10+ y paquetes de `requirements.txt` instalados.
+- [ ] Binario Nginx operativo en `/infocodes/nginx/sbin/nginx` escuchando en el puerto 8081.
+- [ ] Tarea programada en `crontab` apuntando a `current/scripts/generate-dashboards.sh`.
+- [ ] Sonda `scripts/status.sh` respondiendo con código 200 en todos los endpoints.
 
 ---
 
-## 11. Checklist de Deploymnet
+## Documentación Relacionada
 
-Antes de desplegar en producción (ver también el checklist de `docs/DEPLOYMENT.md`, que es la referencia real del procedimiento):
-
-- [ ] VPS accesible por SSH, checkout del repo presente en `/infocodes/project/release-dashboard-application`
-- [ ] SO actualizado (`apt update && apt upgrade`)
-- [ ] Python instalado (para los conversores; versión exacta no confirmada)
-- [ ] Directorios de datos (`data/input`, `data/output`, `data/errors`) presentes con permisos correctos
-- [ ] Firewall habilitado y puerto 8081 (y 22) accesibles
-- [ ] Nginx configurado (`nginx -t` sin errores) y corriendo
-- [ ] Cron de `scripts/generate-dashboards.sh` configurado (ver `scripts/README.md`)
-- [ ] Prueba: `git pull origin production` funciona sin conflictos
-- [ ] Prueba: acceso HTTP a `/dashboards/portal/` y `/data/index.json` en el puerto 8081
-
-**No aplica** (no existe ese mecanismo en este proyecto): despliegue automático desde GitHub Actions (no hay `deploy.yml`, ver `docs/PROJECT-STRUCTURE.md`), SSH key en GitHub Secrets para deploy, certificado SSL gestionado por este Nginx (ver sección 4.4), health checks/backups automáticos (no implementados hoy, ver secciones 6 y 7).
+- [DEPLOYMENT.md](DEPLOYMENT.md) — Manual integral de despliegue Standalone Runtime.
+- [PROJECT-STRUCTURE.md](PROJECT-STRUCTURE.md) — Arquitectura y mapa exhaustivo de directorios.
+- [VERSION-MANAGEMENT.md](VERSION-MANAGEMENT.md) — Política de versionado semántico y trazabilidad.
+- [TROUBLESHOOTING.md](TROUBLESHOOTING.md) — Diagnóstico y resolución de incidencias en VPS y local.
+- [LOGS.md](LOGS.md) — Estándar unificado de bitácora técnica e intervenciones.
 
 ---
 
-## 12. Troubleshooting Común
-
-### "Permission denied (publickey)"
-
-```bash
-# Verificar permisos SSH
-sudo -u app ssh -i /home/app/.ssh/id_rsa app@localhost "echo OK"
-
-# Revisar authorized_keys
-cat ~/.ssh/authorized_keys
-
-# Revisar logs
-sudo journalctl -u ssh -f
-```
-
-### "Python package not found"
-
-```bash
-# Verificar requirements.txt (raíz y converters/)
-cat /infocodes/project/release-dashboard-application/requirements.txt
-cat /infocodes/project/release-dashboard-application/converters/requirements.txt
-
-# Reinstalar dependencias
-cd /infocodes/project/release-dashboard-application
-pip3 install -r requirements.txt
-pip3 install -r converters/requirements.txt
-```
-
-**No confirmado**: si el VPS usa un virtualenv dedicado o el intérprete de sistema (ver sección 2.2).
-
-### "Nginx: 404 Not Found"
-
-```bash
-# Verificar configuración Nginx
-nginx -t
-
-# Verificar que el checkout y el alias apuntan al mismo sitio
-ls -la /infocodes/project/release-dashboard-application/dashboards/
-
-# Revisar logs (ruta real, ver nginx.conf)
-tail -f /infocodes/var/log/nginx/infocodes.access.log
-```
-
-### "Disk space full"
-
-```bash
-# Ver uso de disco
-df -h
-
-# Limpiar logs de conversión antiguos (dentro del propio repo)
-find /infocodes/project/release-dashboard-application/logs -name "*.log" -mtime +30 -delete
-```
-
-**No confirmado**: no existe hoy un directorio de backups (`/var/backups/release-dashboard`) para este proyecto que limpiar — ver sección 7.
-
----
-
-**Fecha de Actualización**: 2026-07-10 — corregido para reflejar la arquitectura real (sin backend Flask/FastAPI propio de este repo, sin entorno de staging, rutas reales `/infocodes/project/release-dashboard-application/`). Ver [`DEPLOYMENT.md`](DEPLOYMENT.md) y [`PROJECT-STRUCTURE.md`](PROJECT-STRUCTURE.md) para el detalle verificado del despliegue y la estructura real.
-**Versión**: 1.1
-**Mantenedor**: DevOps Team
+**Última actualización**: 2026-10-20  
+**Versión del documento**: 2.0  
+**Entorno**: Producción (`10.132.26.96`)
