@@ -29,7 +29,7 @@ El proyecto integra:
 - `converters/src/report_generator/`: Generadores PowerPoint para postmortem y reportes ejecutivos Confluence
 - `converters/cli/`: Scripts de ejecución por consola (`convert_incidents.py`, `convert_postmortems.py`, `generate_executive_report.py`, etc.)
 - `serve_app.py`: Servidor HTTP de desarrollo local (puerto 8080) con endpoints de upload, proxy IA y reportes PPTX
-- `deploy.sh` / `scripts/deploy-production.ps1`: Scripts de despliegue Standalone Runtime al VPS
+- `scripts/deploy-production.ps1`: Script de despliegue Standalone Runtime al VPS (empaquetado selectivo Zero Git)
 
 ## Dashboard: Massive Incidents Dashboard
 

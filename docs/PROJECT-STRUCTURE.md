@@ -21,7 +21,6 @@ release-dashboard-application/
 ├── 📄 requirements-dev.txt          # Herramientas de testing, linting y análisis estático
 ├── 📄 skills-lock.json              # Registro de dependencias de agentes de IA
 ├── 📄 serve_app.py                  # Servidor local de desarrollo (puerto 8080, estáticos, subida CSV, proxies)
-├── 📄 deploy.sh                     # Script informativo de ayuda (redirige a deploy-production.ps1 / status.sh)
 ├── 📄 nginx.conf                    # Configuración de Nginx (copia activa en /infocodes/nginx/conf/nginx.conf)
 │
 ├── 📁 converters/                   # Todo el código Python (CLI, lógica core, tests, docs, specs)

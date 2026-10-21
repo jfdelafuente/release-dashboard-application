@@ -280,7 +280,6 @@ isort --check-only src/ cli/
 
 ```
 release-dashboard-application/
-├── deploy.sh                     # Script de despliegue automatizado y seguro para VPS
 ├── serve_app.py                  # Servidor local (dashboards + /api/upload + proxies IA y FastAPI + PPT gen)
 ├── nginx.conf                    # Configuración de Nginx para el servidor VPS
 ├── dashboards/                   # Suite de Dashboards (HTML/CSS/JS)
@@ -304,7 +303,7 @@ release-dashboard-application/
 │   ├── input/                    # CSVs de entrada
 │   ├── output/                   # JSONs generados + index.json
 │   └── errors/                   # Reportes de error de conversión
-├── scripts/                      # Scripts de operación (cron, generación batch)
+├── scripts/                      # Scripts de despliegue Standalone (deploy-production.ps1) y operación (status, rollback)
 ├── docs/                         # Documentación general del proyecto
 └── config/                       # Configuración (.env.example, hook pre-commit)
 ```
