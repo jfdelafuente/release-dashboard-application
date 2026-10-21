@@ -73,7 +73,7 @@ converters/
 │   ├── convert_incidents.bat / .sh
 │   └── convert_postmortems.bat / .sh
 │
-├── tests/                # Suite de pruebas automatizadas (+470 tests)
+├── tests/                # Suite de pruebas automatizadas (+580 tests)
 │   ├── unit/             # Pruebas unitarias de parsers, normalizadores y esquemas
 │   ├── integration/      # Pruebas de integración con I/O de ficheros
 │   ├── e2e/              # Pruebas extremo a extremo y rendimiento
@@ -159,11 +159,35 @@ python cli/generate_postmortem_report.py --all
 python cli/build_index.py data/output/
 ```
 
+### 6. Uso como Librería en Python
+Aunque el uso ordinario se realiza vía CLI o scripts lanzadores, los motores pueden integrarse directamente en código Python:
+
+```python
+from csv_to_json.converter import CsvToJsonConverter
+from csv_to_json.postmortem_converter import PostmortemConverter
+
+# Instanciar y convertir archivo de incidencias masivas
+converter = CsvToJsonConverter()
+success, report = converter.convert_file(
+    input_path="data/input/incidencias.csv",
+    output_path="data/output/incidencias.json",
+    error_path="data/errors/incidencias_errors.json"
+)
+
+# Convertir archivo postmortem agrupado por release
+pm_converter = PostmortemConverter()
+success_pm, report_pm = pm_converter.convert_file(
+    input_path="data/input/postmortem.csv",
+    output_path="data/output/postmortem.json",
+    release_name="2026R7"
+)
+```
+
 ---
 
 ## 📄 Contrato de Datos (JSON Output)
 
-Los conversores estructuran la salida JSON con el siguiente esquema estándar:
+Los conversores estructuran la salida JSON con el siguiente esquema estándar (formato *Envelope*):
 
 ```json
 {
@@ -202,9 +226,12 @@ Los conversores estructuran la salida JSON con el siguiente esquema estándar:
 
 ## 🧪 Testing y Calidad
 
-El módulo cuenta con una suite completa de pruebas automatizadas:
+El módulo cuenta con una suite completa de más de 580 pruebas automatizadas con un tiempo de ejecución inferior a 15 segundos:
 
 ```bash
+# Situarse siempre en converters antes de ejecutar pytest
+cd converters
+
 # Ejecutar todos los tests
 pytest tests/ -v
 
@@ -215,6 +242,9 @@ pytest tests/unit/ -v
 pytest tests/integration/ -v
 pytest tests/e2e/ -v
 
+# Ejecutar en paralelo aprovechando aislamiento por tmp_path
+pytest tests/ -n auto
+
 # Medir cobertura de código
 pytest tests/ --cov=src --cov-report=term-missing
 ```
@@ -223,8 +253,10 @@ pytest tests/ --cov=src --cov-report=term-missing
 
 ## 📚 Documentación Adicional
 
-- [Arquitectura Detallada](docs/ARCHITECTURE.md)
-- [Referencia de la API](docs/API.md)
-- [Guía de Rendimiento](docs/PERFORMANCE.md)
-- [Estructura y Buenas Prácticas de Pruebas](docs/TEST_STRUCTURE.md)
+- [Arquitectura Global del Sistema](../docs/ARCHITECTURE.md)
+- [Flujo Canónico CSV a JSON](../docs/CSV-TO-JSON-WORKFLOW.md)
+- [Guía de Rendimiento y Benchmarks](docs/PERFORMANCE.md)
+- [Estructura de la Suite de Pruebas](docs/TEST_STRUCTURE.md)
+- [Buenas Prácticas de Testing (Aislamiento y tmp_path)](docs/TESTING_BEST_PRACTICES.md)
+- [Diagrama de la Suite de Tests](docs/TEST_STRUCTURE_DIAGRAM.txt)
 - Especificaciones: [001 Workflow](specs/001-csv-to-json-workflow/) | [004 Postmortem](specs/004-postmortem-converter/) | [010 Executive Report](../specs/010-incident-executive-report/)

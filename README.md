@@ -15,7 +15,7 @@ El repositorio centraliza:
 | Componente | Ubicación | Descripción | Tecnología |
 |-----------|-----------|-------------|-----------|
 | **Dashboards** | [`dashboards/`](dashboards/) | Frontends web estáticos: Portal, Incidencias Masivas, Postmortem/Release, Release KPIs y **Reportes de Incidencias** | HTML5 / CSS3 / JavaScript (Vanilla ES6+) |
-| **Converters** | [`converters/`](converters/) | Motor de procesamiento CSV→JSON, saneamiento, validación y métricas pre-calculadas | Python 3.8+ |
+| **Converters** | [`converters/`](converters/) | Motor de procesamiento CSV→JSON, saneamiento, validación y métricas pre-calculadas | Python 3.10+ / 3.11 |
 | **Report Generator** | [`converters/src/report_generator/`](converters/src/report_generator/) | Generación programática de presentaciones ejecutivas corporativas (`.pptx`) | `python-pptx`, `matplotlib`, `plotly` |
 | **Servidor / Gateway** | [`serve_app.py`](serve_app.py) / [`nginx.conf`](nginx.conf) | Servidor local con endpoints de subida `/api/upload`, proxy Epsilon IA y FastAPI, y config Nginx VPS | Python / Nginx |
 
@@ -27,7 +27,7 @@ El repositorio centraliza:
 
 ```bash
 python serve_app.py
-# Abre: http://localhost:8000/dashboards/portal/
+# Abre: http://localhost:8080/dashboards/portal/
 ```
 
 > ⚠️ **No uses `python -m http.server` ni Live Server.** Solo sirven
@@ -68,7 +68,7 @@ Los JSONs se generan en `data/output/` e `index.json` se actualiza automáticame
 
 ### 3️⃣ Abre el Portal
 
-Con `serve_app.py` corriendo, ve a `http://localhost:8000/dashboards/portal/` (o simplemente `/dashboards/`, que redirige ahí vía `dashboards/index.html`).
+Con `serve_app.py` corriendo, ve a `http://localhost:8080/dashboards/portal/` (o simplemente `/dashboards/`, que redirige ahí vía `dashboards/index.html`).
 
 ### 4️⃣ Paneles y Dashboards Disponibles
 
@@ -164,7 +164,7 @@ console.log(`Tendencia 7 días: ${metadata.kpis.trend_7d}%`);
 
 ## 📋 Requisitos
 
-- **Python 3.8+**
+- **Python 3.10+ / 3.11**
 - **Sin dependencias externas** para los dashboards (usan librerías estándar del navegador + Plotly.js vía CDN)
 - Ver [`converters/requirements.txt`](converters/requirements.txt) y [`converters/requirements-dev.txt`](converters/requirements-dev.txt) para dependencias de desarrollo/test de los converters
 
@@ -201,7 +201,7 @@ console.log(`Tendencia 7 días: ${metadata.kpis.trend_7d}%`);
 
 ## ✅ Estado del Proyecto
 
-- **Tests**: ✅ passing (>80% coverage) — ver `converters/tests/`
+- **Tests**: ✅ 516+ tests passing (cobertura >80%) — ver `converters/tests/`
 - **Dashboards**: ✅ Portal, Incidencias Masivas, Postmortem/Release, Release KPIs y Reportes de Incidencias funcionales
 - **Subida de CSV desde el navegador**: ✅ vía `serve_app.py` (`/api/upload`)
 - **Conversores**: ✅ Incidencias masivas + Postmortems (CLI y batch)
@@ -343,7 +343,7 @@ Genera bajo demanda presentaciones PowerPoint corporativas (`.pptx`) con el dise
 
 ## 🚀 Despliegue en Producción (VPS)
 
-El despliegue se realiza en 1 clic de forma segura y desatendida desde tu terminal local de Windows (PowerShell en rama `production`), mediante un artefacto comprimido (*Standalone Runtime*, ~2.3 MB) transferido por SCP, con persistencia estricta de `data/`, backup automático en rotación de 5 copias, validación sintáctica de Nginx (`nginx -t`) y sondas de salud HTTP:
+El despliegue se realiza en 1 clic de forma segura y desatendida desde tu terminal local de Windows (PowerShell en rama `production`), mediante un artefacto comprimido (*Standalone Runtime*, ~2.3 MB) transferido por SCP, con persistencia estricta en almacenamiento desacoplado (`/infocodes/var/storage/release-dashboard/` para datos analíticos y `/infocodes/var/storage/executive_pptx/` para informes ejecutivos generados, con fallback a `data/` en local), backup automático en rotación de 5 copias, validación sintáctica de Nginx (`nginx -t`) y sondas de salud HTTP:
 
 ```powershell
 .\scripts\deploy-production.ps1
@@ -381,4 +381,4 @@ Ver [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) y [scripts/README.md](scripts/READM
 
 ---
 
-**Última actualización**: 2026-10-02
+**Última actualización**: 2026-10-21

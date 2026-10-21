@@ -1,230 +1,187 @@
-# Contributing to Release Dashboard Application
+# Guía de Contribución - Release Dashboard Application
 
-Thank you for contributing! This guide explains how to work with this project.
-
-## Code Standards
-
-### Python Code Style
-
-- **Formatter**: Use `black` for automatic code formatting
-- **Linter**: Pass `flake8` and `pylint` checks
-- **Naming Conventions**:
-  - Functions and variables: `snake_case`
-  - Classes: `PascalCase`
-  - Constants: `UPPER_CASE`
-- **Docstrings**: Use triple-quoted strings for all public functions and classes
-- **Comments**: Explain "why", not "what" (code should be self-documenting)
-
-### Python Example
-
-```python
-def convert_csv_to_json(input_path: str, output_path: str) -> bool:
-    """
-    Convert CSV file to JSON format.
-
-    Args:
-        input_path: Path to input CSV file
-        output_path: Path to output JSON file
-
-    Returns:
-        True if conversion successful, False otherwise
-    """
-    # Convert the file
-    return True
-```
-
-### HTML/CSS Style
-
-- **Formatting**: Use 4-space indentation
-- **Classes**: Use kebab-case (e.g., `incident-table`, `status-badge`)
-- **Comments**: Document complex sections with descriptive comments
-
-## Branch Naming
-
-Use conventional branch names:
-
-```
-feature/description        # New feature
-bugfix/description         # Bug fix
-docs/description           # Documentation changes
-refactor/description       # Refactoring
-test/description          # Test additions
-```
-
-Example: `feature/add-export-to-csv`, `bugfix/fix-date-parsing`
-
-## Commit Messages
-
-Use conventional commit format:
-
-```
-type(scope): description
-
-[optional body]
-[optional footer]
-```
-
-**Types**:
-- `feat`: New feature
-- `fix`: Bug fix
-- `docs`: Documentation
-- `style`: Code style (formatting, semicolons, etc.)
-- `refactor`: Code refactoring without feature changes
-- `test`: Adding or updating tests
-- `chore`: Build, dependencies, configuration
-
-**Examples**:
-
-```
-feat(converter): add support for UTF-8-sig encoding
-fix(dashboard): correct date parsing for AM/PM times
-docs: update quickstart with new directory structure
-test(converter): add validation tests for required fields
-```
-
-## Pull Request Process
-
-1. **Create feature branch**: `git checkout -b feature/your-feature`
-2. **Write/update code**: Follow code standards above
-3. **Write tests**: Ensure new code has tests
-4. **Run tests locally**: `pytest tests/ -v --cov=src`
-5. **Run linting**:
-   ```bash
-   black src/ tests/
-   flake8 src/ tests/
-   pylint src/ tests/
-   ```
-6. **Commit with message**: `git commit -m "feat: your change description"`
-7. **Push to remote**: `git push origin feature/your-feature`
-8. **Create PR**: Include description of changes, testing done, any breaking changes
-9. **Wait for review**: Address feedback from reviewers
-10. **Merge**: Once approved and CI passes, merge to main
-
-## Testing Requirements
-
-- **Coverage**: Minimum 80% code coverage required
-- **Tests locations**:
-  - Unit tests: `tests/unit/`
-  - Integration tests: `tests/integration/`
-  - Test fixtures: `tests/fixtures/`
-
-### Running Tests
-
-```bash
-# Run all tests with coverage report
-pytest tests/ -v --cov=src --cov-report=html
-
-# Run specific test
-pytest tests/unit/test_converter.py::test_encoding_detection -v
-
-# Run tests matching pattern
-pytest tests/ -k "converter" -v
-
-# Run with detailed output
-pytest tests/ -vv -s
-```
-
-### Writing Tests
-
-Use pytest conventions:
-
-```python
-def test_converter_handles_utf8_encoding():
-    """Test that converter correctly handles UTF-8 encoded CSV files."""
-    # Arrange: Set up test data
-    input_file = "tests/fixtures/sample_utf8.csv"
-    expected_count = 10
-
-    # Act: Run the conversion
-    result = convert_csv_to_json(input_file, output_file)
-
-    # Assert: Verify results
-    assert result is True
-    assert len(loaded_json) == expected_count
-```
-
-## Documentation
-
-### When to Write Documentation
-
-- New features: Add to relevant docs
-- API changes: Update converters/docs/API.md
-- Setup changes: Update docs/DEVELOPMENT.md
-- Deployment changes: Update docs/DEPLOYMENT.md
-
-### Documentation Format
-
-- Use Markdown
-- Include code examples where helpful
-- Keep examples tested and working
-- Update links when moving files
-
-## Security
-
-### Secrets Management
-
-**NEVER** commit:
-- `.env` files (git-ignored automatically)
-- API keys or credentials
-- Passwords or tokens
-- Private configuration
-
-**Always**:
-- Use `.env.example` for template variables
-- Store production secrets in GitHub Secrets
-- Run pre-commit hook: `config/pre-commit-hook.sh`
-
-### Pre-commit Hook
-
-The pre-commit hook automatically prevents committing:
-
-```bash
-# Instalar el hook (configuración única)
-cp config/pre-commit-hook.sh .git/hooks/pre-commit
-chmod +x .git/hooks/pre-commit
-
-# Ejecutarlo manualmente
-bash config/pre-commit-hook.sh
-```
-
-## Performance Considerations
-
-- Dashboard load time target: < 2 seconds
-- Converter throughput: 1000+ records/second
-- Support 10,000+ incidents in memory
-
-Profile code before optimizing:
-
-```bash
-python -m cProfile -s cumulative converters/cli/convert_incidents.py data/input/sample.csv
-```
-
-## Release Process
-
-1. Update VERSION file with new semantic version (MAJOR.MINOR.PATCH)
-2. Update CHANGELOG.md with release notes
-3. Create git tag: `git tag v0.2.0`
-4. Push tags: `git push origin v0.2.0`
-5. Create GitHub release with notes
-
-Example semantic versioning:
-- `0.1.0` → `0.2.0` (Minor: new features, backward compatible)
-- `0.2.0` → `0.2.1` (Patch: bug fix only)
-- `0.2.1` → `1.0.0` (Major: breaking changes)
-
-## Questions?
-
-- Check [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) for common issues
-- Review [docs/PROJECT-STRUCTURE.md](docs/PROJECT-STRUCTURE.md) for file organization
-- Read existing code for patterns and conventions
-
-## Code of Conduct
-
-- Be respectful and constructive
-- Assume good intentions
-- Help others learn and grow
-- Focus on the work, not the person
+¡Gracias por contribuir a Release Dashboard Application! Esta guía establece los estándares de desarrollo, pruebas, seguridad y procedimientos de despliegue para colaborar eficazmente en el repositorio.
 
 ---
 
-**Last Updated**: 2026-05-14
+## 🧭 Principios de Desarrollo
+
+1. **Simplicidad y Robustez**: Código legible, modular y enfocado a la fiabilidad operativa en entorno corporativo Orange.
+2. **Identidad de Marca Estricta**: La marca corporativa es exclusivamente **Orange** (bajo ninguna circunstancia se debe emplear MASORANGE). La paleta visual estándar debe adherirse a los tokens definidos en [`dashboards/assets/tokens.css`](dashboards/assets/tokens.css).
+3. **Calidad y Cobertura**: Todo cambio en el backend o motor de conversión debe incluir pruebas unitarias y de integración que mantengan la cobertura de código por encima del **80%**.
+4. **Desacoplamiento de Datos**: Los datos de incidencias y archivos temporales (`data/`) nunca se suben al repositorio; en el servidor VPS residen desacoplados en `/infocodes/var/storage/`.
+
+---
+
+## 🛠️ Estándares de Código
+
+### Python (Backend y Conversores)
+
+- **Versión de referencia**: Python 3.10+ / 3.11.
+- **Formateador**: `black` con longitud de línea de 120 caracteres.
+- **Linter e imports**: `flake8` e `isort`.
+- **Tipado estático**: Se recomienda el uso intensivo de *type hints* (`typing`).
+- **Docstrings y comentarios**: Documentar todas las funciones y clases públicas siguiendo convenciones estándar (Sphinx o Google style).
+- **Convenciones de nombres**:
+  - Funciones y variables: `snake_case`
+  - Clases: `PascalCase`
+  - Constantes: `UPPER_CASE`
+
+Ejemplo:
+```python
+from pathlib import Path
+from typing import Tuple, Dict, Any
+
+def convert_csv_to_json(input_path: Path, output_path: Path) -> Tuple[bool, Dict[str, Any]]:
+    """
+    Convierte un CSV de Remedy al esquema normalizado JSON del dashboard.
+
+    Args:
+        input_path: Ruta del fichero CSV de entrada.
+        output_path: Ruta del fichero JSON resultante.
+
+    Returns:
+        Tupla con estado de éxito (bool) y diccionario con estadísticas/metadata.
+    """
+    # Lógica de conversión...
+    return True, {"total": 100, "successful": 100}
+```
+
+### Frontend Web (Dashboards HTML/CSS/JS)
+
+- **Arquitectura**: Vanilla ES6+ sin compiladores ni frameworks pesados (React, Vue o Angular no son necesarios en este repositorio; todo se ejecuta nativamente en el navegador).
+- **Estilos**: Variables CSS nativas declaradas en [`dashboards/assets/tokens.css`](dashboards/assets/tokens.css).
+- **Nomenclatura**: Nombres de clases en `kebab-case` (ej. `portal-hero-container`, `status-badge`).
+- **Accesibilidad y Usabilidad**: Diseños adaptados a resoluciones móviles y de escritorio, atributos ARIA cuando proceda y contraste adecuado.
+- **Consultas a APIs**: El servidor local [`serve_app.py`](serve_app.py) (puerto `8080`) actúa como proxy CORS para el servicio corporativo Epsilon IA (`/api/epsilon/resumenIA/{ID}`) y como pasarela para subida de ficheros (`/api/upload`).
+
+---
+
+## 🌿 Convenciones de Ramas y Git
+
+### Nomenclatura de Ramas
+
+```
+feature/nombre-de-la-funcionalidad   # Nuevas capacidades
+fix/descripcion-del-bug              # Corrección de errores
+docs/tema-actualizado                # Mejoras de documentación
+refactor/modulo-o-componente         # Refactorización de código sin cambio funcional
+test/ampliacion-de-suite             # Añadir o actualizar pruebas
+```
+
+### Mensajes de Commit (Conventional Commits)
+
+Utiliza el estándar de *Conventional Commits*:
+
+```
+tipo(ámbito opcional): descripción breve en presente
+
+[cuerpo explicativo opcional]
+
+[referencias a issues opcionales]
+```
+
+**Tipos habituales**:
+- `feat`: Nueva funcionalidad.
+- `fix`: Corrección de un fallo.
+- `docs`: Modificaciones en documentación.
+- `style`: Formato o estética de código sin cambio funcional.
+- `refactor`: Mejora interna del código que no arregla un bug ni añade una feature.
+- `test`: Incorporación o ajuste de pruebas automatizadas.
+- `chore`: Mantenimiento de configuración, dependencias o infraestructura.
+
+**Ejemplos**:
+```bash
+feat(portal): incorporar buscador directo con resumen Epsilon IA
+fix(converters): normalizar delimitadores con valores multilínea
+docs(deployment): documentar procedimiento standalone runtime en VPS
+test(report_generator): añadir pruebas unitarias para paginación de hitos
+```
+
+---
+
+## 🧪 Pruebas y Aseguramiento de la Calidad
+
+### Ejecución de Tests en Python
+
+Todas las pruebas del motor de conversión y generador de informes residen en [`converters/tests/`](converters/tests/):
+
+```bash
+cd converters
+
+# Ejecutar la suite completa (516+ tests)
+pytest tests/ -v
+
+# Ejecutar con reporte de cobertura (debe superar el 80%)
+pytest tests/ -v --cov=src --cov-report=term-missing
+
+# Ejecutar solo una categoría
+pytest tests/unit/
+pytest tests/integration/
+pytest tests/e2e/
+
+# Ejecutar un fichero específico
+pytest tests/unit/report_generator/test_executive_report_builder.py -v
+```
+
+### Pruebas de Frontend (JavaScript)
+
+```bash
+# Validaciones unitarias de lógica JS (por ejemplo normalizador de códigos de Remedy)
+node dashboards/tests/test_sanitize_incident_code.js
+```
+
+### Verificación de Estilo y Linters
+
+```bash
+cd converters
+black --check src/ cli/ tests/
+flake8 src/ cli/ tests/ --max-line-length=120
+isort --check-only src/ cli/ tests/
+```
+
+---
+
+## 🔐 Seguridad y Protección de Secretos
+
+1. **Archivos `.env`**: Nunca deben commitearse credenciales ni archivos de variables de entorno. Utiliza [`config/.env.example`](config/.env.example) como plantilla.
+2. **Hook de Pre-commit**: Es obligatorio activar el hook local para prevenir la inclusión accidental de claves o datos personales:
+   ```bash
+   cp config/pre-commit-hook.sh .git/hooks/pre-commit
+   chmod +x .git/hooks/pre-commit
+   ```
+3. **Datos de Incidencias**: Los ficheros ubicados en `data/input/`, `data/output/` y `data/errors/` están ignorados por `.gitignore` y jamás deben formar parte de un commit.
+
+---
+
+## 🚀 Flujo de Integración y Despliegue
+
+1. **Crear rama de trabajo**: `git checkout -b feature/mi-mejora` a partir de `production`.
+2. **Desarrollar y probar en local**:
+   - Levantar servidor local: `python serve_app.py` (accede en `http://localhost:8080/dashboards/portal/`).
+   - Ejecutar la suite de tests en `converters/` para validar que pasan al 100%.
+3. **Commit y Push**: Tras superar los linters y pruebas locales, sube la rama al repositorio remoto.
+4. **Pull Request hacia `production`**:
+   - Describe con claridad el problema resuelto y las pruebas efectuadas.
+   - La rama `production` está sujeta a políticas de protección (ver [`docs/GITHUB-BRANCH-PROTECTION.md`](docs/GITHUB-BRANCH-PROTECTION.md)), requiriendo aprobación y CI verde.
+5. **Despliegue a Producción (VPS `10.132.26.96:8081`)**:
+   - El despliegue se efectúa mediante el script PowerShell [`scripts/deploy-production.ps1`](scripts/deploy-production.ps1) desde la máquina local autorizada:
+     ```powershell
+     .\scripts\deploy-production.ps1
+     ```
+   - El proceso empaqueta un *Standalone Runtime* (~2.3 MB) transferido vía SCP, rota copias de seguridad de forma automática y mantiene los datos persistentes desacoplados en `/infocodes/var/storage/`.
+
+---
+
+## 📚 Enlaces de Referencia
+
+- [Inicio Rápido (Quickstart)](docs/QUICKSTART.md)
+- [Guía de Desarrollo Local](docs/DEVELOPMENT.md)
+- [Procedimientos de Despliegue](docs/DEPLOYMENT.md)
+- [Protección de Ramas en GitHub](docs/GITHUB-BRANCH-PROTECTION.md)
+- [Resolución de Incidencias (Troubleshooting)](docs/TROUBLESHOOTING.md)
+- [Informe Ejecutivo Postmortem (PowerPoint)](docs/INFORME-EJECUTIVO-POSTMORTEM.md)
+
+---
+
+**Última actualización**: 2026-10-21

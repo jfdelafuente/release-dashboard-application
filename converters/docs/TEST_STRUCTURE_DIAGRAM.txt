@@ -1,126 +1,76 @@
 ╔════════════════════════════════════════════════════════════════════════════════╗
-║                          TEST STRUCTURE ORGANIZATION                           ║
+║                   ESTRUCTURA DE LA SUITE DE PRUEBAS (CONVERTERS)               ║
 ╚════════════════════════════════════════════════════════════════════════════════╝
 
-tests/
+converters/tests/
 │
-├── conftest.py                    ← Shared pytest fixtures
-├── test_data/                     ← Test input fixtures (CSV)
+├── conftest.py                    ← Fixtures compartidos globales y configuración
+├── test_data/                     ← Fixtures inmutables de entrada (CSVs de prueba)
 │   ├── valid-100.csv
 │   ├── invalid-mixed.csv
 │   └── normalization-edge-cases.csv
 │
-├── utils/                         ← Test utilities
+├── utils/                         ← Utilidades y asistentes para pruebas
 │   ├── __init__.py
 │   └── helpers.py
 │
-├── unit/                          ← UNIT TESTS (Pure logic, no I/O)
-│   ├── __init__.py
-│   │
-│   ├── encoding/                  [ENCODING DETECTION]
-│   │   ├── __init__.py
-│   │   ├── test_encoding.py                       2 tests
-│   │   └── test_postmortem_encoding_detection.py
-│   │
-│   ├── delimiter/                 [DELIMITER DETECTION]
-│   │   ├── __init__.py
-│   │   ├── test_delimiter.py                      2 tests
-│   │   └── test_postmortem_delimiter_detection.py
-│   │
-│   ├── normalizers/               [DATA NORMALIZATION]
-│   │   ├── __init__.py
-│   │   ├── test_normalizers.py                    4 tests
-│   │   ├── test_estatus_normalization.py
-│   │   ├── test_record_normalization.py
-│   │   └── test_date_parser.py
-│   │
-│   ├── validators/                [DATA VALIDATION]
-│   │   ├── __init__.py
-│   │   ├── test_validators.py                     3 tests
-│   │   ├── test_validation_rules.py
-│   │   └── test_field_mapping.py
-│   │
-│   ├── schemas/                   [DATA STRUCTURES]
-│   │   ├── __init__.py
-│   │   ├── test_postmortem_schemas.py             4 tests
-│   │   ├── test_kpi_calculation.py
-│   │   ├── test_kpi_metrics.py
-│   │   └── test_metadata_generation.py
-│   │
-│   └── derivation/                [DERIVED LOGIC]
-│       ├── __init__.py
-│       └── test_despliegue_derivation.py          1 test
+├── unit/                          ← PRUEBAS UNITARIAS (Lógica pura, sin I/O en repo)
+│   ├── encoding/                  [DETECCIÓN DE CODIFICACIÓN (UTF-8, Latin-1, CP1252...)]
+│   ├── delimiter/                 [DETECCIÓN DE DELIMITADORES (, ; \t)]
+│   ├── normalizers/               [NORMALIZACIÓN DE FECHAS, CADENAS Y ESTADOS]
+│   ├── validators/                [VALIDACIÓN DE CAMPOS, TIPOS Y ENUMERADOS]
+│   ├── schemas/                   [ESQUEMAS ENVELOPE, METADATA Y CÁLCULO DE KPIS]
+│   ├── derivation/                [LÓGICA DE DERIVACIÓN PAP / MESA]
+│   └── report_generator/          [MOTOR PPTX: PARSERS, CALCULADORAS Y PLOTLY]
 │
-├── integration/                   ← INTEGRATION TESTS (With I/O)
-│   ├── __init__.py
-│   │
-│   ├── converters/                [CSV→JSON CONVERSION]
-│   │   ├── __init__.py
-│   │   ├── test_converter_e2e.py                  2 tests
-│   │   └── test_csv_reader.py
-│   │
-│   └── postmortem/                [POSTMORTEM CONVERTER]
-│       ├── __init__.py
-│       ├── test_postmortem_e2e_conversion.py      4 tests
-│       ├── test_postmortem_e2e_full.py
-│       ├── test_postmortem_normalization_integration.py
-│       └── test_error_handling.py
+├── integration/                   ← PRUEBAS DE INTEGRACIÓN (Con I/O aislado en tmp_path)
+│   ├── converters/                [PIPELINE DE CONVERSIÓN CSV→JSON DE INCIDENCIAS]
+│   ├── postmortem/                [PIPELINE DE POSTMORTEMS Y REPORTE DE ERRORES]
+│   └── report_generator/          [CONSTRUCCIÓN FÍSICA DE PPTX Y PROCESAMIENTO POR LOTES]
 │
-└── e2e/                           ← E2E TESTS (Complete workflows)
-    ├── __init__.py
-    │
-    └── performance/               [PERFORMANCE & BENCHMARKS]
-        ├── __init__.py
-        └── test_performance.py                    1 test
+└── e2e/                           ← PRUEBAS EXTREMO A EXTREMO Y RENDIMIENTO
+    └── performance/               [BENCHMARKS DE TIEMPO, ESCALABILIDAD Y MEMORIA]
 
 ════════════════════════════════════════════════════════════════════════════════
 
-                               TEST STATISTICS
+                         ESTADÍSTICAS DE LA SUITE
 
-┌─────────────────────┬──────────┬─────────────┐
-│ Category            │ Files    │ Tests       │
-├─────────────────────┼──────────┼─────────────┤
-│ Unit Tests          │ 16       │ 178 tests   │
-│ Integration Tests   │ 6        │ 85 tests    │
-│ E2E Tests           │ 1        │ 1 test      │
-├─────────────────────┼──────────┼─────────────┤
-│ TOTAL               │ 23       │ 264 tests   │
-└─────────────────────┴──────────┴─────────────┘
-
-Execution: ~1.3 seconds
-Coverage:  86% (exceeds 80%)
+┌──────────────────────────────────────┬────────────────────────────────────────┐
+│ Módulo / Nivel                       │ Detalle de Cobertura                   │
+├──────────────────────────────────────┼────────────────────────────────────────┤
+│ Pruebas Unitarias                    │ Lógica algorítmica y normalizadores    │
+│ Pruebas de Integración               │ I/O real aislado vía pytest tmp_path   │
+│ Pruebas E2E y Rendimiento            │ Benchmarks de throughput y memoria     │
+├──────────────────────────────────────┼────────────────────────────────────────┤
+│ TOTAL DE TESTS                       │ 581 tests pasando                      │
+│ TIEMPO DE EJECUCIÓN                  │ ~12 segundos                           │
+│ COBERTURA DE CÓDIGO                  │ ≥ 80% requerida                        │
+└──────────────────────────────────────┴────────────────────────────────────────┘
 
 ════════════════════════════════════════════════════════════════════════════════
 
-                            QUICK COMMAND REFERENCE
+                        REFERENCIA RÁPIDA DE COMANDOS
 
-Run all tests:
-  pytest tests/
+Ejecutar siempre desde el directorio 'converters/':
+  cd converters
 
-Run by category:
-  pytest tests/unit/                    # All unit tests
-  pytest tests/integration/             # All integration tests
-  pytest tests/e2e/                     # All e2e tests
+Ejecutar todos los tests:
+  pytest tests/ -v
 
-Run by functionality:
-  pytest tests/unit/encoding/           # Encoding tests
-  pytest tests/unit/delimiter/          # Delimiter tests
-  pytest tests/unit/normalizers/        # Normalization tests
-  pytest tests/unit/validators/         # Validation tests
-  pytest tests/unit/schemas/            # Schema tests
+Ejecutar por categoría:
+  pytest tests/unit/ -v                 # Pruebas unitarias
+  pytest tests/integration/ -v          # Pruebas de integración
+  pytest tests/e2e/performance/ -v      # Benchmarks de rendimiento
 
-Run by converter:
-  pytest tests/integration/converters/  # General converter
-  pytest tests/integration/postmortem/  # Postmortem converter
+Ejecutar por componente:
+  pytest tests/unit/report_generator/   # Reportes PowerPoint
+  pytest tests/unit/normalizers/        # Normalizadores
+  pytest tests/unit/schemas/            # Esquemas de datos
 
-Run with filters:
-  pytest tests/ -k "normalization"      # Tests matching pattern
-  pytest tests/ -v                      # Verbose output
+Ejecutar en paralelo:
+  pytest tests/ -n auto
 
-Run in parallel (requires pytest-xdist):
-  pytest tests/ -n auto                 # Auto-detect CPU cores
-
-Run with coverage:
-  pytest tests/ --cov=src --cov-report=html
+Medir cobertura de código:
+  pytest tests/ --cov=src --cov-report=term-missing
 
 ════════════════════════════════════════════════════════════════════════════════

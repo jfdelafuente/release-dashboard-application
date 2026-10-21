@@ -2,28 +2,39 @@
 
 ## Descripción General
 
-Aplicación con dos dashboards interactivos para análisis de incidencias:
-- **Postmortem Dashboard**: Análisis de post-mortem con desglose por despliegues y segmentos
-- **Massive Incidents Dashboard**: Análisis de incidencias masivas con temporal charts y tendencias
+Ecosistema analítico y de reporting web y programático para monitorización de calidad técnica en despliegues (*releases*), incidencias masivas y postmortem operativo (entorno corporativo Orange).
 
-## Archivos Principales
+El proyecto integra:
+- **Portal Hub** (`dashboards/portal/`): Punto de acceso con buscador hero y pantalla modal interactiva de Resumen IA (Epsilon IA).
+- **Massive Incidents Dashboard** (`dashboards/massive-incidents/`): Análisis de incidencias masivas con métricas temporales y evolución de backlog.
+- **Postmortem Dashboard** (`dashboards/postmortem/`): Análisis de post-mortem por despliegues (PAP / MESA) y SLAs.
+- **Release KPIs Dashboard** (`dashboards/release-kpis/`): Métricas históricas de calidad de releases.
+- **Reportes de Incidencias** (`dashboards/reportes-incidencias/`): Frontend del editor y visor de reportes semanales conectado a la API de `cso-incident-masivas-report`.
+- **Motor Python de Conversores** (`converters/`): Ingesta CSV a JSON, validación estricta y pre-cálculo de KPIs.
+- **Report Generator** (`converters/src/report_generator/`): Generador de presentaciones ejecutivas PowerPoint (`.pptx`) para releases e incidencias individuales.
+- **Servidor y Pasarela** (`serve_app.py` / `nginx.conf`): Servidor local en puerto `8080` y Nginx en producción VPS (`10.132.26.96:8081`).
 
-### Herramientas
-- **csv_to_json.py**: Convierte archivos CSV a JSON con auto-detección de delimitadores
-- **README.md**: Documentación del conversor CSV a JSON
+## Archivos y Módulos Principales
 
-### Dashboards HTML
-- **postmortem-dashboard.html**: Dashboard de post-mortem de incidencias
-- **massive-incidents-dashboard.html**: Dashboard de incidencias masivas (PRINCIPAL)
+### Dashboards HTML y Web
+- `dashboards/portal/index.html`: Portal principal con buscador de incidencias y modal Epsilon IA
+- `dashboards/massive-incidents/index.html`: Dashboard de incidencias masivas
+- `dashboards/postmortem/index.html`: Dashboard de postmortem por release
+- `dashboards/release-kpis/index.html`: Dashboard de KPIs históricos de release
+- `dashboards/reportes-incidencias/`: Listado (`index.html`), editor (`editor.html`) y preview (`preview.html`)
+- `dashboards/assets/`: Recursos compartidos (logos corporativos, topbar, tokens CSS, componentes Epsilon IA)
 
-### Configuración
-- **.gitignore**: Archivos y carpetas a ignorar en git
-- **CLAUDE.md**: Este archivo (documentación para Claude)
+### Conversores Python y Herramientas
+- `converters/src/csv_to_json/`: Módulo de conversión CSV→JSON, detección de delimitador/encoding y validadores
+- `converters/src/report_generator/`: Generadores PowerPoint para postmortem y reportes ejecutivos Confluence
+- `converters/cli/`: Scripts de ejecución por consola (`convert_incidents.py`, `convert_postmortems.py`, `generate_executive_report.py`, etc.)
+- `serve_app.py`: Servidor HTTP de desarrollo local (puerto 8080) con endpoints de upload, proxy IA y reportes PPTX
+- `deploy.sh` / `scripts/deploy-production.ps1`: Scripts de despliegue Standalone Runtime al VPS
 
 ## Dashboard: Massive Incidents Dashboard
 
 ### Ubicación
-`c:\Users\jose.delafuente\proyectos\release-dashboard-application\massive-incidents-dashboard.html`
+`dashboards/massive-incidents/index.html`
 
 ### Características Principales
 
@@ -231,7 +242,7 @@ El módulo `csv_to_json` convierte archivos CSV de incidencias a formato JSON co
 ### Estructura del Módulo
 
 ```
-csv_to_json/
+converters/src/csv_to_json/
 ├── __init__.py           # Exporta CsvToJsonConverter
 ├── encoding.py           # Detección de encoding
 ├── delimiter.py          # Detección de delimitador
@@ -645,6 +656,11 @@ data/errors/CS_Masiva_20260514_errors.json
 - ✅ Usar colores naranja para tema visual consistente
 - ✅ Manejar BOM y diferentes encodings automáticamente
 - ✅ Aplicar filtros globales ANTES que filtros específicos
+- ✅ Marca corporativa: Estrictamente **Orange** (nunca MASORANGE)
+- ✅ Suite de tests: Ejecutar desde `converters/` (`cd converters && pytest tests/ -v --cov=src`, 516+ tests)
+- ✅ Servidor local: `python serve_app.py` en puerto `8080` (evita conflicto con FastAPI en `:8000`)
+- ✅ Despliegue en producción: `.\scripts\deploy-production.ps1` (Standalone Runtime a `10.132.26.96:8081`)
+- ✅ Almacenamiento persistente: Desacoplado en `/infocodes/var/storage/` en VPS, fallback a `data/` en local
 
 ## Referencias Útiles
 
