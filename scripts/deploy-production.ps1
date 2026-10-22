@@ -285,7 +285,23 @@ if (-not $SkipBuild) {
 
         # 7. Generar archivo tarball comprimido
         if (Test-Path $TarballFullPath) { Remove-Item $TarballFullPath -Force }
-        tar --force-local -czf "$TarballFullPath" -C "$StagingDir" .
+
+        $tarExe = "tar"
+        if (Test-Path "$env:SystemRoot\System32\tar.exe") {
+            $tarExe = "$env:SystemRoot\System32\tar.exe"
+        }
+
+        # Empaquetar con bsdtar nativo de Windows (sin --force-local)
+        & $tarExe -czf "$TarballFullPath" -C "$StagingDir" .
+        if ($LASTEXITCODE -ne 0 -or -not (Test-Path $TarballFullPath)) {
+            # Reintento con --force-local por si se trata de un entorno GNU tar
+            & $tarExe --force-local -czf "$TarballFullPath" -C "$StagingDir" . 2>$null
+        }
+
+        if (-not (Test-Path $TarballFullPath)) {
+            Write-Failure "No se pudo generar el archivo comprimido $TarballFullPath."
+            exit 1
+        }
 
         $sizeMB = [Math]::Round((Get-Item $TarballFullPath).Length / 1MB, 2)
         Write-Ok "Artefacto generado con éxito: $TarballRelPath ($sizeMB MB)"
