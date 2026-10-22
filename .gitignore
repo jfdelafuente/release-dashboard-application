@@ -64,6 +64,8 @@ data/reports/*
 data/reports/executive/*
 !data/reports/executive/.gitkeep
 output/
+!data/output/
+!data/output/agents_catalog.json
 archive/
 
 # Temporary Files

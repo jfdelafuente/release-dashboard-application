@@ -160,7 +160,7 @@
         /* Línea 1: 3 columnas (Operación y Monitorización) */
         .row-operational {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
             gap: 20px;
             margin-bottom: 28px;
         }
@@ -259,6 +259,12 @@
             background: #ECEFF1;
             color: #37474F;
             border: 1px solid #CFD8DC;
+        }
+
+        .tag-ai {
+            background: #FFF4E8;
+            color: #C95600;
+            border: 1px solid rgba(255, 121, 0, 0.35);
         }
 
         .card-title {
@@ -865,6 +871,33 @@
                 <div class="card-action">
                     <span>Abrir editor</span>
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                        <path d="M5 12h14"></path>
+                        <path d="M12 5l7 7-7 7"></path>
+                    </svg>
+                </div>
+            </a>
+
+            <!-- Card 4: Catálogo de Agentes IA -->
+            <a href="/dashboards/agents-catalog/" class="card" aria-label="Abrir Catálogo de Agentes IA: Biblioteca central de directrices, prompts y comandos de despliegue">
+                <div>
+                    <div class="card-top">
+                        <div class="card-icon-wrapper" aria-hidden="true">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FF7900" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="3"></circle>
+                                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                            </svg>
+                        </div>
+                        <span class="card-tag tag-ai">Agentes IA</span>
+                    </div>
+                    <h2 class="card-title">Catálogo de Agentes IA</h2>
+                    <span class="card-subtitle">Biblioteca de agentes y skills operativas</span>
+                    <p class="card-desc">
+                        Directorio oficial de agentes cognitivos y skills normativas para soporte, marca e incidencias con generador de despliegue CLI.
+                    </p>
+                </div>
+                <div class="card-action">
+                    <span>Explorar catálogo</span>
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                         <path d="M5 12h14"></path>
                         <path d="M12 5l7 7-7 7"></path>
                     </svg>

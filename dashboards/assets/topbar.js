@@ -17,7 +17,8 @@
     { id: 'postmortem', label: 'Release', href: '/dashboards/postmortem/' },
     { id: 'release-kpis', label: 'KPIs Release', href: '/dashboards/release-kpis/' },
     { id: 'reportes-incidencias', label: 'Reportes de Incidencias', href: '/dashboards/reportes-incidencias/' },
-    { id: 'problemas', label: 'Gestión de Problemas', href: '/problemas' }
+    { id: 'problemas', label: 'Gestión de Problemas', href: '/problemas' },
+    { id: 'agents-catalog', label: 'Agentes IA', href: '/dashboards/agents-catalog/' }
   ];
 
   function render() {

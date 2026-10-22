@@ -37,24 +37,28 @@ except OSError:
     cso_is_file = False
 
 if cso_is_file:
-    spec = importlib.util.spec_from_file_location(
-        "cso_report_generator",
-        str(cso_init_py),
-        submodule_search_locations=[str(CSO_BACKEND_ROOT / "report_generator")]
-    )
-    cso_mod = importlib.util.module_from_spec(spec)
-    sys.modules["cso_report_generator"] = cso_mod
-    spec.loader.exec_module(cso_mod)
+    try:
+        spec = importlib.util.spec_from_file_location(
+            "cso_report_generator",
+            str(cso_init_py),
+            submodule_search_locations=[str(CSO_BACKEND_ROOT / "report_generator")]
+        )
+        cso_mod = importlib.util.module_from_spec(spec)
+        sys.modules["cso_report_generator"] = cso_mod
+        spec.loader.exec_module(cso_mod)
 
-    ExecutiveIncidentData = getattr(cso_mod, "ExecutiveIncidentData", None)
-    sanitize_incident_ref = getattr(cso_mod, "sanitize_incident_ref", None)
-    extract_fields_from_jira_description = getattr(cso_mod, "extract_fields_from_jira_description", None)
-    get_executive_report_path = getattr(cso_mod, "get_executive_report_path", None)
-    get_executive_report_filename = getattr(cso_mod, "get_executive_report_filename", None)
-    cleanup_old_executive_reports = getattr(cso_mod, "cleanup_old_executive_reports", None)
-    ExecutiveReportBuilder = getattr(cso_mod, "ExecutiveReportBuilder", None)
-    ConfluenceParser = getattr(cso_mod, "ConfluenceParser", None)
-else:
+        ExecutiveIncidentData = getattr(cso_mod, "ExecutiveIncidentData", None)
+        sanitize_incident_ref = getattr(cso_mod, "sanitize_incident_ref", None)
+        extract_fields_from_jira_description = getattr(cso_mod, "extract_fields_from_jira_description", None)
+        get_executive_report_path = getattr(cso_mod, "get_executive_report_path", None)
+        get_executive_report_filename = getattr(cso_mod, "get_executive_report_filename", None)
+        cleanup_old_executive_reports = getattr(cso_mod, "cleanup_old_executive_reports", None)
+        ExecutiveReportBuilder = getattr(cso_mod, "ExecutiveReportBuilder", None)
+        ConfluenceParser = getattr(cso_mod, "ConfluenceParser", None)
+    except (OSError, Exception):
+        cso_is_file = False
+
+if not cso_is_file:
     ExecutiveIncidentData = None
     sanitize_incident_ref = None
     extract_fields_from_jira_description = None
@@ -589,6 +593,25 @@ class CustomHTTPHandler(http.server.SimpleHTTPRequestHandler):
         except Exception as e:
             self._send_json(500, {'success': False, 'error': f'Error al leer archivo: {str(e)}'})
 
+    def handle_agents_catalog(self):
+        catalog_path = PROJECT_ROOT / 'data' / 'output' / 'agents_catalog.json'
+        if 'refresh=true' in self.path:
+            try:
+                from build_agents_catalog import build_and_save_catalog
+                build_and_save_catalog()
+            except Exception as e:
+                print(f"  Error refrescando catálogo de agentes: {e}")
+
+        if catalog_path.is_file():
+            try:
+                content = json.loads(catalog_path.read_text(encoding='utf-8'))
+                self._send_json(200, content)
+                return
+            except Exception as e:
+                self._send_json(500, {'error': f'Error leyendo catálogo: {e}'})
+                return
+        self._send_json(404, {'error': 'Catálogo de agentes no encontrado'})
+
     def _send_json(self, status, payload):
         body = json.dumps(payload, ensure_ascii=False).encode('utf-8')
         self.send_response(status)
@@ -613,6 +636,10 @@ class CustomHTTPHandler(http.server.SimpleHTTPRequestHandler):
 
         if self.path.startswith(REPORTS_PATH_PREFIX):
             self.handle_report_download()
+            return
+
+        if self.path == '/api/agents-catalog' or self.path.startswith('/api/agents-catalog?'):
+            self.handle_agents_catalog()
             return
 
         if self.path.startswith('/api/reports') or self.path.startswith('/api/departments') or self.path in ('/healthz', '/readyz'):

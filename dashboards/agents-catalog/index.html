@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Catálogo de Agentes y Skills IA - Customer &amp; Service Operations</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/dashboards/assets/topbar.css">
+  <link rel="stylesheet" href="/dashboards/assets/tokens.css">
+  <link rel="stylesheet" href="/dashboards/assets/shared.css">
+  <link rel="stylesheet" href="/dashboards/assets/ui-feedback.css">
+  <link rel="stylesheet" href="./agents-catalog.css">
+  <script src="/dashboards/assets/ui-feedback.js"></script>
+</head>
+<body>
+  <a href="#main-content" class="skip-link">Saltar al contenido principal</a>
+
+  <!-- Barra superior unificada -->
+  <div id="mo-topbar-root" data-active="agents-catalog"></div>
+
+  <main id="main-content" class="catalog-container" role="main">
+    <!-- Hero Header -->
+    <header class="catalog-hero">
+      <div class="hero-meta-top">
+        <span class="hero-eyebrow">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm0 18a8 8 0 1 1 8-8 8 8 0 0 1-8 8z"></path>
+            <path d="M12 6v6l4 2"></path>
+          </svg>
+          Inteligencia Artificial &amp; Automatización
+        </span>
+        <button id="btn-config-target" class="hero-target-repo-btn" aria-haspopup="dialog" title="Configurar repositorio de destino para los comandos de despliegue">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="3"></circle>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+          </svg>
+          Destino CLI: <span id="current-target-display" class="repo-path">&lt;TargetRepo&gt;</span>
+        </button>
+      </div>
+
+      <h1 class="catalog-hero-title">Catálogo de Agentes y Skills IA</h1>
+      <p class="catalog-hero-desc">
+        Directorio oficial de agentes cognitivos y habilidades especializadas de la biblioteca de fiabilidad y operaciones. Despliegue estandarizado e idempotente hacia cualquier repositorio mediante el script nativo <code>.\deploy-agents.cmd</code>.
+      </p>
+
+      <!-- KPI Grid -->
+      <div class="hero-kpis" aria-label="Métricas de la biblioteca de agentes">
+        <div class="kpi-card">
+          <span class="kpi-label">Total Agentes</span>
+          <span class="kpi-value" id="kpi-total-agents">5</span>
+          <span class="kpi-subtext">Agentes especializados</span>
+        </div>
+        <div class="kpi-card">
+          <span class="kpi-label">Dominios Operativos</span>
+          <span class="kpi-value" id="kpi-total-domains">2</span>
+          <span class="kpi-subtext">Contenido y Marca · Incidencias IT</span>
+        </div>
+        <div class="kpi-card">
+          <span class="kpi-label">Skills Normativas</span>
+          <span class="kpi-value" id="kpi-total-skills">6</span>
+          <span class="kpi-subtext">Habilidades y directrices</span>
+        </div>
+        <div class="kpi-card">
+          <span class="kpi-label">Despliegue CLI</span>
+          <span class="kpi-value" style="color: var(--mo-orange);">1-Clic</span>
+          <span class="kpi-subtext">Sintaxis <code>deploy-agents.cmd</code></span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Navigation Tabs: Agentes vs Skills -->
+    <div class="catalog-tabs" role="tablist" aria-label="Secciones del catálogo">
+      <button class="tab-btn active" id="tab-agents" role="tab" aria-selected="true" aria-controls="agents-view">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+          <circle cx="12" cy="7" r="4"></circle>
+        </svg>
+        Agentes Especializados
+        <span class="tab-badge" id="tab-badge-agents">5</span>
+      </button>
+      <button class="tab-btn" id="tab-skills" role="tab" aria-selected="false" aria-controls="skills-view">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+        </svg>
+        Inventario de Skills
+        <span class="tab-badge" id="tab-badge-skills">6</span>
+      </button>
+    </div>
+
+    <!-- Toolbar: Search & Filters -->
+    <div class="catalog-toolbar" role="region" aria-label="Búsqueda y filtros">
+      <div class="toolbar-search-row">
+        <div class="search-wrapper">
+          <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+          <input
+            type="search"
+            id="search-input"
+            class="search-input"
+            placeholder="Buscar por nombre, alias, descripción o skill... (ej: postmortem, orange, redactor)"
+            aria-label="Buscar agentes y skills"
+            autocomplete="off"
+          >
+          <button id="search-clear-btn" class="search-clear-btn" title="Limpiar búsqueda" aria-label="Limpiar búsqueda">&times;</button>
+        </div>
+        <div class="toolbar-meta">
+          <span id="results-count" class="results-count" aria-live="polite">Cargando catálogo...</span>
+        </div>
+      </div>
+
+      <div class="toolbar-chips-row" id="domain-chips-container">
+        <span class="filter-label">Dominio:</span>
+        <button class="chip-btn active" data-domain="all">
+          Todos <span class="chip-count" id="chip-count-all">5</span>
+        </button>
+        <button class="chip-btn" data-domain="brand-content">
+          Contenido y Marca <span class="chip-count" id="chip-count-brand">1</span>
+        </button>
+        <button class="chip-btn" data-domain="it-incidents">
+          Incidencias IT <span class="chip-count" id="chip-count-it">4</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Loading State -->
+    <div id="loading-state" class="loading-indicator">
+      <div class="spinner"></div>
+      <span>Cargando catálogo de agentes y directrices...</span>
+    </div>
+
+    <!-- Empty State -->
+    <div id="empty-state" class="catalog-empty-state" style="display: none;">
+      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--text-light); margin-bottom: 8px;">
+        <circle cx="11" cy="11" r="8"></circle>
+        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+      </svg>
+      <div class="empty-state-title">No se encontraron agentes ni skills</div>
+      <p>Prueba con otros términos de búsqueda o elimina los filtros aplicados.</p>
+      <button id="btn-reset-filters" class="btn-secondary-action" style="margin-top: 12px;">Limpiar filtros y ver todos</button>
+    </div>
+
+    <!-- View 1: Agents View -->
+    <section id="agents-view" role="tabpanel" aria-labelledby="tab-agents">
+      <!-- Domain Sections Rendered Dinamically -->
+      <div id="agents-content"></div>
+    </section>
+
+    <!-- View 2: Skills View -->
+    <section id="skills-view" role="tabpanel" aria-labelledby="tab-skills" style="display: none;">
+      <div id="skills-content" class="skills-grid"></div>
+    </section>
+  </main>
+
+  <!-- Modal 1: Agent & Skill Technical Sheet Modal -->
+  <div id="detail-modal" class="catalog-modal-overlay" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="detail-modal-title">
+    <div class="catalog-modal" role="document">
+      <header class="modal-header">
+        <div class="modal-header-info">
+          <div class="modal-meta" id="detail-modal-meta"></div>
+          <h2 class="modal-title" id="detail-modal-title">Ficha Técnica</h2>
+        </div>
+        <button class="modal-close-btn" id="detail-modal-close" aria-label="Cerrar modal">&times;</button>
+      </header>
+      <div class="modal-body" id="detail-modal-body">
+        <div class="modal-markdown" id="detail-modal-content"></div>
+      </div>
+      <footer class="modal-footer">
+        <div class="modal-footer-left">
+          <button id="modal-copy-cmd-btn" class="btn-primary-action">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+            </svg>
+            Copiar Comando CLI
+          </button>
+        </div>
+        <div class="modal-footer-right">
+          <button id="modal-copy-prompt-btn" class="btn-secondary-action">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+            </svg>
+            Copiar Markdown Completo
+          </button>
+        </div>
+      </footer>
+    </div>
+  </div>
+
+  <!-- Modal 2: TargetRepo Configuration Modal -->
+  <div id="config-modal" class="catalog-modal-overlay" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="config-modal-title">
+    <div class="catalog-modal" style="max-width: 580px;" role="document">
+      <header class="modal-header">
+        <div class="modal-header-info">
+          <span class="hero-eyebrow" style="padding: 2px 8px; font-size: 11px;">Configuración CLI</span>
+          <h2 class="modal-title" id="config-modal-title">Ruta Destino de Despliegue</h2>
+        </div>
+        <button class="modal-close-btn" id="config-modal-close" aria-label="Cerrar ventana">&times;</button>
+      </header>
+      <div class="modal-body">
+        <div class="config-group">
+          <label for="config-repo-input" class="config-label">Ruta al Repositorio Destino (<code>TargetRepo</code>):</label>
+          <p class="config-hint">
+            Los comandos CLI generados por el catálogo usarán esta ruta de destino. Se guarda automáticamente en tu navegador para futuras sesiones.
+          </p>
+          <input
+            type="text"
+            id="config-repo-input"
+            class="config-input"
+            placeholder="C:\Users\...\proyectos\mi-proyecto"
+            spellcheck="false"
+          >
+          <div class="config-presets">
+            <button type="button" class="config-preset-btn" data-path="C:\Users\jose.delafuente\proyectos\release-dashboard-application">
+              release-dashboard-application
+            </button>
+            <button type="button" class="config-preset-btn" data-path=".">
+              . (Directorio actual)
+            </button>
+            <button type="button" class="config-preset-btn" data-path="&lt;TargetRepo&gt;">
+              &lt;TargetRepo&gt; (Genérico)
+            </button>
+          </div>
+        </div>
+
+        <div class="config-group">
+          <label class="config-label">Vista Previa del Comando Generado:</label>
+          <div class="config-preview-box" id="config-preview-cmd">
+            .\deploy-agents.cmd "&lt;TargetRepo&gt;" -Agents "incident-analyzer"
+          </div>
+        </div>
+      </div>
+      <footer class="modal-footer">
+        <button type="button" class="btn-secondary-action" id="config-btn-reset">Restablecer por Defecto</button>
+        <button type="button" class="btn-primary-action" id="config-btn-save">Guardar Preferencia</button>
+      </footer>
+    </div>
+  </div>
+
+  <script src="/dashboards/assets/topbar.js"></script>
+  <script src="./agents-catalog.js"></script>
+</body>
+</html>
+
