@@ -50,6 +50,7 @@ converters/
 │   ├── convert_incidents.py         # CSV de incidencias masivas → JSON
 │   ├── convert_postmortems.py       # CSV de postmortem → JSON
 │   ├── build_index.py               # Genera el catálogo data/output/index.json
+│   ├── build_agents_catalog.py      # Extracción y catálogo de agentes/skills IA
 │   ├── validate_kpis.py             # Valida el cálculo de KPIs contra el dataset
 │   ├── upload_csv.py                # Invocado por serve_app.py para la subida interactiva
 │   ├── generate_postmortem_report.py # Generación de informes ejecutivos PowerPoint
@@ -106,6 +107,7 @@ dashboards/
 │   ├── colors_and_type.css
 │   └── releases-data.js
 ├── reportes-incidencias/            # Dashboard y panel de gestión de informes de incidencias
+├── agents-catalog/                  # Catálogo interactivo de agentes IA y skills (index.html, CSS, JS)
 ├── assets/                          # Recursos compartidos por todos los dashboards
 │   ├── orange-logo.svg              # Isotipo y logotipo oficial Orange
 │   ├── tokens.css                   # Variables de diseño (colores #FF7900, tipografías, espaciados)
@@ -131,7 +133,7 @@ El tratamiento de los datos difiere deliberadamente entre el desarrollo local y 
 ```text
 Estructura de Datos:
 ├── input/      # Archivos CSV origen (subidos manualmente o por endpoint /api/upload)
-├── output/     # Archivos JSON convertidos (*-massive.json, *-postmortem.json, index.json)
+├── output/     # Archivos JSON convertidos (*-massive.json, *-postmortem.json, index.json, agents_catalog.json)
 ├── reports/    # Informes generados (presentaciones PowerPoint ejecutivas .pptx)
 ├── errors/     # Informes de errores y discrepancias de validación por CSV
 └── archive/    # Archivos históricos archivados

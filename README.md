@@ -3,7 +3,7 @@
 Plataforma analítica y de reporting para la monitorización de calidad técnica en despliegues (*releases*), gestión de incidencias masivas y análisis postmortem operativo (entorno Orange).
 
 El repositorio centraliza:
-1. **La suite completa de frontends web (dashboards)**: Portal unificado con buscador y Resumen IA en tiempo real (Epsilon IA), Incidencias Masivas, Postmortem/Release, KPIs Históricos de Release y el editor/visor de **Reportes de Incidencias**.
+1. **La suite completa de frontends web (dashboards)**: Portal unificado con buscador y Resumen IA en tiempo real (Epsilon IA), Incidencias Masivas, Postmortem/Release, KPIs Históricos de Release, el editor/visor de **Reportes de Incidencias** y el **Catálogo de Agentes IA y Skills**.
 2. **El motor de conversión y normalización en Python**: Ingesta por lotes o web de CSVs de Remedy, detección de encoding/delimitador y pre-cálculo de KPIs analíticas.
 3. **El generador de presentaciones ejecutivas en PowerPoint (`.pptx`)**: Informes corporativos de release e incidencias individuales bajo demanda.
 4. **Infraestructura de servidor local y producción**: Servidor de desarrollo [`serve_app.py`](serve_app.py) con proxy CORS para Epsilon IA y backend FastAPI, y configuración Nginx para el servidor VPS.
@@ -14,7 +14,7 @@ El repositorio centraliza:
 
 | Componente | Ubicación | Descripción | Tecnología |
 |-----------|-----------|-------------|-----------|
-| **Dashboards** | [`dashboards/`](dashboards/) | Frontends web estáticos: Portal, Incidencias Masivas, Postmortem/Release, Release KPIs y **Reportes de Incidencias** | HTML5 / CSS3 / JavaScript (Vanilla ES6+) |
+| **Dashboards** | [`dashboards/`](dashboards/) | Frontends web estáticos: Portal, Incidencias Masivas, Postmortem/Release, Release KPIs, Reportes de Incidencias y **Catálogo de Agentes IA** | HTML5 / CSS3 / JavaScript (Vanilla ES6+) |
 | **Converters** | [`converters/`](converters/) | Motor de procesamiento CSV→JSON, saneamiento, validación y métricas pre-calculadas | Python 3.10+ / 3.11 |
 | **Report Generator** | [`converters/src/report_generator/`](converters/src/report_generator/) | Generación programática de presentaciones ejecutivas corporativas (`.pptx`) | `python-pptx`, `matplotlib`, `plotly` |
 | **Servidor / Gateway** | [`serve_app.py`](serve_app.py) / [`nginx.conf`](nginx.conf) | Servidor local con endpoints de subida `/api/upload`, proxy Epsilon IA y FastAPI, y config Nginx VPS | Python / Nginx |
@@ -79,6 +79,7 @@ El directorio [`dashboards/`](dashboards/) aloja las interfaces web estáticas d
 - **[Postmortem / Release](dashboards/postmortem/)** (`dashboards/postmortem/`): Análisis de incidencias surgidas en ventanas de despliegue operativo (PAP/MESA), seguimiento de SLAs y tiempos de resolución.
 - **[KPIs de Release](dashboards/release-kpis/)** (`dashboards/release-kpis/`): Serie histórica comparativa de métricas de calidad, incidencias y estabilidad entre distintas releases.
 - **[Reportes de Incidencias](dashboards/reportes-incidencias/)** (`dashboards/reportes-incidencias/`): Frontend del editor y visor de reportes semanales de incidencias de Orange. Incluye catálogo histórico (`index.html`), editor interactivo con selector de marcas (`editor.html`) y vista previa con exportación a PDF y PowerPoint (`preview.html`). Se comunica vía API REST con el backend FastAPI de `cso-incident-masivas-report`.
+- **[Catálogo de Agentes IA y Skills](dashboards/agents-catalog/)** (`dashboards/agents-catalog/`): Catálogo interactivo de agentes de IA y habilidades técnicas (*skills*) de la biblioteca corporativa. Incluye 4 tarjetas KPI en cabecera, filtrado facetado por dominio tecnológico, buscador en tiempo real, visor modal de fichas técnicas completas con renderizado Markdown y generador en un clic de comandos CLI de despliegue (`.\deploy-agents.cmd`). Conectado a `GET /api/agents-catalog` con fallback estático.
 
 > **Integración con otros sistemas**: Desde el Portal y la barra superior compartida también se enlaza a **Gestión de Problemas** (`/problemas`), aplicación servida por el backend de otro repositorio hermano en el mismo servidor VPS.
 
@@ -202,7 +203,7 @@ console.log(`Tendencia 7 días: ${metadata.kpis.trend_7d}%`);
 ## ✅ Estado del Proyecto
 
 - **Tests**: ✅ 516+ tests passing (cobertura >80%) — ver `converters/tests/`
-- **Dashboards**: ✅ Portal, Incidencias Masivas, Postmortem/Release, Release KPIs y Reportes de Incidencias funcionales
+- **Dashboards**: ✅ Portal, Incidencias Masivas, Postmortem/Release, Release KPIs, Reportes de Incidencias y Catálogo de Agentes IA funcionales
 - **Subida de CSV desde el navegador**: ✅ vía `serve_app.py` (`/api/upload`)
 - **Conversores**: ✅ Incidencias masivas + Postmortems (CLI y batch)
 - **Informes Ejecutivos**: ✅ Generación PPTX bajo demanda y exportación PDF en cliente
@@ -289,10 +290,11 @@ release-dashboard-application/
 │   ├── postmortem/               # Dashboard de postmortem / release
 │   ├── release-kpis/             # Dashboard de KPIs históricos de release
 │   ├── reportes-incidencias/     # Frontend de reportes de incidencias (listado, editor, preview PDF/PPTX)
+│   ├── agents-catalog/           # Catálogo interactivo de agentes IA y skills (index.html, CSS, JS)
 │   ├── tests/                    # Tests unitarios JavaScript para lógica de dashboards
 │   └── assets/                   # Logos corporativos, tokens.css, topbar.css/js, resumen-ia.css/js
 ├── converters/                   # Módulo Python de conversión CSV→JSON y reporting
-│   ├── cli/                      # convert_incidents.py, convert_postmortems.py, build_index.py, etc.
+│   ├── cli/                      # convert_incidents.py, convert_postmortems.py, build_index.py, build_agents_catalog.py, etc.
 │   ├── src/csv_to_json/          # Lógica de conversión (encoding, normalización, validación)
 │   ├── src/report_generator/     # Motor de generación de presentaciones PPTX
 │   ├── scripts/bin/              # Wrappers .bat/.sh para los CLI
@@ -324,7 +326,8 @@ Portal Hub (dashboards/portal/)  <-- [Consultas en tiempo real a Epsilon IA]
 ├── Incidencias Masivas (dashboards/massive-incidents/)
 ├── Postmortem / Release (dashboards/postmortem/)
 ├── KPIs de Release (dashboards/release-kpis/)
-└── Reportes de Incidencias (dashboards/reportes-incidencias/)  <-- [CRUD vía FastAPI :8000]
+├── Reportes de Incidencias (dashboards/reportes-incidencias/)  <-- [CRUD vía FastAPI :8000]
+└── Catálogo de Agentes IA (dashboards/agents-catalog/)  <-- [API /api/agents-catalog o estático]
     ↓
 Generación de Informes PPTX / PDF (report_generator / html2pdf / pptxgen)
 ```

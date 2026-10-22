@@ -52,6 +52,7 @@
 | **Postmortem / Despliegues** | `dashboards/postmortem/index.html` | `:8080` / `:8081` | Seguimiento de incidencias por ventana de despliegue (PAP/MESA), tiempos de resolución y exportación. |
 | **Release KPIs (Histórico)** | `dashboards/release-kpis/index.html` | `:8080` / `:8081` | Serie histórica de KPIs por release y análisis de tendencias. |
 | **Reportes de Incidencias** | `dashboards/reportes-incidencias/index.html` | `:8080` / `:8081` | Gestión tabular, reportes de impacto y exportación de informes ejecutivos PowerPoint. |
+| **Catálogo de Agentes IA** | `dashboards/agents-catalog/index.html` | `:8080` / `:8081` | Catálogo de agentes IA y skills, visor de prompts/fichas técnicas y generador de comandos CLI de despliegue. |
 
 > `dashboards/index.html` redirige de forma automática al **Portal General** (`/dashboards/portal/`).
 

@@ -131,6 +131,7 @@ El ecosistema cuenta con los siguientes paneles integrados:
 - 📋 **Postmortem y Despliegues** (`dashboards/postmortem/`): Análisis de incidencias por ventana de despliegue (PAP/MESA) y tiempos de resolución.
 - 📈 **Release KPIs** (`dashboards/release-kpis/`): Métricas de calidad y estabilidad de releases.
 - 📑 **Reportes de Incidencias** (`dashboards/reportes-incidencias/`): Panel de consulta y gestión de informes de incidencias.
+- 🤖 **Catálogo de Agentes IA y Skills** (`dashboards/agents-catalog/`): Catálogo interactivo de agentes y habilidades (*skills*), visor Markdown de fichas técnicas y generador CLI de comandos de despliegue.
 - 🤖 **Resumen IA (Epsilon)**: Modal flotante inteligente disponible en los dashboards para generar resúmenes automáticos de incidencias.
 
 ---
@@ -151,6 +152,12 @@ converters\scripts\bin\convert_incidents.bat data/input/archivo.csv --show-error
 ### Generación de Informes Ejecutivos PowerPoint
 ```bash
 python converters/cli/generate_postmortem_report.py --input data/output/incidencias.json --output data/reports/informe_ejecutivo.pptx
+```
+
+### Generación y Actualización del Catálogo de Agentes IA
+```bash
+python converters/cli/build_agents_catalog.py
+# Genera o refresca data/output/agents_catalog.json desde la biblioteca de agentes
 ```
 
 ### Ejecución de la Suite de Tests Automatizados

@@ -7,6 +7,7 @@ Este documento describe todas las APIs, rutas y servicios backend que consumen l
   - **Postmortem / Release** (`dashboards/postmortem/`)
   - **KPIs de Release** (`dashboards/release-kpis/`)
   - **Reportes de Incidencias** (`dashboards/reportes-incidencias/`)
+  - **Catálogo de Agentes IA y Skills** (`dashboards/agents-catalog/`)
   - **Informes Específicos** (`dashboards/informes/incidencias-pdtes-r9-2026/`)
 - La aplicación Next.js de **Gestión de Problemas** bajo `/problemas` (alojada en el repositorio hermano `gestion-problemas-dashboard`).
 - Los componentes transversales de cliente: [`topbar.js`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/dashboards/assets/topbar.js) (sondeo de salud) y [`resumen-ia.js`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/dashboards/assets/resumen-ia.js) (Epsilon IA).
@@ -23,6 +24,7 @@ flowchart TD
         PM["Postmortem / Release<br/>(dashboards/postmortem)"]
         RK["KPIs de Release<br/>(dashboards/release-kpis)"]
         RI["Reportes de Incidencias<br/>(dashboards/reportes-incidencias)"]
+        AC["Catálogo de Agentes IA<br/>(dashboards/agents-catalog)"]
         GP["Gestión de Problemas<br/>(Next.js /problemas)"]
         TB["Barra Superior Unificada<br/>(topbar.js)"]
     end
@@ -36,6 +38,7 @@ flowchart TD
         HLTH["GET /api/health y /healthz"]
         JIRA["GET /api/dashboard"]
         DATA["GET /data/output/*"]
+        AGCAT["GET /api/agents-catalog"]
     end
 
     subgraph StorageAndEngines["Almacenamiento y Motores de Procesamiento"]
@@ -60,6 +63,8 @@ flowchart TD
     RK --> PPT
     RI --> REP_CRUD
     RI --> HLTH
+    AC --> AGCAT
+    AC --> DATA
     GP --> JIRA
     GP --> EXEC
     TB --> HLTH
@@ -87,6 +92,7 @@ flowchart TD
 | **Postmortem de Release** | `/dashboards/postmortem/` | `POST /api/upload`<br/>`GET /api/reports/postmortem/{release_name}`<br/>`GET /api/epsilon/resumenIA/{codigo}`<br/>`GET /data/output/index.json`<br/>`GET /data/output/*-postmortem.json` |
 | **KPIs de Release** | `/dashboards/release-kpis/` | `GET /api/reports/postmortem/{release_name}`<br/>*Nota: datos base leídos de `releases-data.js`* |
 | **Reportes de Incidencias** | `/dashboards/reportes-incidencias/` | `GET /api/reports`<br/>`POST /api/reports`<br/>`GET /api/reports/{id}`<br/>`PUT /api/reports/{id}`<br/>`DELETE /api/reports/{id}`<br/>`POST /api/reports/{id}/duplicate?new_week={week}`<br/>`GET /api/reports/{id}/export`<br/>`GET /api/reports/{id}/legacy-pptx`<br/>`GET /api/health` |
+| **Catálogo de Agentes IA** | `/dashboards/agents-catalog/` | `GET /api/agents-catalog`<br/>`GET /data/output/agents_catalog.json` (fallback estático) |
 | **Gestión de Problemas** | `/problemas` | `GET /api/dashboard` (Jira)<br/>`POST /api/reports/executive-incident`<br/>`GET /api/reports/executive-incident/{ref}/status`<br/>`GET /api/reports/executive-incident/{ref}`<br/>`GET /api/healthz` y `GET /api/readyz` |
 | **Barra Superior Unificada** | *Compartida en todos* | `GET /api/health` (fallback a `GET /healthz`) |
 
@@ -266,6 +272,41 @@ Invocada por el cliente [`dashboards/reportes-incidencias/api-client.js`](file:/
 
 #### `GET /healthz` y `GET /readyz`
 * **Invocado por**: Topbar (como fallback de salud) y sondas de infraestructura de servidor o balanceador.
+
+---
+
+### 9. Catálogo de Agentes IA y Skills
+
+#### `GET /api/agents-catalog`
+* **Invocado por**: [`dashboards/agents-catalog/agents-catalog.js`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/dashboards/agents-catalog/agents-catalog.js).
+* **Propósito**: Proporciona el catálogo interactivo de agentes de IA y habilidades técnicas (*skills*) de la biblioteca corporativa (`biblioteca-agentes`), correlacionando qué agentes emplean cada skill, métricas de reusabilidad y comando de despliegue.
+* **Respuesta (`200 OK`)**: Estructura Envelope (`success`, `data`, `metadata`). Si la biblioteca externa no está presente localmente (entorno VPS), sirve de forma transparente el dataset estático generado en `data/output/agents_catalog.json`.
+* **Esquema**:
+  ```json
+  {
+    "success": true,
+    "data": {
+      "agents": [ ... ],
+      "skills": [ ... ],
+      "domains": [ ... ],
+      "kpis": {
+        "total_agents": 5,
+        "total_skills": 6,
+        "total_domains": 2,
+        "skills_coverage_percent": 100.0
+      },
+      "deployment": {
+        "command_template": ".\\deploy-agents.cmd \"<TargetRepo>\" -Agents \"<AgentName>\"",
+        "source_repo": "C:\\Users\\jose.delafuente\\Claude\\Projects\\biblioteca-agentes"
+      }
+    },
+    "metadata": {
+      "generated_at": "2026-10-22T16:30:00+02:00",
+      "version": "1.0.0",
+      "source": "biblioteca-agentes"
+    }
+  }
+  ```
 
 ---
 

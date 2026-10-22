@@ -10,6 +10,7 @@ El proyecto integra:
 - **Postmortem Dashboard** (`dashboards/postmortem/`): Análisis de post-mortem por despliegues (PAP / MESA) y SLAs.
 - **Release KPIs Dashboard** (`dashboards/release-kpis/`): Métricas históricas de calidad de releases.
 - **Reportes de Incidencias** (`dashboards/reportes-incidencias/`): Frontend del editor y visor de reportes semanales conectado a la API de `cso-incident-masivas-report`.
+- **Catálogo de Agentes IA y Skills** (`dashboards/agents-catalog/`): Catálogo interactivo de agentes de IA y habilidades técnicas (*skills*) de la biblioteca corporativa, con métricas KPI, filtrado por dominio, visor de prompts y generador de comandos CLI de despliegue.
 - **Motor Python de Conversores** (`converters/`): Ingesta CSV a JSON, validación estricta y pre-cálculo de KPIs.
 - **Report Generator** (`converters/src/report_generator/`): Generador de presentaciones ejecutivas PowerPoint (`.pptx`) para releases e incidencias individuales.
 - **Servidor y Pasarela** (`serve_app.py` / `nginx.conf`): Servidor local en puerto `8080` y Nginx en producción VPS (`10.132.26.96:8081`).
@@ -22,12 +23,13 @@ El proyecto integra:
 - `dashboards/postmortem/index.html`: Dashboard de postmortem por release
 - `dashboards/release-kpis/index.html`: Dashboard de KPIs históricos de release
 - `dashboards/reportes-incidencias/`: Listado (`index.html`), editor (`editor.html`) y preview (`preview.html`)
+- `dashboards/agents-catalog/index.html`: Catálogo interactivo de agentes de IA y skills
 - `dashboards/assets/`: Recursos compartidos (logos corporativos, topbar, tokens CSS, componentes Epsilon IA)
 
 ### Conversores Python y Herramientas
 - `converters/src/csv_to_json/`: Módulo de conversión CSV→JSON, detección de delimitador/encoding y validadores
 - `converters/src/report_generator/`: Generadores PowerPoint para postmortem y reportes ejecutivos Confluence
-- `converters/cli/`: Scripts de ejecución por consola (`convert_incidents.py`, `convert_postmortems.py`, `generate_executive_report.py`, etc.)
+- `converters/cli/`: Scripts de ejecución por consola (`convert_incidents.py`, `convert_postmortems.py`, `build_agents_catalog.py`, `generate_executive_report.py`, etc.)
 - `serve_app.py`: Servidor HTTP de desarrollo local (puerto 8080) con endpoints de upload, proxy IA y reportes PPTX
 - `scripts/deploy-production.ps1`: Script de despliegue Standalone Runtime al VPS (empaquetado selectivo Zero Git)
 

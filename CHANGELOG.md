@@ -7,6 +7,21 @@ y este proyecto se adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
 ---
 
+## [0.4.0] - 2026-10-22
+
+### Añadido (Nuevas Funcionalidades y Ecosistema)
+
+#### Catálogo Interactivo de Agentes IA y Skills (Feature 011)
+- **Dashboard web corporativo**: Nueva interfaz interactiva en [`dashboards/agents-catalog/`](dashboards/agents-catalog/) (`index.html`, `agents-catalog.css`, `agents-catalog.js`) con diseño visual Orange (`#FF7900`), cabecera con 4 métricas KPI, pestañas Agentes/Skills y filtrado en tiempo real.
+- **Fichas técnicas y visor de prompts**: Modal interactivo accesible con renderizado de Markdown para explorar el contenido detallado de agentes y habilidades.
+- **Generador de comandos CLI**: Generador con 1 clic de comandos de despliegue (`.\deploy-agents.cmd "<TargetRepo>" -Agents "<name>"`) con persistencia del repositorio destino en `localStorage` y feedback visual (`Toast`).
+- **Extractor CLI de catálogo**: Script [`converters/cli/build_agents_catalog.py`](converters/cli/build_agents_catalog.py) que analiza la biblioteca externa (`biblioteca-agentes`), correlaciona dependencias bidireccionales `used_by_agents` y emite el dataset envelope estándar a [`data/output/agents_catalog.json`](data/output/agents_catalog.json).
+- **Endpoint API y fallback**: Endpoint `GET /api/agents-catalog` integrado en `serve_app.py` con fallback estático transparente para entornos desacoplados (VPS de producción).
+- **Integración global**: Enlace "Agentes IA" añadido a la barra superior unificada ([`dashboards/assets/topbar.js`](dashboards/assets/topbar.js)) y tarjeta de acceso rápido con badge `.tag-ai` en el Hub de Portales ([`dashboards/portal/index.html`](dashboards/portal/index.html)).
+- **Pruebas unitarias**: Suite de 11 tests automatizados passing al 100% en [`converters/tests/unit/test_build_agents_catalog.py`](converters/tests/unit/test_build_agents_catalog.py).
+
+---
+
 ## [0.3.0] - 2026-10-21
 
 ### Añadido (Nuevas Funcionalidades y Ecosistema)
