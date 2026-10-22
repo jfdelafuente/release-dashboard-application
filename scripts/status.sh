@@ -87,6 +87,7 @@ check_endpoint "Incidencias Masivas" "http://localhost:8081/dashboards/massive-i
 check_endpoint "Postmortem" "http://localhost:8081/dashboards/postmortem/"
 check_endpoint "Release KPIs" "http://localhost:8081/dashboards/release-kpis/"
 check_endpoint "Reportes Incidencias" "http://localhost:8081/dashboards/reportes-incidencias/"
+check_endpoint "Catálogo de Agentes IA" "http://localhost:8081/dashboards/agents-catalog/"
 check_endpoint "Proxy API Epsilon" "http://localhost:8081/api/epsilon/resumenIA/INC000004141215"
 check_endpoint "Backend CSO Health" "http://localhost:8081/api/health"
 check_endpoint "Gestión de Problemas (/problemas)" "http://localhost:8081/problemas/readyz"

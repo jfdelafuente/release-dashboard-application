@@ -127,7 +127,7 @@ elif [ -x "$RemoteDir/scripts/status.sh" ]; then
     "$RemoteDir/scripts/status.sh"
 else
     echo "=== Sondas de Salud HTTP ==="
-    for ep in "/dashboards/portal/" "/dashboards/massive-incidents/" "/dashboards/postmortem/" "/dashboards/release-kpis/" "/dashboards/reportes-incidencias/" "/api/health"; do
+    for ep in "/dashboards/portal/" "/dashboards/massive-incidents/" "/dashboards/postmortem/" "/dashboards/release-kpis/" "/dashboards/reportes-incidencias/" "/dashboards/agents-catalog/" "/api/health"; do
         printf "  %-35s : " "\$ep"
         curl -s -o /dev/null -w "%{http_code}\n" --noproxy '*' "http://localhost:8081\$ep"
     done
@@ -159,6 +159,30 @@ fi
 # -------------------------------------------------------------------------
 # COMPROBACIONES DE GIT LOCAL
 # -------------------------------------------------------------------------
+# Auto-detectar git si no se encuentra en el PATH de la sesión actual
+if (-not (Get-Command git -ErrorAction SilentlyContinue)) {
+    $GitCandidates = @(
+        "C:\Program Files\Git\cmd\git.exe",
+        "C:\Program Files\Git\bin\git.exe",
+        "C:\Program Files\Git\mingw64\bin\git.exe",
+        "$env:LOCALAPPDATA\Programs\Git\cmd\git.exe",
+        "$env:ProgramFiles\Git\cmd\git.exe"
+    )
+    foreach ($cand in $GitCandidates) {
+        if (Test-Path $cand) {
+            $gitFolder = Split-Path -Parent $cand
+            $env:PATH = "$gitFolder;$env:PATH"
+            break
+        }
+    }
+}
+
+if (-not (Get-Command git -ErrorAction SilentlyContinue)) {
+    Write-Failure "No se encontró el ejecutable 'git' en el PATH ni en las rutas estándar de Windows."
+    Write-WarnMsg "Añade Git a tu PATH con: `$env:PATH += ';C:\Program Files\Git\cmd' e inténtalo de nuevo."
+    exit 1
+}
+
 Push-Location $ProjectRoot
 try {
     $currentBranch = (git branch --show-current 2>$null).Trim()
@@ -252,7 +276,14 @@ if (-not $SkipBuild) {
             "0.2.0-$(Get-Date -Format 'yyyyMMdd')" | Out-File -FilePath (Join-Path $StagingDir "VERSION") -Encoding utf8
         }
 
-        # 6. Generar archivo tarball comprimido
+        # 6. Copiar dataset inicial de catálogo de agentes si existe en local
+        if (Test-Path "$ProjectRoot\data\output\agents_catalog.json") {
+            $DataOutStaging = Join-Path $StagingDir "data\output"
+            New-Item -ItemType Directory -Path $DataOutStaging -Force | Out-Null
+            Copy-Item "$ProjectRoot\data\output\agents_catalog.json" -Destination $DataOutStaging
+        }
+
+        # 7. Generar archivo tarball comprimido
         if (Test-Path $TarballFullPath) { Remove-Item $TarballFullPath -Force }
         tar --force-local -czf "$TarballFullPath" -C "$StagingDir" .
 
@@ -378,7 +409,14 @@ echo "--> [Remoto] Extrayendo nueva release en `$NEW_RELEASE_DIR..."
 tar -xzf "`$TMP_TAR" -C "`$NEW_RELEASE_DIR"
 rm -f "`$TMP_TAR"
 
-# 4. Enlazar datos desacoplados y logs dentro de la nueva release
+# 4. Sincronizar catálogo de agentes en almacenamiento persistente si viene en el paquete
+if [ -f "`$NEW_RELEASE_DIR/data/output/agents_catalog.json" ]; then
+    echo "--> [Remoto] Sincronizando catálogo de agentes a `$STORAGE_BASE/output/agents_catalog.json..."
+    cp -f "`$NEW_RELEASE_DIR/data/output/agents_catalog.json" "`$STORAGE_BASE/output/agents_catalog.json" 2>/dev/null || true
+    rm -rf "`$NEW_RELEASE_DIR/data"
+fi
+
+# Enlazar datos desacoplados y logs dentro de la nueva release
 ln -sfn "`$STORAGE_BASE" "`$NEW_RELEASE_DIR/data"
 ln -sfn "`$LOGS_BASE" "`$NEW_RELEASE_DIR/logs"
 
@@ -470,7 +508,7 @@ echo "=== Verificación de Sondas de Salud HTTP ==="
 if [ -x "`$REMOTE_DIR/status.sh" ]; then
     "`$REMOTE_DIR/status.sh"
 else
-    for ep in "/dashboards/portal/" "/dashboards/massive-incidents/" "/dashboards/postmortem/" "/dashboards/release-kpis/" "/dashboards/reportes-incidencias/" "/api/health"; do
+    for ep in "/dashboards/portal/" "/dashboards/massive-incidents/" "/dashboards/postmortem/" "/dashboards/release-kpis/" "/dashboards/reportes-incidencias/" "/dashboards/agents-catalog/" "/api/health"; do
         printf "  %-35s : " "\$ep"
         curl -sf --noproxy '*' "http://localhost:8081\$ep" >/dev/null && echo "OK (200)" || echo "ERROR"
     done
