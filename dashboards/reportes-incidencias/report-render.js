@@ -54,10 +54,27 @@ const WEEKDAY_LABELS = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
 // (empty/placeholder values from a bad import) so those quietly sink to
 // the end / get excluded rather than skewing results.
 function parseIncidentDate(s) {
-  const m = String(s || '').match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:\s+(\d{1,2}):(\d{2}))?/);
-  if (!m) return null;
-  const d = new Date(+m[3], +m[2] - 1, +m[1], +(m[4] || 0), +(m[5] || 0));
-  return isNaN(d.getTime()) ? null : d;
+  if (!s) return null;
+  const str = String(s).trim();
+  if (!str) return null;
+
+  // Format 1: DD/MM/YYYY or DD/MM/YY (or with '-' / '.') with optional H:MM[:SS]
+  const m = str.match(/^(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{2,4})(?:\s+(\d{1,2}):(\d{2})(?::(\d{2}))?)?/);
+  if (m) {
+    let yr = +m[3];
+    if (yr < 100) yr += 2000;
+    const d = new Date(yr, +m[2] - 1, +m[1], +(m[4] || 0), +(m[5] || 0), +(m[6] || 0));
+    return isNaN(d.getTime()) ? null : d;
+  }
+
+  // Format 2: ISO YYYY-MM-DD or YYYY/MM/DD with optional [T\s]H:MM[:SS]
+  const mIso = str.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})(?:[T\s](\d{1,2}):(\d{2})(?::(\d{2}))?)?/);
+  if (mIso) {
+    const d = new Date(+mIso[1], +mIso[2] - 1, +mIso[3], +(mIso[4] || 0), +(mIso[5] || 0), +(mIso[6] || 0));
+    return isNaN(d.getTime()) ? null : d;
+  }
+
+  return null;
 }
 
 // Incident counts by weekday (Lun-Dom), split IT/RED, for the "incidencias
@@ -926,7 +943,7 @@ window.ReportRender = {
   parseDurMin, fmtDur, fmtK, num,
   metricsArr, actionPointsArr,
   BRAND_LOGOS_PPTX,
-  computeStats, highlightIncident, truncateText, weekdayBreakdown, compareIncidents, sortIncidents, groupIncidentsForSlides, buildPptxDeck,
+  parseIncidentDate, computeStats, highlightIncident, truncateText, weekdayBreakdown, compareIncidents, sortIncidents, groupIncidentsForSlides, buildPptxDeck,
   buildPdfHtml, downloadPdf, downloadPptx,
 };
 })();
