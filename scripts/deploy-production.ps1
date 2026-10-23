@@ -4,20 +4,20 @@
 
 .DESCRIPTION
     Implementa el modelo de despliegue selectivo por artefacto (Standalone Runtime):
-      1. Verificación de git local (rama production obligatoria) y push a origin/production.
-      2. Empaquetado selectivo de runtime (dist/release-dashboard-runtime.tar.gz):
-         - Solo dashboards, converters, scripts, nginx.conf, requirements.txt y VERSION.
+      1. Regeneración automática de data/output/agents_catalog.json desde biblioteca-agentes.
+      2. Verificación de git local (rama production obligatoria) y push a origin/production.
+      3. Empaquetado selectivo de runtime (dist/release-dashboard-runtime.tar.gz):
+         - Dashboards, converters, scripts, nginx.conf, requirements.txt, VERSION y catálogo de agentes.
          - Excluye .git, tests, specs, documentación, maquetas y ficheros demo.
-         - data/ NO se incluye en el artefacto para no sobrescribir jamás datos persistentes.
-      3. Subida rápida del artefacto por SCP a /tmp/.
-      4. Ejecución remota segura por SSH:
+         - data/ persistente se preserva en el servidor; agents_catalog.json se sincroniza automáticamente.
+      4. Subida rápida del artefacto por SCP a /tmp/.
+      5. Ejecución remota segura por SSH:
          - Backup preventivo en /infocodes/var/backups/release-dashboard-application/.
          - Extracción limpia sobre /infocodes/project/release-dashboard-application.
-         - Preservación íntegra de directorios de datos (data/input, output, reports, errors, archive).
-         - Sincronización y validación sintáctica de Nginx (nginx -t) con recarga en caliente (nginx -s reload).
-         - Rollback automático de Nginx en caso de error sintáctico.
-         - Limpieza de residuos de desarrollo en el servidor.
-         - Sondas de verificación (smoke tests) para todos los dashboards y proxies.
+         - Sincronización del catálogo de agentes en almacenamiento persistente.
+         - Switch atómico symlink 'current'.
+         - Validación y recarga en caliente de Nginx.
+         - Sondas de verificación HTTP.
          - Rotación automática de copias de seguridad (conserva las últimas 5).
 
 .PARAMETER TargetHost
@@ -25,6 +25,12 @@
 
 .PARAMETER RemoteDir
     Ruta remota de la aplicación. Por defecto: "/infocodes/project/release-dashboard-application".
+
+.PARAMETER AgentsLibraryPath
+    Ruta personalizada a la biblioteca de agentes. Por defecto: C:\Users\jose.delafuente\Claude\Projects\biblioteca-agentes.
+
+.PARAMETER SkipCatalogBuild
+    Omite la regeneración automática de data/output/agents_catalog.json antes del despliegue.
 
 .PARAMETER SkipPush
     Omite el git push local a origin/production.
@@ -46,7 +52,7 @@
 
 .EXAMPLE
     .\scripts\deploy-production.ps1
-    Flujo estándar: validación de git, push, empaquetado selectivo, subida, despliegue y verificación.
+    Flujo estándar: regeneración de catálogo, git push, empaquetado selectivo, subida, despliegue y verificación.
 
 .EXAMPLE
     .\scripts\deploy-production.ps1 -VerifyOnly
@@ -61,6 +67,8 @@
 param(
     [string]$TargetHost = "infocodes@10.132.26.96",
     [string]$RemoteDir = "/infocodes/project/release-dashboard-application",
+    [string]$AgentsLibraryPath,
+    [switch]$SkipCatalogBuild,
     [switch]$SkipPush,
     [switch]$SkipBuild,
     [switch]$SkipUpload,
@@ -183,8 +191,76 @@ if (-not (Get-Command git -ErrorAction SilentlyContinue)) {
     exit 1
 }
 
+# Auto-detectar ejecutable de python si no se encuentra en el PATH de la sesión actual
+$PythonCmd = $null
+if (Get-Command python -ErrorAction SilentlyContinue) {
+    $PythonCmd = "python"
+} elseif (Get-Command py -ErrorAction SilentlyContinue) {
+    $PythonCmd = "py"
+} else {
+    $PyCandidates = @(
+        "C:\Program Files\Python312\python.exe",
+        "C:\Program Files\Python311\python.exe",
+        "C:\Program Files\Python310\python.exe",
+        "$env:LOCALAPPDATA\Programs\Python\Python312\python.exe",
+        "$env:LOCALAPPDATA\Programs\Python\Python311\python.exe"
+    )
+    foreach ($cand in $PyCandidates) {
+        if (Test-Path $cand) {
+            $PythonCmd = $cand
+            break
+        }
+    }
+}
+
 Push-Location $ProjectRoot
 try {
+    # -------------------------------------------------------------------------
+    # REGENERACIÓN PREVIA DEL CATÁLOGO DE AGENTES IA
+    # -------------------------------------------------------------------------
+    if (-not $SkipCatalogBuild) {
+        Write-Step "Catálogo" "Regenerando catálogo de agentes IA desde la biblioteca..."
+
+        if ($DryRun) {
+            Write-Ok "[DRY-RUN] Se ejecutaría: python converters/cli/build_agents_catalog.py"
+        } else {
+            $CatalogScript = Join-Path $ProjectRoot "converters\cli\build_agents_catalog.py"
+            if (Test-Path $CatalogScript) {
+                if ($PythonCmd) {
+                    $catalogArgs = @($CatalogScript)
+                    if ($AgentsLibraryPath) {
+                        $catalogArgs += @("--library-path", $AgentsLibraryPath)
+                    }
+
+                    & $PythonCmd @catalogArgs
+                    if ($LASTEXITCODE -eq 0) {
+                        Write-Ok "Catálogo de agentes generado con éxito en data/output/agents_catalog.json"
+
+                        # Si el catálogo cambió respecto a git, registrar commit automático específico
+                        $catalogDiff = (git status --porcelain "data/output/agents_catalog.json" 2>$null)
+                        if ($catalogDiff) {
+                            git add "data/output/agents_catalog.json"
+                            git commit "data/output/agents_catalog.json" -m "data(agents): regenerar catalogo de agentes pre-deploy" | Out-Null
+                            if ($LASTEXITCODE -eq 0) {
+                                Write-Ok "Catálogo actualizado y commiteado automáticamente en git"
+                            }
+                        } else {
+                            Write-Ok "Catálogo de agentes al día (sin cambios en la biblioteca)"
+                        }
+                    } else {
+                        Write-WarnMsg "No se pudo regenerar el catálogo (código de salida: $LASTEXITCODE). Se continuará con la versión existente."
+                    }
+                } else {
+                    Write-WarnMsg "No se encontró el ejecutable de Python. Se continuará con la versión existente si está disponible."
+                }
+            } else {
+                Write-WarnMsg "No se encontró el script generador en: $CatalogScript"
+            }
+        }
+    } else {
+        Write-Step "Catálogo" "Omitiendo regeneración del catálogo (-SkipCatalogBuild activo)."
+    }
+
     $currentBranch = (git branch --show-current 2>$null).Trim()
     if ($currentBranch -ne "production") {
         Write-WarnMsg "Rama actual: '$currentBranch'. La rama operativa para despliegue es 'production'."
@@ -276,11 +352,14 @@ if (-not $SkipBuild) {
             "0.2.0-$(Get-Date -Format 'yyyyMMdd')" | Out-File -FilePath (Join-Path $StagingDir "VERSION") -Encoding utf8
         }
 
-        # 6. Copiar dataset inicial de catálogo de agentes si existe en local
+        # 6. Copiar catálogo de agentes regenerado al paquete runtime
         if (Test-Path "$ProjectRoot\data\output\agents_catalog.json") {
             $DataOutStaging = Join-Path $StagingDir "data\output"
             New-Item -ItemType Directory -Path $DataOutStaging -Force | Out-Null
             Copy-Item "$ProjectRoot\data\output\agents_catalog.json" -Destination $DataOutStaging
+            Write-Ok "Catálogo de agentes empaquetado en el artefacto runtime"
+        } else {
+            Write-WarnMsg "No se encontró data/output/agents_catalog.json para empaquetar"
         }
 
         # 7. Generar archivo tarball comprimido

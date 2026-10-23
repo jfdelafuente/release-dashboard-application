@@ -9,17 +9,21 @@ Scripts para el despliegue, operación y conversión de datos de Release Dashboa
 Script principal de despliegue desde la máquina local Windows a producción (`infocodes@10.132.26.96`).
 
 ### Características:
+- Regeneración automática del catálogo de agentes IA (`data/output/agents_catalog.json`) desde `biblioteca-agentes`.
 - Empaquetado selectivo de runtime en `dist/release-dashboard-runtime.tar.gz` (~2.3 MB).
 - Cero `git pull`, `git stash` o clonación en el servidor de producción.
-- Protección total del directorio `data/` (persistencia estricta).
+- Protección total del directorio `data/` (persistencia estricta) y sincronización del catálogo.
 - Backup preventivo automático con rotación de las últimas 5 copias en `/infocodes/var/backups/release-dashboard-application/`.
 - Validación de sintaxis Nginx (`nginx -t`) y recarga suave en caliente (`nginx -s reload`) con rollback automático.
 - Ejecución desatendida de sondas de salud HTTP al finalizar.
 
 ### Uso:
 ```powershell
-# Despliegue estándar completo:
+# Despliegue estándar completo (regenera catálogo, valida git, empaqueta y despliega):
 .\scripts\deploy-production.ps1
+
+# Despliegue omitiendo la regeneración del catálogo:
+.\scripts\deploy-production.ps1 -SkipCatalogBuild
 
 # Solo verificar salud y estado del servidor sin modificar nada:
 .\scripts\deploy-production.ps1 -VerifyOnly

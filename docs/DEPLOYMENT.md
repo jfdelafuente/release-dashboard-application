@@ -131,7 +131,9 @@ Desde tu terminal de PowerShell en la raíz del proyecto:
 
 | Parámetro | Descripción |
 |---|---|
-| *(sin parámetros)* | Proceso completo: valida git local, push a GitHub, empaqueta artefacto, sube por SCP, aplica en el VPS, valida Nginx y comprueba sondas de salud. |
+| *(sin parámetros)* | Proceso completo: regenera catálogo de agentes IA, valida git local, push a GitHub, empaqueta artefacto, sube por SCP, aplica en el VPS, valida Nginx y comprueba sondas de salud. |
+| `-AgentsLibraryPath` | Ruta personalizada a la biblioteca de agentes (por defecto: `C:\Users\jose.delafuente\Claude\Projects\biblioteca-agentes`). |
+| `-SkipCatalogBuild` | Omite la regeneración automática de `data/output/agents_catalog.json` antes del empaquetado. |
 | `-VerifyOnly` | Solo consulta el estado de Nginx, estadísticas de datos y sondas HTTP remotas sin tocar ningún archivo ni recargar. |
 | `-Rollback` | Restaura instantáneamente la release o copia de seguridad más reciente y recarga Nginx. |
 | `-SkipPush` | Salta el `git push origin production` y empaqueta/despliega directamente el estado local. |
