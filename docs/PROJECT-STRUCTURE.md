@@ -160,14 +160,15 @@ scripts/
 ```
 
 **Mecanismo de Despliegue Standalone Runtime (`deploy-production.ps1`)**:
-1. **Validación Git**: Exige rama `production` limpia y sincronizada con GitHub.
-2. **Empaquetado Selectivo**: Genera un artefacto ligero (`dist/release-dashboard-runtime.tar.gz`, ~2.3 MB) conteniendo únicamente `dashboards/`, `converters/`, `scripts/`, `nginx.conf`, `requirements.txt` y `VERSION`. Excluye `.git`, tests, documentación y `data/`.
-3. **Transferencia SCP**: Sube el tarball al host `infocodes@10.132.26.96:/tmp/`.
-4. **Copia Preventiva**: Crea backup en `/infocodes/var/backups/release-dashboard-application/backup_<TIMESTAMP>.tar.gz`.
-5. **Extracción Atómica**: Descomprime en `/infocodes/project/release-dashboard-application/releases/<TIMESTAMP>`.
-6. **Enlace Simbólico**: Actualiza el symlink atómico `current -> releases/<TIMESTAMP>` y reconecta `current/data` al almacenamiento persistente desacoplado.
-7. **Validación y Recarga**: Ejecuta `nginx -t` y `nginx -s reload` sin caída de servicio (con rollback automático si la sintaxis falla).
-8. **Smoke Tests**: Verifica respuestas HTTP 200 en todos los dashboards y proxies.
+1. **Regeneración de Catálogo IA**: Extrae y sincroniza automáticamente `data/output/agents_catalog.json` desde la biblioteca local de agentes.
+2. **Validación Git**: Exige rama `production` limpia y sincronizada con GitHub.
+3. **Empaquetado Selectivo**: Genera un artefacto ligero (`dist/release-dashboard-runtime.tar.gz`, ~2.3 MB) conteniendo únicamente `dashboards/`, `converters/`, `scripts/`, `nginx.conf`, `requirements.txt`, `VERSION` y el catálogo sincronizado. Excluye `.git`, tests, documentación y datasets de incidencias.
+4. **Transferencia SCP**: Sube el tarball al host `infocodes@10.132.26.96:/tmp/`.
+5. **Copia Preventiva**: Crea backup en `/infocodes/var/backups/release-dashboard-application/backup_<TIMESTAMP>.tar.gz`.
+6. **Extracción Atómica**: Descomprime en `/infocodes/project/release-dashboard-application/releases/<TIMESTAMP>`.
+7. **Sincronización de Catálogo y Symlink**: Sincroniza `agents_catalog.json` en el almacenamiento persistente (`/infocodes/var/storage/release-dashboard/output/agents_catalog.json`), actualiza el symlink atómico `current -> releases/<TIMESTAMP>` y reconecta `current/data` al almacenamiento persistente desacoplado.
+8. **Validación y Recarga**: Ejecuta `nginx -t` y `nginx -s reload` sin caída de servicio (con rollback automático si la sintaxis falla).
+9. **Smoke Tests**: Verifica respuestas HTTP 200 en todos los dashboards y proxies.
 
 ---
 

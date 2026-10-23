@@ -79,7 +79,7 @@ El directorio [`dashboards/`](dashboards/) aloja las interfaces web estáticas d
 - **[Postmortem / Release](dashboards/postmortem/)** (`dashboards/postmortem/`): Análisis de incidencias surgidas en ventanas de despliegue operativo (PAP/MESA), seguimiento de SLAs y tiempos de resolución.
 - **[KPIs de Release](dashboards/release-kpis/)** (`dashboards/release-kpis/`): Serie histórica comparativa de métricas de calidad, incidencias y estabilidad entre distintas releases.
 - **[Reportes de Incidencias](dashboards/reportes-incidencias/)** (`dashboards/reportes-incidencias/`): Frontend del editor y visor de reportes semanales de incidencias de Orange. Incluye catálogo histórico (`index.html`), editor interactivo con selector de marcas (`editor.html`) y vista previa con exportación a PDF y PowerPoint (`preview.html`). Se comunica vía API REST con el backend FastAPI de `cso-incident-masivas-report`.
-- **[Catálogo de Agentes IA y Skills](dashboards/agents-catalog/)** (`dashboards/agents-catalog/`): Catálogo interactivo de agentes de IA y habilidades técnicas (*skills*) de la biblioteca corporativa. Incluye 4 tarjetas KPI en cabecera, filtrado facetado por dominio tecnológico, buscador en tiempo real, visor modal de fichas técnicas completas con renderizado Markdown y generador en un clic de comandos CLI de despliegue (`.\deploy-agents.cmd`). Conectado a `GET /api/agents-catalog` con fallback estático.
+- **[Catálogo de Agentes IA y Skills](dashboards/agents-catalog/)** (`dashboards/agents-catalog/`): Catálogo interactivo de agentes de IA y habilidades técnicas (*skills*) de la biblioteca corporativa. Incluye cabecera sobria y unificada con los dashboards hermanos, filtrado facetado por dominio tecnológico, buscador en tiempo real, visor modal de fichas técnicas completas con renderizado Markdown y generador en un clic de comandos CLI de despliegue (`.\deploy-agents.cmd`). Regenerado automáticamente desde `biblioteca-agentes` en cada despliegue a producción. Conectado a `GET /api/agents-catalog` con fallback estático.
 
 > **Integración con otros sistemas**: Desde el Portal y la barra superior compartida también se enlaza a **Gestión de Problemas** (`/problemas`), aplicación servida por el backend de otro repositorio hermano en el mismo servidor VPS.
 
@@ -345,7 +345,7 @@ Genera bajo demanda presentaciones PowerPoint corporativas (`.pptx`) con el dise
 
 ## 🚀 Despliegue en Producción (VPS)
 
-El despliegue se realiza en 1 clic de forma segura y desatendida desde tu terminal local de Windows (PowerShell en rama `production`), mediante un artefacto comprimido (*Standalone Runtime*, ~2.3 MB) transferido por SCP, con persistencia estricta en almacenamiento desacoplado (`/infocodes/var/storage/release-dashboard/` para datos analíticos y `/infocodes/var/storage/executive_pptx/` para informes ejecutivos generados, con fallback a `data/` en local), backup automático en rotación de 5 copias, validación sintáctica de Nginx (`nginx -t`) y sondas de salud HTTP:
+El despliegue se realiza en 1 clic de forma segura y desatendida desde tu terminal local de Windows (PowerShell en rama `production`), mediante un artefacto comprimido (*Standalone Runtime*, ~2.3 MB) transferido por SCP, con regeneración automática del catálogo de agentes IA (`data/output/agents_catalog.json`), persistencia estricta en almacenamiento desacoplado (`/infocodes/var/storage/release-dashboard/` para datos analíticos y `/infocodes/var/storage/executive_pptx/` para informes ejecutivos generados, con fallback a `data/` en local), backup automático en rotación de 5 copias, validación sintáctica de Nginx (`nginx -t`) y sondas de salud HTTP:
 
 ```powershell
 .\scripts\deploy-production.ps1
@@ -353,9 +353,10 @@ El despliegue se realiza en 1 clic de forma segura y desatendida desde tu termin
 
 Opciones comunes:
 ```powershell
-.\scripts\deploy-production.ps1 -VerifyOnly   # Consultar sondas de salud y estado en el VPS sin desplegar
-.\scripts\deploy-production.ps1 -Rollback     # Revertir a la copia de seguridad anterior
-.\scripts\deploy-production.ps1 -DryRun       # Simular el proceso sin aplicar cambios
+.\scripts\deploy-production.ps1 -SkipCatalogBuild  # Desplegar sin regenerar el catálogo de agentes
+.\scripts\deploy-production.ps1 -VerifyOnly        # Consultar sondas de salud y estado en el VPS sin desplegar
+.\scripts\deploy-production.ps1 -Rollback          # Revertir a la copia de seguridad anterior
+.\scripts\deploy-production.ps1 -DryRun            # Simular el proceso sin aplicar cambios
 ```
 
 En el propio servidor (`/infocodes/project/release-dashboard-application`), se dispone de herramientas de consulta rápida:
