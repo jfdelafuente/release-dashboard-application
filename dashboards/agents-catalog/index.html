@@ -20,10 +20,11 @@
   <!-- Barra superior unificada -->
   <div id="mo-topbar-root" data-active="agents-catalog"></div>
 
-  <main id="main-content" class="catalog-container" role="main">
-    <!-- Cabecera compacta y no intrusiva -->
-    <header class="catalog-header catalog-hero" role="banner">
+  <!-- Cabecera compacta y no intrusiva alineada con dashboards hermanos (portal, postmortem) -->
+  <header class="catalog-header" role="banner">
+    <div class="catalog-header-container">
       <div class="catalog-header-info">
+        <div class="catalog-eyebrow">Customer &amp; Service Operations · Catálogo IA</div>
         <h1 class="catalog-header-title">Catálogo de Agentes y Skills IA</h1>
         <p class="catalog-header-desc">
           Biblioteca de fiabilidad y operaciones · Despliegue estandarizado con <code>.\deploy-agents.cmd</code>
@@ -32,14 +33,19 @@
 
       <div class="catalog-header-actions">
         <button id="btn-config-target" class="hero-target-repo-btn" aria-haspopup="dialog" title="Configurar repositorio de destino para los comandos de despliegue">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <span class="status-live-indicator" aria-hidden="true"></span>
+          <span>Destino CLI:</span>
+          <span id="current-target-display" class="repo-path">&lt;TargetRepo&gt;</span>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="margin-left: 2px; opacity: 0.7;">
             <circle cx="12" cy="12" r="3"></circle>
             <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
           </svg>
-          Destino CLI: <span id="current-target-display" class="repo-path">&lt;TargetRepo&gt;</span>
         </button>
       </div>
-    </header>
+    </div>
+  </header>
+
+  <main id="main-content" class="catalog-container" role="main">
 
     <!-- Navigation Tabs: Agentes vs Skills -->
     <div class="catalog-tabs" role="tablist" aria-label="Secciones del catálogo">
@@ -167,7 +173,7 @@
     <div class="catalog-modal" style="max-width: 580px;" role="document">
       <header class="modal-header">
         <div class="modal-header-info">
-          <span class="hero-eyebrow" style="padding: 2px 8px; font-size: 11px;">Configuración CLI</span>
+          <span class="catalog-eyebrow">Configuración CLI</span>
           <h2 class="modal-title" id="config-modal-title">Ruta Destino de Despliegue</h2>
         </div>
         <button class="modal-close-btn" id="config-modal-close" aria-label="Cerrar ventana">&times;</button>
