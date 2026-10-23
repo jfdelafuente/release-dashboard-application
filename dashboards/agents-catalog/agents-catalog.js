@@ -12,7 +12,6 @@
     agents: [],
     skills: [],
     domains: [],
-    kpis: {},
     activeTab: "agents", // 'agents' | 'skills'
     activeDomain: "all",
     searchQuery: "",
@@ -37,10 +36,6 @@
   }
 
   function cacheDom() {
-    dom.kpiTotalAgents = document.getElementById("kpi-total-agents");
-    dom.kpiTotalDomains = document.getElementById("kpi-total-domains");
-    dom.kpiTotalSkills = document.getElementById("kpi-total-skills");
-
     dom.tabAgents = document.getElementById("tab-agents");
     dom.tabSkills = document.getElementById("tab-skills");
     dom.tabBadgeAgents = document.getElementById("tab-badge-agents");
@@ -325,13 +320,7 @@
     state.agents = data.agents || [];
     state.skills = data.skills || [];
     state.domains = data.domains || [];
-    state.kpis = (catalog._metadata && catalog._metadata.kpis) || {
-      total_agents: state.agents.length,
-      total_domains: state.domains.length,
-      total_skills: state.skills.length
-    };
 
-    updateKpiCards();
     updateTabBadges();
     updateChipCounts();
 
@@ -348,12 +337,6 @@
         '<p style="font-size: 12px; margin-top: 10px;">Asegúrate de haber generado el archivo ejecutando <code>python converters/cli/build_agents_catalog.py</code>.</p>' +
         '</div>';
     }
-  }
-
-  function updateKpiCards() {
-    if (dom.kpiTotalAgents) dom.kpiTotalAgents.textContent = state.kpis.total_agents || state.agents.length;
-    if (dom.kpiTotalDomains) dom.kpiTotalDomains.textContent = state.kpis.total_domains || state.domains.length;
-    if (dom.kpiTotalSkills) dom.kpiTotalSkills.textContent = state.kpis.total_skills || state.skills.length;
   }
 
   function updateTabBadges() {
