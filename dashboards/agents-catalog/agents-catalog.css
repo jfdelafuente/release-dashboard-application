@@ -91,7 +91,7 @@ select:focus-visible {
   background: var(--bg-card);
   border: 1px solid var(--border-main);
   border-radius: var(--radius-lg);
-  padding: 28px 32px;
+  padding: 24px 28px;
   margin-bottom: 24px;
   box-shadow: var(--shadow-sm);
   position: relative;
@@ -174,33 +174,66 @@ select:focus-visible {
 .catalog-hero-desc {
   font-size: 14.5px;
   color: var(--text-muted);
-  margin: 0 0 24px 0;
+  margin: 0;
   max-width: 860px;
   line-height: 1.5;
 }
 
-/* Hero KPI Grid */
+/* ============================================================
+   Bottom KPI Section
+   ============================================================ */
+.catalog-bottom-kpis {
+  margin-top: 48px;
+  padding-top: 28px;
+  border-top: 1px solid var(--border-main);
+}
+
+.bottom-kpis-header {
+  margin-bottom: 16px;
+}
+
+.bottom-kpis-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-main);
+  margin: 0 0 4px 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.bottom-kpis-title svg {
+  color: var(--mo-orange);
+}
+
+.bottom-kpis-subtitle {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.bottom-kpis-grid,
 .hero-kpis {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 16px;
-  margin-top: 8px;
 }
 
 .kpi-card {
-  background: var(--bg-page);
+  background: var(--bg-card);
   border: 1px solid var(--border-main);
   border-radius: var(--radius-md);
-  padding: 14px 18px;
+  padding: 16px 20px;
   display: flex;
   flex-direction: column;
   gap: 4px;
-  transition: transform 0.2s ease, border-color 0.2s ease;
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .kpi-card:hover {
   transform: translateY(-2px);
   border-color: var(--mo-orange);
+  box-shadow: var(--shadow-md);
 }
 
 .kpi-label {

@@ -44,30 +44,6 @@
       <p class="catalog-hero-desc">
         Directorio oficial de agentes cognitivos y habilidades especializadas de la biblioteca de fiabilidad y operaciones. Despliegue estandarizado e idempotente hacia cualquier repositorio mediante el script nativo <code>.\deploy-agents.cmd</code>.
       </p>
-
-      <!-- KPI Grid -->
-      <div class="hero-kpis" aria-label="Métricas de la biblioteca de agentes">
-        <div class="kpi-card">
-          <span class="kpi-label">Total Agentes</span>
-          <span class="kpi-value" id="kpi-total-agents">5</span>
-          <span class="kpi-subtext">Agentes especializados</span>
-        </div>
-        <div class="kpi-card">
-          <span class="kpi-label">Dominios Operativos</span>
-          <span class="kpi-value" id="kpi-total-domains">2</span>
-          <span class="kpi-subtext">Contenido y Marca · Incidencias IT</span>
-        </div>
-        <div class="kpi-card">
-          <span class="kpi-label">Skills Normativas</span>
-          <span class="kpi-value" id="kpi-total-skills">6</span>
-          <span class="kpi-subtext">Habilidades y directrices</span>
-        </div>
-        <div class="kpi-card">
-          <span class="kpi-label">Despliegue CLI</span>
-          <span class="kpi-value" style="color: var(--mo-orange);">1-Clic</span>
-          <span class="kpi-subtext">Sintaxis <code>deploy-agents.cmd</code></span>
-        </div>
-      </div>
     </header>
 
     <!-- Navigation Tabs: Agentes vs Skills -->
@@ -152,6 +128,43 @@
     <!-- View 2: Skills View -->
     <section id="skills-view" role="tabpanel" aria-labelledby="tab-skills" style="display: none;">
       <div id="skills-content" class="skills-grid"></div>
+    </section>
+
+    <!-- Bottom KPI Section -->
+    <section class="catalog-bottom-kpis" aria-label="Métricas globales del catálogo">
+      <div class="bottom-kpis-header">
+        <h3 class="bottom-kpis-title">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <line x1="18" y1="20" x2="18" y2="10"></line>
+            <line x1="12" y1="20" x2="12" y2="4"></line>
+            <line x1="6" y1="20" x2="6" y2="14"></line>
+          </svg>
+          Métricas Globales de la Biblioteca
+        </h3>
+        <span class="bottom-kpis-subtitle">Indicadores agregados de cobertura funcional, dominios operativos y capacidades de despliegue</span>
+      </div>
+      <div class="bottom-kpis-grid">
+        <div class="kpi-card">
+          <span class="kpi-label">Total Agentes</span>
+          <span class="kpi-value" id="kpi-total-agents">5</span>
+          <span class="kpi-subtext">Agentes especializados</span>
+        </div>
+        <div class="kpi-card">
+          <span class="kpi-label">Dominios Operativos</span>
+          <span class="kpi-value" id="kpi-total-domains">2</span>
+          <span class="kpi-subtext">Contenido y Marca · Incidencias IT</span>
+        </div>
+        <div class="kpi-card">
+          <span class="kpi-label">Skills Normativas</span>
+          <span class="kpi-value" id="kpi-total-skills">6</span>
+          <span class="kpi-subtext">Habilidades y directrices</span>
+        </div>
+        <div class="kpi-card">
+          <span class="kpi-label">Despliegue CLI</span>
+          <span class="kpi-value" style="color: var(--mo-orange);">1-Clic</span>
+          <span class="kpi-subtext">Sintaxis <code>deploy-agents.cmd</code></span>
+        </div>
+      </div>
     </section>
   </main>
 
