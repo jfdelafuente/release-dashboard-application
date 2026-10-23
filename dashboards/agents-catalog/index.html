@@ -21,16 +21,16 @@
   <div id="mo-topbar-root" data-active="agents-catalog"></div>
 
   <main id="main-content" class="catalog-container" role="main">
-    <!-- Hero Header -->
-    <header class="catalog-hero">
-      <div class="hero-meta-top">
-        <span class="hero-eyebrow">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm0 18a8 8 0 1 1 8-8 8 8 0 0 1-8 8z"></path>
-            <path d="M12 6v6l4 2"></path>
-          </svg>
-          Inteligencia Artificial &amp; Automatización
-        </span>
+    <!-- Cabecera compacta y no intrusiva -->
+    <header class="catalog-header catalog-hero" role="banner">
+      <div class="catalog-header-info">
+        <h1 class="catalog-header-title">Catálogo de Agentes y Skills IA</h1>
+        <p class="catalog-header-desc">
+          Biblioteca de fiabilidad y operaciones · Despliegue estandarizado con <code>.\deploy-agents.cmd</code>
+        </p>
+      </div>
+
+      <div class="catalog-header-actions">
         <button id="btn-config-target" class="hero-target-repo-btn" aria-haspopup="dialog" title="Configurar repositorio de destino para los comandos de despliegue">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <circle cx="12" cy="12" r="3"></circle>
@@ -39,11 +39,6 @@
           Destino CLI: <span id="current-target-display" class="repo-path">&lt;TargetRepo&gt;</span>
         </button>
       </div>
-
-      <h1 class="catalog-hero-title">Catálogo de Agentes y Skills IA</h1>
-      <p class="catalog-hero-desc">
-        Directorio oficial de agentes cognitivos y habilidades especializadas de la biblioteca de fiabilidad y operaciones. Despliegue estandarizado e idempotente hacia cualquier repositorio mediante el script nativo <code>.\deploy-agents.cmd</code>.
-      </p>
     </header>
 
     <!-- Navigation Tabs: Agentes vs Skills -->
