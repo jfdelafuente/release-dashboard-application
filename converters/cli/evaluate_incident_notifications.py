@@ -329,130 +329,71 @@ class ExecutiveMessageGenerator:
             problema_breve = clean_clean[:45]
             return problema_sintetizado, servicio_alcance, problema_breve
 
+    def __init__(self, agent_store_path: Optional[Path] = None):
+        if agent_store_path is not None:
+            self.agent_store_path = agent_store_path
+        else:
+            root = Path(__file__).resolve().parent.parent.parent
+            candidate = root / "data" / "agent_executive_messages.json"
+            if candidate.exists():
+                self.agent_store_path = candidate
+            else:
+                self.agent_store_path = Path("data/agent_executive_messages.json")
+        self.agent_store = self._load_agent_store()
+
+    def _load_agent_store(self) -> dict[str, Any]:
+        if self.agent_store_path and self.agent_store_path.exists():
+            try:
+                with open(self.agent_store_path, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                    return data.get("incidents", {})
+            except Exception as e:
+                logger.debug("No se pudo cargar el almacén de agentes: %s", e)
+        return {}
+
     def generate(
         self,
         ticket: dict[str, Any],
         evaluation: dict[str, Any],
         resumen_ia: Optional[dict[str, Any]]
     ) -> dict[str, dict[str, Any]]:
-        """Generates executive messages for apertura, seguimiento, and cierre, conforming to incident-reporter agent standards."""
+        """Generates executive messages conforming to the incident-reporter agent persona.
+        VIA A DISCARDED: Fixed template string concatenations are no longer used.
+        Messages come exclusively from the official agent output store. If not yet processed by
+        the agent, messages are marked as pending with the structured prompt ready to run.
+        """
         inc_id = ticket.get("ID de incidencia") or ticket.get("id") or "INC"
-        prio = evaluation.get("prioridad_sugerida", "P2")
+        agent_msgs = self.agent_store.get(inc_id)
 
-        # Sistemas involucrados
-        sistemas_list = []
-        if resumen_ia and isinstance(resumen_ia.get("sistemas"), list):
-            sistemas_list = [s for s in resumen_ia["sistemas"] if s]
-        if not sistemas_list:
-            if isinstance(ticket.get("sistemas"), list) and ticket.get("sistemas"):
-                sistemas_list = ticket.get("sistemas")
+        messages = {}
+        for phase in ["apertura", "seguimiento", "cierre"]:
+            prompt = self.generate_agent_prompt(ticket, evaluation, resumen_ia, phase)
+            if agent_msgs and phase in agent_msgs:
+                phase_data = agent_msgs[phase]
+                comp = self._clean_text(phase_data.get("completo") or "")
+                brev = self._clean_text(phase_data.get("breve") or "")
+                messages[phase] = {
+                    "completo": comp,
+                    "breve": brev,
+                    "conteo_palabras_completo": len(comp.split()),
+                    "conteo_palabras_breve": len(brev.split()),
+                    "generado_por_agente": True,
+                    "origen": phase_data.get("origen", "incident-reporter"),
+                    "prompt_agente": prompt,
+                }
             else:
-                grp = ticket.get("Grupo asignado") or "Sistemas Core"
-                sistemas_list = [grp]
-        sistemas_str = ", ".join(sistemas_list[:3])
+                # Vía A descartada: Sin textos automáticos de plantilla robótica
+                messages[phase] = {
+                    "completo": None,
+                    "breve": None,
+                    "conteo_palabras_completo": 0,
+                    "conteo_palabras_breve": 0,
+                    "generado_por_agente": False,
+                    "estado": "pendiente",
+                    "prompt_agente": prompt,
+                }
 
-        has_epsilon = bool(resumen_ia and (resumen_ia.get("problema") or resumen_ia.get("impacto")))
-
-        if has_epsilon:
-            # Síntesis ejecutiva contextualizada con datos reales de Epsilon Resumen IA
-            problema = self._clean_text(resumen_ia.get("problema") or ticket.get("Descripción") or ticket.get("titulo") or "incidencia técnica").rstrip(".")
-            impacto = self._clean_text(resumen_ia.get("impacto") or "afectación sobre el servicio").rstrip(".")
-            solucion = self._clean_text(resumen_ia.get("solucion") or "actuaciones de diagnóstico y resolución técnica").rstrip(".")
-            sig_accion = self._clean_text(resumen_ia.get("siguienteAccion") or resumen_ia.get("siguiente_accion") or "normalización y verificación del servicio").rstrip(".")
-
-            apertura_comp = (
-                f"Se ha declarado la apertura de una incidencia crítica {prio} ({inc_id}) por {problema} en {sistemas_str}. "
-                f"La contingencia genera {impacto}, comprometiendo la operativa de los servicios. "
-                f"Los equipos técnicos de soporte e infraestructura han iniciado las actuaciones de contención orientadas a {sig_accion}. "
-                f"Se emitirá una nueva actualización de seguimiento en cuanto se disponga del diagnóstico inicial."
-            )
-            apertura_breve = f"Apertura {prio} ({inc_id}): {problema[:45]} en {sistemas_str}. Impacto: {impacto[:40]}. Actuaciones en curso; seguimiento tras diagnóstico inicial."
-
-            seguimiento_comp = (
-                f"Continúa el seguimiento de la incidencia {prio} ({inc_id}) por {problema} en {sistemas_str}. "
-                f"Los equipos técnicos avanzan en las tareas de resolución mediante {solucion}. "
-                f"La línea de acción operativa se enfoca en {sig_accion}, manteniendo la monitorización activa hasta confirmar la estabilidad de los servicios."
-            )
-            seguimiento_breve = f"Seguimiento {prio} ({inc_id}): Mitigación en {sistemas_str} mediante {solucion[:35]}. Próximo paso: {sig_accion[:30]}."
-
-            cierre_comp = (
-                f"Queda formalmente cerrada la incidencia {prio} ({inc_id}) en {sistemas_str}. "
-                f"La afectación originada por {problema} ha sido solventada tras aplicar {solucion}. "
-                f"Los flujos operativos y el servicio se encuentran plenamente restablecidos, manteniéndose supervisión preventiva para asegurar la estabilidad."
-            )
-            cierre_breve = f"Cierre {prio} ({inc_id}): Incidencia resuelta en {sistemas_str} tras {solucion[:35]}. Operativa y servicio normalizados."
-        else:
-            # Síntesis ejecutiva de alto nivel con metadatos del ticket y evaluación ITIL
-            title_raw = ticket.get("Descripción") or ticket.get("descripcion") or ticket.get("titulo") or ""
-            problema_sint, serv_alcance, prob_breve = self.synthesize_ticket_title(title_raw)
-            imp_raw = str(ticket.get("Impacto", "")).lower()
-            imp_eval = str(evaluation.get("evaluacion", {}).get("impacto_justificacion", "")).lower()
-
-            if "masiva" in imp_raw or "corte global" in imp_eval or "alto" in imp_eval:
-                impacto_frase = "una calificación de impacto masivo en los sistemas operativos, afectando a la operativa habitual de la plataforma"
-                impacto_breve = "impacto masivo"
-            elif "alto" in imp_raw or "grave" in imp_eval:
-                impacto_frase = "un impacto alto en la operativa, condicionando la prestación del servicio a usuarios"
-                impacto_breve = "impacto alto"
-            else:
-                impacto_frase = "afectación en los servicios operativos bajo supervisión técnica"
-                impacto_breve = "afectación en servicio"
-
-            apertura_comp = (
-                f"Se ha declarado la apertura de una incidencia crítica {prio} por {problema_sint}, gestionada a través de {sistemas_str}. "
-                f"La anomalía cuenta con {impacto_frase}. "
-                f"Los equipos técnicos de soporte e infraestructura se encuentran investigando el origen del fallo para contener la afectación y recuperar el servicio a la mayor brevedad. "
-                f"Se emitirá una nueva actualización de seguimiento tras el diagnóstico inicial."
-            )
-            apertura_breve = f"Apertura {prio} por {prob_breve} con {impacto_breve}. Equipos técnicos investigando origen para restablecimiento del servicio; nuevo seguimiento tras diagnóstico inicial."
-
-            seguimiento_comp = (
-                f"Continúa el seguimiento de la incidencia {prio} ({inc_id}) por {problema_sint}, canalizada a través de {sistemas_str}. "
-                f"Los equipos técnicos mantienen los trabajos de mitigación y diagnóstico en los entornos afectados. "
-                f"No se identifican bloqueos externos y se prosigue con las pruebas de contención para asegurar la estabilidad operativa. "
-                f"Se mantiene la monitorización activa hasta confirmar la normalización del servicio."
-            )
-            seguimiento_breve = f"Seguimiento {prio} {inc_id}: Mitigación técnica en curso sobre {serv_alcance}. Monitorización activa y verificación de estabilidad sin bloqueos."
-
-            cierre_comp = (
-                f"Queda formalmente cerrada la incidencia {prio} ({inc_id}) relativa a {problema_sint} con soporte de {sistemas_str}. "
-                f"La afectación ha sido solventada por el equipo resolutor y la operativa técnica se encuentra totalmente restablecida. "
-                f"El servicio permanece monitorizado de forma preventiva confirmando su correcta estabilidad y disponibilidad."
-            )
-            cierre_breve = f"Cierre {prio} {inc_id}: Servicio normalizado en {serv_alcance} tras subsanar la incidencia. Operativa técnica restablecida."
-
-        apertura_comp = self._truncate_to_words(self._clean_text(apertura_comp), 90)
-        apertura_breve = self._truncate_to_words(self._clean_text(apertura_breve), 30)
-
-        seguimiento_comp = self._truncate_to_words(self._clean_text(seguimiento_comp), 90)
-        seguimiento_breve = self._truncate_to_words(self._clean_text(seguimiento_breve), 30)
-
-        cierre_comp = self._truncate_to_words(self._clean_text(cierre_comp), 90)
-        cierre_breve = self._truncate_to_words(self._clean_text(cierre_breve), 30)
-
-        messages = {
-            "apertura": {
-                "completo": apertura_comp,
-                "breve": apertura_breve,
-                "conteo_palabras_completo": len(apertura_comp.split()),
-                "conteo_palabras_breve": len(apertura_breve.split()),
-                "prompt_agente": self.generate_agent_prompt(ticket, evaluation, resumen_ia, "apertura"),
-            },
-            "seguimiento": {
-                "completo": seguimiento_comp,
-                "breve": seguimiento_breve,
-                "conteo_palabras_completo": len(seguimiento_comp.split()),
-                "conteo_palabras_breve": len(seguimiento_breve.split()),
-                "prompt_agente": self.generate_agent_prompt(ticket, evaluation, resumen_ia, "seguimiento"),
-            },
-            "cierre": {
-                "completo": cierre_comp,
-                "breve": cierre_breve,
-                "conteo_palabras_completo": len(cierre_comp.split()),
-                "conteo_palabras_breve": len(cierre_breve.split()),
-                "prompt_agente": self.generate_agent_prompt(ticket, evaluation, resumen_ia, "cierre"),
-            },
-        }
+        return messages
 
         return messages
 

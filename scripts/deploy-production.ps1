@@ -388,6 +388,12 @@ if (-not $SkipBuild) {
             Write-Ok "Catálogo de notificaciones de alta prioridad empaquetado en el artefacto runtime"
         }
 
+        if (Test-Path "$ProjectRoot\data\agent_executive_messages.json") {
+            $DataRootStaging = Join-Path $StagingDir "data"
+            Copy-Item "$ProjectRoot\data\agent_executive_messages.json" -Destination $DataRootStaging
+            Write-Ok "Mensajes ejecutivos de agente empaquetados en el artefacto runtime"
+        }
+
         # 7. Generar archivo tarball comprimido
         if (Test-Path $TarballFullPath) { Remove-Item $TarballFullPath -Force }
 

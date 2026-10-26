@@ -453,7 +453,22 @@
         const customMsg = StateManager.getCustomMessage(item.id, activePhase);
         const currentMsg = customMsg || msgs[activePhase] || msgs.apertura || {};
         const isCustom = Boolean(customMsg);
+        const hasAgentOutput = Boolean((currentMsg.completo && currentMsg.completo.trim()) || (currentMsg.breve && currentMsg.breve.trim()));
         const res = item.resumen_ia || {};
+
+        let badgeTitle = '🤖 Salida de Agente incident-reporter';
+        let badgeSub = hasEpsilon ? 'Síntesis ejecutiva con Epsilon IA' : 'Síntesis ejecutiva sobre Remedy Base';
+        let badgeClass = 'hp-badge-official';
+
+        if (isCustom) {
+          badgeTitle = '✏️ Redacción Personalizada';
+          badgeSub = 'Editado en cliente / pegado desde LLM';
+          badgeClass = 'hp-badge-custom';
+        } else if (!hasAgentOutput) {
+          badgeTitle = '⏳ Redacción de Agente Pendiente';
+          badgeSub = 'Listo para procesar prompt en Copilot/LLM';
+          badgeClass = 'hp-badge-pending';
+        }
 
         let epsilonContextBox = '';
         if (hasEpsilon) {
@@ -485,11 +500,11 @@
           <div class="hp-exec-panel">
             <div class="hp-exec-agent-banner">
               <div class="hp-exec-agent-badge-group">
-                <span class="hp-exec-agent-badge ${isCustom ? 'hp-badge-custom' : 'hp-badge-official'}">
-                  ${isCustom ? '✏️ Redacción Personalizada' : '🤖 Salida de Agente incident-reporter'}
+                <span class="hp-exec-agent-badge ${badgeClass}">
+                  ${badgeTitle}
                 </span>
                 <span class="hp-exec-agent-sub">
-                  ${isCustom ? 'Editado en cliente / pegado desde LLM' : (hasEpsilon ? 'Síntesis ejecutiva con Epsilon IA' : 'Síntesis ejecutiva sobre Remedy Base')}
+                  ${badgeSub}
                 </span>
               </div>
               ${isCustom ? `
@@ -507,39 +522,51 @@
 
             ${epsilonContextBox}
 
-            <div class="hp-exec-box">
-              <div class="hp-exec-section-label">
-                <span>Versión Completa Dirección (${currentMsg.conteo_palabras_completo || 0}/90 palabras)</span>
-                <span>Monopárrafo</span>
+            ${hasAgentOutput ? `
+              <div class="hp-exec-box">
+                <div class="hp-exec-section-label">
+                  <span>Versión Completa Dirección (${currentMsg.conteo_palabras_completo || 0}/90 palabras)</span>
+                  <span>Monopárrafo</span>
+                </div>
+                <p class="hp-exec-text">${this.escape(currentMsg.completo || '')}</p>
+                <div class="hp-copy-row">
+                  <button type="button" class="hp-copy-btn" data-action="copy-text" data-text="${this.escapeAttr(currentMsg.completo || '')}">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                    </svg>
+                    Copiar Versión Completa
+                  </button>
+                </div>
               </div>
-              <p class="hp-exec-text">${this.escape(currentMsg.completo || '')}</p>
-              <div class="hp-copy-row">
-                <button type="button" class="hp-copy-btn" data-action="copy-text" data-text="${this.escapeAttr(currentMsg.completo || '')}">
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-                  </svg>
-                  Copiar Versión Completa
-                </button>
-              </div>
-            </div>
 
-            <div class="hp-exec-box">
-              <div class="hp-exec-section-label">
-                <span>Versión Breve (${currentMsg.conteo_palabras_breve || 0}/30 palabras)</span>
-                <span>SMS / Asunto</span>
+              <div class="hp-exec-box">
+                <div class="hp-exec-section-label">
+                  <span>Versión Breve (${currentMsg.conteo_palabras_breve || 0}/30 palabras)</span>
+                  <span>SMS / Asunto</span>
+                </div>
+                <p class="hp-exec-text"><strong>${this.escape(currentMsg.breve || '')}</strong></p>
+                <div class="hp-copy-row">
+                  <button type="button" class="hp-copy-btn" data-action="copy-text" data-text="${this.escapeAttr(currentMsg.breve || '')}">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                    </svg>
+                    Copiar Versión Breve
+                  </button>
+                </div>
               </div>
-              <p class="hp-exec-text"><strong>${this.escape(currentMsg.breve || '')}</strong></p>
-              <div class="hp-copy-row">
-                <button type="button" class="hp-copy-btn" data-action="copy-text" data-text="${this.escapeAttr(currentMsg.breve || '')}">
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-                  </svg>
-                  Copiar Versión Breve
-                </button>
+            ` : `
+              <div class="hp-exec-pending-card">
+                <div class="hp-exec-pending-header">
+                  <span class="hp-exec-pending-icon">⏳</span>
+                  <div>
+                    <h4 class="hp-exec-pending-title">Redacción de Agente Pendiente</h4>
+                    <p class="hp-exec-pending-desc">Esta incidencia no cuenta todavía con mensaje ejecutivo redactado por el agente <code>incident-reporter</code>. Copia el prompt preparado a continuación para procesarlo con tu LLM/Copilot y pulsa <strong>Pegar salida de Agente</strong> para guardarlo.</p>
+                  </div>
+                </div>
               </div>
-            </div>
+            `}
 
             <div class="hp-agent-prompt-box">
               <div class="hp-exec-section-label">
@@ -629,9 +656,9 @@
       `;
     }
 
-    buildAgentPrompt(item, phase) {
+    buildAgentPrompt(item, phase, forceRebuild = false) {
       const msgs = item.mensajes_ejecutivos || {};
-      if (msgs[phase] && msgs[phase].prompt_agente) {
+      if (!forceRebuild && msgs[phase] && msgs[phase].prompt_agente) {
         return msgs[phase].prompt_agente;
       }
 
@@ -675,49 +702,17 @@
     }
 
     refreshMessagesForEpsilon(item) {
-      const prio = item.prioridad_sugerida || 'P2';
-      const incId = item.id;
-      const sistemas = Array.isArray(item.sistemas) ? item.sistemas.join(', ') : (item.sistemas || 'Sistemas Core');
-      const res = item.resumen_ia;
-      if (!res) return;
-
-      const prob = (res.problema || item.titulo || 'incidencia técnica').trim().replace(/\.$/, '');
-      const imp = (res.impacto || 'afectación sobre el servicio').trim().replace(/\.$/, '');
-      const sol = (res.solucion || 'actuaciones de diagnóstico y resolución técnica').trim().replace(/\.$/, '');
-      const sig = (res.siguiente_accion || res.siguienteAccion || 'normalización y verificación del servicio').trim().replace(/\.$/, '');
-
-      const apComp = `Se ha declarado la apertura de una incidencia crítica ${prio} (${incId}) por ${prob} en ${sistemas}. La contingencia genera ${imp}, comprometiendo la operativa de los servicios. Los equipos técnicos de soporte e infraestructura han iniciado las actuaciones de contención orientadas a ${sig}. Se emitirá una nueva actualización de seguimiento en cuanto se disponga del diagnóstico inicial.`;
-      const apBreve = `Apertura ${prio} (${incId}): ${prob.substring(0, 45)} en ${sistemas}. Impacto: ${imp.substring(0, 40)}. Actuaciones en curso; seguimiento tras diagnóstico inicial.`;
-
-      const segComp = `Continúa el seguimiento de la incidencia ${prio} (${incId}) por ${prob} en ${sistemas}. Los equipos técnicos avanzan en las tareas de resolución mediante ${sol}. La línea de acción operativa se enfoca en ${sig}, manteniendo la monitorización activa hasta confirmar la estabilidad de los servicios.`;
-      const segBreve = `Seguimiento ${prio} (${incId}): Mitigación en ${sistemas} mediante ${sol.substring(0, 35)}. Próximo paso: ${sig.substring(0, 30)}.`;
-
-      const cieComp = `Queda formalmente cerrada la incidencia ${prio} (${incId}) en ${sistemas}. La afectación originada por ${prob} ha sido solventada tras aplicar ${sol}. Los flujos operativos y el servicio se encuentran plenamente restablecidos, manteniéndose supervisión preventiva para asegurar la estabilidad.`;
-      const cieBreve = `Cierre ${prio} (${incId}): Incidencia resuelta en ${sistemas} tras ${sol.substring(0, 35)}. Operativa y servicio normalizados.`;
-
-      item.mensajes_ejecutivos = {
-        apertura: {
-          completo: apComp,
-          breve: apBreve,
-          conteo_palabras_completo: apComp.split(/\s+/).filter(Boolean).length,
-          conteo_palabras_breve: apBreve.split(/\s+/).filter(Boolean).length,
-          prompt_agente: this.buildAgentPrompt(item, 'apertura')
-        },
-        seguimiento: {
-          completo: segComp,
-          breve: segBreve,
-          conteo_palabras_completo: segComp.split(/\s+/).filter(Boolean).length,
-          conteo_palabras_breve: segBreve.split(/\s+/).filter(Boolean).length,
-          prompt_agente: this.buildAgentPrompt(item, 'seguimiento')
-        },
-        cierre: {
-          completo: cieComp,
-          breve: cieBreve,
-          conteo_palabras_completo: cieComp.split(/\s+/).filter(Boolean).length,
-          conteo_palabras_breve: cieBreve.split(/\s+/).filter(Boolean).length,
-          prompt_agente: this.buildAgentPrompt(item, 'cierre')
-        }
-      };
+      if (!item.mensajes_ejecutivos) {
+        item.mensajes_ejecutivos = {};
+      }
+      // Actualizar el prompt estructurado para cada fase sin alterar mensajes oficiales o personalizados
+      ['apertura', 'seguimiento', 'cierre'].forEach(phase => {
+        const prev = item.mensajes_ejecutivos[phase] || {};
+        item.mensajes_ejecutivos[phase] = {
+          ...prev,
+          prompt_agente: this.buildAgentPrompt(item, phase, true)
+        };
+      });
     }
 
     async syncEpsilon(id, buttonEl) {

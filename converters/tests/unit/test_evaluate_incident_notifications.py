@@ -461,3 +461,51 @@ def test_should_generate_agent_prompt_with_epsilon_context():
     assert "30 palabras" in prompt
 
 
+def test_should_mark_pending_when_ticket_has_no_agent_messages_and_not_use_via_a():
+    ticket = {
+        "ID de incidencia": "INC_TOTALMENTE_NUEVA_999",
+        "Descripción": "ERROR EN PASARELA NUEVA",
+        "Impacto": "Alto",
+        "Urgencia": "Alta"
+    }
+    evaluation = {"prioridad_sugerida": "P1", "es_alta_prioridad": True, "evaluacion": {}}
+    generator = ExecutiveMessageGenerator()
+    messages = generator.generate(ticket, evaluation, resumen_ia=None)
+
+    for phase in ["apertura", "seguimiento", "cierre"]:
+        msg = messages[phase]
+        assert msg["generado_por_agente"] is False
+        assert msg["estado"] == "pendiente"
+        assert msg["completo"] is None
+        assert msg["breve"] is None
+        # Vía A descartada: No genera textos de plantilla falsa
+        assert "Se ha declarado la apertura" not in str(msg["completo"])
+        # El prompt estructurado debe estar listo para ejecutarse
+        assert "prompt_agente" in msg
+        assert "INC_TOTALMENTE_NUEVA_999" in msg["prompt_agente"]
+
+
+def test_should_load_official_agent_messages_for_active_high_priority_incidents():
+    generator = ExecutiveMessageGenerator()
+    ticket_siebel = {
+        "ID de incidencia": "INC000004159463",
+        "Descripción": "Teide | Error funcional | Bosch - Vigo"
+    }
+    eval_p1 = {"prioridad_sugerida": "P1", "es_alta_prioridad": True, "evaluacion": {}}
+    messages = generator.generate(ticket_siebel, eval_p1, resumen_ia=None)
+
+    for phase in ["apertura", "seguimiento", "cierre"]:
+        msg = messages[phase]
+        assert msg["generado_por_agente"] is True
+        assert msg["completo"] is not None
+        assert msg["breve"] is not None
+        assert len(msg["completo"].split()) <= 90
+        assert len(msg["breve"].split()) <= 30
+        assert "\n\n" not in msg["completo"]
+        # Verifica contenido del agente para INC000004159463
+        if phase == "apertura":
+            assert "Siebel 8" in msg["completo"]
+            assert "Bosch-Vigo" in msg["completo"]
+
+
+

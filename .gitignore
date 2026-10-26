@@ -66,6 +66,8 @@ data/reports/executive/*
 output/
 !data/output/
 !data/output/agents_catalog.json
+!data/output/high_priority_notifications.json
+!data/agent_executive_messages.json
 archive/
 
 # Temporary Files
@@ -74,7 +76,9 @@ archive/
 *.backup
 *~
 .temp/
+scratch/
 temp/
+scratch/
 
 # OS Files
 Thumbs.db
