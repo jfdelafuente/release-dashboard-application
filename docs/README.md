@@ -18,6 +18,9 @@
 - **[INFORME-PPT-POSTMORTEM.md](INFORME-PPT-POSTMORTEM.md)**: Guía de generación masiva batch del informe PPT postmortem por release (PAP/MESA) mediante `generate_postmortem_report.py`.
 - **[DASHBOARDS-API.md](DASHBOARDS-API.md)**: Catálogo de APIs, endpoints, contratos de datos e integraciones con Epsilon IA y backend CSO.
 
+### 🤖 Agentes IA y Notificaciones Ejecutivas
+- **[INCIDENT-EXECUTIVE-NOTIFICATIONS-WORKFLOW.md](INCIDENT-EXECUTIVE-NOTIFICATIONS-WORKFLOW.md)**: Manual operativo integral para procesar nuevos ficheros CSV de incidencias, redactar comunicaciones oficiales para Dirección con la skill `incident-executive-notifications` y sincronizar con producción de forma segura.
+
 ### ⚙️ Conversores y Tratamiento de Datos
 - **[../converters/docs/API.md](../converters/docs/API.md)**: Contrato de datos y especificación de esquemas JSON generados (`_metadata` + `data`).
 - **[../converters/docs/CSV-TO-JSON-WORKFLOW.md](../converters/docs/CSV-TO-JSON-WORKFLOW.md)**: Flujo detallado de ingesta, normalización heurística, detección de encoding y validaciones.
