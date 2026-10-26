@@ -2,16 +2,16 @@
   "_metadata": {
     "type": "high_priority_notifications",
     "version": "1.0.0",
-    "generated_at": "2026-10-26T20:35:25.166705+00:00",
+    "generated_at": "2026-10-26T21:55:46.224578+00:00",
     "source_file": "CS-Informe incidencias P1,  P2 y P3 - 2026 - 26 Oct 2026-massive.json",
     "kpis": {
-      "total_scanned": 1563,
+      "total_scanned": 1565,
       "terminal_skipped_count": 1547,
-      "active_evaluated_count": 16,
-      "total_high_priority": 16,
+      "active_evaluated_count": 18,
+      "total_high_priority": 18,
       "p1_critical_count": 11,
-      "p2_high_count": 5,
-      "discrepancies_count": 16
+      "p2_high_count": 7,
+      "discrepancies_count": 18
     }
   },
   "data": [
@@ -19,11 +19,7 @@
       "id": "INC000004065609",
       "titulo": "ALTAIR // LA FINCA // ERROR FUNCIONAL",
       "sistemas": [
-        "ALTAIR",
-        "UCA",
-        "ZTE",
-        "RED",
-        "vTeMIP"
+        "GNOC CAU"
       ],
       "prioridad_original": "Media",
       "prioridad_sugerida": "P1",
@@ -39,13 +35,7 @@
         "workaround": "Desconocido",
         "sla_objetivo_minutos": 15
       },
-      "resumen_ia": {
-        "problema": "Test Cortes CPE devuelve menos KOs desde W25 (17/06). Volumen de clientes sin cortes aumentó 15%, clientes con corte de servicio pasaron de ~350 a ~0 salidas. Discrepancia en datos W28: porcentaje semanal (51,31%) no coincide con detalle diario (máximo 49,46%).",
-        "impacto": "Imposibilidad de identificar clientes afectados por cortes ópticos. Afecta diagnóstico de incidencias en La Finca. Impacto en negocio: SI. Operativa: 50 operaciones/hora con 15% de errores. Afecta a todos los clientes y usuarios.",
-        "solucion": "Causa raíz: UCA no procesaba eventos de ZTE desde 17/06 hasta 03/07. Acción: 03/07 se limpió OC en vTeMIP y se reinició UCA. Resultado: eventos procesados nuevamente. Test Cortes CPE funciona correctamente, devuelve datos de RED. Escalado a Oceane (2607F09798) para validación de normalización en W29.",
-        "bloqueos": "",
-        "siguiente_accion": ""
-      },
+      "resumen_ia": null,
       "mensajes_ejecutivos": {
         "apertura": {
           "completo": "Se declara incidencia crítica P1 (INC000004065609) por fallo funcional en ALTAIR, donde la herramienta Test Cortes CPE presenta una caída anómala en la detección de cortes ópticos desde la semana 25. La anomalía compromete el diagnóstico de red en La Finca sobre un volumen de 50 operaciones por hora con un 15% de error operativo, afectando a la supervisión de clientes. Los equipos técnicos de soporte e infraestructura investigan la ingesta de eventos de ZTE y vTeMIP para restablecer la visibilidad. Próxima actualización en 30 minutos.",
@@ -54,7 +44,7 @@
           "conteo_palabras_breve": 26,
           "generado_por_agente": true,
           "origen": "incident-reporter",
-          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: APERTURA\nIncidencia: INC000004065609 - ALTAIR // LA FINCA // ERROR FUNCIONAL\nCriticidad sugerida: P1\nSistemas involucrados: ALTAIR, UCA, ZTE, RED, vTeMIP\n\n--- Contexto extraído de Epsilon Resumen IA ---\n• Problema detectado: Test Cortes CPE devuelve menos KOs desde W25 (17/06). Volumen de clientes sin cortes aumentó 15%, clientes con corte de servicio pasaron de ~350 a ~0 salidas. Discrepancia en datos W28: porcentaje semanal (51,31%) no coincide con detalle diario (máximo 49,46%).\n• Impacto en servicio/negocio: Imposibilidad de identificar clientes afectados por cortes ópticos. Afecta diagnóstico de incidencias en La Finca. Impacto en negocio: SI. Operativa: 50 operaciones/hora con 15% de errores. Afecta a todos los clientes y usuarios.\n• Causa raíz / Solución: Causa raíz: UCA no procesaba eventos de ZTE desde 17/06 hasta 03/07. Acción: 03/07 se limpió OC en vTeMIP y se reinició UCA. Resultado: eventos procesados nuevamente. Test Cortes CPE funciona correctamente, devuelve datos de RED. Escalado a Oceane (2607F09798) para validación de normalización en W29.\n• Estado actual reportado: RESUELTO\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
+          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: APERTURA\nIncidencia: INC000004065609 - ALTAIR // LA FINCA // ERROR FUNCIONAL\nCriticidad sugerida: P1\nSistemas involucrados: GNOC CAU\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: ALTAIR // LA FINCA // ERROR FUNCIONAL\n• Impacto ticket: Masiva\n• Urgencia ticket: Medio\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
         },
         "seguimiento": {
           "completo": "Continúa el seguimiento de la incidencia P1 (INC000004065609) en ALTAIR. Se ha identificado que el componente UCA no procesaba correctamente los eventos procedentes de ZTE. Los equipos de infraestructura han procedido al reinicio de UCA y al limpiado de colas operativas en vTeMIP, comenzando a recibir nuevamente flujo de eventos. Se mantienen verificaciones activas sobre la correlación de datos para confirmar que los porcentajes semanales y diarios quedan normalizados antes de dar por cerrada la actuación.",
@@ -63,7 +53,7 @@
           "conteo_palabras_breve": 23,
           "generado_por_agente": true,
           "origen": "incident-reporter",
-          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: SEGUIMIENTO\nIncidencia: INC000004065609 - ALTAIR // LA FINCA // ERROR FUNCIONAL\nCriticidad sugerida: P1\nSistemas involucrados: ALTAIR, UCA, ZTE, RED, vTeMIP\n\n--- Contexto extraído de Epsilon Resumen IA ---\n• Problema detectado: Test Cortes CPE devuelve menos KOs desde W25 (17/06). Volumen de clientes sin cortes aumentó 15%, clientes con corte de servicio pasaron de ~350 a ~0 salidas. Discrepancia en datos W28: porcentaje semanal (51,31%) no coincide con detalle diario (máximo 49,46%).\n• Impacto en servicio/negocio: Imposibilidad de identificar clientes afectados por cortes ópticos. Afecta diagnóstico de incidencias en La Finca. Impacto en negocio: SI. Operativa: 50 operaciones/hora con 15% de errores. Afecta a todos los clientes y usuarios.\n• Causa raíz / Solución: Causa raíz: UCA no procesaba eventos de ZTE desde 17/06 hasta 03/07. Acción: 03/07 se limpió OC en vTeMIP y se reinició UCA. Resultado: eventos procesados nuevamente. Test Cortes CPE funciona correctamente, devuelve datos de RED. Escalado a Oceane (2607F09798) para validación de normalización en W29.\n• Estado actual reportado: RESUELTO\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
+          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: SEGUIMIENTO\nIncidencia: INC000004065609 - ALTAIR // LA FINCA // ERROR FUNCIONAL\nCriticidad sugerida: P1\nSistemas involucrados: GNOC CAU\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: ALTAIR // LA FINCA // ERROR FUNCIONAL\n• Impacto ticket: Masiva\n• Urgencia ticket: Medio\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
         },
         "cierre": {
           "completo": "Queda resuelta la incidencia crítica P1 (INC000004065609) sobre ALTAIR. La causa raíz radicó en la detención del procesado de eventos de ZTE por parte de UCA, subsanada tras reiniciar el servicio y limpiar las operaciones en vTeMIP. La herramienta Test Cortes CPE opera con normalidad, reflejando nuevamente los datos reales de red y cortes de servicio sin discrepancias. La operativa de supervisión en La Finca queda plenamente recuperada, coordinándose seguimiento preventivo con Oceane.",
@@ -72,7 +62,7 @@
           "conteo_palabras_breve": 20,
           "generado_por_agente": true,
           "origen": "incident-reporter",
-          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: CIERRE\nIncidencia: INC000004065609 - ALTAIR // LA FINCA // ERROR FUNCIONAL\nCriticidad sugerida: P1\nSistemas involucrados: ALTAIR, UCA, ZTE, RED, vTeMIP\n\n--- Contexto extraído de Epsilon Resumen IA ---\n• Problema detectado: Test Cortes CPE devuelve menos KOs desde W25 (17/06). Volumen de clientes sin cortes aumentó 15%, clientes con corte de servicio pasaron de ~350 a ~0 salidas. Discrepancia en datos W28: porcentaje semanal (51,31%) no coincide con detalle diario (máximo 49,46%).\n• Impacto en servicio/negocio: Imposibilidad de identificar clientes afectados por cortes ópticos. Afecta diagnóstico de incidencias en La Finca. Impacto en negocio: SI. Operativa: 50 operaciones/hora con 15% de errores. Afecta a todos los clientes y usuarios.\n• Causa raíz / Solución: Causa raíz: UCA no procesaba eventos de ZTE desde 17/06 hasta 03/07. Acción: 03/07 se limpió OC en vTeMIP y se reinició UCA. Resultado: eventos procesados nuevamente. Test Cortes CPE funciona correctamente, devuelve datos de RED. Escalado a Oceane (2607F09798) para validación de normalización en W29.\n• Estado actual reportado: RESUELTO\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
+          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: CIERRE\nIncidencia: INC000004065609 - ALTAIR // LA FINCA // ERROR FUNCIONAL\nCriticidad sugerida: P1\nSistemas involucrados: GNOC CAU\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: ALTAIR // LA FINCA // ERROR FUNCIONAL\n• Impacto ticket: Masiva\n• Urgencia ticket: Medio\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
         }
       }
     },
@@ -80,13 +70,7 @@
       "id": "INC000004103003",
       "titulo": "FICHA CLIENTE MM // TLP MEDELLIN // ERROR FUNCIONAL",
       "sistemas": [
-        "Ficha Cliente Multimarca",
-        "WEB Jazztel",
-        "eCare Multimarca",
-        "GED",
-        "ms-documentmanagement-jz",
-        "Altitude",
-        "APIGEE"
+        "DSI_ING_ALTITUDE"
       ],
       "prioridad_original": "Media",
       "prioridad_sugerida": "P1",
@@ -102,13 +86,7 @@
         "workaround": "Desconocido",
         "sla_objetivo_minutos": 15
       },
-      "resumen_ia": {
-        "problema": "Proceso de carga de documentación en Devolución de Penalización (ruta mi.jazztel.com/cuenta) refleja incorrectamente en Ficha Multimarca: solo carga uno de dos documentos requeridos o muestra duplicados. Impacto 100% en operativa (11 casos/hora). Afecta marca Jazztel, departamento Devolución Penalización.",
-        "impacto": "Casos identificados como incompletos aunque cliente aporte documentación completa. Gestión de solicitudes de Devolución de Penalización comprometida. Múltiples clientes afectados (13+ DNI reportados inicialmente, más casos agregados en septiembre).",
-        "solucion": "",
-        "bloqueos": "Respuesta pendiente de Desarrollo Altitude sobre análisis de error; Mejora en frontales para validar teléfono contacto aún en desarrollo; Sincronización de timeouts entre APP, MicrosJ, APIGEE en curso",
-        "siguiente_accion": "DSI_ING_ALTITUDE revisar análisis de +O (asunto: [EXTERNAL] RE: Problemas subida doc abono penalización) y actualizar con hallazgos. Reasignar a SOPORTE N1 CSO para validación con +O tras respuesta Altitude."
-      },
+      "resumen_ia": null,
       "mensajes_ejecutivos": {
         "apertura": {
           "completo": "Se declara incidencia crítica P1 (INC000004103003) en Ficha Cliente Multimarca y portal web de Jazztel, donde el proceso de carga de documentación para devolución de penalizaciones no registra los archivos correctamente o duplica expedientes. La anomalía afecta al 100% de esta operativa con una tasa de 11 casos por hora y más de 13 expedientes bloqueados, impidiendo tramitar los abonos a clientes. Los equipos de soporte de Altitude, APIGEE y canal web investigan la transferencia documental. Próxima actualización en 30 minutos.",
@@ -117,7 +95,7 @@
           "conteo_palabras_breve": 23,
           "generado_por_agente": true,
           "origen": "incident-reporter",
-          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: APERTURA\nIncidencia: INC000004103003 - FICHA CLIENTE MM // TLP MEDELLIN // ERROR FUNCIONAL\nCriticidad sugerida: P1\nSistemas involucrados: Ficha Cliente Multimarca, WEB Jazztel, eCare Multimarca, GED, ms-documentmanagement-jz, Altitude, APIGEE\n\n--- Contexto extraído de Epsilon Resumen IA ---\n• Problema detectado: Proceso de carga de documentación en Devolución de Penalización (ruta mi.jazztel.com/cuenta) refleja incorrectamente en Ficha Multimarca: solo carga uno de dos documentos requeridos o muestra duplicados. Impacto 100% en operativa (11 casos/hora). Afecta marca Jazztel, departamento Devolución Penalización.\n• Impacto en servicio/negocio: Casos identificados como incompletos aunque cliente aporte documentación completa. Gestión de solicitudes de Devolución de Penalización comprometida. Múltiples clientes afectados (13+ DNI reportados inicialmente, más casos agregados en septiembre).\n• Siguiente acción: DSI_ING_ALTITUDE revisar análisis de +O (asunto: [EXTERNAL] RE: Problemas subida doc abono penalización) y actualizar con hallazgos. Reasignar a SOPORTE N1 CSO para validación con +O tras respuesta Altitude.\n• Estado actual reportado: ASIGNADO\n• Bloqueos identificados: Respuesta pendiente de Desarrollo Altitude sobre análisis de error; Mejora en frontales para validar teléfono contacto aún en desarrollo; Sincronización de timeouts entre APP, MicrosJ, APIGEE en curso\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
+          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: APERTURA\nIncidencia: INC000004103003 - FICHA CLIENTE MM // TLP MEDELLIN // ERROR FUNCIONAL\nCriticidad sugerida: P1\nSistemas involucrados: DSI_ING_ALTITUDE\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: FICHA CLIENTE MM // TLP MEDELLIN // ERROR FUNCIONAL\n• Impacto ticket: Masiva\n• Urgencia ticket: Baja\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
         },
         "seguimiento": {
           "completo": "Seguimiento de la incidencia P1 (INC000004103003). Se confirma que la incidencia en la subida de justificantes de penalización de Jazztel impacta en la integración entre el frontal web y el gestor documental GED a través de APIGEE. El equipo DSI_ING_ALTITUDE se encuentra analizando la traza remitida para aislar el error de mapeo en los expedientes y definir el parche de sincronización con Soporte N1 CSO. La tramitación permanece bajo supervisión activa.",
@@ -126,7 +104,7 @@
           "conteo_palabras_breve": 21,
           "generado_por_agente": true,
           "origen": "incident-reporter",
-          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: SEGUIMIENTO\nIncidencia: INC000004103003 - FICHA CLIENTE MM // TLP MEDELLIN // ERROR FUNCIONAL\nCriticidad sugerida: P1\nSistemas involucrados: Ficha Cliente Multimarca, WEB Jazztel, eCare Multimarca, GED, ms-documentmanagement-jz, Altitude, APIGEE\n\n--- Contexto extraído de Epsilon Resumen IA ---\n• Problema detectado: Proceso de carga de documentación en Devolución de Penalización (ruta mi.jazztel.com/cuenta) refleja incorrectamente en Ficha Multimarca: solo carga uno de dos documentos requeridos o muestra duplicados. Impacto 100% en operativa (11 casos/hora). Afecta marca Jazztel, departamento Devolución Penalización.\n• Impacto en servicio/negocio: Casos identificados como incompletos aunque cliente aporte documentación completa. Gestión de solicitudes de Devolución de Penalización comprometida. Múltiples clientes afectados (13+ DNI reportados inicialmente, más casos agregados en septiembre).\n• Siguiente acción: DSI_ING_ALTITUDE revisar análisis de +O (asunto: [EXTERNAL] RE: Problemas subida doc abono penalización) y actualizar con hallazgos. Reasignar a SOPORTE N1 CSO para validación con +O tras respuesta Altitude.\n• Estado actual reportado: ASIGNADO\n• Bloqueos identificados: Respuesta pendiente de Desarrollo Altitude sobre análisis de error; Mejora en frontales para validar teléfono contacto aún en desarrollo; Sincronización de timeouts entre APP, MicrosJ, APIGEE en curso\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
+          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: SEGUIMIENTO\nIncidencia: INC000004103003 - FICHA CLIENTE MM // TLP MEDELLIN // ERROR FUNCIONAL\nCriticidad sugerida: P1\nSistemas involucrados: DSI_ING_ALTITUDE\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: FICHA CLIENTE MM // TLP MEDELLIN // ERROR FUNCIONAL\n• Impacto ticket: Masiva\n• Urgencia ticket: Baja\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
         },
         "cierre": {
           "completo": "Queda resuelta la incidencia P1 (INC000004103003) en Ficha Cliente Multimarca. Corregida la anomalía en el microservicio de gestión documental que impedía la ingesta íntegra de justificantes de penalización desde mi.jazztel.com. Las solicitudes en curso han sido reprocesadas correctamente y los agentes de TLP Medellín pueden validar expedientes con todos los documentos adjuntos. El flujo de devoluciones opera con plena normalidad y sin duplicidades.",
@@ -135,70 +113,7 @@
           "conteo_palabras_breve": 20,
           "generado_por_agente": true,
           "origen": "incident-reporter",
-          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: CIERRE\nIncidencia: INC000004103003 - FICHA CLIENTE MM // TLP MEDELLIN // ERROR FUNCIONAL\nCriticidad sugerida: P1\nSistemas involucrados: Ficha Cliente Multimarca, WEB Jazztel, eCare Multimarca, GED, ms-documentmanagement-jz, Altitude, APIGEE\n\n--- Contexto extraído de Epsilon Resumen IA ---\n• Problema detectado: Proceso de carga de documentación en Devolución de Penalización (ruta mi.jazztel.com/cuenta) refleja incorrectamente en Ficha Multimarca: solo carga uno de dos documentos requeridos o muestra duplicados. Impacto 100% en operativa (11 casos/hora). Afecta marca Jazztel, departamento Devolución Penalización.\n• Impacto en servicio/negocio: Casos identificados como incompletos aunque cliente aporte documentación completa. Gestión de solicitudes de Devolución de Penalización comprometida. Múltiples clientes afectados (13+ DNI reportados inicialmente, más casos agregados en septiembre).\n• Siguiente acción: DSI_ING_ALTITUDE revisar análisis de +O (asunto: [EXTERNAL] RE: Problemas subida doc abono penalización) y actualizar con hallazgos. Reasignar a SOPORTE N1 CSO para validación con +O tras respuesta Altitude.\n• Estado actual reportado: ASIGNADO\n• Bloqueos identificados: Respuesta pendiente de Desarrollo Altitude sobre análisis de error; Mejora en frontales para validar teléfono contacto aún en desarrollo; Sincronización de timeouts entre APP, MicrosJ, APIGEE en curso\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
-        }
-      }
-    },
-    {
-      "id": "INC000004122710",
-      "titulo": "FICHA DE CLIENTE // OEST OVIEDO // ERROR FUNCIONAL",
-      "sistemas": [
-        "Ficha de Cliente",
-        "Teide",
-        "PeopleSoft",
-        "Siebel 8",
-        "MDG",
-        "BSCS",
-        "Middleware"
-      ],
-      "prioridad_original": "Media",
-      "prioridad_sugerida": "P1",
-      "es_alta_prioridad": true,
-      "es_discrepancia": true,
-      "estatus": "Pendiente",
-      "fecha_envio": "08/09/2026 16:04 a",
-      "evaluacion": {
-        "impacto": "Alto",
-        "impacto_justificacion": "Afectación crítica o corte global sobre el servicio principal sin alternativa viable.",
-        "urgencia": "Alta",
-        "urgencia_justificacion": "Impacto activo en vivo que requiere restablecimiento inmediato.",
-        "workaround": "Desconocido",
-        "sla_objetivo_minutos": 15
-      },
-      "resumen_ia": {
-        "problema": "Módulo de recogidas de equipamientos de fijo en Ficha de Cliente no propaga correctamente cambios de teléfono de contacto. Al modificar el número, el sistema confirma el cambio pero no se sincroniza hacia PS, Siebel 8 ni MDG. Consultas posteriores muestran el número anterior.",
-        "impacto": "Alto. Afecta proceso crítico de recogidas de fijo (100% de operativas). Riesgo de penalizaciones incorrectas a clientes y rellamadas por comunicaciones fallidas. Impacto en todos los usuarios y clientes.",
-        "solucion": "",
-        "bloqueos": "Interfaz 92007 (Actualización Pagador Mundo Fijo) no contiene campos de teléfono de contacto para sincronizar hacia PeopleSoft; Requiere modificación de interfaz o flujo de sincronización entre Teide y PS; Pendiente de PR (Pull Request) para resolución",
-        "siguiente_accion": "Desarrollar solución para propagar teléfono de contacto de fijo desde Teide a PeopleSoft mediante interfaz 92007 o alternativa equivalente"
-      },
-      "mensajes_ejecutivos": {
-        "apertura": {
-          "completo": "Se comunica incidencia de alta prioridad P2 (INC000004122710) en Ficha de Cliente originada por la falta de propagación del teléfono de contacto en el módulo de recogida de routers y terminales fijos. Aunque el frontal confirma la modificación, los datos no se sincronizan con PeopleSoft ni Siebel 8, con riesgo de penalizaciones indebidas por comunicaciones fallidas con clientes. El equipo de FIJO APL Soporte PS diseña la interfaz de sincronización correctora. Próxima actualización en 60 minutos.",
-          "breve": "Apertura P2 (INC000004122710): Cambios de teléfono en recogidas de fijo no sincronizan con PeopleSoft ni Siebel 8, arriesgando entregas a clientes. Soporte interviniendo interfaz.",
-          "conteo_palabras_completo": 76,
-          "conteo_palabras_breve": 24,
-          "generado_por_agente": true,
-          "origen": "incident-reporter",
-          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: APERTURA\nIncidencia: INC000004122710 - FICHA DE CLIENTE // OEST OVIEDO // ERROR FUNCIONAL\nCriticidad sugerida: P1\nSistemas involucrados: Ficha de Cliente, Teide, PeopleSoft, Siebel 8, MDG, BSCS, Middleware\n\n--- Contexto extraído de Epsilon Resumen IA ---\n• Problema detectado: Módulo de recogidas de equipamientos de fijo en Ficha de Cliente no propaga correctamente cambios de teléfono de contacto. Al modificar el número, el sistema confirma el cambio pero no se sincroniza hacia PS, Siebel 8 ni MDG. Consultas posteriores muestran el número anterior.\n• Impacto en servicio/negocio: Alto. Afecta proceso crítico de recogidas de fijo (100% de operativas). Riesgo de penalizaciones incorrectas a clientes y rellamadas por comunicaciones fallidas. Impacto en todos los usuarios y clientes.\n• Siguiente acción: Desarrollar solución para propagar teléfono de contacto de fijo desde Teide a PeopleSoft mediante interfaz 92007 o alternativa equivalente\n• Estado actual reportado: PENDIENTE\n• Bloqueos identificados: Interfaz 92007 (Actualización Pagador Mundo Fijo) no contiene campos de teléfono de contacto para sincronizar hacia PeopleSoft; Requiere modificación de interfaz o flujo de sincronización entre Teide y PS; Pendiente de PR (Pull Request) para resolución\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
-        },
-        "seguimiento": {
-          "completo": "Seguimiento P2 (INC000004122710). El equipo de FIJO APL Soporte PS y desarrollo de Teide ultiman la habilitación de la interfaz 92007 para asegurar que toda actualización de contacto telefónico se replique en tiempo real hacia PeopleSoft y los sistemas de logística inversa. Se valida el reprocesado de solicitudes registradas durante la ventana de fallo.",
-          "breve": "Seguimiento P2 (INC000004122710): Habilitando interfaz 92007 entre Teide y PeopleSoft para propagar teléfonos de contacto en recogidas de fijo pendientes.",
-          "conteo_palabras_completo": 54,
-          "conteo_palabras_breve": 20,
-          "generado_por_agente": true,
-          "origen": "incident-reporter",
-          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: SEGUIMIENTO\nIncidencia: INC000004122710 - FICHA DE CLIENTE // OEST OVIEDO // ERROR FUNCIONAL\nCriticidad sugerida: P1\nSistemas involucrados: Ficha de Cliente, Teide, PeopleSoft, Siebel 8, MDG, BSCS, Middleware\n\n--- Contexto extraído de Epsilon Resumen IA ---\n• Problema detectado: Módulo de recogidas de equipamientos de fijo en Ficha de Cliente no propaga correctamente cambios de teléfono de contacto. Al modificar el número, el sistema confirma el cambio pero no se sincroniza hacia PS, Siebel 8 ni MDG. Consultas posteriores muestran el número anterior.\n• Impacto en servicio/negocio: Alto. Afecta proceso crítico de recogidas de fijo (100% de operativas). Riesgo de penalizaciones incorrectas a clientes y rellamadas por comunicaciones fallidas. Impacto en todos los usuarios y clientes.\n• Siguiente acción: Desarrollar solución para propagar teléfono de contacto de fijo desde Teide a PeopleSoft mediante interfaz 92007 o alternativa equivalente\n• Estado actual reportado: PENDIENTE\n• Bloqueos identificados: Interfaz 92007 (Actualización Pagador Mundo Fijo) no contiene campos de teléfono de contacto para sincronizar hacia PeopleSoft; Requiere modificación de interfaz o flujo de sincronización entre Teide y PS; Pendiente de PR (Pull Request) para resolución\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
-        },
-        "cierre": {
-          "completo": "Cerrada la incidencia P2 (INC000004122710) en Ficha de Cliente. Desplegada la interfaz de sincronización con PeopleSoft y Siebel 8, garantizando que toda modificación de número de contacto en recogidas de fijo se transmite a los operadores logísticos sin incidencias. El servicio opera de forma coordinada y sin riesgo de penalizaciones a clientes.",
-          "breve": "Cierre P2 (INC000004122710): Sincronización de teléfonos en recogidas de fijo restablecida con PeopleSoft. Flujo logístico y de clientes normalizado.",
-          "conteo_palabras_completo": 52,
-          "conteo_palabras_breve": 19,
-          "generado_por_agente": true,
-          "origen": "incident-reporter",
-          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: CIERRE\nIncidencia: INC000004122710 - FICHA DE CLIENTE // OEST OVIEDO // ERROR FUNCIONAL\nCriticidad sugerida: P1\nSistemas involucrados: Ficha de Cliente, Teide, PeopleSoft, Siebel 8, MDG, BSCS, Middleware\n\n--- Contexto extraído de Epsilon Resumen IA ---\n• Problema detectado: Módulo de recogidas de equipamientos de fijo en Ficha de Cliente no propaga correctamente cambios de teléfono de contacto. Al modificar el número, el sistema confirma el cambio pero no se sincroniza hacia PS, Siebel 8 ni MDG. Consultas posteriores muestran el número anterior.\n• Impacto en servicio/negocio: Alto. Afecta proceso crítico de recogidas de fijo (100% de operativas). Riesgo de penalizaciones incorrectas a clientes y rellamadas por comunicaciones fallidas. Impacto en todos los usuarios y clientes.\n• Siguiente acción: Desarrollar solución para propagar teléfono de contacto de fijo desde Teide a PeopleSoft mediante interfaz 92007 o alternativa equivalente\n• Estado actual reportado: PENDIENTE\n• Bloqueos identificados: Interfaz 92007 (Actualización Pagador Mundo Fijo) no contiene campos de teléfono de contacto para sincronizar hacia PeopleSoft; Requiere modificación de interfaz o flujo de sincronización entre Teide y PS; Pendiente de PR (Pull Request) para resolución\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
+          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: CIERRE\nIncidencia: INC000004103003 - FICHA CLIENTE MM // TLP MEDELLIN // ERROR FUNCIONAL\nCriticidad sugerida: P1\nSistemas involucrados: DSI_ING_ALTITUDE\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: FICHA CLIENTE MM // TLP MEDELLIN // ERROR FUNCIONAL\n• Impacto ticket: Masiva\n• Urgencia ticket: Baja\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
         }
       }
     },
@@ -206,9 +121,7 @@
       "id": "INC000004156790",
       "titulo": "Ficha Cliente Orange | Error funcional | Madison - Valladolid",
       "sistemas": [
-        "Ficha Cliente Orange",
-        "xpldocumentlist",
-        "ApiGee"
+        "DES_SOE_FICHA"
       ],
       "prioridad_original": "Media",
       "prioridad_sugerida": "P1",
@@ -224,13 +137,7 @@
         "workaround": "Desconocido",
         "sla_objetivo_minutos": 15
       },
-      "resumen_ia": {
-        "problema": "No se pueden abrir Comprobantes de venta desde el Inyector en Ficha de Cliente. Error 404 en endpoint xpldocumentlist. Afecta a múltiples sedes (Bosch-Vigo, Madison-Valladolid).",
-        "impacto": "60 usuarios afectados en 2 sedes. Bloquea operativa de ventas. Sin método alternativo en Bosch-Vigo; en Madison-Valladolid existe HERMES como alternativa.",
-        "solucion": "URL del endpoint de la XPL incorrecta. Se corrigió la dirección del punto final de conexión. Bosch-Vigo confirmó resolución el 26/10 12:18. Madison-Valladolid reportó NO RESUELTO el 26/10 12:51 (sigue sin abrir comprobantes). Nueva sede afectada (Bosch-Vigo) reportada 26/10 12:43 con error 'No se pueden recuperar datos del pedido'.",
-        "bloqueos": "Madison-Valladolid: Incidencia NO RESUELTA a pesar de corrección de URL; Nueva manifestación en Bosch-Vigo con mensaje de error diferente",
-        "siguiente_accion": ""
-      },
+      "resumen_ia": null,
       "mensajes_ejecutivos": {
         "apertura": {
           "completo": "Se declara incidencia crítica P1 (INC000004156790) en Ficha Cliente Orange originada por un error 404 en el servicio de comprobantes de venta desde el inyector. La afectación impacta a 60 operadores en las sedes de Madison-Valladolid y Bosch-Vigo, bloqueando el cierre operativo de contrataciones de clientes sin vía alternativa en plataforma principal. Los equipos de DES_SOE_FICHA y APIGEE se encuentran interviniendo el endpoint de conexión documental para restablecer el acceso a las ventas. Próxima actualización en 30 minutos.",
@@ -239,7 +146,7 @@
           "conteo_palabras_breve": 25,
           "generado_por_agente": true,
           "origen": "incident-reporter",
-          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: APERTURA\nIncidencia: INC000004156790 - Ficha Cliente Orange | Error funcional | Madison - Valladolid\nCriticidad sugerida: P1\nSistemas involucrados: Ficha Cliente Orange, xpldocumentlist, ApiGee\n\n--- Contexto extraído de Epsilon Resumen IA ---\n• Problema detectado: No se pueden abrir Comprobantes de venta desde el Inyector en Ficha de Cliente. Error 404 en endpoint xpldocumentlist. Afecta a múltiples sedes (Bosch-Vigo, Madison-Valladolid).\n• Impacto en servicio/negocio: 60 usuarios afectados en 2 sedes. Bloquea operativa de ventas. Sin método alternativo en Bosch-Vigo; en Madison-Valladolid existe HERMES como alternativa.\n• Causa raíz / Solución: URL del endpoint de la XPL incorrecta. Se corrigió la dirección del punto final de conexión. Bosch-Vigo confirmó resolución el 26/10 12:18. Madison-Valladolid reportó NO RESUELTO el 26/10 12:51 (sigue sin abrir comprobantes). Nueva sede afectada (Bosch-Vigo) reportada 26/10 12:43 con error 'No se pueden recuperar datos del pedido'.\n• Estado actual reportado: ASIGNADO\n• Bloqueos identificados: Madison-Valladolid: Incidencia NO RESUELTA a pesar de corrección de URL; Nueva manifestación en Bosch-Vigo con mensaje de error diferente\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
+          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: APERTURA\nIncidencia: INC000004156790 - Ficha Cliente Orange | Error funcional | Madison - Valladolid\nCriticidad sugerida: P1\nSistemas involucrados: DES_SOE_FICHA\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: Ficha Cliente Orange | Error funcional | Madison - Valladolid\n• Impacto ticket: Masiva\n• Urgencia ticket: Medio\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
         },
         "seguimiento": {
           "completo": "Seguimiento de la incidencia P1 (INC000004156790). Tras corregir el direccionamiento inicial del endpoint de la XPL, se ha verificado recuperación parcial en la sede de Vigo, si bien Madison-Valladolid continúa reportando errores al recuperar datos del pedido en operaciones específicas. El equipo de DES_SOE_FICHA mantiene los ajustes de enrutamiento y validación de cabeceras en APIGEE para garantizar la apertura homogénea de comprobantes en todos los centros de atención. Se monitorizan las llamadas de contratación en tiempo real.",
@@ -248,7 +155,7 @@
           "conteo_palabras_breve": 22,
           "generado_por_agente": true,
           "origen": "incident-reporter",
-          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: SEGUIMIENTO\nIncidencia: INC000004156790 - Ficha Cliente Orange | Error funcional | Madison - Valladolid\nCriticidad sugerida: P1\nSistemas involucrados: Ficha Cliente Orange, xpldocumentlist, ApiGee\n\n--- Contexto extraído de Epsilon Resumen IA ---\n• Problema detectado: No se pueden abrir Comprobantes de venta desde el Inyector en Ficha de Cliente. Error 404 en endpoint xpldocumentlist. Afecta a múltiples sedes (Bosch-Vigo, Madison-Valladolid).\n• Impacto en servicio/negocio: 60 usuarios afectados en 2 sedes. Bloquea operativa de ventas. Sin método alternativo en Bosch-Vigo; en Madison-Valladolid existe HERMES como alternativa.\n• Causa raíz / Solución: URL del endpoint de la XPL incorrecta. Se corrigió la dirección del punto final de conexión. Bosch-Vigo confirmó resolución el 26/10 12:18. Madison-Valladolid reportó NO RESUELTO el 26/10 12:51 (sigue sin abrir comprobantes). Nueva sede afectada (Bosch-Vigo) reportada 26/10 12:43 con error 'No se pueden recuperar datos del pedido'.\n• Estado actual reportado: ASIGNADO\n• Bloqueos identificados: Madison-Valladolid: Incidencia NO RESUELTA a pesar de corrección de URL; Nueva manifestación en Bosch-Vigo con mensaje de error diferente\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
+          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: SEGUIMIENTO\nIncidencia: INC000004156790 - Ficha Cliente Orange | Error funcional | Madison - Valladolid\nCriticidad sugerida: P1\nSistemas involucrados: DES_SOE_FICHA\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: Ficha Cliente Orange | Error funcional | Madison - Valladolid\n• Impacto ticket: Masiva\n• Urgencia ticket: Medio\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
         },
         "cierre": {
           "completo": "Cerrada la incidencia crítica P1 (INC000004156790) en Ficha Cliente Orange. Subsanado el error de direccionamiento en el endpoint xpldocumentlist, confirmándose la correcta apertura y descarga de comprobantes de venta desde el inyector en todas las sedes operativas, incluidas Valladolid y Vigo. Los 60 puestos afectados operan sin bloqueos y el proceso de formalización de ventas se encuentra totalmente estabilizado bajo supervisión preventiva de soporte.",
@@ -257,7 +164,7 @@
           "conteo_palabras_breve": 23,
           "generado_por_agente": true,
           "origen": "incident-reporter",
-          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: CIERRE\nIncidencia: INC000004156790 - Ficha Cliente Orange | Error funcional | Madison - Valladolid\nCriticidad sugerida: P1\nSistemas involucrados: Ficha Cliente Orange, xpldocumentlist, ApiGee\n\n--- Contexto extraído de Epsilon Resumen IA ---\n• Problema detectado: No se pueden abrir Comprobantes de venta desde el Inyector en Ficha de Cliente. Error 404 en endpoint xpldocumentlist. Afecta a múltiples sedes (Bosch-Vigo, Madison-Valladolid).\n• Impacto en servicio/negocio: 60 usuarios afectados en 2 sedes. Bloquea operativa de ventas. Sin método alternativo en Bosch-Vigo; en Madison-Valladolid existe HERMES como alternativa.\n• Causa raíz / Solución: URL del endpoint de la XPL incorrecta. Se corrigió la dirección del punto final de conexión. Bosch-Vigo confirmó resolución el 26/10 12:18. Madison-Valladolid reportó NO RESUELTO el 26/10 12:51 (sigue sin abrir comprobantes). Nueva sede afectada (Bosch-Vigo) reportada 26/10 12:43 con error 'No se pueden recuperar datos del pedido'.\n• Estado actual reportado: ASIGNADO\n• Bloqueos identificados: Madison-Valladolid: Incidencia NO RESUELTA a pesar de corrección de URL; Nueva manifestación en Bosch-Vigo con mensaje de error diferente\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
+          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: CIERRE\nIncidencia: INC000004156790 - Ficha Cliente Orange | Error funcional | Madison - Valladolid\nCriticidad sugerida: P1\nSistemas involucrados: DES_SOE_FICHA\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: Ficha Cliente Orange | Error funcional | Madison - Valladolid\n• Impacto ticket: Masiva\n• Urgencia ticket: Medio\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
         }
       }
     },
@@ -265,12 +172,7 @@
       "id": "INC000004159463",
       "titulo": "Teide | Error funcional | Bosch - Vigo",
       "sistemas": [
-        "Teide",
-        "Siebel 8",
-        "ms-shoppingcart",
-        "ms-repository",
-        "MDW 115011",
-        "MDW 115053"
+        "SOP_SMC_TEIDE"
       ],
       "prioridad_original": "Media",
       "prioridad_sugerida": "P1",
@@ -286,13 +188,7 @@
         "workaround": "Desconocido",
         "sla_objetivo_minutos": 15
       },
-      "resumen_ia": {
-        "problema": "En órdenes de Siebel 8 para altas o portabilidades de fijo, el campo 'Envío Logístico Fijo' no aparece o aparece incompleto. Afecta a múltiples órdenes desde al menos 16/10/2026.",
-        "impacto": "10 usuarios de Bosch-Vigo afectados. Clientes impactados. Sin método alternativo disponible.",
-        "solucion": "",
-        "bloqueos": "Pendiente información de la sede: fecha exacta de inicio del problema y órdenes de referencia con campo correcto.",
-        "siguiente_accion": "Aguardar respuesta de Bosch-Vigo con órdenes de comparación (con/sin campo correcto) para validar si es comportamiento esperado o defecto real en Frontal."
-      },
+      "resumen_ia": null,
       "mensajes_ejecutivos": {
         "apertura": {
           "completo": "Se ha declarado una incidencia crítica P1 (INC000004159463) provocada por una anomalía funcional en Siebel 8, donde las órdenes de alta y portabilidad de fijo no registran o truncan el campo de envío logístico. El fallo afecta a 10 operadores de Bosch-Vigo y compromete la entrega de equipamiento a clientes, sin vía alternativa disponible. Los equipos de Teide y Siebel 8 se encuentran investigando los microservicios y aguardan órdenes testigo para aislar la causa raíz. Próxima actualización en 30 minutos.",
@@ -301,7 +197,7 @@
           "conteo_palabras_breve": 25,
           "generado_por_agente": true,
           "origen": "incident-reporter",
-          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: APERTURA\nIncidencia: INC000004159463 - Teide | Error funcional | Bosch - Vigo\nCriticidad sugerida: P1\nSistemas involucrados: Teide, Siebel 8, ms-shoppingcart, ms-repository, MDW 115011, MDW 115053\n\n--- Contexto extraído de Epsilon Resumen IA ---\n• Problema detectado: En órdenes de Siebel 8 para altas o portabilidades de fijo, el campo 'Envío Logístico Fijo' no aparece o aparece incompleto. Afecta a múltiples órdenes desde al menos 16/10/2026.\n• Impacto en servicio/negocio: 10 usuarios de Bosch-Vigo afectados. Clientes impactados. Sin método alternativo disponible.\n• Siguiente acción: Aguardar respuesta de Bosch-Vigo con órdenes de comparación (con/sin campo correcto) para validar si es comportamiento esperado o defecto real en Frontal.\n• Estado actual reportado: ASIGNADO\n• Bloqueos identificados: Pendiente información de la sede: fecha exacta de inicio del problema y órdenes de referencia con campo correcto.\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
+          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: APERTURA\nIncidencia: INC000004159463 - Teide | Error funcional | Bosch - Vigo\nCriticidad sugerida: P1\nSistemas involucrados: SOP_SMC_TEIDE\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: Teide | Error funcional | Bosch - Vigo\n• Impacto ticket: Masiva\n• Urgencia ticket: Baja\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
         },
         "seguimiento": {
           "completo": "Seguimiento de la incidencia P1 (INC000004159463). Los equipos de soporte de Teide y arquitectura de Siebel 8 avanzan en la comparación de órdenes con Bosch-Vigo para aislar la pérdida de datos del envío logístico de fijo. El análisis se concentra en los microservicios de cesta de compra y repositorio de pedidos en middleware para corregir la propagación hacia logística y evitar retrasos en las entregas de router a clientes. Monitorización técnica continuada.",
@@ -310,7 +206,7 @@
           "conteo_palabras_breve": 25,
           "generado_por_agente": true,
           "origen": "incident-reporter",
-          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: SEGUIMIENTO\nIncidencia: INC000004159463 - Teide | Error funcional | Bosch - Vigo\nCriticidad sugerida: P1\nSistemas involucrados: Teide, Siebel 8, ms-shoppingcart, ms-repository, MDW 115011, MDW 115053\n\n--- Contexto extraído de Epsilon Resumen IA ---\n• Problema detectado: En órdenes de Siebel 8 para altas o portabilidades de fijo, el campo 'Envío Logístico Fijo' no aparece o aparece incompleto. Afecta a múltiples órdenes desde al menos 16/10/2026.\n• Impacto en servicio/negocio: 10 usuarios de Bosch-Vigo afectados. Clientes impactados. Sin método alternativo disponible.\n• Siguiente acción: Aguardar respuesta de Bosch-Vigo con órdenes de comparación (con/sin campo correcto) para validar si es comportamiento esperado o defecto real en Frontal.\n• Estado actual reportado: ASIGNADO\n• Bloqueos identificados: Pendiente información de la sede: fecha exacta de inicio del problema y órdenes de referencia con campo correcto.\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
+          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: SEGUIMIENTO\nIncidencia: INC000004159463 - Teide | Error funcional | Bosch - Vigo\nCriticidad sugerida: P1\nSistemas involucrados: SOP_SMC_TEIDE\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: Teide | Error funcional | Bosch - Vigo\n• Impacto ticket: Masiva\n• Urgencia ticket: Baja\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
         },
         "cierre": {
           "completo": "Resuelta la incidencia crítica P1 (INC000004159463) en Teide y Siebel 8. Corregida la serialización del campo de envío logístico en los microservicios de pedidos, garantizando que todas las altas y portabilidades de fijo incorporan la dirección y modalidad de entrega requerida. La plataforma de Bosch-Vigo opera con normalidad y el despacho de equipamiento a clientes finales queda totalmente restablecido sin incidencias.",
@@ -319,7 +215,7 @@
           "conteo_palabras_breve": 23,
           "generado_por_agente": true,
           "origen": "incident-reporter",
-          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: CIERRE\nIncidencia: INC000004159463 - Teide | Error funcional | Bosch - Vigo\nCriticidad sugerida: P1\nSistemas involucrados: Teide, Siebel 8, ms-shoppingcart, ms-repository, MDW 115011, MDW 115053\n\n--- Contexto extraído de Epsilon Resumen IA ---\n• Problema detectado: En órdenes de Siebel 8 para altas o portabilidades de fijo, el campo 'Envío Logístico Fijo' no aparece o aparece incompleto. Afecta a múltiples órdenes desde al menos 16/10/2026.\n• Impacto en servicio/negocio: 10 usuarios de Bosch-Vigo afectados. Clientes impactados. Sin método alternativo disponible.\n• Siguiente acción: Aguardar respuesta de Bosch-Vigo con órdenes de comparación (con/sin campo correcto) para validar si es comportamiento esperado o defecto real en Frontal.\n• Estado actual reportado: ASIGNADO\n• Bloqueos identificados: Pendiente información de la sede: fecha exacta de inicio del problema y órdenes de referencia con campo correcto.\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
+          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: CIERRE\nIncidencia: INC000004159463 - Teide | Error funcional | Bosch - Vigo\nCriticidad sugerida: P1\nSistemas involucrados: SOP_SMC_TEIDE\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: Teide | Error funcional | Bosch - Vigo\n• Impacto ticket: Masiva\n• Urgencia ticket: Baja\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
         }
       }
     },
@@ -327,9 +223,7 @@
       "id": "INC000004159877",
       "titulo": "Ficha Cliente Orange | Error funcional | Teleperformance - Salamanca",
       "sistemas": [
-        "Ficha Cliente Orange",
-        "CERES",
-        "BFF Client Dashboard"
+        "NEG_CAMP_CERES"
       ],
       "prioridad_original": "Media",
       "prioridad_sugerida": "P1",
@@ -345,13 +239,7 @@
         "workaround": "Desconocido",
         "sla_objetivo_minutos": 15
       },
-      "resumen_ia": {
-        "problema": "No permite realizar renoves a través de Ficha Cliente Orange. Aparece modal de rechazo que impide acceso a campaña de renove incluso completando campos sugeridos. Afecta a todas las cualificaciones (top riesgo, bajo riesgo, renove multidispositivo).",
-        "impacto": "10 usuarios de Teleperformance - Salamanca no pueden procesar renoves. Afecta a clientes. Método alternativo disponible: Siebel 8.",
-        "solucion": "",
-        "bloqueos": "Asignación incorrecta: NEG_CAMP_CERES no es grupo resolutor técnico, requiere APL_MOV_CERES",
-        "siguiente_accion": ""
-      },
+      "resumen_ia": null,
       "mensajes_ejecutivos": {
         "apertura": {
           "completo": "Se declara incidencia crítica P1 (INC000004159877) en Ficha Cliente Orange por bloqueo generalizado en la tramitación de renovaciones de terminales en Teleperformance-Salamanca. Un modal de rechazo erróneo impide acceder a las campañas de renove para clientes de cualquier nivel de riesgo o modalidad multidispositivo, impactando directamente en la retención comercial sin método alternativo. Los equipos de DES_SOE_FICHA y CERES investigan las reglas de validación para restaurar la operativa comercial. Próxima actualización en 30 minutos.",
@@ -360,7 +248,7 @@
           "conteo_palabras_breve": 24,
           "generado_por_agente": true,
           "origen": "incident-reporter",
-          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: APERTURA\nIncidencia: INC000004159877 - Ficha Cliente Orange | Error funcional | Teleperformance - Salamanca\nCriticidad sugerida: P1\nSistemas involucrados: Ficha Cliente Orange, CERES, BFF Client Dashboard\n\n--- Contexto extraído de Epsilon Resumen IA ---\n• Problema detectado: No permite realizar renoves a través de Ficha Cliente Orange. Aparece modal de rechazo que impide acceso a campaña de renove incluso completando campos sugeridos. Afecta a todas las cualificaciones (top riesgo, bajo riesgo, renove multidispositivo).\n• Impacto en servicio/negocio: 10 usuarios de Teleperformance - Salamanca no pueden procesar renoves. Afecta a clientes. Método alternativo disponible: Siebel 8.\n• Estado actual reportado: ASIGNADO\n• Bloqueos identificados: Asignación incorrecta: NEG_CAMP_CERES no es grupo resolutor técnico, requiere APL_MOV_CERES\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
+          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: APERTURA\nIncidencia: INC000004159877 - Ficha Cliente Orange | Error funcional | Teleperformance - Salamanca\nCriticidad sugerida: P1\nSistemas involucrados: NEG_CAMP_CERES\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: Ficha Cliente Orange | Error funcional | Teleperformance - Salamanca\n• Impacto ticket: Masiva\n• Urgencia ticket: Medio\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
         },
         "seguimiento": {
           "completo": "Seguimiento de la incidencia P1 (INC000004159877). Los equipos de desarrollo de Ficha Cliente y soporte de CERES han identificado una discrepancia en el motor de scoring comercial que dispara el rechazo sistemático en las solicitudes de renove. Se está desplegando una corrección en las condiciones de evaluación del frontal para reactivar las ofertas disponibles sin comprometer las políticas de riesgo. Se realizan pruebas piloto con agentes de Salamanca para confirmar el desbloqueo.",
@@ -369,7 +257,7 @@
           "conteo_palabras_breve": 23,
           "generado_por_agente": true,
           "origen": "incident-reporter",
-          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: SEGUIMIENTO\nIncidencia: INC000004159877 - Ficha Cliente Orange | Error funcional | Teleperformance - Salamanca\nCriticidad sugerida: P1\nSistemas involucrados: Ficha Cliente Orange, CERES, BFF Client Dashboard\n\n--- Contexto extraído de Epsilon Resumen IA ---\n• Problema detectado: No permite realizar renoves a través de Ficha Cliente Orange. Aparece modal de rechazo que impide acceso a campaña de renove incluso completando campos sugeridos. Afecta a todas las cualificaciones (top riesgo, bajo riesgo, renove multidispositivo).\n• Impacto en servicio/negocio: 10 usuarios de Teleperformance - Salamanca no pueden procesar renoves. Afecta a clientes. Método alternativo disponible: Siebel 8.\n• Estado actual reportado: ASIGNADO\n• Bloqueos identificados: Asignación incorrecta: NEG_CAMP_CERES no es grupo resolutor técnico, requiere APL_MOV_CERES\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
+          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: SEGUIMIENTO\nIncidencia: INC000004159877 - Ficha Cliente Orange | Error funcional | Teleperformance - Salamanca\nCriticidad sugerida: P1\nSistemas involucrados: NEG_CAMP_CERES\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: Ficha Cliente Orange | Error funcional | Teleperformance - Salamanca\n• Impacto ticket: Masiva\n• Urgencia ticket: Medio\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
         },
         "cierre": {
           "completo": "Queda resuelta la incidencia P1 (INC000004159877) en Ficha Cliente Orange. Aplicada la corrección sobre el motor de reglas de CERES y el frontal de agentes, eliminando el modal de rechazo indebido en renovaciones. El canal de Teleperformance-Salamanca tramita operaciones de renove de terminales con absoluta normalidad para todas las categorías de clientes, confirmando la plena disponibilidad del catálogo comercial y la recuperación del servicio.",
@@ -378,7 +266,7 @@
           "conteo_palabras_breve": 23,
           "generado_por_agente": true,
           "origen": "incident-reporter",
-          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: CIERRE\nIncidencia: INC000004159877 - Ficha Cliente Orange | Error funcional | Teleperformance - Salamanca\nCriticidad sugerida: P1\nSistemas involucrados: Ficha Cliente Orange, CERES, BFF Client Dashboard\n\n--- Contexto extraído de Epsilon Resumen IA ---\n• Problema detectado: No permite realizar renoves a través de Ficha Cliente Orange. Aparece modal de rechazo que impide acceso a campaña de renove incluso completando campos sugeridos. Afecta a todas las cualificaciones (top riesgo, bajo riesgo, renove multidispositivo).\n• Impacto en servicio/negocio: 10 usuarios de Teleperformance - Salamanca no pueden procesar renoves. Afecta a clientes. Método alternativo disponible: Siebel 8.\n• Estado actual reportado: ASIGNADO\n• Bloqueos identificados: Asignación incorrecta: NEG_CAMP_CERES no es grupo resolutor técnico, requiere APL_MOV_CERES\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
+          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: CIERRE\nIncidencia: INC000004159877 - Ficha Cliente Orange | Error funcional | Teleperformance - Salamanca\nCriticidad sugerida: P1\nSistemas involucrados: NEG_CAMP_CERES\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: Ficha Cliente Orange | Error funcional | Teleperformance - Salamanca\n• Impacto ticket: Masiva\n• Urgencia ticket: Medio\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
         }
       }
     },
@@ -386,8 +274,7 @@
       "id": "INC000004162280",
       "titulo": "Siebel 8 | Error funcional | OEST - Oviedo",
       "sistemas": [
-        "Siebel 8",
-        "TEIDE"
+        "SOP_SMC_TEIDE"
       ],
       "prioridad_original": "Media",
       "prioridad_sugerida": "P1",
@@ -403,13 +290,7 @@
         "workaround": "Desconocido",
         "sla_objetivo_minutos": 15
       },
-      "resumen_ia": {
-        "problema": "Clientes con TV 90 canales en tarifa no aparecen en parque de productos Siebel 8. Desalineamiento entre Ficha de Cliente (productos activos) y TEIDE (sin registros). Imposible activar/desactivar servicios.",
-        "impacto": "10 clientes afectados en OEST Oviedo. Clientes no pueden ver TV contratada. Sin método alternativo disponible.",
-        "solucion": "",
-        "bloqueos": "Falta información detallada del paso a paso desde sede sobre procedimiento en S8; Desalineamiento entre sistemas requiere análisis de sincronización TEIDE-CRM",
-        "siguiente_accion": ""
-      },
+      "resumen_ia": null,
       "mensajes_ejecutivos": {
         "apertura": {
           "completo": "Se declara incidencia crítica P1 (INC000004162280) por desincronización funcional en Siebel 8 sobre clientes con paquetes de TV 90 canales en OEST-Oviedo. La anomalía provoca que el producto contratado no se aprovisione en el parque de sistemas, impidiendo a los clientes el acceso al servicio de televisión y generando bloqueo en la gestión postventa sin procedimiento alternativo. Los equipos de SOP_SMC_TEIDE y Siebel 8 analizan las interfaces de sincronización de catálogo y aprovisionamiento. Próxima actualización en 30 minutos.",
@@ -418,7 +299,7 @@
           "conteo_palabras_breve": 23,
           "generado_por_agente": true,
           "origen": "incident-reporter",
-          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: APERTURA\nIncidencia: INC000004162280 - Siebel 8 | Error funcional | OEST - Oviedo\nCriticidad sugerida: P1\nSistemas involucrados: Siebel 8, TEIDE\n\n--- Contexto extraído de Epsilon Resumen IA ---\n• Problema detectado: Clientes con TV 90 canales en tarifa no aparecen en parque de productos Siebel 8. Desalineamiento entre Ficha de Cliente (productos activos) y TEIDE (sin registros). Imposible activar/desactivar servicios.\n• Impacto en servicio/negocio: 10 clientes afectados en OEST Oviedo. Clientes no pueden ver TV contratada. Sin método alternativo disponible.\n• Estado actual reportado: ASIGNADO\n• Bloqueos identificados: Falta información detallada del paso a paso desde sede sobre procedimiento en S8; Desalineamiento entre sistemas requiere análisis de sincronización TEIDE-CRM\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
+          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: APERTURA\nIncidencia: INC000004162280 - Siebel 8 | Error funcional | OEST - Oviedo\nCriticidad sugerida: P1\nSistemas involucrados: SOP_SMC_TEIDE\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: Siebel 8 | Error funcional | OEST - Oviedo\n• Impacto ticket: Masiva\n• Urgencia ticket: Baja\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
         },
         "seguimiento": {
           "completo": "Seguimiento de la incidencia P1 (INC000004162280). Los equipos técnicos han aislado la falta de inserción de las tarifas de TV en la réplica de productos entre Ficha de Cliente y Siebel 8. Se está ejecutando un plan de reaprovisionamiento manual para los expedientes identificados en Oviedo, al tiempo que se ajustan las rutinas de sincronización en TEIDE para evitar que nuevas contrataciones queden huérfanas de emisión. Se mantienen comprobaciones sobre la activación de parrilla.",
@@ -427,7 +308,7 @@
           "conteo_palabras_breve": 26,
           "generado_por_agente": true,
           "origen": "incident-reporter",
-          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: SEGUIMIENTO\nIncidencia: INC000004162280 - Siebel 8 | Error funcional | OEST - Oviedo\nCriticidad sugerida: P1\nSistemas involucrados: Siebel 8, TEIDE\n\n--- Contexto extraído de Epsilon Resumen IA ---\n• Problema detectado: Clientes con TV 90 canales en tarifa no aparecen en parque de productos Siebel 8. Desalineamiento entre Ficha de Cliente (productos activos) y TEIDE (sin registros). Imposible activar/desactivar servicios.\n• Impacto en servicio/negocio: 10 clientes afectados en OEST Oviedo. Clientes no pueden ver TV contratada. Sin método alternativo disponible.\n• Estado actual reportado: ASIGNADO\n• Bloqueos identificados: Falta información detallada del paso a paso desde sede sobre procedimiento en S8; Desalineamiento entre sistemas requiere análisis de sincronización TEIDE-CRM\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
+          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: SEGUIMIENTO\nIncidencia: INC000004162280 - Siebel 8 | Error funcional | OEST - Oviedo\nCriticidad sugerida: P1\nSistemas involucrados: SOP_SMC_TEIDE\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: Siebel 8 | Error funcional | OEST - Oviedo\n• Impacto ticket: Masiva\n• Urgencia ticket: Baja\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
         },
         "cierre": {
           "completo": "Cerrada la incidencia P1 (INC000004162280). Restablecida la sincronización de paquetes de televisión entre Ficha de Cliente y Siebel 8. Todos los clientes afectados en OEST-Oviedo han sido reaprovisionados correctamente y disponen de acceso íntegro a su parrilla de TV de 90 canales. La emisión del servicio y los registros en el parque de productos se encuentran normalizados y auditados.",
@@ -436,7 +317,7 @@
           "conteo_palabras_breve": 22,
           "generado_por_agente": true,
           "origen": "incident-reporter",
-          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: CIERRE\nIncidencia: INC000004162280 - Siebel 8 | Error funcional | OEST - Oviedo\nCriticidad sugerida: P1\nSistemas involucrados: Siebel 8, TEIDE\n\n--- Contexto extraído de Epsilon Resumen IA ---\n• Problema detectado: Clientes con TV 90 canales en tarifa no aparecen en parque de productos Siebel 8. Desalineamiento entre Ficha de Cliente (productos activos) y TEIDE (sin registros). Imposible activar/desactivar servicios.\n• Impacto en servicio/negocio: 10 clientes afectados en OEST Oviedo. Clientes no pueden ver TV contratada. Sin método alternativo disponible.\n• Estado actual reportado: ASIGNADO\n• Bloqueos identificados: Falta información detallada del paso a paso desde sede sobre procedimiento en S8; Desalineamiento entre sistemas requiere análisis de sincronización TEIDE-CRM\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
+          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: CIERRE\nIncidencia: INC000004162280 - Siebel 8 | Error funcional | OEST - Oviedo\nCriticidad sugerida: P1\nSistemas involucrados: SOP_SMC_TEIDE\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: Siebel 8 | Error funcional | OEST - Oviedo\n• Impacto ticket: Masiva\n• Urgencia ticket: Baja\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
         }
       }
     },
@@ -444,10 +325,7 @@
       "id": "INC000004164611",
       "titulo": "Ficha Cliente Orange | Error funcional | Foundever - Sevilla",
       "sistemas": [
-        "Ficha Cliente Orange",
-        "RecordingManagement",
-        "ms-repository",
-        "updateCommercialActSPA"
+        "DES_SOE_FICHA"
       ],
       "prioridad_original": "Media",
       "prioridad_sugerida": "P1",
@@ -463,13 +341,7 @@
         "workaround": "Desconocido",
         "sla_objetivo_minutos": 15
       },
-      "resumen_ia": {
-        "problema": "Al finalizar la grabación de acto comercial en Ficha Cliente Orange, aparece error \"se ha producido un error en el servicio de grabacion\". La pantalla no se cierra y el flujo se bloquea, aunque la orden continúa su curso.",
-        "impacto": "Afecta a clientes en Foundever Sevilla. Incremento de tiempo en gestión de actos comerciales (Renove, Modificación de Servicio, descuentos/bonos). Masiva con 10+ casos reportados.",
-        "solucion": "",
-        "bloqueos": "Validación de datos: agreement.status se envía como 'recorded' cuando debe ser 'pending' o 'contrato'; Dependencia de DES_SOE_FICHA para corrección en frontal",
-        "siguiente_accion": "DES_SOE_FICHA debe revisar y corregir cómo se informa el campo status del agreement en la llamada a /micrepository/v1/updateCommercialActSPA para que mantenga valor 'pending' o transicione correctamente a 'contrato'"
-      },
+      "resumen_ia": null,
       "mensajes_ejecutivos": {
         "apertura": {
           "completo": "Se declara incidencia crítica P1 (INC000004164611) en Ficha Cliente Orange debido a un fallo en el cierre de actos comerciales en la sede de Foundever-Sevilla. Al concluir la grabación de operaciones, la plataforma devuelve error en la invocación del repositorio de acuerdos, impidiendo formalizar ventas y renovaciones de terminales con un grave impacto en tiempos de atención y experiencia de cliente. El equipo de DES_SOE_FICHA interviene de urgencia el microservicio updateCommercialActSPA. Próxima actualización en 30 minutos.",
@@ -478,7 +350,7 @@
           "conteo_palabras_breve": 24,
           "generado_por_agente": true,
           "origen": "incident-reporter",
-          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: APERTURA\nIncidencia: INC000004164611 - Ficha Cliente Orange | Error funcional | Foundever - Sevilla\nCriticidad sugerida: P1\nSistemas involucrados: Ficha Cliente Orange, RecordingManagement, ms-repository, updateCommercialActSPA\n\n--- Contexto extraído de Epsilon Resumen IA ---\n• Problema detectado: Al finalizar la grabación de acto comercial en Ficha Cliente Orange, aparece error \"se ha producido un error en el servicio de grabacion\". La pantalla no se cierra y el flujo se bloquea, aunque la orden continúa su curso.\n• Impacto en servicio/negocio: Afecta a clientes en Foundever Sevilla. Incremento de tiempo en gestión de actos comerciales (Renove, Modificación de Servicio, descuentos/bonos). Masiva con 10+ casos reportados.\n• Siguiente acción: DES_SOE_FICHA debe revisar y corregir cómo se informa el campo status del agreement en la llamada a /micrepository/v1/updateCommercialActSPA para que mantenga valor 'pending' o transicione correctamente a 'contrato'\n• Estado actual reportado: ASIGNADO\n• Bloqueos identificados: Validación de datos: agreement.status se envía como 'recorded' cuando debe ser 'pending' o 'contrato'; Dependencia de DES_SOE_FICHA para corrección en frontal\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
+          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: APERTURA\nIncidencia: INC000004164611 - Ficha Cliente Orange | Error funcional | Foundever - Sevilla\nCriticidad sugerida: P1\nSistemas involucrados: DES_SOE_FICHA\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: Ficha Cliente Orange | Error funcional | Foundever - Sevilla\n• Impacto ticket: Masiva\n• Urgencia ticket: Medio\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
         },
         "seguimiento": {
           "completo": "Seguimiento de la incidencia P1 (INC000004164611). El equipo de DES_SOE_FICHA ha localizado el origen de la anomalía en la transición de estados del campo agreement status en la llamada interna al repositorio comercial. Se está implementando un ajuste para asegurar que las solicitudes se consoliden en estado de contrato sin generar excepciones en el frontal de los operadores de Sevilla. Se realizan pruebas de validación sobre actos comerciales en curso.",
@@ -487,7 +359,7 @@
           "conteo_palabras_breve": 24,
           "generado_por_agente": true,
           "origen": "incident-reporter",
-          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: SEGUIMIENTO\nIncidencia: INC000004164611 - Ficha Cliente Orange | Error funcional | Foundever - Sevilla\nCriticidad sugerida: P1\nSistemas involucrados: Ficha Cliente Orange, RecordingManagement, ms-repository, updateCommercialActSPA\n\n--- Contexto extraído de Epsilon Resumen IA ---\n• Problema detectado: Al finalizar la grabación de acto comercial en Ficha Cliente Orange, aparece error \"se ha producido un error en el servicio de grabacion\". La pantalla no se cierra y el flujo se bloquea, aunque la orden continúa su curso.\n• Impacto en servicio/negocio: Afecta a clientes en Foundever Sevilla. Incremento de tiempo en gestión de actos comerciales (Renove, Modificación de Servicio, descuentos/bonos). Masiva con 10+ casos reportados.\n• Siguiente acción: DES_SOE_FICHA debe revisar y corregir cómo se informa el campo status del agreement en la llamada a /micrepository/v1/updateCommercialActSPA para que mantenga valor 'pending' o transicione correctamente a 'contrato'\n• Estado actual reportado: ASIGNADO\n• Bloqueos identificados: Validación de datos: agreement.status se envía como 'recorded' cuando debe ser 'pending' o 'contrato'; Dependencia de DES_SOE_FICHA para corrección en frontal\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
+          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: SEGUIMIENTO\nIncidencia: INC000004164611 - Ficha Cliente Orange | Error funcional | Foundever - Sevilla\nCriticidad sugerida: P1\nSistemas involucrados: DES_SOE_FICHA\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: Ficha Cliente Orange | Error funcional | Foundever - Sevilla\n• Impacto ticket: Masiva\n• Urgencia ticket: Medio\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
         },
         "cierre": {
           "completo": "Resuelta la incidencia crítica P1 (INC000004164611) en Ficha Cliente Orange. Desplegada la corrección en el servicio de actualización de acuerdos comerciales, subsanando el fallo en el guardado de grabaciones y renovaciones. Los operadores de Foundever-Sevilla completan sus transacciones de forma fluida y sin interrupciones, quedando el flujo de contratación plenamente operativo y con tiempos de respuesta normalizados.",
@@ -496,7 +368,7 @@
           "conteo_palabras_breve": 21,
           "generado_por_agente": true,
           "origen": "incident-reporter",
-          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: CIERRE\nIncidencia: INC000004164611 - Ficha Cliente Orange | Error funcional | Foundever - Sevilla\nCriticidad sugerida: P1\nSistemas involucrados: Ficha Cliente Orange, RecordingManagement, ms-repository, updateCommercialActSPA\n\n--- Contexto extraído de Epsilon Resumen IA ---\n• Problema detectado: Al finalizar la grabación de acto comercial en Ficha Cliente Orange, aparece error \"se ha producido un error en el servicio de grabacion\". La pantalla no se cierra y el flujo se bloquea, aunque la orden continúa su curso.\n• Impacto en servicio/negocio: Afecta a clientes en Foundever Sevilla. Incremento de tiempo en gestión de actos comerciales (Renove, Modificación de Servicio, descuentos/bonos). Masiva con 10+ casos reportados.\n• Siguiente acción: DES_SOE_FICHA debe revisar y corregir cómo se informa el campo status del agreement en la llamada a /micrepository/v1/updateCommercialActSPA para que mantenga valor 'pending' o transicione correctamente a 'contrato'\n• Estado actual reportado: ASIGNADO\n• Bloqueos identificados: Validación de datos: agreement.status se envía como 'recorded' cuando debe ser 'pending' o 'contrato'; Dependencia de DES_SOE_FICHA para corrección en frontal\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
+          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: CIERRE\nIncidencia: INC000004164611 - Ficha Cliente Orange | Error funcional | Foundever - Sevilla\nCriticidad sugerida: P1\nSistemas involucrados: DES_SOE_FICHA\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: Ficha Cliente Orange | Error funcional | Foundever - Sevilla\n• Impacto ticket: Masiva\n• Urgencia ticket: Medio\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
         }
       }
     },
@@ -504,14 +376,7 @@
       "id": "INC000004166266",
       "titulo": "HPFMS | Error funcional | ISGF - Madrid",
       "sistemas": [
-        "HPFMS",
-        "Middleware",
-        "BSCS",
-        "CAS",
-        "SEDNA_PREPAGO",
-        "HPSPI",
-        "CFMS",
-        "OPSC"
+        "SOP_SMC_BSCS_ONLINE"
       ],
       "prioridad_original": "Media",
       "prioridad_sugerida": "P1",
@@ -527,13 +392,7 @@
         "workaround": "Desconocido",
         "sla_objetivo_minutos": 15
       },
-      "resumen_ia": {
-        "problema": "Desbloqueos de prepago en HPFMS retornan mensaje de éxito pero no se aplican en sistemas downstream. Operación 45002 (Desbloqueo_Total_Prepago) devuelve ErrorCode 0 y Success Text OK, pero bloqueos permanecen activos en OPSC. Posteriormente, operación 117001 (reactivación prepago) falla con error 400: 'JSON no contiene todos los campos' en HPFMS por campo CustomerId vacío enviado desde BSCS.",
-        "impacto": "Múltiples clientes prepago (OSP) afectados. Bloqueos por fraude no se desbloquean. Fallo en cadena de integración HPFMS-MDW-BSCS-HPSPI-SEDNA-HPFMS. Afecta a usuarios de ISGF-Madrid y potencialmente a nivel nacional.",
-        "solucion": "",
-        "bloqueos": "Dependencia de HPFMS: cambio en validación de campos obligatorios desde 11/09/2026; BSCS no envía CustomerId en peticiones de reactivación prepago; Escalado pendiente a equipo HPFMS para revisar cambios en PRJ-10176",
-        "siguiente_accion": "Revisar con equipo HPFMS cambios introducidos en PRJ-10176 (migración OCCI) del 11/09/2026. Validar si CustomerId debe ser obligatorio o si BSCS debe completar el campo. Coordinar corrección en BSCS o HPFMS según corresponda."
-      },
+      "resumen_ia": null,
       "mensajes_ejecutivos": {
         "apertura": {
           "completo": "Se declara incidencia crítica P1 (INC000004166266) en los sistemas de gestión de fraude HPFMS y facturación BSCS Online, donde los desbloqueos operativos de líneas prepago confirman ejecución favorable pero no se propagan a la red. La anomalía mantiene a múltiples clientes legítimos con servicios suspendidos tras validación en ISGF-Madrid, rompiendo la cadena de recuperación del servicio. Los equipos de soporte de BSCS y HPFMS investigan la compatibilidad de identificadores tras la reciente migración OCCI. Próxima actualización en 30 minutos.",
@@ -542,7 +401,7 @@
           "conteo_palabras_breve": 23,
           "generado_por_agente": true,
           "origen": "incident-reporter",
-          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: APERTURA\nIncidencia: INC000004166266 - HPFMS | Error funcional | ISGF - Madrid\nCriticidad sugerida: P1\nSistemas involucrados: HPFMS, Middleware, BSCS, CAS, SEDNA_PREPAGO, HPSPI, CFMS, OPSC\n\n--- Contexto extraído de Epsilon Resumen IA ---\n• Problema detectado: Desbloqueos de prepago en HPFMS retornan mensaje de éxito pero no se aplican en sistemas downstream. Operación 45002 (Desbloqueo_Total_Prepago) devuelve ErrorCode 0 y Success Text OK, pero bloqueos permanecen activos en OPSC. Posteriormente, operación 117001 (reactivación prepago) falla con error 400: 'JSON no contiene todos los campos' en HPFMS por campo CustomerId vacío enviado desde BSCS.\n• Impacto en servicio/negocio: Múltiples clientes prepago (OSP) afectados. Bloqueos por fraude no se desbloquean. Fallo en cadena de integración HPFMS-MDW-BSCS-HPSPI-SEDNA-HPFMS. Afecta a usuarios de ISGF-Madrid y potencialmente a nivel nacional.\n• Siguiente acción: Revisar con equipo HPFMS cambios introducidos en PRJ-10176 (migración OCCI) del 11/09/2026. Validar si CustomerId debe ser obligatorio o si BSCS debe completar el campo. Coordinar corrección en BSCS o HPFMS según corresponda.\n• Estado actual reportado: ASIGNADO\n• Bloqueos identificados: Dependencia de HPFMS: cambio en validación de campos obligatorios desde 11/09/2026; BSCS no envía CustomerId en peticiones de reactivación prepago; Escalado pendiente a equipo HPFMS para revisar cambios en PRJ-10176\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
+          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: APERTURA\nIncidencia: INC000004166266 - HPFMS | Error funcional | ISGF - Madrid\nCriticidad sugerida: P1\nSistemas involucrados: SOP_SMC_BSCS_ONLINE\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: HPFMS | Error funcional | ISGF - Madrid\n• Impacto ticket: Masiva\n• Urgencia ticket: Medio\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
         },
         "seguimiento": {
           "completo": "Seguimiento de la incidencia P1 (INC000004166266). Se confirma que la anomalía en la reactivación de líneas prepago se deriva de la obligatoriedad del campo CustomerId introducida en la última actualización de conectores OCCI. Los equipos de BSCS Online y HPFMS coordinan la adaptación del payload de la operación 45002 para garantizar que las solicitudes de desbloqueo cursen sin rechazo técnico hacia la red. Se mantiene monitorización prioritaria de casos pendientes.",
@@ -551,7 +410,7 @@
           "conteo_palabras_breve": 23,
           "generado_por_agente": true,
           "origen": "incident-reporter",
-          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: SEGUIMIENTO\nIncidencia: INC000004166266 - HPFMS | Error funcional | ISGF - Madrid\nCriticidad sugerida: P1\nSistemas involucrados: HPFMS, Middleware, BSCS, CAS, SEDNA_PREPAGO, HPSPI, CFMS, OPSC\n\n--- Contexto extraído de Epsilon Resumen IA ---\n• Problema detectado: Desbloqueos de prepago en HPFMS retornan mensaje de éxito pero no se aplican en sistemas downstream. Operación 45002 (Desbloqueo_Total_Prepago) devuelve ErrorCode 0 y Success Text OK, pero bloqueos permanecen activos en OPSC. Posteriormente, operación 117001 (reactivación prepago) falla con error 400: 'JSON no contiene todos los campos' en HPFMS por campo CustomerId vacío enviado desde BSCS.\n• Impacto en servicio/negocio: Múltiples clientes prepago (OSP) afectados. Bloqueos por fraude no se desbloquean. Fallo en cadena de integración HPFMS-MDW-BSCS-HPSPI-SEDNA-HPFMS. Afecta a usuarios de ISGF-Madrid y potencialmente a nivel nacional.\n• Siguiente acción: Revisar con equipo HPFMS cambios introducidos en PRJ-10176 (migración OCCI) del 11/09/2026. Validar si CustomerId debe ser obligatorio o si BSCS debe completar el campo. Coordinar corrección en BSCS o HPFMS según corresponda.\n• Estado actual reportado: ASIGNADO\n• Bloqueos identificados: Dependencia de HPFMS: cambio en validación de campos obligatorios desde 11/09/2026; BSCS no envía CustomerId en peticiones de reactivación prepago; Escalado pendiente a equipo HPFMS para revisar cambios en PRJ-10176\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
+          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: SEGUIMIENTO\nIncidencia: INC000004166266 - HPFMS | Error funcional | ISGF - Madrid\nCriticidad sugerida: P1\nSistemas involucrados: SOP_SMC_BSCS_ONLINE\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: HPFMS | Error funcional | ISGF - Madrid\n• Impacto ticket: Masiva\n• Urgencia ticket: Medio\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
         },
         "cierre": {
           "completo": "Cerrada la incidencia crítica P1 (INC000004166266). Subsanada la propagación de la operación de desbloqueo entre HPFMS y BSCS Online, ejecutándose con éxito la reactivación en cascada sobre todas las líneas prepago afectadas. Los clientes han recuperado íntegramente sus servicios de voz y datos y la gestión antifraude en ISGF-Madrid opera con plena fiabilidad y confirmación técnica bidireccional.",
@@ -560,7 +419,7 @@
           "conteo_palabras_breve": 21,
           "generado_por_agente": true,
           "origen": "incident-reporter",
-          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: CIERRE\nIncidencia: INC000004166266 - HPFMS | Error funcional | ISGF - Madrid\nCriticidad sugerida: P1\nSistemas involucrados: HPFMS, Middleware, BSCS, CAS, SEDNA_PREPAGO, HPSPI, CFMS, OPSC\n\n--- Contexto extraído de Epsilon Resumen IA ---\n• Problema detectado: Desbloqueos de prepago en HPFMS retornan mensaje de éxito pero no se aplican en sistemas downstream. Operación 45002 (Desbloqueo_Total_Prepago) devuelve ErrorCode 0 y Success Text OK, pero bloqueos permanecen activos en OPSC. Posteriormente, operación 117001 (reactivación prepago) falla con error 400: 'JSON no contiene todos los campos' en HPFMS por campo CustomerId vacío enviado desde BSCS.\n• Impacto en servicio/negocio: Múltiples clientes prepago (OSP) afectados. Bloqueos por fraude no se desbloquean. Fallo en cadena de integración HPFMS-MDW-BSCS-HPSPI-SEDNA-HPFMS. Afecta a usuarios de ISGF-Madrid y potencialmente a nivel nacional.\n• Siguiente acción: Revisar con equipo HPFMS cambios introducidos en PRJ-10176 (migración OCCI) del 11/09/2026. Validar si CustomerId debe ser obligatorio o si BSCS debe completar el campo. Coordinar corrección en BSCS o HPFMS según corresponda.\n• Estado actual reportado: ASIGNADO\n• Bloqueos identificados: Dependencia de HPFMS: cambio en validación de campos obligatorios desde 11/09/2026; BSCS no envía CustomerId en peticiones de reactivación prepago; Escalado pendiente a equipo HPFMS para revisar cambios en PRJ-10176\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
+          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: CIERRE\nIncidencia: INC000004166266 - HPFMS | Error funcional | ISGF - Madrid\nCriticidad sugerida: P1\nSistemas involucrados: SOP_SMC_BSCS_ONLINE\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: HPFMS | Error funcional | ISGF - Madrid\n• Impacto ticket: Masiva\n• Urgencia ticket: Medio\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
         }
       }
     },
@@ -568,7 +427,7 @@
       "id": "INC000004167311",
       "titulo": "Ficha Cliente Orange | Error funcional | Madison - Valladolid",
       "sistemas": [
-        "DES_SOE_FICHA"
+        "DES_LA_TIENDA_BACKEND"
       ],
       "prioridad_original": "Media",
       "prioridad_sugerida": "P1",
@@ -593,7 +452,7 @@
           "conteo_palabras_breve": 20,
           "generado_por_agente": true,
           "origen": "incident-reporter",
-          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: APERTURA\nIncidencia: INC000004167311 - Ficha Cliente Orange | Error funcional | Madison - Valladolid\nCriticidad sugerida: P1\nSistemas involucrados: DES_SOE_FICHA\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: Ficha Cliente Orange | Error funcional | Madison - Valladolid\n• Impacto ticket: Masiva\n• Urgencia ticket: Medio\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
+          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: APERTURA\nIncidencia: INC000004167311 - Ficha Cliente Orange | Error funcional | Madison - Valladolid\nCriticidad sugerida: P1\nSistemas involucrados: DES_LA_TIENDA_BACKEND\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: Ficha Cliente Orange | Error funcional | Madison - Valladolid\n• Impacto ticket: Masiva\n• Urgencia ticket: Medio\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
         },
         "seguimiento": {
           "completo": "Seguimiento de la incidencia P1 (INC000004167311) en Ficha Cliente Orange. El equipo técnico de DES_SOE_FICHA prosigue con la revisión de dependencias y servicios de integración en el entorno de Madison-Valladolid. Se aplican medidas de estabilización en los puestos afectados y se supervisa el comportamiento de las consultas de clientes sin bloqueos de infraestructura adicionales. Se mantiene monitorización estrecha de la operativa comercial.",
@@ -602,7 +461,7 @@
           "conteo_palabras_breve": 18,
           "generado_por_agente": true,
           "origen": "incident-reporter",
-          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: SEGUIMIENTO\nIncidencia: INC000004167311 - Ficha Cliente Orange | Error funcional | Madison - Valladolid\nCriticidad sugerida: P1\nSistemas involucrados: DES_SOE_FICHA\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: Ficha Cliente Orange | Error funcional | Madison - Valladolid\n• Impacto ticket: Masiva\n• Urgencia ticket: Medio\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
+          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: SEGUIMIENTO\nIncidencia: INC000004167311 - Ficha Cliente Orange | Error funcional | Madison - Valladolid\nCriticidad sugerida: P1\nSistemas involucrados: DES_LA_TIENDA_BACKEND\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: Ficha Cliente Orange | Error funcional | Madison - Valladolid\n• Impacto ticket: Masiva\n• Urgencia ticket: Medio\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
         },
         "cierre": {
           "completo": "Queda resuelta la incidencia crítica P1 (INC000004167311) en Ficha Cliente Orange. Subsanada la anomalía funcional por parte del equipo resolutor, confirmándose la recuperación completa de la herramienta en Madison-Valladolid. Los operadores tramitan gestiones de clientes con normalidad y los indicadores de rendimiento del servicio permanecen plenamente estables bajo supervisión preventiva.",
@@ -611,7 +470,7 @@
           "conteo_palabras_breve": 16,
           "generado_por_agente": true,
           "origen": "incident-reporter",
-          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: CIERRE\nIncidencia: INC000004167311 - Ficha Cliente Orange | Error funcional | Madison - Valladolid\nCriticidad sugerida: P1\nSistemas involucrados: DES_SOE_FICHA\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: Ficha Cliente Orange | Error funcional | Madison - Valladolid\n• Impacto ticket: Masiva\n• Urgencia ticket: Medio\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
+          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: CIERRE\nIncidencia: INC000004167311 - Ficha Cliente Orange | Error funcional | Madison - Valladolid\nCriticidad sugerida: P1\nSistemas involucrados: DES_LA_TIENDA_BACKEND\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: Ficha Cliente Orange | Error funcional | Madison - Valladolid\n• Impacto ticket: Masiva\n• Urgencia ticket: Medio\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
         }
       }
     },
@@ -667,15 +526,61 @@
       }
     },
     {
+      "id": "INC000004168038",
+      "titulo": "DEGRADACION // COBROS JAZZTEL // SL2",
+      "sistemas": [
+        "SOP_BSS_JAZZTEL"
+      ],
+      "prioridad_original": "Alta",
+      "prioridad_sugerida": "P1",
+      "es_alta_prioridad": true,
+      "es_discrepancia": true,
+      "estatus": "Asignado",
+      "fecha_envio": "26/10/2026 19:43 a",
+      "evaluacion": {
+        "impacto": "Alto",
+        "impacto_justificacion": "Afectación crítica o corte global sobre el servicio principal sin alternativa viable.",
+        "urgencia": "Alta",
+        "urgencia_justificacion": "Impacto activo en vivo que requiere restablecimiento inmediato.",
+        "workaround": "Desconocido",
+        "sla_objetivo_minutos": 15
+      },
+      "resumen_ia": null,
+      "mensajes_ejecutivos": {
+        "apertura": {
+          "completo": null,
+          "breve": null,
+          "conteo_palabras_completo": 0,
+          "conteo_palabras_breve": 0,
+          "generado_por_agente": false,
+          "estado": "pendiente",
+          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: APERTURA\nIncidencia: INC000004168038 - DEGRADACION // COBROS JAZZTEL // SL2\nCriticidad sugerida: P1\nSistemas involucrados: SOP_BSS_JAZZTEL\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: DEGRADACION // COBROS JAZZTEL // SL2\n• Impacto ticket: Masiva\n• Urgencia ticket: Alta\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
+        },
+        "seguimiento": {
+          "completo": null,
+          "breve": null,
+          "conteo_palabras_completo": 0,
+          "conteo_palabras_breve": 0,
+          "generado_por_agente": false,
+          "estado": "pendiente",
+          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: SEGUIMIENTO\nIncidencia: INC000004168038 - DEGRADACION // COBROS JAZZTEL // SL2\nCriticidad sugerida: P1\nSistemas involucrados: SOP_BSS_JAZZTEL\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: DEGRADACION // COBROS JAZZTEL // SL2\n• Impacto ticket: Masiva\n• Urgencia ticket: Alta\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
+        },
+        "cierre": {
+          "completo": null,
+          "breve": null,
+          "conteo_palabras_completo": 0,
+          "conteo_palabras_breve": 0,
+          "generado_por_agente": false,
+          "estado": "pendiente",
+          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: CIERRE\nIncidencia: INC000004168038 - DEGRADACION // COBROS JAZZTEL // SL2\nCriticidad sugerida: P1\nSistemas involucrados: SOP_BSS_JAZZTEL\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: DEGRADACION // COBROS JAZZTEL // SL2\n• Impacto ticket: Masiva\n• Urgencia ticket: Alta\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
+        }
+      }
+    },
+    {
       "id": "INC000004099148",
       "titulo": "ERROR AL HACER LOGIN EN ACCEDE A TUS OFERTAS PERSONALIZADAS EN EREBOR.",
       "sistemas": [
-        "EREBOR",
-        "CERES",
-        "TEIDE",
-        "SAS",
-        "PANGEA",
-        "ESHOP_FRONTEND_OSP"
+        "SOP_SMC_TEIDE"
       ],
       "prioridad_original": "Media",
       "prioridad_sugerida": "P2",
@@ -691,13 +596,7 @@
         "workaround": "Desconocido",
         "sla_objetivo_minutos": 60
       },
-      "resumen_ia": {
-        "problema": "Bucle de redirección sin autenticación al acceder a ofertas personalizadas en Erebor. Usuario ingresa credenciales en CLU y es redirigido a Erebor sin estar logado, repitiendo el flujo indefinidamente.",
-        "impacto": "100% de errores en operativa. Más de 10 clientes afectados (11 muestras documentadas), más de 5 usuarios impactados. Falla acceso y uso web. Impacto negocio confirmado. Afecta pruebas producción y regresión previas a release 27/09.",
-        "solucion": "",
-        "bloqueos": "Dependencia LAMBDA para regularización masiva direcciones (estimado 1 semana); Tabla intermedia TEIDE vacía requiere corrección previa; Impacto en pruebas producción hasta resolución",
-        "siguiente_accion": ""
-      },
+      "resumen_ia": null,
       "mensajes_ejecutivos": {
         "apertura": {
           "completo": "Se comunica incidencia de alta prioridad P2 (INC000004099148) en el portal Erebor, donde los clientes que intentan acceder a sus ofertas comerciales personalizadas quedan atrapados en un bucle indefinido de autenticación en CLU sin completar el inicio de sesión. La anomalía bloquea el canal digital comercial e impacta en las pruebas de despliegue. Los equipos de SOP_SMC_TEIDE, CERES y canal online analizan la sincronización de tokens de sesión. Próxima actualización en 60 minutos.",
@@ -706,7 +605,7 @@
           "conteo_palabras_breve": 23,
           "generado_por_agente": true,
           "origen": "incident-reporter",
-          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: APERTURA\nIncidencia: INC000004099148 - ERROR AL HACER LOGIN EN ACCEDE A TUS OFERTAS PERSONALIZADAS EN EREBOR.\nCriticidad sugerida: P2\nSistemas involucrados: EREBOR, CERES, TEIDE, SAS, PANGEA, ESHOP_FRONTEND_OSP\n\n--- Contexto extraído de Epsilon Resumen IA ---\n• Problema detectado: Bucle de redirección sin autenticación al acceder a ofertas personalizadas en Erebor. Usuario ingresa credenciales en CLU y es redirigido a Erebor sin estar logado, repitiendo el flujo indefinidamente.\n• Impacto en servicio/negocio: 100% de errores en operativa. Más de 10 clientes afectados (11 muestras documentadas), más de 5 usuarios impactados. Falla acceso y uso web. Impacto negocio confirmado. Afecta pruebas producción y regresión previas a release 27/09.\n• Estado actual reportado: PENDIENTE\n• Bloqueos identificados: Dependencia LAMBDA para regularización masiva direcciones (estimado 1 semana); Tabla intermedia TEIDE vacía requiere corrección previa; Impacto en pruebas producción hasta resolución\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
+          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: APERTURA\nIncidencia: INC000004099148 - ERROR AL HACER LOGIN EN ACCEDE A TUS OFERTAS PERSONALIZADAS EN EREBOR.\nCriticidad sugerida: P2\nSistemas involucrados: SOP_SMC_TEIDE\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: ERROR AL HACER LOGIN EN ACCEDE A TUS OFERTAS PERSONALIZADAS EN EREBOR.\n• Impacto ticket: Masiva\n• Urgencia ticket: Baja\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
         },
         "seguimiento": {
           "completo": "Seguimiento P2 (INC000004099148) en Erebor. Identificada una incoherencia en las cabeceras de redirección entre la pasarela CLU y el frontal web que impedía registrar la sesión autenticada. Se encuentra en despliegue un parche correctivo en los microservicios de seguridad para validar el acceso a las ofertas y desbloquear las pruebas de producción. Monitorización activa del tráfico de clientes.",
@@ -715,7 +614,7 @@
           "conteo_palabras_breve": 21,
           "generado_por_agente": true,
           "origen": "incident-reporter",
-          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: SEGUIMIENTO\nIncidencia: INC000004099148 - ERROR AL HACER LOGIN EN ACCEDE A TUS OFERTAS PERSONALIZADAS EN EREBOR.\nCriticidad sugerida: P2\nSistemas involucrados: EREBOR, CERES, TEIDE, SAS, PANGEA, ESHOP_FRONTEND_OSP\n\n--- Contexto extraído de Epsilon Resumen IA ---\n• Problema detectado: Bucle de redirección sin autenticación al acceder a ofertas personalizadas en Erebor. Usuario ingresa credenciales en CLU y es redirigido a Erebor sin estar logado, repitiendo el flujo indefinidamente.\n• Impacto en servicio/negocio: 100% de errores en operativa. Más de 10 clientes afectados (11 muestras documentadas), más de 5 usuarios impactados. Falla acceso y uso web. Impacto negocio confirmado. Afecta pruebas producción y regresión previas a release 27/09.\n• Estado actual reportado: PENDIENTE\n• Bloqueos identificados: Dependencia LAMBDA para regularización masiva direcciones (estimado 1 semana); Tabla intermedia TEIDE vacía requiere corrección previa; Impacto en pruebas producción hasta resolución\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
+          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: SEGUIMIENTO\nIncidencia: INC000004099148 - ERROR AL HACER LOGIN EN ACCEDE A TUS OFERTAS PERSONALIZADAS EN EREBOR.\nCriticidad sugerida: P2\nSistemas involucrados: SOP_SMC_TEIDE\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: ERROR AL HACER LOGIN EN ACCEDE A TUS OFERTAS PERSONALIZADAS EN EREBOR.\n• Impacto ticket: Masiva\n• Urgencia ticket: Baja\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
         },
         "cierre": {
           "completo": "Resuelta la incidencia P2 (INC000004099148) en Erebor. Corregido el enrutamiento de autenticación entre CLU y los portales comerciales, restableciendo el acceso directo de los clientes a sus ofertas personalizadas sin redirecciones fallidas. La plataforma web y las suites de prueba operan con absoluta normalidad.",
@@ -724,7 +623,58 @@
           "conteo_palabras_breve": 18,
           "generado_por_agente": true,
           "origen": "incident-reporter",
-          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: CIERRE\nIncidencia: INC000004099148 - ERROR AL HACER LOGIN EN ACCEDE A TUS OFERTAS PERSONALIZADAS EN EREBOR.\nCriticidad sugerida: P2\nSistemas involucrados: EREBOR, CERES, TEIDE, SAS, PANGEA, ESHOP_FRONTEND_OSP\n\n--- Contexto extraído de Epsilon Resumen IA ---\n• Problema detectado: Bucle de redirección sin autenticación al acceder a ofertas personalizadas en Erebor. Usuario ingresa credenciales en CLU y es redirigido a Erebor sin estar logado, repitiendo el flujo indefinidamente.\n• Impacto en servicio/negocio: 100% de errores en operativa. Más de 10 clientes afectados (11 muestras documentadas), más de 5 usuarios impactados. Falla acceso y uso web. Impacto negocio confirmado. Afecta pruebas producción y regresión previas a release 27/09.\n• Estado actual reportado: PENDIENTE\n• Bloqueos identificados: Dependencia LAMBDA para regularización masiva direcciones (estimado 1 semana); Tabla intermedia TEIDE vacía requiere corrección previa; Impacto en pruebas producción hasta resolución\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
+          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: CIERRE\nIncidencia: INC000004099148 - ERROR AL HACER LOGIN EN ACCEDE A TUS OFERTAS PERSONALIZADAS EN EREBOR.\nCriticidad sugerida: P2\nSistemas involucrados: SOP_SMC_TEIDE\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: ERROR AL HACER LOGIN EN ACCEDE A TUS OFERTAS PERSONALIZADAS EN EREBOR.\n• Impacto ticket: Masiva\n• Urgencia ticket: Baja\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
+        }
+      }
+    },
+    {
+      "id": "INC000004122710",
+      "titulo": "FICHA DE CLIENTE // OEST OVIEDO // ERROR FUNCIONAL",
+      "sistemas": [
+        "FIJO APL Soporte PS"
+      ],
+      "prioridad_original": "Media",
+      "prioridad_sugerida": "P2",
+      "es_alta_prioridad": true,
+      "es_discrepancia": true,
+      "estatus": "Pendiente",
+      "fecha_envio": "08/09/2026 16:04 a",
+      "evaluacion": {
+        "impacto": "Alto",
+        "impacto_justificacion": "Afectación crítica o corte global sobre el servicio principal sin alternativa viable.",
+        "urgencia": "Baja",
+        "urgencia_justificacion": "Incidencia de baja sensibilidad temporal o sin bloqueo activo.",
+        "workaround": "Desconocido",
+        "sla_objetivo_minutos": 60
+      },
+      "resumen_ia": null,
+      "mensajes_ejecutivos": {
+        "apertura": {
+          "completo": "Se comunica incidencia de alta prioridad P2 (INC000004122710) en Ficha de Cliente originada por la falta de propagación del teléfono de contacto en el módulo de recogida de routers y terminales fijos. Aunque el frontal confirma la modificación, los datos no se sincronizan con PeopleSoft ni Siebel 8, con riesgo de penalizaciones indebidas por comunicaciones fallidas con clientes. El equipo de FIJO APL Soporte PS diseña la interfaz de sincronización correctora. Próxima actualización en 60 minutos.",
+          "breve": "Apertura P2 (INC000004122710): Cambios de teléfono en recogidas de fijo no sincronizan con PeopleSoft ni Siebel 8, arriesgando entregas a clientes. Soporte interviniendo interfaz.",
+          "conteo_palabras_completo": 76,
+          "conteo_palabras_breve": 24,
+          "generado_por_agente": true,
+          "origen": "incident-reporter",
+          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: APERTURA\nIncidencia: INC000004122710 - FICHA DE CLIENTE // OEST OVIEDO // ERROR FUNCIONAL\nCriticidad sugerida: P2\nSistemas involucrados: FIJO APL Soporte PS\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: FICHA DE CLIENTE // OEST OVIEDO // ERROR FUNCIONAL\n• Impacto ticket: Masiva\n• Urgencia ticket: Medio\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
+        },
+        "seguimiento": {
+          "completo": "Seguimiento P2 (INC000004122710). El equipo de FIJO APL Soporte PS y desarrollo de Teide ultiman la habilitación de la interfaz 92007 para asegurar que toda actualización de contacto telefónico se replique en tiempo real hacia PeopleSoft y los sistemas de logística inversa. Se valida el reprocesado de solicitudes registradas durante la ventana de fallo.",
+          "breve": "Seguimiento P2 (INC000004122710): Habilitando interfaz 92007 entre Teide y PeopleSoft para propagar teléfonos de contacto en recogidas de fijo pendientes.",
+          "conteo_palabras_completo": 54,
+          "conteo_palabras_breve": 20,
+          "generado_por_agente": true,
+          "origen": "incident-reporter",
+          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: SEGUIMIENTO\nIncidencia: INC000004122710 - FICHA DE CLIENTE // OEST OVIEDO // ERROR FUNCIONAL\nCriticidad sugerida: P2\nSistemas involucrados: FIJO APL Soporte PS\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: FICHA DE CLIENTE // OEST OVIEDO // ERROR FUNCIONAL\n• Impacto ticket: Masiva\n• Urgencia ticket: Medio\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
+        },
+        "cierre": {
+          "completo": "Cerrada la incidencia P2 (INC000004122710) en Ficha de Cliente. Desplegada la interfaz de sincronización con PeopleSoft y Siebel 8, garantizando que toda modificación de número de contacto en recogidas de fijo se transmite a los operadores logísticos sin incidencias. El servicio opera de forma coordinada y sin riesgo de penalizaciones a clientes.",
+          "breve": "Cierre P2 (INC000004122710): Sincronización de teléfonos en recogidas de fijo restablecida con PeopleSoft. Flujo logístico y de clientes normalizado.",
+          "conteo_palabras_completo": 52,
+          "conteo_palabras_breve": 19,
+          "generado_por_agente": true,
+          "origen": "incident-reporter",
+          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: CIERRE\nIncidencia: INC000004122710 - FICHA DE CLIENTE // OEST OVIEDO // ERROR FUNCIONAL\nCriticidad sugerida: P2\nSistemas involucrados: FIJO APL Soporte PS\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: FICHA DE CLIENTE // OEST OVIEDO // ERROR FUNCIONAL\n• Impacto ticket: Masiva\n• Urgencia ticket: Medio\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
         }
       }
     },
@@ -732,7 +682,7 @@
       "id": "INC000004152686",
       "titulo": "PaP 28/10 PRDIA-2559 LivePerson | Error funcional | Foundever - Sevilla",
       "sistemas": [
-        "LivePerson"
+        "SOP_DJINGO"
       ],
       "prioridad_original": "Media",
       "prioridad_sugerida": "P2",
@@ -748,13 +698,7 @@
         "workaround": "Desconocido",
         "sla_objetivo_minutos": 60
       },
-      "resumen_ia": {
-        "problema": "El módulo AP de LivePerson no carga el ID de conversación, impidiendo visualizar identificadores de conversaciones en la interfaz.",
-        "impacto": "Afecta a 10 usuarios de Foundever Sevilla en proceso de Ventas (marca OSP Orange). Existe método alternativo mediante módulo Información del consumidor.",
-        "solucion": "",
-        "bloqueos": "",
-        "siguiente_accion": ""
-      },
+      "resumen_ia": null,
       "mensajes_ejecutivos": {
         "apertura": {
           "completo": "Se declara incidencia P2 (INC000004152686) en la plataforma LivePerson que afecta al módulo AP, donde no se visualiza el identificador de conversación para 10 operadores de ventas en Foundever-Sevilla. Aunque la atención a clientes se mantiene activa mediante el canal alternativo de Información del consumidor, la incidencia ralentiza el seguimiento de interacciones. El equipo de SOP_DJINGO diagnostica el componente de interfaz para recuperar los identificadores. Próxima actualización en 60 minutos.",
@@ -763,7 +707,7 @@
           "conteo_palabras_breve": 22,
           "generado_por_agente": true,
           "origen": "incident-reporter",
-          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: APERTURA\nIncidencia: INC000004152686 - PaP 28/10 PRDIA-2559 LivePerson | Error funcional | Foundever - Sevilla\nCriticidad sugerida: P2\nSistemas involucrados: LivePerson\n\n--- Contexto extraído de Epsilon Resumen IA ---\n• Problema detectado: El módulo AP de LivePerson no carga el ID de conversación, impidiendo visualizar identificadores de conversaciones en la interfaz.\n• Impacto en servicio/negocio: Afecta a 10 usuarios de Foundever Sevilla en proceso de Ventas (marca OSP Orange). Existe método alternativo mediante módulo Información del consumidor.\n• Estado actual reportado: PENDIENTE\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
+          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: APERTURA\nIncidencia: INC000004152686 - PaP 28/10 PRDIA-2559 LivePerson | Error funcional | Foundever - Sevilla\nCriticidad sugerida: P2\nSistemas involucrados: SOP_DJINGO\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: PaP 28/10 PRDIA-2559 LivePerson | Error funcional | Foundever - Sevilla\n• Impacto ticket: Masiva\n• Urgencia ticket: Medio\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
         },
         "seguimiento": {
           "completo": "Seguimiento P2 (INC000004152686) en LivePerson. Se ha verificado que la pérdida visual del identificador de chat se limita al módulo de agentes AP sin pérdida de registros en base de datos. SOP_DJINGO coordina con soporte de producto la actualización del componente web para restaurar la visualización homogénea en los puestos de Sevilla sin interrumpir las ventas.",
@@ -772,7 +716,7 @@
           "conteo_palabras_breve": 21,
           "generado_por_agente": true,
           "origen": "incident-reporter",
-          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: SEGUIMIENTO\nIncidencia: INC000004152686 - PaP 28/10 PRDIA-2559 LivePerson | Error funcional | Foundever - Sevilla\nCriticidad sugerida: P2\nSistemas involucrados: LivePerson\n\n--- Contexto extraído de Epsilon Resumen IA ---\n• Problema detectado: El módulo AP de LivePerson no carga el ID de conversación, impidiendo visualizar identificadores de conversaciones en la interfaz.\n• Impacto en servicio/negocio: Afecta a 10 usuarios de Foundever Sevilla en proceso de Ventas (marca OSP Orange). Existe método alternativo mediante módulo Información del consumidor.\n• Estado actual reportado: PENDIENTE\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
+          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: SEGUIMIENTO\nIncidencia: INC000004152686 - PaP 28/10 PRDIA-2559 LivePerson | Error funcional | Foundever - Sevilla\nCriticidad sugerida: P2\nSistemas involucrados: SOP_DJINGO\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: PaP 28/10 PRDIA-2559 LivePerson | Error funcional | Foundever - Sevilla\n• Impacto ticket: Masiva\n• Urgencia ticket: Medio\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
         },
         "cierre": {
           "completo": "Resuelta la incidencia P2 (INC000004152686) en LivePerson. Restablecida la correcta carga de identificadores de conversación en el módulo AP, operando nuevamente de forma transparente para los operadores de Foundever-Sevilla. Todas las herramientas de gestión de ventas digitales se encuentran plenamente operativas y verificadas.",
@@ -781,7 +725,7 @@
           "conteo_palabras_breve": 19,
           "generado_por_agente": true,
           "origen": "incident-reporter",
-          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: CIERRE\nIncidencia: INC000004152686 - PaP 28/10 PRDIA-2559 LivePerson | Error funcional | Foundever - Sevilla\nCriticidad sugerida: P2\nSistemas involucrados: LivePerson\n\n--- Contexto extraído de Epsilon Resumen IA ---\n• Problema detectado: El módulo AP de LivePerson no carga el ID de conversación, impidiendo visualizar identificadores de conversaciones en la interfaz.\n• Impacto en servicio/negocio: Afecta a 10 usuarios de Foundever Sevilla en proceso de Ventas (marca OSP Orange). Existe método alternativo mediante módulo Información del consumidor.\n• Estado actual reportado: PENDIENTE\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
+          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: CIERRE\nIncidencia: INC000004152686 - PaP 28/10 PRDIA-2559 LivePerson | Error funcional | Foundever - Sevilla\nCriticidad sugerida: P2\nSistemas involucrados: SOP_DJINGO\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: PaP 28/10 PRDIA-2559 LivePerson | Error funcional | Foundever - Sevilla\n• Impacto ticket: Masiva\n• Urgencia ticket: Medio\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
         }
       }
     },
@@ -789,8 +733,7 @@
       "id": "INC000004161012",
       "titulo": "IP24 | Error funcional | ATAC Jazzplat - Guadalajara",
       "sistemas": [
-        "Siebel 8",
-        "TEIDE"
+        "CEP CAU AGI"
       ],
       "prioridad_original": "Media",
       "prioridad_sugerida": "P2",
@@ -806,13 +749,7 @@
         "workaround": "Desconocido",
         "sla_objetivo_minutos": 60
       },
-      "resumen_ia": {
-        "problema": "Activación automática de TV libre en líneas multisede sin solicitud del cliente. Batch 'SBL_EAI_RC62_SC14' procesa fichero generado manualmente por Orange, incluyendo casos no autorizados.",
-        "impacto": "5 clientes afectados (B42677955, B81919912, B72150220, B02902070, B50900091) en Jazzplat-Guadalajara. Clientes reclaman activaciones no solicitadas. Sin método alternativo disponible.",
-        "solucion": "",
-        "bloqueos": "Pendiente validación y OK de cierre por negocio",
-        "siguiente_accion": "Verificar con negocio el fichero adjunto y proceder con procedimentación para cierre definitivo"
-      },
+      "resumen_ia": null,
       "mensajes_ejecutivos": {
         "apertura": {
           "completo": "Se comunica incidencia P2 (INC000004161012) por activaciones automáticas indebidas del paquete TV libre sobre líneas multisede en Jazzplat-Guadalajara. La contingencia se origina en el procesamiento de un lote manual por el batch SBL_EAI_RC62_SC14 en Siebel 8, habiéndose detectado reclamaciones de 5 clientes empresariales por altas no solicitadas. El equipo de CEP CAU AGI ha paralizado el procesamiento para contener el impacto e investiga los registros afectados. Próxima actualización en 60 minutos.",
@@ -821,7 +758,7 @@
           "conteo_palabras_breve": 23,
           "generado_por_agente": true,
           "origen": "incident-reporter",
-          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: APERTURA\nIncidencia: INC000004161012 - IP24 | Error funcional | ATAC Jazzplat - Guadalajara\nCriticidad sugerida: P2\nSistemas involucrados: Siebel 8, TEIDE\n\n--- Contexto extraído de Epsilon Resumen IA ---\n• Problema detectado: Activación automática de TV libre en líneas multisede sin solicitud del cliente. Batch 'SBL_EAI_RC62_SC14' procesa fichero generado manualmente por Orange, incluyendo casos no autorizados.\n• Impacto en servicio/negocio: 5 clientes afectados (B42677955, B81919912, B72150220, B02902070, B50900091) en Jazzplat-Guadalajara. Clientes reclaman activaciones no solicitadas. Sin método alternativo disponible.\n• Siguiente acción: Verificar con negocio el fichero adjunto y proceder con procedimentación para cierre definitivo\n• Estado actual reportado: PENDIENTE\n• Bloqueos identificados: Pendiente validación y OK de cierre por negocio\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
+          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: APERTURA\nIncidencia: INC000004161012 - IP24 | Error funcional | ATAC Jazzplat - Guadalajara\nCriticidad sugerida: P2\nSistemas involucrados: CEP CAU AGI\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: IP24 | Error funcional | ATAC Jazzplat - Guadalajara\n• Impacto ticket: Masiva\n• Urgencia ticket: Baja\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
         },
         "seguimiento": {
           "completo": "Seguimiento P2 (INC000004161012). Se confirma la contención del batch para evitar nuevas altas indebidas de TV libre. Los equipos de TEIDE y Siebel 8 coordinan con negocio la depuración de las líneas involucradas en el fichero origen y ejecutan la regularización técnica de los paquetes contratados en los clientes afectados, sin impacto en la facturación.",
@@ -830,7 +767,7 @@
           "conteo_palabras_breve": 20,
           "generado_por_agente": true,
           "origen": "incident-reporter",
-          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: SEGUIMIENTO\nIncidencia: INC000004161012 - IP24 | Error funcional | ATAC Jazzplat - Guadalajara\nCriticidad sugerida: P2\nSistemas involucrados: Siebel 8, TEIDE\n\n--- Contexto extraído de Epsilon Resumen IA ---\n• Problema detectado: Activación automática de TV libre en líneas multisede sin solicitud del cliente. Batch 'SBL_EAI_RC62_SC14' procesa fichero generado manualmente por Orange, incluyendo casos no autorizados.\n• Impacto en servicio/negocio: 5 clientes afectados (B42677955, B81919912, B72150220, B02902070, B50900091) en Jazzplat-Guadalajara. Clientes reclaman activaciones no solicitadas. Sin método alternativo disponible.\n• Siguiente acción: Verificar con negocio el fichero adjunto y proceder con procedimentación para cierre definitivo\n• Estado actual reportado: PENDIENTE\n• Bloqueos identificados: Pendiente validación y OK de cierre por negocio\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
+          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: SEGUIMIENTO\nIncidencia: INC000004161012 - IP24 | Error funcional | ATAC Jazzplat - Guadalajara\nCriticidad sugerida: P2\nSistemas involucrados: CEP CAU AGI\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: IP24 | Error funcional | ATAC Jazzplat - Guadalajara\n• Impacto ticket: Masiva\n• Urgencia ticket: Baja\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
         },
         "cierre": {
           "completo": "Cerrada la incidencia P2 (INC000004161012). Revertidas las altas indebidas de TV libre en las líneas empresariales afectadas y regularizado el procedimiento de carga en el batch de Siebel 8 para prevenir ejecuciones no supervisadas. Todos los parques de clientes se encuentran saneados y con sus tarifas contractuales conformadas.",
@@ -839,7 +776,7 @@
           "conteo_palabras_breve": 20,
           "generado_por_agente": true,
           "origen": "incident-reporter",
-          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: CIERRE\nIncidencia: INC000004161012 - IP24 | Error funcional | ATAC Jazzplat - Guadalajara\nCriticidad sugerida: P2\nSistemas involucrados: Siebel 8, TEIDE\n\n--- Contexto extraído de Epsilon Resumen IA ---\n• Problema detectado: Activación automática de TV libre en líneas multisede sin solicitud del cliente. Batch 'SBL_EAI_RC62_SC14' procesa fichero generado manualmente por Orange, incluyendo casos no autorizados.\n• Impacto en servicio/negocio: 5 clientes afectados (B42677955, B81919912, B72150220, B02902070, B50900091) en Jazzplat-Guadalajara. Clientes reclaman activaciones no solicitadas. Sin método alternativo disponible.\n• Siguiente acción: Verificar con negocio el fichero adjunto y proceder con procedimentación para cierre definitivo\n• Estado actual reportado: PENDIENTE\n• Bloqueos identificados: Pendiente validación y OK de cierre por negocio\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
+          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: CIERRE\nIncidencia: INC000004161012 - IP24 | Error funcional | ATAC Jazzplat - Guadalajara\nCriticidad sugerida: P2\nSistemas involucrados: CEP CAU AGI\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: IP24 | Error funcional | ATAC Jazzplat - Guadalajara\n• Impacto ticket: Masiva\n• Urgencia ticket: Baja\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
         }
       }
     },
@@ -847,8 +784,7 @@
       "id": "INC000004163156",
       "titulo": "PRDIA-2865 DJINGO | Error funcional | ICP",
       "sistemas": [
-        "DJINGO",
-        "Liveperson"
+        "SOP_DJINGO"
       ],
       "prioridad_original": "Media",
       "prioridad_sugerida": "P2",
@@ -864,13 +800,7 @@
         "workaround": "Desconocido",
         "sla_objetivo_minutos": 60
       },
-      "resumen_ia": {
-        "problema": "Liveperson comunica número de teléfono incorrecto en cada pedido (ej: 112222677 en lugar del correcto según albarán 8009831601), impidiendo generar URL correcta para conversación WhatsApp.",
-        "impacto": "Fallo en generación de URL para conversaciones WhatsApp. Afecta proceso de Provisión en Back Office. Marcas: OSP/JAZZ.",
-        "solucion": "",
-        "bloqueos": "Dependencia de Liveperson para validar y corregir mapeo de números telefónicos en pedidos",
-        "siguiente_accion": "Escalado a SOP_DJINGO para análisis de integración con Liveperson y validación de mapeo de datos telefónicos en provisión de pedidos."
-      },
+      "resumen_ia": null,
       "mensajes_ejecutivos": {
         "apertura": {
           "completo": "Se comunica incidencia P2 (INC000004163156) en la integración entre DJINGO y Liveperson en el centro logístico ICP. Un error de mapeo en los pedidos suministra números telefónicos erróneos, impidiendo la generación de enlaces de contacto por WhatsApp durante el proceso de provisión de Back Office para pedidos Orange y Jazztel. El equipo de SOP_DJINGO se encuentra revisando las transformaciones de datos para restablecer el canal de mensajería. Próxima actualización en 60 minutos.",
@@ -879,7 +809,7 @@
           "conteo_palabras_breve": 22,
           "generado_por_agente": true,
           "origen": "incident-reporter",
-          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: APERTURA\nIncidencia: INC000004163156 - PRDIA-2865 DJINGO | Error funcional | ICP\nCriticidad sugerida: P2\nSistemas involucrados: DJINGO, Liveperson\n\n--- Contexto extraído de Epsilon Resumen IA ---\n• Problema detectado: Liveperson comunica número de teléfono incorrecto en cada pedido (ej: 112222677 en lugar del correcto según albarán 8009831601), impidiendo generar URL correcta para conversación WhatsApp.\n• Impacto en servicio/negocio: Fallo en generación de URL para conversaciones WhatsApp. Afecta proceso de Provisión en Back Office. Marcas: OSP/JAZZ.\n• Siguiente acción: Escalado a SOP_DJINGO para análisis de integración con Liveperson y validación de mapeo de datos telefónicos en provisión de pedidos.\n• Estado actual reportado: PENDIENTE\n• Bloqueos identificados: Dependencia de Liveperson para validar y corregir mapeo de números telefónicos en pedidos\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
+          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: APERTURA\nIncidencia: INC000004163156 - PRDIA-2865 DJINGO | Error funcional | ICP\nCriticidad sugerida: P2\nSistemas involucrados: SOP_DJINGO\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: PRDIA-2865 DJINGO | Error funcional | ICP\n• Impacto ticket: Masiva\n• Urgencia ticket: Medio\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
         },
         "seguimiento": {
           "completo": "Seguimiento P2 (INC000004163156). SOP_DJINGO ha localizado la disfunción en la extracción del teléfono de contacto del albarán hacia la API de mensajería de Liveperson. Se procede con el despliegue de una corrección en el conector de integración para asegurar que las comunicaciones de provisión incorporen el contacto fidedigno del cliente. Se auditan pedidos en cola.",
@@ -888,7 +818,7 @@
           "conteo_palabras_breve": 18,
           "generado_por_agente": true,
           "origen": "incident-reporter",
-          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: SEGUIMIENTO\nIncidencia: INC000004163156 - PRDIA-2865 DJINGO | Error funcional | ICP\nCriticidad sugerida: P2\nSistemas involucrados: DJINGO, Liveperson\n\n--- Contexto extraído de Epsilon Resumen IA ---\n• Problema detectado: Liveperson comunica número de teléfono incorrecto en cada pedido (ej: 112222677 en lugar del correcto según albarán 8009831601), impidiendo generar URL correcta para conversación WhatsApp.\n• Impacto en servicio/negocio: Fallo en generación de URL para conversaciones WhatsApp. Afecta proceso de Provisión en Back Office. Marcas: OSP/JAZZ.\n• Siguiente acción: Escalado a SOP_DJINGO para análisis de integración con Liveperson y validación de mapeo de datos telefónicos en provisión de pedidos.\n• Estado actual reportado: PENDIENTE\n• Bloqueos identificados: Dependencia de Liveperson para validar y corregir mapeo de números telefónicos en pedidos\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
+          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: SEGUIMIENTO\nIncidencia: INC000004163156 - PRDIA-2865 DJINGO | Error funcional | ICP\nCriticidad sugerida: P2\nSistemas involucrados: SOP_DJINGO\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: PRDIA-2865 DJINGO | Error funcional | ICP\n• Impacto ticket: Masiva\n• Urgencia ticket: Medio\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
         },
         "cierre": {
           "completo": "Resuelta la incidencia P2 (INC000004163156). Corregido el mapeo telefónico en el conector de DJINGO con Liveperson, generándose con absoluta precisión las URL de mensajería de WhatsApp para los pedidos en Back Office de ICP. La provisión logística y la comunicación con clientes operan con total normalidad.",
@@ -897,7 +827,7 @@
           "conteo_palabras_breve": 17,
           "generado_por_agente": true,
           "origen": "incident-reporter",
-          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: CIERRE\nIncidencia: INC000004163156 - PRDIA-2865 DJINGO | Error funcional | ICP\nCriticidad sugerida: P2\nSistemas involucrados: DJINGO, Liveperson\n\n--- Contexto extraído de Epsilon Resumen IA ---\n• Problema detectado: Liveperson comunica número de teléfono incorrecto en cada pedido (ej: 112222677 en lugar del correcto según albarán 8009831601), impidiendo generar URL correcta para conversación WhatsApp.\n• Impacto en servicio/negocio: Fallo en generación de URL para conversaciones WhatsApp. Afecta proceso de Provisión en Back Office. Marcas: OSP/JAZZ.\n• Siguiente acción: Escalado a SOP_DJINGO para análisis de integración con Liveperson y validación de mapeo de datos telefónicos en provisión de pedidos.\n• Estado actual reportado: PENDIENTE\n• Bloqueos identificados: Dependencia de Liveperson para validar y corregir mapeo de números telefónicos en pedidos\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
+          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: CIERRE\nIncidencia: INC000004163156 - PRDIA-2865 DJINGO | Error funcional | ICP\nCriticidad sugerida: P2\nSistemas involucrados: SOP_DJINGO\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: PRDIA-2865 DJINGO | Error funcional | ICP\n• Impacto ticket: Masiva\n• Urgencia ticket: Medio\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
         }
       }
     },
@@ -905,9 +835,7 @@
       "id": "INC000004167733",
       "titulo": "Ficha Cliente Orange | Error funcional | Jazzplat - Guadalajara",
       "sistemas": [
-        "Ficha Cliente Orange",
-        "Siebel 8",
-        "OCS"
+        "APL_MOV_SOE"
       ],
       "prioridad_original": "Media",
       "prioridad_sugerida": "P2",
@@ -923,13 +851,7 @@
         "workaround": "Desconocido",
         "sla_objetivo_minutos": 60
       },
-      "resumen_ia": {
-        "problema": "No permite activar ciclo de facturación en routers 5G de algunos clientes de forma aleatoria. Refrescando la página múltiples veces ocasionalmente aparece la opción. Afecta a 15 usuarios en Jazzplat-Guadalajara.",
-        "impacto": "Impacto aleatorio en clientes. Genera mala experiencia y apertura de incidencias en móvil cuando ni cliente ni servicio pueden activar desde Ficha Cliente.",
-        "solucion": "",
-        "bloqueos": "Escalado a SOP_OCS por inconsistencia OCS en imputación consumo; Pendiente respuesta desarrollo Ficha Cliente",
-        "siguiente_accion": "Consultar con equipo desarrollo Ficha Cliente sobre comportamiento aleatorio activación ciclo facturación. Coordinar con SOP_OCS resolución imputación consumo OCS."
-      },
+      "resumen_ia": null,
       "mensajes_ejecutivos": {
         "apertura": {
           "completo": "Se comunica incidencia P2 (INC000004167733) en Ficha Cliente Orange que impide de forma intermitente activar el ciclo de facturación para routers 5G a 15 operadores en Jazzplat-Guadalajara. La anomalía genera degradación en la tramitación y reaperturas de casos al no consolidarse la opción en el sistema de cobro OCS. El equipo de APL_MOV_SOE coordina con desarrollo de Ficha Cliente y soporte de OCS el análisis de la inconsistencia. Próxima actualización en 60 minutos.",
@@ -938,7 +860,7 @@
           "conteo_palabras_breve": 23,
           "generado_por_agente": true,
           "origen": "incident-reporter",
-          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: APERTURA\nIncidencia: INC000004167733 - Ficha Cliente Orange | Error funcional | Jazzplat - Guadalajara\nCriticidad sugerida: P2\nSistemas involucrados: Ficha Cliente Orange, Siebel 8, OCS\n\n--- Contexto extraído de Epsilon Resumen IA ---\n• Problema detectado: No permite activar ciclo de facturación en routers 5G de algunos clientes de forma aleatoria. Refrescando la página múltiples veces ocasionalmente aparece la opción. Afecta a 15 usuarios en Jazzplat-Guadalajara.\n• Impacto en servicio/negocio: Impacto aleatorio en clientes. Genera mala experiencia y apertura de incidencias en móvil cuando ni cliente ni servicio pueden activar desde Ficha Cliente.\n• Siguiente acción: Consultar con equipo desarrollo Ficha Cliente sobre comportamiento aleatorio activación ciclo facturación. Coordinar con SOP_OCS resolución imputación consumo OCS.\n• Estado actual reportado: PENDIENTE\n• Bloqueos identificados: Escalado a SOP_OCS por inconsistencia OCS en imputación consumo; Pendiente respuesta desarrollo Ficha Cliente\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
+          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: APERTURA\nIncidencia: INC000004167733 - Ficha Cliente Orange | Error funcional | Jazzplat - Guadalajara\nCriticidad sugerida: P2\nSistemas involucrados: APL_MOV_SOE\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: Ficha Cliente Orange | Error funcional | Jazzplat - Guadalajara\n• Impacto ticket: Masiva\n• Urgencia ticket: Medio\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
         },
         "seguimiento": {
           "completo": "Seguimiento P2 (INC000004167733). Los equipos de APL_MOV_SOE y SOP_OCS avanzan en el diagnóstico de la llamada asíncrona que gestiona la imputación del ciclo 5G en Siebel 8. Se aplican ajustes en el refresco de componentes del frontal para estabilizar la opción y evitar intentos reiterados por parte de los operadores de Guadalajara. Supervisión técnica activa.",
@@ -947,7 +869,7 @@
           "conteo_palabras_breve": 21,
           "generado_por_agente": true,
           "origen": "incident-reporter",
-          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: SEGUIMIENTO\nIncidencia: INC000004167733 - Ficha Cliente Orange | Error funcional | Jazzplat - Guadalajara\nCriticidad sugerida: P2\nSistemas involucrados: Ficha Cliente Orange, Siebel 8, OCS\n\n--- Contexto extraído de Epsilon Resumen IA ---\n• Problema detectado: No permite activar ciclo de facturación en routers 5G de algunos clientes de forma aleatoria. Refrescando la página múltiples veces ocasionalmente aparece la opción. Afecta a 15 usuarios en Jazzplat-Guadalajara.\n• Impacto en servicio/negocio: Impacto aleatorio en clientes. Genera mala experiencia y apertura de incidencias en móvil cuando ni cliente ni servicio pueden activar desde Ficha Cliente.\n• Siguiente acción: Consultar con equipo desarrollo Ficha Cliente sobre comportamiento aleatorio activación ciclo facturación. Coordinar con SOP_OCS resolución imputación consumo OCS.\n• Estado actual reportado: PENDIENTE\n• Bloqueos identificados: Escalado a SOP_OCS por inconsistencia OCS en imputación consumo; Pendiente respuesta desarrollo Ficha Cliente\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
+          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: SEGUIMIENTO\nIncidencia: INC000004167733 - Ficha Cliente Orange | Error funcional | Jazzplat - Guadalajara\nCriticidad sugerida: P2\nSistemas involucrados: APL_MOV_SOE\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: Ficha Cliente Orange | Error funcional | Jazzplat - Guadalajara\n• Impacto ticket: Masiva\n• Urgencia ticket: Medio\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
         },
         "cierre": {
           "completo": "Cerrada la incidencia P2 (INC000004167733) en Ficha Cliente Orange. Subsanada la intermitencia en el servicio de activación de ciclos para routers 5G y sincronizado el consumo con OCS. Los agentes de Jazzplat-Guadalajara completan los trámites de facturación al primer intento y sin anomalías, quedando el servicio plenamente recuperado.",
@@ -956,7 +878,58 @@
           "conteo_palabras_breve": 18,
           "generado_por_agente": true,
           "origen": "incident-reporter",
-          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: CIERRE\nIncidencia: INC000004167733 - Ficha Cliente Orange | Error funcional | Jazzplat - Guadalajara\nCriticidad sugerida: P2\nSistemas involucrados: Ficha Cliente Orange, Siebel 8, OCS\n\n--- Contexto extraído de Epsilon Resumen IA ---\n• Problema detectado: No permite activar ciclo de facturación en routers 5G de algunos clientes de forma aleatoria. Refrescando la página múltiples veces ocasionalmente aparece la opción. Afecta a 15 usuarios en Jazzplat-Guadalajara.\n• Impacto en servicio/negocio: Impacto aleatorio en clientes. Genera mala experiencia y apertura de incidencias en móvil cuando ni cliente ni servicio pueden activar desde Ficha Cliente.\n• Siguiente acción: Consultar con equipo desarrollo Ficha Cliente sobre comportamiento aleatorio activación ciclo facturación. Coordinar con SOP_OCS resolución imputación consumo OCS.\n• Estado actual reportado: PENDIENTE\n• Bloqueos identificados: Escalado a SOP_OCS por inconsistencia OCS en imputación consumo; Pendiente respuesta desarrollo Ficha Cliente\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
+          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: CIERRE\nIncidencia: INC000004167733 - Ficha Cliente Orange | Error funcional | Jazzplat - Guadalajara\nCriticidad sugerida: P2\nSistemas involucrados: APL_MOV_SOE\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: Ficha Cliente Orange | Error funcional | Jazzplat - Guadalajara\n• Impacto ticket: Masiva\n• Urgencia ticket: Medio\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
+        }
+      }
+    },
+    {
+      "id": "INC000004167753",
+      "titulo": "PRDIA-2964 ASISTENTE | Error funcional | Konecta - Sevilla",
+      "sistemas": [
+        "DES_ASISTENTE"
+      ],
+      "prioridad_original": "Media",
+      "prioridad_sugerida": "P2",
+      "es_alta_prioridad": true,
+      "es_discrepancia": true,
+      "estatus": "Pendiente",
+      "fecha_envio": "26/10/2026 18:47 a",
+      "evaluacion": {
+        "impacto": "Alto",
+        "impacto_justificacion": "Afectación crítica o corte global sobre el servicio principal sin alternativa viable.",
+        "urgencia": "Baja",
+        "urgencia_justificacion": "Incidencia de baja sensibilidad temporal o sin bloqueo activo.",
+        "workaround": "Desconocido",
+        "sla_objetivo_minutos": 60
+      },
+      "resumen_ia": null,
+      "mensajes_ejecutivos": {
+        "apertura": {
+          "completo": null,
+          "breve": null,
+          "conteo_palabras_completo": 0,
+          "conteo_palabras_breve": 0,
+          "generado_por_agente": false,
+          "estado": "pendiente",
+          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: APERTURA\nIncidencia: INC000004167753 - PRDIA-2964 ASISTENTE | Error funcional | Konecta - Sevilla\nCriticidad sugerida: P2\nSistemas involucrados: DES_ASISTENTE\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: PRDIA-2964 ASISTENTE | Error funcional | Konecta - Sevilla\n• Impacto ticket: Masiva\n• Urgencia ticket: Medio\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
+        },
+        "seguimiento": {
+          "completo": null,
+          "breve": null,
+          "conteo_palabras_completo": 0,
+          "conteo_palabras_breve": 0,
+          "generado_por_agente": false,
+          "estado": "pendiente",
+          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: SEGUIMIENTO\nIncidencia: INC000004167753 - PRDIA-2964 ASISTENTE | Error funcional | Konecta - Sevilla\nCriticidad sugerida: P2\nSistemas involucrados: DES_ASISTENTE\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: PRDIA-2964 ASISTENTE | Error funcional | Konecta - Sevilla\n• Impacto ticket: Masiva\n• Urgencia ticket: Medio\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
+        },
+        "cierre": {
+          "completo": null,
+          "breve": null,
+          "conteo_palabras_completo": 0,
+          "conteo_palabras_breve": 0,
+          "generado_por_agente": false,
+          "estado": "pendiente",
+          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: CIERRE\nIncidencia: INC000004167753 - PRDIA-2964 ASISTENTE | Error funcional | Konecta - Sevilla\nCriticidad sugerida: P2\nSistemas involucrados: DES_ASISTENTE\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: PRDIA-2964 ASISTENTE | Error funcional | Konecta - Sevilla\n• Impacto ticket: Masiva\n• Urgencia ticket: Medio\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
         }
       }
     }
