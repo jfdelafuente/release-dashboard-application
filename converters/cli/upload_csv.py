@@ -41,8 +41,18 @@ def run_upload(csv_path: Path, dashboard_type: str, project_root: Path, release_
         {"success": True, "message": str}
         {"success": False, "error": str, "details": str | None}
     """
+    csv_path = Path(csv_path)
+    project_root = Path(project_root) if project_root else Path.cwd()
     script_name = CONVERTER_SCRIPTS.get(dashboard_type, CONVERTER_SCRIPTS["massive"])
-    script_path = Path(__file__).parent / script_name
+
+    # Priorizar el conversor dentro de project_root (p. ej. .../current/converters/cli/...)
+    # para soportar cambios de symlink/rotación en procesos persistentes que conserven el módulo en memoria.
+    candidate_paths = [
+        project_root / "converters" / "cli" / script_name,
+        Path(__file__).resolve().parent / script_name,
+        Path(__file__).parent / script_name,
+    ]
+    script_path = next((p for p in candidate_paths if p.exists()), candidate_paths[0])
 
     if not script_path.exists():
         return {"success": False, "error": f"Converter no encontrado: {script_path}"}

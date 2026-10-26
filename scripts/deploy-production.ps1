@@ -597,6 +597,13 @@ if [ "`$BACKUPS_COUNT" -gt 5 ]; then
     done
 fi
 
+# 12.1. Reiniciar servicio backend de reportes (cso-incident-masivas-report) si existe
+CSO_SERVICE="/infocodes/project/cso-incident-masivas-report/current/backend/service.sh"
+if [ -x "`$CSO_SERVICE" ]; then
+    echo "--> [Remoto] Reiniciando backend de reportes para recargar módulos y converters..."
+    "`$CSO_SERVICE" restart || true
+fi
+
 # 13. Verificación de Sondas de Salud HTTP
 echo ""
 echo "=== Verificación de Sondas de Salud HTTP ==="
