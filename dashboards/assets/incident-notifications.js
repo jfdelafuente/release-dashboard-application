@@ -62,9 +62,9 @@
     }
 
     async init() {
-      await this.loadData();
       this.mountBell();
       this.renderDrawer();
+      await this.loadData();
       this.updateBadge();
       this.bindGlobalKeys();
       this.startPolling();
@@ -96,86 +96,99 @@
     }
 
     async loadData() {
-      try {
-        const res = await fetch(DATA_URL, { cache: 'no-store' });
-        if (!res.ok) {
-          console.info('[IncidentNotifications] No se encontró el catálogo generado en ' + DATA_URL);
-          return;
+      const candidates = [
+        '/data/output/high_priority_notifications.json',
+        '../../data/output/high_priority_notifications.json',
+        '../data/output/high_priority_notifications.json',
+        './data/output/high_priority_notifications.json',
+        '/data/high_priority_notifications.json'
+      ];
+
+      for (const url of candidates) {
+        try {
+          const res = await fetch(url, { cache: 'no-store' });
+          if (res.ok) {
+            this.catalog = await res.json();
+            this.items = Array.isArray(this.catalog.data) ? this.catalog.data : [];
+            this.activeDataUrl = url;
+            return;
+          }
+        } catch (err) {
+          // Intentar con siguiente ruta candidata
         }
-        this.catalog = await res.json();
-        this.items = Array.isArray(this.catalog.data) ? this.catalog.data : [];
-      } catch (err) {
-        console.info('[IncidentNotifications] Catálogo aún no disponible o fuera de línea:', err.message);
       }
+      console.info('[IncidentNotifications] Catálogo aún no disponible o fuera de línea');
     }
 
-    // Montar la campana en el header o en la barra superior
+    // Montar la campana en la barra superior unificada
     mountBell() {
       const topbarRight = document.querySelector('.mo-topbar-right');
-      const existing = document.getElementById('hp-notifications-bell-btn');
+      let btn = document.getElementById('hp-notifications-bell-btn');
 
-      // Si ya está correctamente anclado dentro de .mo-topbar-right, salir
-      if (topbarRight && existing && existing.parentElement === topbarRight) {
-        return;
+      if (!btn) {
+        btn = document.createElement('button');
+        btn.id = 'hp-notifications-bell-btn';
+        btn.className = 'hp-bell-btn';
+        btn.type = 'button';
+        btn.setAttribute('aria-label', 'Centro de notificaciones de alta prioridad');
+        btn.title = 'Incidencias de Alta Prioridad (P1 / P2)';
+        btn.innerHTML = `
+          <svg class="hp-bell-icon" viewBox="0 0 24 24">
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+            <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+          </svg>
+          <span class="hp-bell-badge" id="hp-bell-badge" style="display: none;">0</span>
+        `;
+        btn.addEventListener('click', () => this.open());
       }
-
-      if (existing) {
-        existing.remove();
-      }
-
-      const btn = document.createElement('button');
-      btn.id = 'hp-notifications-bell-btn';
-      btn.className = 'hp-bell-btn';
-      btn.type = 'button';
-      btn.setAttribute('aria-label', 'Centro de notificaciones de alta prioridad');
-      btn.title = 'Incidencias de Alta Prioridad (P1 / P2)';
-      btn.innerHTML = `
-        <svg class="hp-bell-icon" viewBox="0 0 24 24">
-          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
-          <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
-        </svg>
-        <span class="hp-bell-badge" id="hp-bell-badge" style="display: none;">0</span>
-      `;
-
-      btn.addEventListener('click', () => this.open());
 
       if (topbarRight) {
-        topbarRight.insertBefore(btn, topbarRight.firstChild);
+        if (btn.parentElement !== topbarRight) {
+          btn.style.position = '';
+          btn.style.top = '';
+          btn.style.right = '';
+          btn.style.zIndex = '';
+          topbarRight.insertBefore(btn, topbarRight.firstChild);
+        }
+        this.updateBadge();
         return;
       }
 
-      // Si no, intentar en la fila de controles del dashboard
-      const controls = document.querySelector('.controls-row');
-      if (controls) {
-        const wrapper = document.createElement('div');
-        wrapper.id = 'hp-controls-wrapper';
-        wrapper.style.display = 'flex';
-        wrapper.style.alignItems = 'center';
-        wrapper.appendChild(btn);
-        controls.appendChild(wrapper);
-      } else {
-        // Fallback flotante en esquina superior derecha
-        btn.style.position = 'fixed';
-        btn.style.top = '16px';
-        btn.style.right = '24px';
-        btn.style.zIndex = '999';
-        document.body.appendChild(btn);
+      // Si .mo-topbar-right aún no existe en el DOM, esperar activamente a que MoTopbar se monte
+      if (!this._observerConfigured) {
+        this._observerConfigured = true;
+        const observer = new MutationObserver(() => {
+          const target = document.querySelector('.mo-topbar-right');
+          if (target) {
+            this.mountBell();
+            observer.disconnect();
+          }
+        });
+        if (document.body) {
+          observer.observe(document.body, { childList: true, subtree: true });
+        } else {
+          document.addEventListener('DOMContentLoaded', () => {
+            observer.observe(document.body, { childList: true, subtree: true });
+          });
+        }
+
+        document.addEventListener('mo-topbar-rendered', () => this.mountBell(), { once: true });
       }
 
-      // Reintentar anclar en la topbar tras un breve retraso por si se carga después
-      setTimeout(() => {
-        const tr = document.querySelector('.mo-topbar-right');
-        const b = document.getElementById('hp-notifications-bell-btn');
-        if (tr && b && b.parentElement !== tr) {
-          const wrapper = document.getElementById('hp-controls-wrapper');
-          if (wrapper) wrapper.remove();
-          b.style.position = '';
-          b.style.top = '';
-          b.style.right = '';
-          b.style.zIndex = '';
-          tr.insertBefore(b, tr.firstChild);
-        }
-      }, 300);
+      // Si tras 800ms sigue sin existir la barra superior, montar botón flotante de respaldo
+      if (!this._fallbackTimer) {
+        this._fallbackTimer = setTimeout(() => {
+          const target = document.querySelector('.mo-topbar-right');
+          if (!target && !document.getElementById('hp-notifications-bell-btn') && document.body) {
+            btn.style.position = 'fixed';
+            btn.style.top = '16px';
+            btn.style.right = '24px';
+            btn.style.zIndex = '999';
+            document.body.appendChild(btn);
+            this.updateBadge();
+          }
+        }, 800);
+      }
     }
 
     renderDrawer() {
@@ -665,7 +678,6 @@
           }, 2000);
         }
       }
-    }
     }
 
     attachCardEvents(container) {

@@ -51,6 +51,18 @@
       '</div>';
 
     checkApiHealth();
+
+    // Notificar y anclar Centro de Notificaciones de Incidencias si está disponible
+    if (typeof window !== 'undefined' && window.IncidentNotifications && typeof window.IncidentNotifications.mountBell === 'function') {
+      try {
+        window.IncidentNotifications.mountBell();
+      } catch (e) {
+        console.warn('[MoTopbar] Error al anclar campana de notificaciones:', e);
+      }
+    }
+    if (typeof document !== 'undefined') {
+      document.dispatchEvent(new CustomEvent('mo-topbar-rendered'));
+    }
   }
 
   function checkApiHealth() {
@@ -101,6 +113,22 @@
     fbScript.src = '/dashboards/assets/ui-feedback.js';
     fbScript.async = true;
     document.head.appendChild(fbScript);
+  }
+
+  // Carga automática de estilos y componente de notificaciones si no están presentes
+  if (typeof window !== 'undefined') {
+    if (!document.querySelector('link[href*="incident-notifications.css"]')) {
+      var notifCss = document.createElement('link');
+      notifCss.rel = 'stylesheet';
+      notifCss.href = '/dashboards/assets/incident-notifications.css';
+      document.head.appendChild(notifCss);
+    }
+    if (!window.IncidentNotifications && !document.querySelector('script[src*="incident-notifications.js"]')) {
+      var notifScript = document.createElement('script');
+      notifScript.src = '/dashboards/assets/incident-notifications.js';
+      notifScript.defer = true;
+      document.head.appendChild(notifScript);
+    }
   }
 
   window.MoTopbar = { render: render, navItems: NAV_ITEMS, checkHealth: checkApiHealth };
