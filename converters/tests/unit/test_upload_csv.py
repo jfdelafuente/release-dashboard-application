@@ -56,3 +56,4 @@ def test_run_upload_not_found_returns_error(tmp_path):
         res = run_upload(csv_file, "invalid", project_root=tmp_path)
         assert res["success"] is False
         assert "Converter no encontrado" in res["error"]
+

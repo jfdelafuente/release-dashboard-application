@@ -1,0 +1,579 @@
+/* ============================================================
+   Centro de Notificaciones de Alta Prioridad (P1 / P2)
+   Estética Corporativa Orange (Tokens Oficiales)
+   ============================================================ */
+
+:root {
+  --hp-orange-primary: #FF7900;
+  --hp-orange-hover: #F16E00;
+  --hp-orange-light: #FFF5EC;
+  --hp-dark: #0C0B09;
+  --hp-text: #1E1C1A;
+  --hp-text-muted: #5C5852;
+  --hp-bg-subtle: #F8F7F4;
+  --hp-border: #E5E2DC;
+  --hp-red-critical: #DC2626;
+  --hp-red-light: #FEE2E2;
+  --hp-amber-warning: #D97706;
+  --hp-amber-light: #FEF3C7;
+  --hp-green-success: #16A34A;
+  --hp-green-light: #DCFCE7;
+  --hp-blue-info: #2563EB;
+  --hp-blue-light: #DBEAFE;
+  --hp-font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --hp-font-mono: 'IBM Plex Mono', 'SFMono-Regular', Consolas, monospace;
+  --hp-shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.15), 0 10px 10px -5px rgba(0, 0, 0, 0.08);
+  --hp-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --hp-transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* ============================================================
+   1. Botón Campana en Header / Topbar
+   ============================================================ */
+.hp-bell-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: white;
+  border: 1.5px solid var(--hp-border);
+  color: var(--hp-text);
+  cursor: pointer;
+  transition: var(--hp-transition);
+  padding: 0;
+  outline: none;
+}
+
+.hp-bell-btn:hover {
+  background: var(--hp-orange-light);
+  border-color: var(--hp-orange-primary);
+  color: var(--hp-orange-primary);
+  transform: translateY(-1px);
+}
+
+.hp-bell-btn:focus-visible {
+  box-shadow: 0 0 0 3px rgba(255, 121, 0, 0.35);
+}
+
+.hp-bell-icon {
+  width: 20px;
+  height: 20px;
+  stroke: currentColor;
+  stroke-width: 2;
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.hp-bell-btn.has-alerts .hp-bell-icon {
+  animation: hp-ring 3.5s infinite ease-in-out;
+  transform-origin: top center;
+}
+
+@keyframes hp-ring {
+  0%, 85%, 100% { transform: rotate(0); }
+  87% { transform: rotate(12deg); }
+  89% { transform: rotate(-10deg); }
+  91% { transform: rotate(8deg); }
+  93% { transform: rotate(-6deg); }
+  95% { transform: rotate(3deg); }
+}
+
+.hp-bell-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  background: var(--hp-red-critical);
+  color: white;
+  font-family: var(--hp-font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  min-width: 19px;
+  height: 19px;
+  line-height: 19px;
+  border-radius: 10px;
+  padding: 0 5px;
+  text-align: center;
+  box-shadow: 0 2px 5px rgba(220, 38, 38, 0.45);
+  border: 2px solid white;
+}
+
+.hp-bell-badge.badge-p2-only {
+  background: var(--hp-orange-primary);
+  box-shadow: 0 2px 5px rgba(255, 121, 0, 0.45);
+}
+
+/* ============================================================
+   2. Drawer / Panel Lateral Desplegable
+   ============================================================ */
+.hp-drawer-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(12, 11, 9, 0.5);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+  z-index: 9998;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.28s ease, visibility 0.28s;
+}
+
+.hp-drawer-backdrop.active {
+  opacity: 1;
+  visibility: visible;
+}
+
+.hp-drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  max-width: 620px;
+  background: white;
+  z-index: 9999;
+  box-shadow: -8px 0 32px rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
+  transform: translateX(100%);
+  transition: transform 0.32s cubic-bezier(0.16, 1, 0.3, 1);
+  font-family: var(--hp-font-sans);
+  color: var(--hp-text);
+}
+
+.hp-drawer.active {
+  transform: translateX(0);
+}
+
+/* Header del Drawer */
+.hp-drawer-header {
+  padding: 24px 28px 18px 28px;
+  border-bottom: 1px solid var(--hp-border);
+  background: white;
+  position: relative;
+}
+
+.hp-drawer-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+
+.hp-drawer-title-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.hp-drawer-eyebrow {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--hp-orange-primary);
+}
+
+.hp-drawer-title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--hp-dark);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.hp-drawer-close {
+  background: transparent;
+  border: none;
+  font-size: 24px;
+  line-height: 1;
+  color: var(--hp-text-muted);
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 6px;
+  transition: var(--hp-transition);
+}
+
+.hp-drawer-close:hover {
+  background: var(--hp-bg-subtle);
+  color: var(--hp-dark);
+}
+
+/* KPIs de resumen */
+.hp-kpis-bar {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.hp-kpi-chip {
+  background: var(--hp-bg-subtle);
+  border: 1px solid var(--hp-border);
+  border-radius: 8px;
+  padding: 8px 12px;
+  display: flex;
+  flex-direction: column;
+}
+
+.hp-kpi-chip-label {
+  font-size: 11px;
+  color: var(--hp-text-muted);
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.hp-kpi-chip-val {
+  font-size: 18px;
+  font-weight: 800;
+  font-family: var(--hp-font-mono);
+  color: var(--hp-dark);
+}
+
+.hp-kpi-chip.kpi-p1 .hp-kpi-chip-val {
+  color: var(--hp-red-critical);
+}
+
+.hp-kpi-chip.kpi-disc .hp-kpi-chip-val {
+  color: var(--hp-amber-warning);
+}
+
+/* Barra de Filtros */
+.hp-filters-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 14px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+}
+
+.hp-filter-btn {
+  background: var(--hp-bg-subtle);
+  border: 1px solid var(--hp-border);
+  color: var(--hp-text-muted);
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: var(--hp-transition);
+}
+
+.hp-filter-btn:hover {
+  border-color: var(--hp-orange-primary);
+  color: var(--hp-orange-primary);
+}
+
+.hp-filter-btn.active {
+  background: var(--hp-orange-primary);
+  border-color: var(--hp-orange-primary);
+  color: white;
+}
+
+/* Contenido / Listado de Tarjetas */
+.hp-drawer-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px 28px;
+  background: #FAF9F6;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* ============================================================
+   3. Tarjeta de Incidencia de Alta Prioridad
+   ============================================================ */
+.hp-card {
+  background: white;
+  border: 1.5px solid var(--hp-border);
+  border-radius: 12px;
+  padding: 18px 20px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+  transition: var(--hp-transition);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.hp-card:hover {
+  box-shadow: var(--hp-shadow-md);
+  border-color: #D1CDCD;
+}
+
+.hp-card.priority-p1 {
+  border-left: 5px solid var(--hp-red-critical);
+}
+
+.hp-card.priority-p2 {
+  border-left: 5px solid var(--hp-orange-primary);
+}
+
+.hp-card.is-managed {
+  opacity: 0.72;
+  background: #FCFCFA;
+}
+
+.hp-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+
+.hp-badges-cluster {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.hp-badge {
+  font-family: var(--hp-font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 6px;
+  text-transform: uppercase;
+}
+
+.hp-badge-p1 {
+  background: var(--hp-red-light);
+  color: var(--hp-red-critical);
+  border: 1px solid #FECACA;
+}
+
+.hp-badge-p2 {
+  background: var(--hp-orange-light);
+  color: var(--hp-orange-primary);
+  border: 1px solid #FED7AA;
+}
+
+.hp-badge-discrepancy {
+  background: var(--hp-amber-light);
+  color: var(--hp-amber-warning);
+  border: 1px solid #FDE68A;
+  font-size: 10px;
+}
+
+.hp-badge-code {
+  background: var(--hp-bg-subtle);
+  color: var(--hp-dark);
+  border: 1px solid var(--hp-border);
+}
+
+/* Selector de Estado Operativo */
+.hp-status-select {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: 1.5px solid var(--hp-border);
+  background: white;
+  cursor: pointer;
+  outline: none;
+  font-family: var(--hp-font-sans);
+}
+
+.hp-status-select:focus {
+  border-color: var(--hp-orange-primary);
+}
+
+.hp-card-title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.4;
+  color: var(--hp-dark);
+}
+
+/* Metadatos ITIL */
+.hp-itil-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  padding: 8px 12px;
+  background: var(--hp-bg-subtle);
+  border-radius: 8px;
+  font-size: 12px;
+}
+
+.hp-itil-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.hp-itil-label {
+  color: var(--hp-text-muted);
+  font-weight: 600;
+}
+
+.hp-itil-val {
+  font-weight: 700;
+  color: var(--hp-dark);
+}
+
+/* Acciones en Tarjeta */
+.hp-card-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-top: 4px;
+}
+
+.hp-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: var(--hp-transition);
+  font-family: var(--hp-font-sans);
+  text-decoration: none;
+  border: none;
+}
+
+.hp-btn-primary {
+  background: var(--hp-orange-primary);
+  color: white;
+}
+
+.hp-btn-primary:hover {
+  background: var(--hp-orange-hover);
+}
+
+.hp-btn-secondary {
+  background: white;
+  color: var(--hp-dark);
+  border: 1px solid var(--hp-border);
+}
+
+.hp-btn-secondary:hover {
+  background: var(--hp-bg-subtle);
+  border-color: var(--hp-text-muted);
+}
+
+/* ============================================================
+   4. Acordeón de Mensajes Ejecutivos (US2)
+   ============================================================ */
+.hp-exec-panel {
+  margin-top: 10px;
+  padding-top: 12px;
+  border-top: 1px dashed var(--hp-border);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.hp-exec-tabs {
+  display: flex;
+  gap: 6px;
+}
+
+.hp-exec-tab {
+  padding: 5px 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  border: 1px solid var(--hp-border);
+  background: var(--hp-bg-subtle);
+  color: var(--hp-text-muted);
+  cursor: pointer;
+  transition: var(--hp-transition);
+}
+
+.hp-exec-tab:hover {
+  color: var(--hp-orange-primary);
+}
+
+.hp-exec-tab.active {
+  background: var(--hp-dark);
+  color: white;
+  border-color: var(--hp-dark);
+}
+
+.hp-exec-box {
+  background: #FDFBF7;
+  border: 1px solid #EAE5DE;
+  border-radius: 8px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.hp-exec-section-label {
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: var(--hp-orange-primary);
+  letter-spacing: 0.05em;
+  display: flex;
+  justify-content: space-between;
+}
+
+.hp-exec-text {
+  font-size: 12px;
+  line-height: 1.5;
+  color: #2D2B29;
+  margin: 0;
+}
+
+.hp-copy-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.hp-copy-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 9px;
+  border-radius: 5px;
+  background: white;
+  border: 1px solid var(--hp-border);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--hp-dark);
+  cursor: pointer;
+  transition: var(--hp-transition);
+}
+
+.hp-copy-btn:hover {
+  background: var(--hp-orange-light);
+  border-color: var(--hp-orange-primary);
+  color: var(--hp-orange-primary);
+}
+
+.hp-copy-btn.copied {
+  background: var(--hp-green-light);
+  border-color: var(--hp-green-success);
+  color: var(--hp-green-success);
+}
+
+/* Empty State */
+.hp-empty-state {
+  text-align: center;
+  padding: 48px 20px;
+  color: var(--hp-text-muted);
+}
+
+.hp-empty-icon {
+  font-size: 36px;
+  margin-bottom: 8px;
+}
+

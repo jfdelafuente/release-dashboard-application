@@ -261,6 +261,26 @@ try {
         Write-Step "Catálogo" "Omitiendo regeneración del catálogo (-SkipCatalogBuild activo)."
     }
 
+    # -------------------------------------------------------------------------
+    # REGENERACIÓN PREVIA DE NOTIFICACIONES DE ALTA PRIORIDAD (P1/P2)
+    # -------------------------------------------------------------------------
+    $NotifScript = Join-Path $ProjectRoot "converters\cli\evaluate_incident_notifications.py"
+    if (Test-Path $NotifScript) {
+        Write-Step "Notificaciones" "Evaluando incidencias masivas y actualizando catálogo de alta prioridad..."
+        if ($DryRun) {
+            Write-Ok "[DRY-RUN] Se ejecutaría: python converters/cli/evaluate_incident_notifications.py"
+        } else {
+            if ($PythonCmd) {
+                & $PythonCmd $NotifScript
+                if ($LASTEXITCODE -eq 0) {
+                    Write-Ok "Catálogo de alta prioridad actualizado con éxito en data/output/high_priority_notifications.json"
+                } else {
+                    Write-WarnMsg "No se pudo actualizar el catálogo de alta prioridad (código de salida: $LASTEXITCODE)."
+                }
+            }
+        }
+    }
+
     $currentBranch = (git branch --show-current 2>$null).Trim()
     if ($currentBranch -ne "production") {
         Write-WarnMsg "Rama actual: '$currentBranch'. La rama operativa para despliegue es 'production'."
@@ -352,14 +372,20 @@ if (-not $SkipBuild) {
             "0.2.0-$(Get-Date -Format 'yyyyMMdd')" | Out-File -FilePath (Join-Path $StagingDir "VERSION") -Encoding utf8
         }
 
-        # 6. Copiar catálogo de agentes regenerado al paquete runtime
+        # 6. Copiar catálogos regenerados al paquete runtime
+        $DataOutStaging = Join-Path $StagingDir "data\output"
+        New-Item -ItemType Directory -Path $DataOutStaging -Force | Out-Null
+
         if (Test-Path "$ProjectRoot\data\output\agents_catalog.json") {
-            $DataOutStaging = Join-Path $StagingDir "data\output"
-            New-Item -ItemType Directory -Path $DataOutStaging -Force | Out-Null
             Copy-Item "$ProjectRoot\data\output\agents_catalog.json" -Destination $DataOutStaging
             Write-Ok "Catálogo de agentes empaquetado en el artefacto runtime"
         } else {
             Write-WarnMsg "No se encontró data/output/agents_catalog.json para empaquetar"
+        }
+
+        if (Test-Path "$ProjectRoot\data\output\high_priority_notifications.json") {
+            Copy-Item "$ProjectRoot\data\output\high_priority_notifications.json" -Destination $DataOutStaging
+            Write-Ok "Catálogo de notificaciones de alta prioridad empaquetado en el artefacto runtime"
         }
 
         # 7. Generar archivo tarball comprimido
@@ -504,12 +530,16 @@ echo "--> [Remoto] Extrayendo nueva release en `$NEW_RELEASE_DIR..."
 tar -xzf "`$TMP_TAR" -C "`$NEW_RELEASE_DIR"
 rm -f "`$TMP_TAR"
 
-# 4. Sincronizar catálogo de agentes en almacenamiento persistente si viene en el paquete
+# 4. Sincronizar catálogos en almacenamiento persistente si vienen en el paquete
 if [ -f "`$NEW_RELEASE_DIR/data/output/agents_catalog.json" ]; then
     echo "--> [Remoto] Sincronizando catálogo de agentes a `$STORAGE_BASE/output/agents_catalog.json..."
     cp -f "`$NEW_RELEASE_DIR/data/output/agents_catalog.json" "`$STORAGE_BASE/output/agents_catalog.json" 2>/dev/null || true
-    rm -rf "`$NEW_RELEASE_DIR/data"
 fi
+if [ -f "`$NEW_RELEASE_DIR/data/output/high_priority_notifications.json" ]; then
+    echo "--> [Remoto] Sincronizando notificaciones de alta prioridad a `$STORAGE_BASE/output/high_priority_notifications.json..."
+    cp -f "`$NEW_RELEASE_DIR/data/output/high_priority_notifications.json" "`$STORAGE_BASE/output/high_priority_notifications.json" 2>/dev/null || true
+fi
+rm -rf "`$NEW_RELEASE_DIR/data"
 
 # Enlazar datos desacoplados y logs dentro de la nueva release
 ln -sfn "`$STORAGE_BASE" "`$NEW_RELEASE_DIR/data"
