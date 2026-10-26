@@ -264,6 +264,30 @@ def test_should_generate_valid_catalog_schema_when_batch_processed(sample_ticket
     assert "mensajes_ejecutivos" in p1_item
 
 
+def test_should_skip_terminal_status_incidents_when_evaluating_batch():
+    """Incidents with Cerrado, Resuelto or Cancelado status must not be notified."""
+    client_mock = MagicMock()
+    client_mock.get_resumen_ia.return_value = None
+    tickets = [
+        {"ID de incidencia": "INC001", "Prioridad": "Alta", "Impacto": "Masiva", "Urgencia": "Alta", "Estatus": "Cerrado"},
+        {"ID de incidencia": "INC002", "Prioridad": "Alta", "Impacto": "Masiva", "Urgencia": "Alta", "Estatus": "Resuelto"},
+        {"ID de incidencia": "INC003", "Prioridad": "Alta", "Impacto": "Masiva", "Urgencia": "Alta", "Estatus": "Cancelado"},
+        {"ID de incidencia": "INC004", "Prioridad": "Alta", "Impacto": "Masiva", "Urgencia": "Alta", "Estatus": "Pendiente", "Descripción": "Corte de red"},
+        {"ID de incidencia": "INC005", "Prioridad": "Alta", "Impacto": "Masiva", "Urgencia": "Alta", "Estatus": "Asignado", "Descripción": "Caída de servicio"},
+    ]
+
+    catalog = evaluate_incidents_batch(tickets, epsilon_client=client_mock)
+
+    assert catalog["_metadata"]["kpis"]["total_scanned"] == 5
+    assert catalog["_metadata"]["kpis"]["terminal_skipped_count"] == 3
+    assert catalog["_metadata"]["kpis"]["active_evaluated_count"] == 2
+    # Only active tickets (INC004, INC005) are included
+    item_ids = [item["id"] for item in catalog["data"]]
+    assert item_ids == ["INC004", "INC005"]
+    # Epsilon should only have been called for active tickets
+    assert client_mock.get_resumen_ia.call_count == 2
+
+
 # ============================================================================
 # Cache, CLI & Resolution Tests (Constitution Principle II: >= 80% Coverage)
 # ============================================================================

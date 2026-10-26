@@ -375,6 +375,21 @@ class EpsilonClient:
         return None
 
 
+# Estados finales que no requieren notificación para no sobrecargar el sistema
+TERMINAL_STATUSES = {
+    "cerrado", "cerrada", "closed",
+    "resuelto", "resuelta", "resolved",
+    "cancelado", "cancelada", "cancelled", "canceled"
+}
+
+
+def is_terminal_status(status: Optional[str]) -> bool:
+    """Indica si el estado de una incidencia es terminal (Cerrado, Resuelto, Cancelado)."""
+    if not status:
+        return False
+    return str(status).strip().lower() in TERMINAL_STATUSES
+
+
 def evaluate_incidents_batch(
     tickets: list[dict[str, Any]],
     epsilon_client: Optional[EpsilonClient] = None,
@@ -392,10 +407,17 @@ def evaluate_incidents_batch(
     p1_count = 0
     p2_count = 0
     discrepancies_count = 0
+    terminal_skipped_count = 0
 
     for item in processed_tickets:
         inc_id = item.get("ID de incidencia") or item.get("id") or ""
         if not inc_id:
+            continue
+
+        # Filtrar incidencias en estado terminal (Cerrado, Resuelto, Cancelado)
+        status_val = item.get("Estatus") or item.get("estatus") or item.get("Estado") or item.get("estado") or ""
+        if is_terminal_status(status_val):
+            terminal_skipped_count += 1
             continue
 
         epsilon_data = epsilon_client.get_resumen_ia(inc_id) if epsilon_client else None
@@ -464,6 +486,8 @@ def evaluate_incidents_batch(
             "source_file": source_file_name,
             "kpis": {
                 "total_scanned": total_scanned,
+                "terminal_skipped_count": terminal_skipped_count,
+                "active_evaluated_count": total_scanned - terminal_skipped_count,
                 "total_high_priority": p1_count + p2_count,
                 "p1_critical_count": p1_count,
                 "p2_high_count": p2_count,
@@ -546,8 +570,10 @@ def main() -> int:
 
     kpis = catalog["_metadata"]["kpis"]
     logger.info(
-        "Evaluación completada: %d escaneadas, %d de alta prioridad (P1: %d, P2: %d), %d discrepancias.",
+        "Evaluación completada: %d escaneadas (%d omitidas por estado final/cerrado, %d activas), %d de alta prioridad (P1: %d, P2: %d), %d discrepancias.",
         kpis["total_scanned"],
+        kpis["terminal_skipped_count"],
+        kpis["active_evaluated_count"],
         kpis["total_high_priority"],
         kpis["p1_critical_count"],
         kpis["p2_high_count"],
