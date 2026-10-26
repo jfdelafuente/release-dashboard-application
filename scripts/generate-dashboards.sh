@@ -134,6 +134,19 @@ else
     exit 1
 fi
 
+# Generar notificaciones de alta prioridad (P1/P2)
+log "Evaluando notificaciones de alta prioridad..."
+eval_script="${CONVERTERS_DIR}/cli/evaluate_incident_notifications.py"
+if [ -f "${eval_script}" ]; then
+    if python "${eval_script}" --index "${DATA_OUTPUT_DIR}/index.json" --output "${DATA_OUTPUT_DIR}/high_priority_notifications.json" 2>>"${LOG_FILE}"; then
+        log "✓ Notificaciones de alta prioridad generadas correctamente"
+    else
+        log "⚠ Advertencia: Error en la evaluación de notificaciones de alta prioridad"
+    fi
+else
+    log "⚠ Advertencia: evaluate_incident_notifications.py no encontrado en ${CONVERTERS_DIR}/cli/"
+fi
+
 # Resumen final
 TOTAL_JSON=$(find "${DATA_OUTPUT_DIR}" -name "*.json" | wc -l)
 log "=========================================="

@@ -75,10 +75,36 @@ def run_upload(csv_path: Path, dashboard_type: str, project_root: Path, release_
             "details": (result.stdout + result.stderr)[-4000:],
         }
 
+    if dashboard_type == "massive":
+        _trigger_notifications_evaluation(project_root)
+
     return {
         "success": True,
         "message": f"{csv_path.name} guardado en data/input/ y convertido correctamente",
     }
+
+
+def _trigger_notifications_evaluation(project_root: Path) -> None:
+    """Dispara en segundo plano la regeneración del catálogo de alertas de alta prioridad."""
+    candidate_paths = [
+        project_root / "converters" / "cli" / "evaluate_incident_notifications.py",
+        Path(__file__).resolve().parent / "evaluate_incident_notifications.py",
+        Path(__file__).parent / "evaluate_incident_notifications.py",
+    ]
+    eval_script = next((p for p in candidate_paths if p.exists()), None)
+    if not eval_script:
+        return
+
+    try:
+        subprocess.run(
+            [sys.executable, str(eval_script)],
+            capture_output=True,
+            text=True,
+            cwd=str(project_root),
+            timeout=60,
+        )
+    except Exception:
+        pass
 
 
 def main():

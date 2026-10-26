@@ -476,9 +476,10 @@ def evaluate_incidents_batch(
     return catalog
 
 
-def resolve_default_input_file(project_root: Path) -> Optional[Path]:
-    """Finds the latest massive incident JSON file from data/output/index.json."""
-    index_path = project_root / "data" / "output" / "index.json"
+def resolve_default_input_file(project_root: Path, index_path: Optional[Path] = None) -> Optional[Path]:
+    """Finds the latest massive incident JSON file from index.json."""
+    if index_path is None:
+        index_path = project_root / "data" / "output" / "index.json"
     if not index_path.exists():
         return None
 
@@ -488,9 +489,14 @@ def resolve_default_input_file(project_root: Path) -> Optional[Path]:
         massive_entry = idx.get("massive", {})
         files = massive_entry.get("files", [])
         if files:
+            name = files[0].get("name")
             rel_path = files[0].get("path")
+            candidates = []
             if rel_path:
-                candidate = project_root / rel_path
+                candidates.append(project_root / rel_path)
+            if name:
+                candidates.append(index_path.parent / name)
+            for candidate in candidates:
                 if candidate.exists():
                     return candidate
     except Exception as e:
@@ -502,6 +508,7 @@ def resolve_default_input_file(project_root: Path) -> Optional[Path]:
 def main() -> int:
     parser = argparse.ArgumentParser(description="Evaluate massive incidents for high-priority executive alerts.")
     parser.add_argument("--input", "-i", type=str, help="Input massive JSON file path")
+    parser.add_argument("--index", type=str, help="Alternative index.json path to resolve input file")
     parser.add_argument("--output", "-o", type=str, default="data/output/high_priority_notifications.json", help="Output JSON path")
     parser.add_argument("--limit", "-l", type=int, help="Limit number of incidents evaluated")
     parser.add_argument("--base-url", type=str, default="http://127.0.0.1:8081/api/epsilon/resumenIA", help="Epsilon proxy base URL")
@@ -511,7 +518,8 @@ def main() -> int:
     args = parser.parse_args()
     project_root = Path.cwd()
 
-    input_file = Path(args.input) if args.input else resolve_default_input_file(project_root)
+    index_override = Path(args.index) if args.index else None
+    input_file = Path(args.input) if args.input else resolve_default_input_file(project_root, index_override)
     if not input_file or not input_file.exists():
         logger.error("No se encontró el fichero de incidencias masivas de entrada: %s", input_file)
         return 1
