@@ -274,6 +274,18 @@ try {
                 & $PythonCmd $NotifScript
                 if ($LASTEXITCODE -eq 0) {
                     Write-Ok "Catálogo de alta prioridad actualizado con éxito en data/output/high_priority_notifications.json"
+
+                    # Si el catálogo cambió respecto a git, registrar commit automático específico
+                    $hpDiff = (git status --porcelain "data/output/high_priority_notifications.json" 2>$null)
+                    if ($hpDiff) {
+                        git add "data/output/high_priority_notifications.json"
+                        git commit "data/output/high_priority_notifications.json" -m "data(notifications): regenerar catalogo de notificaciones pre-deploy" | Out-Null
+                        if ($LASTEXITCODE -eq 0) {
+                            Write-Ok "Catálogo de notificaciones actualizado y commiteado automáticamente en git"
+                        }
+                    } else {
+                        Write-Ok "Catálogo de notificaciones al día (sin cambios)"
+                    }
                 } else {
                     Write-WarnMsg "No se pudo actualizar el catálogo de alta prioridad (código de salida: $LASTEXITCODE)."
                 }
