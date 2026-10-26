@@ -121,7 +121,9 @@ coverage.xml
 # Tool Configuration
 .specify/
 .claude/
-.agents/
+.agents/*
+!.agents/skills/
+!.agents/biblioteca-manifest.json
 
 # Design source artifacts (reference only, not versioned)
 MASORANGE dashboard redesign/

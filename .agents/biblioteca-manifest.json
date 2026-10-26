@@ -1,0 +1,21 @@
+{
+    "sourceRepository":  "C:\\Users\\jose.delafuente\\Claude\\Projects\\biblioteca-agentes",
+    "updatedAt":  "2026-10-26T15:29:15+01:00",
+    "installedAgents":  [
+                            {
+                                "name":  "incident-reporter",
+                                "domain":  "it-incidents",
+                                "version":  "1.0.0",
+                                "relPath":  "agents/it-incidents/incident-reporter.md",
+                                "description":  "Experto en comunicación ejecutiva de incidencias de sistemas para Dirección en grandes organizaciones de servicios/telecomunicaciones. Redacta mensajes de apertura, seguimiento o cierre en dos niveles estrictos (versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).",
+                                "skills":  [
+                                               "it-severity-matrix",
+                                               "postmortem-pir-workflow"
+                                           ]
+                            }
+                        ],
+    "installedSkills":  [
+                            "it-severity-matrix",
+                            "postmortem-pir-workflow"
+                        ]
+}

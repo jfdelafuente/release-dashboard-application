@@ -3,7 +3,7 @@
     "version": "1.0.0",
     "description": "Almacén oficial de redacciones ejecutivas generadas por el Agente incident-reporter",
     "source": "agents/it-incidents/incident-reporter.md",
-    "updated_at": "2026-10-26T21:35:00Z"
+    "updated_at": "2026-10-26T22:09:45Z"
   },
   "incidents": {
     "INC000004065609": {
@@ -472,6 +472,26 @@
         "origen": "incident-reporter",
         "conteo_palabras_completo": 56,
         "conteo_palabras_breve": 19
+      }
+    },
+    "INC000004168038": {
+      "apertura": {
+        "completo": "Se confirma degradación crítica en la plataforma de cobros de Jazztel (SOP_BSS_JAZZTEL), tipificada como P1. El incidente impacta masivamente en los procesos de facturación y cobro. Los equipos de soporte de segundo nivel están investigando el origen del fallo y aplicando protocolos de mitigación inmediata. Se enviará actualización operativa en 30 minutos.",
+        "breve": "P1: Degradación en cobros Jazztel (SOP_BSS_JAZZTEL). Impacto masivo en facturación. Soporte SL2 investigando y mitigando. Próxima actualización en 30 min.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 52,
+        "conteo_palabras_breve": 20
+      }
+    },
+    "INC000004167753": {
+      "apertura": {
+        "completo": "Se ha identificado un error funcional en el servicio de Asistente (DES_ASISTENTE) que afecta a las operaciones del centro Konecta en Sevilla, clasificado como P2. La incidencia impide la operativa normal de los agentes de soporte. El equipo de desarrollo está analizando el aplicativo para desplegar una solución correctiva. Próxima actualización en 60 minutos.",
+        "breve": "P2: Error funcional en Asistente (DES_ASISTENTE) en Konecta Sevilla. Operativa asistida degradada. Equipo de desarrollo analizando solución. Actualización en 60 min.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 54,
+        "conteo_palabras_breve": 21
       }
     }
   }

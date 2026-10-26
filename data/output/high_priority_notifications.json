@@ -2,7 +2,7 @@
   "_metadata": {
     "type": "high_priority_notifications",
     "version": "1.0.0",
-    "generated_at": "2026-10-26T21:55:46.224578+00:00",
+    "generated_at": "2026-10-26T22:09:45.372613+00:00",
     "source_file": "CS-Informe incidencias P1,  P2 y P3 - 2026 - 26 Oct 2026-massive.json",
     "kpis": {
       "total_scanned": 1565,
@@ -548,12 +548,12 @@
       "resumen_ia": null,
       "mensajes_ejecutivos": {
         "apertura": {
-          "completo": null,
-          "breve": null,
-          "conteo_palabras_completo": 0,
-          "conteo_palabras_breve": 0,
-          "generado_por_agente": false,
-          "estado": "pendiente",
+          "completo": "Se confirma degradación crítica en la plataforma de cobros de Jazztel (SOP_BSS_JAZZTEL), tipificada como P1. El incidente impacta masivamente en los procesos de facturación y cobro. Los equipos de soporte de segundo nivel están investigando el origen del fallo y aplicando protocolos de mitigación inmediata. Se enviará actualización operativa en 30 minutos.",
+          "breve": "P1: Degradación en cobros Jazztel (SOP_BSS_JAZZTEL). Impacto masivo en facturación. Soporte SL2 investigando y mitigando. Próxima actualización en 30 min.",
+          "conteo_palabras_completo": 52,
+          "conteo_palabras_breve": 20,
+          "generado_por_agente": true,
+          "origen": "incident-reporter",
           "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: APERTURA\nIncidencia: INC000004168038 - DEGRADACION // COBROS JAZZTEL // SL2\nCriticidad sugerida: P1\nSistemas involucrados: SOP_BSS_JAZZTEL\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: DEGRADACION // COBROS JAZZTEL // SL2\n• Impacto ticket: Masiva\n• Urgencia ticket: Alta\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
         },
         "seguimiento": {
@@ -905,12 +905,12 @@
       "resumen_ia": null,
       "mensajes_ejecutivos": {
         "apertura": {
-          "completo": null,
-          "breve": null,
-          "conteo_palabras_completo": 0,
-          "conteo_palabras_breve": 0,
-          "generado_por_agente": false,
-          "estado": "pendiente",
+          "completo": "Se ha identificado un error funcional en el servicio de Asistente (DES_ASISTENTE) que afecta a las operaciones del centro Konecta en Sevilla, clasificado como P2. La incidencia impide la operativa normal de los agentes de soporte. El equipo de desarrollo está analizando el aplicativo para desplegar una solución correctiva. Próxima actualización en 60 minutos.",
+          "breve": "P2: Error funcional en Asistente (DES_ASISTENTE) en Konecta Sevilla. Operativa asistida degradada. Equipo de desarrollo analizando solución. Actualización en 60 min.",
+          "conteo_palabras_completo": 54,
+          "conteo_palabras_breve": 21,
+          "generado_por_agente": true,
+          "origen": "incident-reporter",
           "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: APERTURA\nIncidencia: INC000004167753 - PRDIA-2964 ASISTENTE | Error funcional | Konecta - Sevilla\nCriticidad sugerida: P2\nSistemas involucrados: DES_ASISTENTE\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: PRDIA-2964 ASISTENTE | Error funcional | Konecta - Sevilla\n• Impacto ticket: Masiva\n• Urgencia ticket: Medio\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
         },
         "seguimiento": {

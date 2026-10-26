@@ -99,3 +99,4 @@ def test_should_raise_value_error_on_invalid_phase(tmp_path: Path):
             completo="A",
             breve="B"
         )
+
