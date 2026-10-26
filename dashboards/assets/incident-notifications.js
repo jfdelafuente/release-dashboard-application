@@ -379,17 +379,49 @@
       const sistemas = Array.isArray(item.sistemas) ? item.sistemas.join(', ') : (item.sistemas || 'Sistemas Core');
       const evalData = item.evaluacion || {};
       const sla = evalData.sla_objetivo_minutos ? `${evalData.sla_objetivo_minutos} min` : '60 min';
+      const hasEpsilon = Boolean(item.resumen_ia && (item.resumen_ia.problema || item.resumen_ia.impacto || item.resumen_ia.solucion));
 
       let discrepancyHtml = '';
       if (item.es_discrepancia) {
         discrepancyHtml = `<span class="hp-badge hp-badge-discrepancy" title="Subescalación detectada: en ticket figura como ${item.prioridad_original} pero la IA calculó ${item.prioridad_sugerida}">⚠️ Ticket: ${this.escape(item.prioridad_original)} → IA: ${item.prioridad_sugerida}</span>`;
       }
 
+      let epsilonBadgeHtml = hasEpsilon
+        ? `<span class="hp-badge hp-badge-epsilon" title="Contexto enriquecido con Epsilon Resumen IA">✨ Epsilon IA</span>`
+        : `<span class="hp-badge hp-badge-no-epsilon" title="Datos basados en ticket Remedy. Pulsa 'Sincronizar' para enriquecer con Epsilon">ℹ️ Remedy Base</span>`;
+
       // Panel Ejecutivo si está abierto
       let execPanelHtml = '';
-      if (isOpenExec && item.mensajes_ejecutivos) {
-        const msgs = item.mensajes_ejecutivos;
+      if (isOpenExec) {
+        const msgs = item.mensajes_ejecutivos || {};
         const currentMsg = msgs[activePhase] || msgs.apertura || {};
+        const res = item.resumen_ia || {};
+
+        let epsilonContextBox = '';
+        if (hasEpsilon) {
+          epsilonContextBox = `
+            <div class="hp-epsilon-summary-box">
+              <div class="hp-epsilon-header">
+                <span class="hp-epsilon-title">✨ Contexto Técnico Epsilon Resumen IA</span>
+                <button type="button" class="hp-sync-btn" data-action="sync-epsilon" data-id="${item.id}" title="Reconsultar Epsilon en tiempo real">🔄 Actualizar</button>
+              </div>
+              <div class="hp-epsilon-grid">
+                ${res.problema ? `<div class="hp-epsilon-field"><span class="hp-ep-label">Problema:</span> <span class="hp-ep-val">${this.escape(res.problema)}</span></div>` : ''}
+                ${res.impacto ? `<div class="hp-epsilon-field"><span class="hp-ep-label">Impacto:</span> <span class="hp-ep-val">${this.escape(res.impacto)}</span></div>` : ''}
+                ${res.solucion ? `<div class="hp-epsilon-field"><span class="hp-ep-label">Causa/Solución:</span> <span class="hp-ep-val">${this.escape(res.solucion)}</span></div>` : ''}
+                ${res.siguiente_accion ? `<div class="hp-epsilon-field"><span class="hp-ep-label">Siguiente acción:</span> <span class="hp-ep-val">${this.escape(res.siguiente_accion)}</span></div>` : ''}
+                ${res.bloqueos ? `<div class="hp-epsilon-field"><span class="hp-ep-label">Bloqueos:</span> <span class="hp-ep-val hp-ep-alert">${this.escape(res.bloqueos)}</span></div>` : ''}
+              </div>
+            </div>
+          `;
+        } else {
+          epsilonContextBox = `
+            <div class="hp-epsilon-summary-box hp-epsilon-missing">
+              <span class="hp-ep-missing-text">ℹ️ Esta alerta usa metadatos base. Puedes sincronizar el Resumen IA de Epsilon para enriquecer el contexto.</span>
+              <button type="button" class="hp-sync-btn hp-sync-btn-highlight" data-action="sync-epsilon" data-id="${item.id}">🔄 Sincronizar Epsilon IA</button>
+            </div>
+          `;
+        }
 
         execPanelHtml = `
           <div class="hp-exec-panel">
@@ -398,6 +430,8 @@
               <button type="button" class="hp-exec-tab ${activePhase === 'seguimiento' ? 'active' : ''}" data-action="set-phase" data-id="${item.id}" data-phase="seguimiento">🟡 Seguimiento</button>
               <button type="button" class="hp-exec-tab ${activePhase === 'cierre' ? 'active' : ''}" data-action="set-phase" data-id="${item.id}" data-phase="cierre">🔵 Cierre</button>
             </div>
+
+            ${epsilonContextBox}
 
             <div class="hp-exec-box">
               <div class="hp-exec-section-label">
@@ -424,6 +458,17 @@
                 </button>
               </div>
             </div>
+
+            <div class="hp-agent-prompt-box">
+              <div class="hp-exec-section-label">
+                <span>🤖 Prompt para Agente incident-reporter</span>
+                <span>${hasEpsilon ? 'Contexto Epsilon IA' : 'Metadatos Base'}</span>
+              </div>
+              <p class="hp-prompt-hint">Copia el prompt estructurado con todo el contexto técnico de Epsilon para que el agente elabore comunicaciones o análisis adicionales.</p>
+              <button type="button" class="hp-copy-btn hp-copy-prompt-btn" data-action="copy-prompt" data-id="${item.id}" data-phase="${activePhase}">
+                📋 Copiar Prompt con Contexto Epsilon para Agente IA
+              </button>
+            </div>
           </div>
         `;
       }
@@ -435,6 +480,7 @@
               <span class="hp-badge ${prioBadgeClass}">${item.prioridad_sugerida} ${isP1 ? 'Crítica' : 'Alta'}</span>
               <span class="hp-badge hp-badge-code">${item.id}</span>
               ${discrepancyHtml}
+              ${epsilonBadgeHtml}
             </div>
             <div>
               <select class="hp-status-select" data-action="change-status" data-id="${item.id}">
@@ -479,6 +525,147 @@
           ${execPanelHtml}
         </article>
       `;
+    }
+
+    buildAgentPrompt(item, phase) {
+      const msgs = item.mensajes_ejecutivos || {};
+      if (msgs[phase] && msgs[phase].prompt_agente) {
+        return msgs[phase].prompt_agente;
+      }
+
+      const incId = item.id || 'INC';
+      const prio = item.prioridad_sugerida || 'P2';
+      const faseLabel = (phase || 'apertura').toUpperCase();
+      const sistemas = Array.isArray(item.sistemas) ? item.sistemas.join(', ') : (item.sistemas || 'Sistemas Core');
+      const res = item.resumen_ia;
+
+      const lines = [
+        'Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).',
+        `Fase solicitada: ${faseLabel}`,
+        `Incidencia: ${incId} - ${item.titulo || ''}`,
+        `Criticidad sugerida: ${prio}`,
+        `Sistemas involucrados: ${sistemas}`,
+        ''
+      ];
+
+      if (res && (res.problema || res.impacto || res.solucion)) {
+        lines.push('--- Contexto extraído de Epsilon Resumen IA ---');
+        if (res.problema) lines.push(`• Problema detectado: ${res.problema}`);
+        if (res.impacto) lines.push(`• Impacto en servicio/negocio: ${res.impacto}`);
+        if (res.solucion) lines.push(`• Causa raíz / Solución: ${res.solucion}`);
+        if (res.siguiente_accion || res.siguienteAccion) lines.push(`• Siguiente acción: ${res.siguiente_accion || res.siguienteAccion}`);
+        if (res.estadoActual) lines.push(`• Estado actual reportado: ${res.estadoActual}`);
+        if (res.bloqueos) lines.push(`• Bloqueos identificados: ${Array.isArray(res.bloqueos) ? res.bloqueos.join('; ') : res.bloqueos}`);
+      } else {
+        lines.push('--- Metadatos del ticket (Epsilon IA pendiente) ---');
+        lines.push(`• Descripción: ${item.titulo || ''}`);
+        const evalData = item.evaluacion || {};
+        lines.push(`• Impacto ticket: ${evalData.impacto || 'N/D'}`);
+        lines.push(`• Urgencia ticket: ${evalData.urgencia || 'N/D'}`);
+      }
+
+      lines.push('');
+      lines.push('Redacta el mensaje en los dos niveles obligatorios:');
+      lines.push('**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)');
+      lines.push('**Versión aún más breve:** (máx 30 palabras)');
+
+      return lines.join('\n');
+    }
+
+    refreshMessagesForEpsilon(item) {
+      const prio = item.prioridad_sugerida || 'P2';
+      const incId = item.id;
+      const sistemas = Array.isArray(item.sistemas) ? item.sistemas.join(', ') : (item.sistemas || 'Sistemas Core');
+      const res = item.resumen_ia;
+      if (!res) return;
+
+      const prob = (res.problema || item.titulo || 'Incidencia técnica').trim();
+      const imp = (res.impacto || 'Afectación al servicio').trim();
+      const sol = (res.solucion || 'acciones de diagnóstico y resolución técnica').trim();
+      const sig = (res.siguiente_accion || 'restablecimiento y verificación del servicio').trim();
+
+      const apComp = `Incidencia de criticidad ${prio} en ${sistemas} (${incId}). Se detecta ${prob}. Impacto operativo y de negocio: ${imp}. Línea de actuación en curso: ${sig}. Se emitirá actualización con la evolución técnica.`;
+      const apBreve = `[${prio} Apertura] ${incId}: ${prob.substring(0, 55)} en ${sistemas}. Intervención en curso.`;
+
+      const segComp = `Seguimiento de incidencia ${incId} (${prio}) en ${sistemas}. Continúa la gestión operativa sobre ${prob}. Avance técnico: ${sol}. Próxima acción: ${sig}. Se mantiene la monitorización activa del servicio.`;
+      const segBreve = `[Seguimiento] ${incId}: Avance en ${sistemas}. Acción en curso: ${sig.substring(0, 45)}.`;
+
+      const cieComp = `Incidencia ${incId} en ${sistemas} resuelta satisfactoriamente. La afectación sobre ${prob} queda subsanada tras aplicar ${sol}. El servicio se encuentra estable y bajo supervisión preventiva.`;
+      const cieBreve = `[Cierre] ${incId} resuelta: Servicio normalizado en ${sistemas} tras ${sol.substring(0, 40)}.`;
+
+      item.mensajes_ejecutivos = {
+        apertura: {
+          completo: apComp,
+          breve: apBreve,
+          conteo_palabras_completo: apComp.split(/\s+/).length,
+          conteo_palabras_breve: apBreve.split(/\s+/).length,
+          prompt_agente: this.buildAgentPrompt(item, 'apertura')
+        },
+        seguimiento: {
+          completo: segComp,
+          breve: segBreve,
+          conteo_palabras_completo: segComp.split(/\s+/).length,
+          conteo_palabras_breve: segBreve.split(/\s+/).length,
+          prompt_agente: this.buildAgentPrompt(item, 'seguimiento')
+        },
+        cierre: {
+          completo: cieComp,
+          breve: cieBreve,
+          conteo_palabras_completo: cieComp.split(/\s+/).length,
+          conteo_palabras_breve: cieBreve.split(/\s+/).length,
+          prompt_agente: this.buildAgentPrompt(item, 'cierre')
+        }
+      };
+    }
+
+    async syncEpsilon(id, buttonEl) {
+      if (!id) return;
+      const originalText = buttonEl ? buttonEl.innerHTML : '';
+      if (buttonEl) {
+        buttonEl.disabled = true;
+        buttonEl.innerHTML = '⏳ Consultando Epsilon...';
+      }
+
+      try {
+        const res = await fetch(`/api/epsilon/resumenIA/${encodeURIComponent(id)}`, {
+          headers: { 'Accept': 'application/json', 'Cache-Control': 'no-cache' }
+        });
+        if (!res.ok) {
+          throw new Error(`HTTP ${res.status}`);
+        }
+        const payload = await res.json();
+        const data = (payload && payload.data) ? payload.data : payload;
+        if (!data || (!data.problema && !data.impacto && !data.solucion)) {
+          throw new Error('Epsilon no devolvió resumen para esta incidencia');
+        }
+
+        const item = this.items.find(x => x.id === id);
+        if (item) {
+          item.resumen_ia = {
+            problema: data.problema || '',
+            impacto: data.impacto || '',
+            solucion: data.solucion || '',
+            bloqueos: Array.isArray(data.bloqueos) ? data.bloqueos.join('; ') : (data.bloqueos || ''),
+            siguiente_accion: data.siguienteAccion || data.siguiente_accion || '',
+            estadoActual: data.estadoActual || ''
+          };
+          if (Array.isArray(data.sistemas) && data.sistemas.length > 0) {
+            item.sistemas = data.sistemas;
+          }
+          this.refreshMessagesForEpsilon(item);
+          this.renderCards();
+        }
+      } catch (err) {
+        console.warn(`[IncidentNotifications] Error al sincronizar con Epsilon para ${id}:`, err);
+        if (buttonEl) {
+          buttonEl.innerHTML = '⚠️ No disponible';
+          setTimeout(() => {
+            buttonEl.disabled = false;
+            buttonEl.innerHTML = originalText;
+          }, 2000);
+        }
+      }
+    }
     }
 
     attachCardEvents(container) {
@@ -547,6 +734,39 @@
             console.error('Error al copiar:', err);
             prompt('Copia manualmente con Ctrl+C:', text);
           }
+        });
+      });
+
+      // Copiado de Prompt estructurado para Agente IA
+      container.querySelectorAll('button[data-action="copy-prompt"]').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+          const id = e.currentTarget.dataset.id;
+          const phase = e.currentTarget.dataset.phase || 'apertura';
+          const item = this.items.find(x => x.id === id);
+          if (!item) return;
+
+          const promptText = this.buildAgentPrompt(item, phase);
+          try {
+            await navigator.clipboard.writeText(promptText);
+            const origHtml = e.currentTarget.innerHTML;
+            e.currentTarget.classList.add('copied');
+            e.currentTarget.innerHTML = '✅ ¡Prompt Copiado!';
+            setTimeout(() => {
+              e.currentTarget.classList.remove('copied');
+              e.currentTarget.innerHTML = origHtml;
+            }, 2000);
+          } catch (err) {
+            console.error('Error al copiar prompt:', err);
+            prompt('Copia manualmente con Ctrl+C:', promptText);
+          }
+        });
+      });
+
+      // Sincronización en vivo con Epsilon Resumen IA
+      container.querySelectorAll('button[data-action="sync-epsilon"]').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const id = e.currentTarget.dataset.id;
+          this.syncEpsilon(id, e.currentTarget);
         });
       });
     }

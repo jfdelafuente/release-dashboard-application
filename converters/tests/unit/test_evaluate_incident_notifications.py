@@ -381,3 +381,46 @@ def test_should_run_main_dry_run_successfully(tmp_path, monkeypatch):
     exit_code = main()
     assert exit_code == 0
 
+
+def test_should_generate_agent_prompt_with_epsilon_context():
+    ticket = {
+        "ID de incidencia": "INC000004103003",
+        "Descripción": "Afectación masiva servicios de fibra",
+        "Grupo asignado": "Sistemas Core"
+    }
+    evaluation = {
+        "prioridad_sugerida": "P1",
+        "evaluacion": {
+            "impacto": "Crítico",
+            "urgencia": "Alta"
+        }
+    }
+    resumen_ia = {
+        "problema": "Corte en enlace troncal de fibra óptica de la zona Este",
+        "impacto": "45.000 clientes residenciales sin servicio de banda ancha",
+        "solucion": "Despliegue de equipo de planta externa para empalme y sustitución de tramo",
+        "siguienteAccion": "Fusión del cable principal y pruebas de reflectometría",
+        "sistemas": ["FTTH", "Red Transporte"],
+        "bloqueos": ["Acceso restringido a cámara subterránea por inundación"],
+        "estadoActual": "En curso de resolución"
+    }
+
+    generator = ExecutiveMessageGenerator()
+    messages = generator.generate(ticket, evaluation, resumen_ia)
+
+    assert "apertura" in messages
+    assert "prompt_agente" in messages["apertura"]
+    prompt = messages["apertura"]["prompt_agente"]
+
+    assert "incident-reporter" in prompt
+    assert "INC000004103003" in prompt
+    assert "Contexto extraído de Epsilon Resumen IA" in prompt
+    assert "Corte en enlace troncal" in prompt
+    assert "45.000 clientes" in prompt
+    assert "Despliegue de equipo de planta externa" in prompt
+    assert "Fusión del cable principal" in prompt
+    assert "Acceso restringido a cámara" in prompt
+    assert "90 palabras" in prompt
+    assert "30 palabras" in prompt
+
+

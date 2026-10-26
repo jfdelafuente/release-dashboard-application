@@ -565,6 +565,153 @@
   color: var(--hp-green-success);
 }
 
+.hp-badge-epsilon {
+  background: #EFF6FF;
+  color: #1D4ED8;
+  border: 1px solid #BFDBFE;
+}
+
+.hp-badge-no-epsilon {
+  background: var(--hp-bg-subtle);
+  color: var(--hp-text-muted);
+  border: 1px solid var(--hp-border);
+  font-size: 10px;
+}
+
+/* ============================================================
+   5. Caja de Contexto Epsilon Resumen IA
+   ============================================================ */
+.hp-epsilon-summary-box {
+  background: #F0FDF4;
+  border: 1px solid #BBF7D0;
+  border-radius: 8px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.hp-epsilon-summary-box.hp-epsilon-missing {
+  background: #FFFBEB;
+  border-color: #FDE68A;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+
+.hp-ep-missing-text {
+  font-size: 11px;
+  color: #92400E;
+}
+
+.hp-epsilon-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.hp-epsilon-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: #166534;
+  letter-spacing: 0.02em;
+}
+
+.hp-epsilon-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 5px;
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.hp-epsilon-field {
+  color: #1F2937;
+}
+
+.hp-ep-label {
+  font-weight: 700;
+  color: #374151;
+}
+
+.hp-ep-val {
+  color: #111827;
+}
+
+.hp-ep-alert {
+  color: var(--hp-red-critical);
+  font-weight: 600;
+}
+
+.hp-sync-btn {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 4px;
+  background: white;
+  border: 1px solid #86EFAC;
+  color: #166534;
+  cursor: pointer;
+  transition: var(--hp-transition);
+}
+
+.hp-sync-btn:hover {
+  background: #DCFCE7;
+}
+
+.hp-sync-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.hp-sync-btn-highlight {
+  background: var(--hp-orange-primary);
+  color: white;
+  border-color: var(--hp-orange-primary);
+  white-space: nowrap;
+}
+
+.hp-sync-btn-highlight:hover {
+  background: var(--hp-orange-hover);
+}
+
+/* ============================================================
+   6. Caja de Prompt Estructurado para Agente IA
+   ============================================================ */
+.hp-agent-prompt-box {
+  background: #FFF9F2;
+  border: 1px solid #FFEDD5;
+  border-radius: 8px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.hp-prompt-hint {
+  font-size: 11px;
+  color: var(--hp-text-muted);
+  margin: 0;
+  line-height: 1.4;
+}
+
+.hp-copy-prompt-btn {
+  background: white;
+  border-color: var(--hp-orange-primary);
+  color: var(--hp-orange-primary);
+  font-weight: 700;
+  justify-content: center;
+  padding: 7px 12px;
+  box-shadow: 0 1px 2px rgba(255, 121, 0, 0.1);
+}
+
+.hp-copy-prompt-btn:hover {
+  background: var(--hp-orange-light);
+  color: var(--hp-orange-hover);
+}
+
 /* Empty State */
 .hp-empty-state {
   text-align: center;
