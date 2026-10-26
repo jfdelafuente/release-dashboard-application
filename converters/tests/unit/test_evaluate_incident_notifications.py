@@ -215,6 +215,43 @@ def test_should_include_apertura_seguimiento_and_cierre_phases(sample_ticket_p3_
     assert "cierre" in messages
 
 
+def test_should_synthesize_raw_ticket_title_into_clean_executive_phrasing():
+    desc, scope, short = ExecutiveMessageGenerator.synthesize_ticket_title("ALTAIR // LA FINCA // ERROR FUNCIONAL")
+    assert "ALTAIR" in scope
+    assert "La Finca" in scope
+    assert "error funcional" in desc
+    assert "//" not in desc
+
+    desc2, scope2, short2 = ExecutiveMessageGenerator.synthesize_ticket_title("Siebel 8 | Error funcional | OEST - Oviedo")
+    assert "Siebel 8" in scope2
+    assert "OEST - Oviedo" in scope2
+    assert "|" not in desc2
+
+
+def test_should_generate_incident_reporter_conforming_messages_without_epsilon(sample_ticket_p3_nominal):
+    evaluator = SeverityEvaluator()
+    eval_result = evaluator.evaluate(sample_ticket_p3_nominal, epsilon_data=None)
+
+    generator = ExecutiveMessageGenerator()
+    messages = generator.generate(sample_ticket_p3_nominal, eval_result, resumen_ia=None)
+
+    for phase in ["apertura", "seguimiento", "cierre"]:
+        msg = messages[phase]
+        comp = msg["completo"]
+        brev = msg["breve"]
+        # Monopárrafo sin saltos
+        assert "\n" not in comp
+        assert "\n" not in brev
+        # Límites estrictos de incident-reporter
+        assert len(comp.split()) <= 90
+        assert len(brev.split()) <= 30
+        assert msg["conteo_palabras_completo"] == len(comp.split())
+        assert msg["conteo_palabras_breve"] == len(brev.split())
+        # Sin delimitadores crudos
+        assert "//" not in comp
+        assert "//" not in brev
+
+
 # ============================================================================
 # Phase 5: User Story 3 (P3) Tests - Discrepancias de Prioridad
 # ============================================================================

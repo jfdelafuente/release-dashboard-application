@@ -278,13 +278,64 @@ class ExecutiveMessageGenerator:
 
         return "\n".join(prompt_lines)
 
+    @classmethod
+    def synthesize_ticket_title(cls, raw_title: str) -> tuple[str, str, str]:
+        """Synthesizes a raw Remedy title (e.g. 'ALTAIR // LA FINCA // ERROR FUNCIONAL')
+        into natural executive phrasing matching the incident-reporter agent style:
+        returns: (problema_sintetizado, servicio_alcance, problema_breve)
+        """
+        raw = cls._clean_text(raw_title)
+        if not raw:
+            return "una incidencia técnica", "los servicios involucrados", "incidencia técnica"
+
+        parts = [p.strip() for p in re.split(r"//|\|", raw) if p.strip()]
+        if len(parts) >= 2:
+            system = parts[0]
+            issue = ""
+            location = ""
+            for p in parts[1:]:
+                p_lower = p.lower()
+                if any(k in p_lower for k in ["error", "fallo", "caida", "caída", "degradac", "lento", "corte", "bloqueo", "indispon"]):
+                    issue = p_lower
+                elif not location:
+                    location = p
+            if not issue and len(parts) == 3:
+                location = parts[1]
+                issue = parts[2].lower()
+            elif not issue:
+                issue = "error funcional"
+
+            loc_str = ""
+            if location:
+                loc_words = []
+                for idx, w in enumerate(location.split()):
+                    if (len(w) <= 3 or w.upper() in ["TLP", "ICP", "MM", "ISGF", "CAU", "RED", "ATAC", "PRDIA", "OEST"]) and w.upper() in ["TLP", "ICP", "MM", "ISGF", "CAU", "RED", "ATAC", "PRDIA", "OEST"]:
+                        loc_words.append(w.upper())
+                    elif idx > 0 and len(w) == 2 and w.lower() in ["de", "la", "el", "en"]:
+                        loc_words.append(w.lower())
+                    else:
+                        loc_words.append(w.capitalize())
+                loc_str = " (" + " ".join(loc_words) + ")"
+
+            problema_sintetizado = f"un {issue} detectado en el servicio {system}{loc_str}"
+            servicio_alcance = f"{system}{loc_str}"
+            problema_breve = f"{issue} en {system}{loc_str}"
+            return problema_sintetizado, servicio_alcance, problema_breve
+        else:
+            clean = raw[:-1] if raw.endswith(".") else raw
+            clean_clean = clean.capitalize() if clean.isupper() else clean
+            problema_sintetizado = f"un problema por {clean_clean}"
+            servicio_alcance = clean_clean
+            problema_breve = clean_clean[:45]
+            return problema_sintetizado, servicio_alcance, problema_breve
+
     def generate(
         self,
         ticket: dict[str, Any],
         evaluation: dict[str, Any],
         resumen_ia: Optional[dict[str, Any]]
     ) -> dict[str, dict[str, Any]]:
-        """Generates executive messages for apertura, seguimiento, and cierre, leveraging Epsilon AI context."""
+        """Generates executive messages for apertura, seguimiento, and cierre, conforming to incident-reporter agent standards."""
         inc_id = ticket.get("ID de incidencia") or ticket.get("id") or "INC"
         prio = evaluation.get("prioridad_sugerida", "P2")
 
@@ -293,69 +344,82 @@ class ExecutiveMessageGenerator:
         if resumen_ia and isinstance(resumen_ia.get("sistemas"), list):
             sistemas_list = [s for s in resumen_ia["sistemas"] if s]
         if not sistemas_list:
-            grp = ticket.get("Grupo asignado") or "Sistemas Core"
-            sistemas_list = [grp]
+            if isinstance(ticket.get("sistemas"), list) and ticket.get("sistemas"):
+                sistemas_list = ticket.get("sistemas")
+            else:
+                grp = ticket.get("Grupo asignado") or "Sistemas Core"
+                sistemas_list = [grp]
         sistemas_str = ", ".join(sistemas_list[:3])
 
         has_epsilon = bool(resumen_ia and (resumen_ia.get("problema") or resumen_ia.get("impacto")))
 
         if has_epsilon:
-            # Síntesis ejecutiva contextualizada con datos reales de Epsilon
-            problema = self._clean_text(resumen_ia.get("problema") or ticket.get("Descripción", "Incidencia técnica"))
-            impacto = self._clean_text(resumen_ia.get("impacto") or "Afectación al servicio")
-            solucion = self._clean_text(resumen_ia.get("solucion") or "acciones de diagnóstico y resolución técnica")
-            sig_accion = self._clean_text(resumen_ia.get("siguienteAccion") or resumen_ia.get("siguiente_accion") or "restablecimiento y verificación del servicio")
+            # Síntesis ejecutiva contextualizada con datos reales de Epsilon Resumen IA
+            problema = self._clean_text(resumen_ia.get("problema") or ticket.get("Descripción") or ticket.get("titulo") or "incidencia técnica").rstrip(".")
+            impacto = self._clean_text(resumen_ia.get("impacto") or "afectación sobre el servicio").rstrip(".")
+            solucion = self._clean_text(resumen_ia.get("solucion") or "actuaciones de diagnóstico y resolución técnica").rstrip(".")
+            sig_accion = self._clean_text(resumen_ia.get("siguienteAccion") or resumen_ia.get("siguiente_accion") or "normalización y verificación del servicio").rstrip(".")
 
             apertura_comp = (
-                f"Incidencia de criticidad {prio} en {sistemas_str} ({inc_id}). "
-                f"Se detecta {problema}. "
-                f"Impacto operativo y de negocio: {impacto}. "
-                f"Línea de actuación en curso: {sig_accion}. "
-                f"Se emitirá actualización con la evolución técnica."
+                f"Se ha declarado la apertura de una incidencia crítica {prio} ({inc_id}) por {problema} en {sistemas_str}. "
+                f"La contingencia genera {impacto}, comprometiendo la operativa de los servicios. "
+                f"Los equipos técnicos de soporte e infraestructura han iniciado las actuaciones de contención orientadas a {sig_accion}. "
+                f"Se emitirá una nueva actualización de seguimiento en cuanto se disponga del diagnóstico inicial."
             )
-            apertura_breve = f"[{prio} Apertura] {inc_id}: {problema[:55]} en {sistemas_str}. Intervención en curso."
+            apertura_breve = f"Apertura {prio} ({inc_id}): {problema[:45]} en {sistemas_str}. Impacto: {impacto[:40]}. Actuaciones en curso; seguimiento tras diagnóstico inicial."
 
             seguimiento_comp = (
-                f"Seguimiento de incidencia {inc_id} ({prio}) en {sistemas_str}. "
-                f"Continúa la gestión operativa sobre {problema}. "
-                f"Avance técnico: {solucion}. "
-                f"Próxima acción: {sig_accion}. "
-                f"Se mantiene la monitorización activa del servicio."
+                f"Continúa el seguimiento de la incidencia {prio} ({inc_id}) por {problema} en {sistemas_str}. "
+                f"Los equipos técnicos avanzan en las tareas de resolución mediante {solucion}. "
+                f"La línea de acción operativa se enfoca en {sig_accion}, manteniendo la monitorización activa hasta confirmar la estabilidad de los servicios."
             )
-            seguimiento_breve = f"[Seguimiento] {inc_id}: Avance en {sistemas_str}. Acción en curso: {sig_accion[:45]}."
+            seguimiento_breve = f"Seguimiento {prio} ({inc_id}): Mitigación en {sistemas_str} mediante {solucion[:35]}. Próximo paso: {sig_accion[:30]}."
 
             cierre_comp = (
-                f"Incidencia {inc_id} en {sistemas_str} resuelta satisfactoriamente. "
-                f"La afectación sobre {problema} queda subsanada tras aplicar {solucion}. "
-                f"El servicio se encuentra estable y bajo supervisión preventiva."
+                f"Queda formalmente cerrada la incidencia {prio} ({inc_id}) en {sistemas_str}. "
+                f"La afectación originada por {problema} ha sido solventada tras aplicar {solucion}. "
+                f"Los flujos operativos y el servicio se encuentran plenamente restablecidos, manteniéndose supervisión preventiva para asegurar la estabilidad."
             )
-            cierre_breve = f"[Cierre] {inc_id} resuelta: Servicio normalizado en {sistemas_str} tras {solucion[:40]}."
+            cierre_breve = f"Cierre {prio} ({inc_id}): Incidencia resuelta en {sistemas_str} tras {solucion[:35]}. Operativa y servicio normalizados."
         else:
-            # Fallback limpio sin sobrecargar cuando Epsilon no tiene resumen
-            desc = self._clean_text(ticket.get("Descripción") or ticket.get("descripcion") or "Incidencia de servicio")
-            imp_just = evaluation.get("evaluacion", {}).get("impacto_justificacion", "Degradación del servicio")
-            imp_clean = self._clean_text(imp_just)
+            # Síntesis ejecutiva de alto nivel con metadatos del ticket y evaluación ITIL
+            title_raw = ticket.get("Descripción") or ticket.get("descripcion") or ticket.get("titulo") or ""
+            problema_sint, serv_alcance, prob_breve = self.synthesize_ticket_title(title_raw)
+            imp_raw = str(ticket.get("Impacto", "")).lower()
+            imp_eval = str(evaluation.get("evaluacion", {}).get("impacto_justificacion", "")).lower()
+
+            if "masiva" in imp_raw or "corte global" in imp_eval or "alto" in imp_eval:
+                impacto_frase = "una calificación de impacto masivo en los sistemas operativos, afectando a la operativa habitual de la plataforma"
+                impacto_breve = "impacto masivo"
+            elif "alto" in imp_raw or "grave" in imp_eval:
+                impacto_frase = "un impacto alto en la operativa, condicionando la prestación del servicio a usuarios"
+                impacto_breve = "impacto alto"
+            else:
+                impacto_frase = "afectación en los servicios operativos bajo supervisión técnica"
+                impacto_breve = "afectación en servicio"
 
             apertura_comp = (
-                f"Incidencia de criticidad {prio} detectada en {sistemas_str} ({inc_id}). "
-                f"Se registra {desc}, con afectación catalogada como {imp_clean}. "
-                f"Los equipos operativos intervienen para contener la afectación y restablecer el servicio."
+                f"Se ha declarado la apertura de una incidencia crítica {prio} por {problema_sint}, gestionada a través de {sistemas_str}. "
+                f"La anomalía cuenta con {impacto_frase}. "
+                f"Los equipos técnicos de soporte e infraestructura se encuentran investigando el origen del fallo para contener la afectación y recuperar el servicio a la mayor brevedad. "
+                f"Se emitirá una nueva actualización de seguimiento tras el diagnóstico inicial."
             )
-            apertura_breve = f"[{prio} Apertura] {inc_id}: {desc[:50]} en {sistemas_str}. Intervención en curso."
+            apertura_breve = f"Apertura {prio} por {prob_breve} con {impacto_breve}. Equipos técnicos investigando origen para restablecimiento del servicio; nuevo seguimiento tras diagnóstico inicial."
 
             seguimiento_comp = (
-                f"Seguimiento de la incidencia {inc_id} ({prio}) en {sistemas_str}. "
-                f"Continúan los trabajos de diagnóstico y mitigación sobre {desc}. "
-                f"Se mantiene la monitorización operativa hasta confirmar la estabilización del flujo de servicio."
+                f"Continúa el seguimiento de la incidencia {prio} ({inc_id}) por {problema_sint}, canalizada a través de {sistemas_str}. "
+                f"Los equipos técnicos mantienen los trabajos de mitigación y diagnóstico en los entornos afectados. "
+                f"No se identifican bloqueos externos y se prosigue con las pruebas de contención para asegurar la estabilidad operativa. "
+                f"Se mantiene la monitorización activa hasta confirmar la normalización del servicio."
             )
-            seguimiento_breve = f"[Seguimiento] {inc_id}: Trabajos en curso en {sistemas_str} sobre {desc[:40]}."
+            seguimiento_breve = f"Seguimiento {prio} {inc_id}: Mitigación técnica en curso sobre {serv_alcance}. Monitorización activa y verificación de estabilidad sin bloqueos."
 
             cierre_comp = (
-                f"Incidencia {inc_id} en {sistemas_str} resuelta y servicio restablecido. "
-                f"La incidencia sobre {desc} ha sido normalizada por el equipo resolutor. "
-                f"Se confirma la estabilidad operativa."
+                f"Queda formalmente cerrada la incidencia {prio} ({inc_id}) relativa a {problema_sint} con soporte de {sistemas_str}. "
+                f"La afectación ha sido solventada por el equipo resolutor y la operativa técnica se encuentra totalmente restablecida. "
+                f"El servicio permanece monitorizado de forma preventiva confirmando su correcta estabilidad y disponibilidad."
             )
-            cierre_breve = f"[Cierre] {inc_id} resuelta: Operativa restablecida en {sistemas_str}."
+            cierre_breve = f"Cierre {prio} {inc_id}: Servicio normalizado en {serv_alcance} tras subsanar la incidencia. Operativa técnica restablecida."
 
         apertura_comp = self._truncate_to_words(self._clean_text(apertura_comp), 90)
         apertura_breve = self._truncate_to_words(self._clean_text(apertura_breve), 30)

@@ -34,14 +34,57 @@
 
     setStatus(id, status) {
       const all = this.getAll();
-      all[id] = {
-        status: status,
-        updated_at: new Date().toISOString()
-      };
+      if (!all[id]) {
+        all[id] = {};
+      }
+      all[id].status = status;
+      all[id].updated_at = new Date().toISOString();
       try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(all));
       } catch (e) {
         console.warn('[IncidentNotifications] Error escribiendo localStorage:', e);
+      }
+    },
+
+    getCustomMessage(id, phase) {
+      const all = this.getAll();
+      return (all[id] && all[id].custom_messages && all[id].custom_messages[phase]) || null;
+    },
+
+    setCustomMessage(id, phase, completo, breve) {
+      const all = this.getAll();
+      if (!all[id]) {
+        all[id] = { status: 'pendiente' };
+      }
+      if (!all[id].custom_messages) {
+        all[id].custom_messages = {};
+      }
+      const wordsComp = (completo || '').trim().split(/\s+/).filter(Boolean).length;
+      const wordsBrev = (breve || '').trim().split(/\s+/).filter(Boolean).length;
+      all[id].custom_messages[phase] = {
+        completo: completo.trim(),
+        breve: breve.trim(),
+        conteo_palabras_completo: wordsComp,
+        conteo_palabras_breve: wordsBrev,
+        is_custom: true,
+        saved_at: new Date().toISOString()
+      };
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(all));
+      } catch (e) {
+        console.warn('[IncidentNotifications] Error guardando custom message:', e);
+      }
+    },
+
+    removeCustomMessage(id, phase) {
+      const all = this.getAll();
+      if (all[id] && all[id].custom_messages && all[id].custom_messages[phase]) {
+        delete all[id].custom_messages[phase];
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(all));
+        } catch (e) {
+          console.warn('[IncidentNotifications] Error eliminando custom message:', e);
+        }
       }
     }
   };
@@ -407,7 +450,9 @@
       let execPanelHtml = '';
       if (isOpenExec) {
         const msgs = item.mensajes_ejecutivos || {};
-        const currentMsg = msgs[activePhase] || msgs.apertura || {};
+        const customMsg = StateManager.getCustomMessage(item.id, activePhase);
+        const currentMsg = customMsg || msgs[activePhase] || msgs.apertura || {};
+        const isCustom = Boolean(customMsg);
         const res = item.resumen_ia || {};
 
         let epsilonContextBox = '';
@@ -438,6 +483,22 @@
 
         execPanelHtml = `
           <div class="hp-exec-panel">
+            <div class="hp-exec-agent-banner">
+              <div class="hp-exec-agent-badge-group">
+                <span class="hp-exec-agent-badge ${isCustom ? 'hp-badge-custom' : 'hp-badge-official'}">
+                  ${isCustom ? '✏️ Redacción Personalizada' : '🤖 Salida de Agente incident-reporter'}
+                </span>
+                <span class="hp-exec-agent-sub">
+                  ${isCustom ? 'Editado en cliente / pegado desde LLM' : (hasEpsilon ? 'Síntesis ejecutiva con Epsilon IA' : 'Síntesis ejecutiva sobre Remedy Base')}
+                </span>
+              </div>
+              ${isCustom ? `
+                <button type="button" class="hp-reset-agent-btn" data-action="reset-agent-output" data-id="${item.id}" data-phase="${activePhase}" title="Restaurar el mensaje oficial generado por el agente">
+                  ↺ Restaurar original
+                </button>
+              ` : ''}
+            </div>
+
             <div class="hp-exec-tabs">
               <button type="button" class="hp-exec-tab ${activePhase === 'apertura' ? 'active' : ''}" data-action="set-phase" data-id="${item.id}" data-phase="apertura">🟢 Apertura</button>
               <button type="button" class="hp-exec-tab ${activePhase === 'seguimiento' ? 'active' : ''}" data-action="set-phase" data-id="${item.id}" data-phase="seguimiento">🟡 Seguimiento</button>
@@ -477,10 +538,15 @@
                 <span>🤖 Prompt para Agente incident-reporter</span>
                 <span>${hasEpsilon ? 'Contexto Epsilon IA' : 'Metadatos Base'}</span>
               </div>
-              <p class="hp-prompt-hint">Copia el prompt estructurado con todo el contexto técnico de Epsilon para que el agente elabore comunicaciones o análisis adicionales.</p>
-              <button type="button" class="hp-copy-btn hp-copy-prompt-btn" data-action="copy-prompt" data-id="${item.id}" data-phase="${activePhase}">
-                📋 Copiar Prompt con Contexto Epsilon para Agente IA
-              </button>
+              <p class="hp-prompt-hint">Copia el prompt estructurado para pasárselo a un LLM o pega directamente aquí la respuesta obtenida para sustituir el mensaje.</p>
+              <div class="hp-prompt-actions-row">
+                <button type="button" class="hp-copy-btn hp-copy-prompt-btn" data-action="copy-prompt" data-id="${item.id}" data-phase="${activePhase}">
+                  📋 Copiar Prompt con Contexto
+                </button>
+                <button type="button" class="hp-copy-btn hp-paste-agent-btn" data-action="paste-agent-output" data-id="${item.id}" data-phase="${activePhase}">
+                  ✏️ Pegar salida de Agente
+                </button>
+              </div>
             </div>
           </div>
         `;
@@ -592,40 +658,40 @@
       const res = item.resumen_ia;
       if (!res) return;
 
-      const prob = (res.problema || item.titulo || 'Incidencia técnica').trim();
-      const imp = (res.impacto || 'Afectación al servicio').trim();
-      const sol = (res.solucion || 'acciones de diagnóstico y resolución técnica').trim();
-      const sig = (res.siguiente_accion || 'restablecimiento y verificación del servicio').trim();
+      const prob = (res.problema || item.titulo || 'incidencia técnica').trim().replace(/\.$/, '');
+      const imp = (res.impacto || 'afectación sobre el servicio').trim().replace(/\.$/, '');
+      const sol = (res.solucion || 'actuaciones de diagnóstico y resolución técnica').trim().replace(/\.$/, '');
+      const sig = (res.siguiente_accion || res.siguienteAccion || 'normalización y verificación del servicio').trim().replace(/\.$/, '');
 
-      const apComp = `Incidencia de criticidad ${prio} en ${sistemas} (${incId}). Se detecta ${prob}. Impacto operativo y de negocio: ${imp}. Línea de actuación en curso: ${sig}. Se emitirá actualización con la evolución técnica.`;
-      const apBreve = `[${prio} Apertura] ${incId}: ${prob.substring(0, 55)} en ${sistemas}. Intervención en curso.`;
+      const apComp = `Se ha declarado la apertura de una incidencia crítica ${prio} (${incId}) por ${prob} en ${sistemas}. La contingencia genera ${imp}, comprometiendo la operativa de los servicios. Los equipos técnicos de soporte e infraestructura han iniciado las actuaciones de contención orientadas a ${sig}. Se emitirá una nueva actualización de seguimiento en cuanto se disponga del diagnóstico inicial.`;
+      const apBreve = `Apertura ${prio} (${incId}): ${prob.substring(0, 45)} en ${sistemas}. Impacto: ${imp.substring(0, 40)}. Actuaciones en curso; seguimiento tras diagnóstico inicial.`;
 
-      const segComp = `Seguimiento de incidencia ${incId} (${prio}) en ${sistemas}. Continúa la gestión operativa sobre ${prob}. Avance técnico: ${sol}. Próxima acción: ${sig}. Se mantiene la monitorización activa del servicio.`;
-      const segBreve = `[Seguimiento] ${incId}: Avance en ${sistemas}. Acción en curso: ${sig.substring(0, 45)}.`;
+      const segComp = `Continúa el seguimiento de la incidencia ${prio} (${incId}) por ${prob} en ${sistemas}. Los equipos técnicos avanzan en las tareas de resolución mediante ${sol}. La línea de acción operativa se enfoca en ${sig}, manteniendo la monitorización activa hasta confirmar la estabilidad de los servicios.`;
+      const segBreve = `Seguimiento ${prio} (${incId}): Mitigación en ${sistemas} mediante ${sol.substring(0, 35)}. Próximo paso: ${sig.substring(0, 30)}.`;
 
-      const cieComp = `Incidencia ${incId} en ${sistemas} resuelta satisfactoriamente. La afectación sobre ${prob} queda subsanada tras aplicar ${sol}. El servicio se encuentra estable y bajo supervisión preventiva.`;
-      const cieBreve = `[Cierre] ${incId} resuelta: Servicio normalizado en ${sistemas} tras ${sol.substring(0, 40)}.`;
+      const cieComp = `Queda formalmente cerrada la incidencia ${prio} (${incId}) en ${sistemas}. La afectación originada por ${prob} ha sido solventada tras aplicar ${sol}. Los flujos operativos y el servicio se encuentran plenamente restablecidos, manteniéndose supervisión preventiva para asegurar la estabilidad.`;
+      const cieBreve = `Cierre ${prio} (${incId}): Incidencia resuelta en ${sistemas} tras ${sol.substring(0, 35)}. Operativa y servicio normalizados.`;
 
       item.mensajes_ejecutivos = {
         apertura: {
           completo: apComp,
           breve: apBreve,
-          conteo_palabras_completo: apComp.split(/\s+/).length,
-          conteo_palabras_breve: apBreve.split(/\s+/).length,
+          conteo_palabras_completo: apComp.split(/\s+/).filter(Boolean).length,
+          conteo_palabras_breve: apBreve.split(/\s+/).filter(Boolean).length,
           prompt_agente: this.buildAgentPrompt(item, 'apertura')
         },
         seguimiento: {
           completo: segComp,
           breve: segBreve,
-          conteo_palabras_completo: segComp.split(/\s+/).length,
-          conteo_palabras_breve: segBreve.split(/\s+/).length,
+          conteo_palabras_completo: segComp.split(/\s+/).filter(Boolean).length,
+          conteo_palabras_breve: segBreve.split(/\s+/).filter(Boolean).length,
           prompt_agente: this.buildAgentPrompt(item, 'seguimiento')
         },
         cierre: {
           completo: cieComp,
           breve: cieBreve,
-          conteo_palabras_completo: cieComp.split(/\s+/).length,
-          conteo_palabras_breve: cieBreve.split(/\s+/).length,
+          conteo_palabras_completo: cieComp.split(/\s+/).filter(Boolean).length,
+          conteo_palabras_breve: cieBreve.split(/\s+/).filter(Boolean).length,
           prompt_agente: this.buildAgentPrompt(item, 'cierre')
         }
       };
@@ -781,6 +847,189 @@
           this.syncEpsilon(id, e.currentTarget);
         });
       });
+
+      // Pegar salida personalizada de Agente LLM
+      container.querySelectorAll('button[data-action="paste-agent-output"]').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const id = e.currentTarget.dataset.id;
+          const phase = e.currentTarget.dataset.phase || 'apertura';
+          this.openPasteModal(id, phase);
+        });
+      });
+
+      // Restaurar salida original del Agente
+      container.querySelectorAll('button[data-action="reset-agent-output"]').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const id = e.currentTarget.dataset.id;
+          const phase = e.currentTarget.dataset.phase || 'apertura';
+          StateManager.removeCustomMessage(id, phase);
+          this.renderCards();
+        });
+      });
+    }
+
+    parseAgentOutput(raw) {
+      let completo = '';
+      let breve = '';
+      if (!raw || typeof raw !== 'string') return { completo, breve };
+
+      const clean = raw.trim();
+
+      // Buscar versión completa
+      const compRegex = /\*\*(?:Mensaje para Dirección|Versión Completa)[^\*]*\*\*[:\s]*([\s\S]*?)(?=\*\*(?:Versión aún más breve|Versión breve)[^\*]*\*\*|$)/i;
+      const compMatch = clean.match(compRegex);
+      if (compMatch && compMatch[1]) {
+        completo = compMatch[1].trim();
+      }
+
+      // Buscar versión breve
+      const brevRegex = /\*\*(?:Versión aún más breve|Versión breve)[^\*]*\*\*[:\s]*([\s\S]*?)$/i;
+      const brevMatch = clean.match(brevRegex);
+      if (brevMatch && brevMatch[1]) {
+        breve = brevMatch[1].trim();
+      }
+
+      // Si no se usó el formato exacto de doble asterisco
+      if (!completo && !breve) {
+        const paras = clean.split(/\n\s*\n/).map(p => p.trim()).filter(Boolean);
+        if (paras.length >= 2) {
+          completo = paras[0];
+          breve = paras[1];
+        } else {
+          completo = clean;
+          breve = clean.split('.')[0] || clean.substring(0, 100);
+        }
+      } else if (!breve && completo) {
+        breve = completo.split('.')[0] || completo.substring(0, 100);
+      }
+
+      // Limpiar prefijos de instrucciones entre paréntesis que pudieran haberse capturado
+      completo = completo.replace(/^\([^)]*\)\s*/, '').replace(/^["'`]+|["'`]+$/g, '').trim();
+      breve = breve.replace(/^\([^)]*\)\s*/, '').replace(/^["'`]+|["'`]+$/g, '').trim();
+
+      return { completo, breve };
+    }
+
+    openPasteModal(id, phase) {
+      const item = this.items.find(x => x.id === id);
+      if (!item) return;
+
+      const msgs = item.mensajes_ejecutivos || {};
+      const customMsg = StateManager.getCustomMessage(id, phase);
+      const current = customMsg || msgs[phase] || msgs.apertura || {};
+
+      let modalBackdrop = document.getElementById('hp-paste-modal');
+      if (!modalBackdrop) {
+        modalBackdrop = document.createElement('div');
+        modalBackdrop.id = 'hp-paste-modal';
+        modalBackdrop.className = 'hp-paste-backdrop';
+        document.body.appendChild(modalBackdrop);
+      }
+
+      const phaseName = (phase || 'apertura').toUpperCase();
+      const defaultComp = current.completo || '';
+      const defaultBrev = current.breve || '';
+      const wordsComp = defaultComp ? defaultComp.split(/\s+/).filter(Boolean).length : 0;
+      const wordsBrev = defaultBrev ? defaultBrev.split(/\s+/).filter(Boolean).length : 0;
+
+      modalBackdrop.innerHTML = `
+        <div class="hp-paste-dialog" role="dialog" aria-modal="true" aria-labelledby="hp-paste-title">
+          <div class="hp-paste-header">
+            <div>
+              <span class="hp-paste-eyebrow">Agente incident-reporter</span>
+              <h3 id="hp-paste-title" class="hp-paste-title">✏️ Salida del Agente (${this.escape(id)} - ${phaseName})</h3>
+            </div>
+            <button type="button" class="hp-paste-close" id="hp-paste-close-btn" aria-label="Cerrar">&times;</button>
+          </div>
+
+          <div class="hp-paste-body">
+            <p class="hp-paste-desc">
+              Pega aquí el texto devuelto por el LLM al ejecutar el Prompt. Se autocompletarán la Versión Completa (máx 90 palabras) y la Versión Breve (máx 30 palabras).
+            </p>
+
+            <div class="hp-paste-field">
+              <label for="hp-paste-raw" class="hp-paste-label">📋 Pegar respuesta completa del LLM / Agente:</label>
+              <textarea id="hp-paste-raw" class="hp-paste-textarea" rows="3" placeholder="Pega aquí la salida del agente..."></textarea>
+            </div>
+
+            <div class="hp-paste-field">
+              <div class="hp-paste-field-header">
+                <label for="hp-paste-comp" class="hp-paste-label">Versión Completa Dirección (Monopárrafo):</label>
+                <span id="hp-paste-comp-count" class="hp-word-count-badge ${wordsComp > 90 ? 'count-overflow' : ''}">${wordsComp} / 90 palabras</span>
+              </div>
+              <textarea id="hp-paste-comp" class="hp-paste-textarea" rows="4">${this.escape(defaultComp)}</textarea>
+            </div>
+
+            <div class="hp-paste-field">
+              <div class="hp-paste-field-header">
+                <label for="hp-paste-brev" class="hp-paste-label">Versión Aún Más Breve (SMS / Asunto):</label>
+                <span id="hp-paste-brev-count" class="hp-word-count-badge ${wordsBrev > 30 ? 'count-overflow' : ''}">${wordsBrev} / 30 palabras</span>
+              </div>
+              <textarea id="hp-paste-brev" class="hp-paste-textarea" rows="2">${this.escape(defaultBrev)}</textarea>
+            </div>
+          </div>
+
+          <div class="hp-paste-footer">
+            <button type="button" class="hp-btn hp-btn-secondary" id="hp-paste-cancel-btn">Cancelar</button>
+            <button type="button" class="hp-btn hp-btn-primary" id="hp-paste-save-btn">💾 Guardar Mensaje Ejecutivo</button>
+          </div>
+        </div>
+      `;
+
+      modalBackdrop.classList.add('active');
+
+      const rawInput = document.getElementById('hp-paste-raw');
+      const compInput = document.getElementById('hp-paste-comp');
+      const brevInput = document.getElementById('hp-paste-brev');
+      const compCount = document.getElementById('hp-paste-comp-count');
+      const brevCount = document.getElementById('hp-paste-brev-count');
+
+      const updateWordCounts = () => {
+        const cVal = compInput.value.trim();
+        const bVal = brevInput.value.trim();
+        const cLen = cVal ? cVal.split(/\s+/).filter(Boolean).length : 0;
+        const bLen = bVal ? bVal.split(/\s+/).filter(Boolean).length : 0;
+
+        compCount.textContent = `${cLen} / 90 palabras`;
+        compCount.className = `hp-word-count-badge ${cLen > 90 ? 'count-overflow' : ''}`;
+
+        brevCount.textContent = `${bLen} / 30 palabras`;
+        brevCount.className = `hp-word-count-badge ${bLen > 30 ? 'count-overflow' : ''}`;
+      };
+
+      rawInput.addEventListener('input', () => {
+        const parsed = this.parseAgentOutput(rawInput.value);
+        if (parsed.completo) compInput.value = parsed.completo;
+        if (parsed.breve) brevInput.value = parsed.breve;
+        updateWordCounts();
+      });
+
+      compInput.addEventListener('input', updateWordCounts);
+      brevInput.addEventListener('input', updateWordCounts);
+
+      const closeModal = () => {
+        modalBackdrop.classList.remove('active');
+      };
+
+      document.getElementById('hp-paste-close-btn').addEventListener('click', closeModal);
+      document.getElementById('hp-paste-cancel-btn').addEventListener('click', closeModal);
+      modalBackdrop.addEventListener('click', (e) => {
+        if (e.target === modalBackdrop) closeModal();
+      });
+
+      document.getElementById('hp-paste-save-btn').addEventListener('click', () => {
+        const finalComp = compInput.value.trim();
+        const finalBrev = brevInput.value.trim();
+        if (!finalComp && !finalBrev) {
+          alert('Por favor, introduce al menos una de las versiones del mensaje.');
+          return;
+        }
+        StateManager.setCustomMessage(id, phase, finalComp, finalBrev);
+        closeModal();
+        this.renderCards();
+      });
+
+      setTimeout(() => rawInput.focus(), 80);
     }
 
     escape(str) {
