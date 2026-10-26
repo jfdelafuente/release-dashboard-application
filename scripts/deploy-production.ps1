@@ -557,6 +557,10 @@ if [ -f "`$NEW_RELEASE_DIR/data/output/high_priority_notifications.json" ]; then
     echo "--> [Remoto] Sincronizando notificaciones de alta prioridad a `$STORAGE_BASE/output/high_priority_notifications.json..."
     cp -f "`$NEW_RELEASE_DIR/data/output/high_priority_notifications.json" "`$STORAGE_BASE/output/high_priority_notifications.json" 2>/dev/null || true
 fi
+if [ -f "`$NEW_RELEASE_DIR/data/agent_executive_messages.json" ]; then
+    echo "--> [Remoto] Sincronizando mensajes ejecutivos a `$STORAGE_BASE/agent_executive_messages.json..."
+    cp -f "`$NEW_RELEASE_DIR/data/agent_executive_messages.json" "`$STORAGE_BASE/agent_executive_messages.json" 2>/dev/null || true
+fi
 rm -rf "`$NEW_RELEASE_DIR/data"
 
 # Enlazar datos desacoplados y logs dentro de la nueva release

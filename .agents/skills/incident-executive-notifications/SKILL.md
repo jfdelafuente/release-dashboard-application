@@ -5,20 +5,24 @@ description: >-
   Sintetiza y redacta comunicaciones ejecutivas oficiales para Dirección (<= 90 palabras, monopárrafo)
   y alertas breves (<= 30 palabras) de incidencias IT de alta prioridad (P1, P2 y discrepancias) tras la
   subida de un nuevo fichero de incidencias o detección de tickets pendientes, adoptando el rol del agente
-  incident-reporter y actualizando data/agent_executive_messages.json y las notificaciones del dashboard.
+  incident-reporter y actualizando data/agent_executive_messages.json y las notificaciones locales del dashboard.
 ---
 
 # Skill: Síntesis y Notificaciones Ejecutivas de Incidencias IT (`incident-executive-notifications`)
 
-Esta skill orquesta el flujo integral de detección, redacción ejecutiva y publicación de comunicaciones oficiales para incidencias IT críticas (P1, P2 y discrepancias de prioridad) en el Release Dashboard.
+Esta skill orquesta el flujo integral de detección, redacción ejecutiva y almacenamiento persistente de comunicaciones oficiales para incidencias IT críticas (P1, P2 y discrepancias de prioridad) en el Release Dashboard.
 
 Garantiza que **ninguna notificación dependa de plantillas genéricas o mecánicas (Vía A descartada)** y que cada ticket de alta prioridad cuente con una redacción contextualizada elaborada por el agente oficial `incident-reporter`.
+
+> [!IMPORTANT]
+> **Separación de Responsabilidades y Seguridad:**
+> Esta skill opera en **entorno local**. Su alcance finaliza al generar, validar y persistir los mensajes localmente en `data/agent_executive_messages.json`. **Nunca despliega de forma autónoma a producción.** El despliegue al servidor es una acción desacoplada y explícita tras la revisión humana.
 
 ---
 
 ## Cuándo activar esta skill
 
-- Tras subir un nuevo fichero CSV/Excel de incidencias Remedy.
+- Tras cargar o actualizar un nuevo fichero CSV/Excel de incidencias Remedy en el entorno local.
 - Cuando el usuario solicite: *"redacta las incidencias pendientes"*, *"genera los mensajes ejecutivos"*, *"actualiza las notificaciones ejecutivas"* o *"procesa el fichero de incidencias"*.
 - Cuando se agreguen nuevos tickets a `data/incidents.json` o `data/output/high_priority_notifications.json`.
 
@@ -28,26 +32,27 @@ Garantiza que **ninguna notificación dependa de plantillas genéricas o mecáni
 
 ```mermaid
 flowchart TD
-    A["1. Subida / Ingesta CSV de Incidencias"] --> B["2. Evaluación de Prioridad y Alertas<br/>(evaluate_incident_notifications.py)"]
+    A["1. Carga / Actualización CSV en Local"] --> B["2. Evaluación de Severidad ITIL<br/>(evaluate_incident_notifications.py)"]
     B --> C["3. Escaneo de Tickets Pendientes<br/>(scan_pending_incidents.py)"]
     C --> D{"¿Hay pendientes?"}
     D -- Sí --> E["4. Adopción de rol incident-reporter<br/>(Redacción ejecutiva <= 90 palabras)"]
     E --> F["5. Guardado en almacén persistente<br/>(update_agent_message.py)"]
     F --> C
-    D -- No --> G["6. Despliegue en Producción<br/>(deploy-production.ps1)"]
+    D -- No --> G["6. Verificación Local y Preview al Usuario<br/>(Fin del alcance de la Skill)"]
+    G -. "Acción explícita" .-> H["7. Subida CSV a Producción + Despliegue<br/>(deploy-production.ps1)"]
 ```
 
 ---
 
-### Paso 1: Evaluación y triaje del catálogo
+### Paso 1: Evaluación y triaje del catálogo local
 
-Si se acaba de recibir o subir un nuevo CSV/archivo de incidencias, ejecuta la evaluación ITIL de severidad:
+Tras recibir o depositar el nuevo CSV de incidencias en local, ejecuta la evaluación ITIL de severidad:
 
 ```powershell
 python converters/evaluate_incident_notifications.py
 ```
 
-Esto generará o actualizará `data/output/high_priority_notifications.json`, identificando todos los tickets P1, P2 y discrepancias activas, integrando el almacén persistente `data/agent_executive_messages.json`.
+Esto generará o actualizará `data/output/high_priority_notifications.json`, identificando todos los tickets P1, P2 y discrepancias activas, integrando el almacén acumulativo `data/agent_executive_messages.json`.
 
 ---
 
@@ -75,7 +80,7 @@ python .agents/skills/incident-executive-notifications/scripts/scan_pending_inci
 
 ### Paso 3: Redacción adoptando el rol `incident-reporter`
 
-Para cada incidencia pendiente detectada, el asistente debe adoptar las reglas de [`agents/it-incidents/incident-reporter.md`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/agents/it-incidents/incident-reporter.md) y apoyarse en `it-severity-matrix`:
+Para cada incidencia pendiente detectada, el asistente adopta las reglas de [`agents/it-incidents/incident-reporter.md`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/agents/it-incidents/incident-reporter.md) y se apoya en `it-severity-matrix`:
 
 #### Reglas de Redacción Obligatorias:
 1. **Dos niveles de salida:**
@@ -95,7 +100,7 @@ Para cada incidencia pendiente detectada, el asistente debe adoptar las reglas d
 
 ---
 
-### Paso 4: Ingesta en el almacén persistente
+### Paso 4: Ingesta en el almacén persistente local
 
 Una vez redactado el texto para una incidencia, ingéstalo en el almacén oficial usando el CLI `update_agent_message.py`:
 
@@ -123,21 +128,31 @@ python converters/cli/update_agent_message.py --id <ID_INCIDENCIA> --phase apert
 
 ---
 
-### Paso 5: Verificación y Despliegue en Producción
+### Paso 5: Verificación Local y Validación Humana (Fin de la Skill)
 
-1. Verifica con los tests unitarios:
+1. Comprueba los tests unitarios:
    ```powershell
-   pytest converters/tests/unit/test_update_agent_message.py converters/tests/unit/test_evaluate_incident_notifications.py -v
+   python -m pytest converters/tests/unit/test_update_agent_message.py converters/tests/unit/test_evaluate_incident_notifications.py -v
    ```
 2. Ejecuta el escáner final:
    ```powershell
    python .agents/skills/incident-executive-notifications/scripts/scan_pending_incidents.py
    ```
    Debe reportar: `✅ Todas las incidencias activas disponen de mensajes ejecutivos oficiales.`
-3. Despliega la versión en el servidor de producción:
+3. **Presenta el preview de los mensajes redactados al usuario en el chat.** La skill concluye aquí.
+
+---
+
+### Paso Posterior Opcional: Publicación a Producción
+
+Cuando el usuario da el visto bueno a los mensajes y desea sincronizar la nueva versión con el servidor de producción:
+
+1. **Subir el CSV a producción:** Cargar el CSV a través de la interfaz web (`/dashboards/massive-incidents/`) para registrarlo en el almacenamiento persistente remoto.
+2. **Desplegar la sincronización:**
    ```powershell
    powershell -ExecutionPolicy Bypass -File scripts/deploy-production.ps1 -AgentsLibraryPath . -BypassSandbox true
    ```
+   Esto transferirá `agent_executive_messages.json` y `high_priority_notifications.json` a `/infocodes/var/storage/release-dashboard/` asegurando que tanto la tabla masiva como las notificaciones de producción muestren la información coherente y actualizada.
 
 ---
 
