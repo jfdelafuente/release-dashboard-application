@@ -515,7 +515,11 @@
               <p class="hp-exec-text">${this.escape(currentMsg.completo || '')}</p>
               <div class="hp-copy-row">
                 <button type="button" class="hp-copy-btn" data-action="copy-text" data-text="${this.escapeAttr(currentMsg.completo || '')}">
-                  📋 Copiar Versión Completa
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                  </svg>
+                  Copiar Versión Completa
                 </button>
               </div>
             </div>
@@ -528,7 +532,11 @@
               <p class="hp-exec-text"><strong>${this.escape(currentMsg.breve || '')}</strong></p>
               <div class="hp-copy-row">
                 <button type="button" class="hp-copy-btn" data-action="copy-text" data-text="${this.escapeAttr(currentMsg.breve || '')}">
-                  📋 Copiar Versión Breve
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                  </svg>
+                  Copiar Versión Breve
                 </button>
               </div>
             </div>
@@ -538,12 +546,27 @@
                 <span>🤖 Prompt para Agente incident-reporter</span>
                 <span>${hasEpsilon ? 'Contexto Epsilon IA' : 'Metadatos Base'}</span>
               </div>
-              <p class="hp-prompt-hint">Copia el prompt estructurado para pasárselo a un LLM o pega directamente aquí la respuesta obtenida para sustituir el mensaje.</p>
-              <div class="hp-prompt-actions-row">
-                <button type="button" class="hp-copy-btn hp-copy-prompt-btn" data-action="copy-prompt" data-id="${item.id}" data-phase="${activePhase}">
-                  📋 Copiar Prompt con Contexto
+              <p class="hp-prompt-hint">Copia el prompt estructurado con todo el contexto técnico o pega directamente aquí la respuesta devuelta por el agente:</p>
+
+              <div class="cmd-snippet-box hp-prompt-snippet-box">
+                <span class="cmd-text hp-prompt-snippet-text" title="Haz clic o copia para usar en tu LLM">${this.escape(`Actúa como incident-reporter: ${item.id} (${activePhase.toUpperCase()} - ${item.prioridad_sugerida})`)}</span>
+                <button type="button" class="cmd-copy-mini-btn hp-prompt-copy-mini-btn" data-action="copy-prompt" data-id="${item.id}" data-phase="${activePhase}" title="Copiar Prompt CLI/LLM" aria-label="Copiar prompt">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                  </svg>
                 </button>
-                <button type="button" class="hp-copy-btn hp-paste-agent-btn" data-action="paste-agent-output" data-id="${item.id}" data-phase="${activePhase}">
+              </div>
+
+              <div class="agent-card-actions hp-prompt-actions-row">
+                <button type="button" class="btn-primary-action hp-btn-copy-prompt" data-action="copy-prompt" data-id="${item.id}" data-phase="${activePhase}">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                  </svg>
+                  Copiar Prompt con Contexto
+                </button>
+                <button type="button" class="btn-secondary-action hp-btn-paste-agent" data-action="paste-agent-output" data-id="${item.id}" data-phase="${activePhase}">
                   ✏️ Pegar salida de Agente
                 </button>
               </div>
@@ -797,46 +820,31 @@
 
       // Copiado en 1 clic al portapapeles
       container.querySelectorAll('button[data-action="copy-text"]').forEach(btn => {
-        btn.addEventListener('click', async (e) => {
+        btn.addEventListener('click', (e) => {
           const text = e.currentTarget.dataset.text;
-          try {
-            await navigator.clipboard.writeText(text);
-            const origHtml = e.currentTarget.innerHTML;
-            e.currentTarget.classList.add('copied');
-            e.currentTarget.innerHTML = '✅ ¡Copiado!';
-            setTimeout(() => {
-              e.currentTarget.classList.remove('copied');
-              e.currentTarget.innerHTML = origHtml;
-            }, 1800);
-          } catch (err) {
-            console.error('Error al copiar:', err);
-            prompt('Copia manualmente con Ctrl+C:', text);
-          }
+          this.copyToClipboard(text, e.currentTarget, 'Mensaje copiado al portapapeles');
         });
       });
 
       // Copiado de Prompt estructurado para Agente IA
       container.querySelectorAll('button[data-action="copy-prompt"]').forEach(btn => {
-        btn.addEventListener('click', async (e) => {
+        btn.addEventListener('click', (e) => {
           const id = e.currentTarget.dataset.id;
           const phase = e.currentTarget.dataset.phase || 'apertura';
           const item = this.items.find(x => x.id === id);
           if (!item) return;
 
           const promptText = this.buildAgentPrompt(item, phase);
-          try {
-            await navigator.clipboard.writeText(promptText);
-            const origHtml = e.currentTarget.innerHTML;
-            e.currentTarget.classList.add('copied');
-            e.currentTarget.innerHTML = '✅ ¡Prompt Copiado!';
-            setTimeout(() => {
-              e.currentTarget.classList.remove('copied');
-              e.currentTarget.innerHTML = origHtml;
-            }, 2000);
-          } catch (err) {
-            console.error('Error al copiar prompt:', err);
-            prompt('Copia manualmente con Ctrl+C:', promptText);
-          }
+          this.copyToClipboard(promptText, e.currentTarget, 'Prompt con contexto copiado');
+        });
+      });
+
+      // Clic directo en el snippet de texto del prompt para copiar
+      container.querySelectorAll('.hp-prompt-snippet-text').forEach(el => {
+        el.addEventListener('click', (e) => {
+          const box = e.currentTarget.closest('.hp-prompt-snippet-box');
+          const btn = box ? box.querySelector('button[data-action="copy-prompt"]') : null;
+          if (btn) btn.click();
         });
       });
 
@@ -1021,7 +1029,7 @@
         const finalComp = compInput.value.trim();
         const finalBrev = brevInput.value.trim();
         if (!finalComp && !finalBrev) {
-          alert('Por favor, introduce al menos una de las versiones del mensaje.');
+          this.notify('Por favor, introduce al menos una de las versiones del mensaje.', 'warning');
           return;
         }
         StateManager.setCustomMessage(id, phase, finalComp, finalBrev);
@@ -1030,6 +1038,110 @@
       });
 
       setTimeout(() => rawInput.focus(), 80);
+    }
+
+    copyToClipboard(text, triggerBtn, successMessage) {
+      if (!text) return;
+
+      if (navigator.clipboard && navigator.clipboard.writeText && window.isSecureContext) {
+        navigator.clipboard.writeText(text)
+          .then(() => {
+            this.handleCopySuccess(triggerBtn, successMessage);
+          })
+          .catch(() => {
+            this.fallbackExecCommand(text, triggerBtn, successMessage);
+          });
+      } else {
+        this.fallbackExecCommand(text, triggerBtn, successMessage);
+      }
+    }
+
+    fallbackExecCommand(text, triggerBtn, successMessage) {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.setAttribute('readonly', '');
+      ta.style.position = 'fixed';
+      ta.style.left = '-9999px';
+      ta.style.top = '-9999px';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.focus();
+      ta.select();
+      try {
+        const ok = document.execCommand('copy');
+        if (ok) {
+          this.handleCopySuccess(triggerBtn, successMessage);
+        } else {
+          this.notify('No se pudo copiar automáticamente', 'warning');
+        }
+      } catch (err) {
+        console.warn('[IncidentNotifications] Error al copiar con execCommand:', err);
+        this.notify('No se pudo copiar automáticamente', 'error');
+      } finally {
+        if (document.body.contains(ta)) {
+          document.body.removeChild(ta);
+        }
+      }
+    }
+
+    handleCopySuccess(triggerBtn, successMessage) {
+      this.notify(successMessage || 'Copiado al portapapeles', 'success');
+
+      if (triggerBtn) {
+        const origHtml = triggerBtn.innerHTML;
+        triggerBtn.classList.add('copied');
+        const hasSvg = origHtml.indexOf('<svg') !== -1;
+        const isMini = triggerBtn.classList.contains('cmd-copy-mini-btn') || triggerBtn.classList.contains('hp-prompt-copy-mini-btn');
+
+        if (isMini) {
+          triggerBtn.innerHTML = `
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#16A34A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+          `;
+        } else {
+          triggerBtn.innerHTML = `
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+            <span>✓ Copiado</span>
+          `;
+        }
+
+        setTimeout(() => {
+          triggerBtn.classList.remove('copied');
+          triggerBtn.innerHTML = origHtml;
+        }, 2000);
+      }
+    }
+
+    notify(message, type = 'info') {
+      if (window.Toast && typeof window.Toast.show === 'function') {
+        window.Toast.show(message, type);
+      } else if (window.UIFeedback && typeof window.UIFeedback.toast === 'function') {
+        window.UIFeedback.toast(message, type);
+      } else {
+        this.showFloatingToast(message, type);
+      }
+    }
+
+    showFloatingToast(message, type = 'info') {
+      let toast = document.getElementById('hp-global-toast');
+      if (!toast) {
+        toast = document.createElement('div');
+        toast.id = 'hp-global-toast';
+        toast.className = 'hp-global-toast';
+        document.body.appendChild(toast);
+      }
+
+      const icon = type === 'success' ? '✓' : (type === 'warning' ? '⚠️' : 'ℹ️');
+      toast.className = `hp-global-toast hp-toast-${type} active`;
+      toast.innerHTML = `<span class="hp-toast-icon">${icon}</span> <span class="hp-toast-text">${this.escape(message)}</span>`;
+
+      clearTimeout(this._toastTimer);
+      this._toastTimer = setTimeout(() => {
+        toast.classList.remove('active');
+      }, 2500);
     }
 
     escape(str) {
