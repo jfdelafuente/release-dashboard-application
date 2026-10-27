@@ -71,6 +71,24 @@ if [ ! -f "${CONVERTERS_DIR}/cli/convert_incidents.py" ]; then
     exit 1
 fi
 
+# 4. Localizar ejecutable de Python (priorizar venv o python3)
+if [ -x "/infocodes/venv/bin/python3" ]; then
+    PYTHON_CMD="/infocodes/venv/bin/python3"
+elif [ -x "/infocodes/venv/bin/python" ]; then
+    PYTHON_CMD="/infocodes/venv/bin/python"
+elif command -v python3 >/dev/null 2>&1; then
+    PYTHON_CMD="$(command -v python3)"
+elif command -v python >/dev/null 2>&1; then
+    PYTHON_CMD="$(command -v python)"
+else
+    PYTHON_CMD="python3"
+fi
+
+if ! "${PYTHON_CMD}" --version >/dev/null 2>&1; then
+    log "ERROR: No se encontró un ejecutable de Python funcional: ${PYTHON_CMD}"
+    exit 1
+fi
+
 # Crear directorios necesarios si no existen
 mkdir -p "${DATA_OUTPUT_DIR}"
 mkdir -p "${DATA_ERRORS_DIR}"
@@ -78,6 +96,7 @@ mkdir -p "${DATA_ERRORS_DIR}"
 log "Directorio de proyecto: ${PROJECT_ROOT}"
 log "Directorio de entrada: ${DATA_INPUT_DIR}"
 log "Directorio de salida: ${DATA_OUTPUT_DIR}"
+log "Ejecutable Python: ${PYTHON_CMD} ($("${PYTHON_CMD}" --version 2>&1))"
 
 # Cambiar al directorio del proyecto
 cd "${PROJECT_ROOT}" || exit 1
@@ -99,26 +118,36 @@ log "Encontrados ${CSV_COUNT} archivo(s) CSV para procesar"
 for csv_file in "${DATA_INPUT_DIR}"/*.csv; do
     if [ -f "${csv_file}" ]; then
         filename=$(basename "${csv_file}")
+        filename_lower=$(echo "${filename}" | tr '[:upper:]' '[:lower:]')
 
-        if [[ "${filename}" == *postmortem* ]]; then
+        if [[ "${filename_lower}" == *postmortem* ]] || [[ "${filename_lower}" == *"mesa post"* ]]; then
             converter_script="${CONVERTERS_DIR}/cli/convert_postmortems.py"
-            log "Procesando postmortem: ${filename}"
+            release_arg=()
+            detected_release=$(echo "${filename}" | grep -o -E '[0-9]{4}R[0-9]+|R[0-9]+' | head -n1)
+            if [ -n "${detected_release}" ]; then
+                release_arg=("--release-name" "${detected_release}")
+            fi
+            log "Procesando postmortem: ${filename} (release: ${detected_release:-'no detectada'})"
+            if "${PYTHON_CMD}" "${converter_script}" "${csv_file}" -o "${DATA_OUTPUT_DIR}" "${release_arg[@]}" 2>>"${LOG_FILE}"; then
+                log "✓ Conversión exitosa: ${filename}"
+            else
+                log "✗ Error en conversión de: ${filename}"
+            fi
         else
             converter_script="${CONVERTERS_DIR}/cli/convert_incidents.py"
             log "Procesando: ${filename}"
-        fi
-
-        if python "${converter_script}" "${csv_file}" -o "${DATA_OUTPUT_DIR}" 2>>"${LOG_FILE}"; then
-            log "✓ Conversión exitosa: ${filename}"
-        else
-            log "✗ Error en conversión de: ${filename}"
+            if "${PYTHON_CMD}" "${converter_script}" "${csv_file}" -o "${DATA_OUTPUT_DIR}" 2>>"${LOG_FILE}"; then
+                log "✓ Conversión exitosa: ${filename}"
+            else
+                log "✗ Error en conversión de: ${filename}"
+            fi
         fi
     fi
 done
 
 # Generar index.json
 log "Generando index.json..."
-if python "${CONVERTERS_DIR}/cli/build_index.py" "${DATA_OUTPUT_DIR}" 2>>"${LOG_FILE}"; then
+if "${PYTHON_CMD}" "${CONVERTERS_DIR}/cli/build_index.py" "${DATA_OUTPUT_DIR}" 2>>"${LOG_FILE}"; then
     log "✓ index.json generado correctamente"
 
     # Validar que index.json existe y tiene contenido
@@ -138,7 +167,7 @@ fi
 log "Evaluando notificaciones de alta prioridad..."
 eval_script="${CONVERTERS_DIR}/cli/evaluate_incident_notifications.py"
 if [ -f "${eval_script}" ]; then
-    if python "${eval_script}" --index "${DATA_OUTPUT_DIR}/index.json" --output "${DATA_OUTPUT_DIR}/high_priority_notifications.json" 2>>"${LOG_FILE}"; then
+    if "${PYTHON_CMD}" "${eval_script}" --index "${DATA_OUTPUT_DIR}/index.json" --output "${DATA_OUTPUT_DIR}/high_priority_notifications.json" 2>>"${LOG_FILE}"; then
         log "✓ Notificaciones de alta prioridad generadas correctamente"
     else
         log "⚠ Advertencia: Error en la evaluación de notificaciones de alta prioridad"

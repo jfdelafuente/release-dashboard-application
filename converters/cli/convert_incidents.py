@@ -371,15 +371,21 @@ Ejemplos:
     print()
     print_info("Generando index.json para Dashboard Hub...")
     try:
+        if args.output:
+            out_p = Path(args.output)
+            actual_output_dir = out_p if (out_p.is_dir() or not out_p.suffix) else out_p.parent
+        else:
+            actual_output_dir = DEFAULT_OUTPUT_DIR
+
         # Call build_index as subprocess
         cli_path = Path(__file__).parent / 'build_index.py'
         result = subprocess.run(
-            [sys.executable, str(cli_path), str(DEFAULT_OUTPUT_DIR)],
+            [sys.executable, str(cli_path), str(actual_output_dir)],
             capture_output=True,
             text=True
         )
         if result.returncode == 0:
-            print_success(f"Index actualizado: {DEFAULT_OUTPUT_DIR / 'index.json'}")
+            print_success(f"Index actualizado: {actual_output_dir / 'index.json'}")
             if result.stdout:
                 for line in result.stdout.strip().split('\n'):
                     print(f"  {line}")

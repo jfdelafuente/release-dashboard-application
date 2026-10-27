@@ -568,8 +568,14 @@ Ejemplos:
     print()
     print_info("Generando index.json para Dashboard Hub...")
     try:
-        if build_index_for_hub(str(DEFAULT_OUTPUT_DIR)):
-            print_success(f"Index actualizado para Dashboard Hub")
+        if args.output:
+            out_p = Path(args.output)
+            hub_output_dir = out_p if (out_p.is_dir() or not out_p.suffix) else out_p.parent
+        else:
+            hub_output_dir = DEFAULT_OUTPUT_DIR
+
+        if build_index_for_hub(str(hub_output_dir)):
+            print_success(f"Index actualizado para Dashboard Hub ({hub_output_dir / 'index.json'})")
         else:
             print_warning("No se pudo generar index.json")
     except Exception as e:
