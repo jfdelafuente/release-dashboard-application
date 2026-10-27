@@ -3,7 +3,7 @@
     "version": "1.0.0",
     "description": "Almacén oficial de redacciones ejecutivas generadas por el Agente incident-reporter",
     "source": "agents/it-incidents/incident-reporter.md",
-    "updated_at": "2026-10-27T10:29:33Z"
+    "updated_at": "2026-10-27T12:22:00Z"
   },
   "incidents": {
     "INC000004065609": {
@@ -534,6 +534,32 @@
         "origen": "incident-reporter",
         "conteo_palabras_completo": 66,
         "conteo_palabras_breve": 22
+      }
+    },
+    "INC000004168617": {
+      "apertura": {
+        "completo": "Se declara apertura de incidencia crítica P1 (INC000004168617) por error funcional en Ficha Cliente Orange en la sede de Marktel-Valencia, activando la Regla de Oro de Atención al Cliente (ATC). El fallo genera afectación masiva en el frontal de gestión comercial del centro, bloqueando la consulta y operativa habitual con clientes móviles sin vía alternativa disponible. El equipo de soporte APL_MOV_SOE interviene el servicio para diagnosticar el origen del error y mitigar la indisponibilidad en la plataforma. Próxima actualización en 30 minutos.",
+        "breve": "Apertura P1 (INC000004168617): Error funcional en Ficha Cliente Orange genera impacto masivo en Marktel-Valencia (proceso ATC). Soporte APL_MOV_SOE investigando; próxima actualización en 30 min.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 82,
+        "conteo_palabras_breve": 24
+      },
+      "seguimiento": {
+        "completo": "Continúa la gestión de la incidencia crítica P1 (INC000004168617) que afecta a Ficha Cliente Orange en Marktel-Valencia dentro del proceso de Atención al Cliente (ATC). El equipo de soporte APL_MOV_SOE ha aislado anomalías en las llamadas del frontal móvil hacia los servicios de consulta comercial, aplicando medidas de contención técnica en los componentes afectados. Se mantiene monitorización activa con los supervisores del centro operativo para validar la recuperación progresiva de los puestos de trabajo. Próxima actualización en 30 minutos.",
+        "breve": "Seguimiento P1 (INC000004168617): APL_MOV_SOE aplica contención técnica en Ficha Cliente Orange en Marktel-Valencia (ATC). Verificando estabilidad operativa; próxima actualización en 30 min.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 79,
+        "conteo_palabras_breve": 22
+      },
+      "cierre": {
+        "completo": "Queda resuelta la incidencia crítica P1 (INC000004168617) sobre Ficha Cliente Orange en Marktel-Valencia, restableciéndose el proceso de Atención al Cliente (ATC). La intervención técnica de APL_MOV_SOE ha estabilizado la comunicación del frontal de atención móvil, eliminando los bloqueos funcionales. Los puestos operativos del centro han reanudado la atención comercial sin incidencias, confirmándose la normalización del servicio tras pruebas de verificación satisfactorias. El análisis detallado de causa raíz continuará a través del procedimiento post-incidente habitual.",
+        "breve": "Cierre P1 (INC000004168617): Normalizada Ficha Cliente Orange en Marktel-Valencia (ATC) tras intervención de APL_MOV_SOE. Servicio y operativa comercial plenamente restablecidos.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 74,
+        "conteo_palabras_breve": 20
       }
     }
   }

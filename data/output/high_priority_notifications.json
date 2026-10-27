@@ -2,7 +2,7 @@
   "_metadata": {
     "type": "high_priority_notifications",
     "version": "1.0.0",
-    "generated_at": "2026-10-27T12:14:30.884269+00:00",
+    "generated_at": "2026-10-27T12:22:00.911299+00:00",
     "source_file": "CS-Informe incidencias P1,  P2 y P3 - 2026 - 27 Oct 2026-massive.json",
     "kpis": {
       "total_scanned": 1566,
@@ -464,30 +464,30 @@
       "resumen_ia": null,
       "mensajes_ejecutivos": {
         "apertura": {
-          "completo": null,
-          "breve": null,
-          "conteo_palabras_completo": 0,
-          "conteo_palabras_breve": 0,
-          "generado_por_agente": false,
-          "estado": "pendiente",
+          "completo": "Se declara apertura de incidencia crítica P1 (INC000004168617) por error funcional en Ficha Cliente Orange en la sede de Marktel-Valencia, activando la Regla de Oro de Atención al Cliente (ATC). El fallo genera afectación masiva en el frontal de gestión comercial del centro, bloqueando la consulta y operativa habitual con clientes móviles sin vía alternativa disponible. El equipo de soporte APL_MOV_SOE interviene el servicio para diagnosticar el origen del error y mitigar la indisponibilidad en la plataforma. Próxima actualización en 30 minutos.",
+          "breve": "Apertura P1 (INC000004168617): Error funcional en Ficha Cliente Orange genera impacto masivo en Marktel-Valencia (proceso ATC). Soporte APL_MOV_SOE investigando; próxima actualización en 30 min.",
+          "conteo_palabras_completo": 82,
+          "conteo_palabras_breve": 24,
+          "generado_por_agente": true,
+          "origen": "incident-reporter",
           "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: APERTURA\nIncidencia: INC000004168617 - Ficha Cliente Orange | Error funcional | Marktel - Valencia\nCriticidad sugerida: P1\nSistemas involucrados: APL_MOV_SOE\nProceso de Negocio: Atención al Cliente (ATC)\nCriterio / Umbral: ATC: Frontales/CRM (>20% desviación en 30m) o Regla de Oro N1\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: Ficha Cliente Orange | Error funcional | Marktel - Valencia\n• Impacto ticket: Masiva\n• Urgencia ticket: Medio\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
         },
         "seguimiento": {
-          "completo": null,
-          "breve": null,
-          "conteo_palabras_completo": 0,
-          "conteo_palabras_breve": 0,
-          "generado_por_agente": false,
-          "estado": "pendiente",
+          "completo": "Continúa la gestión de la incidencia crítica P1 (INC000004168617) que afecta a Ficha Cliente Orange en Marktel-Valencia dentro del proceso de Atención al Cliente (ATC). El equipo de soporte APL_MOV_SOE ha aislado anomalías en las llamadas del frontal móvil hacia los servicios de consulta comercial, aplicando medidas de contención técnica en los componentes afectados. Se mantiene monitorización activa con los supervisores del centro operativo para validar la recuperación progresiva de los puestos de trabajo. Próxima actualización en 30 minutos.",
+          "breve": "Seguimiento P1 (INC000004168617): APL_MOV_SOE aplica contención técnica en Ficha Cliente Orange en Marktel-Valencia (ATC). Verificando estabilidad operativa; próxima actualización en 30 min.",
+          "conteo_palabras_completo": 79,
+          "conteo_palabras_breve": 22,
+          "generado_por_agente": true,
+          "origen": "incident-reporter",
           "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: SEGUIMIENTO\nIncidencia: INC000004168617 - Ficha Cliente Orange | Error funcional | Marktel - Valencia\nCriticidad sugerida: P1\nSistemas involucrados: APL_MOV_SOE\nProceso de Negocio: Atención al Cliente (ATC)\nCriterio / Umbral: ATC: Frontales/CRM (>20% desviación en 30m) o Regla de Oro N1\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: Ficha Cliente Orange | Error funcional | Marktel - Valencia\n• Impacto ticket: Masiva\n• Urgencia ticket: Medio\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
         },
         "cierre": {
-          "completo": null,
-          "breve": null,
-          "conteo_palabras_completo": 0,
-          "conteo_palabras_breve": 0,
-          "generado_por_agente": false,
-          "estado": "pendiente",
+          "completo": "Queda resuelta la incidencia crítica P1 (INC000004168617) sobre Ficha Cliente Orange en Marktel-Valencia, restableciéndose el proceso de Atención al Cliente (ATC). La intervención técnica de APL_MOV_SOE ha estabilizado la comunicación del frontal de atención móvil, eliminando los bloqueos funcionales. Los puestos operativos del centro han reanudado la atención comercial sin incidencias, confirmándose la normalización del servicio tras pruebas de verificación satisfactorias. El análisis detallado de causa raíz continuará a través del procedimiento post-incidente habitual.",
+          "breve": "Cierre P1 (INC000004168617): Normalizada Ficha Cliente Orange en Marktel-Valencia (ATC) tras intervención de APL_MOV_SOE. Servicio y operativa comercial plenamente restablecidos.",
+          "conteo_palabras_completo": 74,
+          "conteo_palabras_breve": 20,
+          "generado_por_agente": true,
+          "origen": "incident-reporter",
           "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: CIERRE\nIncidencia: INC000004168617 - Ficha Cliente Orange | Error funcional | Marktel - Valencia\nCriticidad sugerida: P1\nSistemas involucrados: APL_MOV_SOE\nProceso de Negocio: Atención al Cliente (ATC)\nCriterio / Umbral: ATC: Frontales/CRM (>20% desviación en 30m) o Regla de Oro N1\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: Ficha Cliente Orange | Error funcional | Marktel - Valencia\n• Impacto ticket: Masiva\n• Urgencia ticket: Medio\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
         }
       }
