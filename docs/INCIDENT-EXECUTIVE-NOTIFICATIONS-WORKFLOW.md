@@ -18,55 +18,72 @@ Esta guía describe el procedimiento paso a paso que debes seguir **cada vez que
 
 ---
 
-## 🗺️ Mapa Visual del Proceso
+## 🗺️ Mapa Visual de Procesos
 
 ```mermaid
 flowchart TD
-    subgraph FASE_LOCAL["FASE 1: Entorno Local (Preparación y Redacción)"]
-        A["1. Copiar nuevo CSV a local<br/>(data/input/...)"] --> B["2. Evaluar severidad ITIL<br/>(evaluate_incident_notifications.py)"]
-        B --> C["3. Escanear pendientes<br/>(scan_pending_incidents.py)"]
-        C --> D["4. Invocar skill / agente incident-reporter<br/>(Redacción automática de tickets)"]
-        D --> E["5. Guardado en almacén<br/>(update_agent_message.py)"]
-        E --> F["6. Preview y Validación Humana<br/>(Revisión de textos en chat)"]
+    subgraph ESCENARIO_1["ESCENARIO 1: Flujo Habitual (Local Primero -> Producción)"]
+        direction TB
+        E1_A["1. Subir CSV por Web Local (:8080)<br/>o copiar a data/input/"] --> E1_B["2. Evaluación ITIL y Escáner<br/>(Detección de pendientes)"]
+        E1_B --> E1_C["3. Agente redacta textos oficiales<br/>(Skill incident-executive-notifications)"]
+        E1_C --> E1_D["4. Guardado en almacén<br/>(data/agent_executive_messages.json)"]
+        E1_D --> E1_E["5. Subir CSV por Web Prod (:8081)<br/>y Desplegar almacén (deploy-production.ps1)"]
+        E1_E --> E1_F["6. En Producción: 100% Oficiales"]
     end
 
-    subgraph FASE_PROD["FASE 2: Producción (Publicación y Sincronización)"]
-        F --> G["7. Subir CSV por la Web en Producción<br/>(Portal / Massive Incidents)"]
-        G --> H["8. Desplegar / Sincronizar<br/>(deploy-production.ps1)"]
-        H --> I["9. Verificación en Vivo<br/>(http://infocodes.si.orange.es:8081)"]
+    subgraph ESCENARIO_2["ESCENARIO 2: Subida Directa por Web en Producción (:8081)"]
+        direction TB
+        E2_A["1. Operador sube CSV por Web Prod"] --> E2_B["2. Servidor procesa CSV<br/>(Tickets conocidos: oficiales<br/>Tickets nuevos: 'pendiente')"]
+        E2_B --> E2_C["3. Copiar CSV al entorno local<br/>(data/input/...)"]
+        E2_C --> E2_D["4. Evaluar y redactar pendientes<br/>(Skill incident-executive-notifications)"]
+        E2_D --> E2_E["5. Desplegar almacén a Producción<br/>(deploy-production.ps1)"]
+        E2_E --> E2_F["6. Refrescar Web Prod: pasan a Oficiales"]
     end
 
-    style FASE_LOCAL fill:#f0f4f8,stroke:#2b6cb0,stroke-width:2px
-    style FASE_PROD fill:#f0fff4,stroke:#2f855a,stroke-width:2px
+    style ESCENARIO_1 fill:#f0f4f8,stroke:#2b6cb0,stroke-width:2px
+    style ESCENARIO_2 fill:#fefcbf,stroke:#b7791f,stroke-width:2px
 ```
 
 ---
 
 ## 🛠️ Procedimiento Paso a Paso
 
-### FASE 1: Entorno Local (Preparación y Redacción)
+### ESCENARIO 1: Flujo Habitual (Preparación en Local -> Publicación en Producción)
 
-#### Paso 1: Copiar el CSV a tu entorno local
-Descarga o coloca tu nuevo archivo CSV de incidencias en la carpeta de entrada:
-```text
-data/input/CS-Informe incidencias P1,  P2 y P3 - 2026 - <FECHA>.csv
-```
+#### FASE 1: Entorno Local (Preparación y Redacción)
 
-#### Paso 2: Evaluar la severidad ITIL del nuevo archivo
-Abre tu terminal en la raíz del proyecto y ejecuta la evaluación de prioridades:
-```powershell
-python converters/evaluate_incident_notifications.py
-```
-*Este comando analiza todos los tickets, detecta discrepancias de severidad, cruza con los mensajes existentes y genera `data/output/high_priority_notifications.json`.*
+#### Paso 1: Ingesta del nuevo CSV en Local (Elige una opción)
 
-#### Paso 3: Escanear incidencias pendientes de redacción
+* **Opción A (Recomendada: A través del Formulario Web Local):**
+  1. Asegúrate de tener arrancado el servidor local: `python serve_app.py` (puerto `8080`).
+  2. Abre en tu navegador el dashboard local de incidencias masivas:  
+     **[http://localhost:8080/dashboards/massive-incidents/](http://localhost:8080/dashboards/massive-incidents/)**  
+     *(o el Portal Central: [http://localhost:8080/dashboards/portal/](http://localhost:8080/dashboards/portal/))*.
+  3. En la barra superior, haz clic en **"Seleccionar archivo"** (o arrastra el CSV).
+  4. La aplicación web local automáticamente:
+     * Guarda el CSV en `data/input/`.
+     * Convierte el archivo a JSON masivo en `data/output/`.
+     * Dispara en segundo plano `evaluate_incident_notifications.py` actualizando el catálogo de alertas.
+  * *¡Listo! Si usas esta opción, puedes saltar directamente al Paso 3.*
+
+* **Opción B (Alternativa manual por terminal):**
+  1. Copia tu nuevo archivo CSV a la carpeta:
+     ```text
+     data/input/CS-Informe incidencias P1,  P2 y P3 - 2026 - <FECHA>.csv
+     ```
+  2. Ejecuta manualmente la evaluación de prioridades:
+     ```powershell
+     python converters/evaluate_incident_notifications.py
+     ```
+
+#### Paso 2: Escanear incidencias pendientes de redacción
 Comprueba qué tickets de alta prioridad no disponen aún de mensaje oficial:
 ```powershell
 python .agents/skills/incident-executive-notifications/scripts/scan_pending_incidents.py
 ```
-*Si faltan tickets por redactar, el script listará los IDs, sistemas y estado de Epsilon IA.*
+*Si faltan tickets por redactar, el script listará los IDs, sistemas y el estado de enriquecimiento de Epsilon IA.*
 
-#### Paso 4: Invocar la Skill de Asistente (Redacción IA)
+#### Paso 3: Invocar la Skill de Asistente (Redacción IA)
 Pide a Antigravity en el chat:
 > *"He cargado un nuevo CSV de incidencias. Activa la skill incident-executive-notifications para redactar las comunicaciones oficiales pendientes."*
 
@@ -75,7 +92,7 @@ El asistente:
 2. Adoptará el rol `incident-reporter` y redactará los dos niveles obligatorios ($\le 90$ palabras monopárrafo y $\le 30$ palabras breve).
 3. Guardará automáticamente las salidas validadas en `data/agent_executive_messages.json` usando `update_agent_message.py`.
 
-#### Paso 5: Revisión de Textos y Validación Humana (*Human-in-the-Loop*)
+#### Paso 4: Revisión de Textos y Validación Humana (*Human-in-the-Loop*)
 1. El asistente te presentará en el chat el resumen de todos los mensajes generados.
 2. Si deseas ajustar manualmente la redacción de alguna incidencia concreta:
    ```powershell
@@ -93,17 +110,17 @@ El asistente:
 
 ---
 
-### FASE 2: Servidor de Producción (Publicación y Sincronización)
+#### FASE 2: Servidor de Producción (Publicación y Sincronización)
 
 Una vez que los mensajes y los datos están validados en local, sigue este orden para evitar desincronizaciones:
 
-#### Paso 6: Subir el CSV en la web de producción
+#### Paso 5: Subir el CSV en la web de producción
 1. Abre tu navegador y accede al dashboard de incidencias masivas en producción:
    **[http://infocodes.si.orange.es:8081/dashboards/massive-incidents/](http://infocodes.si.orange.es:8081/dashboards/massive-incidents/)**
-2. Arrastra o selecciona el nuevo fichero CSV en el botón **"Seleccionar archivo"**.
-3. Espera a que termine la subida y conversión a JSON en el servidor.
+2. Haz clic en **"Seleccionar archivo"** y sube el mismo fichero CSV que procesaste en local.
+3. Espera a que termine la barra de carga y la conversión a JSON en el servidor.
 
-#### Paso 7: Desplegar y sincronizar los mensajes al servidor
+#### Paso 6: Desplegar y sincronizar el almacén al servidor
 Ejecuta el script de despliegue desde PowerShell:
 ```powershell
 powershell -ExecutionPolicy Bypass -File scripts/deploy-production.ps1 -AgentsLibraryPath . -SkipPush
@@ -116,10 +133,63 @@ powershell -ExecutionPolicy Bypass -File scripts/deploy-production.ps1 -AgentsLi
 * **Sincroniza `agent_executive_messages.json`** y `high_priority_notifications.json` en el almacenamiento persistente `/infocodes/var/storage/release-dashboard/`.
 * Reinicia el backend y realiza las comprobaciones de salud HTTP (todas en `200 OK`).
 
-#### Paso 8: Verificación en Vivo
+#### Paso 7: Verificación en Vivo
 Accede al portal y comprueba que la campana de notificaciones y los modales ejecutivos muestran los textos redactados:
 * **Portal Principal:** [http://infocodes.si.orange.es:8081/dashboards/portal/](http://infocodes.si.orange.es:8081/dashboards/portal/)
 * **Incidencias Masivas:** [http://infocodes.si.orange.es:8081/dashboards/massive-incidents/](http://infocodes.si.orange.es:8081/dashboards/massive-incidents/)
+
+---
+
+### ESCENARIO 2: Subida Directa del CSV a través del Formulario Web en Producción
+
+Este escenario ocurre cuando un operador o usuario **sube un nuevo CSV directamente desde el formulario web de producción** ([http://infocodes.si.orange.es:8081](http://infocodes.si.orange.es:8081)) antes de haber redactado los mensajes en local.
+
+#### ¿Qué ocurre en el servidor en el momento de la subida web?
+1. El backend web guarda el archivo en `/infocodes/var/storage/release-dashboard/input/` y genera el JSON masivo.
+2. Automáticamente ejecuta `evaluate_incident_notifications.py` en el VPS.
+3. **Comportamiento mixto**:
+   * Las incidencias que ya habían sido redactadas en fechas anteriores se cargan desde el almacén persistente `/infocodes/var/storage/release-dashboard/agent_executive_messages.json` con su **texto oficial**.
+   * Las **nuevas incidencias** que no estaban en el almacén se marcan con **`"estado": "pendiente"`** y muestran el icono de alerta sin redacción ejecutiva formal (protección anti-alucinación).
+
+#### Procedimiento de Resolución Paso a Paso
+
+Si se ha producido este escenario, sigue estos pasos para completar la redacción y publicar los textos oficiales:
+
+#### Paso 1: Disponer del fichero CSV en tu entorno local
+Si ya tienes el fichero CSV en tu equipo (el mismo que se subió por la web):
+* Cópialo a tu carpeta local `data/input/`.
+
+*(Si no dispones del fichero localmente, descárgalo directamente del VPS por SCP)*:
+```powershell
+scp infocodes@10.132.26.96:"/infocodes/var/storage/release-dashboard/input/CS-Informe*.csv" data/input/
+```
+
+#### Paso 2: Evaluar y escanear los tickets pendientes en local
+Ejecuta la evaluación ITIL local para alinear los datos:
+```powershell
+python converters/evaluate_incident_notifications.py
+python .agents/skills/incident-executive-notifications/scripts/scan_pending_incidents.py
+```
+El escáner te mostrará exactamente cuáles son las incidencias nuevas que quedaron pendientes en la subida web.
+
+#### Paso 3: Redactar los tickets pendientes con el Asistente
+Pide al asistente en el chat:
+> *"He sincronizado el CSV subido a producción. Activa la skill incident-executive-notifications para redactar las incidencias pendientes."*
+
+El asistente generará los textos de apertura/seguimiento según las reglas ITIL y el rol `incident-reporter`, incorporándolos automáticamente a `data/agent_executive_messages.json`.
+
+#### Paso 4: Desplegar el almacén actualizado a Producción
+Sincroniza el almacén de mensajes con el servidor ejecutando el despliegue:
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/deploy-production.ps1 -AgentsLibraryPath .
+```
+El script transferirá el almacén actualizado a `/infocodes/var/storage/release-dashboard/agent_executive_messages.json` y actualizará las notificaciones.
+
+#### Paso 5: Verificación en el Navegador
+Recarga la web en producción:
+* **[http://infocodes.si.orange.es:8081/dashboards/massive-incidents/](http://infocodes.si.orange.es:8081/dashboards/massive-incidents/)**
+
+Comprobarás que las incidencias que antes estaban en estado `"pendiente"` ahora muestran el badge verde con el texto oficial completo (≤ 90 palabras) y la versión breve (≤ 30 palabras).
 
 ---
 
