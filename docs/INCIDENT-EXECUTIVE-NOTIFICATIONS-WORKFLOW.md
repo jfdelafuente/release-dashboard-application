@@ -123,6 +123,22 @@ Accede al portal y comprueba que la campana de notificaciones y los modales ejec
 
 ---
 
+## ❓ Preguntas Frecuentes y Diagnóstico (FAQ)
+
+### 1. ¿Por qué la subida web de un CSV en producción no genera los textos del agente automáticamente?
+* **Diseño sin LLM en el servidor**: Por motivos de gobernanza, costes y prevención de alucinaciones, en el VPS de producción no corre ningún modelo de lenguaje desatendido.
+* **Separación de responsabilidades**: La redacción ejecutiva formal para Dirección la genera el agente `incident-reporter` en el entorno local (con supervisión humana).
+* **Comportamiento esperado**: Cuando el backend web de producción procesa un CSV, evalúa la severidad ITIL y busca los mensajes en el almacén persistente `/infocodes/var/storage/release-dashboard/agent_executive_messages.json`. Cualquier incidencia nueva que no esté en dicho almacén se marca automáticamente como `"estado": "pendiente"` con su prompt técnico listo para ser procesado.
+
+### 2. ¿Por qué al ejecutar `deploy-production.ps1 -SkipPush` no veía los ficheros JSON actualizados en producción?
+* **Seguridad de Git**: El script de despliegue verifica que el estado de Git esté limpio (`git status --porcelain`). Si tienes modificaciones locales no commiteadas o una confirmación interactiva esperando en terminal, el script aborta antes de empaquetar o conectar por SSH al VPS.
+* **Ubicación en el servidor**: Los datos persistentes no residen dentro del árbol de código estático de la release, sino en el storage desacoplado:
+  * Notificaciones activas: `/infocodes/var/storage/release-dashboard/output/high_priority_notifications.json`
+  * Almacén de redacciones: `/infocodes/var/storage/release-dashboard/agent_executive_messages.json`
+* **Sincronización en el script**: Asegúrate de que el script copie tanto `high_priority_notifications.json` como `agent_executive_messages.json` hacia `$STORAGE_BASE` antes de recrear el symlink `data/`.
+
+---
+
 ## 🧰 Comandos Útiles y Rescate (CheatSheet)
 
 | Acción | Comando |

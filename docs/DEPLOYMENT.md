@@ -72,8 +72,9 @@ flowchart LR
 ├── var/
 │   ├── storage/
 │   │   ├── release-dashboard/                        # Almacenamiento desacoplado (Persistente)
+│   │   │   ├── agent_executive_messages.json         # Almacén acumulativo de mensajes oficiales del agente
 │   │   │   ├── input/                                # CSVs subidos desde web o CLI
-│   │   │   ├── output/                               # JSONs estructurados e index.json
+│   │   │   ├── output/                               # JSONs estructurados, index.json y high_priority_notifications.json
 │   │   │   ├── reports/                              # Postmortems PPTX ({release}-postmortem-report.pptx)
 │   │   │   │   └── executive -> /infocodes/var/storage/executive_pptx
 │   │   │   ├── errors/                               # CSVs erróneos detectados en batch

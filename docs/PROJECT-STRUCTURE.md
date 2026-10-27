@@ -132,11 +132,12 @@ El tratamiento de los datos difiere deliberadamente entre el desarrollo local y 
 
 ```text
 Estructura de Datos:
-├── input/      # Archivos CSV origen (subidos manualmente o por endpoint /api/upload)
-├── output/     # Archivos JSON convertidos (*-massive.json, *-postmortem.json, index.json, agents_catalog.json)
-├── reports/    # Informes generados (presentaciones PowerPoint ejecutivas .pptx)
-├── errors/     # Informes de errores y discrepancias de validación por CSV
-└── archive/    # Archivos históricos archivados
+├── input/                      # Archivos CSV origen (subidos manualmente o por endpoint /api/upload)
+├── output/                     # Archivos JSON convertidos (*-massive.json, *-postmortem.json, index.json, agents_catalog.json, high_priority_notifications.json)
+├── reports/                    # Informes generados (presentaciones PowerPoint ejecutivas .pptx)
+├── errors/                     # Informes de errores y discrepancias de validación por CSV
+├── archive/                    # Archivos históricos archivados
+└── agent_executive_messages.json # Almacén persistente acumulativo de redacciones del agente incident-reporter
 ```
 
 | Ámbito | Ubicación Física | Comportamiento |
@@ -166,7 +167,7 @@ scripts/
 4. **Transferencia SCP**: Sube el tarball al host `infocodes@10.132.26.96:/tmp/`.
 5. **Copia Preventiva**: Crea backup en `/infocodes/var/backups/release-dashboard-application/backup_<TIMESTAMP>.tar.gz`.
 6. **Extracción Atómica**: Descomprime en `/infocodes/project/release-dashboard-application/releases/<TIMESTAMP>`.
-7. **Sincronización de Catálogo y Symlink**: Sincroniza `agents_catalog.json` en el almacenamiento persistente (`/infocodes/var/storage/release-dashboard/output/agents_catalog.json`), actualiza el symlink atómico `current -> releases/<TIMESTAMP>` y reconecta `current/data` al almacenamiento persistente desacoplado.
+7. **Sincronización de Catálogo y Symlink**: Sincroniza `agents_catalog.json`, `high_priority_notifications.json` y `agent_executive_messages.json` en el almacenamiento persistente (`/infocodes/var/storage/release-dashboard/`), actualiza el symlink atómico `current -> releases/<TIMESTAMP>` y reconecta `current/data` al almacenamiento persistente desacoplado.
 8. **Validación y Recarga**: Ejecuta `nginx -t` y `nginx -s reload` sin caída de servicio (con rollback automático si la sintaxis falla).
 9. **Smoke Tests**: Verifica respuestas HTTP 200 en todos los dashboards y proxies.
 
