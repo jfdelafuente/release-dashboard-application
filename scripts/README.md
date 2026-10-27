@@ -89,5 +89,40 @@ Script para procesar CSVs y generar los archivos JSON para los dashboards estát
 
 ### Configuración en Crontab (VPS):
 ```bash
-0 2 * * * /infocodes/project/release-dashboard-application/scripts/generate-dashboards.sh >> /infocodes/project/release-dashboard-application/logs/dashboards-cron.log 2>&1
+0 * * * * bash /infocodes/project/release-dashboard-application/current/scripts/generate-dashboards.sh >> /infocodes/var/log/release-dashboard/dashboards-cron.log 2>&1
+```
+
+---
+
+## 🧹 maintenance.sh (Rotación y Purga de Logs)
+
+Script para el mantenimiento preventivo y depuración de ficheros de registro (`/infocodes/project/release-dashboard-application/maintenance.sh` o `scripts/maintenance.sh`).
+
+### Características:
+- **Rotación *Copy-Truncate* de `dashboards-cron.log`**: Desplaza las rotaciones históricas (.1 a .4) y vacía el fichero activo sin interrumpir la ejecución del cron.
+- **Compresión automática con gzip**: Comprime logs diarios con más de 7 días de antigüedad (`.gz`).
+- **Purga por retención**: Elimina de forma segura los ficheros de log diarios (`dashboards-generation-*.log` y `deploy-*.log`) que superen el periodo de retención (por defecto 30 días).
+- **Diagnóstico y estado (`status`)**: Informa del tamaño ocupado por logs, uso porcentual de disco, número de archivos y advertencias de Nginx.
+
+### Uso Manual:
+```bash
+# Ver estado y ocupación de logs
+./maintenance.sh status
+
+# Ejecutar rotación de cron.log y purga de logs antiguos (>30d)
+./maintenance.sh rotate-logs
+
+# Limpiar logs antiguos (>30d) sin rotar cron.log
+./maintenance.sh clean
+
+# Forzar rotación de cron.log aunque no alcance el tamaño mínimo
+./maintenance.sh rotate-logs --force
+
+# Sobrescribir periodo de retención a 15 días
+./maintenance.sh rotate-logs --retention-days 15
+```
+
+### Configuración recomendada en Crontab (Semanal):
+```bash
+15 2 * * 6 bash /infocodes/project/release-dashboard-application/current/scripts/maintenance.sh rotate-logs >> /infocodes/var/log/release-dashboard/maintenance.log 2>&1
 ```

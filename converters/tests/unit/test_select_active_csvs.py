@@ -44,3 +44,4 @@ def test_select_active_csv_files(tmp_path: Path):
     assert "2026R7 MESA POST - 07 Aug 2026 (2).csv" in selected_names
     assert "2026R9 MESA POST - 26 Oct 2026.csv" in selected_names
     assert "CS-Informe incidencias - 27 Oct 2026.csv" in selected_names
+

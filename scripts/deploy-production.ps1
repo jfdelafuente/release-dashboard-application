@@ -369,6 +369,9 @@ if (-not $SkipBuild) {
         if (Test-Path "$ProjectRoot\scripts\rollback.sh") {
             Copy-Item "$ProjectRoot\scripts\rollback.sh" -Destination $StagingDir
         }
+        if (Test-Path "$ProjectRoot\scripts\maintenance.sh") {
+            Copy-Item "$ProjectRoot\scripts\maintenance.sh" -Destination $StagingDir
+        }
         if (Test-Path "$ProjectRoot\scripts\deploy.sh") {
             Copy-Item "$ProjectRoot\scripts\deploy.sh" -Destination $StagingDir
         }
@@ -578,17 +581,21 @@ ln -sfn "releases/`$RELEASE_ID" "`$CURRENT_LINK"
 # 7. Sincronizar scripts de control y metadatos en la raíz de `$REMOTE_DIR
 cp -f "`$NEW_RELEASE_DIR/status.sh" "`$REMOTE_DIR/status.sh"
 cp -f "`$NEW_RELEASE_DIR/rollback.sh" "`$REMOTE_DIR/rollback.sh"
+if [ -f "`$NEW_RELEASE_DIR/maintenance.sh" ]; then
+    cp -f "`$NEW_RELEASE_DIR/maintenance.sh" "`$REMOTE_DIR/maintenance.sh"
+    chmod +x "`$REMOTE_DIR/maintenance.sh"
+fi
 if [ -f "`$NEW_RELEASE_DIR/VERSION" ]; then
     cp -f "`$NEW_RELEASE_DIR/VERSION" "`$REMOTE_DIR/VERSION"
 fi
 chmod +x "`$REMOTE_DIR/status.sh" "`$REMOTE_DIR/rollback.sh"
 
 # 8. Limpiar elementos residuales en la raíz de `$REMOTE_DIR
-#    Solo deben quedar: current, releases, shared, data, logs, status.sh, rollback.sh, VERSION
+#    Solo deben quedar: current, releases, shared, data, logs, status.sh, rollback.sh, maintenance.sh, VERSION
 echo "--> [Remoto] Limpiando elementos residuales en la raíz de `$REMOTE_DIR..."
 for entry in `$(ls -A "`$REMOTE_DIR"); do
     case "`$entry" in
-        current|releases|shared|data|logs|status.sh|rollback.sh|VERSION)
+        current|releases|shared|data|logs|status.sh|rollback.sh|maintenance.sh|VERSION)
             ;;
         *)
             rm -rf "`$REMOTE_DIR/`$entry" 2>/dev/null || true
