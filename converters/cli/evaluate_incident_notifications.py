@@ -102,6 +102,9 @@ class SeverityEvaluator:
         original_raw = ticket.get("Prioridad") or ticket.get("prioridad")
         is_discrepancy = detect_priority_discrepancy(original_raw, priority)
 
+        proceso = self._classify_process(ticket, epsilon_data)
+        criterio = self._determine_criterion(proceso, priority, impact, urgency, ticket, epsilon_data)
+
         sla_minutes = SLA_TARGET_MINUTES.get(priority, 240)
 
         return {
@@ -109,6 +112,8 @@ class SeverityEvaluator:
             "es_alta_prioridad": is_high_priority,
             "es_discrepancia": is_discrepancy,
             "evaluacion": {
+                "proceso": proceso,
+                "criterio": criterio,
                 "impacto": impact,
                 "impacto_justificacion": impact_reason,
                 "urgencia": urgency,
@@ -117,6 +122,105 @@ class SeverityEvaluator:
                 "sla_objetivo_minutos": sla_minutes,
             }
         }
+
+    @staticmethod
+    def _classify_process(ticket: dict[str, Any], epsilon: Optional[dict[str, Any]]) -> str:
+        """Classifies incident into one of the 6 Critical Business Processes or Core O&M."""
+        text_corpus = ""
+        if epsilon:
+            text_corpus += f" {epsilon.get('problema', '')} {epsilon.get('impacto', '')} {epsilon.get('titulo', '')}"
+            if isinstance(epsilon.get("sistemas"), list):
+                text_corpus += " " + " ".join(epsilon.get("sistemas", []))
+        desc = ticket.get("Descripción") or ticket.get("descripcion") or ""
+        group = ticket.get("Grupo asignado") or ticket.get("Grupo Resolutor") or ""
+        text_corpus += f" {desc} {group}"
+        text_lower = text_corpus.lower()
+
+        # 1. Facturación y Cobros
+        if any(k in text_lower for k in [
+            "hpfms", "bscs", "cobro", "cobros", "factura", "facturación", "facturacion",
+            "tarifica", "tarificación", "tarificacion", "abono", "abonos", "penalizacion",
+            "penalización", "sop_bss", "sop_smc_bscs"
+        ]):
+            return "Facturación y Cobros"
+
+        # 2. Prepago
+        if any(k in text_lower for k in ["prepago", "recarga", "recargas", "alta de líneas prepago", "altas prepago"]):
+            return "Prepago"
+
+        # 3. Portabilidad
+        if any(k in text_lower for k in ["portabilidad", "portabilidades", "flujo 2 am", "entidad de referencia", "nodo portabilidad"]):
+            return "Portabilidad"
+
+        # 4. Ventas
+        if any(k in text_lower for k in [
+            "comprobante de venta", "comprobantes de venta", "comprobantes", "televenta",
+            "canal comercial", "neg_camp_ceres", "ceres", "renove", "renovación de terminales",
+            "renovacion de terminales", "venta", "ventas", "contratación", "contratacion"
+        ]):
+            return "Ventas"
+
+        # 5. Provisión
+        if any(k in text_lower for k in [
+            "provisión", "provision", "aprovisionamiento", "orden de móvil", "orden de fijo",
+            "órdenes", "ordenes", "alta de fijo", "alta de móvil", "renovación de beneficios",
+            "renovacion de beneficios", "sop_smc_teide", "teide", "fijo apl", "ip24"
+        ]):
+            return "Provisión"
+
+        # 6. Atención al Cliente (ATC)
+        if any(k in text_lower for k in [
+            "ficha cliente", "ficha de cliente", "des_soe_ficha", "ivr", "frontales",
+            "crm", "asistente", "des_asistente", "djingo", "liveperson", "sop_djingo",
+            "onuris", "sop_onuris", "operador", "operadores", "call center", "genesys",
+            "altitude", "atención al cliente", "atencion al cliente", "atc"
+        ]):
+            return "Atención al Cliente (ATC)"
+
+        # 7. Operación y Monitorización (O&M) / Infraestructura
+        if any(k in text_lower for k in [
+            "altair", "gnoc", "cpe", "cortes cpe", "vtemip", "zte", "uca", "supervisión",
+            "supervision", "monitorización", "monitorizacion", "cau", "cep cau agi", "ftth",
+            "fibra", "nodo central", "enlace", "routing core", "rac"
+        ]):
+            return "Operación y Monitorización (O&M)"
+
+        return "Sistemas Core"
+
+    @staticmethod
+    def _determine_criterion(
+        process: str,
+        priority: str,
+        impact: str,
+        urgency: str,
+        ticket: dict[str, Any],
+        epsilon: Optional[dict[str, Any]]
+    ) -> str:
+        """Determines the specific threshold or ITIL rule applied from the it-severity-matrix skill."""
+        if priority == "P1":
+            if process == "Atención al Cliente (ATC)":
+                return "ATC: Frontales/CRM (>20% desviación en 30m) o Regla de Oro N1"
+            if process == "Ventas":
+                return "Ventas: Afectación canal comercial (>30% volumen) o bloqueo televenta"
+            if process == "Portabilidad":
+                return "Portabilidad: Flujo 2 AM o entidad de referencia (>2h retraso)"
+            if process == "Prepago":
+                return "Prepago: >10% errores o >30 min sin altas/recargas"
+            if process == "Provisión":
+                return "Provisión: Órdenes en error (>20% móvil / >30% fijo) o Regla de Oro N1"
+            if process == "Facturación y Cobros":
+                return "Facturación: >3h sin tarificación online o ventana +/-3 días ciclo"
+            if process == "Operación y Monitorización (O&M)":
+                return "O&M: Compromiso en herramienta esencial de supervisión (Regla de Oro N1)"
+            return "Regla de Oro N1: Triaje preventivo SL1/P1 en apertura por riesgo de impacto"
+
+        if priority == "P2":
+            return "SL2 Mayor: Degradación funcional o afectación en sede sin indisponibilidad global"
+
+        if priority == "P3":
+            return "SL3 Menor: Bajo impacto en procesos secundarios o alarmas menores"
+
+        return "SL4 Informativa: Seguimiento sin afectación directa a servicios"
 
     def _evaluate_impact(self, ticket: dict[str, Any], epsilon: Optional[dict[str, Any]]) -> Tuple[str, str]:
         text_corpus = ""
@@ -247,6 +351,14 @@ class ExecutiveMessageGenerator:
             f"Criticidad sugerida: {prio}",
             f"Sistemas involucrados: {sistemas_str}"
         ]
+
+        eval_data = evaluation.get("evaluacion") if isinstance(evaluation.get("evaluacion"), dict) else evaluation
+        proceso = eval_data.get("proceso")
+        criterio = eval_data.get("criterio")
+        if proceso:
+            prompt_lines.append(f"Proceso de Negocio: {proceso}")
+        if criterio:
+            prompt_lines.append(f"Criterio / Umbral: {criterio}")
 
         if resumen_ia:
             prompt_lines.append("\n--- Contexto extraído de Epsilon Resumen IA ---")

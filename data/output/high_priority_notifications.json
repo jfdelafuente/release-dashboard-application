@@ -2,15 +2,15 @@
   "_metadata": {
     "type": "high_priority_notifications",
     "version": "1.0.0",
-    "generated_at": "2026-10-27T11:13:21.289953+00:00",
+    "generated_at": "2026-10-27T12:14:30.884269+00:00",
     "source_file": "CS-Informe incidencias P1,  P2 y P3 - 2026 - 27 Oct 2026-massive.json",
     "kpis": {
-      "total_scanned": 1565,
-      "terminal_skipped_count": 1550,
+      "total_scanned": 1566,
+      "terminal_skipped_count": 1551,
       "active_evaluated_count": 15,
       "total_high_priority": 15,
-      "p1_critical_count": 10,
-      "p2_high_count": 5,
+      "p1_critical_count": 9,
+      "p2_high_count": 6,
       "discrepancies_count": 15
     }
   },
@@ -28,6 +28,8 @@
       "estatus": "Asignado",
       "fecha_envio": "01/07/2026 17:56 a",
       "evaluacion": {
+        "proceso": "Operación y Monitorización (O&M)",
+        "criterio": "O&M: Compromiso en herramienta esencial de supervisión (Regla de Oro N1)",
         "impacto": "Alto",
         "impacto_justificacion": "Afectación crítica o corte global sobre el servicio principal sin alternativa viable.",
         "urgencia": "Media",
@@ -44,7 +46,7 @@
           "conteo_palabras_breve": 26,
           "generado_por_agente": true,
           "origen": "incident-reporter",
-          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: APERTURA\nIncidencia: INC000004065609 - ALTAIR // LA FINCA // ERROR FUNCIONAL\nCriticidad sugerida: P1\nSistemas involucrados: GNOC CAU\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: ALTAIR // LA FINCA // ERROR FUNCIONAL\n• Impacto ticket: Masiva\n• Urgencia ticket: Medio\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
+          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: APERTURA\nIncidencia: INC000004065609 - ALTAIR // LA FINCA // ERROR FUNCIONAL\nCriticidad sugerida: P1\nSistemas involucrados: GNOC CAU\nProceso de Negocio: Operación y Monitorización (O&M)\nCriterio / Umbral: O&M: Compromiso en herramienta esencial de supervisión (Regla de Oro N1)\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: ALTAIR // LA FINCA // ERROR FUNCIONAL\n• Impacto ticket: Masiva\n• Urgencia ticket: Medio\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
         },
         "seguimiento": {
           "completo": "Continúa el seguimiento de la incidencia P1 (INC000004065609) en ALTAIR. Se ha identificado que el componente UCA no procesaba correctamente los eventos procedentes de ZTE. Los equipos de infraestructura han procedido al reinicio de UCA y al limpiado de colas operativas en vTeMIP, comenzando a recibir nuevamente flujo de eventos. Se mantienen verificaciones activas sobre la correlación de datos para confirmar que los porcentajes semanales y diarios quedan normalizados antes de dar por cerrada la actuación.",
@@ -53,7 +55,7 @@
           "conteo_palabras_breve": 23,
           "generado_por_agente": true,
           "origen": "incident-reporter",
-          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: SEGUIMIENTO\nIncidencia: INC000004065609 - ALTAIR // LA FINCA // ERROR FUNCIONAL\nCriticidad sugerida: P1\nSistemas involucrados: GNOC CAU\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: ALTAIR // LA FINCA // ERROR FUNCIONAL\n• Impacto ticket: Masiva\n• Urgencia ticket: Medio\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
+          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: SEGUIMIENTO\nIncidencia: INC000004065609 - ALTAIR // LA FINCA // ERROR FUNCIONAL\nCriticidad sugerida: P1\nSistemas involucrados: GNOC CAU\nProceso de Negocio: Operación y Monitorización (O&M)\nCriterio / Umbral: O&M: Compromiso en herramienta esencial de supervisión (Regla de Oro N1)\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: ALTAIR // LA FINCA // ERROR FUNCIONAL\n• Impacto ticket: Masiva\n• Urgencia ticket: Medio\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
         },
         "cierre": {
           "completo": "Queda resuelta la incidencia crítica P1 (INC000004065609) sobre ALTAIR. La causa raíz radicó en la detención del procesado de eventos de ZTE por parte de UCA, subsanada tras reiniciar el servicio y limpiar las operaciones en vTeMIP. La herramienta Test Cortes CPE opera con normalidad, reflejando nuevamente los datos reales de red y cortes de servicio sin discrepancias. La operativa de supervisión en La Finca queda plenamente recuperada, coordinándose seguimiento preventivo con Oceane.",
@@ -62,7 +64,7 @@
           "conteo_palabras_breve": 20,
           "generado_por_agente": true,
           "origen": "incident-reporter",
-          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: CIERRE\nIncidencia: INC000004065609 - ALTAIR // LA FINCA // ERROR FUNCIONAL\nCriticidad sugerida: P1\nSistemas involucrados: GNOC CAU\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: ALTAIR // LA FINCA // ERROR FUNCIONAL\n• Impacto ticket: Masiva\n• Urgencia ticket: Medio\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
+          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: CIERRE\nIncidencia: INC000004065609 - ALTAIR // LA FINCA // ERROR FUNCIONAL\nCriticidad sugerida: P1\nSistemas involucrados: GNOC CAU\nProceso de Negocio: Operación y Monitorización (O&M)\nCriterio / Umbral: O&M: Compromiso en herramienta esencial de supervisión (Regla de Oro N1)\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: ALTAIR // LA FINCA // ERROR FUNCIONAL\n• Impacto ticket: Masiva\n• Urgencia ticket: Medio\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
         }
       }
     },
@@ -79,6 +81,8 @@
       "estatus": "Asignado",
       "fecha_envio": "14/10/2026 13:26 a",
       "evaluacion": {
+        "proceso": "Atención al Cliente (ATC)",
+        "criterio": "ATC: Frontales/CRM (>20% desviación en 30m) o Regla de Oro N1",
         "impacto": "Alto",
         "impacto_justificacion": "Afectación crítica o corte global sobre el servicio principal sin alternativa viable.",
         "urgencia": "Media",
@@ -95,7 +99,7 @@
           "conteo_palabras_breve": 25,
           "generado_por_agente": true,
           "origen": "incident-reporter",
-          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: APERTURA\nIncidencia: INC000004156790 - Ficha Cliente Orange | Error funcional | Madison - Valladolid\nCriticidad sugerida: P1\nSistemas involucrados: DES_SOE_FICHA\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: Ficha Cliente Orange | Error funcional | Madison - Valladolid\n• Impacto ticket: Masiva\n• Urgencia ticket: Medio\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
+          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: APERTURA\nIncidencia: INC000004156790 - Ficha Cliente Orange | Error funcional | Madison - Valladolid\nCriticidad sugerida: P1\nSistemas involucrados: DES_SOE_FICHA\nProceso de Negocio: Atención al Cliente (ATC)\nCriterio / Umbral: ATC: Frontales/CRM (>20% desviación en 30m) o Regla de Oro N1\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: Ficha Cliente Orange | Error funcional | Madison - Valladolid\n• Impacto ticket: Masiva\n• Urgencia ticket: Medio\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
         },
         "seguimiento": {
           "completo": "Seguimiento de la incidencia P1 (INC000004156790). Tras corregir el direccionamiento inicial del endpoint de la XPL, se ha verificado recuperación parcial en la sede de Vigo, si bien Madison-Valladolid continúa reportando errores al recuperar datos del pedido en operaciones específicas. El equipo de DES_SOE_FICHA mantiene los ajustes de enrutamiento y validación de cabeceras en APIGEE para garantizar la apertura homogénea de comprobantes en todos los centros de atención. Se monitorizan las llamadas de contratación en tiempo real.",
@@ -104,7 +108,7 @@
           "conteo_palabras_breve": 22,
           "generado_por_agente": true,
           "origen": "incident-reporter",
-          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: SEGUIMIENTO\nIncidencia: INC000004156790 - Ficha Cliente Orange | Error funcional | Madison - Valladolid\nCriticidad sugerida: P1\nSistemas involucrados: DES_SOE_FICHA\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: Ficha Cliente Orange | Error funcional | Madison - Valladolid\n• Impacto ticket: Masiva\n• Urgencia ticket: Medio\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
+          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: SEGUIMIENTO\nIncidencia: INC000004156790 - Ficha Cliente Orange | Error funcional | Madison - Valladolid\nCriticidad sugerida: P1\nSistemas involucrados: DES_SOE_FICHA\nProceso de Negocio: Atención al Cliente (ATC)\nCriterio / Umbral: ATC: Frontales/CRM (>20% desviación en 30m) o Regla de Oro N1\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: Ficha Cliente Orange | Error funcional | Madison - Valladolid\n• Impacto ticket: Masiva\n• Urgencia ticket: Medio\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
         },
         "cierre": {
           "completo": "Cerrada la incidencia crítica P1 (INC000004156790) en Ficha Cliente Orange. Subsanado el error de direccionamiento en el endpoint xpldocumentlist, confirmándose la correcta apertura y descarga de comprobantes de venta desde el inyector en todas las sedes operativas, incluidas Valladolid y Vigo. Los 60 puestos afectados operan sin bloqueos y el proceso de formalización de ventas se encuentra totalmente estabilizado bajo supervisión preventiva de soporte.",
@@ -113,58 +117,7 @@
           "conteo_palabras_breve": 23,
           "generado_por_agente": true,
           "origen": "incident-reporter",
-          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: CIERRE\nIncidencia: INC000004156790 - Ficha Cliente Orange | Error funcional | Madison - Valladolid\nCriticidad sugerida: P1\nSistemas involucrados: DES_SOE_FICHA\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: Ficha Cliente Orange | Error funcional | Madison - Valladolid\n• Impacto ticket: Masiva\n• Urgencia ticket: Medio\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
-        }
-      }
-    },
-    {
-      "id": "INC000004159877",
-      "titulo": "Ficha Cliente Orange | Error funcional | Teleperformance - Salamanca",
-      "sistemas": [
-        "NEG_CAMP_CERES"
-      ],
-      "prioridad_original": "Media",
-      "prioridad_sugerida": "P1",
-      "es_alta_prioridad": true,
-      "es_discrepancia": true,
-      "estatus": "Asignado",
-      "fecha_envio": "19/10/2026 12:33 a",
-      "evaluacion": {
-        "impacto": "Alto",
-        "impacto_justificacion": "Afectación crítica o corte global sobre el servicio principal sin alternativa viable.",
-        "urgencia": "Media",
-        "urgencia_justificacion": "Incidencia en tratamiento con contención operativa transitoria.",
-        "workaround": "Desconocido",
-        "sla_objetivo_minutos": 15
-      },
-      "resumen_ia": null,
-      "mensajes_ejecutivos": {
-        "apertura": {
-          "completo": "Se declara incidencia crítica P1 (INC000004159877) en Ficha Cliente Orange por bloqueo generalizado en la tramitación de renovaciones de terminales en Teleperformance-Salamanca. Un modal de rechazo erróneo impide acceder a las campañas de renove para clientes de cualquier nivel de riesgo o modalidad multidispositivo, impactando directamente en la retención comercial sin método alternativo. Los equipos de DES_SOE_FICHA y CERES investigan las reglas de validación para restaurar la operativa comercial. Próxima actualización en 30 minutos.",
-          "breve": "Apertura P1 (INC000004159877): Bloqueo en campañas de renove en Ficha Cliente Orange en Teleperformance-Salamanca por modal de rechazo indebido. Equipos técnicos interviniendo reglas comerciales.",
-          "conteo_palabras_completo": 74,
-          "conteo_palabras_breve": 24,
-          "generado_por_agente": true,
-          "origen": "incident-reporter",
-          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: APERTURA\nIncidencia: INC000004159877 - Ficha Cliente Orange | Error funcional | Teleperformance - Salamanca\nCriticidad sugerida: P1\nSistemas involucrados: NEG_CAMP_CERES\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: Ficha Cliente Orange | Error funcional | Teleperformance - Salamanca\n• Impacto ticket: Masiva\n• Urgencia ticket: Medio\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
-        },
-        "seguimiento": {
-          "completo": "Seguimiento de la incidencia P1 (INC000004159877). Los equipos de desarrollo de Ficha Cliente y soporte de CERES han identificado una discrepancia en el motor de scoring comercial que dispara el rechazo sistemático en las solicitudes de renove. Se está desplegando una corrección en las condiciones de evaluación del frontal para reactivar las ofertas disponibles sin comprometer las políticas de riesgo. Se realizan pruebas piloto con agentes de Salamanca para confirmar el desbloqueo.",
-          "breve": "Seguimiento P1 (INC000004159877): Identificado error en motor comercial de renove en Ficha Cliente; desplegando corrección y validando pruebas piloto con agentes en Salamanca.",
-          "conteo_palabras_completo": 72,
-          "conteo_palabras_breve": 23,
-          "generado_por_agente": true,
-          "origen": "incident-reporter",
-          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: SEGUIMIENTO\nIncidencia: INC000004159877 - Ficha Cliente Orange | Error funcional | Teleperformance - Salamanca\nCriticidad sugerida: P1\nSistemas involucrados: NEG_CAMP_CERES\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: Ficha Cliente Orange | Error funcional | Teleperformance - Salamanca\n• Impacto ticket: Masiva\n• Urgencia ticket: Medio\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
-        },
-        "cierre": {
-          "completo": "Queda resuelta la incidencia P1 (INC000004159877) en Ficha Cliente Orange. Aplicada la corrección sobre el motor de reglas de CERES y el frontal de agentes, eliminando el modal de rechazo indebido en renovaciones. El canal de Teleperformance-Salamanca tramita operaciones de renove de terminales con absoluta normalidad para todas las categorías de clientes, confirmando la plena disponibilidad del catálogo comercial y la recuperación del servicio.",
-          "breve": "Cierre P1 (INC000004159877): Desbloqueado acceso a campañas de renove en Ficha Cliente Orange tras corregir reglas comerciales. Operativa de terminales restablecida en Salamanca.",
-          "conteo_palabras_completo": 64,
-          "conteo_palabras_breve": 23,
-          "generado_por_agente": true,
-          "origen": "incident-reporter",
-          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: CIERRE\nIncidencia: INC000004159877 - Ficha Cliente Orange | Error funcional | Teleperformance - Salamanca\nCriticidad sugerida: P1\nSistemas involucrados: NEG_CAMP_CERES\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: Ficha Cliente Orange | Error funcional | Teleperformance - Salamanca\n• Impacto ticket: Masiva\n• Urgencia ticket: Medio\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
+          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: CIERRE\nIncidencia: INC000004156790 - Ficha Cliente Orange | Error funcional | Madison - Valladolid\nCriticidad sugerida: P1\nSistemas involucrados: DES_SOE_FICHA\nProceso de Negocio: Atención al Cliente (ATC)\nCriterio / Umbral: ATC: Frontales/CRM (>20% desviación en 30m) o Regla de Oro N1\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: Ficha Cliente Orange | Error funcional | Madison - Valladolid\n• Impacto ticket: Masiva\n• Urgencia ticket: Medio\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
         }
       }
     },
@@ -181,6 +134,8 @@
       "estatus": "Asignado",
       "fecha_envio": "20/10/2026 17:22 a",
       "evaluacion": {
+        "proceso": "Provisión",
+        "criterio": "Provisión: Órdenes en error (>20% móvil / >30% fijo) o Regla de Oro N1",
         "impacto": "Alto",
         "impacto_justificacion": "Afectación crítica o corte global sobre el servicio principal sin alternativa viable.",
         "urgencia": "Media",
@@ -197,7 +152,7 @@
           "conteo_palabras_breve": 23,
           "generado_por_agente": true,
           "origen": "incident-reporter",
-          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: APERTURA\nIncidencia: INC000004162280 - Siebel 8 | Error funcional | OEST - Oviedo\nCriticidad sugerida: P1\nSistemas involucrados: SOP_SMC_TEIDE\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: Siebel 8 | Error funcional | OEST - Oviedo\n• Impacto ticket: Masiva\n• Urgencia ticket: Baja\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
+          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: APERTURA\nIncidencia: INC000004162280 - Siebel 8 | Error funcional | OEST - Oviedo\nCriticidad sugerida: P1\nSistemas involucrados: SOP_SMC_TEIDE\nProceso de Negocio: Provisión\nCriterio / Umbral: Provisión: Órdenes en error (>20% móvil / >30% fijo) o Regla de Oro N1\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: Siebel 8 | Error funcional | OEST - Oviedo\n• Impacto ticket: Masiva\n• Urgencia ticket: Baja\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
         },
         "seguimiento": {
           "completo": "Seguimiento de la incidencia P1 (INC000004162280). Los equipos técnicos han aislado la falta de inserción de las tarifas de TV en la réplica de productos entre Ficha de Cliente y Siebel 8. Se está ejecutando un plan de reaprovisionamiento manual para los expedientes identificados en Oviedo, al tiempo que se ajustan las rutinas de sincronización en TEIDE para evitar que nuevas contrataciones queden huérfanas de emisión. Se mantienen comprobaciones sobre la activación de parrilla.",
@@ -206,7 +161,7 @@
           "conteo_palabras_breve": 26,
           "generado_por_agente": true,
           "origen": "incident-reporter",
-          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: SEGUIMIENTO\nIncidencia: INC000004162280 - Siebel 8 | Error funcional | OEST - Oviedo\nCriticidad sugerida: P1\nSistemas involucrados: SOP_SMC_TEIDE\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: Siebel 8 | Error funcional | OEST - Oviedo\n• Impacto ticket: Masiva\n• Urgencia ticket: Baja\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
+          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: SEGUIMIENTO\nIncidencia: INC000004162280 - Siebel 8 | Error funcional | OEST - Oviedo\nCriticidad sugerida: P1\nSistemas involucrados: SOP_SMC_TEIDE\nProceso de Negocio: Provisión\nCriterio / Umbral: Provisión: Órdenes en error (>20% móvil / >30% fijo) o Regla de Oro N1\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: Siebel 8 | Error funcional | OEST - Oviedo\n• Impacto ticket: Masiva\n• Urgencia ticket: Baja\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
         },
         "cierre": {
           "completo": "Cerrada la incidencia P1 (INC000004162280). Restablecida la sincronización de paquetes de televisión entre Ficha de Cliente y Siebel 8. Todos los clientes afectados en OEST-Oviedo han sido reaprovisionados correctamente y disponen de acceso íntegro a su parrilla de TV de 90 canales. La emisión del servicio y los registros en el parque de productos se encuentran normalizados y auditados.",
@@ -215,7 +170,7 @@
           "conteo_palabras_breve": 22,
           "generado_por_agente": true,
           "origen": "incident-reporter",
-          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: CIERRE\nIncidencia: INC000004162280 - Siebel 8 | Error funcional | OEST - Oviedo\nCriticidad sugerida: P1\nSistemas involucrados: SOP_SMC_TEIDE\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: Siebel 8 | Error funcional | OEST - Oviedo\n• Impacto ticket: Masiva\n• Urgencia ticket: Baja\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
+          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: CIERRE\nIncidencia: INC000004162280 - Siebel 8 | Error funcional | OEST - Oviedo\nCriticidad sugerida: P1\nSistemas involucrados: SOP_SMC_TEIDE\nProceso de Negocio: Provisión\nCriterio / Umbral: Provisión: Órdenes en error (>20% móvil / >30% fijo) o Regla de Oro N1\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: Siebel 8 | Error funcional | OEST - Oviedo\n• Impacto ticket: Masiva\n• Urgencia ticket: Baja\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
         }
       }
     },
@@ -232,6 +187,8 @@
       "estatus": "Asignado",
       "fecha_envio": "22/10/2026 12:03 a",
       "evaluacion": {
+        "proceso": "Atención al Cliente (ATC)",
+        "criterio": "ATC: Frontales/CRM (>20% desviación en 30m) o Regla de Oro N1",
         "impacto": "Alto",
         "impacto_justificacion": "Afectación crítica o corte global sobre el servicio principal sin alternativa viable.",
         "urgencia": "Media",
@@ -248,7 +205,7 @@
           "conteo_palabras_breve": 24,
           "generado_por_agente": true,
           "origen": "incident-reporter",
-          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: APERTURA\nIncidencia: INC000004164611 - Ficha Cliente Orange | Error funcional | Foundever - Sevilla\nCriticidad sugerida: P1\nSistemas involucrados: DES_SOE_FICHA\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: Ficha Cliente Orange | Error funcional | Foundever - Sevilla\n• Impacto ticket: Masiva\n• Urgencia ticket: Medio\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
+          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: APERTURA\nIncidencia: INC000004164611 - Ficha Cliente Orange | Error funcional | Foundever - Sevilla\nCriticidad sugerida: P1\nSistemas involucrados: DES_SOE_FICHA\nProceso de Negocio: Atención al Cliente (ATC)\nCriterio / Umbral: ATC: Frontales/CRM (>20% desviación en 30m) o Regla de Oro N1\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: Ficha Cliente Orange | Error funcional | Foundever - Sevilla\n• Impacto ticket: Masiva\n• Urgencia ticket: Medio\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
         },
         "seguimiento": {
           "completo": "Seguimiento de la incidencia P1 (INC000004164611). El equipo de DES_SOE_FICHA ha localizado el origen de la anomalía en la transición de estados del campo agreement status en la llamada interna al repositorio comercial. Se está implementando un ajuste para asegurar que las solicitudes se consoliden en estado de contrato sin generar excepciones en el frontal de los operadores de Sevilla. Se realizan pruebas de validación sobre actos comerciales en curso.",
@@ -257,7 +214,7 @@
           "conteo_palabras_breve": 24,
           "generado_por_agente": true,
           "origen": "incident-reporter",
-          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: SEGUIMIENTO\nIncidencia: INC000004164611 - Ficha Cliente Orange | Error funcional | Foundever - Sevilla\nCriticidad sugerida: P1\nSistemas involucrados: DES_SOE_FICHA\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: Ficha Cliente Orange | Error funcional | Foundever - Sevilla\n• Impacto ticket: Masiva\n• Urgencia ticket: Medio\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
+          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: SEGUIMIENTO\nIncidencia: INC000004164611 - Ficha Cliente Orange | Error funcional | Foundever - Sevilla\nCriticidad sugerida: P1\nSistemas involucrados: DES_SOE_FICHA\nProceso de Negocio: Atención al Cliente (ATC)\nCriterio / Umbral: ATC: Frontales/CRM (>20% desviación en 30m) o Regla de Oro N1\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: Ficha Cliente Orange | Error funcional | Foundever - Sevilla\n• Impacto ticket: Masiva\n• Urgencia ticket: Medio\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
         },
         "cierre": {
           "completo": "Resuelta la incidencia crítica P1 (INC000004164611) en Ficha Cliente Orange. Desplegada la corrección en el servicio de actualización de acuerdos comerciales, subsanando el fallo en el guardado de grabaciones y renovaciones. Los operadores de Foundever-Sevilla completan sus transacciones de forma fluida y sin interrupciones, quedando el flujo de contratación plenamente operativo y con tiempos de respuesta normalizados.",
@@ -266,7 +223,7 @@
           "conteo_palabras_breve": 21,
           "generado_por_agente": true,
           "origen": "incident-reporter",
-          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: CIERRE\nIncidencia: INC000004164611 - Ficha Cliente Orange | Error funcional | Foundever - Sevilla\nCriticidad sugerida: P1\nSistemas involucrados: DES_SOE_FICHA\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: Ficha Cliente Orange | Error funcional | Foundever - Sevilla\n• Impacto ticket: Masiva\n• Urgencia ticket: Medio\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
+          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: CIERRE\nIncidencia: INC000004164611 - Ficha Cliente Orange | Error funcional | Foundever - Sevilla\nCriticidad sugerida: P1\nSistemas involucrados: DES_SOE_FICHA\nProceso de Negocio: Atención al Cliente (ATC)\nCriterio / Umbral: ATC: Frontales/CRM (>20% desviación en 30m) o Regla de Oro N1\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: Ficha Cliente Orange | Error funcional | Foundever - Sevilla\n• Impacto ticket: Masiva\n• Urgencia ticket: Medio\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
         }
       }
     },
@@ -283,6 +240,8 @@
       "estatus": "En Curso",
       "fecha_envio": "26/10/2026 9:56 a",
       "evaluacion": {
+        "proceso": "Facturación y Cobros",
+        "criterio": "Facturación: >3h sin tarificación online o ventana +/-3 días ciclo",
         "impacto": "Alto",
         "impacto_justificacion": "Afectación crítica o corte global sobre el servicio principal sin alternativa viable.",
         "urgencia": "Media",
@@ -299,7 +258,7 @@
           "conteo_palabras_breve": 23,
           "generado_por_agente": true,
           "origen": "incident-reporter",
-          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: APERTURA\nIncidencia: INC000004166266 - HPFMS | Error funcional | ISGF - Madrid\nCriticidad sugerida: P1\nSistemas involucrados: SOP_SMC_BSCS_ONLINE\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: HPFMS | Error funcional | ISGF - Madrid\n• Impacto ticket: Masiva\n• Urgencia ticket: Medio\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
+          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: APERTURA\nIncidencia: INC000004166266 - HPFMS | Error funcional | ISGF - Madrid\nCriticidad sugerida: P1\nSistemas involucrados: SOP_SMC_BSCS_ONLINE\nProceso de Negocio: Facturación y Cobros\nCriterio / Umbral: Facturación: >3h sin tarificación online o ventana +/-3 días ciclo\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: HPFMS | Error funcional | ISGF - Madrid\n• Impacto ticket: Masiva\n• Urgencia ticket: Medio\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
         },
         "seguimiento": {
           "completo": "Seguimiento de la incidencia P1 (INC000004166266). Se confirma que la anomalía en la reactivación de líneas prepago se deriva de la obligatoriedad del campo CustomerId introducida en la última actualización de conectores OCCI. Los equipos de BSCS Online y HPFMS coordinan la adaptación del payload de la operación 45002 para garantizar que las solicitudes de desbloqueo cursen sin rechazo técnico hacia la red. Se mantiene monitorización prioritaria de casos pendientes.",
@@ -308,7 +267,7 @@
           "conteo_palabras_breve": 23,
           "generado_por_agente": true,
           "origen": "incident-reporter",
-          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: SEGUIMIENTO\nIncidencia: INC000004166266 - HPFMS | Error funcional | ISGF - Madrid\nCriticidad sugerida: P1\nSistemas involucrados: SOP_SMC_BSCS_ONLINE\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: HPFMS | Error funcional | ISGF - Madrid\n• Impacto ticket: Masiva\n• Urgencia ticket: Medio\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
+          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: SEGUIMIENTO\nIncidencia: INC000004166266 - HPFMS | Error funcional | ISGF - Madrid\nCriticidad sugerida: P1\nSistemas involucrados: SOP_SMC_BSCS_ONLINE\nProceso de Negocio: Facturación y Cobros\nCriterio / Umbral: Facturación: >3h sin tarificación online o ventana +/-3 días ciclo\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: HPFMS | Error funcional | ISGF - Madrid\n• Impacto ticket: Masiva\n• Urgencia ticket: Medio\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
         },
         "cierre": {
           "completo": "Cerrada la incidencia crítica P1 (INC000004166266). Subsanada la propagación de la operación de desbloqueo entre HPFMS y BSCS Online, ejecutándose con éxito la reactivación en cascada sobre todas las líneas prepago afectadas. Los clientes han recuperado íntegramente sus servicios de voz y datos y la gestión antifraude en ISGF-Madrid opera con plena fiabilidad y confirmación técnica bidireccional.",
@@ -317,7 +276,7 @@
           "conteo_palabras_breve": 21,
           "generado_por_agente": true,
           "origen": "incident-reporter",
-          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: CIERRE\nIncidencia: INC000004166266 - HPFMS | Error funcional | ISGF - Madrid\nCriticidad sugerida: P1\nSistemas involucrados: SOP_SMC_BSCS_ONLINE\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: HPFMS | Error funcional | ISGF - Madrid\n• Impacto ticket: Masiva\n• Urgencia ticket: Medio\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
+          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: CIERRE\nIncidencia: INC000004166266 - HPFMS | Error funcional | ISGF - Madrid\nCriticidad sugerida: P1\nSistemas involucrados: SOP_SMC_BSCS_ONLINE\nProceso de Negocio: Facturación y Cobros\nCriterio / Umbral: Facturación: >3h sin tarificación online o ventana +/-3 días ciclo\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: HPFMS | Error funcional | ISGF - Madrid\n• Impacto ticket: Masiva\n• Urgencia ticket: Medio\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
         }
       }
     },
@@ -334,6 +293,8 @@
       "estatus": "Asignado",
       "fecha_envio": "26/10/2026 15:48 a",
       "evaluacion": {
+        "proceso": "Atención al Cliente (ATC)",
+        "criterio": "ATC: Frontales/CRM (>20% desviación en 30m) o Regla de Oro N1",
         "impacto": "Alto",
         "impacto_justificacion": "Afectación crítica o corte global sobre el servicio principal sin alternativa viable.",
         "urgencia": "Media",
@@ -350,7 +311,7 @@
           "conteo_palabras_breve": 23,
           "generado_por_agente": true,
           "origen": "incident-reporter",
-          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: APERTURA\nIncidencia: INC000004167733 - Ficha Cliente Orange | Error funcional | Jazzplat - Guadalajara\nCriticidad sugerida: P1\nSistemas involucrados: DES_SOE_FICHA\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: Ficha Cliente Orange | Error funcional | Jazzplat - Guadalajara\n• Impacto ticket: Masiva\n• Urgencia ticket: Medio\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
+          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: APERTURA\nIncidencia: INC000004167733 - Ficha Cliente Orange | Error funcional | Jazzplat - Guadalajara\nCriticidad sugerida: P1\nSistemas involucrados: DES_SOE_FICHA\nProceso de Negocio: Atención al Cliente (ATC)\nCriterio / Umbral: ATC: Frontales/CRM (>20% desviación en 30m) o Regla de Oro N1\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: Ficha Cliente Orange | Error funcional | Jazzplat - Guadalajara\n• Impacto ticket: Masiva\n• Urgencia ticket: Medio\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
         },
         "seguimiento": {
           "completo": "Seguimiento P2 (INC000004167733). Los equipos de APL_MOV_SOE y SOP_OCS avanzan en el diagnóstico de la llamada asíncrona que gestiona la imputación del ciclo 5G en Siebel 8. Se aplican ajustes en el refresco de componentes del frontal para estabilizar la opción y evitar intentos reiterados por parte de los operadores de Guadalajara. Supervisión técnica activa.",
@@ -359,7 +320,7 @@
           "conteo_palabras_breve": 21,
           "generado_por_agente": true,
           "origen": "incident-reporter",
-          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: SEGUIMIENTO\nIncidencia: INC000004167733 - Ficha Cliente Orange | Error funcional | Jazzplat - Guadalajara\nCriticidad sugerida: P1\nSistemas involucrados: DES_SOE_FICHA\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: Ficha Cliente Orange | Error funcional | Jazzplat - Guadalajara\n• Impacto ticket: Masiva\n• Urgencia ticket: Medio\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
+          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: SEGUIMIENTO\nIncidencia: INC000004167733 - Ficha Cliente Orange | Error funcional | Jazzplat - Guadalajara\nCriticidad sugerida: P1\nSistemas involucrados: DES_SOE_FICHA\nProceso de Negocio: Atención al Cliente (ATC)\nCriterio / Umbral: ATC: Frontales/CRM (>20% desviación en 30m) o Regla de Oro N1\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: Ficha Cliente Orange | Error funcional | Jazzplat - Guadalajara\n• Impacto ticket: Masiva\n• Urgencia ticket: Medio\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
         },
         "cierre": {
           "completo": "Cerrada la incidencia P2 (INC000004167733) en Ficha Cliente Orange. Subsanada la intermitencia en el servicio de activación de ciclos para routers 5G y sincronizado el consumo con OCS. Los agentes de Jazzplat-Guadalajara completan los trámites de facturación al primer intento y sin anomalías, quedando el servicio plenamente recuperado.",
@@ -368,7 +329,7 @@
           "conteo_palabras_breve": 18,
           "generado_por_agente": true,
           "origen": "incident-reporter",
-          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: CIERRE\nIncidencia: INC000004167733 - Ficha Cliente Orange | Error funcional | Jazzplat - Guadalajara\nCriticidad sugerida: P1\nSistemas involucrados: DES_SOE_FICHA\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: Ficha Cliente Orange | Error funcional | Jazzplat - Guadalajara\n• Impacto ticket: Masiva\n• Urgencia ticket: Medio\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
+          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: CIERRE\nIncidencia: INC000004167733 - Ficha Cliente Orange | Error funcional | Jazzplat - Guadalajara\nCriticidad sugerida: P1\nSistemas involucrados: DES_SOE_FICHA\nProceso de Negocio: Atención al Cliente (ATC)\nCriterio / Umbral: ATC: Frontales/CRM (>20% desviación en 30m) o Regla de Oro N1\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: Ficha Cliente Orange | Error funcional | Jazzplat - Guadalajara\n• Impacto ticket: Masiva\n• Urgencia ticket: Medio\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
         }
       }
     },
@@ -382,9 +343,11 @@
       "prioridad_sugerida": "P1",
       "es_alta_prioridad": true,
       "es_discrepancia": true,
-      "estatus": "En Curso",
+      "estatus": "Asignado",
       "fecha_envio": "26/10/2026 16:20 a",
       "evaluacion": {
+        "proceso": "Atención al Cliente (ATC)",
+        "criterio": "ATC: Frontales/CRM (>20% desviación en 30m) o Regla de Oro N1",
         "impacto": "Alto",
         "impacto_justificacion": "Afectación crítica o corte global sobre el servicio principal sin alternativa viable.",
         "urgencia": "Media",
@@ -401,7 +364,7 @@
           "conteo_palabras_breve": 21,
           "generado_por_agente": true,
           "origen": "incident-reporter",
-          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: APERTURA\nIncidencia: INC000004167737 - ONURIS | Error funcional | Orange - La Finca\nCriticidad sugerida: P1\nSistemas involucrados: SOP_ONURIS\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: ONURIS | Error funcional | Orange - La Finca\n• Impacto ticket: Masiva\n• Urgencia ticket: Medio\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
+          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: APERTURA\nIncidencia: INC000004167737 - ONURIS | Error funcional | Orange - La Finca\nCriticidad sugerida: P1\nSistemas involucrados: SOP_ONURIS\nProceso de Negocio: Atención al Cliente (ATC)\nCriterio / Umbral: ATC: Frontales/CRM (>20% desviación en 30m) o Regla de Oro N1\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: ONURIS | Error funcional | Orange - La Finca\n• Impacto ticket: Masiva\n• Urgencia ticket: Medio\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
         },
         "seguimiento": {
           "completo": "Seguimiento de la incidencia P1 (INC000004167737) en ONURIS. Los especialistas de Soporte N1 CSO e infraestructuras avanzan en la depuración de componentes en el entorno central de La Finca. Se han reiniciado módulos auxiliares para descongestionar el flujo de datos operativos y se valida la recepción continuada de telemetría de sistemas. Las tareas de contención prosiguen activas hasta garantizar total estabilidad.",
@@ -410,7 +373,7 @@
           "conteo_palabras_breve": 20,
           "generado_por_agente": true,
           "origen": "incident-reporter",
-          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: SEGUIMIENTO\nIncidencia: INC000004167737 - ONURIS | Error funcional | Orange - La Finca\nCriticidad sugerida: P1\nSistemas involucrados: SOP_ONURIS\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: ONURIS | Error funcional | Orange - La Finca\n• Impacto ticket: Masiva\n• Urgencia ticket: Medio\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
+          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: SEGUIMIENTO\nIncidencia: INC000004167737 - ONURIS | Error funcional | Orange - La Finca\nCriticidad sugerida: P1\nSistemas involucrados: SOP_ONURIS\nProceso de Negocio: Atención al Cliente (ATC)\nCriterio / Umbral: ATC: Frontales/CRM (>20% desviación en 30m) o Regla de Oro N1\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: ONURIS | Error funcional | Orange - La Finca\n• Impacto ticket: Masiva\n• Urgencia ticket: Medio\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
         },
         "cierre": {
           "completo": "Finalizada la incidencia crítica P1 (INC000004167737) sobre la plataforma ONURIS en Orange La Finca. Restablecida la estabilidad funcional del servicio tras las intervenciones realizadas por Soporte N1 CSO. Los flujos de monitorización y gestión de eventos operan con parámetros nominales, sin pérdidas de información ni retrasos en la plataforma.",
@@ -419,58 +382,7 @@
           "conteo_palabras_breve": 17,
           "generado_por_agente": true,
           "origen": "incident-reporter",
-          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: CIERRE\nIncidencia: INC000004167737 - ONURIS | Error funcional | Orange - La Finca\nCriticidad sugerida: P1\nSistemas involucrados: SOP_ONURIS\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: ONURIS | Error funcional | Orange - La Finca\n• Impacto ticket: Masiva\n• Urgencia ticket: Medio\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
-        }
-      }
-    },
-    {
-      "id": "INC000004167778",
-      "titulo": "DJINGO | Error funcional | Control Room - La Finca",
-      "sistemas": [
-        "DES_DJINGO"
-      ],
-      "prioridad_original": "Media",
-      "prioridad_sugerida": "P1",
-      "es_alta_prioridad": true,
-      "es_discrepancia": true,
-      "estatus": "Asignado",
-      "fecha_envio": "27/10/2026 9:58 a",
-      "evaluacion": {
-        "impacto": "Alto",
-        "impacto_justificacion": "Afectación crítica o corte global sobre el servicio principal sin alternativa viable.",
-        "urgencia": "Media",
-        "urgencia_justificacion": "Incidencia en tratamiento con contención operativa transitoria.",
-        "workaround": "Desconocido",
-        "sla_objetivo_minutos": 15
-      },
-      "resumen_ia": null,
-      "mensajes_ejecutivos": {
-        "apertura": {
-          "completo": "Se declara incidencia crítica P1 (INC000004167778) por un fallo funcional en el servicio DJINGO, reportado a las 09:58 por el Control Room de La Finca. La anomalía provoca un impacto masivo sobre la plataforma de asistencia y supervisión operativa sin vía de contención inmediata disponible. El equipo de desarrollo y soporte especializado DES_DJINGO se encuentra asignado e interviniendo en el aplicativo para determinar la causa y mitigar la afectación. Se emitirá una nueva actualización de seguimiento en 30 minutos.",
-          "breve": "Apertura P1 (INC000004167778): Fallo funcional en DJINGO detectado en Control Room La Finca con impacto masivo. DES_DJINGO diagnosticando. Próxima actualización en 30 minutos.",
-          "conteo_palabras_completo": 79,
-          "conteo_palabras_breve": 23,
-          "generado_por_agente": true,
-          "origen": "incident-reporter",
-          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: APERTURA\nIncidencia: INC000004167778 - DJINGO | Error funcional | Control Room - La Finca\nCriticidad sugerida: P1\nSistemas involucrados: DES_DJINGO\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: DJINGO | Error funcional | Control Room - La Finca\n• Impacto ticket: Masiva\n• Urgencia ticket: Medio\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
-        },
-        "seguimiento": {
-          "completo": "Continúa el seguimiento de la incidencia P1 (INC000004167778) en el servicio DJINGO. El equipo técnico de DES_DJINGO ha localizado la disfunción en el módulo de conexión con el Control Room de La Finca y se encuentra desplegando un ajuste de configuración para restaurar el flujo de comunicaciones. La afectación en la asistencia permanece bajo monitorización activa, registrándose las primeras respuestas del entorno. Se proporcionará una nueva comunicación operativa al concluir la validación del parche.",
-          "breve": "Seguimiento P1 (INC000004167778): Localizada disfunción en módulo de enlace de DJINGO; DES_DJINGO aplicando ajuste de configuración. Monitorización activa en curso.",
-          "conteo_palabras_completo": 74,
-          "conteo_palabras_breve": 20,
-          "generado_por_agente": true,
-          "origen": "incident-reporter",
-          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: SEGUIMIENTO\nIncidencia: INC000004167778 - DJINGO | Error funcional | Control Room - La Finca\nCriticidad sugerida: P1\nSistemas involucrados: DES_DJINGO\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: DJINGO | Error funcional | Control Room - La Finca\n• Impacto ticket: Masiva\n• Urgencia ticket: Medio\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
-        },
-        "cierre": {
-          "completo": "Queda resuelta la incidencia crítica P1 (INC000004167778) en el servicio DJINGO. La anomalía funcional en el Control Room de La Finca ha sido solventada tras corregir el enlace de servicios por parte de DES_DJINGO. Las funcionalidades de asistencia operan con normalidad en todos los canales y la monitorización posterior confirma la estabilidad completa de la plataforma sin incidencias residuales. El servicio se mantiene bajo vigilancia preventiva.",
-          "breve": "Cierre P1 (INC000004167778): Restablecido servicio funcional de DJINGO en Control Room La Finca tras intervención técnica de DES_DJINGO. Operativa y asistencia estabilizadas.",
-          "conteo_palabras_completo": 66,
-          "conteo_palabras_breve": 22,
-          "generado_por_agente": true,
-          "origen": "incident-reporter",
-          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: CIERRE\nIncidencia: INC000004167778 - DJINGO | Error funcional | Control Room - La Finca\nCriticidad sugerida: P1\nSistemas involucrados: DES_DJINGO\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: DJINGO | Error funcional | Control Room - La Finca\n• Impacto ticket: Masiva\n• Urgencia ticket: Medio\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
+          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: CIERRE\nIncidencia: INC000004167737 - ONURIS | Error funcional | Orange - La Finca\nCriticidad sugerida: P1\nSistemas involucrados: SOP_ONURIS\nProceso de Negocio: Atención al Cliente (ATC)\nCriterio / Umbral: ATC: Frontales/CRM (>20% desviación en 30m) o Regla de Oro N1\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: ONURIS | Error funcional | Orange - La Finca\n• Impacto ticket: Masiva\n• Urgencia ticket: Medio\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
         }
       }
     },
@@ -478,7 +390,7 @@
       "id": "INC000004168038",
       "titulo": "Ficha Cliente Jazztel | Error funcional | ISGF - Murcia",
       "sistemas": [
-        "SOPORTE N1 CSO"
+        "SOP_BSS_JAZZTEL"
       ],
       "prioridad_original": "Alta",
       "prioridad_sugerida": "P1",
@@ -487,6 +399,8 @@
       "estatus": "Asignado",
       "fecha_envio": "26/10/2026 19:43 a",
       "evaluacion": {
+        "proceso": "Facturación y Cobros",
+        "criterio": "Facturación: >3h sin tarificación online o ventana +/-3 días ciclo",
         "impacto": "Alto",
         "impacto_justificacion": "Afectación crítica o corte global sobre el servicio principal sin alternativa viable.",
         "urgencia": "Alta",
@@ -503,7 +417,7 @@
           "conteo_palabras_breve": 20,
           "generado_por_agente": true,
           "origen": "incident-reporter",
-          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: APERTURA\nIncidencia: INC000004168038 - Ficha Cliente Jazztel | Error funcional | ISGF - Murcia\nCriticidad sugerida: P1\nSistemas involucrados: SOPORTE N1 CSO\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: Ficha Cliente Jazztel | Error funcional | ISGF - Murcia\n• Impacto ticket: Masiva\n• Urgencia ticket: Alta\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
+          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: APERTURA\nIncidencia: INC000004168038 - Ficha Cliente Jazztel | Error funcional | ISGF - Murcia\nCriticidad sugerida: P1\nSistemas involucrados: SOP_BSS_JAZZTEL\nProceso de Negocio: Facturación y Cobros\nCriterio / Umbral: Facturación: >3h sin tarificación online o ventana +/-3 días ciclo\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: Ficha Cliente Jazztel | Error funcional | ISGF - Murcia\n• Impacto ticket: Masiva\n• Urgencia ticket: Alta\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
         },
         "seguimiento": {
           "completo": "Continúa el seguimiento de la incidencia P1 (INC000004168038) en Ficha Cliente Jazztel (ISGF - Murcia). El equipo de soporte especializado e ingeniería de BSS analizan las peticiones de cobro bloqueadas e identifican una degradación de latencia en la pasarela de servicios. Se aplican medidas de balanceo de carga para recuperar la agilidad operativa mientras se valida la estabilidad del proceso. Se facilitará nueva actualización al término de las comprobaciones.",
@@ -512,7 +426,7 @@
           "conteo_palabras_breve": 21,
           "generado_por_agente": true,
           "origen": "incident-reporter",
-          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: SEGUIMIENTO\nIncidencia: INC000004168038 - Ficha Cliente Jazztel | Error funcional | ISGF - Murcia\nCriticidad sugerida: P1\nSistemas involucrados: SOPORTE N1 CSO\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: Ficha Cliente Jazztel | Error funcional | ISGF - Murcia\n• Impacto ticket: Masiva\n• Urgencia ticket: Alta\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
+          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: SEGUIMIENTO\nIncidencia: INC000004168038 - Ficha Cliente Jazztel | Error funcional | ISGF - Murcia\nCriticidad sugerida: P1\nSistemas involucrados: SOP_BSS_JAZZTEL\nProceso de Negocio: Facturación y Cobros\nCriterio / Umbral: Facturación: >3h sin tarificación online o ventana +/-3 días ciclo\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: Ficha Cliente Jazztel | Error funcional | ISGF - Murcia\n• Impacto ticket: Masiva\n• Urgencia ticket: Alta\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
         },
         "cierre": {
           "completo": "Queda formalmente resuelta la incidencia P1 (INC000004168038) en Ficha Cliente Jazztel. Subsanada la anomalía de sincronización en la plataforma de facturación y cobro por parte del equipo de soporte especializado. Los operadores en ISGF Murcia tramitan los expedientes con normalidad y los tiempos de respuesta se encuentran dentro de los parámetros de servicio establecidos, permaneciendo el canal bajo supervisión preventiva.",
@@ -521,7 +435,60 @@
           "conteo_palabras_breve": 20,
           "generado_por_agente": true,
           "origen": "incident-reporter",
-          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: CIERRE\nIncidencia: INC000004168038 - Ficha Cliente Jazztel | Error funcional | ISGF - Murcia\nCriticidad sugerida: P1\nSistemas involucrados: SOPORTE N1 CSO\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: Ficha Cliente Jazztel | Error funcional | ISGF - Murcia\n• Impacto ticket: Masiva\n• Urgencia ticket: Alta\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
+          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: CIERRE\nIncidencia: INC000004168038 - Ficha Cliente Jazztel | Error funcional | ISGF - Murcia\nCriticidad sugerida: P1\nSistemas involucrados: SOP_BSS_JAZZTEL\nProceso de Negocio: Facturación y Cobros\nCriterio / Umbral: Facturación: >3h sin tarificación online o ventana +/-3 días ciclo\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: Ficha Cliente Jazztel | Error funcional | ISGF - Murcia\n• Impacto ticket: Masiva\n• Urgencia ticket: Alta\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
+        }
+      }
+    },
+    {
+      "id": "INC000004168617",
+      "titulo": "Ficha Cliente Orange | Error funcional | Marktel - Valencia",
+      "sistemas": [
+        "APL_MOV_SOE"
+      ],
+      "prioridad_original": "Media",
+      "prioridad_sugerida": "P1",
+      "es_alta_prioridad": true,
+      "es_discrepancia": true,
+      "estatus": "Asignado",
+      "fecha_envio": "27/10/2026 11:31 a",
+      "evaluacion": {
+        "proceso": "Atención al Cliente (ATC)",
+        "criterio": "ATC: Frontales/CRM (>20% desviación en 30m) o Regla de Oro N1",
+        "impacto": "Alto",
+        "impacto_justificacion": "Afectación crítica o corte global sobre el servicio principal sin alternativa viable.",
+        "urgencia": "Media",
+        "urgencia_justificacion": "Incidencia en tratamiento con contención operativa transitoria.",
+        "workaround": "Desconocido",
+        "sla_objetivo_minutos": 15
+      },
+      "resumen_ia": null,
+      "mensajes_ejecutivos": {
+        "apertura": {
+          "completo": null,
+          "breve": null,
+          "conteo_palabras_completo": 0,
+          "conteo_palabras_breve": 0,
+          "generado_por_agente": false,
+          "estado": "pendiente",
+          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: APERTURA\nIncidencia: INC000004168617 - Ficha Cliente Orange | Error funcional | Marktel - Valencia\nCriticidad sugerida: P1\nSistemas involucrados: APL_MOV_SOE\nProceso de Negocio: Atención al Cliente (ATC)\nCriterio / Umbral: ATC: Frontales/CRM (>20% desviación en 30m) o Regla de Oro N1\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: Ficha Cliente Orange | Error funcional | Marktel - Valencia\n• Impacto ticket: Masiva\n• Urgencia ticket: Medio\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
+        },
+        "seguimiento": {
+          "completo": null,
+          "breve": null,
+          "conteo_palabras_completo": 0,
+          "conteo_palabras_breve": 0,
+          "generado_por_agente": false,
+          "estado": "pendiente",
+          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: SEGUIMIENTO\nIncidencia: INC000004168617 - Ficha Cliente Orange | Error funcional | Marktel - Valencia\nCriticidad sugerida: P1\nSistemas involucrados: APL_MOV_SOE\nProceso de Negocio: Atención al Cliente (ATC)\nCriterio / Umbral: ATC: Frontales/CRM (>20% desviación en 30m) o Regla de Oro N1\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: Ficha Cliente Orange | Error funcional | Marktel - Valencia\n• Impacto ticket: Masiva\n• Urgencia ticket: Medio\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
+        },
+        "cierre": {
+          "completo": null,
+          "breve": null,
+          "conteo_palabras_completo": 0,
+          "conteo_palabras_breve": 0,
+          "generado_por_agente": false,
+          "estado": "pendiente",
+          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: CIERRE\nIncidencia: INC000004168617 - Ficha Cliente Orange | Error funcional | Marktel - Valencia\nCriticidad sugerida: P1\nSistemas involucrados: APL_MOV_SOE\nProceso de Negocio: Atención al Cliente (ATC)\nCriterio / Umbral: ATC: Frontales/CRM (>20% desviación en 30m) o Regla de Oro N1\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: Ficha Cliente Orange | Error funcional | Marktel - Valencia\n• Impacto ticket: Masiva\n• Urgencia ticket: Medio\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
         }
       }
     },
@@ -538,6 +505,8 @@
       "estatus": "Pendiente",
       "fecha_envio": "08/09/2026 16:04 a",
       "evaluacion": {
+        "proceso": "Provisión",
+        "criterio": "SL2 Mayor: Degradación funcional o afectación en sede sin indisponibilidad global",
         "impacto": "Alto",
         "impacto_justificacion": "Afectación crítica o corte global sobre el servicio principal sin alternativa viable.",
         "urgencia": "Baja",
@@ -554,7 +523,7 @@
           "conteo_palabras_breve": 24,
           "generado_por_agente": true,
           "origen": "incident-reporter",
-          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: APERTURA\nIncidencia: INC000004122710 - FICHA DE CLIENTE // OEST OVIEDO // ERROR FUNCIONAL\nCriticidad sugerida: P2\nSistemas involucrados: FIJO APL Soporte PS\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: FICHA DE CLIENTE // OEST OVIEDO // ERROR FUNCIONAL\n• Impacto ticket: Masiva\n• Urgencia ticket: Medio\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
+          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: APERTURA\nIncidencia: INC000004122710 - FICHA DE CLIENTE // OEST OVIEDO // ERROR FUNCIONAL\nCriticidad sugerida: P2\nSistemas involucrados: FIJO APL Soporte PS\nProceso de Negocio: Provisión\nCriterio / Umbral: SL2 Mayor: Degradación funcional o afectación en sede sin indisponibilidad global\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: FICHA DE CLIENTE // OEST OVIEDO // ERROR FUNCIONAL\n• Impacto ticket: Masiva\n• Urgencia ticket: Medio\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
         },
         "seguimiento": {
           "completo": "Seguimiento P2 (INC000004122710). El equipo de FIJO APL Soporte PS y desarrollo de Teide ultiman la habilitación de la interfaz 92007 para asegurar que toda actualización de contacto telefónico se replique en tiempo real hacia PeopleSoft y los sistemas de logística inversa. Se valida el reprocesado de solicitudes registradas durante la ventana de fallo.",
@@ -563,7 +532,7 @@
           "conteo_palabras_breve": 20,
           "generado_por_agente": true,
           "origen": "incident-reporter",
-          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: SEGUIMIENTO\nIncidencia: INC000004122710 - FICHA DE CLIENTE // OEST OVIEDO // ERROR FUNCIONAL\nCriticidad sugerida: P2\nSistemas involucrados: FIJO APL Soporte PS\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: FICHA DE CLIENTE // OEST OVIEDO // ERROR FUNCIONAL\n• Impacto ticket: Masiva\n• Urgencia ticket: Medio\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
+          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: SEGUIMIENTO\nIncidencia: INC000004122710 - FICHA DE CLIENTE // OEST OVIEDO // ERROR FUNCIONAL\nCriticidad sugerida: P2\nSistemas involucrados: FIJO APL Soporte PS\nProceso de Negocio: Provisión\nCriterio / Umbral: SL2 Mayor: Degradación funcional o afectación en sede sin indisponibilidad global\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: FICHA DE CLIENTE // OEST OVIEDO // ERROR FUNCIONAL\n• Impacto ticket: Masiva\n• Urgencia ticket: Medio\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
         },
         "cierre": {
           "completo": "Cerrada la incidencia P2 (INC000004122710) en Ficha de Cliente. Desplegada la interfaz de sincronización con PeopleSoft y Siebel 8, garantizando que toda modificación de número de contacto en recogidas de fijo se transmite a los operadores logísticos sin incidencias. El servicio opera de forma coordinada y sin riesgo de penalizaciones a clientes.",
@@ -572,7 +541,7 @@
           "conteo_palabras_breve": 19,
           "generado_por_agente": true,
           "origen": "incident-reporter",
-          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: CIERRE\nIncidencia: INC000004122710 - FICHA DE CLIENTE // OEST OVIEDO // ERROR FUNCIONAL\nCriticidad sugerida: P2\nSistemas involucrados: FIJO APL Soporte PS\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: FICHA DE CLIENTE // OEST OVIEDO // ERROR FUNCIONAL\n• Impacto ticket: Masiva\n• Urgencia ticket: Medio\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
+          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: CIERRE\nIncidencia: INC000004122710 - FICHA DE CLIENTE // OEST OVIEDO // ERROR FUNCIONAL\nCriticidad sugerida: P2\nSistemas involucrados: FIJO APL Soporte PS\nProceso de Negocio: Provisión\nCriterio / Umbral: SL2 Mayor: Degradación funcional o afectación en sede sin indisponibilidad global\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: FICHA DE CLIENTE // OEST OVIEDO // ERROR FUNCIONAL\n• Impacto ticket: Masiva\n• Urgencia ticket: Medio\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
         }
       }
     },
@@ -580,7 +549,7 @@
       "id": "INC000004152686",
       "titulo": "PaP 28/10 PRDIA-2559 LivePerson | Error funcional | Foundever - Sevilla",
       "sistemas": [
-        "SOP_DJINGO"
+        "SOP_ASISTENTE"
       ],
       "prioridad_original": "Media",
       "prioridad_sugerida": "P2",
@@ -589,6 +558,8 @@
       "estatus": "Pendiente",
       "fecha_envio": "08/10/2026 18:10 a",
       "evaluacion": {
+        "proceso": "Atención al Cliente (ATC)",
+        "criterio": "SL2 Mayor: Degradación funcional o afectación en sede sin indisponibilidad global",
         "impacto": "Alto",
         "impacto_justificacion": "Afectación crítica o corte global sobre el servicio principal sin alternativa viable.",
         "urgencia": "Baja",
@@ -605,7 +576,7 @@
           "conteo_palabras_breve": 22,
           "generado_por_agente": true,
           "origen": "incident-reporter",
-          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: APERTURA\nIncidencia: INC000004152686 - PaP 28/10 PRDIA-2559 LivePerson | Error funcional | Foundever - Sevilla\nCriticidad sugerida: P2\nSistemas involucrados: SOP_DJINGO\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: PaP 28/10 PRDIA-2559 LivePerson | Error funcional | Foundever - Sevilla\n• Impacto ticket: Masiva\n• Urgencia ticket: Medio\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
+          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: APERTURA\nIncidencia: INC000004152686 - PaP 28/10 PRDIA-2559 LivePerson | Error funcional | Foundever - Sevilla\nCriticidad sugerida: P2\nSistemas involucrados: SOP_ASISTENTE\nProceso de Negocio: Atención al Cliente (ATC)\nCriterio / Umbral: SL2 Mayor: Degradación funcional o afectación en sede sin indisponibilidad global\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: PaP 28/10 PRDIA-2559 LivePerson | Error funcional | Foundever - Sevilla\n• Impacto ticket: Masiva\n• Urgencia ticket: Medio\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
         },
         "seguimiento": {
           "completo": "Seguimiento P2 (INC000004152686) en LivePerson. Se ha verificado que la pérdida visual del identificador de chat se limita al módulo de agentes AP sin pérdida de registros en base de datos. SOP_DJINGO coordina con soporte de producto la actualización del componente web para restaurar la visualización homogénea en los puestos de Sevilla sin interrumpir las ventas.",
@@ -614,7 +585,7 @@
           "conteo_palabras_breve": 21,
           "generado_por_agente": true,
           "origen": "incident-reporter",
-          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: SEGUIMIENTO\nIncidencia: INC000004152686 - PaP 28/10 PRDIA-2559 LivePerson | Error funcional | Foundever - Sevilla\nCriticidad sugerida: P2\nSistemas involucrados: SOP_DJINGO\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: PaP 28/10 PRDIA-2559 LivePerson | Error funcional | Foundever - Sevilla\n• Impacto ticket: Masiva\n• Urgencia ticket: Medio\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
+          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: SEGUIMIENTO\nIncidencia: INC000004152686 - PaP 28/10 PRDIA-2559 LivePerson | Error funcional | Foundever - Sevilla\nCriticidad sugerida: P2\nSistemas involucrados: SOP_ASISTENTE\nProceso de Negocio: Atención al Cliente (ATC)\nCriterio / Umbral: SL2 Mayor: Degradación funcional o afectación en sede sin indisponibilidad global\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: PaP 28/10 PRDIA-2559 LivePerson | Error funcional | Foundever - Sevilla\n• Impacto ticket: Masiva\n• Urgencia ticket: Medio\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
         },
         "cierre": {
           "completo": "Resuelta la incidencia P2 (INC000004152686) en LivePerson. Restablecida la correcta carga de identificadores de conversación en el módulo AP, operando nuevamente de forma transparente para los operadores de Foundever-Sevilla. Todas las herramientas de gestión de ventas digitales se encuentran plenamente operativas y verificadas.",
@@ -623,7 +594,7 @@
           "conteo_palabras_breve": 19,
           "generado_por_agente": true,
           "origen": "incident-reporter",
-          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: CIERRE\nIncidencia: INC000004152686 - PaP 28/10 PRDIA-2559 LivePerson | Error funcional | Foundever - Sevilla\nCriticidad sugerida: P2\nSistemas involucrados: SOP_DJINGO\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: PaP 28/10 PRDIA-2559 LivePerson | Error funcional | Foundever - Sevilla\n• Impacto ticket: Masiva\n• Urgencia ticket: Medio\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
+          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: CIERRE\nIncidencia: INC000004152686 - PaP 28/10 PRDIA-2559 LivePerson | Error funcional | Foundever - Sevilla\nCriticidad sugerida: P2\nSistemas involucrados: SOP_ASISTENTE\nProceso de Negocio: Atención al Cliente (ATC)\nCriterio / Umbral: SL2 Mayor: Degradación funcional o afectación en sede sin indisponibilidad global\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: PaP 28/10 PRDIA-2559 LivePerson | Error funcional | Foundever - Sevilla\n• Impacto ticket: Masiva\n• Urgencia ticket: Medio\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
         }
       }
     },
@@ -640,6 +611,8 @@
       "estatus": "Pendiente",
       "fecha_envio": "19/10/2026 11:25 a",
       "evaluacion": {
+        "proceso": "Provisión",
+        "criterio": "SL2 Mayor: Degradación funcional o afectación en sede sin indisponibilidad global",
         "impacto": "Alto",
         "impacto_justificacion": "Afectación crítica o corte global sobre el servicio principal sin alternativa viable.",
         "urgencia": "Baja",
@@ -656,7 +629,7 @@
           "conteo_palabras_breve": 23,
           "generado_por_agente": true,
           "origen": "incident-reporter",
-          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: APERTURA\nIncidencia: INC000004161012 - IP24 | Error funcional | ATAC Jazzplat - Guadalajara\nCriticidad sugerida: P2\nSistemas involucrados: CEP CAU AGI\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: IP24 | Error funcional | ATAC Jazzplat - Guadalajara\n• Impacto ticket: Masiva\n• Urgencia ticket: Baja\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
+          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: APERTURA\nIncidencia: INC000004161012 - IP24 | Error funcional | ATAC Jazzplat - Guadalajara\nCriticidad sugerida: P2\nSistemas involucrados: CEP CAU AGI\nProceso de Negocio: Provisión\nCriterio / Umbral: SL2 Mayor: Degradación funcional o afectación en sede sin indisponibilidad global\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: IP24 | Error funcional | ATAC Jazzplat - Guadalajara\n• Impacto ticket: Masiva\n• Urgencia ticket: Baja\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
         },
         "seguimiento": {
           "completo": "Seguimiento P2 (INC000004161012). Se confirma la contención del batch para evitar nuevas altas indebidas de TV libre. Los equipos de TEIDE y Siebel 8 coordinan con negocio la depuración de las líneas involucradas en el fichero origen y ejecutan la regularización técnica de los paquetes contratados en los clientes afectados, sin impacto en la facturación.",
@@ -665,7 +638,7 @@
           "conteo_palabras_breve": 20,
           "generado_por_agente": true,
           "origen": "incident-reporter",
-          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: SEGUIMIENTO\nIncidencia: INC000004161012 - IP24 | Error funcional | ATAC Jazzplat - Guadalajara\nCriticidad sugerida: P2\nSistemas involucrados: CEP CAU AGI\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: IP24 | Error funcional | ATAC Jazzplat - Guadalajara\n• Impacto ticket: Masiva\n• Urgencia ticket: Baja\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
+          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: SEGUIMIENTO\nIncidencia: INC000004161012 - IP24 | Error funcional | ATAC Jazzplat - Guadalajara\nCriticidad sugerida: P2\nSistemas involucrados: CEP CAU AGI\nProceso de Negocio: Provisión\nCriterio / Umbral: SL2 Mayor: Degradación funcional o afectación en sede sin indisponibilidad global\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: IP24 | Error funcional | ATAC Jazzplat - Guadalajara\n• Impacto ticket: Masiva\n• Urgencia ticket: Baja\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
         },
         "cierre": {
           "completo": "Cerrada la incidencia P2 (INC000004161012). Revertidas las altas indebidas de TV libre en las líneas empresariales afectadas y regularizado el procedimiento de carga en el batch de Siebel 8 para prevenir ejecuciones no supervisadas. Todos los parques de clientes se encuentran saneados y con sus tarifas contractuales conformadas.",
@@ -674,7 +647,7 @@
           "conteo_palabras_breve": 20,
           "generado_por_agente": true,
           "origen": "incident-reporter",
-          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: CIERRE\nIncidencia: INC000004161012 - IP24 | Error funcional | ATAC Jazzplat - Guadalajara\nCriticidad sugerida: P2\nSistemas involucrados: CEP CAU AGI\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: IP24 | Error funcional | ATAC Jazzplat - Guadalajara\n• Impacto ticket: Masiva\n• Urgencia ticket: Baja\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
+          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: CIERRE\nIncidencia: INC000004161012 - IP24 | Error funcional | ATAC Jazzplat - Guadalajara\nCriticidad sugerida: P2\nSistemas involucrados: CEP CAU AGI\nProceso de Negocio: Provisión\nCriterio / Umbral: SL2 Mayor: Degradación funcional o afectación en sede sin indisponibilidad global\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: IP24 | Error funcional | ATAC Jazzplat - Guadalajara\n• Impacto ticket: Masiva\n• Urgencia ticket: Baja\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
         }
       }
     },
@@ -691,6 +664,8 @@
       "estatus": "Pendiente",
       "fecha_envio": "21/10/2026 12:21 a",
       "evaluacion": {
+        "proceso": "Atención al Cliente (ATC)",
+        "criterio": "SL2 Mayor: Degradación funcional o afectación en sede sin indisponibilidad global",
         "impacto": "Alto",
         "impacto_justificacion": "Afectación crítica o corte global sobre el servicio principal sin alternativa viable.",
         "urgencia": "Baja",
@@ -707,7 +682,7 @@
           "conteo_palabras_breve": 22,
           "generado_por_agente": true,
           "origen": "incident-reporter",
-          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: APERTURA\nIncidencia: INC000004163156 - PRDIA-2865 DJINGO | Error funcional | ICP\nCriticidad sugerida: P2\nSistemas involucrados: SOP_DJINGO\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: PRDIA-2865 DJINGO | Error funcional | ICP\n• Impacto ticket: Masiva\n• Urgencia ticket: Medio\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
+          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: APERTURA\nIncidencia: INC000004163156 - PRDIA-2865 DJINGO | Error funcional | ICP\nCriticidad sugerida: P2\nSistemas involucrados: SOP_DJINGO\nProceso de Negocio: Atención al Cliente (ATC)\nCriterio / Umbral: SL2 Mayor: Degradación funcional o afectación en sede sin indisponibilidad global\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: PRDIA-2865 DJINGO | Error funcional | ICP\n• Impacto ticket: Masiva\n• Urgencia ticket: Medio\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
         },
         "seguimiento": {
           "completo": "Seguimiento P2 (INC000004163156). SOP_DJINGO ha localizado la disfunción en la extracción del teléfono de contacto del albarán hacia la API de mensajería de Liveperson. Se procede con el despliegue de una corrección en el conector de integración para asegurar que las comunicaciones de provisión incorporen el contacto fidedigno del cliente. Se auditan pedidos en cola.",
@@ -716,7 +691,7 @@
           "conteo_palabras_breve": 18,
           "generado_por_agente": true,
           "origen": "incident-reporter",
-          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: SEGUIMIENTO\nIncidencia: INC000004163156 - PRDIA-2865 DJINGO | Error funcional | ICP\nCriticidad sugerida: P2\nSistemas involucrados: SOP_DJINGO\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: PRDIA-2865 DJINGO | Error funcional | ICP\n• Impacto ticket: Masiva\n• Urgencia ticket: Medio\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
+          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: SEGUIMIENTO\nIncidencia: INC000004163156 - PRDIA-2865 DJINGO | Error funcional | ICP\nCriticidad sugerida: P2\nSistemas involucrados: SOP_DJINGO\nProceso de Negocio: Atención al Cliente (ATC)\nCriterio / Umbral: SL2 Mayor: Degradación funcional o afectación en sede sin indisponibilidad global\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: PRDIA-2865 DJINGO | Error funcional | ICP\n• Impacto ticket: Masiva\n• Urgencia ticket: Medio\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
         },
         "cierre": {
           "completo": "Resuelta la incidencia P2 (INC000004163156). Corregido el mapeo telefónico en el conector de DJINGO con Liveperson, generándose con absoluta precisión las URL de mensajería de WhatsApp para los pedidos en Back Office de ICP. La provisión logística y la comunicación con clientes operan con total normalidad.",
@@ -725,7 +700,7 @@
           "conteo_palabras_breve": 17,
           "generado_por_agente": true,
           "origen": "incident-reporter",
-          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: CIERRE\nIncidencia: INC000004163156 - PRDIA-2865 DJINGO | Error funcional | ICP\nCriticidad sugerida: P2\nSistemas involucrados: SOP_DJINGO\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: PRDIA-2865 DJINGO | Error funcional | ICP\n• Impacto ticket: Masiva\n• Urgencia ticket: Medio\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
+          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: CIERRE\nIncidencia: INC000004163156 - PRDIA-2865 DJINGO | Error funcional | ICP\nCriticidad sugerida: P2\nSistemas involucrados: SOP_DJINGO\nProceso de Negocio: Atención al Cliente (ATC)\nCriterio / Umbral: SL2 Mayor: Degradación funcional o afectación en sede sin indisponibilidad global\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: PRDIA-2865 DJINGO | Error funcional | ICP\n• Impacto ticket: Masiva\n• Urgencia ticket: Medio\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
         }
       }
     },
@@ -742,6 +717,8 @@
       "estatus": "Pendiente",
       "fecha_envio": "26/10/2026 18:47 a",
       "evaluacion": {
+        "proceso": "Atención al Cliente (ATC)",
+        "criterio": "SL2 Mayor: Degradación funcional o afectación en sede sin indisponibilidad global",
         "impacto": "Alto",
         "impacto_justificacion": "Afectación crítica o corte global sobre el servicio principal sin alternativa viable.",
         "urgencia": "Baja",
@@ -758,7 +735,7 @@
           "conteo_palabras_breve": 21,
           "generado_por_agente": true,
           "origen": "incident-reporter",
-          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: APERTURA\nIncidencia: INC000004167753 - PRDIA-2964 ASISTENTE | Error funcional | Konecta - Sevilla\nCriticidad sugerida: P2\nSistemas involucrados: DES_ASISTENTE\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: PRDIA-2964 ASISTENTE | Error funcional | Konecta - Sevilla\n• Impacto ticket: Masiva\n• Urgencia ticket: Medio\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
+          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: APERTURA\nIncidencia: INC000004167753 - PRDIA-2964 ASISTENTE | Error funcional | Konecta - Sevilla\nCriticidad sugerida: P2\nSistemas involucrados: DES_ASISTENTE\nProceso de Negocio: Atención al Cliente (ATC)\nCriterio / Umbral: SL2 Mayor: Degradación funcional o afectación en sede sin indisponibilidad global\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: PRDIA-2964 ASISTENTE | Error funcional | Konecta - Sevilla\n• Impacto ticket: Masiva\n• Urgencia ticket: Medio\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
         },
         "seguimiento": {
           "completo": null,
@@ -767,7 +744,7 @@
           "conteo_palabras_breve": 0,
           "generado_por_agente": false,
           "estado": "pendiente",
-          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: SEGUIMIENTO\nIncidencia: INC000004167753 - PRDIA-2964 ASISTENTE | Error funcional | Konecta - Sevilla\nCriticidad sugerida: P2\nSistemas involucrados: DES_ASISTENTE\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: PRDIA-2964 ASISTENTE | Error funcional | Konecta - Sevilla\n• Impacto ticket: Masiva\n• Urgencia ticket: Medio\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
+          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: SEGUIMIENTO\nIncidencia: INC000004167753 - PRDIA-2964 ASISTENTE | Error funcional | Konecta - Sevilla\nCriticidad sugerida: P2\nSistemas involucrados: DES_ASISTENTE\nProceso de Negocio: Atención al Cliente (ATC)\nCriterio / Umbral: SL2 Mayor: Degradación funcional o afectación en sede sin indisponibilidad global\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: PRDIA-2964 ASISTENTE | Error funcional | Konecta - Sevilla\n• Impacto ticket: Masiva\n• Urgencia ticket: Medio\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
         },
         "cierre": {
           "completo": null,
@@ -776,7 +753,60 @@
           "conteo_palabras_breve": 0,
           "generado_por_agente": false,
           "estado": "pendiente",
-          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: CIERRE\nIncidencia: INC000004167753 - PRDIA-2964 ASISTENTE | Error funcional | Konecta - Sevilla\nCriticidad sugerida: P2\nSistemas involucrados: DES_ASISTENTE\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: PRDIA-2964 ASISTENTE | Error funcional | Konecta - Sevilla\n• Impacto ticket: Masiva\n• Urgencia ticket: Medio\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
+          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: CIERRE\nIncidencia: INC000004167753 - PRDIA-2964 ASISTENTE | Error funcional | Konecta - Sevilla\nCriticidad sugerida: P2\nSistemas involucrados: DES_ASISTENTE\nProceso de Negocio: Atención al Cliente (ATC)\nCriterio / Umbral: SL2 Mayor: Degradación funcional o afectación en sede sin indisponibilidad global\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: PRDIA-2964 ASISTENTE | Error funcional | Konecta - Sevilla\n• Impacto ticket: Masiva\n• Urgencia ticket: Medio\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
+        }
+      }
+    },
+    {
+      "id": "INC000004167778",
+      "titulo": "PRDIA-2967 DJINGO | Error funcional | Control Room - La Finca",
+      "sistemas": [
+        "DES_DJINGO"
+      ],
+      "prioridad_original": "Media",
+      "prioridad_sugerida": "P2",
+      "es_alta_prioridad": true,
+      "es_discrepancia": true,
+      "estatus": "Pendiente",
+      "fecha_envio": "27/10/2026 9:58 a",
+      "evaluacion": {
+        "proceso": "Atención al Cliente (ATC)",
+        "criterio": "SL2 Mayor: Degradación funcional o afectación en sede sin indisponibilidad global",
+        "impacto": "Alto",
+        "impacto_justificacion": "Afectación crítica o corte global sobre el servicio principal sin alternativa viable.",
+        "urgencia": "Baja",
+        "urgencia_justificacion": "Incidencia de baja sensibilidad temporal o sin bloqueo activo.",
+        "workaround": "Desconocido",
+        "sla_objetivo_minutos": 60
+      },
+      "resumen_ia": null,
+      "mensajes_ejecutivos": {
+        "apertura": {
+          "completo": "Se declara incidencia crítica P1 (INC000004167778) por un fallo funcional en el servicio DJINGO, reportado a las 09:58 por el Control Room de La Finca. La anomalía provoca un impacto masivo sobre la plataforma de asistencia y supervisión operativa sin vía de contención inmediata disponible. El equipo de desarrollo y soporte especializado DES_DJINGO se encuentra asignado e interviniendo en el aplicativo para determinar la causa y mitigar la afectación. Se emitirá una nueva actualización de seguimiento en 30 minutos.",
+          "breve": "Apertura P1 (INC000004167778): Fallo funcional en DJINGO detectado en Control Room La Finca con impacto masivo. DES_DJINGO diagnosticando. Próxima actualización en 30 minutos.",
+          "conteo_palabras_completo": 79,
+          "conteo_palabras_breve": 23,
+          "generado_por_agente": true,
+          "origen": "incident-reporter",
+          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: APERTURA\nIncidencia: INC000004167778 - PRDIA-2967 DJINGO | Error funcional | Control Room - La Finca\nCriticidad sugerida: P2\nSistemas involucrados: DES_DJINGO\nProceso de Negocio: Atención al Cliente (ATC)\nCriterio / Umbral: SL2 Mayor: Degradación funcional o afectación en sede sin indisponibilidad global\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: PRDIA-2967 DJINGO | Error funcional | Control Room - La Finca\n• Impacto ticket: Masiva\n• Urgencia ticket: Medio\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
+        },
+        "seguimiento": {
+          "completo": "Continúa el seguimiento de la incidencia P1 (INC000004167778) en el servicio DJINGO. El equipo técnico de DES_DJINGO ha localizado la disfunción en el módulo de conexión con el Control Room de La Finca y se encuentra desplegando un ajuste de configuración para restaurar el flujo de comunicaciones. La afectación en la asistencia permanece bajo monitorización activa, registrándose las primeras respuestas del entorno. Se proporcionará una nueva comunicación operativa al concluir la validación del parche.",
+          "breve": "Seguimiento P1 (INC000004167778): Localizada disfunción en módulo de enlace de DJINGO; DES_DJINGO aplicando ajuste de configuración. Monitorización activa en curso.",
+          "conteo_palabras_completo": 74,
+          "conteo_palabras_breve": 20,
+          "generado_por_agente": true,
+          "origen": "incident-reporter",
+          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: SEGUIMIENTO\nIncidencia: INC000004167778 - PRDIA-2967 DJINGO | Error funcional | Control Room - La Finca\nCriticidad sugerida: P2\nSistemas involucrados: DES_DJINGO\nProceso de Negocio: Atención al Cliente (ATC)\nCriterio / Umbral: SL2 Mayor: Degradación funcional o afectación en sede sin indisponibilidad global\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: PRDIA-2967 DJINGO | Error funcional | Control Room - La Finca\n• Impacto ticket: Masiva\n• Urgencia ticket: Medio\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
+        },
+        "cierre": {
+          "completo": "Queda resuelta la incidencia crítica P1 (INC000004167778) en el servicio DJINGO. La anomalía funcional en el Control Room de La Finca ha sido solventada tras corregir el enlace de servicios por parte de DES_DJINGO. Las funcionalidades de asistencia operan con normalidad en todos los canales y la monitorización posterior confirma la estabilidad completa de la plataforma sin incidencias residuales. El servicio se mantiene bajo vigilancia preventiva.",
+          "breve": "Cierre P1 (INC000004167778): Restablecido servicio funcional de DJINGO en Control Room La Finca tras intervención técnica de DES_DJINGO. Operativa y asistencia estabilizadas.",
+          "conteo_palabras_completo": 66,
+          "conteo_palabras_breve": 22,
+          "generado_por_agente": true,
+          "origen": "incident-reporter",
+          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: CIERRE\nIncidencia: INC000004167778 - PRDIA-2967 DJINGO | Error funcional | Control Room - La Finca\nCriticidad sugerida: P2\nSistemas involucrados: DES_DJINGO\nProceso de Negocio: Atención al Cliente (ATC)\nCriterio / Umbral: SL2 Mayor: Degradación funcional o afectación en sede sin indisponibilidad global\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: PRDIA-2967 DJINGO | Error funcional | Control Room - La Finca\n• Impacto ticket: Masiva\n• Urgencia ticket: Medio\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
         }
       }
     }
