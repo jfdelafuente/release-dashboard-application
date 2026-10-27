@@ -112,38 +112,52 @@ fi
 
 log "Encontrados ${CSV_COUNT} archivo(s) CSV para procesar"
 
-# Procesar cada CSV encontrado, despachando al conversor que le corresponde
-# según el nombre de archivo (evita convertir cada postmortem dos veces: una
-# con el conversor equivocado y otra con el correcto)
-for csv_file in "${DATA_INPUT_DIR}"/*.csv; do
-    if [ -f "${csv_file}" ]; then
-        filename=$(basename "${csv_file}")
-        filename_lower=$(echo "${filename}" | tr '[:upper:]' '[:lower:]')
+# Seleccionar los CSVs activos más recientes (último masivo global y último postmortem por release)
+# Evita redundancia de conversiones y bucles de archivado
+selector_script="${CONVERTERS_DIR}/cli/select_active_csvs.py"
+if [ -f "${selector_script}" ]; then
+    log "Seleccionando archivos CSV activos más recientes..."
+    active_files_raw=$("${PYTHON_CMD}" "${selector_script}" "${DATA_INPUT_DIR}" 2>>"${LOG_FILE}")
+else
+    # Fallback si el selector no estuviese disponible
+    active_files_raw=$(find "${DATA_INPUT_DIR}" -name "*.csv" | awk '{print $0 "\tfallback\t"}')
+fi
 
-        if [[ "${filename_lower}" == *postmortem* ]] || [[ "${filename_lower}" == *"mesa post"* ]]; then
-            converter_script="${CONVERTERS_DIR}/cli/convert_postmortems.py"
-            release_arg=()
-            detected_release=$(echo "${filename}" | grep -o -E '[0-9]{4}R[0-9]+|R[0-9]+' | head -n1)
-            if [ -n "${detected_release}" ]; then
-                release_arg=("--release-name" "${detected_release}")
-            fi
-            log "Procesando postmortem: ${filename} (release: ${detected_release:-'no detectada'})"
-            if "${PYTHON_CMD}" "${converter_script}" "${csv_file}" -o "${DATA_OUTPUT_DIR}" "${release_arg[@]}" 2>>"${LOG_FILE}"; then
-                log "✓ Conversión exitosa: ${filename}"
-            else
-                log "✗ Error en conversión de: ${filename}"
-            fi
+if [ -z "${active_files_raw}" ]; then
+    log "ADVERTENCIA: No se seleccionaron archivos CSV para procesar"
+    exit 0
+fi
+
+# Procesar cada CSV seleccionado
+while IFS=$'\t' read -r csv_file csv_type release_name; do
+    [ -z "${csv_file}" ] && continue
+    [ ! -f "${csv_file}" ] && continue
+
+    filename=$(basename "${csv_file}")
+    filename_lower=$(echo "${filename}" | tr '[:upper:]' '[:lower:]')
+
+    if [ "${csv_type}" = "postmortem" ] || [[ "${filename_lower}" == *postmortem* ]] || [[ "${filename_lower}" == *"mesa post"* ]]; then
+        converter_script="${CONVERTERS_DIR}/cli/convert_postmortems.py"
+        release_arg=()
+        if [ -n "${release_name}" ] && [ "${release_name}" != "None" ]; then
+            release_arg=("--release-name" "${release_name}")
+        fi
+        log "Procesando postmortem: ${filename} (release: ${release_name:-'no detectada'})"
+        if "${PYTHON_CMD}" "${converter_script}" "${csv_file}" -o "${DATA_OUTPUT_DIR}" "${release_arg[@]}" 2>>"${LOG_FILE}"; then
+            log "✓ Conversión exitosa: ${filename}"
         else
-            converter_script="${CONVERTERS_DIR}/cli/convert_incidents.py"
-            log "Procesando: ${filename}"
-            if "${PYTHON_CMD}" "${converter_script}" "${csv_file}" -o "${DATA_OUTPUT_DIR}" 2>>"${LOG_FILE}"; then
-                log "✓ Conversión exitosa: ${filename}"
-            else
-                log "✗ Error en conversión de: ${filename}"
-            fi
+            log "✗ Error en conversión de: ${filename}"
+        fi
+    else
+        converter_script="${CONVERTERS_DIR}/cli/convert_incidents.py"
+        log "Procesando incidencias: ${filename}"
+        if "${PYTHON_CMD}" "${converter_script}" "${csv_file}" -o "${DATA_OUTPUT_DIR}" 2>>"${LOG_FILE}"; then
+            log "✓ Conversión exitosa: ${filename}"
+        else
+            log "✗ Error en conversión de: ${filename}"
         fi
     fi
-done
+done <<< "${active_files_raw}"
 
 # Generar index.json
 log "Generando index.json..."
