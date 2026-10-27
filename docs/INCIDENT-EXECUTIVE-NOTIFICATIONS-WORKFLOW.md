@@ -20,28 +20,46 @@ Esta guía describe el procedimiento paso a paso que debes seguir **cada vez que
 
 ## 🗺️ Mapa Visual de Procesos
 
+### ESCENARIO 1: Flujo Habitual (Local Primero -> Producción)
+
 ```mermaid
 flowchart TD
-    subgraph ESCENARIO_1["ESCENARIO 1: Flujo Habitual (Local Primero -> Producción)"]
-        direction TB
-        E1_A["1. Subir CSV por Web Local (:8080)<br/>o copiar a data/input/"] --> E1_B["2. Evaluación ITIL y Escáner<br/>(Detección de pendientes)"]
-        E1_B --> E1_C["3. Agente redacta textos oficiales<br/>(Skill incident-executive-notifications)"]
-        E1_C --> E1_D["4. Guardado en almacén<br/>(data/agent_executive_messages.json)"]
-        E1_D --> E1_E["5. Subir CSV por Web Prod (:8081)<br/>y Desplegar almacén (deploy-production.ps1)"]
-        E1_E --> E1_F["6. En Producción: 100% Oficiales"]
+    subgraph E1_LOCAL["1. Entorno Local (:8080) [Con Skill y Asistente IA]"]
+        E1_A["Subir CSV (web local o data/input/)"] --> E1_B["Evaluación ITIL y detección de pendientes"]
+        E1_B --> E1_C["Skill incident-executive-notifications<br/>(Redacta mensajes oficiales)"]
+        E1_C --> E1_D["Persistencia local en<br/>data/agent_executive_messages.json"]
+    end
+    subgraph E1_PROD["2. Servidor de Producción (:8081) [Sin Skill ni IA]"]
+        E1_E["Subida CSV por web de producción"] --> E1_F["Despliegue de almacén (deploy-production.ps1)"]
+        E1_F --> E1_G["Dashboard en Vivo: 100% Oficiales"]
+    end
+    E1_D --> E1_E
+```
+
+---
+
+### ESCENARIO 2: Subida Directa por Web en Producción
+
+```mermaid
+flowchart TD
+    subgraph E2_PROD_INI["Fase A: Servidor Producción (:8081) [¡Sin Skill ni IA!]"]
+        E2_A["Operador sube CSV por formulario web"] --> E2_B["Servidor procesa CSV y calcula severidad"]
+        E2_B --> E2_C{"¿Existe en almacén persistente?"}
+        E2_C -- Sí --> E2_D["Muestra texto oficial existente"]
+        E2_C -- No --> E2_E["Queda en estado 'PENDIENTE'<br/>(¡En prod NO hay skill para redactarlo!)"]
     end
 
-    subgraph ESCENARIO_2["ESCENARIO 2: Subida Directa por Web en Producción (:8081)"]
-        direction TB
-        E2_A["1. Operador sube CSV por Web Prod"] --> E2_B["2. Servidor procesa CSV<br/>(Tickets conocidos: oficiales<br/>Tickets nuevos: 'pendiente')"]
-        E2_B --> E2_C["3. Copiar CSV al entorno local<br/>(data/input/...)"]
-        E2_C --> E2_D["4. Evaluar y redactar pendientes<br/>(Skill incident-executive-notifications)"]
-        E2_D --> E2_E["5. Desplegar almacén a Producción<br/>(deploy-production.ps1)"]
-        E2_E --> E2_F["6. Refrescar Web Prod: pasan a Oficiales"]
+    subgraph E2_LOCAL["Fase B: Resolución en Entorno Local [Con Skill e IA]"]
+        E2_F["Copiar CSV al entorno local (data/input/)"] --> E2_G["Ejecutar Skill incident-executive-notifications<br/>(Agente redacta tickets pendientes)"]
+        E2_G --> E2_H["Guardar en data/agent_executive_messages.json"]
     end
 
-    style ESCENARIO_1 fill:#f0f4f8,stroke:#2b6cb0,stroke-width:2px
-    style ESCENARIO_2 fill:#fefcbf,stroke:#b7791f,stroke-width:2px
+    subgraph E2_PROD_FIN["Fase C: Sincronización al VPS"]
+        E2_I["deploy-production.ps1<br/>(Sincroniza almacén persistente al VPS)"] --> E2_J["Dashboard en Vivo:<br/>Todos los tickets pasan a OFICIALES"]
+    end
+
+    E2_E -.->|"Requiere intervención local"| E2_F
+    E2_H --> E2_I
 ```
 
 ---
@@ -142,21 +160,31 @@ Accede al portal y comprueba que la campana de notificaciones y los modales ejec
 
 ### ESCENARIO 2: Subida Directa del CSV a través del Formulario Web en Producción
 
-Este escenario ocurre cuando un operador o usuario **sube un nuevo CSV directamente desde el formulario web de producción** ([http://infocodes.si.orange.es:8081](http://infocodes.si.orange.es:8081)) antes de haber redactado los mensajes en local.
+Este escenario ocurre cuando un operador o usuario **sube un nuevo CSV directamente desde el formulario web de producción** ([http://infocodes.si.orange.es:8081](http://infocodes.si.orange.es:8081)) antes de que los mensajes hayan sido procesados en local.
 
-#### ¿Qué ocurre en el servidor en el momento de la subida web?
+> [!IMPORTANT]
+> **En el servidor de producción NO existen skills ni agentes de IA.**
+> El VPS de producción (`10.132.26.96`) opera de manera puramente determinista (Python y Nginx). No tiene conexión a modelos de lenguaje (LLM), no dispone del asistente Antigravity, ni tiene desplegada la carpeta de skills (`.agents/`).
+> Por este motivo, **la subida web en producción por sí sola NUNCA redacta comunicaciones oficiales**. Su único cometido es convertir el CSV, evaluar la severidad ITIL por reglas fijas y consultar si los tickets ya existen en el almacén persistente.
+
+---
+
+#### Fase A: Lo que ocurre automáticamente en Producción (¡Sin Skill ni IA!)
+
 1. El backend web guarda el archivo en `/infocodes/var/storage/release-dashboard/input/` y genera el JSON masivo.
 2. Automáticamente ejecuta `evaluate_incident_notifications.py` en el VPS.
-3. **Comportamiento mixto**:
-   * Las incidencias que ya habían sido redactadas en fechas anteriores se cargan desde el almacén persistente `/infocodes/var/storage/release-dashboard/agent_executive_messages.json` con su **texto oficial**.
-   * Las **nuevas incidencias** que no estaban en el almacén se marcan con **`"estado": "pendiente"`** y muestran el icono de alerta sin redacción ejecutiva formal (protección anti-alucinación).
+3. **Comportamiento según el almacén persistente**:
+   * **Incidencias ya redactadas previamente:** Se cargan desde `/infocodes/var/storage/release-dashboard/agent_executive_messages.json` mostrando su **texto oficial**.
+   * **Incidencias nuevas:** Dado que en el VPS no hay ninguna skill para redactarlas, quedan marcadas con **`"estado": "pendiente"`** (con un badge de alerta y su prompt técnico preparado a la espera de redacción).
 
-#### Procedimiento de Resolución Paso a Paso
+---
 
-Si se ha producido este escenario, sigue estos pasos para completar la redacción y publicar los textos oficiales:
+#### Fase B: Resolución de Tickets Pendientes en Local (Donde SÍ reside la Skill y el Asistente)
+
+Para convertir esas incidencias pendientes en comunicaciones oficiales validadas, debes intervenir desde tu entorno de desarrollo local:
 
 #### Paso 1: Disponer del fichero CSV en tu entorno local
-Si ya tienes el fichero CSV en tu equipo (el mismo que se subió por la web):
+Si ya tienes el fichero CSV en tu máquina:
 * Cópialo a tu carpeta local `data/input/`.
 
 *(Si no dispones del fichero localmente, descárgalo directamente del VPS por SCP)*:
@@ -165,31 +193,35 @@ scp infocodes@10.132.26.96:"/infocodes/var/storage/release-dashboard/input/CS-In
 ```
 
 #### Paso 2: Evaluar y escanear los tickets pendientes en local
-Ejecuta la evaluación ITIL local para alinear los datos:
+Ejecuta la evaluación ITIL local para identificar exactamente los tickets que quedaron pendientes en el servidor:
 ```powershell
 python converters/evaluate_incident_notifications.py
 python .agents/skills/incident-executive-notifications/scripts/scan_pending_incidents.py
 ```
-El escáner te mostrará exactamente cuáles son las incidencias nuevas que quedaron pendientes en la subida web.
+El escáner listará las incidencias nuevas que requieren redacción.
 
-#### Paso 3: Redactar los tickets pendientes con el Asistente
-Pide al asistente en el chat:
+#### Paso 3: Redactar los tickets pendientes con la Skill en Local
+Pide al asistente en el chat local de Antigravity:
 > *"He sincronizado el CSV subido a producción. Activa la skill incident-executive-notifications para redactar las incidencias pendientes."*
 
-El asistente generará los textos de apertura/seguimiento según las reglas ITIL y el rol `incident-reporter`, incorporándolos automáticamente a `data/agent_executive_messages.json`.
+El asistente ejecutará la skill en local, adoptará el rol `incident-reporter`, redactará los mensajes (≤ 90 palabras para Dirección y ≤ 30 palabras versión breve) y los guardará en el almacén acumulativo local `data/agent_executive_messages.json`.
+
+---
+
+#### Fase C: Sincronización y Publicación en Producción
 
 #### Paso 4: Desplegar el almacén actualizado a Producción
-Sincroniza el almacén de mensajes con el servidor ejecutando el despliegue:
+Sincroniza el almacén de mensajes con el servidor ejecutando el script de despliegue desde PowerShell:
 ```powershell
 powershell -ExecutionPolicy Bypass -File scripts/deploy-production.ps1 -AgentsLibraryPath .
 ```
-El script transferirá el almacén actualizado a `/infocodes/var/storage/release-dashboard/agent_executive_messages.json` y actualizará las notificaciones.
+El script transferirá el almacén actualizado a `/infocodes/var/storage/release-dashboard/agent_executive_messages.json` y actualizará automáticamente el catálogo de notificaciones.
 
 #### Paso 5: Verificación en el Navegador
 Recarga la web en producción:
 * **[http://infocodes.si.orange.es:8081/dashboards/massive-incidents/](http://infocodes.si.orange.es:8081/dashboards/massive-incidents/)**
 
-Comprobarás que las incidencias que antes estaban en estado `"pendiente"` ahora muestran el badge verde con el texto oficial completo (≤ 90 palabras) y la versión breve (≤ 30 palabras).
+Verás que las incidencias que antes figuraban en estado `"pendiente"` ahora muestran el badge verde con el texto oficial completo y breve listo para Dirección.
 
 ---
 
