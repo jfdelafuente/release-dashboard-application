@@ -2,16 +2,16 @@
   "_metadata": {
     "type": "high_priority_notifications",
     "version": "1.0.0",
-    "generated_at": "2026-10-26T22:11:48.731939+00:00",
-    "source_file": "CS-Informe incidencias P1,  P2 y P3 - 2026 - 26 Oct 2026-massive.json",
+    "generated_at": "2026-10-27T08:15:52.450744+00:00",
+    "source_file": "CS-Informe incidencias P1,  P2 y P3 - 2026 - 27 Oct 2026-massive.json",
     "kpis": {
       "total_scanned": 1565,
-      "terminal_skipped_count": 1547,
-      "active_evaluated_count": 18,
-      "total_high_priority": 18,
-      "p1_critical_count": 11,
+      "terminal_skipped_count": 1548,
+      "active_evaluated_count": 17,
+      "total_high_priority": 17,
+      "p1_critical_count": 10,
       "p2_high_count": 7,
-      "discrepancies_count": 18
+      "discrepancies_count": 17
     }
   },
   "data": [
@@ -382,7 +382,7 @@
       "prioridad_sugerida": "P1",
       "es_alta_prioridad": true,
       "es_discrepancia": true,
-      "estatus": "Asignado",
+      "estatus": "En Curso",
       "fecha_envio": "26/10/2026 9:56 a",
       "evaluacion": {
         "impacto": "Alto",
@@ -478,13 +478,13 @@
       "id": "INC000004167737",
       "titulo": "ONURIS | Error funcional | Orange - La Finca",
       "sistemas": [
-        "SOPORTE N1 CSO"
+        "SOP_ONURIS"
       ],
       "prioridad_original": "Media",
       "prioridad_sugerida": "P1",
       "es_alta_prioridad": true,
       "es_discrepancia": true,
-      "estatus": "Asignado",
+      "estatus": "En Curso",
       "fecha_envio": "26/10/2026 16:20 a",
       "evaluacion": {
         "impacto": "Alto",
@@ -503,7 +503,7 @@
           "conteo_palabras_breve": 21,
           "generado_por_agente": true,
           "origen": "incident-reporter",
-          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: APERTURA\nIncidencia: INC000004167737 - ONURIS | Error funcional | Orange - La Finca\nCriticidad sugerida: P1\nSistemas involucrados: SOPORTE N1 CSO\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: ONURIS | Error funcional | Orange - La Finca\n• Impacto ticket: Masiva\n• Urgencia ticket: Medio\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
+          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: APERTURA\nIncidencia: INC000004167737 - ONURIS | Error funcional | Orange - La Finca\nCriticidad sugerida: P1\nSistemas involucrados: SOP_ONURIS\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: ONURIS | Error funcional | Orange - La Finca\n• Impacto ticket: Masiva\n• Urgencia ticket: Medio\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
         },
         "seguimiento": {
           "completo": "Seguimiento de la incidencia P1 (INC000004167737) en ONURIS. Los especialistas de Soporte N1 CSO e infraestructuras avanzan en la depuración de componentes en el entorno central de La Finca. Se han reiniciado módulos auxiliares para descongestionar el flujo de datos operativos y se valida la recepción continuada de telemetría de sistemas. Las tareas de contención prosiguen activas hasta garantizar total estabilidad.",
@@ -512,7 +512,7 @@
           "conteo_palabras_breve": 20,
           "generado_por_agente": true,
           "origen": "incident-reporter",
-          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: SEGUIMIENTO\nIncidencia: INC000004167737 - ONURIS | Error funcional | Orange - La Finca\nCriticidad sugerida: P1\nSistemas involucrados: SOPORTE N1 CSO\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: ONURIS | Error funcional | Orange - La Finca\n• Impacto ticket: Masiva\n• Urgencia ticket: Medio\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
+          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: SEGUIMIENTO\nIncidencia: INC000004167737 - ONURIS | Error funcional | Orange - La Finca\nCriticidad sugerida: P1\nSistemas involucrados: SOP_ONURIS\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: ONURIS | Error funcional | Orange - La Finca\n• Impacto ticket: Masiva\n• Urgencia ticket: Medio\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
         },
         "cierre": {
           "completo": "Finalizada la incidencia crítica P1 (INC000004167737) sobre la plataforma ONURIS en Orange La Finca. Restablecida la estabilidad funcional del servicio tras las intervenciones realizadas por Soporte N1 CSO. Los flujos de monitorización y gestión de eventos operan con parámetros nominales, sin pérdidas de información ni retrasos en la plataforma.",
@@ -521,58 +521,7 @@
           "conteo_palabras_breve": 17,
           "generado_por_agente": true,
           "origen": "incident-reporter",
-          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: CIERRE\nIncidencia: INC000004167737 - ONURIS | Error funcional | Orange - La Finca\nCriticidad sugerida: P1\nSistemas involucrados: SOPORTE N1 CSO\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: ONURIS | Error funcional | Orange - La Finca\n• Impacto ticket: Masiva\n• Urgencia ticket: Medio\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
-        }
-      }
-    },
-    {
-      "id": "INC000004168038",
-      "titulo": "DEGRADACION // COBROS JAZZTEL // SL2",
-      "sistemas": [
-        "SOP_BSS_JAZZTEL"
-      ],
-      "prioridad_original": "Alta",
-      "prioridad_sugerida": "P1",
-      "es_alta_prioridad": true,
-      "es_discrepancia": true,
-      "estatus": "Asignado",
-      "fecha_envio": "26/10/2026 19:43 a",
-      "evaluacion": {
-        "impacto": "Alto",
-        "impacto_justificacion": "Afectación crítica o corte global sobre el servicio principal sin alternativa viable.",
-        "urgencia": "Alta",
-        "urgencia_justificacion": "Impacto activo en vivo que requiere restablecimiento inmediato.",
-        "workaround": "Desconocido",
-        "sla_objetivo_minutos": 15
-      },
-      "resumen_ia": null,
-      "mensajes_ejecutivos": {
-        "apertura": {
-          "completo": "Se confirma degradación crítica en la plataforma de cobros de Jazztel (SOP_BSS_JAZZTEL), tipificada como P1. El incidente impacta masivamente en los procesos de facturación y cobro. Los equipos de soporte de segundo nivel están investigando el origen del fallo y aplicando protocolos de mitigación inmediata. Se enviará actualización operativa en 30 minutos.",
-          "breve": "P1: Degradación en cobros Jazztel (SOP_BSS_JAZZTEL). Impacto masivo en facturación. Soporte SL2 investigando y mitigando. Próxima actualización en 30 min.",
-          "conteo_palabras_completo": 52,
-          "conteo_palabras_breve": 20,
-          "generado_por_agente": true,
-          "origen": "incident-reporter",
-          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: APERTURA\nIncidencia: INC000004168038 - DEGRADACION // COBROS JAZZTEL // SL2\nCriticidad sugerida: P1\nSistemas involucrados: SOP_BSS_JAZZTEL\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: DEGRADACION // COBROS JAZZTEL // SL2\n• Impacto ticket: Masiva\n• Urgencia ticket: Alta\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
-        },
-        "seguimiento": {
-          "completo": null,
-          "breve": null,
-          "conteo_palabras_completo": 0,
-          "conteo_palabras_breve": 0,
-          "generado_por_agente": false,
-          "estado": "pendiente",
-          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: SEGUIMIENTO\nIncidencia: INC000004168038 - DEGRADACION // COBROS JAZZTEL // SL2\nCriticidad sugerida: P1\nSistemas involucrados: SOP_BSS_JAZZTEL\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: DEGRADACION // COBROS JAZZTEL // SL2\n• Impacto ticket: Masiva\n• Urgencia ticket: Alta\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
-        },
-        "cierre": {
-          "completo": null,
-          "breve": null,
-          "conteo_palabras_completo": 0,
-          "conteo_palabras_breve": 0,
-          "generado_por_agente": false,
-          "estado": "pendiente",
-          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: CIERRE\nIncidencia: INC000004168038 - DEGRADACION // COBROS JAZZTEL // SL2\nCriticidad sugerida: P1\nSistemas involucrados: SOP_BSS_JAZZTEL\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: DEGRADACION // COBROS JAZZTEL // SL2\n• Impacto ticket: Masiva\n• Urgencia ticket: Alta\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
+          "prompt_agente": "Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).\nFase solicitada: CIERRE\nIncidencia: INC000004167737 - ONURIS | Error funcional | Orange - La Finca\nCriticidad sugerida: P1\nSistemas involucrados: SOP_ONURIS\n\n--- Metadatos del ticket (Epsilon IA pendiente) ---\n• Descripción: ONURIS | Error funcional | Orange - La Finca\n• Impacto ticket: Masiva\n• Urgencia ticket: Medio\n\nRedacta el mensaje en los dos niveles obligatorios:\n**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)\n**Versión aún más breve:** (máx 30 palabras)"
         }
       }
     },
