@@ -508,4 +508,70 @@ def test_should_load_official_agent_messages_for_active_high_priority_incidents(
             assert "Bosch-Vigo" in msg["completo"]
 
 
+def test_should_include_process_and_criterion_in_evaluation():
+    evaluator = SeverityEvaluator()
+    ticket_atc = {
+        "ID de incidencia": "INC000004156790",
+        "Descripción": "Ficha Cliente Orange | Error funcional | Madison - Valladolid",
+        "Prioridad": "Media",
+        "Impacto": "Masiva",
+        "Urgencia": "Medio",
+        "Grupo asignado": "DES_SOE_FICHA"
+    }
+    result = evaluator.evaluate(ticket_atc, epsilon_data=None)
+    eval_block = result["evaluacion"]
+    assert "proceso" in eval_block
+    assert "criterio" in eval_block
+    assert eval_block["proceso"] in ("Atención al Cliente (ATC)", "Ventas")
+    assert len(eval_block["criterio"]) > 0
+
+
+def test_should_classify_critical_processes_correctly():
+    evaluator = SeverityEvaluator()
+    
+    # Facturación
+    t_fact = {"Descripción": "BSCS Online tarificación batch con error", "Grupo asignado": "SOP_SMC_BSCS_ONLINE"}
+    assert evaluator._classify_process(t_fact, None) == "Facturación y Cobros"
+    
+    # Prepago
+    t_prepago = {"Descripción": "Fallo en recargas prepago canal web", "Grupo asignado": "PREPAGO_OPS"}
+    assert evaluator._classify_process(t_prepago, None) == "Prepago"
+    
+    # Portabilidad
+    t_porta = {"Descripción": "Retraso en portabilidad entidad de referencia", "Grupo asignado": "PORTA_CORE"}
+    assert evaluator._classify_process(t_porta, None) == "Portabilidad"
+    
+    # Ventas
+    t_ventas = {"Descripción": "Comprobantes de venta no descargan en televenta", "Grupo asignado": "NEG_CAMP_CERES"}
+    assert evaluator._classify_process(t_ventas, None) == "Ventas"
+    
+    # Provisión
+    t_prov = {"Descripción": "Siebel 8 órdenes de móvil en error", "Grupo asignado": "SOP_SMC_TEIDE"}
+    assert evaluator._classify_process(t_prov, None) == "Provisión"
+    
+    # O&M
+    t_om = {"Descripción": "ALTAIR test cortes CPE con caída", "Grupo asignado": "GNOC CAU"}
+    assert evaluator._classify_process(t_om, None) == "Operación y Monitorización (O&M)"
+
+
+def test_should_include_process_and_criterion_in_agent_prompt():
+    generator = ExecutiveMessageGenerator()
+    ticket = {
+        "ID de incidencia": "INC000004156790",
+        "Descripción": "Ficha Cliente Orange | Madison",
+        "Grupo asignado": "DES_SOE_FICHA"
+    }
+    eval_block = {
+        "prioridad_sugerida": "P1",
+        "evaluacion": {
+            "proceso": "Atención al Cliente (ATC)",
+            "criterio": "ATC: Frontales/CRM (>20% desviación en 30m) o Regla de Oro N1"
+        }
+    }
+    prompt = generator.generate_agent_prompt(ticket, eval_block, resumen_ia=None, phase="apertura")
+    assert "Proceso de Negocio: Atención al Cliente (ATC)" in prompt
+    assert "Criterio / Umbral: ATC: Frontales/CRM" in prompt
+
+
+
 

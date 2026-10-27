@@ -124,7 +124,11 @@ def main():
         res = it.get("resumen_ia") or {}
         has_epsilon = bool(res.get("problema") or res.get("impacto"))
 
+        ev = it.get("evaluacion") or {}
+        proceso = ev.get("proceso") or "-"
+        criterio = ev.get("criterio") or "-"
         print(f"[{idx}] {inc_id} ({prio}) - {it.get('titulo')}")
+        print(f"    Proceso:  {proceso} | Criterio: {criterio}")
         print(f"    Sistemas: {sistemas}")
         print(f"    Epsilon IA: {'✨ Disponible' if has_epsilon else 'ℹ️ Solo metadatos Remedy'}")
         if has_epsilon:

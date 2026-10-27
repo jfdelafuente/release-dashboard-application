@@ -624,6 +624,14 @@
           <h3 class="hp-card-title">${this.escape(item.titulo || 'Incidencia sin descripción')}</h3>
 
           <div class="hp-itil-meta">
+            <div class="hp-itil-item hp-itil-proceso">
+              <span class="hp-itil-label">Proceso:</span>
+              <span class="hp-itil-val hp-process-tag">${this.escape(evalData.proceso || 'Sistemas Core')}</span>
+            </div>
+            <div class="hp-itil-item hp-itil-criterio">
+              <span class="hp-itil-label">Criterio:</span>
+              <span class="hp-itil-val hp-criterio-text" title="${this.escape(evalData.criterio || '-')}">${this.escape(evalData.criterio || '-')}</span>
+            </div>
             <div class="hp-itil-item">
               <span class="hp-itil-label">Sistemas:</span>
               <span class="hp-itil-val">${this.escape(sistemas)}</span>
@@ -674,8 +682,12 @@
         `Incidencia: ${incId} - ${item.titulo || ''}`,
         `Criticidad sugerida: ${prio}`,
         `Sistemas involucrados: ${sistemas}`,
-        ''
       ];
+
+      const evalData = item.evaluacion || {};
+      if (evalData.proceso) lines.push(`Proceso de Negocio: ${evalData.proceso}`);
+      if (evalData.criterio) lines.push(`Criterio / Umbral: ${evalData.criterio}`);
+      lines.push('');
 
       if (res && (res.problema || res.impacto || res.solucion)) {
         lines.push('--- Contexto extraído de Epsilon Resumen IA ---');
