@@ -3,7 +3,7 @@
     "version": "1.0.0",
     "description": "Almacén oficial de redacciones ejecutivas generadas por el Agente incident-reporter",
     "source": "agents/it-incidents/incident-reporter.md",
-    "updated_at": "2026-10-26T22:09:45Z"
+    "updated_at": "2026-10-27T10:29:33Z"
   },
   "incidents": {
     "INC000004065609": {
@@ -482,6 +482,22 @@
         "origen": "incident-reporter",
         "conteo_palabras_completo": 52,
         "conteo_palabras_breve": 20
+      },
+      "seguimiento": {
+        "completo": "Continúa el seguimiento de la incidencia P1 (INC000004168038) en Ficha Cliente Jazztel (ISGF - Murcia). El equipo de soporte especializado e ingeniería de BSS analizan las peticiones de cobro bloqueadas e identifican una degradación de latencia en la pasarela de servicios. Se aplican medidas de balanceo de carga para recuperar la agilidad operativa mientras se valida la estabilidad del proceso. Se facilitará nueva actualización al término de las comprobaciones.",
+        "breve": "Seguimiento P1 (INC000004168038): Soporte BSS analiza latencias en pasarela de cobros de Jazztel; aplicando balanceo para recuperar operaciones en ISGF Murcia.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 69,
+        "conteo_palabras_breve": 21
+      },
+      "cierre": {
+        "completo": "Queda formalmente resuelta la incidencia P1 (INC000004168038) en Ficha Cliente Jazztel. Subsanada la anomalía de sincronización en la plataforma de facturación y cobro por parte del equipo de soporte especializado. Los operadores en ISGF Murcia tramitan los expedientes con normalidad y los tiempos de respuesta se encuentran dentro de los parámetros de servicio establecidos, permaneciendo el canal bajo supervisión preventiva.",
+        "breve": "Cierre P1 (INC000004168038): Resuelto fallo funcional en cobros de Ficha Cliente Jazztel tras intervención técnica. Operativa normalizada en ISGF Murcia.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 60,
+        "conteo_palabras_breve": 20
       }
     },
     "INC000004167753": {
@@ -492,6 +508,32 @@
         "origen": "incident-reporter",
         "conteo_palabras_completo": 54,
         "conteo_palabras_breve": 21
+      }
+    },
+    "INC000004167778": {
+      "apertura": {
+        "completo": "Se declara incidencia crítica P1 (INC000004167778) por un fallo funcional en el servicio DJINGO, reportado a las 09:58 por el Control Room de La Finca. La anomalía provoca un impacto masivo sobre la plataforma de asistencia y supervisión operativa sin vía de contención inmediata disponible. El equipo de desarrollo y soporte especializado DES_DJINGO se encuentra asignado e interviniendo en el aplicativo para determinar la causa y mitigar la afectación. Se emitirá una nueva actualización de seguimiento en 30 minutos.",
+        "breve": "Apertura P1 (INC000004167778): Fallo funcional en DJINGO detectado en Control Room La Finca con impacto masivo. DES_DJINGO diagnosticando. Próxima actualización en 30 minutos.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 79,
+        "conteo_palabras_breve": 23
+      },
+      "seguimiento": {
+        "completo": "Continúa el seguimiento de la incidencia P1 (INC000004167778) en el servicio DJINGO. El equipo técnico de DES_DJINGO ha localizado la disfunción en el módulo de conexión con el Control Room de La Finca y se encuentra desplegando un ajuste de configuración para restaurar el flujo de comunicaciones. La afectación en la asistencia permanece bajo monitorización activa, registrándose las primeras respuestas del entorno. Se proporcionará una nueva comunicación operativa al concluir la validación del parche.",
+        "breve": "Seguimiento P1 (INC000004167778): Localizada disfunción en módulo de enlace de DJINGO; DES_DJINGO aplicando ajuste de configuración. Monitorización activa en curso.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 74,
+        "conteo_palabras_breve": 20
+      },
+      "cierre": {
+        "completo": "Queda resuelta la incidencia crítica P1 (INC000004167778) en el servicio DJINGO. La anomalía funcional en el Control Room de La Finca ha sido solventada tras corregir el enlace de servicios por parte de DES_DJINGO. Las funcionalidades de asistencia operan con normalidad en todos los canales y la monitorización posterior confirma la estabilidad completa de la plataforma sin incidencias residuales. El servicio se mantiene bajo vigilancia preventiva.",
+        "breve": "Cierre P1 (INC000004167778): Restablecido servicio funcional de DJINGO en Control Room La Finca tras intervención técnica de DES_DJINGO. Operativa y asistencia estabilizadas.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 66,
+        "conteo_palabras_breve": 22
       }
     }
   }
