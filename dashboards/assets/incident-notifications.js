@@ -717,9 +717,6 @@
             <button type="button" class="hp-btn hp-btn-secondary" data-action="open-resumen-ia" data-id="${item.id}">
               ✨ Resumen IA
             </button>
-            <button type="button" class="hp-btn hp-btn-emergency" data-action="copy-emergency-report" data-id="${item.id}" title="Copiar reporte oficial de emergencia en 4 bloques según protocolo Orange">
-              📋 Reporte Emergencia
-            </button>
           </div>
 
           ${execPanelHtml}
