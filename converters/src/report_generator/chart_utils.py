@@ -10,7 +10,7 @@ import numpy as np
 
 logger = logging.getLogger(__name__)
 
-# Paleta MASORANGE/Orange (ver dashboards/postmortem/index.html)
+# Paleta Orange (ver dashboards/postmortem/index.html)
 COLOR_ORANGE = "#FF7900"
 COLOR_ORANGE_LIGHT = "#FFC08A"
 COLOR_ORANGE_DARK = "#E66D00"

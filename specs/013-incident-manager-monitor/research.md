@@ -90,7 +90,7 @@ El propósito de esta fase de investigación técnica es determinar la arquitect
 
 ### Decisión 5: Reutilización de Componentes de Estilo y Epsilon IA
 
-* **Problema**: Mantener coherencia estética institucional con la plataforma MasOrange/Orange y permitir inspeccionar Epsilon IA.
+* **Problema**: Mantener coherencia estética institucional con la plataforma Orange y permitir inspeccionar Epsilon IA.
 * **Solución**:
   - Carga de tokens y estilos corporativos existentes:
     - `/dashboards/assets/topbar.css` (para la cabecera operativa).

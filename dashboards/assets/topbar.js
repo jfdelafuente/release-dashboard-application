@@ -1,5 +1,5 @@
 /* ============================================================
-   MASORANGE — Barra Superior Unificada (Portal Shell)
+   Orange — Barra Superior Unificada (Portal Shell)
    ============================================================
    Fuente única y canónica de la navegación cruzada entre plataformas:
    - Portal (/dashboards/portal/)

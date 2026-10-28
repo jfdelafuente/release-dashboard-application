@@ -9,7 +9,7 @@
    breakpoints responsive, mecanismo de mostrar/ocultar el
    dashboard) se queda en el <style> de cada página.
 
-   La barra superior MASORANGE vive en topbar.css (importado abajo)
+   La barra superior Orange vive en topbar.css (importado abajo)
    porque la usan TODOS los dashboards, incluidos los que no
    necesitan el resto de este framework (p. ej. release-kpis,
    que no tiene pantalla de subida ni tabla).

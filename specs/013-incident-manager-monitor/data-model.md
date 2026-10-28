@@ -73,7 +73,7 @@ Representación en el frontend de cada ticket evaluado que se clasifica como pen
 - `id` (string): Identificador único Remedy (`INC00000XXXXXX`).
 - `prioridad_sugerida` (string): `"P1"` o `"P2"`.
 - `es_discrepancia` (boolean): `true` cuando `prioridad_sugerida` difiere de la nominal (subescalación o ajuste).
-- `evaluacion.proceso` (string): Uno de los 6 procesos críticos de negocio de MasOrange:
+- `evaluacion.proceso` (string): Uno de los 6 procesos críticos de negocio de Orange:
   - `Atención al Cliente (ATC)`
   - `Venta y Contratación`
   - `Facturación y Cobros`

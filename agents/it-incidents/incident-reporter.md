@@ -12,7 +12,7 @@ version: 1.1.0
 source: agentes_copilot.docx
 recommended_skills:
   - it-severity-matrix
-  - masorange-it-emergency-management
+  - orange-it-emergency-management
   - postmortem-pir-workflow
 ---
 

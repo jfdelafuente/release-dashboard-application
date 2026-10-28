@@ -139,7 +139,7 @@ converters/
    - Barra de herramientas con filtros por severidad, proceso y buscador de texto.
    - Contenedor de la cola de incidencias con renderizado dinámico.
 2. Crear `dashboards/incident-manager-monitor/monitor.css`:
-   - Paleta de diseño institucional MasOrange con alta legibilidad.
+   - Paleta de diseño institucional Orange con alta legibilidad.
    - Badges de criticidad (SL1 Rojo, SL2 Ámbar, Subescalación).
    - Componentes colapsables de prompts y asistente de ingesta.
 3. Crear `dashboards/incident-manager-monitor/monitor.js`:

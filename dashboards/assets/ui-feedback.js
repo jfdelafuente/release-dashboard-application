@@ -1,5 +1,5 @@
 /* ============================================================
-   MASORANGE — Sistema Central de Notificaciones Toast y Modales
+   Orange — Sistema Central de Notificaciones Toast y Modales
    dashboards/assets/ui-feedback.js
    ============================================================
    Expone window.Toast y window.UIFeedback de forma canónica

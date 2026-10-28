@@ -1,5 +1,5 @@
 /**
- * MASORANGE — Utilidades Centrales de Fechas y Semanas ISO 8601
+ * Orange — Utilidades Centrales de Fechas y Semanas ISO 8601
  * dashboards/assets/date.js
  * Compatible tanto con ES Modules como con scripts clásicos (window.MODate y window.DateUtils).
  */

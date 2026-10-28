@@ -4,7 +4,7 @@
    Armonizado con la identidad visual compartida (/dashboards/assets/)
    ============================================================ */
 
-/* Mapeo estricto a las variables y tokens corporativos de MASORANGE /assets/tokens.css */
+/* Mapeo estricto a las variables y tokens corporativos de Orange /assets/tokens.css */
 :root {
   /* Fondos armonizados con dashboards hermanos */
   --bg-page: var(--bg-2);

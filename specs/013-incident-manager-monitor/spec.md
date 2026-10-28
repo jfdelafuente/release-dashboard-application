@@ -12,7 +12,7 @@
 
 ## 🧭 Contexto y Origen de Datos
 
-En la gestión de incidentes mayores de MasOrange, tras la ingesta de un nuevo informe masivo de incidencias (ficheros `CS-Informe incidencias P1, P2 y P3 - *.csv` procesados hacia `data/output/*-massive.json`), el sistema evalúa la severidad ITIL/SRE a través del motor `converters/cli/evaluate_incident_notifications.py` y genera el catálogo persistente `data/output/high_priority_notifications.json`.
+En la gestión de incidentes mayores de Orange, tras la ingesta de un nuevo informe masivo de incidencias (ficheros `CS-Informe incidencias P1, P2 y P3 - *.csv` procesados hacia `data/output/*-massive.json`), el sistema evalúa la severidad ITIL/SRE a través del motor `converters/cli/evaluate_incident_notifications.py` y genera el catálogo persistente `data/output/high_priority_notifications.json`.
 
 Dicho catálogo cruza los metadatos de tickets con la síntesis de **Epsilon IA** y aplica las reglas de la skill corporativa **`it-severity-matrix`** ([`.agents/skills/it-severity-matrix/SKILL.md`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/.agents/skills/it-severity-matrix/SKILL.md)) para identificar:
 1. **Incidencias de Alta Prioridad Activas**: Incidentes clasificados como **P1 (Crítica)** o **P2 (Alta)** con estatus operativo no terminal (`Asignado`, `En Curso`, `Pendiente`).
@@ -229,5 +229,5 @@ Como Administrador de la plataforma y responsable de usabilidad de la herramient
 
 - **Disponibilidad de Catálogos**: El proceso de carga de CSV ejecuta periódicamente `evaluate_incident_notifications.py` asegurando que `data/output/high_priority_notifications.json` se encuentre actualizado.
 - **Rol del Usuario**: Quien interactúa con este frontal es un Incident Manager o miembro del equipo de operaciones de guardia con permisos para registrar redacciones oficiales en nombre del agente.
-- **Entorno de Despliegue**: El frontal es servido a través del servidor HTTP local de desarrollo `serve_app.py` (puerto 8080) y por Nginx en el entorno de producción MasOrange.
+- **Entorno de Despliegue**: El frontal es servido a través del servidor HTTP local de desarrollo `serve_app.py` (puerto 8080) y por Nginx en el entorno de producción Orange.
 - **Compatibilidad de Navegadores**: Navegadores modernos compatibles con ES6+, CSS Grid, Flexbox y Clipboard API (Chrome, Edge, Firefox).

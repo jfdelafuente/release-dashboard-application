@@ -3,13 +3,13 @@ name: it-severity-matrix
 alias: matriz-severidad-it
 description: >-
   Calcula y justifica el nivel de Severidad y Prioridad (SL1/P1 a SL4/P4) de incidencias IT
-  en MasOrange, aplicando los umbrales de los 6 Procesos Críticos de Negocio, la Regla de Oro
+  en Orange, aplicando los umbrales de los 6 Procesos Críticos de Negocio, la Regla de Oro
   del triaje N1 y el protocolo oficial de escalados de Emergencias (45 min / +1 hora) con IM-CSO.
 ---
 
-# Matriz de Severidad, Prioridad y Protocolo de Escalados IT (MasOrange)
+# Matriz de Severidad, Prioridad y Protocolo de Escalados IT (Orange)
 
-Esta skill establece el criterio estándar, objetivo y determinista para la detección, clasificación, asignación de severidad y protocolo de escalado técnico en la gestión de incidencias de MasOrange.
+Esta skill establece el criterio estándar, objetivo y determinista para la detección, clasificación, asignación de severidad y protocolo de escalado técnico en la gestión de incidencias de Orange.
 
 ---
 
@@ -100,7 +100,7 @@ El **Incident Manager (IM)** es el responsable de coordinar la resolución técn
 
 ### 5.3 Estructura de las Matrices de Contacto y Repositorios
 Las matrices de contacto están organizadas por capas operativas y marcas:
-* **Nivel 1 (N1):** Primer escalón de atención operativa (tanto interno de MasOrange como del proveedor de soporte).
+* **Nivel 1 (N1):** Primer escalón de atención operativa (tanto interno de Orange como del proveedor de soporte).
 * **Niveles N2 y N3 (Especialistas y Proveedores):** Matrices específicas asociadas a cada aplicativo o elemento de infraestructura:
   * **Entorno MasMóvil / KRT:** Documentadas y centralizadas en **Confluence**.
   * **Entorno Orange / Jazztel:** Documentadas y centralizadas en la plataforma **GRIAL**.

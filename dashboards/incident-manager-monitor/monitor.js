@@ -545,7 +545,7 @@
     const criterio = evaluacion.criterio || 'SL2 Mayor';
     const sistemas = (inc.sistemas || []).join(', ') || 'Sistemas';
 
-    return `Actúa como el agente incident-reporter de MasOrange para la fase de ${phase.toUpperCase()}.
+    return `Actúa como el agente incident-reporter de Orange para la fase de ${phase.toUpperCase()}.
 Redacta la comunicación ejecutiva para Dirección sobre la incidencia ${inc.id} (${inc.prioridad_sugerida}).
 Proceso Crítico: ${proceso} | Criterio: ${criterio} | Sistemas: ${sistemas}
 Título/Afectación: ${inc.titulo}

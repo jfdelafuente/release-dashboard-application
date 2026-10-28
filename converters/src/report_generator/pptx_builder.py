@@ -29,7 +29,7 @@ _RGB_WHITE = RGBColor(0xFF, 0xFF, 0xFF)
 _RGB_SUCCESS = RGBColor.from_string(COLOR_SUCCESS.lstrip("#"))
 _RGB_DANGER = RGBColor.from_string(COLOR_DANGER.lstrip("#"))
 
-# Paleta del "hero" del rediseño MASORANGE (fondo negro), distinta de la
+# Paleta del "hero" del rediseño Orange (fondo negro), distinta de la
 # usada en las tarjetas de KPI (fondo blanco) — ver
 # "MASORANGE dashboard redesign/Release Dashboard.dc.html", sección Portal.
 _RGB_HERO_SUBTITLE = RGBColor.from_string("B8B2A9")
@@ -74,7 +74,7 @@ def _add_title_bar(slide, title_text):
 def new_presentation(release_name):
     """Crea la Presentation con la portada.
 
-    Sigue el "hero" de portal del rediseño MASORANGE (fondo negro, logo,
+    Sigue el "hero" de portal del rediseño Orange (fondo negro, logo,
     eyebrow naranja, titular grande en blanco, subtítulo gris) — ver
     "MASORANGE dashboard redesign/Release Dashboard.dc.html".
     """
