@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Monitor de Incidentes Mayores · Incident Manager</title>
+  
+  <!-- Tipografía Corporativa Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Estilos compartidos y de Epsilon IA -->
+  <link rel="stylesheet" href="/dashboards/assets/topbar.css">
+  <link rel="stylesheet" href="/dashboards/assets/shared.css">
+  <link rel="stylesheet" href="/dashboards/assets/resumen-ia.css">
+  
+  <!-- Estilos propios del Cockpit Incident Manager -->
+  <link rel="stylesheet" href="./monitor.css">
+</head>
+<body>
+
+  <!-- Región para anuncios a lectores de pantalla (WCAG 2.1 AA) -->
+  <div id="sr-announcements" class="sr-only" role="status" aria-live="polite"></div>
+
+  <!-- Contenedor Principal -->
+  <div class="im-container">
+    
+    <!-- 1. Cabecera Operativa -->
+    <header class="im-header" role="banner">
+      <div class="im-header-title-block">
+        <span class="im-header-badge" aria-label="Rol del sistema">Incident Manager</span>
+        <div>
+          <h1 class="im-header-h1">Monitor de Incidencias de Alta Prioridad</h1>
+          <p class="im-header-subtitle">Vigilancia en tiempo real de redacciones de agente pendientes (P1, P2 y discrepancias de triaje)</p>
+        </div>
+      </div>
+
+      <div class="im-header-controls">
+        <div id="conn-status-pill" class="im-status-pill status-connected" aria-label="Estado de conexión">
+          <span class="im-status-dot" aria-hidden="true">●</span>
+          <span id="conn-status-text">Conectado</span>
+        </div>
+
+        <label for="auto-refresh-select" class="sr-only">Intervalo de auto-refresco</label>
+        <select id="auto-refresh-select" class="im-select" title="Seleccionar frecuencia de actualización automática">
+          <option value="0">Auto-refresco: Desactivado</option>
+          <option value="30000" selected>Auto-refresco: cada 30s</option>
+          <option value="60000">Auto-refresco: cada 60s</option>
+        </select>
+
+        <button id="btn-manual-refresh" class="im-btn im-btn-secondary" title="Sincronizar catálogo ahora">
+          <span aria-hidden="true">🔄</span>
+          <span>Refrescar</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- 2. Barra de KPIs Operativos -->
+    <section class="im-kpi-bar" aria-label="Métricas de incidencias de alta prioridad">
+      <!-- KPI 1: Pendientes de Redacción (Foco) -->
+      <article id="kpi-card-pending" class="kpi-card kpi-pending-clean">
+        <div class="kpi-card-title">Pendientes de Redacción</div>
+        <div id="kpi-pending-count" class="kpi-card-value">0</div>
+        <div id="kpi-pending-footer" class="kpi-card-footer">Requieren prompt para Agente</div>
+      </article>
+
+      <!-- KPI 2: Completadas -->
+      <article class="kpi-card">
+        <div class="kpi-card-title">Mensajes Oficiales Emitidos</div>
+        <div id="kpi-completed-count" class="kpi-card-value">0</div>
+        <div class="kpi-card-footer">Almacenadas en agent_executive_messages.json</div>
+      </article>
+
+      <!-- KPI 3: Total Activas -->
+      <article class="kpi-card">
+        <div class="kpi-card-title">Total Activas Alta Prioridad</div>
+        <div id="kpi-total-active" class="kpi-card-value">0</div>
+        <div id="kpi-source-file" class="kpi-card-footer">Último informe masivo cargado</div>
+      </article>
+
+      <!-- KPI 4: Desglose Severidad -->
+      <article class="kpi-card">
+        <div class="kpi-card-title">Criticidad P1 / P2</div>
+        <div class="kpi-card-value">
+          <span id="kpi-p1-count" style="color: var(--im-p1-red);">0</span>
+          <span style="color: var(--im-text-muted); font-size: 20px;">/</span>
+          <span id="kpi-p2-count" style="color: var(--im-p2-amber);">0</span>
+        </div>
+        <div class="kpi-card-footer">SL1 Críticas / SL2 Altas</div>
+      </article>
+
+      <!-- KPI 5: Discrepancias (Subescalación) -->
+      <article class="kpi-card">
+        <div class="kpi-card-title">Subescalaciones (Discrepancia)</div>
+        <div id="kpi-discrepancies-count" class="kpi-card-value" style="color: #B45309;">0</div>
+        <div class="kpi-card-footer">Ticket P3/P4 elevado a P1/P2 por N1</div>
+      </article>
+    </section>
+
+    <!-- 3. Barra de Vistas y Filtros Dinámicos -->
+    <nav class="im-toolbar" aria-label="Herramientas de filtrado y visualización">
+      <div class="im-toolbar-row-top">
+        <!-- Selector de Vistas -->
+        <div class="im-view-tabs" role="tablist" aria-label="Modo de vista de cola">
+          <button id="tab-view-pending" class="im-tab-btn active" role="tab" aria-selected="true" aria-controls="queue-container">
+            Solo Pendientes (<span id="badge-count-pending">0</span>)
+          </button>
+          <button id="tab-view-all" class="im-tab-btn" role="tab" aria-selected="false" aria-controls="queue-container">
+            Todas las Activas (<span id="badge-count-all">0</span>)
+          </button>
+        </div>
+
+        <div style="font-size: 11px; color: var(--im-text-muted);">
+          <span>Última sincronización: </span>
+          <strong id="last-sync-timestamp">--:--:--</strong>
+        </div>
+      </div>
+
+      <div class="im-toolbar-filters">
+        <!-- Buscador en tiempo real -->
+        <div class="im-search-box">
+          <span class="im-search-icon" aria-hidden="true">🔍</span>
+          <input type="text" id="filter-search-input" class="im-search-input" placeholder="Buscar por ID (ej. INC000004168775), título o sistema..." aria-label="Buscar incidencias">
+        </div>
+
+        <!-- Filtro Severidad -->
+        <label for="filter-severity-select" class="sr-only">Filtrar por Severidad</label>
+        <select id="filter-severity-select" class="im-select" title="Filtrar por Severidad">
+          <option value="all">Todas las Severidades</option>
+          <option value="P1">Solo Críticas (P1)</option>
+          <option value="P2">Solo Altas (P2)</option>
+        </select>
+
+        <!-- Filtro Proceso Crítico -->
+        <label for="filter-process-select" class="sr-only">Filtrar por Proceso de Negocio</label>
+        <select id="filter-process-select" class="im-select" title="Filtrar por Proceso de Negocio">
+          <option value="all">Todos los Procesos de Negocio</option>
+          <option value="Atención al Cliente (ATC)">Atención al Cliente (ATC)</option>
+          <option value="Ventas y Canales">Ventas y Canales</option>
+          <option value="Facturación y Cobros">Facturación y Cobros</option>
+          <option value="Provisión y Activación">Provisión y Activación</option>
+          <option value="Servicios de Red">Servicios de Red</option>
+          <option value="Sistemas Core">Sistemas Core</option>
+        </select>
+
+        <!-- Filtro Solo Discrepancias -->
+        <label class="im-checkbox-label">
+          <input type="checkbox" id="filter-only-discrepancies">
+          <span>Solo Discrepancias</span>
+        </label>
+      </div>
+    </nav>
+
+    <!-- 4. Contenedor de Cola de Incidencias -->
+    <main id="queue-container" class="queue-container" role="feed" aria-busy="false">
+      <!-- Se puebla dinámicamente con las tarjetas de incidencias -->
+    </main>
+
+    <!-- 5. Estado Vacío (Oculto por defecto) -->
+    <div id="empty-state-container" class="empty-state" style="display: none;" role="region" aria-label="Estado sin incidencias pendientes">
+      <div class="empty-state-icon" aria-hidden="true">🎉</div>
+      <h2 id="empty-state-title" class="empty-state-title">No hay redacciones pendientes</h2>
+      <p id="empty-state-desc" class="empty-state-text">
+        Todas las incidencias de alta prioridad activas disponen de mensajes ejecutivos oficiales generados por el agente incident-reporter.
+      </p>
+    </div>
+
+  </div>
+
+  <!-- Contenedor para Notificaciones Flotantes (Toasts) -->
+  <div id="im-toast-container" class="im-toast-container" aria-live="polite" aria-atomic="true"></div>
+
+  <!-- Scripts: Modal nativo de Epsilon IA y Lógica del Cockpit -->
+  <script src="/dashboards/assets/resumen-ia.js" defer></script>
+  <script src="./monitor.js" defer></script>
+</body>
+</html>
+

@@ -247,6 +247,8 @@ class CustomHTTPHandler(http.server.SimpleHTTPRequestHandler):
             f'{EXECUTIVE_REPORT_V1_PREFIX}/',
         ):
             self.handle_executive_report_generate()
+        elif self.path == '/api/incident-manager/save-message' or self.path.startswith('/api/incident-manager/save-message?'):
+            self.handle_incident_manager_save_message()
         else:
             self.send_error(404, "Not Found")
 
@@ -612,6 +614,47 @@ class CustomHTTPHandler(http.server.SimpleHTTPRequestHandler):
                 return
         self._send_json(404, {'error': 'Catálogo de agentes no encontrado'})
 
+    def handle_incident_manager_pending(self):
+        try:
+            from incident_manager_service import get_pending_incidents_payload
+            catalog_path = STORAGE_DIR / 'output' / 'high_priority_notifications.json'
+            store_path = STORAGE_DIR / 'agent_executive_messages.json'
+            payload = get_pending_incidents_payload(catalog_path=catalog_path, store_path=store_path)
+            self._send_json(200, payload)
+        except Exception as e:
+            print(f"  Error obteniendo incidencias pendientes: {e}")
+            self._send_json(500, {'success': False, 'error': str(e)})
+
+    def handle_incident_manager_save_message(self):
+        try:
+            content_length = int(self.headers.get('Content-Length', 0))
+            if content_length <= 0:
+                self._send_json(400, {'success': False, 'error': 'Payload vacío.'})
+                return
+
+            raw_body = self.rfile.read(content_length)
+            body = json.loads(raw_body.decode('utf-8'))
+
+            from incident_manager_service import validate_and_save_agent_message
+            store_path = STORAGE_DIR / 'agent_executive_messages.json'
+            eval_script = PROJECT_ROOT / 'converters' / 'cli' / 'evaluate_incident_notifications.py'
+
+            status, resp = validate_and_save_agent_message(
+                incident_id=body.get('incident_id', ''),
+                phase=body.get('phase', ''),
+                completo=body.get('completo', ''),
+                breve=body.get('breve', ''),
+                origen=body.get('origen', 'incident-reporter'),
+                store_path=store_path,
+                eval_script=eval_script
+            )
+            self._send_json(status, resp)
+        except json.JSONDecodeError as e:
+            self._send_json(400, {'success': False, 'error': f'JSON inválido: {e}'})
+        except Exception as e:
+            print(f"  Error guardando mensaje de agente: {e}")
+            self._send_json(500, {'success': False, 'error': str(e)})
+
     def _send_json(self, status, payload):
         body = json.dumps(payload, ensure_ascii=False).encode('utf-8')
         self.send_response(status)
@@ -640,6 +683,10 @@ class CustomHTTPHandler(http.server.SimpleHTTPRequestHandler):
 
         if self.path == '/api/agents-catalog' or self.path.startswith('/api/agents-catalog?'):
             self.handle_agents_catalog()
+            return
+
+        if self.path == '/api/incident-manager/pending' or self.path.startswith('/api/incident-manager/pending?'):
+            self.handle_incident_manager_pending()
             return
 
         if self.path.startswith('/api/reports') or self.path.startswith('/api/departments') or self.path in ('/healthz', '/readyz'):

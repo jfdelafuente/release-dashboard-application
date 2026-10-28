@@ -225,6 +225,34 @@ Verás que las incidencias que antes figuraban en estado `"pendiente"` ahora mue
 
 ---
 
+## 🖥️ Consola Operativa: Monitor de Incidentes Mayores (Cockpit Incident Manager)
+
+Para facilitar la supervisión del estado de las redacciones de agente sin depender exclusivamente de comandos de terminal, el sistema cuenta con un **Frontal Web de Monitorización del Incident Manager** (*Cockpit IM*).
+
+### Acceso a la Consola
+* **Entorno de Desarrollo Local:** [http://localhost:8080/dashboards/incident-manager-monitor/](http://localhost:8080/dashboards/incident-manager-monitor/)
+* **Entorno de Producción VPS:** [http://infocodes.si.orange.es:8081/dashboards/incident-manager-monitor/](http://infocodes.si.orange.es:8081/dashboards/incident-manager-monitor/)
+
+> [!NOTE]
+> **Aislamiento Estricto:** Esta herramienta es de uso exclusivo para el Incident Manager y el equipo de guardia operativa. **No aparece enlazada en el portal general público** (`/dashboards/portal/`) para mantener limpio el panel de negocio. Su acceso se realiza mediante URL directa o marcadores de navegador.
+
+### Capacidades del Cockpit:
+1. **Barra de KPIs en Tiempo Real:**
+   * Contador de incidencias pendientes de redacción con alerta visual dinámica (rojo si $> 0$, verde si $= 0$).
+   * Desglose de oficiales emitidos, total de activas, criticidad P1/P2 y discrepancias de triaje (subescalaciones N1).
+2. **Cola Operativa Filtrable:**
+   * Conmutador inmediato entre *"Solo Pendientes"* (vista por defecto enfocada al turno) y *"Todas las Activas"*.
+   * Filtros dinámicos por Severidad (P1, P2), por Proceso Crítico de Negocio (6 procesos ITIL), checkbox de discrepancias y buscador de texto libre con respuesta instantánea.
+3. **Inspección de Contexto y Copia de Prompts en 1 Clic:**
+   * Muestra el Proceso Crítico y Criterio asignado, sistemas afectados y acceso directo al modal interactivo de Epsilon IA (`Ver Resumen Epsilon`).
+   * Pestañas de Fase (`Apertura`, `Seguimiento`, `Cierre`) con visor del prompt precalculado para `incident-reporter` y botón **"Copiar Prompt para el Agente"** con feedback temporal al portapapeles.
+4. **Asistente de Ingesta Integrado con Validación Reactiva:**
+   * Contadores en vivo de longitud de palabras para la Versión Completa ($\le 90$ palabras, monopárrafo) y Versión Breve ($\le 30$ palabras).
+   * Botón **"Guardar en Almacén Oficial"** que persiste directamente vía API en `data/agent_executive_messages.json` y regenera el catálogo en vivo.
+   * Botón de contingencia **"Copiar Comando CLI"** que genera la sintaxis exacta de `update_agent_message.py` lista para pegar en terminal si se opera sin conectividad API.
+
+---
+
 ## ❓ Preguntas Frecuentes y Diagnóstico (FAQ)
 
 ### 1. ¿Por qué la subida web de un CSV en producción no genera los textos del agente automáticamente?
