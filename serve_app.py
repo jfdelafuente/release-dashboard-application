@@ -15,9 +15,8 @@ from pathlib import Path
 from email.parser import BytesParser
 from email import policy
 
-# Cambiar al directorio raíz del proyecto
+# Raíz del proyecto
 PROJECT_ROOT = Path(__file__).parent.absolute()
-os.chdir(PROJECT_ROOT)
 
 sys.path.insert(0, str(PROJECT_ROOT / 'converters' / 'cli'))
 from upload_csv import run_upload  # noqa: E402
@@ -59,14 +58,29 @@ if cso_is_file:
         cso_is_file = False
 
 if not cso_is_file:
-    ExecutiveIncidentData = None
-    sanitize_incident_ref = None
-    extract_fields_from_jira_description = None
-    get_executive_report_path = None
-    get_executive_report_filename = None
-    cleanup_old_executive_reports = None
-    ExecutiveReportBuilder = None
-    ConfluenceParser = None
+    try:
+        sys.path.insert(0, str(PROJECT_ROOT / 'converters' / 'src'))
+        from report_generator.executive_models import (
+            ExecutiveIncidentData,
+            sanitize_incident_ref,
+            extract_fields_from_jira_description,
+        )
+        from report_generator.executive_paths import (
+            get_executive_report_path,
+            get_executive_report_filename,
+            cleanup_old_executive_reports,
+        )
+        from report_generator.executive_report_builder import ExecutiveReportBuilder
+        from report_generator.confluence_parser import ConfluenceParser
+    except (ImportError, Exception):
+        ExecutiveIncidentData = None
+        sanitize_incident_ref = None
+        extract_fields_from_jira_description = None
+        get_executive_report_path = None
+        get_executive_report_filename = None
+        cleanup_old_executive_reports = None
+        ExecutiveReportBuilder = None
+        ConfluenceParser = None
 
 REPORTS_PATH_PREFIX = '/api/reports/postmortem/'
 EXECUTIVE_REPORT_PREFIX = '/api/reports/executive-incident'
@@ -247,6 +261,8 @@ class CustomHTTPHandler(http.server.SimpleHTTPRequestHandler):
             f'{EXECUTIVE_REPORT_V1_PREFIX}/',
         ):
             self.handle_executive_report_generate()
+        elif self.path == '/api/incident-manager/save-message' or self.path.startswith('/api/incident-manager/save-message?'):
+            self.handle_incident_manager_save_message()
         else:
             self.send_error(404, "Not Found")
 
@@ -612,6 +628,47 @@ class CustomHTTPHandler(http.server.SimpleHTTPRequestHandler):
                 return
         self._send_json(404, {'error': 'Catálogo de agentes no encontrado'})
 
+    def handle_incident_manager_pending(self):
+        try:
+            from incident_manager_service import get_pending_incidents_payload
+            catalog_path = STORAGE_DIR / 'output' / 'high_priority_notifications.json'
+            store_path = STORAGE_DIR / 'agent_executive_messages.json'
+            payload = get_pending_incidents_payload(catalog_path=catalog_path, store_path=store_path)
+            self._send_json(200, payload)
+        except Exception as e:
+            print(f"  Error obteniendo incidencias pendientes: {e}")
+            self._send_json(500, {'success': False, 'error': str(e)})
+
+    def handle_incident_manager_save_message(self):
+        try:
+            content_length = int(self.headers.get('Content-Length', 0))
+            if content_length <= 0:
+                self._send_json(400, {'success': False, 'error': 'Payload vacío.'})
+                return
+
+            raw_body = self.rfile.read(content_length)
+            body = json.loads(raw_body.decode('utf-8'))
+
+            from incident_manager_service import validate_and_save_agent_message
+            store_path = STORAGE_DIR / 'agent_executive_messages.json'
+            eval_script = PROJECT_ROOT / 'converters' / 'cli' / 'evaluate_incident_notifications.py'
+
+            status, resp = validate_and_save_agent_message(
+                incident_id=body.get('incident_id', ''),
+                phase=body.get('phase', ''),
+                completo=body.get('completo', ''),
+                breve=body.get('breve', ''),
+                origen=body.get('origen', 'incident-reporter'),
+                store_path=store_path,
+                eval_script=eval_script
+            )
+            self._send_json(status, resp)
+        except json.JSONDecodeError as e:
+            self._send_json(400, {'success': False, 'error': f'JSON inválido: {e}'})
+        except Exception as e:
+            print(f"  Error guardando mensaje de agente: {e}")
+            self._send_json(500, {'success': False, 'error': str(e)})
+
     def _send_json(self, status, payload):
         body = json.dumps(payload, ensure_ascii=False).encode('utf-8')
         self.send_response(status)
@@ -640,6 +697,10 @@ class CustomHTTPHandler(http.server.SimpleHTTPRequestHandler):
 
         if self.path == '/api/agents-catalog' or self.path.startswith('/api/agents-catalog?'):
             self.handle_agents_catalog()
+            return
+
+        if self.path == '/api/incident-manager/pending' or self.path.startswith('/api/incident-manager/pending?'):
+            self.handle_incident_manager_pending()
             return
 
         if self.path.startswith('/api/reports') or self.path.startswith('/api/departments') or self.path in ('/healthz', '/readyz'):
@@ -709,6 +770,7 @@ class CustomHTTPHandler(http.server.SimpleHTTPRequestHandler):
         print(f"[{self.client_address[0]}] {format % args}")
 
 if __name__ == '__main__':
+    os.chdir(PROJECT_ROOT)
     import argparse
     parser = argparse.ArgumentParser(description="Release Dashboard Static Server")
     parser.add_argument(
