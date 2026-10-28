@@ -135,7 +135,7 @@ elif [ -x "$RemoteDir/scripts/status.sh" ]; then
     "$RemoteDir/scripts/status.sh"
 else
     echo "=== Sondas de Salud HTTP ==="
-    for ep in "/dashboards/portal/" "/dashboards/massive-incidents/" "/dashboards/postmortem/" "/dashboards/release-kpis/" "/dashboards/reportes-incidencias/" "/dashboards/agents-catalog/" "/api/health"; do
+    for ep in "/dashboards/portal/" "/dashboards/massive-incidents/" "/dashboards/postmortem/" "/dashboards/release-kpis/" "/dashboards/reportes-incidencias/" "/dashboards/incident-manager-monitor/" "/dashboards/agents-catalog/" "/api/health"; do
         printf "  %-35s : " "\$ep"
         curl -s -o /dev/null -w "%{http_code}\n" --noproxy '*' "http://localhost:8081\$ep"
     done
@@ -669,7 +669,7 @@ echo "=== Verificación de Sondas de Salud HTTP ==="
 if [ -x "`$REMOTE_DIR/status.sh" ]; then
     "`$REMOTE_DIR/status.sh"
 else
-    for ep in "/dashboards/portal/" "/dashboards/massive-incidents/" "/dashboards/postmortem/" "/dashboards/release-kpis/" "/dashboards/reportes-incidencias/" "/dashboards/agents-catalog/" "/api/health"; do
+    for ep in "/dashboards/portal/" "/dashboards/massive-incidents/" "/dashboards/postmortem/" "/dashboards/release-kpis/" "/dashboards/reportes-incidencias/" "/dashboards/incident-manager-monitor/" "/dashboards/agents-catalog/" "/api/health"; do
         printf "  %-35s : " "\$ep"
         curl -sf --noproxy '*' "http://localhost:8081\$ep" >/dev/null && echo "OK (200)" || echo "ERROR"
     done
@@ -694,10 +694,11 @@ $Stopwatch.Stop()
 Write-Host ""
 Write-Host "=================================================================" -ForegroundColor DarkGreen
 Write-Host ("   ¡Despliegue completado con éxito en {0:N1}s!                   " -f $Stopwatch.Elapsed.TotalSeconds) -ForegroundColor Green
-Write-Host "   Portal               : http://infocodes.si.orange.es:8081/dashboards/portal/" -ForegroundColor Cyan
-Write-Host "   Incidencias Masivas  : http://infocodes.si.orange.es:8081/dashboards/massive-incidents/" -ForegroundColor Cyan
-Write-Host "   Postmortem           : http://infocodes.si.orange.es:8081/dashboards/postmortem/" -ForegroundColor Cyan
-Write-Host "   Release KPIs         : http://infocodes.si.orange.es:8081/dashboards/release-kpis/" -ForegroundColor Cyan
-Write-Host "   Reportes Incidencias : http://infocodes.si.orange.es:8081/dashboards/reportes-incidencias/" -ForegroundColor Cyan
-Write-Host "   Gestión de Problemas : http://infocodes.si.orange.es:8081/problemas" -ForegroundColor Cyan
+Write-Host "   Portal                   : http://infocodes.si.orange.es:8081/dashboards/portal/" -ForegroundColor Cyan
+Write-Host "   Incidencias Masivas      : http://infocodes.si.orange.es:8081/dashboards/massive-incidents/" -ForegroundColor Cyan
+Write-Host "   Postmortem               : http://infocodes.si.orange.es:8081/dashboards/postmortem/" -ForegroundColor Cyan
+Write-Host "   Release KPIs             : http://infocodes.si.orange.es:8081/dashboards/release-kpis/" -ForegroundColor Cyan
+Write-Host "   Reportes Incidencias     : http://infocodes.si.orange.es:8081/dashboards/reportes-incidencias/" -ForegroundColor Cyan
+Write-Host "   Monitor Incident Manager : http://infocodes.si.orange.es:8081/dashboards/incident-manager-monitor/" -ForegroundColor Cyan
+Write-Host "   Gestión de Problemas     : http://infocodes.si.orange.es:8081/problemas" -ForegroundColor Cyan
 Write-Host "=================================================================" -ForegroundColor DarkGreen
