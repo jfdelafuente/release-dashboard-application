@@ -120,3 +120,4 @@ Cuando evalúes una incidencia o redactes un informe de emergencia, utiliza esta
 2. **Estado de Comunicaciones:** Tiempo transcurrido para la 1ª notificación (<20 min) y frecuencia de updates (cada 1h).
 3. **Plan de Acción y Workarounds:** Estado de validación por IM-CSO y revisión de PaP/Rollbacks.
 4. **Estado de Escalado:** Minuto actual frente a la ventana de 45 min / +1h y grupos convocados.
+

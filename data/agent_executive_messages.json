@@ -3,7 +3,7 @@
     "version": "1.0.0",
     "description": "Almacén oficial de redacciones ejecutivas generadas por el Agente incident-reporter",
     "source": "agents/it-incidents/incident-reporter.md",
-    "updated_at": "2026-10-27T12:22:00Z"
+    "updated_at": "2026-10-28T11:24:21Z"
   },
   "incidents": {
     "INC000004065609": {
@@ -560,6 +560,96 @@
         "origen": "incident-reporter",
         "conteo_palabras_completo": 74,
         "conteo_palabras_breve": 20
+      }
+    },
+    "INC000004168295": {
+      "apertura": {
+        "completo": "Se declara incidencia crítica P1 (INC000004168295) por error funcional en la plataforma de Límite de Consumos. La anomalía afecta de forma masiva a las integraciones de control de gasto y tarificación de clientes, activándose el protocolo preventivo SL1 por riesgo de impacto en sistemas core. El equipo de SOPORTE N1 CSO investiga la sincronización de las políticas de consumo para evitar cargos indebidos o bloqueos de línea. Próxima actualización en 30 minutos.",
+        "breve": "Apertura P1 (INC000004168295): Error funcional en Límite de Consumos afecta masivamente al control de gasto. SOPORTE N1 CSO investigando sincronización. Próxima actualización en 30 minutos.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 72,
+        "conteo_palabras_breve": 25
+      }
+    },
+    "INC000004169083": {
+      "apertura": {
+        "completo": "Se declara incidencia crítica P1 (INC000004169083) por fallo funcional en el frontal conversacional DJINGO en la sede de Foundever - Sevilla. La incidencia compromete la operativa de atención al cliente e interacciones guiadas en canal de soporte, generando desvíos en la atención comercial y sobrecarga en agentes. El equipo especializado de SOP_DJINGO se encuentra diagnosticando las interfaces y servicios del asistente para reanudar el flujo habitual de atención. Próxima actualización en 30 minutos.",
+        "breve": "Apertura P1 (INC000004169083): Error funcional en DJINGO bloquea atención interactiva en Foundever Sevilla. Equipo SOP_DJINGO investigando interfaces. Próxima actualización en 30 minutos.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 73,
+        "conteo_palabras_breve": 22
+      }
+    },
+    "INC000004169100": {
+      "apertura": {
+        "completo": "Se declara incidencia crítica P1 (INC000004169100) originada por un error funcional en el aplicativo Extranet reportado desde Jazzplat - Guadalajara. La anomalía repercute sobre el mantenimiento y consulta del catálogo de productos fijos, afectando la tramitación y provisión de órdenes comerciales. El grupo resolutor FIJO APL Mto. Catalogo está analizando los registros de base de datos y la coherencia de catálogo para restaurar la operatividad en el centro de atención. Próxima actualización en 30 minutos.",
+        "breve": "Apertura P1 (INC000004169100): Fallo funcional en Extranet en Jazzplat Guadalajara afecta catálogo y provisión fija. FIJO APL Mto. Catalogo diagnosticando. Próxima actualización 30 minutos.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 75,
+        "conteo_palabras_breve": 24
+      }
+    },
+    "INC000004169171": {
+      "apertura": {
+        "completo": "Se declara incidencia crítica P1 (INC000004169171) por error funcional en Ficha Cliente Orange en la plataforma de Teleperformance - Salamanca. La avería imposibilita a los operadores de atención acceder o actualizar la ficha de cliente, comprometiendo la gestión de llamadas y consultas en el frontal CRM. El equipo de SOPORTE N1 CSO interviene en la plataforma para estabilizar las sesiones y la comunicación con servicios centrales. Próxima actualización en 30 minutos.",
+        "breve": "Apertura P1 (INC000004169171): Error funcional en Ficha Cliente Orange en Teleperformance Salamanca bloquea consultas CRM. SOPORTE N1 CSO interviniendo. Próxima actualización en 30 minutos.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 71,
+        "conteo_palabras_breve": 24
+      }
+    },
+    "INC000004169652": {
+      "apertura": {
+        "completo": "Se declara incidencia crítica P1 (INC000004169652) debida a un error funcional en Siebel 8 reportado en el centro Konecta - Sevilla. El fallo afecta a la gestión de órdenes de provisión y contratación en el CRM, provocando demoras y bloqueos en las solicitudes de clientes. El equipo de soporte SOP_SMC_TEIDE se encuentra revisando los flujos de integración y servicios de backend para normalizar la tramitación en Siebel 8. Próxima actualización en 30 minutos.",
+        "breve": "Apertura P1 (INC000004169652): Error funcional en Siebel 8 en Konecta Sevilla bloquea provisión y pedidos comerciales. Soporte SOP_SMC_TEIDE investigando. Próxima actualización en 30 minutos.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 73,
+        "conteo_palabras_breve": 24
+      }
+    },
+    "INC000004169906": {
+      "apertura": {
+        "completo": "Se declara incidencia crítica P1 (INC000004169906) por degradación del servicio PALOS afectando a la sede Teleperformance Qualytel. La afectación impacta en herramientas de supervisión y gestión de tráfico operativo, aplicándose triaje preventivo SL1/P1 por criticidad de O&M y riesgo directo en la continuidad del servicio. El centro de control GNOC lidera las comprobaciones de red y servidores para mitigar la saturación y restaurar la calidad del servicio. Próxima actualización en 30 minutos.",
+        "breve": "Apertura P1 (INC000004169906): Degradación en PALOS en Teleperformance Qualytel con impacto operativo masivo. GNOC interviniendo en supervisión y red. Próxima actualización en 30 minutos.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 72,
+        "conteo_palabras_breve": 24
+      }
+    },
+    "INC000004169057": {
+      "apertura": {
+        "completo": "Se notifica incidencia de prioridad alta P2 (INC000004169057) por problema de acceso a la herramienta Asistente (PRDIA-2998) en el centro Konecta - Sevilla. La afectación causa degradación operativa local a los operadores de atención sin generar corte total en el servicio al cliente ni indisponibilidad general de sistemas. El equipo de desarrollo DES_ASISTENTE está analizando el módulo de autenticación para resolver el bloqueo de accesos. Próxima actualización en 2 horas.",
+        "breve": "Apertura P2 (INC000004169057): Incidencia de acceso en herramienta Asistente para operadores en Konecta Sevilla. DES_ASISTENTE revisando autenticación. Próxima actualización en 2 horas.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 70,
+        "conteo_palabras_breve": 22
+      }
+    },
+    "INC000004169623": {
+      "apertura": {
+        "completo": "Se notifica incidencia de prioridad alta P2 (INC000004169623) por error funcional en la plataforma ASISTENTE (PRDIA-2999) en la sede ADI - Madrid. El comportamiento anómalo genera fallos en consultas específicas de soporte en dicho centro, manteniéndose el servicio principal operativo sin afectación global en el parque de clientes. El equipo técnico de DES_ASISTENTE se encuentra verificando las trazas de aplicación para corregir la anomalía funcional. Próxima actualización en 2 horas.",
+        "breve": "Apertura P2 (INC000004169623): Error funcional en herramienta ASISTENTE en ADI Madrid con afectación local en soporte. DES_ASISTENTE analizando trazas. Próxima actualización en 2 horas.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 70,
+        "conteo_palabras_breve": 24
+      }
+    },
+    "INC000004168775": {
+      "apertura": {
+        "completo": "Se notifica incidencia de prioridad alta P2 (INC000004168775) por indisponibilidad parcial en componentes de middleware y almacenamiento. La degradación compromete servicios intermedios de almacenamiento gestionados por SPAIN ALMACENAMIENTO, manteniéndose activos los canales de negocio mediante redundancias de infraestructura. Los especialistas de almacenamiento y sistemas intervienen en la plataforma para restablecer el servicio completo de middleware y normalizar la sincronización de datos. Próxima actualización en 2 horas.",
+        "breve": "Apertura P2 (INC000004168775): Indisponibilidad parcial en middleware y almacenamiento. Canales activos por redundancia. SPAIN ALMACENAMIENTO trabajando en restablecimiento. Próxima actualización en 2 horas.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 66,
+        "conteo_palabras_breve": 23
       }
     }
   }
