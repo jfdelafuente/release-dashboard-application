@@ -442,6 +442,35 @@
         discrepancyHtml = `<span class="hp-badge hp-badge-discrepancy" title="Subescalación detectada: en ticket figura como ${item.prioridad_original} pero la IA calculó ${item.prioridad_sugerida}">⚠️ Ticket: ${this.escape(item.prioridad_original)} → IA: ${item.prioridad_sugerida}</span>`;
       }
 
+      // SLA y Escalados (orange-it-emergency-management)
+      const mins = evalData.minutos_desde_apertura;
+      const sla1aVencido = Boolean(evalData.sla_primera_notificacion_vencido);
+      const reqEscaladoTel = Boolean(evalData.requiere_escalado_telefonico);
+      const escSuperior = Boolean(evalData.escalado_estamentos_superiores);
+      const workaroundGob = evalData.workaround_gobernanza;
+      const hasWorkaround = evalData.workaround === 'Sí';
+
+      let slaBadgeHtml = '';
+      if (mins !== undefined && mins !== null) {
+        if (sla1aVencido) {
+          slaBadgeHtml = `<span class="hp-badge hp-badge-sla-overdue" title="SLA 1ª Notificación a Dirección (>20 min) VENCIDO (${mins} min)">🔴 1ª Notif. >20m (${mins}m)</span>`;
+        } else {
+          slaBadgeHtml = `<span class="hp-badge hp-badge-sla-ok" title="En tiempo para 1ª Notificación a Dirección (<20 min) (${mins} min)">🟢 1ª Notif. &lt;20m (${mins}m)</span>`;
+        }
+      }
+
+      let escaladoBadgeHtml = '';
+      if (escSuperior) {
+        escaladoBadgeHtml = `<span class="hp-badge hp-badge-phone-escalation hp-badge-esc-superior" title="Superados 105 min sin resolución. Protocolo Orange: 2º escalado a Estamentos Superiores liderado por IM-CSO">🚨 &gt;1h45m: Escalado Estamentos Superiores</span>`;
+      } else if (reqEscaladoTel) {
+        escaladoBadgeHtml = `<span class="hp-badge hp-badge-phone-escalation" title="Superados 45 min sin avances. Regla de Oro: Incident Manager debe realizar escalado telefónico a N3 / Proveedor">📞 &gt;45m: Escalado Telefónico N3 / Proveedor</span>`;
+      }
+
+      let workaroundBadgeHtml = '';
+      if (hasWorkaround) {
+        workaroundBadgeHtml = `<span class="hp-badge hp-badge-workaround-cso" title="Reglas de Oro 2 y 3: Workaround aplicado. Requiere autorización de IM-CSO y NO reduce severidad mientras persista impacto.">⚠️ Workaround (Req. IM-CSO)</span>`;
+      }
+
       let epsilonBadgeHtml = hasEpsilon
         ? `<span class="hp-badge hp-badge-epsilon" title="Contexto enriquecido con Epsilon Resumen IA">✨ Epsilon IA</span>`
         : `<span class="hp-badge hp-badge-no-epsilon" title="Datos basados en ticket Remedy. Pulsa 'Sincronizar' para enriquecer con Epsilon">ℹ️ Remedy Base</span>`;
@@ -598,6 +627,24 @@
                 </button>
               </div>
             </div>
+
+            <div class="hp-emergency-report-box">
+              <div class="hp-exec-section-label">
+                <span>🚨 Reporte Operativo de Emergencia (4 Bloques Orange)</span>
+                <span>Protocolo IM-CSO</span>
+              </div>
+              <p class="hp-prompt-hint">Estructura normalizada para seguimiento técnico y escalados oficiales:</p>
+              <pre class="hp-emergency-report-text">${this.escape(item.reporte_emergencia || this.buildEmergency4BlocksReport(item))}</pre>
+              <div class="hp-copy-row">
+                <button type="button" class="hp-copy-btn" data-action="copy-emergency-report" data-id="${item.id}">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                  </svg>
+                  Copiar Reporte 4 Bloques
+                </button>
+              </div>
+            </div>
           </div>
         `;
       }
@@ -609,6 +656,9 @@
               <span class="hp-badge ${prioBadgeClass}">${item.prioridad_sugerida} ${isP1 ? 'Crítica' : 'Alta'}</span>
               <span class="hp-badge hp-badge-code">${item.id}</span>
               ${discrepancyHtml}
+              ${slaBadgeHtml}
+              ${escaladoBadgeHtml}
+              ${workaroundBadgeHtml}
               ${epsilonBadgeHtml}
             </div>
             <div>
@@ -648,6 +698,16 @@
               <span class="hp-itil-label">SLA Obj.:</span>
               <span class="hp-itil-val">${sla}</span>
             </div>
+            ${mins !== undefined && mins !== null ? `
+            <div class="hp-itil-item">
+              <span class="hp-itil-label">Transcurrido:</span>
+              <span class="hp-itil-val hp-timer-val ${sla1aVencido ? 'sla-warn' : ''}">${mins} min</span>
+            </div>` : ''}
+            ${workaroundGob ? `
+            <div class="hp-itil-item hp-itil-workaround">
+              <span class="hp-itil-label">Gobernanza:</span>
+              <span class="hp-itil-val hp-workaround-val">${this.escape(workaroundGob)}</span>
+            </div>` : ''}
           </div>
 
           <div class="hp-card-actions">
@@ -656,6 +716,9 @@
             </button>
             <button type="button" class="hp-btn hp-btn-secondary" data-action="open-resumen-ia" data-id="${item.id}">
               ✨ Resumen IA
+            </button>
+            <button type="button" class="hp-btn hp-btn-emergency" data-action="copy-emergency-report" data-id="${item.id}" title="Copiar reporte oficial de emergencia en 4 bloques según protocolo Orange">
+              📋 Reporte Emergencia
             </button>
           </div>
 
@@ -725,6 +788,55 @@
           prompt_agente: this.buildAgentPrompt(item, phase, true)
         };
       });
+    }
+
+    buildEmergency4BlocksReport(item) {
+      if (item.reporte_emergencia) return item.reporte_emergencia;
+
+      const evalData = item.evaluacion || {};
+      const res = item.resumen_ia || {};
+      const sistemas = Array.isArray(item.sistemas) ? item.sistemas.join(', ') : (item.sistemas || 'Sistemas Core');
+      const mins = evalData.minutos_desde_apertura !== undefined && evalData.minutos_desde_apertura !== null
+        ? `${evalData.minutos_desde_apertura} min`
+        : 'Desconocido';
+
+      const esc = evalData.escalado_estamentos_superiores
+        ? 'Superados 105 min. Requiere 2º escalado a Estamentos Superiores liderado por IM-CSO.'
+        : (evalData.requiere_escalado_telefonico
+          ? 'Superados 45 min sin avances. Regla de Oro: Requiere escalado telefónico a N3 / Proveedor.'
+          : 'Dentro de ventana normal de trabajo.');
+
+      return [
+        '================================================================================',
+        'REPORTE OPERATIVO DE EMERGENCIA IT - ORANGE',
+        `Incidencia: ${item.id} | Severidad: ${item.prioridad_sugerida} | Proceso: ${evalData.proceso || 'Core'}`,
+        '================================================================================',
+        '',
+        '1. RESUMEN EJECUTIVO',
+        `  - Incidencia: ${item.id}`,
+        `  - Severidad: ${item.prioridad_sugerida} (Original: ${item.prioridad_original || 'N/A'})`,
+        `  - Proceso Crítico: ${evalData.proceso || 'Core'} (Criterio: ${evalData.criterio || 'Operación'})`,
+        `  - Estado Operativo: ${item.estado || 'Activo'}`,
+        `  - Impacto de Negocio: ${res.impacto || evalData.impacto || item.titulo || 'Impacto en servicio'}`,
+        '',
+        '2. DETALLE TÉCNICO Y CAUSA',
+        `  - Síntomas y Causa: ${res.problema || res.solucion || item.titulo || 'En investigación'}`,
+        `  - Sistemas Afectados: ${sistemas}`,
+        `  - Workaround / Mitigación: ${evalData.workaround_gobernanza || (evalData.workaround === 'Sí' ? 'Workaround activo (Pendiente IM-CSO)' : 'Sin workaround aplicable')}`,
+        '',
+        '3. CRONOLOGÍA Y GOBERNANZA',
+        `  - Apertura / Detección: ${item.fecha_inicio || 'N/A'}`,
+        `  - Tiempo Transcurrido: ${mins}`,
+        `  - 1ª Notificación a Dirección: ${evalData.sla_primera_notificacion_vencido ? 'VENCIDA (>20 min)' : 'En plazo (<20 min)'}`,
+        `  - Próxima Ventana de Actualización: ${evalData.proxima_ventana_update_minutos || 60} min`,
+        `  - Estado de Escalado: ${esc}`,
+        '',
+        '4. ACCIONES EN CURSO Y EQUIPOS',
+        `  - Asignatario / Grupo: ${item.grupo_asignado || 'N3 / Operaciones'}`,
+        `  - Acciones Inmediatas: ${res.siguiente_accion || 'Monitorización técnica y diagnóstico continuo con equipos de soporte.'}`,
+        `  - Bloqueos Activos: ${res.bloqueos || 'Sin bloqueos declarados.'}`,
+        '================================================================================'
+      ].join('\n');
     }
 
     async syncEpsilon(id, buttonEl) {
@@ -879,6 +991,18 @@
           const phase = e.currentTarget.dataset.phase || 'apertura';
           StateManager.removeCustomMessage(id, phase);
           this.renderCards();
+        });
+      });
+
+      // Copiar Reporte de Emergencia oficial en 4 bloques
+      container.querySelectorAll('button[data-action="copy-emergency-report"]').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const id = e.currentTarget.dataset.id;
+          const item = this.items.find(x => x.id === id);
+          if (!item) return;
+
+          const reportText = item.reporte_emergencia || this.buildEmergency4BlocksReport(item);
+          this.copyToClipboard(reportText, e.currentTarget, 'Reporte de emergencia en 4 bloques copiado');
         });
       });
     }

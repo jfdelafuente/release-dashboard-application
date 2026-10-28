@@ -72,6 +72,82 @@ def detect_priority_discrepancy(original_priority: Optional[str], calculated_pri
     return calc_rank < orig_rank
 
 
+def parse_incident_datetime(raw: Optional[str]) -> Optional[datetime]:
+    """Parses incident timestamp from Remedy and various ISO/localized formats.
+    
+    Supports Remedy exports with Spanish/English indicators (e.g. '14/10/2026 13:26 a').
+    """
+    if not raw or not isinstance(raw, str):
+        return None
+    s = raw.strip()
+    if not s:
+        return None
+
+    # Clean Remedy trailing indicators like ' a', ' p', ' a. m.', ' p. m.'
+    clean_s = re.sub(r"\s+[ap]\.?\s*m?\.?$", "", s, flags=re.IGNORECASE).strip()
+
+    formats = [
+        "%d/%m/%Y %H:%M:%S",
+        "%d/%m/%Y %H:%M",
+        "%Y-%m-%d %H:%M:%S",
+        "%Y-%m-%dT%H:%M:%S",
+        "%Y-%m-%dT%H:%M:%SZ",
+        "%Y-%m-%dT%H:%M:%S%z",
+        "%d/%m/%Y",
+        "%Y-%m-%d",
+    ]
+    for fmt in formats:
+        try:
+            return datetime.strptime(clean_s, fmt)
+        except ValueError:
+            continue
+    return None
+
+
+def compute_emergency_sla_status(
+    created_at: Optional[datetime],
+    reference_time: Optional[datetime] = None
+) -> dict[str, Any]:
+    """Computes operational elapsed time and Orange IT Emergency Management SLA & Escalation triggers.
+    
+    Rules (orange-it-emergency-management):
+    - SLA 1ª Notificación a Dirección: < 20 minutos desde la identificación/apertura.
+    - Escalado 1 (Telefónico a N3 / Proveedor): >= 45 minutos sin avances significativos.
+    - Escalado 2 (Estamentos Superiores con IM-CSO): >= 105 minutos (45 min + 1h).
+    - Frecuencia de Actualizaciones: Cada 60 minutos (o <30m ante cambios críticos).
+    """
+    if not created_at:
+        return {
+            "minutos_desde_apertura": None,
+            "sla_primera_notificacion_vencido": False,
+            "requiere_escalado_telefonico": False,
+            "escalado_estamentos_superiores": False,
+            "proxima_ventana_update_minutos": 60,
+        }
+
+    ref = reference_time or datetime.now()
+    if ref.tzinfo is not None and created_at.tzinfo is None:
+        created_at = created_at.replace(tzinfo=ref.tzinfo)
+    elif ref.tzinfo is None and created_at.tzinfo is not None:
+        ref = ref.replace(tzinfo=created_at.tzinfo)
+
+    delta = ref - created_at
+    minutes = max(0, int(delta.total_seconds() // 60))
+
+    sla_1a_notif_vencido = minutes > 20
+    req_escalado_tel = minutes >= 45
+    esc_superior = minutes >= 105
+    proximo_update = 60 - (minutes % 60) if minutes > 0 else 60
+
+    return {
+        "minutos_desde_apertura": minutes,
+        "sla_primera_notificacion_vencido": sla_1a_notif_vencido,
+        "requiere_escalado_telefonico": req_escalado_tel,
+        "escalado_estamentos_superiores": esc_superior,
+        "proxima_ventana_update_minutos": proximo_update,
+    }
+
+
 class SeverityEvaluator:
     """Evaluates ITIL severity based on Impact and Urgency heuristics."""
 
@@ -107,6 +183,14 @@ class SeverityEvaluator:
 
         sla_minutes = SLA_TARGET_MINUTES.get(priority, 240)
 
+        # Reglas de Oro 2 y 3 (orange-it-emergency-management): Gobernanza de Workarounds
+        if has_workaround == "Sí":
+            workaround_gobernanza = "Pendiente autorización IM-CSO (SL1 activa)"
+        elif has_workaround == "No":
+            workaround_gobernanza = "Sin workaround (Resolución directa requerida)"
+        else:
+            workaround_gobernanza = "No identificado"
+
         return {
             "prioridad_sugerida": priority,
             "es_alta_prioridad": is_high_priority,
@@ -119,6 +203,7 @@ class SeverityEvaluator:
                 "urgencia": urgency,
                 "urgencia_justificacion": urgency_reason,
                 "workaround": has_workaround,
+                "workaround_gobernanza": workaround_gobernanza,
                 "sla_objetivo_minutos": sla_minutes,
             }
         }
@@ -281,12 +366,15 @@ class SeverityEvaluator:
 
     @staticmethod
     def _calculate_matrix(impact: str, urgency: str, has_workaround: str) -> str:
-        """Applies ITIL Impact x Urgency cross-reference rules."""
+        """Applies ITIL Impact x Urgency cross-reference rules with Orange Emergency Golden Rules.
+        
+        Regla de Oro 3 (orange-it-emergency-management):
+        Un workaround NO reduce automáticamente la severidad del ticket. Una Emergencia SL1 solo
+        se da por resuelta cuando el impacto sobre el negocio o servicio ha desaparecido por completo.
+        """
         if impact == "Alto":
-            if urgency == "Alta":
+            if urgency in ("Alta", "Media"):
                 return "P1"
-            if urgency == "Media":
-                return "P2" if has_workaround == "Sí" else "P1"
             return "P2"
 
         if impact == "Medio":
@@ -507,7 +595,93 @@ class ExecutiveMessageGenerator:
 
         return messages
 
-        return messages
+    @classmethod
+    def generate_emergency_4blocks_report(
+        cls,
+        ticket: dict[str, Any],
+        evaluation: dict[str, Any],
+        resumen_ia: Optional[dict[str, Any]] = None,
+        sla_status: Optional[dict[str, Any]] = None,
+    ) -> str:
+        """Generates the standardized 4-block emergency report mandated by orange-it-emergency-management."""
+        inc_id = ticket.get("ID de incidencia") or ticket.get("id") or "INC"
+        titulo = ticket.get("Descripción") or ticket.get("descripcion") or (resumen_ia.get("titulo") if resumen_ia else "")
+        prio = evaluation.get("prioridad_sugerida", "P1")
+        sl_level = "SL1 (Emergencia Crítica)" if prio == "P1" else ("SL2 (Incidencia Mayor)" if prio == "P2" else f"SL{prio[-1]}")
+
+        eval_data = evaluation.get("evaluacion") if isinstance(evaluation.get("evaluacion"), dict) else evaluation
+        proceso = eval_data.get("proceso", "Sistemas Core")
+        criterio = eval_data.get("criterio", "Regla de Oro N1")
+        impacto = eval_data.get("impacto", "Alto")
+        impacto_just = eval_data.get("impacto_justificacion", "Afectación crítica en servicio.")
+        urgencia = eval_data.get("urgencia", "Alta")
+        urgencia_just = eval_data.get("urgencia_justificacion", "Impacto activo en vivo.")
+        workaround = eval_data.get("workaround", "No")
+        workaround_gob = eval_data.get("workaround_gobernanza", "Pendiente autorización IM-CSO (SL1 activa)" if workaround == "Sí" else "Sin workaround")
+
+        sistemas_list = []
+        if resumen_ia and isinstance(resumen_ia.get("sistemas"), list):
+            sistemas_list = [s for s in resumen_ia["sistemas"] if s]
+        if not sistemas_list and ticket.get("Grupo asignado"):
+            sistemas_list = [ticket["Grupo asignado"]]
+        sistemas_str = ", ".join(sistemas_list) if sistemas_list else "Servicios Core"
+
+        # Tiempos operativos y estado de escalado
+        sla_data = sla_status or {}
+        mins = sla_data.get("minutos_desde_apertura")
+        mins_str = f"{mins} min" if mins is not None else "En curso (reciente)"
+        sla_notif_vencido = sla_data.get("sla_primera_notificacion_vencido", False)
+        req_tel = sla_data.get("requiere_escalado_telefonico", False)
+        esc_sup = sla_data.get("escalado_estamentos_superiores", False)
+
+        if mins is None:
+            estado_1a_notif = "En ventana (<20 min)"
+            estado_escalado = "Ventana operativa inicial (<45 min)"
+        else:
+            estado_1a_notif = f"⚠️ SLA 1ª Notificación VENCIDO (>20 min - {mins} min transcurridos)" if sla_notif_vencido else f"✅ En SLA 1ª Notificación (<20 min - {mins} min transcurridos)"
+            if esc_sup:
+                estado_escalado = f"🚨 2º Escalado Requerido a Estamentos Superiores (+{mins} min transcurridos)"
+            elif req_tel:
+                estado_escalado = f"📞 1er Escalado Telefónico Requerido a N3/Proveedor (+{mins} min transcurridos)"
+            else:
+                estado_escalado = f"🟢 En plazo de intervención inicial ({mins}/45 min)"
+
+        problema = (resumen_ia.get("problema") if resumen_ia else None) or titulo
+        solucion = (resumen_ia.get("solucion") if resumen_ia else None) or "Diagnóstico y contención técnica en curso por equipos resolutores"
+        siguiente = (resumen_ia.get("siguienteAccion") or resumen_ia.get("siguiente_accion") if resumen_ia else None) or "Auditoría preventiva PaP y restablecimiento de servicio"
+
+        lines = [
+            "🚨 REPORTE DE EMERGENCIA IT - ORANGE TECH OPERATIONS",
+            "────────────────────────────────────────────────────────────",
+            "[1] CLASIFICACIÓN DEL TICKET",
+            f"• Incidencia: {inc_id} ({sl_level})",
+            f"• Proceso Crítico: {proceso}",
+            f"• Umbral de Emergencia: {criterio}",
+            f"• Alcance y Sistemas: {sistemas_str}",
+            f"• Impacto: {impacto} ({impacto_just})",
+            f"• Urgencia: {urgencia} ({urgencia_just})",
+            "",
+            "[2] ESTADO DE COMUNICACIONES Y SLAS",
+            f"• Tiempo desde Apertura: {mins_str}",
+            f"• 1ª Notificación a Dirección: {estado_1a_notif}",
+            f"• Frecuencia de Actualizaciones: Cada 60 min (o <30m ante cambios críticos)",
+            "• War Room / Teams: Liderado por Incident Manager (IM)",
+            "",
+            "[3] PLAN DE ACCIÓN Y GOBERNANZA DE WORKAROUNDS",
+            f"• Diagnóstico Técnico: {problema}",
+            f"• Acciones en Curso: {solucion}",
+            f"• Siguiente Hito: {siguiente}",
+            f"• Workaround: {workaround} | Gobernanza: {workaround_gob}",
+            "• Regla de Oro: Prohibida la desescalada automática sin erradicación total del impacto",
+            "• Revisión Trabajos Programados (PaP): Auditoría preventiva de Rollback en curso",
+            "",
+            "[4] ESTADO DE ESCALADO TELEFÓNICO",
+            f"• Protocolo de Tiempos: {estado_escalado}",
+            "• Canal de Escalado: Vía Telefónica obligatoria (Regla de Oro)",
+            "• Gobernanza RACI: Incident Manager (R) / Customer & Service Ops IM-CSO (A)",
+            "────────────────────────────────────────────────────────────"
+        ]
+        return "\n".join(lines)
 
 
 class EpsilonClient:
@@ -597,9 +771,10 @@ def evaluate_incidents_batch(
     tickets: list[dict[str, Any]],
     epsilon_client: Optional[EpsilonClient] = None,
     limit: Optional[int] = None,
-    source_file_name: str = ""
+    source_file_name: str = "",
+    reference_time: Optional[datetime] = None
 ) -> dict[str, Any]:
-    """Processes a batch of massive incidents and constructs the High Priority catalog."""
+    """Processes a batch of massive incidents and constructs the High Priority catalog with Orange IT Emergency Management."""
     evaluator = SeverityEvaluator()
     msg_generator = ExecutiveMessageGenerator()
 
@@ -638,9 +813,28 @@ def evaluate_incidents_batch(
         elif prio_sugerida == "P2":
             p2_count += 1
 
-        # Construir mensajes ejecutivos para alta prioridad o discrepancias
+        # Construir mensajes ejecutivos y reporte de emergencia para alta prioridad o discrepancias
         if es_alta or es_disc:
+            raw_date = item.get("Fecha de envío") or item.get("fecha_envio") or ""
+            parsed_date = parse_incident_datetime(raw_date)
+            sla_status = compute_emergency_sla_status(parsed_date, reference_time=reference_time)
+
+            eval_dict = dict(evaluation["evaluacion"])
+            eval_dict["minutos_desde_apertura"] = sla_status["minutos_desde_apertura"]
+            eval_dict["sla_primera_notificacion_vencido"] = sla_status["sla_primera_notificacion_vencido"]
+            eval_dict["requiere_escalado_telefonico"] = sla_status["requiere_escalado_telefonico"]
+            eval_dict["escalado_estamentos_superiores"] = sla_status["escalado_estamentos_superiores"]
+            eval_dict["proxima_ventana_update_minutos"] = sla_status["proxima_ventana_update_minutos"]
+            evaluation["evaluacion"] = eval_dict
+
             mensajes = msg_generator.generate(item, evaluation, epsilon_data)
+            reporte_emergencia = msg_generator.generate_emergency_4blocks_report(
+                ticket=item,
+                evaluation=evaluation,
+                resumen_ia=epsilon_data,
+                sla_status=sla_status,
+            )
+            mensajes["reporte_emergencia"] = reporte_emergencia
             
             sistemas = []
             if epsilon_data and isinstance(epsilon_data.get("sistemas"), list):
@@ -667,10 +861,11 @@ def evaluate_incidents_batch(
                 "es_alta_prioridad": es_alta,
                 "es_discrepancia": es_disc,
                 "estatus": item.get("Estatus") or "Asignado",
-                "fecha_envio": item.get("Fecha de envío") or item.get("fecha_envio") or "",
-                "evaluacion": evaluation["evaluacion"],
+                "fecha_envio": raw_date,
+                "evaluacion": eval_dict,
                 "resumen_ia": resumen_ia_block,
-                "mensajes_ejecutivos": mensajes
+                "mensajes_ejecutivos": mensajes,
+                "reporte_emergencia": reporte_emergencia,
             })
 
     # Ordenar: primero P1, luego discrepancias, luego P2
@@ -680,6 +875,10 @@ def evaluate_incidents_batch(
         return (prio_val, disc_val)
 
     high_priority_items.sort(key=sort_key)
+
+    sla_vencidos_count = sum(1 for it in high_priority_items if it.get("evaluacion", {}).get("sla_primera_notificacion_vencido"))
+    escalados_tel_count = sum(1 for it in high_priority_items if it.get("evaluacion", {}).get("requiere_escalado_telefonico"))
+    workaround_pendientes_count = sum(1 for it in high_priority_items if "Pendiente" in str(it.get("evaluacion", {}).get("workaround_gobernanza", "")))
 
     catalog = {
         "_metadata": {
@@ -694,7 +893,10 @@ def evaluate_incidents_batch(
                 "total_high_priority": p1_count + p2_count,
                 "p1_critical_count": p1_count,
                 "p2_high_count": p2_count,
-                "discrepancies_count": discrepancies_count
+                "discrepancies_count": discrepancies_count,
+                "sla_primera_notificacion_vencidos_count": sla_vencidos_count,
+                "requiere_escalado_telefonico_count": escalados_tel_count,
+                "workaround_pendientes_cso_count": workaround_pendientes_count,
             }
         },
         "data": high_priority_items
@@ -773,7 +975,7 @@ def main() -> int:
 
     kpis = catalog["_metadata"]["kpis"]
     logger.info(
-        "Evaluación completada: %d escaneadas (%d omitidas por estado final/cerrado, %d activas), %d de alta prioridad (P1: %d, P2: %d), %d discrepancias.",
+        "Evaluación completada: %d escaneadas (%d omitidas por estado final/cerrado, %d activas), %d de alta prioridad (P1: %d, P2: %d), %d discrepancias. SLA 1ª notif vencidos: %d, Escalados telefónicos req: %d, Workarounds pend. CSO: %d.",
         kpis["total_scanned"],
         kpis["terminal_skipped_count"],
         kpis["active_evaluated_count"],
@@ -781,6 +983,9 @@ def main() -> int:
         kpis["p1_critical_count"],
         kpis["p2_high_count"],
         kpis["discrepancies_count"],
+        kpis.get("sla_primera_notificacion_vencidos_count", 0),
+        kpis.get("requiere_escalado_telefonico_count", 0),
+        kpis.get("workaround_pendientes_cso_count", 0),
     )
 
     if not args.dry_run:

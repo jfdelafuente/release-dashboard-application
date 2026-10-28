@@ -5,6 +5,7 @@ Follows Constitution Testing Standards:
 - Tests edge cases, fallback modes, and ITIL matrix rules.
 """
 
+from datetime import datetime, timedelta
 import json
 from unittest.mock import MagicMock, patch
 import pytest
@@ -15,7 +16,9 @@ from converters.cli.evaluate_incident_notifications import (
     ExecutiveMessageGenerator,
     evaluate_incidents_batch,
     detect_priority_discrepancy,
-    normalize_priority
+    normalize_priority,
+    parse_incident_datetime,
+    compute_emergency_sla_status,
 )
 
 
@@ -571,6 +574,158 @@ def test_should_include_process_and_criterion_in_agent_prompt():
     prompt = generator.generate_agent_prompt(ticket, eval_block, resumen_ia=None, phase="apertura")
     assert "Proceso de Negocio: Atención al Cliente (ATC)" in prompt
     assert "Criterio / Umbral: ATC: Frontales/CRM" in prompt
+
+
+# ============================================================================
+# Phase 6: Orange IT Emergency Management Tests (orange-it-emergency-management)
+# ============================================================================
+
+def test_should_parse_remedy_incident_datetime_formats():
+    # Remedy export con indicador 'a'
+    dt1 = parse_incident_datetime("14/10/2026 13:26 a")
+    assert dt1 == datetime(2026, 10, 14, 13, 26)
+
+    # Remedy export con indicador 'p'
+    dt2 = parse_incident_datetime("20/10/2026 17:22 p")
+    assert dt2 == datetime(2026, 10, 20, 17, 22)
+
+    # Formato estándar DD/MM/YYYY HH:MM
+    dt3 = parse_incident_datetime("14/10/2026 10:00")
+    assert dt3 == datetime(2026, 10, 14, 10, 0)
+
+    # Formato ISO
+    dt4 = parse_incident_datetime("2026-10-14T10:00:00")
+    assert dt4 == datetime(2026, 10, 14, 10, 0)
+
+    # Valores inválidos o nulos
+    assert parse_incident_datetime(None) is None
+    assert parse_incident_datetime("") is None
+    assert parse_incident_datetime("no-es-fecha") is None
+
+
+def test_should_compute_emergency_sla_triggers_correctly():
+    ref = datetime(2026, 10, 14, 12, 0)
+
+    # 1. Menos de 20 min (Apertura reciente a las 11:50) -> Todo en plazo
+    sla_10m = compute_emergency_sla_status(ref - timedelta(minutes=10), reference_time=ref)
+    assert sla_10m["minutos_desde_apertura"] == 10
+    assert sla_10m["sla_primera_notificacion_vencido"] is False
+    assert sla_10m["requiere_escalado_telefonico"] is False
+    assert sla_10m["escalado_estamentos_superiores"] is False
+    assert sla_10m["proxima_ventana_update_minutos"] == 50
+
+    # 2. 25 min -> SLA 1ª Notificación vencido (>20 min), pero sin escalado telefónico todavía
+    sla_25m = compute_emergency_sla_status(ref - timedelta(minutes=25), reference_time=ref)
+    assert sla_25m["minutos_desde_apertura"] == 25
+    assert sla_25m["sla_primera_notificacion_vencido"] is True
+    assert sla_25m["requiere_escalado_telefonico"] is False
+    assert sla_25m["escalado_estamentos_superiores"] is False
+
+    # 3. 50 min -> 1er Escalado telefónico requerido (>=45 min)
+    sla_50m = compute_emergency_sla_status(ref - timedelta(minutes=50), reference_time=ref)
+    assert sla_50m["minutos_desde_apertura"] == 50
+    assert sla_50m["sla_primera_notificacion_vencido"] is True
+    assert sla_50m["requiere_escalado_telefonico"] is True
+    assert sla_50m["escalado_estamentos_superiores"] is False
+
+    # 4. 110 min -> 2º Escalado requerido a Estamentos Superiores (>=105 min, 45m + 1h)
+    sla_110m = compute_emergency_sla_status(ref - timedelta(minutes=110), reference_time=ref)
+    assert sla_110m["minutos_desde_apertura"] == 110
+    assert sla_110m["sla_primera_notificacion_vencido"] is True
+    assert sla_110m["requiere_escalado_telefonico"] is True
+    assert sla_110m["escalado_estamentos_superiores"] is True
+
+
+def test_should_keep_p1_and_require_cso_validation_when_high_impact_and_workaround_applied():
+    """Reglas de Oro 2 y 3: Un workaround NO desescala automáticamente una Emergencia SL1/P1."""
+    evaluator = SeverityEvaluator()
+    ticket = {
+        "ID de incidencia": "INC000004199999",
+        "Descripción": "CORTE TOTAL FIBRA EMPRESAS // Solución temporal workaround mediante export alternativo",
+        "Prioridad": "Media",
+        "Estatus": "Asignado",
+        "Impacto": "Masiva",
+        "Urgencia": "Media",
+        "Grupo asignado": "SOPORTE FIBRA RED"
+    }
+    result = evaluator.evaluate(ticket, epsilon_data=None)
+
+    # Debe mantenerse como P1 a pesar del workaround
+    assert result["prioridad_sugerida"] == "P1"
+    assert result["es_alta_prioridad"] is True
+    eval_data = result["evaluacion"]
+    assert eval_data["impacto"] == "Alto"
+    assert eval_data["workaround"] == "Sí"
+    assert "Pendiente autorización IM-CSO" in eval_data["workaround_gobernanza"]
+
+
+def test_should_generate_emergency_4blocks_report_with_all_sections():
+    generator = ExecutiveMessageGenerator()
+    ticket = {
+        "ID de incidencia": "INC000004156790",
+        "Descripción": "Ficha Cliente Orange | Error funcional | Madison - Valladolid",
+        "Grupo asignado": "DES_SOE_FICHA"
+    }
+    eval_result = {
+        "prioridad_sugerida": "P1",
+        "evaluacion": {
+            "proceso": "Atención al Cliente (ATC)",
+            "criterio": "ATC: Frontales/CRM (>20% desviación en 30m) o Regla de Oro N1",
+            "impacto": "Alto",
+            "impacto_justificacion": "Corte en servicio principal",
+            "urgencia": "Alta",
+            "urgencia_justificacion": "Afectación activa",
+            "workaround": "Sí",
+            "workaround_gobernanza": "Pendiente autorización IM-CSO (SL1 activa)"
+        }
+    }
+    sla_status = {
+        "minutos_desde_apertura": 55,
+        "sla_primera_notificacion_vencido": True,
+        "requiere_escalado_telefonico": True,
+        "escalado_estamentos_superiores": False
+    }
+
+    report = generator.generate_emergency_4blocks_report(ticket, eval_result, resumen_ia=None, sla_status=sla_status)
+
+    assert "REPORTE DE EMERGENCIA IT - ORANGE TECH OPERATIONS" in report
+    assert "[1] CLASIFICACIÓN DEL TICKET" in report
+    assert "[2] ESTADO DE COMUNICACIONES Y SLAS" in report
+    assert "[3] PLAN DE ACCIÓN Y GOBERNANZA DE WORKAROUNDS" in report
+    assert "[4] ESTADO DE ESCALADO TELEFÓNICO" in report
+    assert "INC000004156790" in report
+    assert "SL1 (Emergencia Crítica)" in report
+    assert "Atención al Cliente (ATC)" in report
+    assert "SLA 1ª Notificación VENCIDO" in report
+    assert "Escalado Telefónico Requerido" in report
+    assert "Pendiente autorización IM-CSO" in report
+    assert "Vía Telefónica obligatoria" in report
+
+
+def test_should_include_emergency_kpis_and_reports_in_batch_evaluation(sample_ticket_p3_nominal, sample_epsilon_critical_response):
+    client_mock = MagicMock()
+    client_mock.get_resumen_ia.return_value = sample_epsilon_critical_response
+
+    ref_time = datetime(2026, 10, 14, 11, 0) # 60 minutos después de las 10:00 del ticket
+    catalog = evaluate_incidents_batch(
+        [sample_ticket_p3_nominal],
+        epsilon_client=client_mock,
+        reference_time=ref_time
+    )
+
+    kpis = catalog["_metadata"]["kpis"]
+    assert "sla_primera_notificacion_vencidos_count" in kpis
+    assert "requiere_escalado_telefonico_count" in kpis
+    assert "workaround_pendientes_cso_count" in kpis
+    assert kpis["sla_primera_notificacion_vencidos_count"] >= 1
+    assert kpis["requiere_escalado_telefonico_count"] >= 1
+
+    item = catalog["data"][0]
+    assert "reporte_emergencia" in item
+    assert "[1] CLASIFICACIÓN DEL TICKET" in item["reporte_emergencia"]
+    assert "reporte_emergencia" in item["mensajes_ejecutivos"]
+    assert item["evaluacion"]["minutos_desde_apertura"] == 60
+    assert item["evaluacion"]["requiere_escalado_telefonico"] is True
 
 
 

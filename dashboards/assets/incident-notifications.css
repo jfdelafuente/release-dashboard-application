@@ -371,6 +371,45 @@
   border: 1px solid var(--hp-border);
 }
 
+.hp-badge-sla-overdue {
+  background: #FEF2F2;
+  color: #DC2626;
+  border: 1px solid #FCA5A5;
+  font-weight: 700;
+  animation: hp-sla-pulse 2s infinite ease-in-out;
+}
+
+@keyframes hp-sla-pulse {
+  0%, 100% { border-color: #FCA5A5; }
+  50% { border-color: #DC2626; box-shadow: 0 0 6px rgba(220, 38, 38, 0.3); }
+}
+
+.hp-badge-sla-ok {
+  background: #F0FDF4;
+  color: #16A34A;
+  border: 1px solid #BBF7D0;
+}
+
+.hp-badge-phone-escalation {
+  background: #FFFBEB;
+  color: #B45309;
+  border: 1px solid #FCD34D;
+  font-weight: 700;
+}
+
+.hp-badge-esc-superior {
+  background: #FEF2F2;
+  color: #991B1B;
+  border: 1.5px solid #EF4444;
+  font-weight: 800;
+}
+
+.hp-badge-workaround-cso {
+  background: #FFF7ED;
+  color: #C2410C;
+  border: 1px solid #FDBA74;
+}
+
 /* Selector de Estado Operativo */
 .hp-status-select {
   font-size: 11px;
@@ -442,6 +481,22 @@
   font-size: 11.5px;
 }
 
+.hp-timer-val {
+  font-family: var(--hp-font-mono);
+  font-size: 11px;
+}
+
+.hp-timer-val.sla-warn {
+  color: var(--hp-red-critical);
+  font-weight: 800;
+}
+
+.hp-workaround-val {
+  color: #B45309;
+  font-weight: 700;
+  font-size: 11px;
+}
+
 /* Acciones en Tarjeta */
 .hp-card-actions {
   display: flex;
@@ -483,6 +538,18 @@
 .hp-btn-secondary:hover {
   background: var(--hp-bg-subtle);
   border-color: var(--hp-text-muted);
+}
+
+.hp-btn-emergency {
+  background: #1E293B;
+  color: #F8FAFC;
+  border: 1px solid #334155;
+}
+
+.hp-btn-emergency:hover {
+  background: #0F172A;
+  color: #FFFFFF;
+  border-color: #475569;
 }
 
 /* ============================================================
@@ -595,6 +662,34 @@
   color: var(--hp-text-muted);
   border: 1px solid var(--hp-border);
   font-size: 10px;
+}
+
+/* Reporte de Emergencia en 4 Bloques (orange-it-emergency-management) */
+.hp-emergency-report-box {
+  background: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  border-radius: 8px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.hp-emergency-report-text {
+  margin: 0;
+  font-family: var(--hp-font-mono);
+  font-size: 11px;
+  line-height: 1.45;
+  color: #0F172A;
+  background: #FFFFFF;
+  border: 1px solid #CBD5E1;
+  border-radius: 6px;
+  padding: 10px 12px;
+  max-height: 240px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 
 /* ============================================================
