@@ -13,6 +13,7 @@ source: agentes_copilot.docx
 recommended_skills:
   - it-severity-matrix
   - orange-it-emergency-management
+  - incident-executive-notifications
   - postmortem-pir-workflow
 ---
 
