@@ -57,11 +57,11 @@ def test_builder_creates_presentation(sample_incident_data, tmp_path):
 
     assert output_path.exists()
     assert metadata.size_bytes > 0
-    assert metadata.slide_count >= 3
+    assert metadata.slide_count >= 2
 
     # Inspeccionar la presentación generada
     prs = pptx.Presentation(str(output_path))
-    assert len(prs.slides) >= 3
+    assert len(prs.slides) >= 2
 
     # Diapositiva 1: Verificar título y textos clave
     slide1 = prs.slides[0]

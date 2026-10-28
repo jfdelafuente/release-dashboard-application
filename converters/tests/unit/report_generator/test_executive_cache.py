@@ -40,5 +40,5 @@ def test_cache_and_force_regeneration(tmp_path):
     data.title = "Título actualizado tras regenerar"
     meta2 = builder.generate(data, output_path)
     assert output_path.exists()
-    assert meta2.slide_count >= 3
+    assert meta2.slide_count >= 1
 

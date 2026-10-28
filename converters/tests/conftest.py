@@ -11,6 +11,11 @@ from pathlib import Path
 
 import pytest
 
+# Add workspace root so tests can import converters.cli... or converters.src...
+workspace_root = Path(__file__).parent.parent.parent
+if str(workspace_root) not in sys.path:
+    sys.path.insert(0, str(workspace_root))
+
 # Add src to Python path so tests can import csv_to_json / report_generator modules
 src_path = Path(__file__).parent.parent / "src"
 if str(src_path) not in sys.path:

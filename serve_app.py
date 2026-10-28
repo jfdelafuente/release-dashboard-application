@@ -15,9 +15,8 @@ from pathlib import Path
 from email.parser import BytesParser
 from email import policy
 
-# Cambiar al directorio raíz del proyecto
+# Raíz del proyecto
 PROJECT_ROOT = Path(__file__).parent.absolute()
-os.chdir(PROJECT_ROOT)
 
 sys.path.insert(0, str(PROJECT_ROOT / 'converters' / 'cli'))
 from upload_csv import run_upload  # noqa: E402
@@ -59,14 +58,29 @@ if cso_is_file:
         cso_is_file = False
 
 if not cso_is_file:
-    ExecutiveIncidentData = None
-    sanitize_incident_ref = None
-    extract_fields_from_jira_description = None
-    get_executive_report_path = None
-    get_executive_report_filename = None
-    cleanup_old_executive_reports = None
-    ExecutiveReportBuilder = None
-    ConfluenceParser = None
+    try:
+        sys.path.insert(0, str(PROJECT_ROOT / 'converters' / 'src'))
+        from report_generator.executive_models import (
+            ExecutiveIncidentData,
+            sanitize_incident_ref,
+            extract_fields_from_jira_description,
+        )
+        from report_generator.executive_paths import (
+            get_executive_report_path,
+            get_executive_report_filename,
+            cleanup_old_executive_reports,
+        )
+        from report_generator.executive_report_builder import ExecutiveReportBuilder
+        from report_generator.confluence_parser import ConfluenceParser
+    except (ImportError, Exception):
+        ExecutiveIncidentData = None
+        sanitize_incident_ref = None
+        extract_fields_from_jira_description = None
+        get_executive_report_path = None
+        get_executive_report_filename = None
+        cleanup_old_executive_reports = None
+        ExecutiveReportBuilder = None
+        ConfluenceParser = None
 
 REPORTS_PATH_PREFIX = '/api/reports/postmortem/'
 EXECUTIVE_REPORT_PREFIX = '/api/reports/executive-incident'
@@ -756,6 +770,7 @@ class CustomHTTPHandler(http.server.SimpleHTTPRequestHandler):
         print(f"[{self.client_address[0]}] {format % args}")
 
 if __name__ == '__main__':
+    os.chdir(PROJECT_ROOT)
     import argparse
     parser = argparse.ArgumentParser(description="Release Dashboard Static Server")
     parser.add_argument(
