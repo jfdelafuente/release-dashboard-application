@@ -39,12 +39,13 @@ def parse_markdown_frontmatter(file_path: Path) -> Tuple[Dict[str, Any], str]:
         Tuple[Dict[str, Any], str]: (metadatos_del_frontmatter, cuerpo_markdown)
     """
     try:
-        content = file_path.read_text(encoding="utf-8")
+        content = file_path.read_text(encoding="utf-8-sig")
     except UnicodeDecodeError:
         content = file_path.read_text(encoding="latin-1")
 
     # Separar por delimitador inicial de frontmatter
     # El frontmatter debe comenzar al principio del archivo con '---'
+    content = content.lstrip()
     if content.startswith("---"):
         parts = content.split("---", 2)
         if len(parts) >= 3:
