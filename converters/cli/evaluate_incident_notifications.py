@@ -820,6 +820,7 @@ def evaluate_incidents_batch(
             sla_status = compute_emergency_sla_status(parsed_date, reference_time=reference_time)
 
             eval_dict = dict(evaluation["evaluacion"])
+            eval_dict["fecha_apertura"] = raw_date
             eval_dict["minutos_desde_apertura"] = sla_status["minutos_desde_apertura"]
             eval_dict["sla_primera_notificacion_vencido"] = sla_status["sla_primera_notificacion_vencido"]
             eval_dict["requiere_escalado_telefonico"] = sla_status["requiere_escalado_telefonico"]
@@ -862,6 +863,7 @@ def evaluate_incidents_batch(
                 "es_discrepancia": es_disc,
                 "estatus": item.get("Estatus") or "Asignado",
                 "fecha_envio": raw_date,
+                "fecha_apertura": raw_date,
                 "evaluacion": eval_dict,
                 "resumen_ia": resumen_ia_block,
                 "mensajes_ejecutivos": mensajes,

@@ -436,6 +436,8 @@
       const evalData = item.evaluacion || {};
       const sla = evalData.sla_objetivo_minutos ? `${evalData.sla_objetivo_minutos} min` : '60 min';
       const hasEpsilon = Boolean(item.resumen_ia && (item.resumen_ia.problema || item.resumen_ia.impacto || item.resumen_ia.solucion));
+      const rawFecha = item.fecha_apertura || item.fecha_envio || evalData.fecha_apertura || item.fecha_inicio || '';
+      const displayFechaApertura = rawFecha ? String(rawFecha).trim().replace(/\s+[ap]\.?\s*m?\.?$/i, '') : '';
 
       let discrepancyHtml = '';
       if (item.es_discrepancia) {
@@ -698,6 +700,11 @@
               <span class="hp-itil-label">SLA Obj.:</span>
               <span class="hp-itil-val">${sla}</span>
             </div>
+            ${displayFechaApertura ? `
+            <div class="hp-itil-item">
+              <span class="hp-itil-label">Apertura:</span>
+              <span class="hp-itil-val hp-date-val">${this.escape(displayFechaApertura)}</span>
+            </div>` : ''}
             ${mins !== undefined && mins !== null ? `
             <div class="hp-itil-item">
               <span class="hp-itil-label">Transcurrido:</span>
