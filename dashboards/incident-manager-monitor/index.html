@@ -16,7 +16,7 @@
   <link rel="stylesheet" href="/dashboards/assets/resumen-ia.css">
   
   <!-- Estilos propios del Cockpit Incident Manager -->
-  <link rel="stylesheet" href="./monitor.css">
+  <link rel="stylesheet" href="./monitor.css?v=20261029_1130">
 </head>
 <body>
 
@@ -32,7 +32,7 @@
         <span class="im-header-badge" aria-label="Rol del sistema">Incident Manager</span>
         <div>
           <h1 class="im-header-h1">Monitor de Incidencias de Alta Prioridad</h1>
-          <p class="im-header-subtitle">Vigilancia en tiempo real de redacciones de agente pendientes (P1, P2 y discrepancias de triaje)</p>
+          <p class="im-header-subtitle">Vigilancia en tiempo real de incidencias prioritarias: redacciones oficiales, escalados (&gt;45m) y discrepancias</p>
         </div>
       </div>
 
@@ -49,6 +49,11 @@
           <option value="60000">Auto-refresco: cada 60s</option>
         </select>
 
+        <button id="btn-open-raci" class="im-btn im-btn-secondary" title="Ver Protocolo de Emergencias IT y Matriz RACI">
+          <span aria-hidden="true">📖</span>
+          <span>Protocolo & Contactos</span>
+        </button>
+
         <button id="btn-manual-refresh" class="im-btn im-btn-secondary" title="Sincronizar catálogo ahora">
           <span aria-hidden="true">🔄</span>
           <span>Refrescar</span>
@@ -58,57 +63,102 @@
 
     <!-- 2. Barra de KPIs Operativos -->
     <section class="im-kpi-bar" aria-label="Métricas de incidencias de alta prioridad">
-      <!-- KPI 1: Pendientes de Redacción (Foco) -->
-      <article id="kpi-card-pending" class="kpi-card kpi-pending-clean">
-        <div class="kpi-card-title">Pendientes de Redacción</div>
+      <!-- KPI 1: Pendientes de Tratar (Foco: Redacción SL1/P2, Escalado >45m o Discrepancia) -->
+      <article id="kpi-card-pending" class="kpi-card kpi-pending-clean kpi-card-clickable" role="button" tabindex="0" title="Ver incidencias pendientes de tratar (redacción SL1/P2, escalado >45 min o discrepancias)">
+        <div class="kpi-card-title">Pendientes</div>
         <div id="kpi-pending-count" class="kpi-card-value">0</div>
-        <div id="kpi-pending-footer" class="kpi-card-footer">Requieren prompt para Agente</div>
+        <div id="kpi-pending-footer" class="kpi-card-footer">Por tratar</div>
       </article>
 
-      <!-- KPI 2: Completadas -->
-      <article class="kpi-card">
-        <div class="kpi-card-title">Mensajes Oficiales Emitidos</div>
+      <!-- KPI 2: Al Día / Completadas -->
+      <article id="kpi-card-completed" class="kpi-card kpi-card-clickable" role="button" tabindex="0" title="Ver incidencias al día (sin acciones pendientes)">
+        <div class="kpi-card-title">Al Día</div>
         <div id="kpi-completed-count" class="kpi-card-value">0</div>
-        <div class="kpi-card-footer">Almacenadas en agent_executive_messages.json</div>
+        <div class="kpi-card-footer">Sin acciones pend.</div>
       </article>
 
       <!-- KPI 3: Total Activas -->
-      <article class="kpi-card">
-        <div class="kpi-card-title">Total Activas Alta Prioridad</div>
+      <article id="kpi-card-total" class="kpi-card kpi-card-clickable" role="button" tabindex="0" title="Ver todas las incidencias activas en catálogo">
+        <div class="kpi-card-title">Total Activas</div>
         <div id="kpi-total-active" class="kpi-card-value">0</div>
-        <div id="kpi-source-file" class="kpi-card-footer">Último informe masivo cargado</div>
+        <div id="kpi-source-file" class="kpi-card-footer">Último masivo</div>
       </article>
 
       <!-- KPI 4: Desglose Severidad -->
-      <article class="kpi-card">
-        <div class="kpi-card-title">Criticidad P1 / P2</div>
+      <article id="kpi-card-severity" class="kpi-card kpi-card-clickable" role="button" tabindex="0" title="Filtrar por severidad: clic para alternar, o clic directo en P1 / P2">
+        <div class="kpi-card-title">P1 / P2</div>
         <div class="kpi-card-value">
-          <span id="kpi-p1-count" style="color: var(--im-p1-red);">0</span>
-          <span style="color: var(--im-text-muted); font-size: 20px;">/</span>
-          <span id="kpi-p2-count" style="color: var(--im-p2-amber);">0</span>
+          <span id="kpi-p1-count" class="kpi-clickable-subval" style="color: var(--im-p1-red);" title="Filtrar solo P1 (Críticas)">0</span>
+          <span style="color: var(--im-text-muted); font-size: 13px; font-weight: 400;">/</span>
+          <span id="kpi-p2-count" class="kpi-clickable-subval" style="color: var(--im-p2-amber);" title="Filtrar solo P2 (Altas)">0</span>
         </div>
-        <div class="kpi-card-footer">SL1 Críticas / SL2 Altas</div>
+        <div class="kpi-card-footer">SL1 / SL2</div>
       </article>
 
       <!-- KPI 5: Discrepancias (Subescalación) -->
-      <article class="kpi-card">
-        <div class="kpi-card-title">Subescalaciones (Discrepancia)</div>
-        <div id="kpi-discrepancies-count" class="kpi-card-value" style="color: #B45309;">0</div>
-        <div class="kpi-card-footer">Ticket P3/P4 elevado a P1/P2 por N1</div>
+      <article id="kpi-card-discrepancies" class="kpi-card kpi-card-clickable" role="button" tabindex="0" title="Filtrar incidencias con subescalación N1 Remedy vs ITIL Orange">
+        <div class="kpi-card-title">Subescaladas</div>
+        <div class="kpi-card-value">
+          <span id="kpi-discrepancies-count" style="color: #B45309;">0</span>
+          <span style="font-size: 10px; font-weight: 600; color: var(--im-text-muted); margin-left: 2px;">
+            (<span id="kpi-discrepancies-sl1" style="color: var(--im-p1-red);">0</span>/<span id="kpi-discrepancies-sl2" style="color: var(--im-p2-amber);">0</span>)
+          </span>
+        </div>
+        <div class="kpi-card-footer">Por regla ITIL</div>
+      </article>
+
+      <!-- KPI 6: Alertas de Escalado Telefónico -->
+      <article id="kpi-card-escalation" class="kpi-card kpi-card-clickable" role="button" tabindex="0" title="Filtrar incidencias con escalado telefónico obligatorio (≥45m / ≥105m)">
+        <div class="kpi-card-title">Escalados (≥45m)</div>
+        <div class="kpi-card-value">
+          <span id="kpi-escalation-alerts-count" style="color: #9A3412;">0</span>
+        </div>
+        <div id="kpi-escalation-footer" class="kpi-card-footer">Voz obligatoria</div>
+      </article>
+
+      <!-- KPI 7: Workarounds Pendientes CSO -->
+      <article id="kpi-card-workarounds" class="kpi-card" title="Workarounds provisionales pendientes de visado por IM-CSO">
+        <div class="kpi-card-title">Workarounds CSO</div>
+        <div class="kpi-card-value">
+          <span id="kpi-workarounds-pending-count" style="color: var(--im-cso-pending-text);">0</span>
+        </div>
+        <div class="kpi-card-footer">Bloqueo activo</div>
       </article>
     </section>
 
     <!-- 3. Barra de Vistas y Filtros Dinámicos -->
     <nav class="im-toolbar" aria-label="Herramientas de filtrado y visualización">
       <div class="im-toolbar-row-top">
-        <!-- Selector de Vistas -->
-        <div class="im-view-tabs" role="tablist" aria-label="Modo de vista de cola">
-          <button id="tab-view-pending" class="im-tab-btn active" role="tab" aria-selected="true" aria-controls="queue-container">
-            Solo Pendientes (<span id="badge-count-pending">0</span>)
-          </button>
-          <button id="tab-view-all" class="im-tab-btn" role="tab" aria-selected="false" aria-controls="queue-container">
-            Todas las Activas (<span id="badge-count-all">0</span>)
-          </button>
+        <!-- Selector Principal de Modo de Consola: De un Vistazo vs Tarjetas -->
+        <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+          <div class="im-main-view-switcher" role="tablist" aria-label="Modo de Presentación de la Consola">
+            <button id="tab-pres-triage" class="im-main-tab-btn active" role="tab" aria-selected="true" aria-controls="triage-view-container">
+              <span aria-hidden="true">⚡</span>
+              <span>De un Vistazo (Triaje)</span>
+            </button>
+            <button id="tab-pres-cards" class="im-main-tab-btn" role="tab" aria-selected="false" aria-controls="queue-container">
+              <span aria-hidden="true">📑</span>
+              <span>Tarjetas Detalladas</span>
+            </button>
+          </div>
+
+          <!-- Selector de Sub-Vistas (Pendientes vs Todas) -->
+          <div class="im-view-tabs" role="tablist" aria-label="Modo de vista de cola">
+            <button id="tab-view-pending" class="im-tab-btn active" role="tab" aria-selected="true" aria-controls="queue-container" title="Ver incidencias pendientes de tratar (redacción SL1/P2, escalado >45m o discrepancias)">
+              Solo Pendientes (<span id="badge-count-pending">0</span>)
+            </button>
+            <button id="tab-view-all" class="im-tab-btn" role="tab" aria-selected="false" aria-controls="queue-container" title="Ver todas las incidencias de alta prioridad activas">
+              Todas las Activas (<span id="badge-count-all">0</span>)
+            </button>
+          </div>
+
+          <!-- Selector de Modo de Consola (Compacto vs Emergencias) -->
+          <div class="im-view-mode-toggle">
+            <button id="btn-toggle-emergency-mode" class="im-btn im-btn-secondary im-btn-sm" title="Alternar entre Vista Estándar y Vista de Emergencias Extendida">
+              <span aria-hidden="true">🚨</span>
+              <span id="toggle-emergency-mode-label">Modo Emergencias: Activo</span>
+            </button>
+          </div>
         </div>
 
         <div style="font-size: 11px; color: var(--im-text-muted);">
@@ -137,11 +187,28 @@
         <select id="filter-process-select" class="im-select" title="Filtrar por Proceso de Negocio">
           <option value="all">Todos los Procesos de Negocio</option>
           <option value="Atención al Cliente (ATC)">Atención al Cliente (ATC)</option>
-          <option value="Ventas y Canales">Ventas y Canales</option>
           <option value="Facturación y Cobros">Facturación y Cobros</option>
-          <option value="Provisión y Activación">Provisión y Activación</option>
-          <option value="Servicios de Red">Servicios de Red</option>
+          <option value="Provisión">Provisión</option>
+          <option value="Ventas">Ventas</option>
+          <option value="Prepago">Prepago</option>
+          <option value="Portabilidad">Portabilidad</option>
+          <option value="Operación y Monitorización (O&M)">Operación y Monitorización (O&M)</option>
           <option value="Sistemas Core">Sistemas Core</option>
+        </select>
+
+        <!-- Filtro Comunicación Oficial (Apertura / Seguimiento / Cierre) -->
+        <label for="filter-comm-select" class="sr-only">Filtrar por Comunicación Oficial</label>
+        <select id="filter-comm-select" class="im-select" title="Filtrar por Estado de Comunicación Oficial (Apertura / Seguimiento / Cierre)">
+          <option value="all">Todas las Comunicaciones</option>
+          <option value="missing_any">⚠️ Sin Comunicación (Alguna fase)</option>
+          <option value="missing_apertura">❌ Sin Apertura Oficial</option>
+          <option value="missing_seguimiento">⏳ Sin Seguimiento Oficial</option>
+          <option value="missing_cierre">🏁 Sin Cierre Oficial</option>
+          <option value="missing_all">🚫 Sin Ninguna Comunicación</option>
+          <option value="has_apertura">📣 Con Apertura Oficial</option>
+          <option value="has_seguimiento">🔄 Con Seguimiento Oficial</option>
+          <option value="has_cierre">✅ Con Cierre Oficial</option>
+          <option value="all_completed">✨ Con Todas Generadas</option>
         </select>
 
         <!-- Filtro Solo Discrepancias -->
@@ -149,15 +216,104 @@
           <input type="checkbox" id="filter-only-discrepancies">
           <span>Solo Discrepancias</span>
         </label>
+
+        <!-- Botón Limpiar Filtros -->
+        <button type="button" id="btn-reset-filters" class="im-btn im-btn-secondary im-btn-sm btn-reset-filters" style="display:none;" title="Restablecer todos los filtros y volver a la vista por defecto">
+          <span aria-hidden="true">✕</span>
+          <span>Limpiar Filtros</span>
+        </button>
       </div>
     </nav>
 
-    <!-- 4. Contenedor de Cola de Incidencias -->
-    <main id="queue-container" class="queue-container" role="feed" aria-busy="false">
+    <!-- 4. Vista Inicial 1: Triaje Rápido "De un Vistazo" (Página por Defecto para Determinar Tratamiento) -->
+    <section id="triage-view-container" class="im-triage-view-container" aria-label="Bandeja de Triaje Rápido">
+      <div class="im-triage-panel">
+        <div class="im-triage-header">
+          <div class="im-triage-header-info">
+            <div class="im-triage-title-row">
+              <span class="im-triage-badge">Triaje Operativo</span>
+              <h2 class="im-triage-title">Bandeja de Entrada · Incidencias a Tratar</h2>
+            </div>
+            <p class="im-triage-subtitle">
+              Priorización de incidencias en tiempo real: evalúa qué tickets requieren redacción oficial inmediata (SL1/P2), escalado telefónico (>45 min) o revisión de discrepancias.
+            </p>
+          </div>
+
+          <!-- Filtros Rápidos de Decisión (Chips de Urgencia) -->
+          <div class="im-triage-chips" role="group" aria-label="Filtrado rápido por nivel de urgencia">
+            <button type="button" class="im-triage-chip active" data-triage-filter="urgent" id="chip-urgent" title="Ver incidencias que requieren tratamiento urgente o escalado">
+              <span class="chip-pulse-dot" aria-hidden="true"></span>
+              <span>🚨 Requieren Acción Ya</span>
+              <span class="chip-count" id="chip-count-urgent">0</span>
+            </button>
+            <button type="button" class="im-triage-chip" data-triage-filter="pending" id="chip-pending" title="Ver incidencias pendientes en el flujo operativo">
+              <span>🟡 Solo Pendientes</span>
+              <span class="chip-count" id="chip-count-pending">0</span>
+            </button>
+            <button type="button" class="im-triage-chip" data-triage-filter="escalation" id="chip-escalation" title="Ver incidencias con tiempo ≥45 min que requieren llamada">
+              <span>📞 Escalados Vencidos (≥45m)</span>
+              <span class="chip-count" id="chip-count-escalation">0</span>
+            </button>
+            <button type="button" class="im-triage-chip" data-triage-filter="discrepancy" id="chip-discrepancy" title="Ver incidencias subescaladas en Remedy">
+              <span>⚖️ Discrepancias N1</span>
+              <span class="chip-count" id="chip-count-discrepancy">0</span>
+            </button>
+            <button type="button" class="im-triage-chip" data-triage-filter="missing_comm" id="chip-missing-comm" title="Ver incidencias sin comunicación oficial generada (Apertura, Seguimiento o Cierre)">
+              <span>💬 Sin Redacción Oficial</span>
+              <span class="chip-count" id="chip-count-missing-comm">0</span>
+            </button>
+            <button type="button" class="im-triage-chip" data-triage-filter="all" id="chip-all" title="Ver todas las incidencias activas en el catálogo">
+              <span>📋 Ver Todas</span>
+              <span class="chip-count" id="chip-count-all">0</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Tabla de Triaje Operativo de Alta Densidad -->
+        <div class="im-triage-table-wrapper">
+          <table class="im-triage-table" id="triage-table" aria-label="Tabla de incidencias para triaje de atención inmediata">
+            <thead>
+              <tr>
+                <th scope="col" style="min-width: 175px;">Urgencia / Tratamiento</th>
+                <th scope="col" style="min-width: 145px;">Incidencia</th>
+                <th scope="col" style="min-width: 250px;">Título / Resumen</th>
+                <th scope="col" style="min-width: 115px;">Severidad</th>
+                <th scope="col" style="min-width: 160px;">Proceso Crítico</th>
+                <th scope="col" style="min-width: 95px;">Tiempo</th>
+                <th scope="col" style="min-width: 150px;">Estado Operativo</th>
+                <th scope="col" style="min-width: 130px; text-align: right;">Acción Directa</th>
+              </tr>
+            </thead>
+            <tbody id="triage-table-body">
+              <!-- Se puebla dinámicamente con JavaScript -->
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Estado vacío para la tabla de triaje -->
+        <div id="triage-empty-state" class="im-triage-empty" style="display: none;">
+          <span class="im-triage-empty-icon" aria-hidden="true">🎉</span>
+          <h3 class="im-triage-empty-title">Sin incidencias en esta categoría</h3>
+          <p class="im-triage-empty-text">No hay incidencias que coincidan con el filtro de triaje seleccionado.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5. Barra de Navegación de Vuelta (Visible solo en Vista de Tarjetas) -->
+    <div id="cards-nav-bar" class="cards-nav-bar" style="display: none;">
+      <button type="button" id="btn-back-to-triage" class="im-btn im-btn-secondary im-btn-sm">
+        <span aria-hidden="true">⬅</span>
+        <span>Volver al Triaje (De un Vistazo)</span>
+      </button>
+      <span class="cards-nav-hint">Mostrando tarjetas completas con reportes de 4 bloques y asistentes de redacción</span>
+    </div>
+
+    <!-- 6. Vista 2: Contenedor de Cola de Tarjetas Detalladas -->
+    <main id="queue-container" class="queue-container" role="feed" aria-busy="false" style="display: none;">
       <!-- Se puebla dinámicamente con las tarjetas de incidencias -->
     </main>
 
-    <!-- 5. Estado Vacío (Oculto por defecto) -->
+    <!-- 7. Estado Vacío de Tarjetas (Oculto por defecto) -->
     <div id="empty-state-container" class="empty-state" style="display: none;" role="region" aria-label="Estado sin incidencias pendientes">
       <div class="empty-state-icon" aria-hidden="true">🎉</div>
       <h2 id="empty-state-title" class="empty-state-title">No hay redacciones pendientes</h2>
@@ -168,12 +324,107 @@
 
   </div>
 
+  <!-- Modal de Gobernanza RACI y Matrices de Contacto (US5) -->
+  <div id="raci-modal-backdrop" class="im-modal-backdrop" style="display: none;" role="dialog" aria-modal="true" aria-labelledby="raci-modal-title" aria-hidden="true">
+    <div class="im-modal-window">
+      <div class="im-modal-header">
+        <h2 id="raci-modal-title" class="im-modal-title">
+          <span aria-hidden="true">📋</span> Protocolo de Emergencias IT &amp; Matriz RACI Orange
+        </h2>
+        <button id="btn-close-raci" class="im-modal-close-btn" aria-label="Cerrar ventana de protocolo">✕</button>
+      </div>
+      <div class="im-modal-body">
+        <p style="margin-top:0;">
+          Gobernanza oficial del Incident Management en incidencias SL1/SL2 según el procedimiento operativo corporativo de <strong>Orange España</strong>.
+        </p>
+        
+        <h3 style="font-size:13px; font-weight:700; margin:16px 0 8px 0; color:var(--im-dark);">
+          Matriz RACI: Incident Manager (IM) vs Customer &amp; Service Ops (IM-CSO)
+        </h3>
+        <table class="im-raci-table">
+          <thead>
+            <tr>
+              <th>Actividad Operativa</th>
+              <th style="width: 150px;">Incident Manager (IM)</th>
+              <th style="width: 180px;">IM-CSO (Customer &amp; Service Ops)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Triaje Inicial y Detección de Discrepancias</strong></td>
+              <td><span class="im-raci-badge im-raci-r">R - Responsible</span> Aplica umbrales objetivos de los 6 procesos</td>
+              <td><span class="im-raci-badge im-raci-i">I - Informed</span> Notificado de la calificación</td>
+            </tr>
+            <tr>
+              <td><strong>Convocatoria Crisis y Puente de Audio SL1</strong></td>
+              <td><span class="im-raci-badge im-raci-r">R - Responsible</span> Obligatorio canal telefónico</td>
+              <td><span class="im-raci-badge im-raci-c">C - Consulted</span> Concurre o designa delegado</td>
+            </tr>
+            <tr>
+              <td><strong>Control de Tiempos de Escalado (45m / +1h)</strong></td>
+              <td><span class="im-raci-badge im-raci-r">R - Responsible</span> Cronometraje y activación N2/N3</td>
+              <td><span class="im-raci-badge im-raci-a">A - Approver</span> Autoriza escalado a Dirección (+1h)</td>
+            </tr>
+            <tr>
+              <td><strong>Aprobación de Workaround (Mitigación)</strong></td>
+              <td><span class="im-raci-badge im-raci-c">C - Consulted</span> Evalúa viabilidad técnica</td>
+              <td><span class="im-raci-badge im-raci-a">A - Approver</span> <strong>Autorización Exclusiva</strong></td>
+            </tr>
+            <tr>
+              <td><strong>Desescalada o Cierre Operativo</strong></td>
+              <td><span class="im-raci-badge im-raci-r">R - Responsible</span> Prohibida con impacto remanente</td>
+              <td><span class="im-raci-badge im-raci-a">A - Approver</span> Valida erradicación de impacto</td>
+            </tr>
+            <tr>
+              <td><strong>Emisión de Comunicados Ejecutivos</strong></td>
+              <td><span class="im-raci-badge im-raci-r">R - Responsible</span> Máximo 90 palabras monopárrafo</td>
+              <td><span class="im-raci-badge im-raci-i">I - Informed</span> Receptor de comunicaciones</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3 style="font-size:13px; font-weight:700; margin:16px 0 8px 0; color:var(--im-dark);">
+          Repositorios Documentales y Matrices de Contacto Oficiales
+        </h3>
+        <div class="im-contact-repo-list">
+          <div class="im-repo-card">
+            <div class="im-repo-title">
+              <span>🟠 GRIAL Orange</span>
+            </div>
+            <div class="im-repo-desc">
+              Directorio corporativo oficial de guardias 24/7 y matrices de contacto de sistemas Orange.
+            </div>
+            <a href="https://grial.orange.es" target="_blank" rel="noopener noreferrer" class="im-btn im-btn-secondary im-btn-sm" style="display:inline-flex; align-items:center; gap:4px;">
+              <span>Abrir GRIAL Orange</span> <span aria-hidden="true">↗</span>
+            </a>
+          </div>
+
+          <div class="im-repo-card">
+            <div class="im-repo-title">
+              <span>🟡 Confluence Operaciones MasMóvil</span>
+            </div>
+            <div class="im-repo-desc">
+              Matrices de contacto de infraestructuras compartidas y procedimientos de enlace técnico.
+            </div>
+            <a href="https://confluence.masmovil.com" target="_blank" rel="noopener noreferrer" class="im-btn im-btn-secondary im-btn-sm" style="display:inline-flex; align-items:center; gap:4px;">
+              <span>Abrir Confluence MM</span> <span aria-hidden="true">↗</span>
+            </a>
+          </div>
+        </div>
+
+        <div style="margin-top:16px; padding:10px 12px; background:#FEF2F2; border-left:4px solid var(--im-sl1-red); border-radius:4px; font-size:11px; color:#991B1B;">
+          <strong>Regla de Oro:</strong> En emergencias SL1, la convocatoria por canal telefónico es obligatoria y no puede sustituirse por mensajería escrita. Las desescaladas por mitigación provisional (workaround) están terminantemente bloqueadas en la consola sin autorización de IM-CSO y erradicación total del impacto en cliente.
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Contenedor para Notificaciones Flotantes (Toasts) -->
   <div id="im-toast-container" class="im-toast-container" aria-live="polite" aria-atomic="true"></div>
 
   <!-- Scripts: Modal nativo de Epsilon IA y Lógica del Cockpit -->
-  <script src="/dashboards/assets/resumen-ia.js" defer></script>
-  <script src="./monitor.js" defer></script>
+  <script src="/dashboards/assets/resumen-ia.js?v=20261029_1130" defer></script>
+  <script src="./monitor.js?v=20261029_1130" defer></script>
 </body>
 </html>
 

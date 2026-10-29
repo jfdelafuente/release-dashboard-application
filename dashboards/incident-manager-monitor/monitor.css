@@ -28,6 +28,25 @@
   --im-purple-proc: #6B21A8;
   --im-purple-bg: #F3E8FF;
 
+  /* Severidades Operativas Orange (SL1 - SL4) */
+  --im-sl1-red: #D32F2F;
+  --im-sl1-bg: #FFEBEE;
+  --im-sl1-border: #EF4444;
+  --im-sl2-amber: #E65100;
+  --im-sl2-bg: #FFF3E0;
+  --im-sl2-border: #F59E0B;
+
+  /* Gobernanza de Workarounds y Candado */
+  --im-lock-red: #B91C1C;
+  --im-lock-bg: #FEF2F2;
+  --im-lock-border: #F87171;
+  --im-cso-pending-bg: #FEF3C7;
+  --im-cso-pending-text: #92400E;
+  --im-cso-pending-border: #FCD34D;
+  --im-cso-approved-bg: #DCFCE7;
+  --im-cso-approved-text: #166534;
+  --im-cso-approved-border: #86EFAC;
+
   /* Tipografías y Sombras */
   --im-font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --im-font-mono: 'IBM Plex Mono', 'SFMono-Regular', Consolas, monospace;
@@ -228,44 +247,68 @@ body {
    ============================================================ */
 .im-kpi-bar {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
-  gap: 14px;
-  margin-bottom: 20px;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+@media (min-width: 1100px) {
+  .im-kpi-bar {
+    grid-template-columns: repeat(7, 1fr);
+  }
 }
 
 .kpi-card {
   background: var(--im-surface);
   border: 1px solid var(--im-border);
-  border-radius: var(--im-radius);
-  padding: 14px 18px;
-  box-shadow: var(--im-shadow-sm);
+  border-radius: 6px;
+  padding: 8px 10px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   position: relative;
   overflow: hidden;
+  min-height: 58px;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.kpi-card:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--im-shadow-sm);
 }
 
 .kpi-card-title {
-  font-size: 11px;
+  font-size: 9.5px;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.3px;
   color: var(--im-text-muted);
-  margin-bottom: 6px;
+  margin-bottom: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .kpi-card-value {
-  font-size: 28px;
+  font-size: 18px;
   font-weight: 800;
-  line-height: 1.1;
+  line-height: 1.15;
   color: var(--im-dark);
+  display: flex;
+  align-items: baseline;
+  gap: 3px;
+  flex-wrap: wrap;
 }
 
 .kpi-card-footer {
-  font-size: 11px;
+  font-size: 9.5px;
   color: var(--im-text-muted);
-  margin-top: 6px;
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.2;
 }
 
 /* KPI Pendientes con resalte especial */
@@ -285,6 +328,36 @@ body {
 
 .kpi-card.kpi-pending-clean .kpi-card-value {
   color: var(--im-green-success);
+}
+
+/* KPI Cards Interactivas */
+.kpi-card.kpi-card-clickable {
+  cursor: pointer;
+  user-select: none;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+.kpi-card.kpi-card-clickable:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+  border-color: var(--im-orange-primary);
+}
+
+.kpi-card.kpi-card-clickable:focus-visible {
+  outline: 2px solid var(--im-orange-primary);
+  outline-offset: 2px;
+}
+
+.kpi-clickable-subval {
+  cursor: pointer;
+  padding: 1px 4px;
+  border-radius: 4px;
+  transition: background 0.15s ease;
+}
+
+.kpi-clickable-subval:hover {
+  background: rgba(0, 0, 0, 0.06);
+  text-decoration: underline;
 }
 
 /* ============================================================
@@ -384,6 +457,22 @@ body {
   user-select: none;
 }
 
+/* Botón Limpiar Filtros */
+.btn-reset-filters {
+  background: #F1F5F9;
+  border-color: #CBD5E1;
+  color: #475569;
+  font-weight: 600;
+  padding: 5px 11px;
+  transition: all 0.15s ease;
+}
+
+.btn-reset-filters:hover {
+  background: #FEE2E2;
+  border-color: #F87171;
+  color: #DC2626;
+}
+
 /* ============================================================
    4. Cola de Incidencias (.queue-container)
    ============================================================ */
@@ -469,17 +558,78 @@ body {
   border: 1px solid var(--im-border);
 }
 
+/* Selector de Estado Operativo (Ciclo de Vida: Pendiente, Comunicada, En Seguimiento, Descartada) */
+.im-status-select {
+  font-size: 11.5px;
+  font-weight: 700;
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: 1.5px solid var(--im-border);
+  background: white;
+  cursor: pointer;
+  outline: none;
+  font-family: var(--im-font-sans);
+  color: var(--im-text);
+  transition: all 0.15s ease;
+  vertical-align: middle;
+}
+
+.im-status-select:hover {
+  border-color: var(--im-orange-primary);
+}
+
+.im-status-select:focus {
+  border-color: var(--im-orange-primary);
+  box-shadow: 0 0 0 2px rgba(255, 121, 0, 0.15);
+}
+
+.im-status-select.status-pendiente {
+  border-color: #FCA5A5;
+  background: #FEF2F2;
+  color: #991B1B;
+}
+
+.im-status-select.status-comunicada {
+  border-color: #BAE6FD;
+  background: #F0F9FF;
+  color: #0369A1;
+}
+
+.im-status-select.status-en_seguimiento {
+  border-color: #FED7AA;
+  background: #FFF7ED;
+  color: #C2410C;
+}
+
+.im-status-select.status-descartada {
+  border-color: #CBD5E1;
+  background: #F8FAFC;
+  color: #64748B;
+}
+
 .incident-id-link {
   font-family: var(--im-font-mono);
-  font-weight: 700;
-  font-size: 13px;
-  color: var(--im-dark);
+  font-weight: 800;
+  font-size: 12.5px;
+  color: #EA580C;
   text-decoration: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 8px;
+  border-radius: 5px;
+  background: #FFF7ED;
+  border: 1px solid #FED7AA;
+  transition: all 0.15s ease;
 }
 
 .incident-id-link:hover {
-  color: var(--im-orange-primary);
+  color: #C2410C;
+  background: #FFEDD5;
+  border-color: #FDBA74;
   text-decoration: underline;
+  box-shadow: 0 1px 3px rgba(234, 88, 12, 0.2);
 }
 
 .incident-timing {
@@ -793,4 +943,872 @@ body {
     opacity: 1;
   }
 }
+
+/* ============================================================
+   9. Consola de Emergencias Orange (Feature 014)
+   ============================================================ */
+
+/* Badges de Severidad Operativa SL1 / SL2 */
+.badge-sl1 {
+  background: var(--im-sl1-bg);
+  color: var(--im-sl1-red);
+  border: 1px solid var(--im-sl1-border);
+  font-weight: 700;
+}
+
+.badge-sl2 {
+  background: var(--im-sl2-bg);
+  color: var(--im-sl2-amber);
+  border: 1px solid var(--im-sl2-border);
+  font-weight: 700;
+}
+
+/* Tabla de Discrepancias Cuantitativas (US1) */
+.im-discrepancy-panel {
+  margin-top: 10px;
+  background: #FFFBEB;
+  border: 1px solid #FCD34D;
+  border-radius: var(--im-radius);
+  padding: 10px 14px;
+}
+
+.im-discrepancy-title {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #92400E;
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.im-discrepancy-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+  color: var(--im-text);
+}
+
+.im-discrepancy-table thead,
+table.im-discrepancy-table thead {
+  background: #FEF3C7;
+  border-bottom: 2px solid #FCD34D;
+}
+
+.im-discrepancy-table th,
+table.im-discrepancy-table th {
+  text-align: left;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #78350F;
+  background: #FEF3C7;
+  padding: 6px 8px;
+  border-bottom: 1px solid #FDE68A;
+}
+
+.im-discrepancy-table td {
+  padding: 6px 8px;
+  border-bottom: 1px solid #FEF3C7;
+  vertical-align: top;
+}
+
+.im-discrepancy-table tr:last-child td {
+  border-bottom: none;
+}
+
+.im-threshold-highlight {
+  font-family: var(--im-font-mono);
+  font-weight: 600;
+  color: #B45309;
+}
+
+/* Cronometraje en Vivo y Alertas de Escalado (US2) */
+.im-timer-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-family: var(--im-font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  background: #F1F5F9;
+  color: #334155;
+  border: 1px solid #CBD5E1;
+}
+
+.im-timer-pulse-warning {
+  background: var(--im-sl2-bg);
+  color: var(--im-sl2-amber);
+  border-color: var(--im-sl2-border);
+  animation: pulseAmber 2s infinite;
+}
+
+.im-timer-pulse-critical {
+  background: var(--im-sl1-bg);
+  color: var(--im-sl1-red);
+  border-color: var(--im-sl1-border);
+  animation: pulseRed 1.5s infinite;
+}
+
+@keyframes pulseAmber {
+  0% { box-shadow: 0 0 0 0 rgba(230, 81, 0, 0.4); }
+  70% { box-shadow: 0 0 0 8px rgba(230, 81, 0, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(230, 81, 0, 0); }
+}
+
+@keyframes pulseRed {
+  0% { box-shadow: 0 0 0 0 rgba(211, 47, 47, 0.5); }
+  70% { box-shadow: 0 0 0 10px rgba(211, 47, 47, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(211, 47, 47, 0); }
+}
+
+.im-escalation-alert-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  margin-top: 8px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.im-escalation-alert-banner.alert-45m {
+  background: #FFF7ED;
+  border: 1px solid #FDBA74;
+  color: #9A3412;
+}
+
+.im-escalation-alert-banner.alert-105m {
+  background: #FEF2F2;
+  border: 1px solid #FCA5A5;
+  color: #991B1B;
+}
+
+.im-escalation-alert-banner .im-phone-icon {
+  font-size: 16px;
+}
+
+/* Gobernanza de Workarounds y Bloqueo (US3) */
+.im-gov-lock-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 14px;
+  background-color: var(--im-lock-bg);
+  border: 1px solid var(--im-lock-border);
+  border-radius: var(--im-radius);
+  color: var(--im-lock-red);
+  margin-top: 10px;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.im-gov-lock-icon {
+  font-size: 18px;
+  line-height: 1;
+}
+
+.badge-cso-pending {
+  background: var(--im-cso-pending-bg);
+  color: var(--im-cso-pending-text);
+  border: 1px solid var(--im-cso-pending-border);
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.badge-cso-approved {
+  background: var(--im-cso-approved-bg);
+  color: var(--im-cso-approved-text);
+  border: 1px solid var(--im-cso-approved-border);
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Contenedor Plegable de Reportes y Redacción Oficial */
+.im-reports-wrapper {
+  margin-top: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.im-reports-wrapper.collapsed,
+.im-reports-wrapper[hidden] {
+  display: none !important;
+}
+
+/* Reporte de Emergencia en 4 Bloques (US4) */
+.im-emergency-report-box {
+  margin-top: 12px;
+  background: #0F172A;
+  border: 1px solid #334155;
+  border-radius: var(--im-radius);
+  overflow: hidden;
+}
+
+.im-emergency-report-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 14px;
+  background: #1E293B;
+  border-bottom: 1px solid #334155;
+  color: #E2E8F0;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.im-emergency-report-content {
+  padding: 12px 14px;
+  margin: 0;
+  color: #F8FAFC;
+  font-family: var(--im-font-mono);
+  font-size: 11px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 240px;
+  overflow-y: auto;
+}
+
+/* Panel Modal RACI y Contactos (US5) */
+.im-modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(2px);
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.im-modal-window {
+  background: var(--im-surface);
+  border: 1px solid var(--im-border);
+  border-radius: 10px;
+  box-shadow: var(--im-shadow-lg);
+  max-width: 720px;
+  width: 100%;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: modalPop 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes modalPop {
+  from { transform: scale(0.96); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+.im-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--im-border);
+  background: #F8FAFC;
+}
+
+.im-modal-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--im-text);
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.im-modal-close-btn {
+  background: transparent;
+  border: none;
+  font-size: 20px;
+  color: var(--im-text-muted);
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+.im-modal-close-btn:hover {
+  background: #E2E8F0;
+  color: var(--im-text);
+}
+
+.im-modal-body {
+  padding: 20px;
+  overflow-y: auto;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.im-raci-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 12px 0 20px 0;
+  font-size: 12px;
+}
+
+.im-raci-table thead,
+table.im-raci-table thead {
+  background: #F1F5F9;
+  border-bottom: 1px solid var(--im-border);
+}
+
+.im-raci-table th,
+table.im-raci-table th {
+  background: #F1F5F9;
+  color: var(--im-text);
+  text-align: left;
+  padding: 8px 10px;
+  border: 1px solid var(--im-border);
+  font-weight: 700;
+}
+
+.im-raci-table td {
+  padding: 8px 10px;
+  border: 1px solid var(--im-border);
+  vertical-align: middle;
+}
+
+.im-raci-badge {
+  display: inline-block;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 700;
+  font-size: 11px;
+}
+
+.im-raci-r { background: #DCFCE7; color: #166534; }
+.im-raci-a { background: #FEF3C7; color: #92400E; }
+.im-raci-c { background: #E0F2FE; color: #075985; }
+.im-raci-i { background: #F1F5F9; color: #475569; }
+
+.im-contact-repo-list {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.im-repo-card {
+  border: 1px solid var(--im-border);
+  border-radius: 6px;
+  padding: 12px;
+  background: #F8FAFC;
+}
+
+.im-repo-title {
+  font-weight: 700;
+  font-size: 12px;
+  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.im-repo-desc {
+  font-size: 11px;
+  color: var(--im-text-muted);
+  margin-bottom: 8px;
+}
+
+/* ============================================================
+   10. Consola de Triaje Rápido "De un Vistazo" (Página Inicial)
+   ============================================================ */
+
+/* Selector Principal de Modo de Consola (Triaje vs Tarjetas) */
+.im-main-view-switcher {
+  display: inline-flex;
+  align-items: center;
+  background: #E2E8F0;
+  padding: 3px;
+  border-radius: 8px;
+  gap: 3px;
+}
+
+.im-main-tab-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border: none;
+  background: transparent;
+  color: #475569;
+  font-family: var(--im-font-sans);
+  font-size: 12.5px;
+  font-weight: 700;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.im-main-tab-btn:hover {
+  color: var(--im-dark);
+  background: rgba(255, 255, 255, 0.5);
+}
+
+.im-main-tab-btn.active {
+  background: #FFFFFF;
+  color: #EA580C;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* Contenedor del Panel de Triaje */
+.im-triage-view-container {
+  margin-top: 14px;
+}
+
+.im-triage-panel {
+  background: var(--im-surface);
+  border: 1px solid var(--im-border);
+  border-radius: var(--im-radius);
+  box-shadow: var(--im-shadow-sm);
+  overflow: hidden;
+}
+
+.im-triage-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--im-border);
+  background: linear-gradient(180deg, #FFFFFF 0%, #F8FAFC 100%);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.im-triage-title-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.im-triage-badge {
+  font-size: 10.5px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: #FFEDD5;
+  color: #C2410C;
+  border: 1px solid #FED7AA;
+}
+
+.im-triage-title {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--im-dark);
+  margin: 0;
+}
+
+.im-triage-subtitle {
+  font-size: 12.5px;
+  color: var(--im-text-muted);
+  margin: 4px 0 0 0;
+  line-height: 1.4;
+}
+
+/* Chips de Decisión y Filtrado Rápido */
+.im-triage-chips {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.im-triage-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 20px;
+  border: 1px solid var(--im-border);
+  background: #FFFFFF;
+  color: var(--im-text);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.im-triage-chip:hover {
+  background: #F8FAFC;
+  border-color: #CBD5E1;
+}
+
+.im-triage-chip.active {
+  background: #FFF7ED;
+  border-color: #EA580C;
+  color: #C2410C;
+  box-shadow: 0 1px 2px rgba(234, 88, 12, 0.15);
+}
+
+.im-triage-chip .chip-count {
+  font-family: var(--im-font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 10px;
+  background: #F1F5F9;
+  color: #475569;
+}
+
+.im-triage-chip.active .chip-count {
+  background: #EA580C;
+  color: #FFFFFF;
+}
+
+.chip-pulse-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #DC2626;
+  animation: pulseTriageDot 1.5s infinite;
+}
+
+@keyframes pulseTriageDot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(1.3); }
+}
+
+/* Tabla de Triaje de Alta Densidad */
+.im-triage-table-wrapper {
+  overflow-x: auto;
+}
+
+.im-triage-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12.5px;
+  text-align: left;
+}
+
+.im-triage-table th {
+  background: #F8FAFC;
+  color: #475569;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 11px 14px;
+  border-bottom: 1px solid var(--im-border);
+  white-space: nowrap;
+}
+
+.im-triage-table td {
+  padding: 11px 14px;
+  border-bottom: 1px solid #F1F5F9;
+  vertical-align: middle;
+  color: var(--im-text);
+}
+
+.im-triage-row {
+  transition: background-color 0.15s ease;
+  cursor: pointer;
+}
+
+.im-triage-row:hover {
+  background-color: #F8FAFC;
+}
+
+.im-triage-row.row-action-needed {
+  background-color: #FFFDFB;
+}
+
+.im-triage-row.row-action-needed:hover {
+  background-color: #FFF7ED;
+}
+
+/* Semáforo de Urgencia en Triaje */
+.im-urgency-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 8px;
+  border-radius: 5px;
+  font-weight: 700;
+  font-size: 11px;
+  white-space: nowrap;
+  letter-spacing: 0.02em;
+}
+
+.urgency-badge-sl1 {
+  background: #FEF2F2;
+  color: #991B1B;
+  border: 1px solid #F87171;
+}
+
+.urgency-badge-105m {
+  background: #450A0A;
+  color: #FEE2E2;
+  border: 1px solid #991B1B;
+}
+
+.urgency-badge-45m {
+  background: #FFF7ED;
+  color: #9A3412;
+  border: 1px solid #FDBA74;
+}
+
+.urgency-badge-pending {
+  background: #FEF3C7;
+  color: #92400E;
+  border: 1px solid #FCD34D;
+}
+
+.urgency-badge-disc {
+  background: #F3E8FF;
+  color: #6B21A8;
+  border: 1px solid #D8B4FE;
+}
+
+.urgency-badge-lock {
+  background: #FEF2F2;
+  color: #B91C1C;
+  border: 1px solid #FCA5A5;
+}
+
+.urgency-badge-stable {
+  background: #DCFCE7;
+  color: #166534;
+  border: 1px solid #86EFAC;
+}
+
+.urgency-badge-communicated {
+  background: #F0F9FF;
+  color: #0369A1;
+  border: 1px solid #BAE6FD;
+}
+
+.urgency-badge-monitoring {
+  background: #FFF7ED;
+  color: #C2410C;
+  border: 1px solid #FED7AA;
+}
+
+.urgency-badge-dismissed {
+  background: #F8FAFC;
+  color: #64748B;
+  border: 1px solid #CBD5E1;
+}
+
+.triage-title {
+  font-weight: 600;
+  color: var(--im-dark);
+  max-width: 320px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.triage-process {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.triage-systems-list {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.triage-systems-list .context-systems {
+  font-size: 10px;
+  padding: 1px 4px;
+}
+
+/* Estado vacío en triaje */
+.im-triage-empty {
+  padding: 40px 20px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.im-triage-empty-icon {
+  font-size: 32px;
+  margin-bottom: 8px;
+}
+
+.im-triage-empty-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--im-dark);
+  margin: 0 0 4px 0;
+}
+
+.im-triage-empty-text {
+  font-size: 12px;
+  color: var(--im-text-muted);
+  margin: 0;
+}
+
+/* Barra de Navegación de Vuelta a Triaje (en vista de Tarjetas) */
+.cards-nav-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #FFF7ED;
+  border: 1px solid #FED7AA;
+  border-radius: var(--im-radius);
+  padding: 8px 14px;
+  margin-top: 14px;
+  margin-bottom: 12px;
+}
+
+.cards-nav-hint {
+  font-size: 12px;
+  color: #9A3412;
+  font-weight: 500;
+}
+
+/* Efecto de foco cuando se navega desde Triaje a una Tarjeta */
+.im-card-highlight {
+  box-shadow: 0 0 0 3px #EA580C, 0 8px 24px rgba(234, 88, 12, 0.25) !important;
+  animation: cardHighlightPulse 2s ease forwards;
+}
+
+@keyframes cardHighlightPulse {
+  0% { transform: scale(1.01); }
+  50% { transform: scale(1.01); }
+  100% { transform: scale(1); }
+}
+
+/* ============================================================
+   11. Botones de Acción Operativa Inmediata (Cockpit Incident Manager)
+   ============================================================ */
+.btn-quick-reclass {
+  background: #FAF5FF;
+  border-color: #D8B4FE;
+  color: #6B21A8;
+}
+
+.btn-quick-reclass:hover {
+  background: #F3E8FF;
+  border-color: #9333EA;
+  color: #581C87;
+}
+
+.btn-quick-warroom {
+  background: #FFF7ED;
+  border-color: #FDBA74;
+  color: #C2410C;
+}
+
+.btn-quick-warroom:hover {
+  background: #FFEDD5;
+  border-color: #EA580C;
+  color: #9A3412;
+}
+
+.btn-suggest-draft,
+.btn-suggest-draft-inline {
+  background: #F5F3FF;
+  border-color: #C4B5FD;
+  color: #6D28D9;
+  font-weight: 600;
+}
+
+.btn-suggest-draft:hover,
+.btn-suggest-draft-inline:hover {
+  background: #EDE9FE;
+  border-color: #8B5CF6;
+  color: #5B21B6;
+}
+
+.btn-copy-remedy-reclass {
+  background: #FAF5FF;
+  border-color: #D8B4FE;
+  color: #6B21A8;
+  font-weight: 600;
+}
+
+.btn-copy-remedy-reclass:hover {
+  background: #F3E8FF;
+  border-color: #9333EA;
+  color: #581C87;
+}
+
+.btn-copy-teams-warroom {
+  background: #FFFFFF;
+  border-color: #FDBA74;
+  color: #C2410C;
+  font-weight: 600;
+}
+
+.btn-copy-teams-warroom:hover {
+  background: #FFF7ED;
+  border-color: #EA580C;
+  color: #9A3412;
+}
+
+/* Pastillas de Estado de Comunicación Oficial (Triaje y Tarjetas) */
+.triage-comm-pills {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  margin-top: 3px;
+}
+
+.comm-pill {
+  font-family: var(--im-font-mono, monospace);
+  font-size: 9.5px;
+  font-weight: 600;
+  padding: 1px 4px;
+  border-radius: 3px;
+  line-height: 1.2;
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
+}
+
+.comm-pill-ok {
+  background: #ECFDF5;
+  color: #065F46;
+  border: 1px solid #A7F3D0;
+}
+
+.comm-pill-missing {
+  background: #FEF2F2;
+  color: #991B1B;
+  border: 1px solid #FECACA;
+}
+
+.badge-comm-ok {
+  background: #ECFDF5;
+  color: #065F46;
+  border: 1px solid #A7F3D0;
+  font-size: 10px;
+}
+
+.badge-comm-missing {
+  background: #FFFBEB;
+  color: #92400E;
+  border: 1px solid #FDE68A;
+  font-size: 10px;
+}
+
+
+
+
 

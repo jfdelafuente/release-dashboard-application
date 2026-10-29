@@ -630,6 +630,9 @@ class CustomHTTPHandler(http.server.SimpleHTTPRequestHandler):
 
     def handle_incident_manager_pending(self):
         try:
+            import incident_manager_service
+            import importlib
+            importlib.reload(incident_manager_service)
             from incident_manager_service import get_pending_incidents_payload
             catalog_path = STORAGE_DIR / 'output' / 'high_priority_notifications.json'
             store_path = STORAGE_DIR / 'agent_executive_messages.json'
@@ -637,6 +640,35 @@ class CustomHTTPHandler(http.server.SimpleHTTPRequestHandler):
             self._send_json(200, payload)
         except Exception as e:
             print(f"  Error obteniendo incidencias pendientes: {e}")
+            self._send_json(500, {'success': False, 'error': str(e)})
+
+    def handle_incident_manager_emergency_cockpit(self):
+        try:
+            import incident_manager_service
+            import importlib
+            importlib.reload(incident_manager_service)
+            from incident_manager_service import get_emergency_cockpit_payload
+            catalog_path = STORAGE_DIR / 'output' / 'high_priority_notifications.json'
+            store_path = STORAGE_DIR / 'agent_executive_messages.json'
+
+            parsed_url = urllib.parse.urlparse(self.path)
+            query_params = urllib.parse.parse_qs(parsed_url.query)
+
+            only_pending_val = query_params.get('only_pending', ['false'])[0].lower()
+            only_pending = only_pending_val in ('true', '1', 'yes')
+            severity = query_params.get('severity', ['all'])[0]
+            comm_phase = query_params.get('comm_phase', ['all'])[0]
+
+            payload = get_emergency_cockpit_payload(
+                catalog_path=catalog_path,
+                store_path=store_path,
+                only_pending=only_pending,
+                severity=severity,
+                comm_phase=comm_phase
+            )
+            self._send_json(200, payload)
+        except Exception as e:
+            print(f"  Error obteniendo telemetría de emergencias: {e}")
             self._send_json(500, {'success': False, 'error': str(e)})
 
     def handle_incident_manager_save_message(self):
@@ -701,6 +733,10 @@ class CustomHTTPHandler(http.server.SimpleHTTPRequestHandler):
 
         if self.path == '/api/incident-manager/pending' or self.path.startswith('/api/incident-manager/pending?'):
             self.handle_incident_manager_pending()
+            return
+
+        if self.path == '/api/incident-manager/emergency-cockpit' or self.path.startswith('/api/incident-manager/emergency-cockpit?'):
+            self.handle_incident_manager_emergency_cockpit()
             return
 
         if self.path.startswith('/api/reports') or self.path.startswith('/api/departments') or self.path in ('/healthz', '/readyz'):

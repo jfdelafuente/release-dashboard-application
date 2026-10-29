@@ -3,7 +3,7 @@
     "version": "1.0.0",
     "description": "Almacén oficial de redacciones ejecutivas generadas por el Agente incident-reporter",
     "source": "agents/it-incidents/incident-reporter.md",
-    "updated_at": "2026-10-29T07:44:41Z"
+    "updated_at": "2026-10-29T13:21:35Z"
   },
   "incidents": {
     "INC000004065609": {
@@ -702,6 +702,58 @@
         "origen": "incident-reporter",
         "conteo_palabras_completo": 61,
         "conteo_palabras_breve": 20
+      }
+    },
+    "INC000004170183": {
+      "apertura": {
+        "completo": "Se declara incidencia crítica P1 (INC000004170183) por error funcional en la plataforma IP24 reportado desde la sede de NTTDATA en Alicante. La afectación genera un bloqueo operativo en la tramitación y provisión de órdenes comerciales sin alternativa viable en el frontal de trabajo del centro. El equipo de soporte SOP_SMC_TEIDE se encuentra interviniendo y analizando las trazas del servicio para aislar el fallo y restablecer la disponibilidad funcional. Próxima actualización en 30 minutos.",
+        "breve": "Apertura P1 (INC000004170183): Error funcional en IP24 bloquea tramitación de órdenes en NTTDATA Alicante. Soporte SOP_SMC_TEIDE diagnosticando. Próxima actualización 30 min.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 73,
+        "conteo_palabras_breve": 21
+      },
+      "seguimiento": {
+        "completo": "Seguimiento de la incidencia P1 (INC000004170183) en IP24. Los equipos resolutores de SOP_SMC_TEIDE han identificado una anomalía en las sesiones de conectividad del aplicativo hacia los servicios centrales de provisión en NTTDATA Alicante. Se han reiniciado los procesos de intermediación y se aplican acciones de purga y reconexión sobre los puestos afectados. Se monitoriza activamente la tasa de tramitación para verificar la progresiva recuperación del flujo operativo.",
+        "breve": "Seguimiento P1 (INC000004170183): SOP_SMC_TEIDE reinicia servicios de conexión de IP24 en NTTDATA Alicante; monitorizando recuperación de tramitaciones y puestos.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 67,
+        "conteo_palabras_breve": 19
+      },
+      "cierre": {
+        "completo": "Queda cerrada la incidencia crítica P1 (INC000004170183) en IP24. Restablecida plenamente la operativa de provisión y tramitación en la sede de NTTDATA Alicante tras la normalización de las sesiones y servicios de middleware por parte de SOP_SMC_TEIDE. Los puestos operan con tiempos de respuesta nominales y sin registrar fallos funcionales, confirmándose la ausencia de órdenes retenidas. El servicio queda bajo supervisión preventiva de soporte.",
+        "breve": "Cierre P1 (INC000004170183): Normalizada operativa de IP24 en NTTDATA Alicante tras estabilizar middleware por SOP_SMC_TEIDE; provisión de órdenes recuperada sin incidencias.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 64,
+        "conteo_palabras_breve": 21
+      }
+    },
+    "INC000004170500": {
+      "apertura": {
+        "completo": "Se declara incidencia crítica P1 (INC000004170500) por error funcional en Ficha Cliente Orange reportado desde la plataforma de Konecta en Sevilla. La anomalía bloquea de forma generalizada las consultas de abonados y la tramitación comercial en los puestos de atención sin canal alternativo en el frontal. El equipo resolutor APL_MOV_SOE se encuentra analizando la integración y las llamadas a microservicios para aislar el fallo y reanudar el servicio. Próxima actualización en 30 minutos.",
+        "breve": "Apertura P1 (INC000004170500): Error funcional en Ficha Cliente Orange bloquea atención en Konecta Sevilla. APL_MOV_SOE investigando backend. Próxima actualización 30 min.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 73,
+        "conteo_palabras_breve": 21
+      },
+      "seguimiento": {
+        "completo": "Seguimiento de la incidencia P1 (INC000004170500) en Ficha Cliente Orange. El equipo de APL_MOV_SOE ha detectado una degradación en las conexiones hacia el pool de servicios móviles que causaba timeouts en las peticiones emitidas desde Konecta Sevilla. Se ha ejecutado el reciclado de instancias de frontend y el rebalanceo de tráfico, registrándose una disminución sustancial de transacciones fallidas. Los operadores reanudan progresivamente las consultas de clientes bajo supervisión activa del equipo técnico.",
+        "breve": "Seguimiento P1 (INC000004170500): Rebalanceadas instancias y recuperada conectividad en Ficha Cliente Orange para Konecta Sevilla; agentes operando bajo supervisión técnica de APL_MOV_SOE.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 72,
+        "conteo_palabras_breve": 22
+      },
+      "cierre": {
+        "completo": "Se da por cerrada la incidencia crítica P1 (INC000004170500) en Ficha Cliente Orange. Resuelta la degradación de peticiones entre el frontal de atención y los servicios móviles tras estabilizar los servidores de aplicación en APL_MOV_SOE. La plataforma de Konecta en Sevilla opera con normalidad absoluta, tramitándose consultas comerciales y gestiones de abonados con latencias óptimas y sin errores. Se mantiene la monitorización preventiva habitual sobre el entorno.",
+        "breve": "Cierre P1 (INC000004170500): Normalizada Ficha Cliente Orange en Konecta Sevilla tras estabilizar servidores APL_MOV_SOE; consultas y gestiones comerciales operando sin incidencias.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 67,
+        "conteo_palabras_breve": 21
       }
     }
   }

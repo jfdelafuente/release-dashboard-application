@@ -5,6 +5,7 @@
 Ecosistema analítico y de reporting web y programático para monitorización de calidad técnica en despliegues (*releases*), incidencias masivas y postmortem operativo (entorno corporativo Orange).
 
 El proyecto integra:
+
 - **Portal Hub** (`dashboards/portal/`): Punto de acceso con buscador hero y pantalla modal interactiva de Resumen IA (Epsilon IA).
 - **Massive Incidents Dashboard** (`dashboards/massive-incidents/`): Análisis de incidencias masivas con métricas temporales y evolución de backlog.
 - **Postmortem Dashboard** (`dashboards/postmortem/`): Análisis de post-mortem por despliegues (PAP / MESA) y SLAs.
@@ -18,6 +19,7 @@ El proyecto integra:
 ## Archivos y Módulos Principales
 
 ### Dashboards HTML y Web
+
 - `dashboards/portal/index.html`: Portal principal con buscador de incidencias y modal Epsilon IA
 - `dashboards/massive-incidents/index.html`: Dashboard de incidencias masivas
 - `dashboards/postmortem/index.html`: Dashboard de postmortem por release
@@ -27,6 +29,7 @@ El proyecto integra:
 - `dashboards/assets/`: Recursos compartidos (logos corporativos, topbar, tokens CSS, componentes Epsilon IA)
 
 ### Conversores Python y Herramientas
+
 - `converters/src/csv_to_json/`: Módulo de conversión CSV→JSON, detección de delimitador/encoding y validadores
 - `converters/src/report_generator/`: Generadores PowerPoint para postmortem y reportes ejecutivos Confluence
 - `converters/cli/`: Scripts de ejecución por consola (`convert_incidents.py`, `convert_postmortems.py`, `build_agents_catalog.py`, `generate_executive_report.py`, etc.)
@@ -36,17 +39,21 @@ El proyecto integra:
 ## Dashboard: Massive Incidents Dashboard
 
 ### Ubicación
+
 `dashboards/massive-incidents/index.html`
 
 ### Características Principales
 
 #### 1. **Carga de Datos**
+
 - Interfaz drag-and-drop para cargar archivos JSON
 - Auto-detección de formato y encoding
 - Validación de estructura JSON
 
 #### 2. **Filtro de Tiempo Global** ⭐
+
 Períodos predefinidos que afectan TODOS los componentes:
+
 - Todo (todos los datos)
 - Últimos 7 días
 - Últimos 15 días
@@ -59,8 +66,9 @@ Períodos predefinidos que afectan TODOS los componentes:
 **Campo de filtro**: "Fecha de envío"
 
 #### 3. **KPI Cards**
+
 | KPI | Descripción | Campo |
-|-----|-------------|-------|
+| ----- | ------------- | ------- |
 | Total Incidencias | Todas las incidencias del período | Count |
 | Incidencias Pdtes | Incidencias pendientes (no Cerrado/Resuelto/Cancelado) | Count |
 | Tendencia 7 días | % cambio backlog vs 7 días atrás | % con color |
@@ -68,28 +76,35 @@ Períodos predefinidos que afectan TODOS los componentes:
 | Tendencia 30 días | % cambio backlog vs 30 días atrás | % con color |
 
 **Colores de tendencia**:
+
 - 🟢 Verde: Reducción (< -2%)
 - 🔴 Rojo: Aumento (> +2%)
 - ⚫ Gris: Estable (-2% a +2%)
 
 #### 4. **Gráficas Temporales**
+
 **A. Evolución Diaria de Incidencias Operativas**
+
 - Eje X: Fechas cronológicas
 - Eje Y (izquierda): Entradas y Solucionadas (barras apiladas, naranja)
 - Eje Y (derecha): Backlog Acumulado (línea, naranja oscuro)
 
 **B. Incidencias Abiertas por Día y Backlog**
+
 - Eje X: Fechas cronológicas
 - Eje Y (izquierda): Conteo de incidencias apiladas por Status (colores)
 - Eje Y (derecha): Backlog (línea)
 
 #### 5. **Filtros de Tabla** (aplican DESPUÉS del filtro de tiempo)
+
 - **Estado**: Filtra por Estatus
 - **Sistema**: Filtra por Grupo asignado
 - **Urgencia**: Filtra por Urgencia
 
 #### 6. **Tabla de Incidencias**
+
 Columnas (todas ordenables con click):
+
 - **Código**: Abre la pantalla flotante interactiva con el Resumen IA de Epsilon (consulta `/api/epsilon/resumenIA/{ID}` / `https://soptmc.si.orange.es/MonTMC/api/epsilon/resumenIA/{ID}`) con enlace secundario directo a Remedy
 - **Descripción**: Texto del incidente
 - **Estado**: Badge con color según status
@@ -101,7 +116,9 @@ Columnas (todas ordenables con click):
 **Ordenación especial por fecha**: Usa parseDate() para comparar cronológicamente
 
 #### 7. **Tabla de Debug** (colapsible)
+
 Muestra cálculos diarios para verificación:
+
 - Fecha
 - Entradas (incidencias abiertas ese día)
 - Solucionadas (incidencias cerradas ese día)
@@ -128,7 +145,7 @@ Muestra cálculos diarios para verificación:
 ### Campos Críticos para Cada Característica
 
 | Característica | Campo Requerido | Formato |
-|----------------|-----------------|---------|
+| ---------------- | ----------------- | --------- |
 | Filtro de Tiempo | "Fecha de envío" | "dd/mm/yyyy HH:mm a" |
 | KPI Pendientes | "Estatus" | String (case-insensitive) |
 | Temporal Charts | "Fecha de envío", "Estatus" | dd/mm/yyyy HH:mm |
@@ -138,6 +155,7 @@ Muestra cálculos diarios para verificación:
 ### Funciones Clave
 
 #### Filtrado de Tiempo
+
 ```javascript
 applyTimeFilter(incidents, startDate, endDate)
 // Filtra por "Fecha de envío" en rango [startDate, endDate]
@@ -145,6 +163,7 @@ applyTimeFilter(incidents, startDate, endDate)
 ```
 
 #### Cálculo de Fecha de Inicio
+
 ```javascript
 calculateStartDate(period)
 // 'all' → null
@@ -154,6 +173,7 @@ calculateStartDate(period)
 ```
 
 #### Parsing de Fechas
+
 ```javascript
 parseDate(dateStr)
 // Input: "17/03/2025 18:44 a"
@@ -161,6 +181,7 @@ parseDate(dateStr)
 ```
 
 #### Ordenación de Tabla
+
 ```javascript
 filterTable() // Sort logic
 // Detecta columnas de fecha ("Fecha de envío", "Fecha de última resolución")
@@ -209,19 +230,24 @@ let sortDirection = 'asc';          // Dirección: 'asc' o 'desc'
 ### Notas de Implementación
 
 #### BOM Handling
+
 Función `getIncidentValue()` maneja automáticamente caracteres BOM (\uFEFF) en nombres de campos.
 
 #### Exclusiones de Estado
+
 Incidencias con estos estados se excluyen de tabla y KPIs:
+
 - "Cerrado"
 - "Resuelto"
 - "Cancelado"
 
 #### Normalización de Fechas
+
 - Todas las fechas normalizadas a medianoche (00:00:00) para comparación consistente
 - Timezone: Local (sin conversión)
 
 #### Edge Cases Manejados
+
 1. **Período sin datos**: KPIs = 0, gráficas vacías
 2. **Incidencias sin fecha**: Excluidas con filtro activo
 3. **Backlog con datos insuficientes**: Muestra "-" en KPIs
@@ -234,6 +260,7 @@ Incidencias con estos estados se excluyen de tabla y KPIs:
 El módulo `csv_to_json` convierte archivos CSV de incidencias a formato JSON compatible con el Massive Incidents Dashboard.
 
 **Características:**
+
 - ✅ Auto-detección de encoding (UTF-8, UTF-8-sig, Windows-1252, Latin-1, ISO-8859-15)
 - ✅ Auto-detección de delimitadores (coma, punto-y-coma, tabulación)
 - ✅ **Normalización de campos**: Urgencia "4-Baja" → "Baja", Estatus → title case
@@ -289,6 +316,7 @@ print(f"Encoding detectado: {report['encoding_detected']}")
 ### Salida del Conversor
 
 **Archivo JSON (valid records):**
+
 ```json
 [
   {
@@ -305,6 +333,7 @@ print(f"Encoding detectado: {report['encoding_detected']}")
 ```
 
 **Reporte de Errores (invalid records):**
+
 ```json
 {
   "summary": {
@@ -332,6 +361,7 @@ print(f"Encoding detectado: {report['encoding_detected']}")
 El conversor de incidencias masivas convierte archivos CSV a JSON compatible con el Massive Incidents Dashboard, con validación automática y cálculo de KPIs.
 
 **Uso Programático:**
+
 ```python
 from src.converters.csv_to_json import CsvToJsonConverter
 
@@ -366,11 +396,13 @@ success, report = converter.convert_file(
 El conversor de postmortem convierte archivos CSV postmortem a JSON compatible con Dashboard Hub, con derivación automática de Despliegue y cálculo de Dashboard Hub KPIs.
 
 **Características Especiales**:
+
 - **Despliegue Derivation**: Automáticamente asigna "PAP" al fecha más antigua y "MESA" a las demás
 - **Dashboard Hub KPIs**: Calcula cerradas_percent, pap_resueltas_percent, mesa_resueltas_percent
 - **Flexible Date Parsing**: Soporta múltiples formatos de fecha (DD-MMM, DD/MM/YYYY, con/sin hora)
 
 **Uso Programático:**
+
 ```python
 from src.converters.csv_to_json.postmortem_converter import convertPostmortemCSV
 
@@ -414,6 +446,7 @@ success, records, kpis, metadata, errors = convertPostmortemCSV(
 ### Uso Anterior (Deprecated)
 
 El script `csv_to_json.py` anterior era un conversor simple sin validación ni normalización. El nuevo módulo reemplaza esta funcionalidad con:
+
 - Formato de salida compatible (idéntico al esperado por el dashboard)
 - Validación automática de datos
 - Normalización de campos (especialmente Urgencia)
@@ -425,6 +458,27 @@ El script `csv_to_json.py` anterior era un conversor simple sin validación ni n
 
 <!-- SPECKIT START: Active feature implementation plans -->
 
+### Feature: Consola Operativa de Emergencias Orange en Tiempo Real (014-emergency-operations-console)
+
+**Status**: ✅ IMPLEMENTATION COMPLETE
+
+**Branch**: `production`
+
+**Objective**: Consola operativa de emergencias Orange en tiempo real (`dashboards/incident-manager-monitor/`) que detecta discrepancias con métricas cuantitativas exactas de los 6 procesos críticos, controla cronológicamente los tiempos de escalado telefónico obligatorio a los 45 min y +1h, bloquea activamente desescaladas indebidas por workarounds no erradicados o no autorizados por IM-CSO, y despliega el reporte normalizado de 4 bloques con panel de gobernanza RACI.
+
+**Related Documentation**:
+
+- Flujo de Gestión de Incidencias: [docs/INCIDENT-MANAGEMENT-WORKFLOW.md](docs/INCIDENT-MANAGEMENT-WORKFLOW.md)
+- Manual del Operador: [docs/MANUAL-OPERADOR-CONSOLA-OPERATIVA.md](docs/MANUAL-OPERADOR-CONSOLA-OPERATIVA.md)
+- Specification: [specs/014-emergency-operations-console/spec.md](specs/014-emergency-operations-console/spec.md)
+- Implementation Plan: [specs/014-emergency-operations-console/plan.md](specs/014-emergency-operations-console/plan.md)
+- Tasks: [specs/014-emergency-operations-console/tasks.md](specs/014-emergency-operations-console/tasks.md)
+- Research: [specs/014-emergency-operations-console/research.md](specs/014-emergency-operations-console/research.md)
+- Data Model: [specs/014-emergency-operations-console/data-model.md](specs/014-emergency-operations-console/data-model.md)
+- Contracts: [specs/014-emergency-operations-console/contracts/](specs/014-emergency-operations-console/contracts/)
+- Quickstart: [specs/014-emergency-operations-console/quickstart.md](specs/014-emergency-operations-console/quickstart.md)
+- Requirements Checklist: [specs/014-emergency-operations-console/checklists/requirements.md](specs/014-emergency-operations-console/checklists/requirements.md)
+
 ### Feature: Informe Ejecutivo de Incidencias Postmortem (010-incident-executive-report)
 
 **Status**: ✅ IMPLEMENTATION COMPLETE
@@ -434,11 +488,13 @@ El script `csv_to_json.py` anterior era un conversor simple sin validación ni n
 **Objective**: Construir un informe ejecutivo descargable en formato PowerPoint (`.pptx`) basado en la plantilla corporativa `20260609 Incidencia IVR ExMM.pptx` (Diapositiva 1: Resumen con Inicio/Duración, Impacto, Causa, Solución y tabla de 4 columnas de Puntos de Acción; Diapositivas 2 y 3: Cronología detallada de hitos y eventos). La fuente de datos es una página de Confluence del postmortem solicitada bajo demanda mediante un botón interactivo por fila en la tabla de candidatos a postmortem del dashboard de Gestión de Problemas.
 
 **Decisiones de Clarificación**:
+
 - Q1 (Formato): Archivo PowerPoint (`.pptx`) fiel a la plantilla de referencia.
 - Q2 (Ingesta Confluence): Modal interactivo con sesión activa del operador para validar o introducir la URL.
 - Q3 (Interacción UI): Botón de acción por fila en la tabla de candidatos a postmortem con descarga directa y regeneración forzada.
 
 **Delivered**:
+
 - Plantilla corporativa oficial registrada en `converters/src/report_generator/assets/executive_template.pptx`.
 - Modelos de datos tipados y funciones de serialización y sanitización en `converters/src/report_generator/executive_models.py` y `executive_paths.py`.
 - Generador de presentaciones `ExecutiveReportBuilder` con preservación de estilos de celda, fuentes y colores, así como paginación automática de hitos cronológicos extensos en `converters/src/report_generator/executive_report_builder.py`.
@@ -451,6 +507,7 @@ El script `csv_to_json.py` anterior era un conversor simple sin validación ni n
 - Suite de pruebas unitarias al 100% (71 tests passing en `pytest converters/tests/unit/report_generator/`).
 
 **Related Documentation**:
+
 - Specification: [specs/010-incident-executive-report/spec.md](specs/010-incident-executive-report/spec.md)
 - Implementation Plan: [specs/010-incident-executive-report/plan.md](specs/010-incident-executive-report/plan.md)
 - Research & Technical Decisions: [specs/010-incident-executive-report/research.md](specs/010-incident-executive-report/research.md)
@@ -469,6 +526,7 @@ El script `csv_to_json.py` anterior era un conversor simple sin validación ni n
 **Objective**: Incluir en la parte superior del portal principal (`dashboards/portal/index.html`) un buscador hero de incidencias que permita consultar cualquier código (ej. `INC000004141215` o `4141215`), con normalización automática y validación accesible, abriendo la pantalla flotante de Resumen IA mediante la reutilización de `dashboards/assets/resumen-ia.js` y `dashboards/assets/resumen-ia.css` con protección de doble capa de caché.
 
 **Delivered**:
+
 - Enlace de recursos compartidos `resumen-ia.css` en `<head>` y `resumen-ia.js` (con `defer`) en `dashboards/portal/index.html`.
 - Componente de búsqueda destacado tipo hero (`<section class="portal-search-hero">`) en `<main>` con diseño corporativo Orange (`#FF7900`), badge de Epsilon IA, responsive en móvil y accesible.
 - Normalización automática `sanitizeIncidentCode(input)` tolerante a minúsculas, espacios y códigos numéricos abreviados (auto-padding a 12 dígitos `INC000004141215`).
@@ -477,6 +535,7 @@ El script `csv_to_json.py` anterior era un conversor simple sin validación ni n
 - Documentación actualizada en `dashboards/README.md`.
 
 **Related Documentation**:
+
 - Specification: [specs/009-portal-incident-search/spec.md](specs/009-portal-incident-search/spec.md)
 - Implementation Plan: [specs/009-portal-incident-search/plan.md](specs/009-portal-incident-search/plan.md)
 - Research: [specs/009-portal-incident-search/research.md](specs/009-portal-incident-search/research.md)
@@ -494,6 +553,7 @@ El script `csv_to_json.py` anterior era un conversor simple sin validación ni n
 **Objective**: Generar un informe `.pptx` por release, con el estilo visual Orange, con 3 diapositivas: portada, Métricas Globales (3 KPIs + gráfica "Incidencias por Release") y Comparativa de KPIs (gráficas "KPI % PaP" y "KPI % 1ª semana"). Rediseñado tras la implementación inicial: todos los KPIs y gráficas se calculan a partir de `dashboards/release-kpis/releases-data.js` (única fuente de datos); el JSON de postmortem por release ya no interviene.
 
 **Delivered**:
+
 - `converters/src/report_generator/`: `release_kpis_data.py` (parseo de `releases-data.js`, `build_releases()` con `total_incidencias`/`pct_pap`/`pct_first_week`, `find_release()`) + `release_kpis_charts.py` (réplica de las 3 gráficas de `release-kpis/app.js`), `pptx_builder.py` (portada + `add_kpi_and_chart_slide()` con 3 tarjetas de KPI en verde/rojo según `KPI_TARGET_PCT` + `add_dual_chart_slide()`), `chart_utils.py` (Plotly + Kaleido, colores y `KPI_TARGET_PCT` compartidos), `paths.py`
 - `converters/src/report_generator/kpi_calculator.py`, `postmortem_charts.py` y `data_loader.py` ya NO se usan en la generación del informe (quedan sin cablear, con sus tests, por si se reutilizan en el futuro — el informe dejó de depender del JSON de postmortem)
 - `converters/cli/generate_postmortem_report.py`: CLI + librería (`generate_report()`, `generate_all_reports()`), mismo patrón que `upload_csv.py`; caché por mtime de `releases-data.js` (evita regenerar si nadie ha subido datos nuevos)
@@ -504,6 +564,7 @@ El script `csv_to_json.py` anterior era un conversor simple sin validación ni n
 **Riesgo conocido y aceptado**: la lógica de KPIs y gráficas está duplicada entre JavaScript (`dashboards/release-kpis/app.js`) y Python (`report_generator`) — no hay una forma de compartir literalmente el mismo código entre navegador y servidor sin añadir una dependencia de navegador headless (ver research.md §2-3). Un cambio futuro en la lógica del dashboard de KPIs de Release debe replicarse manualmente en el módulo Python equivalente.
 
 **Related Documentation**:
+
 - Specification: [specs/008-postmortem-ppt-report/spec.md](specs/008-postmortem-ppt-report/spec.md)
 - Implementation Plan: [specs/008-postmortem-ppt-report/plan.md](specs/008-postmortem-ppt-report/plan.md)
 - Research: [specs/008-postmortem-ppt-report/research.md](specs/008-postmortem-ppt-report/research.md)
@@ -521,6 +582,7 @@ El script `csv_to_json.py` anterior era un conversor simple sin validación ni n
 **Objective**: Sustituir el dashboard combinado de Postmortem/Release por un dashboard dedicado por release, identificado por el nombre que el usuario le da al subir el CSV, navegable desde la tabla ya existente en `dashboards/release-kpis/` (columna "RELEASE" convertida en enlace).
 
 **Related Documentation**:
+
 - Specification: [specs/007-per-release-dashboards/spec.md](specs/007-per-release-dashboards/spec.md)
 - Implementation Plan: [specs/007-per-release-dashboards/plan.md](specs/007-per-release-dashboards/plan.md)
 - Research: [specs/007-per-release-dashboards/research.md](specs/007-per-release-dashboards/research.md)
@@ -539,6 +601,7 @@ El script `csv_to_json.py` anterior era un conversor simple sin validación ni n
 **Completed Features**:
 
 #### Phase 1-2: Infrastructure (12 tasks ✅)
+
 - ✅ Test framework setup with pytest fixtures and custom markers
 - ✅ Base validator class with field validation rules (required, enum, date format, max_length)
 - ✅ Encoding detection with BOM support (UTF-8, UTF-8-sig, Windows-1252, Latin-1, ISO-8859-15)
@@ -547,6 +610,7 @@ El script `csv_to_json.py` anterior era un conversor simple sin validación ni n
 - ✅ Field schemas with validation rules and allowed values
 
 #### Phase 3: Massive Incidents Converter (18 tasks ✅)
+
 - ✅ `CsvToJsonConverter` class with complete pipeline
 - ✅ Field normalization: Urgencia "4-Baja" → "Baja", Estatus → title case
 - ✅ Per-record validation with detailed error tracking
@@ -560,6 +624,7 @@ El script `csv_to_json.py` anterior era un conversor simple sin validación ni n
 - ✅ **Test Coverage**: 264 total tests passing (86% code coverage, exceeds 80% requirement)
 
 #### Phase 4: Postmortem Converter (13 tasks ✅)
+
 - ✅ `PostmortemRecord` class with 13-field specification
 - ✅ Flexible date parsing: DD-MMM, DD/MM/YYYY, with/without time
 - ✅ Despliegue derivation: PAP=earliest date, MESA=others with deterministic tie-breaking
@@ -570,6 +635,7 @@ El script `csv_to_json.py` anterior era un conversor simple sin validación ni n
 - ✅ 6 integration tests for despliegue, date parsing, KPI accuracy
 
 #### Phase 5: Error Handling (11 tasks ✅)
+
 - ✅ Error reporting with row numbers, record IDs, field-level messages
 - ✅ Field-level error messages with validation guidance
 - ✅ Error report generator aggregating all validation errors
@@ -579,6 +645,7 @@ El script `csv_to_json.py` anterior era un conversor simple sin validación ni n
 - ✅ Error report JSON structure validation
 
 #### Phase 6: Performance (10 tasks ✅)
+
 - ✅ CSV streaming with csv.DictReader (no full file loading)
 - ✅ Regex pattern pre-compilation and result caching
 - ✅ Efficient data structures (dict/Counter) for KPI aggregation
@@ -589,6 +656,7 @@ El script `csv_to_json.py` anterior era un conversor simple sin validación ni n
 - ✅ **All performance targets met** (264 tests pass in 1.08 seconds)
 
 #### Phase 7: Polish & Cross-Cutting Concerns (7 tasks ✅)
+
 - ✅ End-to-end integration tests with Massive Incidents Dashboard
 - ✅ End-to-end integration tests with Postmortem Dashboard + Dashboard Hub
 - ✅ Edge case tests: BOM handling, mixed line endings, duplicate headers
@@ -598,6 +666,7 @@ El script `csv_to_json.py` anterior era un conversor simple sin validación ni n
 - ✅ Code quality: linting, formatting, and import sorting verified
 
 **Test Results**:
+
 - ✅ 264 tests passing (1.08 seconds execution)
 - ✅ 86% code coverage (exceeds 80% requirement)
 - ✅ All conversion pipeline scenarios covered
@@ -608,6 +677,7 @@ El script `csv_to_json.py` anterior era un conversor simple sin validación ni n
 - ✅ Integration with dashboards verified
 
 **Related Documentation**:
+
 - Implementation Plan: [specs/006-optimize-csv-converters/plan.md](specs/006-optimize-csv-converters/plan.md)
 - Specification: [specs/006-optimize-csv-converters/spec.md](specs/006-optimize-csv-converters/spec.md)
 - Data Model: [specs/006-optimize-csv-converters/data-model.md](specs/006-optimize-csv-converters/data-model.md)
@@ -633,12 +703,14 @@ data/
 **Directorios protegidos por .gitignore**: Todos los directorios `data/` están protegidos para evitar commit accidental de datos sensibles de incidencias.
 
 **Convenciones de nombres**:
+
 - **Input (CSV)**: `cs-masiva-202605.csv`, `2026r4-postmortem.csv`, `cs-informe-diario.csv`
 - **Output (JSON)**: Mismo nombre base que el CSV, extensión `.json`
 - **Errores**: `{nombre-base}_errors.json`
 - **Sufijos automáticos**: `-massive` para masivas, `-postmortem` para postmortems
 
 **Ejemplos**:
+
 ```
 data/input/CS_Masiva_20260514.csv
   ↓ (conversión)
@@ -667,7 +739,7 @@ data/errors/CS_Masiva_20260514_errors.json
 ## Referencias Útiles
 
 - Campo de filtro de tiempo: "Fecha de envío"
-- URL Remedy: https://soptmc.si.orange.es/MonTMC/epsilon/remedyC/{ID}
-- URL Epsilon IA: https://soptmc.si.orange.es/MonTMC/api/epsilon/resumenIA/{ID} (proxy local en `/api/epsilon/resumenIA/{ID}` vía `serve_app.py` y bloque proxy en `nginx.conf`)
+- URL Remedy: <https://soptmc.si.orange.es/MonTMC/epsilon/remedyC/{ID}>
+- URL Epsilon IA: <https://soptmc.si.orange.es/MonTMC/api/epsilon/resumenIA/{ID}> (proxy local en `/api/epsilon/resumenIA/{ID}` vía `serve_app.py` y bloque proxy en `nginx.conf`)
 - Paleta Orange: #FF7900 (acento principal/solucionadas), #FFC08A (entradas/tono claro), #0C0B09 (tinta/backlog), #F5F3F0 (fondo página), #E2DDD5 (bordes)
 - Formato fecha: dd/mm/yyyy HH:mm a (parseDate() lo convierte a Date)

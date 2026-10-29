@@ -173,6 +173,25 @@ class SeverityEvaluator:
         urgency, urgency_reason, has_workaround = self._evaluate_urgency(ticket, epsilon_data)
 
         priority = self._calculate_matrix(impact, urgency, has_workaround)
+
+        # Regla de Etiquetado Operativo Explícito (/SL1 y /SL2) en Nomenclatura de N1 (it-severity-matrix v2)
+        title_raw = str(ticket.get("Descripción") or ticket.get("descripcion") or (epsilon_data.get("titulo") if epsilon_data else "") or "")
+        status_raw = str(ticket.get("Estatus") or (epsilon_data.get("estadoActual") if epsilon_data else "") or "").lower()
+        is_closed = "cerrad" in status_raw or "resuelt" in status_raw or "cancelad" in status_raw
+        if not is_closed:
+            if re.search(r"(?:^|/|\s|\|)SL1(?:/|\s|\||$|:)", title_raw, flags=re.IGNORECASE):
+                priority = "P1"
+                impact = "Alto"
+                impact_reason = "Etiquetado explícito /SL1 por N1 en apertura (Emergencia Crítica)."
+                if urgency == "Baja":
+                    urgency = "Alta"
+                    urgency_reason = "Emergencia /SL1 activa en tratamiento prioritario."
+            elif re.search(r"(?:^|/|\s|\|)SL2(?:/|\s|\||$|:)", title_raw, flags=re.IGNORECASE) and priority not in ("P1", "P2"):
+                priority = "P2"
+                if impact == "Bajo":
+                    impact = "Medio"
+                    impact_reason = "Etiquetado explícito /SL2 por N1 (Incidencia Mayor / Pérdida de redundancia o degradación)."
+
         is_high_priority = priority in ("P1", "P2")
 
         original_raw = ticket.get("Prioridad") or ticket.get("prioridad")
@@ -210,7 +229,7 @@ class SeverityEvaluator:
 
     @staticmethod
     def _classify_process(ticket: dict[str, Any], epsilon: Optional[dict[str, Any]]) -> str:
-        """Classifies incident into one of the 6 Critical Business Processes or Core O&M."""
+        """Classifies incident into one of the 10 Critical Business / Technical Blocks (it-severity-matrix v2: 3.1 to 3.10)."""
         text_corpus = ""
         if epsilon:
             text_corpus += f" {epsilon.get('problema', '')} {epsilon.get('impacto', '')} {epsilon.get('titulo', '')}"
@@ -221,48 +240,86 @@ class SeverityEvaluator:
         text_corpus += f" {desc} {group}"
         text_lower = text_corpus.lower()
 
-        # 1. Facturación y Cobros
+        # 3.8 Conectividad de Sedes, Call Centers (MSC) y Tiendas (RTV-TECSE RED DATOS / GNOC)
         if any(k in text_lower for k in [
-            "hpfms", "bscs", "cobro", "cobros", "factura", "facturación", "facturacion",
+            "rtv-tecse", "red datos", "ulises", "meneses", "caída de tienda", "caida de tienda",
+            "aislamiento de sede", "circuito backup", "circuito principal", "ambos circuitos"
+        ]) or ("circuito" in text_lower and any(s in text_lower for s in ["sede", "msc", "plataforma", "tienda", "wan", "mpls"])):
+            return "Conectividad de Sedes, Call Centers y Tiendas"
+
+        # 3.9 Infraestructura Core IT, Hipervisores (ESX), Servidores (PSeries), Almacenamiento (SAN), BBDD (Exadata) y Cloud (OCI/GCP)
+        if any(k in text_lower for k in [
+            "esx", "vmware", "pseries", "power9", "exadata", "hwsan", "spain almacenamiento",
+            "itx oci", "oci/gcp", "data mart fiscal", "backup osp", "hipervisor", "cabina san"
+        ]):
+            return "Infraestructura Core IT, BBDD y Cloud"
+
+        # 3.10 Autenticación / Gestión de Identidad (GDU / EVIDIAN) y Automatización Operativa (ROBOTFACTORY)
+        if any(k in text_lower for k in [
+            "gdu", "evidian", "gdu/acm", "robotfactory", "sso corporativo"
+        ]):
+            return "Identidad (GDU/EVIDIAN) y Automatización"
+
+        # 3.7 Middleware e Integración Transversal
+        if any(k in text_lower for k in [
+            "apigee", "openapi", "tibco", "gc middleware", "datapower", "occi",
+            "sbl_eai", "bus de integración", "bus de integracion", "api gateway"
+        ]):
+            return "Middleware e Integración Transversal"
+
+        # 3.5 y 3.6 Facturación y Cobros
+        if any(k in text_lower for k in [
+            "hpfms", "bscs", "open cobros", "excalibur", "sga", "mediación", "mediacion",
+            "hp-ium", "sap", "cobro", "cobros", "factura", "facturación", "facturacion",
             "tarifica", "tarificación", "tarificacion", "abono", "abonos", "penalizacion",
-            "penalización", "sop_bss", "sop_smc_bscs"
+            "penalización", "sop_bss", "sop_smc_bscs", "sop_tmc_excalibur"
         ]):
             return "Facturación y Cobros"
 
-        # 2. Prepago
-        if any(k in text_lower for k in ["prepago", "recarga", "recargas", "alta de líneas prepago", "altas prepago"]):
+        # 3.3 Prepago
+        if any(k in text_lower for k in [
+            "prepago", "recarga", "recargas", "recargas aprs", "aprs", "ocs", "sop_ocs",
+            "alta de líneas prepago", "altas prepago"
+        ]):
             return "Prepago"
 
-        # 3. Portabilidad
-        if any(k in text_lower for k in ["portabilidad", "portabilidades", "flujo 2 am", "entidad de referencia", "nodo portabilidad"]):
+        # 3.2 / 3.4 Portabilidad
+        if any(k in text_lower for k in [
+            "portabilidad", "portabilidades", "flujo 2 am", "entidad de referencia",
+            "nodo portabilidad", "pomv", "ncrn"
+        ]):
             return "Portabilidad"
 
-        # 4. Ventas
+        # 3.2 Ventas / Contratación y Captación
         if any(k in text_lower for k in [
             "comprobante de venta", "comprobantes de venta", "comprobantes", "televenta",
-            "canal comercial", "neg_camp_ceres", "ceres", "renove", "renovación de terminales",
+            "canal comercial", "neg_camp_ceres", "ceres", "updatecommercialactspa",
+            "econtrato", "pangea", "renove", "renovación de terminales",
             "renovacion de terminales", "venta", "ventas", "contratación", "contratacion"
         ]):
             return "Ventas"
 
-        # 5. Provisión
+        # 3.4 Provisión y Gestión de Pedidos
         if any(k in text_lower for k in [
             "provisión", "provision", "aprovisionamiento", "orden de móvil", "orden de fijo",
             "órdenes", "ordenes", "alta de fijo", "alta de móvil", "renovación de beneficios",
-            "renovacion de beneficios", "sop_smc_teide", "teide", "fijo apl", "ip24"
+            "renovacion de beneficios", "sop_smc_teide", "teide", "fijo apl", "ip24",
+            "sigma", "luna", "myaddress", "altair a brújula", "brújula", "brujula", "gis fibra", "activateorder"
         ]):
             return "Provisión"
 
-        # 6. Atención al Cliente (ATC)
+        # 3.1 Contacto y Atención al Cliente (ATC)
         if any(k in text_lower for k in [
-            "ficha cliente", "ficha de cliente", "des_soe_ficha", "ivr", "frontales",
-            "crm", "asistente", "des_asistente", "djingo", "liveperson", "sop_djingo",
-            "onuris", "sop_onuris", "operador", "operadores", "call center", "genesys",
-            "altitude", "atención al cliente", "atencion al cliente", "atc"
+            "ficha cliente", "ficha de cliente", "des_soe_ficha", "apl_mov_soe", "ivr", "cti",
+            "frontales", "crm", "crm jazztel", "crm4telco", "siebel", "polar", "asistente",
+            "des_asistente", "djingo", "liveperson", "sop_djingo", "onuris", "sop_onuris",
+            "onconnect", "naboo", "boreal", "app mi orange", "mijazztel", "operador",
+            "operadores", "call center", "genesys", "altitude", "atención al cliente",
+            "atencion al cliente", "atc"
         ]):
             return "Atención al Cliente (ATC)"
 
-        # 7. Operación y Monitorización (O&M) / Infraestructura
+        # Operación y Monitorización (O&M)
         if any(k in text_lower for k in [
             "altair", "gnoc", "cpe", "cortes cpe", "vtemip", "zte", "uca", "supervisión",
             "supervision", "monitorización", "monitorizacion", "cau", "cep cau agi", "ftth",
@@ -281,25 +338,41 @@ class SeverityEvaluator:
         ticket: dict[str, Any],
         epsilon: Optional[dict[str, Any]]
     ) -> str:
-        """Determines the specific threshold or ITIL rule applied from the it-severity-matrix skill."""
+        """Determines the specific threshold or ITIL rule applied from the it-severity-matrix skill (3.1 to 3.10)."""
         if priority == "P1":
             if process == "Atención al Cliente (ATC)":
-                return "ATC: Frontales/CRM (>20% desviación en 30m) o Regla de Oro N1"
+                return "ATC (3.1): Frontales/CRM (>20% desviación en 30m) o Regla de Oro N1"
             if process == "Ventas":
-                return "Ventas: Afectación canal comercial (>30% volumen) o bloqueo televenta"
+                return "Ventas (3.2): Afectación canal comercial (>30% volumen) o bloqueo contratación"
             if process == "Portabilidad":
-                return "Portabilidad: Flujo 2 AM o entidad de referencia (>2h retraso)"
+                return "Portabilidad (3.2/3.4): Flujo 2 AM o entidad de referencia (>2h retraso)"
             if process == "Prepago":
-                return "Prepago: >10% errores o >30 min sin altas/recargas"
+                return "Prepago (3.3): >10% errores o >30 min sin altas/recargas (APRS/OCS)"
             if process == "Provisión":
-                return "Provisión: Órdenes en error (>20% móvil / >30% fijo) o Regla de Oro N1"
+                return "Provisión (3.4): Órdenes en error (>20% móvil / >30% fijo) o Regla de Oro N1"
             if process == "Facturación y Cobros":
-                return "Facturación: >3h sin tarificación online o ventana +/-3 días ciclo"
+                return "Facturación/Cobros (3.5/3.6): >3h sin tarificación online o bloqueo ciclo activo"
+            if process == "Middleware e Integración Transversal":
+                return "Middleware (3.7): Caída o bloqueo transversal en bus/API (APIGEE/TIBCO/Datapower/OCCI)"
+            if process == "Conectividad de Sedes, Call Centers y Tiendas":
+                return "Conectividad Sedes (3.8): Caída simultánea de circuitos (principal + backup) o aislamiento MSC"
+            if process == "Infraestructura Core IT, BBDD y Cloud":
+                return "Infraestructura Core/Cloud (3.9): Corte troncal Cloud (OCI/GCP) o servidor/clúster sin absorción HA"
+            if process == "Identidad (GDU/EVIDIAN) y Automatización":
+                return "Identidad y Automatización (3.10): Caída global de autenticación (GDU/EVIDIAN) o ROBOTFACTORY"
             if process == "Operación y Monitorización (O&M)":
                 return "O&M: Compromiso en herramienta esencial de supervisión (Regla de Oro N1)"
             return "Regla de Oro N1: Triaje preventivo SL1/P1 en apertura por riesgo de impacto"
 
         if priority == "P2":
+            if process == "Conectividad de Sedes, Call Centers y Tiendas":
+                return "Conectividad Sedes/Tiendas (3.8 SL2): Caída de circuito único con backup activo o tienda individual"
+            if process == "Infraestructura Core IT, BBDD y Cloud":
+                return "Infraestructura Core/Cloud (3.9 SL2): Caída de nodo (ESX/PSeries/Exadata) o alerta SAN absorbida por HA"
+            if process == "Identidad (GDU/EVIDIAN) y Automatización":
+                return "Identidad y Automatización (3.10 SL2): Degradación parcial en GDU/EVIDIAN o fallo acotado en ROBOTFACTORY"
+            if process == "Middleware e Integración Transversal":
+                return "Middleware (3.7 SL2): Latencia elevada o errores intermitentes en pasarela API/bus con reintentos"
             return "SL2 Mayor: Degradación funcional o afectación en sede sin indisponibilidad global"
 
         if priority == "P3":
@@ -353,12 +426,12 @@ class SeverityEvaluator:
         if "cerrad" in status or "resuelt" in status:
             return "Baja", "Incidencia ya resuelta o estabilizada por el equipo resolutor.", has_workaround
 
-        # Urgencia Alta
-        if any(kw in text_lower for kw in self.HIGH_URGENCY_KEYWORDS) or ticket_urgency == "alta":
+        # Urgencia Alta (Remedy exporta "Crítica" o "Alta")
+        if any(kw in text_lower for kw in self.HIGH_URGENCY_KEYWORDS) or ticket_urgency in ("crítica", "critica", "alta"):
             return "Alta", "Impacto activo en vivo que requiere restablecimiento inmediato.", has_workaround
 
-        # Urgencia Media
-        if ticket_urgency == "media" or "en curso" in status or "asigna" in status:
+        # Urgencia Media (En curso / Asignado, o Urgencia Media/Medio activa sin bloqueo por espera Pendiente)
+        if "en curso" in status or "asigna" in status or (ticket_urgency in ("media", "medio") and "pendiente" not in status):
             return "Media", "Incidencia en tratamiento con contención operativa transitoria.", has_workaround
 
         # Urgencia Baja

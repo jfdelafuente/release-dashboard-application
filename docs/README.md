@@ -18,8 +18,10 @@
 - **[INFORME-PPT-POSTMORTEM.md](INFORME-PPT-POSTMORTEM.md)**: Guía de generación masiva batch del informe PPT postmortem por release (PAP/MESA) mediante `generate_postmortem_report.py`.
 - **[DASHBOARDS-API.md](DASHBOARDS-API.md)**: Catálogo de APIs, endpoints, contratos de datos e integraciones con Epsilon IA y backend CSO.
 
-### 🤖 Agentes IA y Notificaciones Ejecutivas
-- **[INCIDENT-EXECUTIVE-NOTIFICATIONS-WORKFLOW.md](INCIDENT-EXECUTIVE-NOTIFICATIONS-WORKFLOW.md)**: Manual operativo integral para procesar nuevos ficheros CSV de incidencias, redactar comunicaciones oficiales para Dirección con la skill `incident-executive-notifications` y sincronizar con producción de forma segura.
+### 🤖 Agentes IA y Gestión de Incidencias
+- **[INCIDENT-MANAGEMENT-WORKFLOW.md](INCIDENT-MANAGEMENT-WORKFLOW.md)**: Guía operativa del ciclo de vida integral de incidencias y emergencias IT Orange (triaje de 6 procesos críticos, Regla de Oro N1, cronómetros de escalado telefónico 45m/105m, ciclo de 4 estados operativos, herramientas de acción inmediata en 1-clic, gobernanza de workarounds con candado institucional CSO y traspaso a PIR).
+- **[INCIDENT-EXECUTIVE-NOTIFICATIONS-WORKFLOW.md](INCIDENT-EXECUTIVE-NOTIFICATIONS-WORKFLOW.md)**: Manual operativo integral para procesar nuevos ficheros CSV de incidencias, redactar comunicaciones oficiales para Dirección con la skill `incident-executive-notifications` y el asistente de sugerencia IA en consola, y sincronizar con producción de forma segura.
+- **[MANUAL-OPERADOR-CONSOLA-OPERATIVA.md](MANUAL-OPERADOR-CONSOLA-OPERATIVA.md)**: Manual de operación en tiempo real para el Incident Manager en la Consola de Emergencias IT Orange (triaje cuantitativo de 6 procesos críticos, ciclo de 4 estados, herramientas de acción inmediata: Reclasificación Remedy, Convocatoria War Room y Sugerir Borrador IA, cronometraje anti-drift a 45m/105m, gobernanza de workarounds con candado y reporte normalizado en 4 bloques).
 
 ### ⚙️ Conversores y Tratamiento de Datos
 - **[../converters/docs/API.md](../converters/docs/API.md)**: Contrato de datos y especificación de esquemas JSON generados (`_metadata` + `data`).
@@ -56,6 +58,7 @@
 | **Release KPIs (Histórico)** | `dashboards/release-kpis/index.html` | `:8080` / `:8081` | Serie histórica de KPIs por release y análisis de tendencias. |
 | **Reportes de Incidencias** | `dashboards/reportes-incidencias/index.html` | `:8080` / `:8081` | Gestión tabular, reportes de impacto y exportación de informes ejecutivos PowerPoint. |
 | **Catálogo de Agentes IA** | `dashboards/agents-catalog/index.html` | `:8080` / `:8081` | Catálogo de agentes IA y skills, visor de prompts/fichas técnicas y generador de comandos CLI de despliegue. |
+| **Consola de Emergencias IT (IM)** | `dashboards/incident-manager-monitor/index.html` | `:8080` / `:8081` | Consola operativa táctica aislada para el Incident Manager: triaje cuantitativo, ciclo de 4 estados, herramientas de acción inmediata (Remedy/War Room/IA), escalados y gobernanza de crisis. |
 
 > `dashboards/index.html` redirige de forma automática al **Portal General** (`/dashboards/portal/`).
 

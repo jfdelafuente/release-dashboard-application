@@ -225,31 +225,59 @@ Verás que las incidencias que antes figuraban en estado `"pendiente"` ahora mue
 
 ---
 
-## 🖥️ Consola Operativa: Monitor de Incidentes Mayores (Cockpit Incident Manager)
+## 🖥️ Consola Operativa: Consola de Emergencias IT Orange (Cockpit Incident Manager)
 
-Para facilitar la supervisión del estado de las redacciones de agente sin depender exclusivamente de comandos de terminal, el sistema cuenta con un **Frontal Web de Monitorización del Incident Manager** (*Cockpit IM*).
+Para facilitar la supervisión del estado de las redacciones de agente y la gobernanza en tiempo real de situaciones de crisis según el procedimiento corporativo de **Orange España**, el sistema cuenta con la **Consola Operativa de Emergencias IT del Incident Manager** (*Cockpit IM*).
 
 ### Acceso a la Consola
 * **Entorno de Desarrollo Local:** [http://localhost:8080/dashboards/incident-manager-monitor/](http://localhost:8080/dashboards/incident-manager-monitor/)
 * **Entorno de Producción VPS:** [http://infocodes.si.orange.es:8081/dashboards/incident-manager-monitor/](http://infocodes.si.orange.es:8081/dashboards/incident-manager-monitor/)
 
 > [!NOTE]
-> **Aislamiento Estricto:** Esta herramienta es de uso exclusivo para el Incident Manager y el equipo de guardia operativa. **No aparece enlazada en el portal general público** (`/dashboards/portal/`) para mantener limpio el panel de negocio. Su acceso se realiza mediante URL directa o marcadores de navegador.
+> **Aislamiento Estricto:** Esta herramienta es de uso exclusivo para el Incident Manager y el equipo de guardia operativa. **No aparece enlazada en el portal general público** (`/dashboards/portal/` o `/dashboards/index.html`) para mantener aislada la gestión de crisis IT. Su acceso se realiza mediante URL directa o marcadores de navegador.
+> 
+> 📖 Para consultar la guía de uso detallada durante los turnos de guardia, consulta el [Manual del Operador de la Consola Operativa](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/docs/MANUAL-OPERADOR-CONSOLA-OPERATIVA.md).
 
-### Capacidades del Cockpit:
-1. **Barra de KPIs en Tiempo Real:**
+### Capacidades de la Consola Operativa de Emergencias:
+1. **Barra de KPIs de Emergencia en Tiempo Real:**
    * Contador de incidencias pendientes de redacción con alerta visual dinámica (rojo si $> 0$, verde si $= 0$).
-   * Desglose de oficiales emitidos, total de activas, criticidad P1/P2 y discrepancias de triaje (subescalaciones N1).
-2. **Cola Operativa Filtrable:**
-   * Conmutador inmediato entre *"Solo Pendientes"* (vista por defecto enfocada al turno) y *"Todas las Activas"*.
-   * Filtros dinámicos por Severidad (P1, P2), por Proceso Crítico de Negocio (6 procesos ITIL), checkbox de discrepancias y buscador de texto libre con respuesta instantánea.
-3. **Inspección de Contexto y Copia de Prompts en 1 Clic:**
-   * Muestra el Proceso Crítico y Criterio asignado, sistemas afectados y acceso directo al modal interactivo de Epsilon IA (`Ver Resumen Epsilon`).
-   * Pestañas de Fase (`Apertura`, `Seguimiento`, `Cierre`) con visor del prompt precalculado para `incident-reporter` y botón **"Copiar Prompt para el Agente"** con feedback temporal al portapapeles.
-4. **Asistente de Ingesta Integrado con Validación Reactiva:**
-   * Contadores en vivo de longitud de palabras para la Versión Completa ($\le 90$ palabras, monopárrafo) y Versión Breve ($\le 30$ palabras).
+   * Desglose de oficiales emitidos, total de activas y criticidad P1/SL1 y P2/SL2.
+   * Contador de **Subescalaciones (Discrepancias de Triaje)** desglosando casos SL1 vs SL2 con métricas objetivas.
+   * Contador de **Alertas de Escalado Telefónico (≥45m / +1h)** con resaltado visual.
+   * Contador de **Workarounds Pendientes CSO** con aviso de bloqueo de desescalada.
+2. **Detección Cuantitativa de Discrepancias (Regla de Oro N1):**
+   * Despliega la tabla comparativa de Severidad Remedy Nominal vs Severidad ITIL Orange (SL1/SL2).
+   * Identifica el Proceso Crítico afectado (ATC, Ventas, Facturación, Provisión, Red o Sistemas Core) y el **umbral numérico exacto superado** (ej. $>100$ llamadas en cola ATC, indisponibilidad POS $>50\%$ tiendas, corte de provisión $>500$ líneas).
+3. **Cronometraje Anti-Drift y Alertas de Escalado Telefónico:**
+   * Cronómetro en vivo de minutos transcurridos desde la apertura Remedy (`minutos_desde_apertura`), calculado sobre epoch UTC cada 10s con sobrecarga de CPU $<0.1\%$.
+   * **Alerta 45 min (1er Escalado):** Banner ámbar que exige convocatoria obligatoria a resolutores N2/N3 vía telefónica/audio (Regla de Oro).
+   * **Alerta +1h / 105 min (2º Escalado):** Banner rojo crítico que exige escalado telefónico a Dirección y Customer & Service Ops (IM-CSO).
+4. **Gobernanza de Workarounds y Bloqueo Institucional de Desescaladas:**
+   * Banner institucional con candado 🔒 (`.im-gov-lock-banner`).
+   * Bloqueo estricto de desescaladas en la consola: una mitigación provisional **nunca** permite rebajar la severidad mientras el impacto en clientes siga activo y sin la autorización explícita de **IM-CSO**.
+5. **Reporte Normalizado de Emergencia en 4 Bloques (1-Click Copy):**
+   * Generador de reporte estructurado oficial con monospaced styling:
+     * `[1] CLASIFICACIÓN DEL TICKET`: ID, Severidad ITIL, Proceso Crítico, Umbral de Emergencia, Sistemas e Impacto.
+     * `[2] ESTADO DE COMUNICACIONES Y SLAS`: Tiempo transcurrido, estado de 1ª notificación (<20 min) y frecuencia.
+     * `[3] PLAN DE ACCIÓN Y GOBERNANZA DE WORKAROUNDS`: Diagnóstico técnico, estatus de workaround y gobernanza CSO.
+     * `[4] ESTADO DE ESCALADO TELEFÓNICO`: Fase temporal, canal telefónico obligatorio y matriz RACI.
+   * Botón **"Copiar Reporte"** con retroalimentación instantánea al portapapeles y anuncio ARIA para lectores de pantalla.
+6. **Alternancia de Modos de Consola:**
+   * Botón **"Modo Emergencias" / "Modo Compacto"** para desplegar u ocultar los bloques operativos según la intensidad del turno de guardia.
+7. **Protocolo de Emergencias IT & Matriz RACI (Drawer / Modal):**
+   * Botón de cabecera **"Protocolo & Contactos"** que despliega el modal accesible con la matriz RACI corporativa:
+     * **Incident Manager (IM):** Responsable (R) de triaje, cronometraje, convocatoria telefónica y reporte.
+     * **Customer & Service Ops (IM-CSO):** Aprobador (A) exclusivo de mitigaciones (workarounds) y escalados a Dirección.
+   * Enlaces directos a directorios de guardias y matrices de contacto: **GRIAL Orange** (`https://grial.orange.es`) y **Confluence Operaciones MasMóvil** (`https://confluence.masmovil.com`).
+8. **Asistente de Ingesta Integrado con Validación Reactiva y Sugerencia IA:**
+   * Botón **"✨ Sugerir Borrador IA"** (en la cabecera del editor) y **"✨ Sugerir"** (en la barra de ingesta rápida) para rellenar de forma inmediata un borrador normativo conforme a los límites de Orange ($\le 90$ palabras monopárrafo para Versión Completa y $\le 30$ palabras para Versión Breve).
+   * Contadores en vivo de longitud de palabras con alerta visual en rojo ante excesos.
    * Botón **"Guardar en Almacén Oficial"** que persiste directamente vía API en `data/agent_executive_messages.json` y regenera el catálogo en vivo.
    * Botón de contingencia **"Copiar Comando CLI"** que genera la sintaxis exacta de `update_agent_message.py` lista para pegar en terminal si se opera sin conectividad API.
+9. **Herramientas de Ejecución Rápida y Ciclo de Vida (4 Estados):**
+   * Botón **"📋 Reclasif." / "Copiar Solicitud Reclasificación Remedy"** para generar la justificación formal ITIL al grupo resolutor N1.
+   * Botón **"📞 War Room" / "Convocatoria War Room Teams"** para citar a canal de audio a los técnicos ante escalados $\ge 45\text{m}$.
+   * Selector del **Ciclo de Vida de 4 Estados** (`Pendiente`, `Comunicada`, `En Seguimiento`, `Descartada`) con persistencia en `localStorage` y filtros reactivos `Solo Pendientes` vs `Todas las Activas`.
 
 ---
 
