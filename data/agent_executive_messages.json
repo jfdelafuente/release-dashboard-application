@@ -3,7 +3,7 @@
     "version": "1.0.0",
     "description": "Almacén oficial de redacciones ejecutivas generadas por el Agente incident-reporter",
     "source": "agents/it-incidents/incident-reporter.md",
-    "updated_at": "2026-10-28T11:24:21Z"
+    "updated_at": "2026-10-29T07:44:41Z"
   },
   "incidents": {
     "INC000004065609": {
@@ -650,6 +650,58 @@
         "origen": "incident-reporter",
         "conteo_palabras_completo": 66,
         "conteo_palabras_breve": 23
+      }
+    },
+    "INC000004152079": {
+      "apertura": {
+        "completo": "Se declara incidencia crítica P1 (INC000004152079) por un fallo funcional en el proceso de facturación de Lego Deporte (INCIFAC-1540 Stihl). La anomalía impacta de forma masiva en la emisión y liquidación de cuotas de clientes vinculados a la promoción deportiva, bloqueando la conciliación de cargos sin procedimiento alternativo en el ciclo activo. Los equipos de SOP_TMC_EXCALIBUR y facturación intervienen las rutinas de tarificación para corregir la discrepancia y asegurar la emisión correcta de facturas. Próxima actualización en 30 minutos.",
+        "breve": "Apertura P1 (INC000004152079): Error de facturación en Lego Deporte (Stihl) bloquea liquidación de cuotas en ciclo activo. Soporte técnico interviniendo Excalibur. Próxima actualización 30 min.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 79,
+        "conteo_palabras_breve": 25
+      },
+      "seguimiento": {
+        "completo": "Seguimiento de la incidencia P1 (INC000004152079). El equipo de soporte SOP_TMC_EXCALIBUR ha aislado la regla errónea de tarificación asociada a los paquetes Lego Deporte y prepara el script de reprocesado de facturas afectadas. Se ha completado la validación en entorno de preproducción para evitar duplicidad de cobros y se inicia la ejecución controlada en producción bajo supervisión de los especialistas de facturación. Se continúa monitorizando el ciclo para confirmar la total regularización de los cargos emitidos.",
+        "breve": "Seguimiento P1 (INC000004152079): Aislada regla errónea de facturación en Lego Deporte; ejecutando script de reprocesado en Excalibur para regularizar cobros del ciclo activo.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 76,
+        "conteo_palabras_breve": 23
+      },
+      "cierre": {
+        "completo": "Cerrada la incidencia crítica P1 (INC000004152079). Concluido con éxito el reprocesamiento y ajuste de las tarifas de Lego Deporte en los sistemas de facturación de SOP_TMC_EXCALIBUR. Se ha verificado la correcta emisión y liquidación de las cuotas de todos los clientes afectados, normalizándose el ciclo comercial sin descuadres contables ni bloqueos operativos. El servicio permanece monitorizado preventivamente.",
+        "breve": "Cierre P1 (INC000004152079): Subsanado error de facturación en Lego Deporte en Excalibur; cuotas y liquidaciones de clientes regularizadas satisfactoriamente.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 57,
+        "conteo_palabras_breve": 19
+      }
+    },
+    "INC000004169386": {
+      "apertura": {
+        "completo": "Se declara incidencia crítica P1 (INC000004169386) por error funcional en Ficha Cliente Orange reportado desde la sede de ISGF en Murcia. La incidencia genera un bloqueo masivo en la consulta y gestión de clientes y pedidos, impidiendo tramitar operaciones comerciales y de provisión sin alternativa viable en el frontal de atención. Los equipos resolutores de SOP_SMC_TEIDE y soporte técnico se encuentran diagnosticando la integración de servicios y bases de datos para restablecer la funcionalidad. Próxima actualización en 30 minutos.",
+        "breve": "Apertura P1 (INC000004169386): Error funcional en Ficha Cliente Orange bloquea operativa de clientes y provisión en ISGF Murcia. Soporte técnico interviniendo. Próxima actualización 30 min.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 79,
+        "conteo_palabras_breve": 25
+      },
+      "seguimiento": {
+        "completo": "Seguimiento de la incidencia P1 (INC000004169386). Los equipos de SOP_SMC_TEIDE han identificado una latencia anómala en la conexión de Ficha Cliente Orange con los servicios de catálogo y órdenes en la sede de ISGF Murcia. Se ha procedido a reiniciar y reequilibrar los nodos de conexión afectados, observándose una disminución gradual de errores en las consultas de operadores. Se mantiene el soporte en tiempo real y la validación cruzada hasta confirmar la estabilidad integral de la plataforma.",
+        "breve": "Seguimiento P1 (INC000004169386): Reequilibrados nodos de conexión de Ficha Cliente Orange en ISGF Murcia; recuperación progresiva bajo monitorización activa de SOP_SMC_TEIDE.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 77,
+        "conteo_palabras_breve": 21
+      },
+      "cierre": {
+        "completo": "Cerrada la incidencia crítica P1 (INC000004169386) en Ficha Cliente Orange. Restablecida por completo la comunicación y carga de datos en los puestos de atención de ISGF Murcia tras normalizar los servicios de conectividad y balanceo en SOP_SMC_TEIDE. Los operadores gestionan clientes y órdenes de provisión con tiempos de respuesta óptimos y sin registrar bloqueos, quedando el servicio bajo supervisión preventiva ordinaria.",
+        "breve": "Cierre P1 (INC000004169386): Restablecido funcionamiento de Ficha Cliente Orange en ISGF Murcia; tramitación de órdenes y atención comercial totalmente normalizadas.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 61,
+        "conteo_palabras_breve": 20
       }
     }
   }
