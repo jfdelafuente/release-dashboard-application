@@ -3,7 +3,7 @@
     "version": "1.0.0",
     "description": "Almacén oficial de redacciones ejecutivas generadas por el Agente incident-reporter",
     "source": "agents/it-incidents/incident-reporter.md",
-    "updated_at": "2026-10-30T13:09:48Z"
+    "updated_at": "2026-10-30T13:24:11Z"
   },
   "incidents": {
     "INC000004065609": {
@@ -748,12 +748,12 @@
     },
     "INC000004170500": {
       "apertura": {
-        "completo": "Se declara incidencia crítica P1 (INC000004170500) por error funcional en Ficha Cliente Orange reportado desde la plataforma de Konecta en Sevilla. La anomalía bloquea de forma generalizada las consultas de abonados y la tramitación comercial en los puestos de atención sin canal alternativo en el frontal. El equipo resolutor APL_MOV_SOE se encuentra analizando la integración y las llamadas a microservicios para aislar el fallo y reanudar el servicio. Próxima actualización en 30 minutos.",
-        "breve": "Apertura P1 (INC000004170500): Error funcional en Ficha Cliente Orange bloquea atención en Konecta Sevilla. APL_MOV_SOE investigando backend. Próxima actualización 30 min.",
+        "completo": "Se declara incidencia crítica P1 (INC000004170500) por error funcional en Ficha Cliente Orange al abrir el desplegable de Compromisos de Permanencia y Venta a Plazos. El fallo en el backend bffclientdashboard (customerAgreement) afecta a ~1.129 operadores en cinco plataformas (Konecta Sevilla, Foundever, OEST Oviedo, Jazzplat e ISGF Murcia), bloqueando la consulta de penalizaciones sin canal alternativo. El equipo APL_MOV_SOE y DES_SOE_FICHA intervienen en el servicio backend para restablecer las consultas. Próxima actualización en 30 minutos.",
+        "breve": "Apertura P1 (INC000004170500): Fallo en consulta de Compromisos en Ficha Cliente Orange; afecta a ~1.129 operadores en 5 sedes. Diagnóstico de backend en curso.",
         "generado_por_agente": true,
         "origen": "incident-reporter",
-        "conteo_palabras_completo": 73,
-        "conteo_palabras_breve": 21
+        "conteo_palabras_completo": 75,
+        "conteo_palabras_breve": 24
       },
       "seguimiento": {
         "completo": "Seguimiento de la incidencia P1 (INC000004170500) en Ficha Cliente Orange. El equipo de APL_MOV_SOE ha detectado una degradación en las conexiones hacia el pool de servicios móviles que causaba timeouts en las peticiones emitidas desde Konecta Sevilla. Se ha ejecutado el reciclado de instancias de frontend y el rebalanceo de tráfico, registrándose una disminución sustancial de transacciones fallidas. Los operadores reanudan progresivamente las consultas de clientes bajo supervisión activa del equipo técnico.",
@@ -774,28 +774,28 @@
     },
     "INC000004171650": {
       "apertura": {
-        "completo": "Se declara incidencia crítica P1 (INC000004171650) por error funcional en Ficha de Cliente Orange en la plataforma ISGF de Murcia. La anomalía en el backend bffclientdashboard y el microservicio InteractionClient bloquea el botón de rechazo de campañas, impidiendo a los operadores tipificar llamadas e informar compromisos de pago sin canal alternativo en el frontal. Los equipos técnicos se encuentran diagnosticando el CircuitBreaker del servicio para restablecer la validación y recuperar la operativa comercial. Próxima actualización en 30 minutos.",
-        "breve": "Apertura P1 (INC000004171650): Fallo en Ficha de Cliente Orange bloquea rechazo de campañas y tipificación en ISGF Murcia. Soporte investigando microservicios. Próxima actualización 30 min.",
+        "completo": "Se declara incidencia crítica P1 (INC000004171650) por error funcional en Ficha de Cliente Orange en la plataforma ISGF de Murcia. La anomalía en el endpoint bffclientdashboard/campaignRejection y la integración con InteractionClient bloquea el botón de rechazo de campañas, impidiendo a los operadores tipificar llamadas e informar compromisos de pago sin canal alternativo en el frontal. Los equipos técnicos diagnostican el CircuitBreaker del servicio para restablecer la validación y recuperar la operativa comercial. Próxima actualización en 30 minutos.",
+        "breve": "Apertura P1 (INC000004171650): Bloqueo en rechazo de campañas en Ficha Cliente para ISGF Murcia. Diagnóstico de validación en InteractionClient en curso.",
         "generado_por_agente": true,
         "origen": "incident-reporter",
-        "conteo_palabras_completo": 78,
-        "conteo_palabras_breve": 25
+        "conteo_palabras_completo": 77,
+        "conteo_palabras_breve": 21
       },
       "seguimiento": {
-        "completo": "Seguimiento de la incidencia crítica P1 (INC000004171650) en Ficha de Cliente Orange. El equipo técnico ha identificado que las peticiones al endpoint de rechazo de campañas disparaban el CircuitBreaker de InteractionClient por un fallo en la validación de respuestas. Se ha implementado un ajuste de configuración en el microservicio bffclientdashboard y se verifica la absorción correcta de peticiones en ISGF Murcia. Los puestos de atención reanudan gradualmente la tipificación de llamadas bajo monitorización operativa estrecha.",
-        "breve": "Seguimiento P1 (INC000004171650): Ajustada validación en InteractionClient de Ficha Cliente Orange; operadores de ISGF Murcia reanudan tipificación bajo supervisión técnica activa.",
+        "completo": "Seguimiento de la incidencia crítica P1 (INC000004171650) en Ficha de Cliente Orange. Los equipos de desarrollo de DES_SOE_FICHA han aislado el error de validación en InteractionClient asociado a la llamada campaignRejection y preparan un ajuste en el backend para restablecer el guardado de motivos de rechazo. La afectación sigue circunscrita a los 10 operadores de ISGF Murcia sin desvío alternativo. Se prevé despliegue del parche y pruebas de confirmación en 30 minutos.",
+        "breve": "Seguimiento P1 (INC000004171650): DES_SOE_FICHA prepara ajuste de validación en backend de Ficha Cliente. Impacto acotado en Murcia. Pruebas en 30 min.",
         "generado_por_agente": true,
         "origen": "incident-reporter",
-        "conteo_palabras_completo": 75,
+        "conteo_palabras_completo": 72,
         "conteo_palabras_breve": 21
       },
       "cierre": {
-        "completo": "Se da por cerrada la incidencia crítica P1 (INC000004171650) en Ficha de Cliente Orange. Se ha restablecido plenamente el servicio de validación de rechazo de campañas en InteractionClient y el backend bffclientdashboard tras corregir el control de respuestas del microservicio. Los operadores del centro ISGF de Murcia tipifican llamadas y gestionan compromisos de pago con normalidad y sin errores en el frontal. La operativa comercial queda completamente recuperada y se mantiene la supervisión preventiva habitual.",
-        "breve": "Cierre P1 (INC000004171650): Restablecido rechazo de campañas y tipificación en Ficha Cliente Orange para ISGF Murcia tras estabilizar microservicios; servicio 100% operativo.",
+        "completo": "Se da por cerrada la incidencia crítica P1 (INC000004171650) en Ficha de Cliente Orange. Se ha subsanado el error de validación en el backend bffclientdashboard y restablecido el comportamiento nominal del endpoint campaignRejection, permitiendo a los operadores de ISGF Murcia tipificar el rechazo de campañas con normalidad y sin fallos de CircuitBreaker. La operativa comercial queda restablecida al 100% y el servicio estabilizado bajo supervisión rutinaria.",
+        "breve": "Cierre P1 (INC000004171650): Subsanado error en endpoint de rechazo de campañas en Ficha Cliente Orange; operativa de tipificación 100% restablecida en ISGF Murcia.",
         "generado_por_agente": true,
         "origen": "incident-reporter",
-        "conteo_palabras_completo": 75,
-        "conteo_palabras_breve": 22
+        "conteo_palabras_completo": 66,
+        "conteo_palabras_breve": 23
       }
     },
     "INC000004171670": {
