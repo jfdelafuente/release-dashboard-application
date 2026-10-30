@@ -31,53 +31,53 @@
 
     <!-- 1. Cabecera Institucional y Controles de Inspección -->
     <header class="triage-header" role="banner">
-      <div class="triage-brand">
-        <div class="triage-logo-box" aria-label="Logo Orange">
-          <!-- Icono Cuadrado Naranja Oficial -->
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <rect width="24" height="24" rx="3" fill="#FFFFFF"/>
-            <rect x="3" y="15" width="18" height="6" fill="#FF7900"/>
-          </svg>
+      <div class="triage-header-main">
+        <div class="triage-brand">
+          <div class="triage-logo-box" aria-label="Logo Orange">
+            <!-- Icono Cuadrado Naranja Oficial -->
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <rect width="24" height="24" rx="3" fill="#FFFFFF"/>
+              <rect x="3" y="15" width="18" height="6" fill="#FF7900"/>
+            </svg>
+          </div>
+          <div class="triage-title-group">
+            <span class="triage-eyebrow">Orange Tech Operations · Incident Management</span>
+            <h1 class="triage-title">Consola de Triaje y Reclasificación Automática</h1>
+            <p class="triage-subtitle">Módulo 1: Motor de Inspección Continua, Umbrales Críticos y Alertas de Subescalación (SL1/P1 & SL2/P2)</p>
+          </div>
         </div>
-        <div class="triage-title-group">
-          <span class="triage-eyebrow">Orange Tech Operations · Incident Management</span>
-          <h1 class="triage-title">Consola de Triaje y Reclasificación Automática</h1>
-          <p class="triage-subtitle">Módulo 1: Motor de Inspección Continua, Umbrales Críticos y Alertas de Subescalación (SL1/P1 & SL2/P2)</p>
+
+        <div class="triage-header-actions">
+          <!-- Indicador de conexión / inspección activa en vivo -->
+          <div id="live-pill" class="triage-live-pill" aria-label="Estado de la inspección continua">
+            <span class="triage-pulse-dot" aria-hidden="true"></span>
+            <span id="live-status-text">Inspección Activa</span>
+          </div>
+
+          <!-- Selector de frecuencia de inspección -->
+          <label for="auto-refresh-select" class="sr-only">Frecuencia de inspección automática</label>
+          <select id="auto-refresh-select" class="triage-select" title="Frecuencia de actualización continua">
+            <option value="15000">Inspección: cada 15s</option>
+            <option value="30000" selected>Inspección: cada 30s</option>
+            <option value="60000">Inspección: cada 60s</option>
+            <option value="0">Inspección: Pausada</option>
+          </select>
+
+          <!-- Botón de inspección manual inmediata -->
+          <button id="btn-refresh-now" class="triage-btn" title="Escanear catálogo ahora">
+            <span aria-hidden="true">🔄</span>
+            <span>Inspeccionar Ahora</span>
+          </button>
+
+          <!-- Botón de consulta de criterios oficiales de umbrales -->
+          <button id="btn-help-criteria" class="triage-btn triage-btn-primary btn-open-criteria" title="Consultar Umbrales de los 6 Procesos Críticos y Reglas de Oro">
+            <span aria-hidden="true">📘</span>
+            <span>Criterios Oficiales</span>
+          </button>
         </div>
       </div>
 
-      <div class="triage-header-actions">
-        <!-- Indicador de conexión / inspección activa en vivo -->
-        <div id="live-pill" class="triage-live-pill" aria-label="Estado de la inspección continua">
-          <span class="triage-pulse-dot" aria-hidden="true"></span>
-          <span id="live-status-text">Inspección Activa</span>
-        </div>
-
-        <!-- Selector de frecuencia de inspección -->
-        <label for="auto-refresh-select" class="sr-only">Frecuencia de inspección automática</label>
-        <select id="auto-refresh-select" class="triage-select" title="Frecuencia de actualización continua">
-          <option value="15000">Inspección: cada 15s</option>
-          <option value="30000" selected>Inspección: cada 30s</option>
-          <option value="60000">Inspección: cada 60s</option>
-          <option value="0">Inspección: Pausada</option>
-        </select>
-
-        <!-- Botón de inspección manual inmediata -->
-        <button id="btn-refresh-now" class="triage-btn" title="Escanear catálogo ahora">
-          <span aria-hidden="true">🔄</span>
-          <span>Inspeccionar Ahora</span>
-        </button>
-
-        <!-- Botón de consulta de criterios oficiales de umbrales -->
-        <button id="btn-help-criteria" class="triage-btn triage-btn-primary btn-open-criteria" title="Consultar Umbrales de los 6 Procesos Críticos y Reglas de Oro">
-          <span aria-hidden="true">📘</span>
-          <span>Criterios Oficiales</span>
-        </button>
-      </div>
-    </header>
-
-    <!-- 2. Función 1: Panel de Ingesta e Inspección Continua -->
-    <section class="triage-inspection-panel" aria-label="Función 1: Ingesta e Inspección Continua">
+      <!-- Barra de Metadatos de Origen de Datos e Inspección integrada en cabecera -->
       <div class="triage-source-meta-bar">
         <div class="triage-source-info">
           <span class="triage-source-badge">
@@ -90,7 +90,10 @@
           <strong id="last-scan-label">Sincronizando...</strong>
         </div>
       </div>
+    </header>
 
+    <!-- 2. Función 1: Panel de Ingesta e Inspección Continua -->
+    <section class="triage-inspection-panel" aria-label="Función 1: Ingesta e Inspección Continua">
       <!-- Métricas de Ingesta Global (Solo Incidencias Activas) -->
       <div class="triage-kpi-grid">
         <div class="triage-kpi-card kpi-scanned">

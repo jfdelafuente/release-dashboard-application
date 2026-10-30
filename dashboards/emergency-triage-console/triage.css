@@ -108,16 +108,23 @@ body {
    -------------------------------------------------------------------------- */
 .triage-header {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 20px;
-  padding: 22px 28px;
+  flex-direction: column;
+  gap: 14px;
+  padding: 20px 24px 16px 24px;
   background: var(--triage-surface);
   border: 1px solid var(--triage-border);
   border-radius: var(--radius-lg);
-  margin-bottom: 24px;
+  margin-bottom: 20px;
   box-shadow: var(--shadow-card);
+}
+
+.triage-header-main {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 18px;
+  width: 100%;
 }
 
 .triage-brand {
@@ -297,7 +304,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: 16px;
-  margin-bottom: 24px;
+  margin-bottom: 20px;
 }
 
 .triage-source-meta-bar {
@@ -306,13 +313,13 @@ body {
   align-items: center;
   flex-wrap: wrap;
   gap: 12px;
-  background: var(--triage-surface);
-  border: 1px solid var(--triage-border);
-  border-radius: var(--radius-md);
-  padding: 12px 20px;
-  font-size: 13px;
+  background: #FAF8F5;
+  border: 1px solid var(--triage-border-light);
+  border-radius: var(--radius-sm);
+  padding: 7px 14px;
+  font-size: 12px;
   color: var(--triage-text-muted);
-  box-shadow: var(--shadow-subtle);
+  width: 100%;
 }
 
 .triage-source-info {
@@ -1538,12 +1545,20 @@ body {
    -------------------------------------------------------------------------- */
 @media (max-width: 900px) {
   .triage-header {
+    padding: 16px;
+  }
+  .triage-header-main {
     flex-direction: column;
     align-items: flex-start;
   }
   .triage-header-actions {
     width: 100%;
     justify-content: flex-start;
+  }
+  .triage-source-meta-bar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
   }
   .triage-control-bar {
     flex-direction: column;
