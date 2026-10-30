@@ -18,6 +18,7 @@ import json
 import logging
 from pathlib import Path
 import re
+import ssl
 import sys
 import time
 import urllib.error
@@ -761,6 +762,12 @@ class EpsilonClient:
     """Client for Epsilon Resumen IA service with local file caching and graceful offline handling."""
 
     CACHE_TTL_SECONDS = 900  # 15 minutes
+    CORPORATE_URL = "https://soptmc.si.orange.es/MonTMC/api/epsilon/resumenIA"
+    DEFAULT_CANDIDATE_URLS = [
+        "http://127.0.0.1:8081/api/epsilon/resumenIA",
+        "http://127.0.0.1:8080/api/epsilon/resumenIA",
+        "https://soptmc.si.orange.es/MonTMC/api/epsilon/resumenIA",
+    ]
 
     def __init__(self, base_url: str = "http://127.0.0.1:8081/api/epsilon/resumenIA", cache_dir: Optional[Path] = None, max_consecutive_failures: int = 3):
         self.base_url = base_url.rstrip("/")
@@ -769,9 +776,31 @@ class EpsilonClient:
         self.max_consecutive_failures = max_consecutive_failures
         self._server_offline = False
         self._consecutive_failures = 0
+        self._allow_fallback = (base_url.rstrip("/") == "http://127.0.0.1:8081/api/epsilon/resumenIA")
+        self._fallback_urls = [u for u in self.DEFAULT_CANDIDATE_URLS if u != self.base_url]
 
     def _get_cache_path(self, incident_code: str) -> Path:
         return self.cache_dir / f"{incident_code}.json"
+
+    def _fetch_from_url(self, target_base: str, incident_code: str) -> Optional[dict[str, Any]]:
+        url = f"{target_base}/{incident_code}"
+        req = urllib.request.Request(
+            url,
+            headers={"User-Agent": "ReleaseDashboard-Evaluator/1.0", "Accept": "application/json"}
+        )
+        ssl_ctx = None
+        if url.startswith("https://"):
+            ssl_ctx = ssl.create_default_context()
+            ssl_ctx.check_hostname = False
+            ssl_ctx.verify_mode = ssl.CERT_NONE
+
+        with urllib.request.urlopen(req, timeout=5.0, context=ssl_ctx) as resp:
+            if resp.status == 200:
+                payload = json.loads(resp.read().decode("utf-8"))
+                data = payload.get("data") if isinstance(payload, dict) and "data" in payload else payload
+                if data:
+                    return data
+        return None
 
     def get_resumen_ia(self, incident_code: str, force_refresh: bool = False) -> Optional[dict[str, Any]]:
         """Fetches AI summary for an incident, using local cache when valid."""
@@ -791,26 +820,35 @@ class EpsilonClient:
         if self._server_offline:
             return None
 
-        url = f"{self.base_url}/{incident_code}"
-        req = urllib.request.Request(
-            url,
-            headers={"User-Agent": "ReleaseDashboard-Evaluator/1.0", "Accept": "application/json"}
-        )
-
         try:
-            with urllib.request.urlopen(req, timeout=5.0) as resp:
-                if resp.status == 200:
-                    self._consecutive_failures = 0
-                    payload = json.loads(resp.read().decode("utf-8"))
-                    data = payload.get("data") if isinstance(payload, dict) and "data" in payload else payload
-                    if data:
-                        try:
-                            with open(cache_file, "w", encoding="utf-8") as f:
-                                json.dump(data, f, ensure_ascii=False, indent=2)
-                        except Exception as write_err:
-                            logger.debug("No se pudo escribir caché para %s: %s", incident_code, write_err)
-                        return data
+            data = self._fetch_from_url(self.base_url, incident_code)
+            if data:
+                self._consecutive_failures = 0
+                try:
+                    with open(cache_file, "w", encoding="utf-8") as f:
+                        json.dump(data, f, ensure_ascii=False, indent=2)
+                except Exception as write_err:
+                    logger.debug("No se pudo escribir caché para %s: %s", incident_code, write_err)
+                return data
         except (urllib.error.URLError, urllib.error.HTTPError, TimeoutError, OSError) as net_err:
+            if self._allow_fallback and self._fallback_urls:
+                for candidate in list(self._fallback_urls):
+                    try:
+                        cand_data = self._fetch_from_url(candidate, incident_code)
+                        if cand_data:
+                            logger.info("Conectado con éxito a endpoint alternativo de Epsilon: %s", candidate)
+                            self.base_url = candidate
+                            self._fallback_urls.remove(candidate)
+                            self._consecutive_failures = 0
+                            try:
+                                with open(cache_file, "w", encoding="utf-8") as f:
+                                    json.dump(cand_data, f, ensure_ascii=False, indent=2)
+                            except Exception as write_err:
+                                logger.debug("No se pudo escribir caché para %s: %s", incident_code, write_err)
+                            return cand_data
+                    except (urllib.error.URLError, urllib.error.HTTPError, TimeoutError, OSError):
+                        pass
+
             self._consecutive_failures += 1
             if self._consecutive_failures >= self.max_consecutive_failures:
                 self._server_offline = True
