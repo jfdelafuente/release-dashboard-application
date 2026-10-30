@@ -225,6 +225,32 @@ def parse_incident_datetime(raw: Optional[str]) -> Optional[datetime]:
     return None
 
 
+def format_operational_duration(minutes: Optional[int]) -> str:
+    """Formats an operational duration in minutes into a human-readable string.
+    
+    Examples:
+    - None -> "En curso (reciente)"
+    - 15 -> "15m"
+    - 105 -> "1h 45m (105m)"
+    - 74616 -> "51d 19h (74616m)"
+    """
+    if minutes is None:
+        return "En curso (reciente)"
+    if minutes < 0:
+        return "0m"
+    if minutes < 60:
+        return f"{minutes}m"
+    
+    hours = minutes // 60
+    rem_mins = minutes % 60
+    if hours < 24:
+        return f"{hours}h {rem_mins}m ({minutes}m)"
+    
+    days = hours // 24
+    rem_hours = hours % 24
+    return f"{days}d {rem_hours}h ({minutes}m)"
+
+
 def compute_emergency_sla_status(
     created_at: Optional[datetime],
     reference_time: Optional[datetime] = None
@@ -1122,25 +1148,31 @@ class ExecutiveMessageGenerator:
             sistemas_list = [ticket["Grupo asignado"]]
         sistemas_str = ", ".join(sistemas_list) if sistemas_list else "Servicios Core"
 
-        # Tiempos operativos y estado de escalado
+        # Detección de Estado del Ticket (Cerrado/Resuelto vs Activo)
+        status_raw = str(ticket.get("Estatus") or (resumen_ia.get("estadoActual") if resumen_ia else "") or "").lower()
+        is_closed = any(s in status_raw for s in ["cerrad", "resuelt", "cancelad"])
+
+        # Tiempos operativos y formato legible
         sla_data = sla_status or {}
         mins = sla_data.get("minutos_desde_apertura")
-        mins_str = f"{mins} min" if mins is not None else "En curso (reciente)"
+        mins_str = format_operational_duration(mins)
         sla_notif_vencido = sla_data.get("sla_primera_notificacion_vencido", False)
         req_tel = sla_data.get("requiere_escalado_telefonico", False)
         esc_sup = sla_data.get("escalado_estamentos_superiores", False)
 
-        if mins is None:
-            estado_1a_notif = "En ventana (<20 min)"
-            estado_escalado = "Ventana operativa inicial (<45 min)"
+        # Reglas de Gobernanza de Workaround (orange-it-emergency-management)
+        if workaround == "Sí":
+            workaround_gob = "APLICADO - Pendiente autorización IM-CSO (No desescala la severidad activa)"
+        elif workaround == "No":
+            workaround_gob = "SIN WORKAROUND (Requiere resolución directa en servicio/infraestructura)"
         else:
-            estado_1a_notif = f"⚠️ SLA 1ª Notificación VENCIDO (>20 min - {mins} min transcurridos)" if sla_notif_vencido else f"✅ En SLA 1ª Notificación (<20 min - {mins} min transcurridos)"
-            if esc_sup:
-                estado_escalado = f"🚨 2º Escalado Requerido a Estamentos Superiores (+{mins} min transcurridos)"
-            elif req_tel:
-                estado_escalado = f"📞 1er Escalado Telefónico Requerido a N3/Proveedor (+{mins} min transcurridos)"
-            else:
-                estado_escalado = f"🟢 En plazo de intervención inicial ({mins}/45 min)"
+            workaround_gob = "No identificado"
+
+        # Protocolo de Escalado: Normal vs Paralelo (Estructural)
+        requires_parallel = (
+            proceso in ("Middleware e Integración Transversal", "Infraestructura Core IT, BBDD y Cloud")
+            or dominio_tecnico in ("Middleware e Integración Transversal", "Infraestructura Core IT, BBDD y Cloud")
+        )
 
         problema = (resumen_ia.get("problema") if resumen_ia else None) or titulo
         solucion = (resumen_ia.get("solucion") if resumen_ia else None) or "Diagnóstico y contención técnica en curso por equipos resolutores"
@@ -1166,10 +1198,33 @@ class ExecutiveMessageGenerator:
             f"• Urgencia: {urgencia} ({urgencia_just})",
             "",
             "[2] ESTADO DE COMUNICACIONES Y SLAS",
-            f"• Tiempo desde Apertura: {mins_str}",
-            f"• 1ª Notificación a Dirección: {estado_1a_notif}",
-            f"• Frecuencia de Actualizaciones: Cada 60 min (o <30m ante cambios críticos)",
-            "• War Room / Teams: Liderado por Incident Manager (IM)",
+        ])
+
+        if is_closed:
+            lines.extend([
+                f"• Estado Operativo: ✅ INCIDENCIA RESUELTA / ESTABILIZADA",
+                f"• Duración Total: {mins_str} hasta restablecimiento",
+                "• Notificación de Cierre: Emitida a Dirección y partes interesadas",
+                "• War Room / Teams: Concluida y desconvocada por Incident Manager",
+            ])
+        else:
+            if mins is None:
+                estado_1a_notif = "En ventana (<20 min)"
+            else:
+                estado_1a_notif = (
+                    f"⚠️ SLA 1ª Notificación VENCIDO (>20 min - {mins_str} transcurridos)"
+                    if sla_notif_vencido
+                    else f"✅ En SLA 1ª Notificación (<20 min - {mins_str} transcurridos)"
+                )
+
+            lines.extend([
+                f"• Tiempo desde Apertura: {mins_str}",
+                f"• 1ª Notificación a Dirección: {estado_1a_notif}",
+                "• Frecuencia de Actualizaciones: Cada 60 min (o <30m ante cambios críticos)",
+                "• War Room / Teams: Liderado por Incident Manager (IM)",
+            ])
+
+        lines.extend([
             "",
             "[3] PLAN DE ACCIÓN Y GOBERNANZA DE WORKAROUNDS",
             f"• Diagnóstico Técnico: {problema}",
@@ -1180,8 +1235,35 @@ class ExecutiveMessageGenerator:
             "• Revisión Trabajos Programados (PaP): Auditoría preventiva de Rollback en curso",
             "",
             "[4] ESTADO DE ESCALADO TELEFÓNICO",
-            f"• Protocolo de Tiempos: {estado_escalado}",
-            "• Canal de Escalado: Vía Telefónica obligatoria (Regla de Oro)",
+        ])
+
+        if is_closed:
+            lines.extend([
+                "• Protocolo de Tiempos: ✅ Proceso de escalado concluido por resolución",
+                "• Transición Operativa: Paso a Post-Incident Review (PIR) / Problem Management",
+                "• Regla de Oro 3: Confirmada erradicación total del impacto en servicio y negocio",
+            ])
+        else:
+            if mins is None:
+                estado_escalado = "Ventana operativa inicial (<45 min)"
+            elif mins >= 120 and prio == "P1":
+                estado_escalado = f"🚨 ALARMA POR ESTANCAMIENTO (>2h): Escalado a Dirección IM-CSO y reevaluación técnica ({mins_str})"
+            elif esc_sup:
+                estado_escalado = f"🚨 2º Escalado Requerido a Estamentos Superiores (+{mins_str} transcurridos)"
+            elif req_tel:
+                estado_escalado = f"📞 1er Escalado Telefónico Requerido a N3/Proveedor (+{mins_str} transcurridos)"
+            else:
+                estado_escalado = f"🟢 En plazo de intervención inicial ({mins}/45 min)"
+
+            lines.append(f"• Protocolo de Tiempos: {estado_escalado}")
+
+            if requires_parallel:
+                lines.append("• Directiva de Escalado: ⚡ ESCALADO EN PARALELO ACTIVADO (Convocatoria simultánea obligatoria a todos los grupos resolutores)")
+            else:
+                lines.append("• Canal de Escalado: Vía Telefónica obligatoria (Regla de Oro)")
+
+        lines.extend([
+            "• Matrices de Contacto: GRIAL (entornos Orange/Jazztel) | Confluence (entornos MasMóvil/KRT)",
             "• Gobernanza RACI: Incident Manager (R) / Customer & Service Ops IM-CSO (A)",
             "────────────────────────────────────────────────────────────"
         ])
@@ -1376,7 +1458,7 @@ def evaluate_incidents_batch(
                 resumen_ia=epsilon_data,
                 sla_status=sla_status,
             )
-            mensajes["reporte_emergencia"] = reporte_emergencia
+            # reporte_emergencia se expone exclusivamente en la raíz de la incidencia (evitando duplicidad en mensajes_ejecutivos)
             
             sistemas = []
             if epsilon_data and isinstance(epsilon_data.get("sistemas"), list):

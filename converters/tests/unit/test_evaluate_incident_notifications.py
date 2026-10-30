@@ -22,6 +22,7 @@ from converters.cli.evaluate_incident_notifications import (
     normalize_priority,
     parse_incident_datetime,
     compute_emergency_sla_status,
+    format_operational_duration,
 )
 
 
@@ -726,7 +727,8 @@ def test_should_include_emergency_kpis_and_reports_in_batch_evaluation(sample_ti
     item = catalog["data"][0]
     assert "reporte_emergencia" in item
     assert "[1] CLASIFICACIÓN DEL TICKET" in item["reporte_emergencia"]
-    assert "reporte_emergencia" in item["mensajes_ejecutivos"]
+    assert "reporte_emergencia" not in item["mensajes_ejecutivos"]
+    assert set(item["mensajes_ejecutivos"].keys()) == {"apertura", "seguimiento", "cierre"}
     assert item["evaluacion"]["minutos_desde_apertura"] == 60
     assert item["evaluacion"]["requiere_escalado_telefonico"] is True
 
@@ -1034,6 +1036,128 @@ def test_should_populate_dynamic_impact_justification_with_actual_evidence():
     res_remedy = evaluator.evaluate(ticket_remedy_only, None)
     assert res_remedy["evaluacion"]["impacto"] == "Medio"
     assert "Incidencia catalogada Masiva en Remedy" in res_remedy["evaluacion"]["impacto_justificacion"]
+
+
+def test_should_format_operational_duration_correctly():
+    """Validates human-readable formatting of minutes into days, hours, and minutes."""
+    assert format_operational_duration(None) == "En curso (reciente)"
+    assert format_operational_duration(-5) == "0m"
+    assert format_operational_duration(0) == "0m"
+    assert format_operational_duration(15) == "15m"
+    assert format_operational_duration(59) == "59m"
+    assert format_operational_duration(60) == "1h 0m (60m)"
+    assert format_operational_duration(105) == "1h 45m (105m)"
+    assert format_operational_duration(1440) == "1d 0h (1440m)"
+    assert format_operational_duration(74616) == "51d 19h (74616m)"
+
+
+def test_should_adapt_emergency_report_when_incident_is_resolved_or_closed():
+    """Emergency report for resolved/closed tickets must not emit pending escalation alarms."""
+    generator = ExecutiveMessageGenerator()
+    ticket_resolved = {
+        "ID de incidencia": "INC000004122710",
+        "Descripción": "Ficha Cliente Orange - Interfaz de teléfono",
+        "Estatus": "Resuelto",
+        "Grupo asignado": "FIJO APL Soporte PS",
+    }
+    eval_result = {
+        "prioridad_sugerida": "P1",
+        "evaluacion": {
+            "proceso": "Atención al Cliente (ATC)",
+            "criterio": "ATC (3.1): Frontales/CRM",
+            "impacto": "Alto",
+            "impacto_justificacion": "Afectación en recogida de equipos",
+            "urgencia": "Alta",
+            "urgencia_justificacion": "Impacto activo",
+            "workaround": "No",
+        }
+    }
+    sla_status = {
+        "minutos_desde_apertura": 74616,
+        "sla_primera_notificacion_vencido": True,
+        "requiere_escalado_telefonico": True,
+        "escalado_estamentos_superiores": True,
+    }
+
+    report = generator.generate_emergency_4blocks_report(ticket_resolved, eval_result, sla_status=sla_status)
+
+    assert "INCIDENCIA RESUELTA / ESTABILIZADA" in report
+    assert "Duración Total: 51d 19h (74616m) hasta restablecimiento" in report
+    assert "Proceso de escalado concluido por resolución" in report
+    assert "Paso a Post-Incident Review (PIR) / Problem Management" in report
+    assert "SLA 1ª Notificación VENCIDO" not in report
+    assert "2º Escalado Requerido" not in report
+
+
+def test_should_activate_parallel_escalation_for_middleware_and_core_infrastructure():
+    """Structural components (Middleware / Cloud / Core IT) must mandate Parallel Escalation in emergency report."""
+    generator = ExecutiveMessageGenerator()
+    ticket_middleware = {
+        "ID de incidencia": "INC000004100001",
+        "Descripción": "TIBCO Bus Transversal // TIMEOUT GENERAL",
+        "Estatus": "En Curso",
+        "Grupo asignado": "SOP_INTEGRACION_TIBCO",
+    }
+    eval_result = {
+        "prioridad_sugerida": "P1",
+        "evaluacion": {
+            "proceso": "Middleware e Integración Transversal",
+            "dominio_tecnico": "Middleware e Integración Transversal",
+            "criterio": "Middleware (3.7): Caída o bloqueo transversal en bus/API",
+            "impacto": "Alto",
+            "impacto_justificacion": "Corte total de APIs core",
+            "urgencia": "Alta",
+            "urgencia_justificacion": "Impacto activo",
+            "workaround": "No",
+        }
+    }
+    sla_status = {
+        "minutos_desde_apertura": 50,
+        "sla_primera_notificacion_vencido": True,
+        "requiere_escalado_telefonico": True,
+        "escalado_estamentos_superiores": False,
+    }
+
+    report = generator.generate_emergency_4blocks_report(ticket_middleware, eval_result, sla_status=sla_status)
+
+    assert "⚡ ESCALADO EN PARALELO ACTIVADO" in report
+    assert "Matrices de Contacto: GRIAL (entornos Orange/Jazztel) | Confluence (entornos MasMóvil/KRT)" in report
+    assert "Incident Manager (R) / Customer & Service Ops IM-CSO (A)" in report
+
+
+def test_should_escalate_stagnant_incident_over_2h_in_emergency_report():
+    """Active P1 incidents open for > 120 minutes must trigger Stagnation Alarm in emergency report."""
+    generator = ExecutiveMessageGenerator()
+    ticket_active = {
+        "ID de incidencia": "INC000004199999",
+        "Descripción": "Caída Pasarela Pagos OCS",
+        "Estatus": "Asignado",
+        "Grupo asignado": "SOPORTE_OCS_PAGOS",
+    }
+    eval_result = {
+        "prioridad_sugerida": "P1",
+        "evaluacion": {
+            "proceso": "Prepago",
+            "criterio": "Prepago (3.3): >10% errores",
+            "impacto": "Alto",
+            "impacto_justificacion": "Imposibilidad de cobro",
+            "urgencia": "Alta",
+            "urgencia_justificacion": "Impacto en vivo",
+            "workaround": "No",
+        }
+    }
+    sla_status = {
+        "minutos_desde_apertura": 130,
+        "sla_primera_notificacion_vencido": True,
+        "requiere_escalado_telefonico": True,
+        "escalado_estamentos_superiores": True,
+    }
+
+    report = generator.generate_emergency_4blocks_report(ticket_active, eval_result, sla_status=sla_status)
+
+    assert "🚨 ALARMA POR ESTANCAMIENTO (>2h): Escalado a Dirección IM-CSO" in report
+    assert "2h 10m (130m)" in report
+
 
 
 

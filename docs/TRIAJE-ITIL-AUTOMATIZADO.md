@@ -286,13 +286,46 @@ El resultado del triaje se almacena dentro de cada incidencia en el campo `"eval
     "sla_objetivo_minutos": 120,
     "fecha_apertura": "14/10/2026 13:26",
     "minutos_desde_apertura": 4240,
+    "minutos_desde_apertura_legible": "2d 22h (4240m)",
     "sla_primera_notificacion_vencido": true,
     "requiere_escalado_telefonico": true,
     "escalado_estamentos_superiores": true,
     "proxima_ventana_update_minutos": 20
-  }
+  },
+  "mensajes_ejecutivos": {
+    "apertura": {
+      "completo": "Apertura de incidencia P1 (INC000004122710)... (máx 90 palabras, monopárrafo)",
+      "breve": "Apertura P1 (INC000004122710)... (máx 30 palabras)",
+      "conteo_palabras_completo": 58,
+      "conteo_palabras_breve": 22,
+      "generado_por_agente": true,
+      "origen": "incident-reporter"
+    },
+    "seguimiento": { ... },
+    "cierre": { ... }
+  },
+  "reporte_emergencia": "🚨 REPORTE DE EMERGENCIA IT - ORANGE TECH OPERATIONS\n[1] CLASIFICACIÓN...\n[2] ESTADO DE COMUNICACIONES...\n[3] PLAN DE ACCIÓN Y WORKAROUNDS...\n[4] ESTADO DE ESCALADO TELEFÓNICO..."
 }
 ```
+
+### Separación de Responsabilidades: Comunicaciones Ejecutivas vs Reporte Técnico
+
+El motor desacopla nítidamente los canales de difusión:
+
+1. **`mensajes_ejecutivos` (Agente `incident-reporter`)**:
+   * Destinado a **Dirección de Operaciones y Negocio**.
+   * Estrictamente estructurado en **dos niveles** por cada fase (`apertura`, `seguimiento`, `cierre`):
+     * **Versión completa**: Máximo 90 palabras, párrafo único continuo, sin viñetas ni encabezados técnicos.
+     * **Versión breve**: Máximo 30 palabras, lista para SMS o canal push móvil.
+   * Sin contenido técnico crudo de logs o matrices internas.
+
+2. **`reporte_emergencia` (Especialista Operativo de Emergencias IT)**:
+   * Destinado al **Incident Manager (IM)**, **War Room técnica** y el modal de emergencia del Dashboard.
+   * Estructura fija en **4 Bloques Operacionales**:
+     * **[1] Clasificación del Ticket**: ID, proceso crítico ITIL, dominio, alerta de subescalación (delta de niveles), umbral detonante y justificación de impacto.
+     * **[2] Estado de Comunicaciones y SLAs**: Tiempos formateados legibles (`X d Y h (Z m)`), control de vencimiento de 1ª notificación (20 min) y adaptación automática de ciclo de vida (detecta tickets `Resuelto`/`Cerrado` derivando a PIR/Post-Mortem).
+     * **[3] Plan de Acción y Workarounds**: Diagnóstico técnico, acciones inmediatas, revisión de Rollback de Trabajos Programados (PaP) y gobernanza de workarounds (prohibición de desescalar sin autorización expresa de IM-CSO).
+     * **[4] Escalado Telefónico y RACI**: Alarma por estancamiento (>2h activas), directiva de **escalado en paralelo inmediato** ante componentes estructurales (*Middleware e Integración Transversal* o *Infraestructura Core IT/Cloud*), canal telefónico obligatorio y matrices oficiales de contacto (`GRIAL` para Orange/Jazztel y `Confluence` para MasMóvil/KRT).
 
 ### KPIs de Metadatos del Catálogo
 El encabezado `_metadata.kpis` consolida el resumen ejecutivo de la evaluación:
