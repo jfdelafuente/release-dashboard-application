@@ -9,6 +9,7 @@
 En grandes infraestructuras de telecomunicaciones y servicios, la clasificación manual inicial de incidencias en soporte de primer nivel (**N1**) suele adolecer de dispersión y **subescalación**: incidencias con cortes severos o degradaciones críticas de frontales se catalogan nominalmente en Remedy como *Prioridad Media (P3)* o *Baja (P4)*, retrasando la intervención de los equipos de guardia y la convocatoria del Incident Manager.
 
 El **Triaje ITIL Automatizado** es el motor algorítmico y determinista que evalúa el **impacto real sobre el negocio y los servicios** de cada incidencia activa, aplicando de forma estricta:
+
 1. La **Matriz de Severidad y Criticidad IT** ([`.agents/skills/it-severity-matrix/SKILL.md`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/.agents/skills/it-severity-matrix/SKILL.md)).
 2. El **Marco Operativo de Gestión de Emergencias IT de Orange** ([`.agents/skills/orange-it-emergency-management/SKILL.md`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/.agents/skills/orange-it-emergency-management/SKILL.md)).
 3. La detección automática de **Discrepancias de Prioridad** (alertando al Incident Manager cuando la prioridad sugerida supera la nominal del ticket).
@@ -43,12 +44,16 @@ flowchart TD
 ## 3. Las 5 Fases del Algoritmo de Triaje
 
 ### Fase 1: Ingesta y Filtrado de Estados Terminales
+
 El evaluador analiza cada ticket del informe masivo y descarta de forma inmediata los tickets en estados finales para no sobrecargar a los operadores ni desvirtuar los SLAs activos:
+
 * Estados omitidos: `Cerrado`, `Cerrada`, `Closed`, `Resuelto`, `Resuelta`, `Resolved`, `Cancelado`, `Cancelada`, `Cancelled`, `Canceled`.
 * Métrica resultante: `_metadata.kpis.terminal_skipped_count`.
 
 ### Fase 2: Enriquecimiento Contextual Dual (Remedy + Epsilon IA)
+
 Para superar la brevedad o ambigüedad del título de Remedy, el evaluador construye un corpus textual unificado combinando:
+
 * **Metadatos Remedy**: `Descripción`, `Impacto`, `Urgencia`, `Grupo Asignado`, `Fecha de Envío`.
 * **Diagnóstico Epsilon IA**: `problema`, `impacto`, `solucion`, `sistemas`, `bloqueos`, `siguienteAccion`.
 
@@ -57,9 +62,34 @@ Para superar la brevedad o ambigüedad del título de Remedy, el evaluador const
 
 ---
 
-### Fase 3: Clasificación en los 10 Procesos Críticos de Negocio
+### Fase 3: Clasificación en los 10 Procesos Críticos mediante Matriz Ponderada Multidominio
 
-La función `_classify_process` escanea el corpus del ticket y lo asigna a uno de los 10 dominios de criticidad de Orange:
+A diferencia de los analizadores tradicionales basados en estructuras secuenciales rígidas (`if/elif`), el evaluador implementa una **Matriz de Puntuación Ponderada Multidominio** (`_classify_process_multi_domain`). Este mecanismo evita sesgos posicionales y asigna pesos diferenciales según la autoridad de cada metadato:
+
+```mermaid
+flowchart LR
+    A["Corpus del Ticket"] --> B["Extracción de Evidencias"]
+    B --> W1["Grupo Resolutor Remedy<br><b>Peso 4.0x</b>"]
+    B --> W2["Sistemas Epsilon IA<br><b>Peso 3.0x</b>"]
+    B --> W3["Título del Ticket<br><b>Peso 2.0x</b>"]
+    B --> W4["Descripción y Problema<br><b>Peso 1.0x</b>"]
+    
+    W1 & W2 & W3 & W4 --> S["Matriz Ponderada de Coincidencias<br>(Regex Compiladas con \b)"]
+    S --> C1["Proceso de Negocio Crítico<br>(ej. Atención al Cliente - ATC)"]
+    S --> C2["Dominio Técnico de Infraestructura<br>(ej. Sistemas Core / Middleware)"]
+```
+
+#### Prevención de Falsos Positivos con Regex Compiladas (`\b`)
+Todos los patrones de detección utilizan límites de palabra (`\bpattern\b`). Esto erradica falsos positivos históricos donde subcadenas cortas disparaban clasificaciones incorrectas:
+* `operaciones` ya **no** se clasifica como O&M (eliminada coincidencia espuria de `rac`).
+* `pasaporte` ya **no** se clasifica como Facturación (eliminada coincidencia de `sap`).
+* `comunicación` ya **no** se clasifica como O&M (eliminada coincidencia de `uca`).
+* `precaución` ya **no** se clasifica como O&M (eliminada coincidencia de `cau`).
+
+#### Doble Etiquetado ITIL: Negocio vs Infraestructura
+El motor etiqueta simultáneamente dos dimensiones operativas:
+1. `proceso_negocio`: Impacto sobre el flujo cliente (ej. *Atención al Cliente*, *Ventas*, *Portabilidad*, *Prepago*, *Provisión*, *Facturación*).
+2. `dominio_tecnico`: Capa técnica subyacente (ej. *Middleware e Integración*, *Conectividad de Sedes/Circuitos*, *Infraestructura Core/Cloud*, *Identidad y Automatización*).
 
 | # | Proceso Crítico | Sistemas y Grupos Resolutores Típicos | Criterio de Activación de Emergencia (SL1) |
 | :---: | :--- | :--- | :--- |
@@ -72,36 +102,46 @@ La función `_classify_process` escanea el corpus del ticket y lo asigna a uno d
 | **3.7** | **Middleware Transversal** | `APIGEE`, `OPENAPI`, `TIBCO`, `GC Middleware`, `Datapower`, conectores `OCCI`, `SBL_EAI`. | Caída, saturación de hilos o errores masivos (504/500) en el bus de integración. |
 | **3.8** | **Conectividad de Sedes y Tiendas** | `RTV-TECSE RED DATOS`, `GNOC`, circuitos `Ulises` y `Meneses`, Call Centers / `MSC`, tiendas. | Aislamiento total de sede/MSC, o caída simultánea de circuitos principal y backup. |
 | **3.9** | **Infraestructura Core IT y Cloud** | `Atlas_Soporte_Unix` (`PSeries Power9`), `VMware ESX`, clúster `Exadata`, `OCI`, `GCP`, SAN `HWSAN`. | Corte troncal Cloud (OCI/GCP), o caída de servidor/hipervisor sin absorción por HA. |
-| **3.10**| **Identidad y Automatización** | `GDU`, `EVIDIAN`, `GDU/ACM`, `ROBOTFACTORY`, SSO corporativo. | Caída global de autenticación/SSO o bloqueo en factoría de robots de backoffice. |
+| **3.10** | **Identidad y Automatización** | `GDU`, `EVIDIAN`, `GDU/ACM`, `ROBOTFACTORY`, SSO corporativo. | Caída global de autenticación/SSO o bloqueo en factoría de robots de backoffice. |
 
 ---
 
-### Fase 4: Evaluación Heurística de Impacto, Urgencia y Workaround
+### Fase 4: Evaluación Heurística de Impacto, Urgencia y Métricas Cuantitativas
 
 #### A. Nivel de Impacto (`_evaluate_impact`)
-* **Alto (`Alto`)**: 
-  * Se activa si el ticket contiene expresiones de interrupción total: `caída total`, `corte total`, `indisponibilidad total`, `sin servicio`, `afectación global`, `bloqueo general`, `más del 50%`, `>50%`.
-  * O si el campo nativo de Remedy es `Impacto: Masiva`.
-  * *Excepción de seguridad*: Se degrada a `Bajo` si el texto indica explícitamente "fallo cosmético" o "error tipográfico".
-* **Medio (`Medio`)**:
-  * Se activa si hay términos de afectación parcial: `degradación`, `lentitud`, `retraso`, `parcial`, `10%`, `20%`, `30%`, `40%`.
-  * O si el campo nativo de Remedy es `Impacto: Alto` o `Medio`.
-* **Bajo (`Bajo`)**: Afectación acotada a componentes secundarios o usuarios aislados.
 
-#### B. Nivel de Urgencia (`_evaluate_urgency`)
+El evaluador combina análisis de umbrales cuantitativos numéricos con filtros sintácticos de negación:
+
+1. **Umbrales Cuantitativos Directos (SL1 Objetivo)**:
+   * **Sedes / Tiendas / Call Centers:** $\ge 3$ sedes afectadas $\to$ **Impacto Alto**.
+   * **Usuarios / Clientes / Líneas:** $\ge 500$ abonados afectados $\to$ **Impacto Alto**.
+   * **Desviación / Errores %:** $\ge 20\%$ de desviación o error $\to$ **Impacto Alto** (salvo que el texto documente explícitamente enlace secundario con tráfico principal cursando bajo redundancia activa, en cuyo caso se mantiene en SL2 / Medio).
+2. **Filtro de Negación Sintáctica en Español (`is_phrase_negated`)**:
+   Palabras clave críticas de caída (`caída total`, `corte total`, `sin servicio`) precedidas por conectores como `sin`, `no hay`, `descartada`, `se descarta` o `descarte de` quedan invalidadas para evitar elevaciones de impacto injustificadas:
+   * *"Se descarta caída total del servicio"* $\to$ No eleva a Impacto Alto.
+   * *"Corte total de fibra sin alternativa"* $\to$ Eleva a Impacto Alto.
+3. **Regla de Fallos Cosméticos**:
+   Si el texto contiene `error tipográfico` o `fallo cosmético`, el impacto se degrada deterministamente a **Bajo**.
+
+#### B. Nivel de Urgencia y Análisis de Bloqueos (`_evaluate_urgency`)
+
+* **Explotación de Bloqueos de Epsilon IA**:
+  El motor analiza el campo `bloqueos` de Epsilon Resumen IA. Si se reportan dependencias críticas activas (`sin alternativa`, `bloqueo`, `esperando proveedor`) y no consta workaround, la urgencia se eleva de forma prioritaria a **Alta**.
 * **Detección de Workaround**:
-  * `Sí`: El texto menciona `workaround`, `solución temporal`, `solucion alternativa`, `export alternativo`.
-  * `No`: El texto indica expresamente `sin alternativa`, `sin workaround`.
-  * `Desconocido`: No se dispone de mención explícita.
-* **Alta (`Alta`)**: Presencia de términos críticos en vivo (`en curso`, `afectando en vivo`, `urgente`, `crítico`, `intervención inmediata`) o campo Remedy `Urgencia: Crítica` / `Alta`.
-* **Media (`Media`)**: Incidencias en tratamiento activo (`en curso`, `asignado`) con contención operativa transitoria.
-* **Baja (`Baja`)**: Baja sensibilidad temporal o sin bloqueo activo.
+  * `Sí`: Presencia confirmada de `workaround`, `solución temporal`, `solucion alternativa`, `export alternativo`.
+  * `No`: Indicación expresa de `sin alternativa`, `sin workaround`, o bloqueo sin mitigación.
+  * `Desconocido`: Ausencia de datos explícitos de mitigación.
+* **Niveles de Urgencia**:
+  * **Alta (`Alta`)**: Bloqueos reportados sin workaround, términos críticos en vivo (`afectando en vivo`, `urgente`, `crítico`), o campo Remedy `Urgencia: Crítica` / `Alta`.
+  * **Media (`Media`)**: Incidencias en tratamiento activo (`en curso`, `asignado`, o `Urgencia: Media` nativa).
+  * **Baja (`Baja`)**: Baja sensibilidad temporal, tickets resueltos o cerrados.
 
 ---
 
 ### Fase 5: Matriz de Cruce ITIL y Reglas de Oro de Orange
 
 #### Matriz de Cruce Estándar
+
 La función `_calculate_matrix(impact, urgency, has_workaround)` cruza las variables según la tabla normativa:
 
 | Nivel de Impacto | Nivel de Urgencia | ¿Existe Workaround? | Prioridad Calculada | Severidad Oficial | SLA Máximo Resolución |
@@ -117,6 +157,7 @@ La función `_calculate_matrix(impact, urgency, has_workaround)` cruza las varia
 | **Bajo** | **Baja** | Cualquiera | **P4** | **SL4 — Informativa** | 1440 min (24 h) |
 
 #### Las Reglas de Oro de Orange
+
 1. **Principio de Precaución (Regla de Oro N1):**
    > En caso de duda sobre el alcance de una afectación en un proceso crítico, se clasifica preventivamente como **SL1 / P1**. Solo se desescalará cuando se confirme fehacientemente que el impacto es acotado.
 2. **Suelo Mínimo por Etiquetado Explícito (`/SL1` y `/SL2`):**
@@ -124,28 +165,39 @@ La función `_calculate_matrix(impact, urgency, has_workaround)` cruza las varia
 3. **Gobernanza Estricta de Workarounds:**
    > [!WARNING]
    > La aplicación de un workaround en una incidencia de Impacto Alto **NO reduce automáticamente la severidad del ticket**. La emergencia SL1 solo se da por finalizada cuando el impacto sobre el negocio ha desaparecido en su totalidad y el Incident Manager con el CSO autorizan el cierre.
+4. **Escalado Operativo por Envejecimiento (*Aging Escalation*):**
+   > [!IMPORTANT]
+   > Si una incidencia activa clasificada como **P2 / SL2** acumula **$\ge 120$ minutos** desde su apertura sin que exista un workaround efectivo autorizado ni resolución, el motor la escala automáticamente a **P1 / SL1** (`aging_escalated = true`), exigiendo la intervención urgente del Incident Manager y convocatoria de War Room.
 
 ---
 
-## 4. Detección de Discrepancias (Subescalación N1)
+## 4. Detección de Discrepancias (Subescalación N1) y Clasificación por Niveles $\Delta$
 
-Una de las aportaciones más críticas del motor es la detección de tickets mal clasificados en origen:
+Una de las aportaciones más críticas del motor es la detección de tickets mal clasificados en origen mediante la función `compute_discrepancy_details`:
 
 ```python
-def detect_priority_discrepancy(original_priority: Optional[str], calculated_priority: str) -> bool:
+def compute_discrepancy_details(original_priority: Optional[str], calculated_priority: str, reasons: Optional[list[str]] = None) -> dict[str, Any]:
     norm_orig = normalize_priority(original_priority)
     norm_calc = normalize_priority(calculated_priority)
     orig_rank = PRIORITY_RANKS.get(norm_orig, 3)   # P1=1, P2=2, P3=3, P4=4
     calc_rank = PRIORITY_RANKS.get(norm_calc, 3)
-    # Si el rango calculado es menor (mayor severidad) que el original -> DISCREPANCIA
-    return calc_rank < orig_rank
+    
+    delta = max(0, orig_rank - calc_rank)
+    # delta > 0 indica que la prioridad calculada por ITIL supera la nominal de Remedy
+    ...
 ```
 
-### Casos de Discrepancia Típicos
-* **Subescalación Crítica (Ticket P3 $\to$ Triaje P1):**
-  Un operador registra en Remedy un ticket como *Prioridad Media (P3)* con título `FICHA DE CLIENTE // SEVILLA // ERROR FUNCIONAL`. El triaje detecta que afecta a 20+ sedes y 1.500 operadores en proceso crítico ATC $\to$ Se reclasifica de oficio a **P1 (SL1)** y se marca `es_discrepancia = true`.
-* **Pérdida de Redundancia (Ticket P3 $\to$ Triaje P2):**
-  Caída de un circuito de sede o nodo de hipervisor que mantiene el servicio por el circuito de backup $\to$ Se clasifica como **P2 (SL2)** para alertar del riesgo de corte total ante un segundo fallo.
+### Escala Gradual de Gravedad por Salto de Nivel ($\Delta$)
+
+| Nivel $\Delta$ | Clasificación de Gravedad | Salto de Prioridad Típico | Impacto Operativo y Acción Requerida |
+| :---: | :--- | :--- | :--- |
+| **$\Delta = 0$** | **Sin Discrepancia** | P1 $\to$ P1, P2 $\to$ P2 | La clasificación de N1 es correcta y coincide con los umbrales ITIL. |
+| **$\Delta = 1$** | **Moderada** | P3 $\to$ P2 o P2 $\to$ P1 | Subescalación de un nivel. Requiere ajuste administrativo y seguimiento prioritario. |
+| **$\Delta = 2$** | **Mayor Severa** | P3 $\to$ P1 o P4 $\to$ P2 | Salto de dos niveles. Típico de tickets críticos abiertos como *Media* por N1. Requiere reetiquetado inmediato en Remedy y reporte a IM-CSO. |
+| **$\Delta \ge 3$** | **Crítica Extrema** | P4 $\to$ P1 | Subescalación masiva (ticket registrado como *Baja* con caída global o $\ge 500$ usuarios). Activa alarma inmediata de triaje y feedback a supervisión de N1. |
+
+### Causa Determinante y Explicabilidad
+Cada discrepancia genera un texto explicativo auditable (`discrepancia_motivo`) combinando la gravedad del salto con la causa técnica directa (ej. umbral de sedes, afectación crítica de frontales o envejecimiento operativo).
 
 ---
 
@@ -179,13 +231,19 @@ El resultado del triaje se almacena dentro de cada incidencia en el campo `"eval
 {
   "id": "INC000004122710",
   "titulo": "FICHA DE CLIENTE // OEST OVIEDO // ERROR FUNCIONAL",
-  "sistemas": ["Ficha de Cliente", "TEIDE", "PeopleSoft", "MDG", "Siebel 8"],
+  "sistemas": ["Ficha de Cliente", "TEIDE", "PeopleSoft", "MDG", "Siebel 8", "BSCS/PS"],
   "prioridad_original": "Media",
   "prioridad_sugerida": "P1",
   "es_alta_prioridad": true,
   "es_discrepancia": true,
+  "discrepancia_delta": 2,
+  "discrepancia_gravedad": "Mayor Severa",
+  "discrepancia_motivo": "Subescalación severa (+2 niveles): Ticket registrado como P3 y evaluado como P1. Causa determinante: Afectación crítica o corte global sobre el servicio principal sin alternativa viable.; Impacto activo en vivo que requiere restablecimiento inmediato.",
+  "aging_escalated": false,
   "evaluacion": {
     "proceso": "Atención al Cliente (ATC)",
+    "proceso_negocio": "Atención al Cliente (ATC)",
+    "dominio_tecnico": "Sistemas Core",
     "criterio": "ATC (3.1): Frontales/CRM (>20% desviación en 30m) o Regla de Oro N1",
     "impacto": "Alto",
     "impacto_justificacion": "Afectación crítica o corte global sobre el servicio principal sin alternativa viable.",
@@ -193,6 +251,12 @@ El resultado del triaje se almacena dentro de cada incidencia en el campo `"eval
     "urgencia_justificacion": "Impacto activo en vivo que requiere restablecimiento inmediato.",
     "workaround": "No",
     "workaround_gobernanza": "Sin workaround (Resolución directa requerida)",
+    "metricas_cuantitativas": {
+      "sedes": null,
+      "usuarios": null,
+      "desviacion_pct": null,
+      "detalles": []
+    },
     "sla_objetivo_minutos": 120,
     "fecha_apertura": "14/10/2026 13:26",
     "minutos_desde_apertura": 4240,
@@ -204,6 +268,14 @@ El resultado del triaje se almacena dentro de cada incidencia en el campo `"eval
 }
 ```
 
+### KPIs de Metadatos del Catálogo
+El encabezado `_metadata.kpis` consolida el resumen ejecutivo de la evaluación:
+* `total_scanned`, `terminal_skipped_count`, `active_evaluated_count`.
+* `total_high_priority`, `p1_critical_count`, `p2_high_count`.
+* `discrepancies_count`, `discrepancias_delta1_moderada_count`, `discrepancias_delta2_mayor_count`, `discrepancias_delta3_critica_count`.
+* `aging_escaladas_p1_count`.
+* `sla_primera_notificacion_vencidos_count`, `requiere_escalado_telefonico_count`, `workaround_pendientes_cso_count`.
+
 ---
 
 ## 7. Ejecución y Diagnóstico CLI
@@ -211,11 +283,13 @@ El resultado del triaje se almacena dentro de cada incidencia en el campo `"eval
 El triaje se ejecuta automáticamente en cada subida de CSV o puede ejecutarse manualmente desde la consola:
 
 ### Modo estándar (con fallback inteligente a Epsilon IA)
+
 ```powershell
 python converters/cli/evaluate_incident_notifications.py
 ```
 
 ### Forzar fichero de entrada específico y salida
+
 ```powershell
 python converters/cli/evaluate_incident_notifications.py `
     --input "data/output/CS-Informe incidencias P1,  P2 y P3 - 2026 - 30 Oct 2026-massive.json" `
@@ -223,7 +297,9 @@ python converters/cli/evaluate_incident_notifications.py `
 ```
 
 ### Ejecución en modo simulador (Dry Run)
+
 Permite inspeccionar los KPIs de triaje y discrepancias en pantalla sin escribir en disco:
+
 ```powershell
 python converters/cli/evaluate_incident_notifications.py --dry-run
 ```
@@ -237,4 +313,3 @@ python converters/cli/evaluate_incident_notifications.py --dry-run
 * **[MANUAL-OPERADOR-CONSOLA-OPERATIVA.md](MANUAL-OPERADOR-CONSOLA-OPERATIVA.md)**: Manual del Incident Manager en la Consola de Emergencias IT.
 * **[it-severity-matrix SKILL.md](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/.agents/skills/it-severity-matrix/SKILL.md)**: Matriz cuantitativa oficial de severidades IT.
 * **[orange-it-emergency-management SKILL.md](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/.agents/skills/orange-it-emergency-management/SKILL.md)**: Protocolos operativos de escalado, War Room y gobernanza RACI.
-

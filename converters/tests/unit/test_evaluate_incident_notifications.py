@@ -16,6 +16,9 @@ from converters.cli.evaluate_incident_notifications import (
     ExecutiveMessageGenerator,
     evaluate_incidents_batch,
     detect_priority_discrepancy,
+    compute_discrepancy_details,
+    is_phrase_negated,
+    extract_quantitative_metrics,
     normalize_priority,
     parse_incident_datetime,
     compute_emergency_sla_status,
@@ -726,6 +729,245 @@ def test_should_include_emergency_kpis_and_reports_in_batch_evaluation(sample_ti
     assert "reporte_emergencia" in item["mensajes_ejecutivos"]
     assert item["evaluacion"]["minutos_desde_apertura"] == 60
     assert item["evaluacion"]["requiere_escalado_telefonico"] is True
+
+
+def test_should_avoid_false_positive_substring_matches():
+    evaluator = SeverityEvaluator()
+    # 1. "operaciones" should not classify as O&M via "rac"
+    ticket_operaciones = {
+        "ID de incidencia": "INC000004999901",
+        "Prioridad": "Media",
+        "Descripción": "Consulta de operaciones financieras del cliente",
+        "Grupo Resolutor": "SOPORTE GENERAL",
+    }
+    top_cat, top_bus, top_tech = evaluator._classify_process_multi_domain(ticket_operaciones, None)
+    assert top_cat != "Operación y Monitorización (O&M)"
+
+    # 2. "pasaporte" should not classify as Facturación via "sap"
+    ticket_pasaporte = {
+        "ID de incidencia": "INC000004999902",
+        "Prioridad": "Media",
+        "Descripción": "Subida de foto de pasaporte en portal",
+        "Grupo Resolutor": "SOPORTE DOCUMENTAL",
+    }
+    top_cat, top_bus, top_tech = evaluator._classify_process_multi_domain(ticket_pasaporte, None)
+    assert top_cat != "Facturación y Cobros"
+
+    # 3. "comunicación" should not classify as O&M via "uca"
+    ticket_comunicacion = {
+        "ID de incidencia": "INC000004999903",
+        "Prioridad": "Media",
+        "Descripción": "Envío de carta de comunicación de bienvenida",
+        "Grupo Resolutor": "SOPORTE GENERAL",
+    }
+    top_cat, top_bus, top_tech = evaluator._classify_process_multi_domain(ticket_comunicacion, None)
+    assert top_cat != "Operación y Monitorización (O&M)"
+
+    # 4. "precaución" should not classify as O&M via "cau"
+    ticket_precaucion = {
+        "ID de incidencia": "INC000004999904",
+        "Prioridad": "Media",
+        "Descripción": "Nota de precaución sobre uso de contraseñas",
+        "Grupo Resolutor": "SOPORTE GENERAL",
+    }
+    top_cat, top_bus, top_tech = evaluator._classify_process_multi_domain(ticket_precaucion, None)
+    assert top_cat != "Operación y Monitorización (O&M)"
+
+
+def test_should_not_elevate_impact_when_critical_phrase_is_syntactically_negated():
+    evaluator = SeverityEvaluator()
+
+    # Negated scenario: "se descarta caída total"
+    ticket_negated = {
+        "ID de incidencia": "INC000004999910",
+        "Prioridad": "Baja",
+        "Descripción": "Revisión preventiva de routers. Se descarta caída total del servicio.",
+        "Urgencia": "Baja",
+        "Impacto": "Bajo"
+    }
+    eval_negated = evaluator.evaluate(ticket_negated, None)
+    assert eval_negated["evaluacion"]["impacto"] != "Alto"
+    assert eval_negated["prioridad_sugerida"] in ("P3", "P4")
+
+    # Positive (non-negated) scenario: "caída total del servicio"
+    ticket_positive = {
+        "ID de incidencia": "INC000004999911",
+        "Prioridad": "Media",
+        "Descripción": "Caída total del servicio sin alternativa viable.",
+        "Urgencia": "Alta",
+        "Impacto": "Medio"
+    }
+    eval_positive = evaluator.evaluate(ticket_positive, None)
+    assert eval_positive["evaluacion"]["impacto"] == "Alto"
+    assert eval_positive["prioridad_sugerida"] == "P1"
+
+
+def test_should_extract_quantitative_magnitude_metrics():
+    # Sedes
+    m1 = extract_quantitative_metrics("Incidencia que afecta a 4 sedes operativas de Madrid")
+    assert m1["sedes"] == 4
+
+    # Usuarios
+    m2 = extract_quantitative_metrics("Afectación en 1.500 clientes de fibra fija")
+    assert m2["usuarios"] == 1500
+
+    # Desviación %
+    m3 = extract_quantitative_metrics("Desviación del 25% en tramitación de portabilidad")
+    assert m3["desviacion_pct"] == 25.0
+
+    # Texto sin métricas cuantitativas
+    m4 = extract_quantitative_metrics("Incidencia menor en interfaz visual")
+    assert m4["sedes"] is None
+    assert m4["usuarios"] is None
+    assert m4["desviacion_pct"] is None
+
+
+def test_should_escalate_impact_to_high_when_quantitative_thresholds_exceeded():
+    evaluator = SeverityEvaluator()
+
+    # Threshold sedes >= 3
+    ticket_sedes = {
+        "ID de incidencia": "INC000004999920",
+        "Prioridad": "Media",
+        "Descripción": "Incidencia de conectividad con impacto en 3 tiendas físicas de Barcelona",
+        "Urgencia": "Alta",
+        "Impacto": "Medio"
+    }
+    res_sedes = evaluator.evaluate(ticket_sedes, None)
+    assert res_sedes["evaluacion"]["impacto"] == "Alto"
+    assert "Umbral Cuantitativo (>=3 sedes: 3)" in res_sedes["evaluacion"]["criterio"]
+    assert res_sedes["prioridad_sugerida"] == "P1"
+
+    # Threshold usuarios >= 500
+    ticket_users = {
+        "ID de incidencia": "INC000004999921",
+        "Prioridad": "Media",
+        "Descripción": "Problema en frontal web afectando a 650 usuarios concurrentes",
+        "Urgencia": "Alta",
+        "Impacto": "Bajo"
+    }
+    res_users = evaluator.evaluate(ticket_users, None)
+    assert res_users["evaluacion"]["impacto"] == "Alto"
+    assert "Umbral Cuantitativo (>=500 usuarios: 650)" in res_users["evaluacion"]["criterio"]
+    assert res_users["prioridad_sugerida"] == "P1"
+
+
+def test_should_classify_with_multi_domain_weighted_scoring_and_dual_itil_labeling():
+    evaluator = SeverityEvaluator()
+
+    ticket = {
+        "ID de incidencia": "INC000004999930",
+        "Prioridad": "Media",
+        "Descripción": "Fallo en motor Oracle BBDD afectando a consultas",
+        "Grupo Resolutor": "DES_SOE_FICHA",  # ATC pattern in resolver group (4x weight)
+        "Urgencia": "Alta",
+        "Impacto": "Alto"
+    }
+    epsilon_data = {
+        "sistemas": ["DES_SOE_FICHA", "FICHA CLIENTE"],
+        "problema": "Carga lenta de fichas de clientes comerciales.",
+        "impacto": "Consultas lentas.",
+    }
+    result = evaluator.evaluate(ticket, epsilon_data)
+
+    eval_data = result["evaluacion"]
+    # ATC should outvote BBDD because Grupo Resolutor (weight 4) and Epsilon (weight 3) point to ATC
+    assert eval_data["proceso"] == "Atención al Cliente (ATC)"
+    assert eval_data["proceso_negocio"] == "Atención al Cliente (ATC)"
+    assert "dominio_tecnico" in eval_data
+
+
+def test_should_compute_discrepancy_delta_and_severity_levels():
+    # Delta 0: Aligned
+    d0 = compute_discrepancy_details("Media", "P3")
+    assert d0["es_discrepancia"] is False
+    assert d0["delta"] == 0
+    assert d0["gravedad"] == "Sin discrepancia"
+
+    # Delta 1: Moderada (P3 -> P2)
+    d1 = compute_discrepancy_details("Media", "P2")
+    assert d1["es_discrepancia"] is True
+    assert d1["delta"] == 1
+    assert d1["gravedad"] == "Moderada"
+    assert "Subescalación moderada (+1 nivel)" in d1["motivo"]
+
+    # Delta 2: Mayor Severa (P3 -> P1)
+    d2 = compute_discrepancy_details("Media", "P1", reasons=["Afectación de 3 tiendas"])
+    assert d2["es_discrepancia"] is True
+    assert d2["delta"] == 2
+    assert d2["gravedad"] == "Mayor Severa"
+    assert "Subescalación severa (+2 niveles)" in d2["motivo"]
+    assert "Afectación de 3 tiendas" in d2["motivo"]
+
+    # Delta 3: Crítica Extrema (P4 -> P1)
+    d3 = compute_discrepancy_details("Baja", "P1")
+    assert d3["es_discrepancia"] is True
+    assert d3["delta"] == 3
+    assert d3["gravedad"] == "Crítica Extrema"
+    assert "Subescalación crítica extrema" in d3["motivo"]
+
+
+def test_should_apply_operational_aging_escalation_when_p2_open_over_120_min_without_workaround():
+    evaluator = SeverityEvaluator()
+
+    # Ticket P2 naturally: Impacto Medio + Urgencia Media sin workaround
+    ticket_aging = {
+        "ID de incidencia": "INC000004999940",
+        "Prioridad": "Media",
+        "Descripción": "Degradación en enlace de sede sin corte total",
+        "Estatus": "Asignado",
+        "Fecha de envío": "14/10/2026 10:00",
+        "Urgencia": "Media",
+        "Impacto": "Medio"
+    }
+
+    # Case A: Open for 130 min without workaround -> escalates to P1
+    ref_time_130m = datetime(2026, 10, 14, 12, 10)
+    result_aging = evaluator.evaluate(ticket_aging, None, reference_time=ref_time_130m)
+    assert result_aging["prioridad_sugerida"] == "P1"
+    assert result_aging["evaluacion"]["aging_escalated"] is True
+    assert "Aging Escalation" in result_aging["evaluacion"]["criterio"]
+
+    # Case B: Open for only 60 min -> stays P2
+    ref_time_60m = datetime(2026, 10, 14, 11, 0)
+    result_normal = evaluator.evaluate(ticket_aging, None, reference_time=ref_time_60m)
+    assert result_normal["prioridad_sugerida"] == "P2"
+    assert result_normal["evaluacion"]["aging_escalated"] is False
+
+    # Case C: Open for 140 min WITH workaround -> stays P2 (not escalated by aging)
+    ticket_with_workaround = dict(ticket_aging)
+    ticket_with_workaround["Descripción"] = "Degradación en enlace de sede con workaround activo"
+    ref_time_140m = datetime(2026, 10, 14, 12, 20)
+    result_wa = evaluator.evaluate(ticket_with_workaround, None, reference_time=ref_time_140m)
+    assert result_wa["evaluacion"]["aging_escalated"] is False
+
+
+def test_should_include_new_discrepancy_and_aging_kpis_in_batch_catalog():
+    ticket_p3 = {
+        "ID de incidencia": "INC000004999950",
+        "Prioridad": "Media",
+        "Descripción": "Corte de fibra afectando a 5 tiendas",
+        "Estatus": "Asignado",
+        "Fecha de envío": "14/10/2026 10:00",
+        "Urgencia": "Alta",
+        "Impacto": "Alto"
+    }
+    # Evaluates to P1 with discrepancy Delta = 2 (Media -> P1)
+    ref_time = datetime(2026, 10, 14, 10, 15)
+    catalog = evaluate_incidents_batch([ticket_p3], epsilon_client=None, reference_time=ref_time)
+
+    kpis = catalog["_metadata"]["kpis"]
+    assert "discrepancias_delta1_moderada_count" in kpis
+    assert "discrepancias_delta2_mayor_count" in kpis
+    assert "discrepancias_delta3_critica_count" in kpis
+    assert "aging_escaladas_p1_count" in kpis
+    assert kpis["discrepancias_delta2_mayor_count"] == 1
+
+    item = catalog["data"][0]
+    assert item["discrepancia_delta"] == 2
+    assert item["discrepancia_gravedad"] == "Mayor Severa"
+    assert "+2 niveles" in item["discrepancia_motivo"]
+
 
 
 

@@ -65,12 +65,132 @@ def detect_priority_discrepancy(original_priority: Optional[str], calculated_pri
     
     Example: Ticket is 'Media' (P3) and calculated is 'P1' -> Subescalation detected.
     """
+    details = compute_discrepancy_details(original_priority, calculated_priority)
+    return details["es_discrepancia"]
+
+
+def compute_discrepancy_details(
+    original_priority: Optional[str],
+    calculated_priority: str,
+    reasons: Optional[list[str]] = None
+) -> dict[str, Any]:
+    """Computes detailed discrepancy delta level, gravity classification, and explainable root cause for N1 feedback.
+    
+    Delta levels:
+    - Delta = 0: Sin discrepancia (Prio Remedy alineada con evaluación ITIL)
+    - Delta = 1: Moderada (ej. P3 -> P2 o P2 -> P1)
+    - Delta = 2: Mayor Severa (ej. P3 -> P1 o P4 -> P2)
+    - Delta >= 3: Crítica Extrema (ej. P4 -> P1 subescalación masiva)
+    """
     norm_orig = normalize_priority(original_priority)
     norm_calc = normalize_priority(calculated_priority)
     orig_rank = PRIORITY_RANKS.get(norm_orig, 3)
     calc_rank = PRIORITY_RANKS.get(norm_calc, 3)
-    # Lower rank number = Higher severity (P1=1 < P3=3)
-    return calc_rank < orig_rank
+
+    delta = max(0, orig_rank - calc_rank)
+    es_discrepancia = delta > 0
+
+    if delta == 0:
+        gravedad = "Sin discrepancia"
+        motivo = f"Prioridad Remedy ({norm_orig}) alineada con evaluación ITIL ({norm_calc})."
+    elif delta == 1:
+        gravedad = "Moderada"
+        motivo = f"Subescalación moderada (+1 nivel): Ticket registrado como {norm_orig} y evaluado como {norm_calc}."
+    elif delta == 2:
+        gravedad = "Mayor Severa"
+        motivo = f"Subescalación severa (+2 niveles): Ticket registrado como {norm_orig} y evaluado como {norm_calc}."
+    else:
+        gravedad = "Crítica Extrema"
+        motivo = f"Subescalación crítica extrema (+{delta} niveles): Ticket registrado como {norm_orig} y evaluado como {norm_calc}."
+
+    if es_discrepancia and reasons:
+        reasons_clean = [r.strip() for r in reasons if r and r.strip()]
+        if reasons_clean:
+            motivo += " Causa determinante: " + "; ".join(reasons_clean)
+
+    return {
+        "es_discrepancia": es_discrepancia,
+        "delta": delta,
+        "gravedad": gravedad,
+        "motivo": motivo,
+        "prioridad_original_normalizada": norm_orig,
+        "prioridad_calculada_normalizada": norm_calc,
+    }
+
+
+def is_phrase_negated(text: str, match_span: tuple[int, int]) -> bool:
+    """Detects if a keyword match is syntactically negated in Spanish.
+    
+    Examples: 'sin corte total', 'descartada caída', 'no se aprecia afectación',
+    'no hay interrupción', 'se descarta caída'.
+    """
+    start, _ = match_span
+    prefix = text[max(0, start - 35):start].lower()
+    return bool(re.search(
+        r"\b(?:sin|no(?:\s+hay|\s+se\s+aprecian?|\s+se\s+observan?|\s+presentan?)?|descartad[ao]s?|se\s+descarta|descarte)\s+(?:de\s+|un\s+|una\s+|el\s+|la\s+|ning[uú]n\s+)?$",
+        prefix
+    ))
+
+
+def extract_quantitative_metrics(text: str) -> dict[str, Any]:
+    """Extracts quantifiable magnitude metrics from incident texts or Epsilon IA.
+    
+    Extracts:
+    - Sedes / Tiendas / Call Centers (threshold >= 3 for SL1)
+    - Usuarios / Clientes afectados (threshold >= 500 for SL1)
+    - Desviación / Error % (threshold >= 20% for SL1)
+    """
+    metrics: dict[str, Any] = {
+        "sedes": None,
+        "usuarios": None,
+        "desviacion_pct": None,
+        "detalles": [],
+    }
+    if not text:
+        return metrics
+
+    # 1. Sedes / Tiendas / Call Centers / Circuitos (umbral SL1 >= 3)
+    sede_pattern = re.compile(
+        r"(?:afectad[ao]s?\s+a\s+|afecta\s+a\s+|impacto\s+en\s+)?(?:>\s*|m[aá]s\s+de\s+|~\s*)?(\d+)\+?\s*(?:sedes?|tiendas?|call\s*centers?|oficinas?)",
+        re.I
+    )
+    sede_match = sede_pattern.search(text)
+    if sede_match:
+        val = int(sede_match.group(1))
+        metrics["sedes"] = val
+        metrics["detalles"].append(f"{val} sedes/tiendas/centros")
+
+    # 2. Usuarios / Clientes / Líneas / Afectados (umbral SL1 >= 500)
+    user_pattern = re.compile(
+        r"(?:afectad[ao]s?\s+a\s+|afecta\s+a\s+|impacto\s+en\s+)?(?:>\s*|m[aá]s\s+de\s+|~\s*)?(\d{1,3}(?:\.\d{3})+|\d+)\+?\s*(?:usuarios?|clientes?|l[íi]neas?|afectados?|abonados?)",
+        re.I
+    )
+    user_match = user_pattern.search(text)
+    if user_match:
+        raw_val = user_match.group(1).replace(".", "").replace(",", "")
+        try:
+            val = int(raw_val)
+            metrics["usuarios"] = val
+            metrics["detalles"].append(f"{val} usuarios/clientes")
+        except ValueError:
+            pass
+
+    # 3. Desviación / Porcentaje (umbral SL1 >= 20%)
+    pct_pattern = re.compile(
+        r"(?:(?:afectaci[oó]n|desviaci[oó]n|ca[íi]da|errores?|fallos?|tr[áa]fico)\s+(?:de[nl]?\s+)?(?:>\s*|m[aá]s\s+de\s+|~\s*)?(\d+(?:[.,]\d+)?)\s*%|(?:>\s*|m[aá]s\s+de\s+|~\s*)?(\d+(?:[.,]\d+)?)\s*%\s*(?:de\s+)?(?:desviaci[oó]n|errores?|ca[íi]das?|afectaci[oó]n|fallos?|tr[áa]fico))",
+        re.I
+    )
+    pct_match = pct_pattern.search(text)
+    if pct_match:
+        raw_pct = (pct_match.group(1) or pct_match.group(2)).replace(",", ".")
+        try:
+            val = float(raw_pct)
+            metrics["desviacion_pct"] = val
+            metrics["detalles"].append(f"{val}% afectación/desviación")
+        except ValueError:
+            pass
+
+    return metrics
 
 
 def parse_incident_datetime(raw: Optional[str]) -> Optional[datetime]:
@@ -149,6 +269,191 @@ def compute_emergency_sla_status(
     }
 
 
+PROCESS_PATTERNS: dict[str, list[re.Pattern]] = {
+    "Conectividad de Sedes, Call Centers y Tiendas": [
+        re.compile(r"\brtv-tecse\b", re.I),
+        re.compile(r"\bred\s+datos\b", re.I),
+        re.compile(r"\bulises\b", re.I),
+        re.compile(r"\bmeneses\b", re.I),
+        re.compile(r"\bca[íi]da\s+de\s+tienda\b", re.I),
+        re.compile(r"\baislamiento\s+de\s+sede\b", re.I),
+        re.compile(r"\bcircuito\s+(?:backup|principal|ambos)\b", re.I),
+        re.compile(r"\bcircuito\b.*\b(?:sede|msc|plataforma|tienda|wan|mpls)\b", re.I),
+    ],
+    "Infraestructura Core IT, BBDD y Cloud": [
+        re.compile(r"\besx\b", re.I),
+        re.compile(r"\bvmware\b", re.I),
+        re.compile(r"\bpseries\b", re.I),
+        re.compile(r"\bpower9\b", re.I),
+        re.compile(r"\bexadata\b", re.I),
+        re.compile(r"\bhwsan\b", re.I),
+        re.compile(r"\bspain\s+almacenamiento\b", re.I),
+        re.compile(r"\bitx\s+oci\b", re.I),
+        re.compile(r"\boci/gcp\b", re.I),
+        re.compile(r"\bdata\s+mart\s+fiscal\b", re.I),
+        re.compile(r"\bbackup\s+osp\b", re.I),
+        re.compile(r"\bhipervisor\b", re.I),
+        re.compile(r"\bcabina\s+san\b", re.I),
+        re.compile(r"\brac\b", re.I),  # Boundary regex: never matches 'operaciones'
+    ],
+    "Identidad (GDU/EVIDIAN) y Automatización": [
+        re.compile(r"\bgdu\b", re.I),
+        re.compile(r"\bevidian\b", re.I),
+        re.compile(r"\bgdu/acm\b", re.I),
+        re.compile(r"\brobotfactory\b", re.I),
+        re.compile(r"\bsso\s+corporativo\b", re.I),
+        re.compile(r"\biam\b", re.I),
+    ],
+    "Middleware e Integración Transversal": [
+        re.compile(r"\bapigee\b", re.I),
+        re.compile(r"\bopenapi\b", re.I),
+        re.compile(r"\btibco\b", re.I),
+        re.compile(r"\bgc\s+middleware\b", re.I),
+        re.compile(r"\bdatapower\b", re.I),
+        re.compile(r"\bocci\b", re.I),
+        re.compile(r"\bsbl_eai\b", re.I),
+        re.compile(r"\bbus\s+de\s+integraci[oó]n\b", re.I),
+        re.compile(r"\bapi\s+gateway\b", re.I),
+    ],
+    "Facturación y Cobros": [
+        re.compile(r"\bhpfms\b", re.I),
+        re.compile(r"\bbscs\b", re.I),
+        re.compile(r"\bopen\s+cobros\b", re.I),
+        re.compile(r"\bexcalibur\b", re.I),
+        re.compile(r"\bsga\b", re.I),  # Boundary regex: never matches 'desglose'
+        re.compile(r"\bmediaci[oó]n\b", re.I),
+        re.compile(r"\bhp-ium\b", re.I),
+        re.compile(r"\bsap\b", re.I),  # Boundary regex: never matches 'pasaporte'
+        re.compile(r"\bcobros?\b", re.I),
+        re.compile(r"\bfacturas?\b", re.I),
+        re.compile(r"\bfacturaci[oó]n\b", re.I),
+        re.compile(r"\btarificaci[oó]n\b", re.I),
+        re.compile(r"\btarifica\b", re.I),
+        re.compile(r"\babonos?\b", re.I),
+        re.compile(r"\bpenalizaci[oó]n\b", re.I),
+        re.compile(r"\bsop_bss\b", re.I),
+        re.compile(r"\bsop_smc_bscs\b", re.I),
+        re.compile(r"\bsop_tmc_excalibur\b", re.I),
+    ],
+    "Prepago": [
+        re.compile(r"\bprepago\b", re.I),
+        re.compile(r"\brecargas?\b", re.I),
+        re.compile(r"\brecargas\s+aprs\b", re.I),
+        re.compile(r"\baprs\b", re.I),
+        re.compile(r"\bocs\b", re.I),
+        re.compile(r"\bsop_ocs\b", re.I),
+        re.compile(r"\baltas?\s+prepago\b", re.I),
+        re.compile(r"\balta\s+de\s+l[íi]neas\s+prepago\b", re.I),
+    ],
+    "Portabilidad": [
+        re.compile(r"\bportabilidad(?:es)?\b", re.I),
+        re.compile(r"\bflujo\s+2\s*am\b", re.I),
+        re.compile(r"\bentidad\s+de\s+referencia\b", re.I),
+        re.compile(r"\bnodo\s+portabilidad\b", re.I),
+        re.compile(r"\bpomv\b", re.I),
+        re.compile(r"\bncrn\b", re.I),
+    ],
+    "Ventas": [
+        re.compile(r"\bcomprobantes?\s+de\s+venta\b", re.I),
+        re.compile(r"\bteleventa\b", re.I),
+        re.compile(r"\bcanal\s+comercial\b", re.I),
+        re.compile(r"\bneg_camp_ceres\b", re.I),
+        re.compile(r"\bceres\b", re.I),
+        re.compile(r"\bupdatecommercialactspa\b", re.I),
+        re.compile(r"\becontrato\b", re.I),
+        re.compile(r"\bpangea\b", re.I),
+        re.compile(r"\brenove\b", re.I),
+        re.compile(r"\brenovaci[oó]n\s+de\s+terminales\b", re.I),
+        re.compile(r"\bventas?\b", re.I),
+        re.compile(r"\bcontrataci[oó]n\b", re.I),
+    ],
+    "Provisión": [
+        re.compile(r"\bprovisi[oó]n\b", re.I),
+        re.compile(r"\baprovisionamiento\b", re.I),
+        re.compile(r"\b[oó]rdenes?(?:\s+de\s+(?:m[oó]vil|fijo))?\b", re.I),
+        re.compile(r"\balta\s+de\s+(?:fijo|m[oó]vil)\b", re.I),
+        re.compile(r"\brenovaci[oó]n\s+de\s+beneficios\b", re.I),
+        re.compile(r"\bsop_smc_teide\b", re.I),
+        re.compile(r"\bteide\b", re.I),
+        re.compile(r"\bfijo\s+apl\b", re.I),
+        re.compile(r"\bip24\b", re.I),
+        re.compile(r"\bsigma\b", re.I),
+        re.compile(r"\bluna\b", re.I),
+        re.compile(r"\bmyaddress\b", re.I),
+        re.compile(r"\baltair\s+a\s+br[uú]jula\b", re.I),
+        re.compile(r"\bbr[uú]jula\b", re.I),
+        re.compile(r"\bgis\s+fibra\b", re.I),
+        re.compile(r"\bactivateorder\b", re.I),
+    ],
+    "Atención al Cliente (ATC)": [
+        re.compile(r"\bficha\s+de?\s+cliente\b", re.I),
+        re.compile(r"\bdes_soe_ficha\b", re.I),
+        re.compile(r"\bapl_mov_soe\b", re.I),
+        re.compile(r"\bivr\b", re.I),
+        re.compile(r"\bcti\b", re.I),
+        re.compile(r"\bfrontales\b", re.I),
+        re.compile(r"\bcrm\b", re.I),
+        re.compile(r"\bcrm\s+jazztel\b", re.I),
+        re.compile(r"\bcrm4telco\b", re.I),
+        re.compile(r"\bsiebel(?:\s+8)?\b", re.I),
+        re.compile(r"\bpolar\b", re.I),
+        re.compile(r"\basistente\b", re.I),
+        re.compile(r"\bdes_asistente\b", re.I),
+        re.compile(r"\bdjingo\b", re.I),
+        re.compile(r"\bliveperson\b", re.I),
+        re.compile(r"\bsop_djingo\b", re.I),
+        re.compile(r"\bonuris\b", re.I),
+        re.compile(r"\bsop_onuris\b", re.I),
+        re.compile(r"\bonconnect\b", re.I),
+        re.compile(r"\bnaboo\b", re.I),
+        re.compile(r"\bboreal\b", re.I),
+        re.compile(r"\bapp\s+mi\s+orange\b", re.I),
+        re.compile(r"\bmijazztel\b", re.I),
+        re.compile(r"\boperadores?\b", re.I),
+        re.compile(r"\bcall\s+center\b", re.I),
+        re.compile(r"\bgenesys\b", re.I),
+        re.compile(r"\baltitude\b", re.I),
+        re.compile(r"\batenci[oó]n\s+al\s+cliente\b", re.I),
+        re.compile(r"\batc\b", re.I),
+    ],
+    "Operación y Monitorización (O&M)": [
+        re.compile(r"\baltair\b", re.I),
+        re.compile(r"\bgnoc\b", re.I),
+        re.compile(r"\bcpe\b", re.I),
+        re.compile(r"\bcortes\s+cpe\b", re.I),
+        re.compile(r"\bvtemip\b", re.I),
+        re.compile(r"\bzte\b", re.I),
+        re.compile(r"\buca\b", re.I),  # Boundary regex: never matches 'comunicación'
+        re.compile(r"\bsupervisi[oó]n\b", re.I),
+        re.compile(r"\bmonitorizaci[oó]n\b", re.I),
+        re.compile(r"\bcau\b", re.I),  # Boundary regex: never matches 'precaución'
+        re.compile(r"\bcep\s+cau\s+agi\b", re.I),
+        re.compile(r"\bftth\b", re.I),
+        re.compile(r"\bfibra\b", re.I),
+        re.compile(r"\bnodo\s+central\b", re.I),
+        re.compile(r"\benlace\b", re.I),
+        re.compile(r"\brouting\s+core\b", re.I),
+    ],
+}
+
+BUSINESS_PROCESS_CATEGORIES = {
+    "Atención al Cliente (ATC)",
+    "Ventas",
+    "Portabilidad",
+    "Prepago",
+    "Provisión",
+    "Facturación y Cobros",
+    "Conectividad de Sedes, Call Centers y Tiendas",
+}
+
+TECHNICAL_DOMAIN_CATEGORIES = {
+    "Middleware e Integración Transversal",
+    "Infraestructura Core IT, BBDD y Cloud",
+    "Identidad (GDU/EVIDIAN) y Automatización",
+    "Operación y Monitorización (O&M)",
+}
+
+
 class SeverityEvaluator:
     """Evaluates ITIL severity based on Impact and Urgency heuristics."""
 
@@ -168,9 +473,14 @@ class SeverityEvaluator:
         "urgente", "crítico", "critico", "intervención inmediata"
     )
 
-    def evaluate(self, ticket: dict[str, Any], epsilon_data: Optional[dict[str, Any]]) -> dict[str, Any]:
+    def evaluate(
+        self,
+        ticket: dict[str, Any],
+        epsilon_data: Optional[dict[str, Any]],
+        reference_time: Optional[datetime] = None
+    ) -> dict[str, Any]:
         """Calculates suggested priority (P1-P4) and structured ITIL justification."""
-        impact, impact_reason = self._evaluate_impact(ticket, epsilon_data)
+        impact, impact_reason, quant_metrics = self._evaluate_impact(ticket, epsilon_data)
         urgency, urgency_reason, has_workaround = self._evaluate_urgency(ticket, epsilon_data)
 
         priority = self._calculate_matrix(impact, urgency, has_workaround)
@@ -193,13 +503,31 @@ class SeverityEvaluator:
                     impact = "Medio"
                     impact_reason = "Etiquetado explícito /SL2 por N1 (Incidencia Mayor / Pérdida de redundancia o degradación)."
 
+        # Regla Operativa de Aging Escalation:
+        # P2 activa por >= 120 minutos sin workaround autorizado escala preventivamente a P1
+        raw_date = ticket.get("Fecha de envío") or ticket.get("fecha_envio") or ""
+        parsed_date = parse_incident_datetime(raw_date)
+        sla_info = compute_emergency_sla_status(parsed_date, reference_time=reference_time)
+        mins_open = sla_info.get("minutos_desde_apertura")
+
+        aging_escalated = False
+        aging_criterion_prefix = ""
+        if not is_closed and priority == "P2" and has_workaround != "Sí" and mins_open is not None and mins_open >= 120:
+            priority = "P1"
+            aging_escalated = True
+            aging_criterion_prefix = f"Aging Escalation (>120m en P2 sin workaround - {mins_open}m) | "
+            urgency_reason = f"Escalado operativo a P1 por tiempo transcurrido ({mins_open} min >= 120 min) sin mitigación ni workaround."
+
         is_high_priority = priority in ("P1", "P2")
 
         original_raw = ticket.get("Prioridad") or ticket.get("prioridad")
-        is_discrepancy = detect_priority_discrepancy(original_raw, priority)
+        disc_details = compute_discrepancy_details(original_raw, priority, reasons=[impact_reason, urgency_reason])
+        is_discrepancy = disc_details["es_discrepancia"]
 
-        proceso = self._classify_process(ticket, epsilon_data)
-        criterio = self._determine_criterion(proceso, priority, impact, urgency, ticket, epsilon_data)
+        proceso, proceso_negocio, dominio_tecnico = self._classify_process_multi_domain(ticket, epsilon_data)
+        criterio = self._determine_criterion(proceso, priority, impact, urgency, ticket, epsilon_data, quant_metrics)
+        if aging_criterion_prefix:
+            criterio = aging_criterion_prefix + criterio
 
         sla_minutes = SLA_TARGET_MINUTES.get(priority, 240)
 
@@ -215,8 +543,13 @@ class SeverityEvaluator:
             "prioridad_sugerida": priority,
             "es_alta_prioridad": is_high_priority,
             "es_discrepancia": is_discrepancy,
+            "discrepancia_delta": disc_details["delta"],
+            "discrepancia_gravedad": disc_details["gravedad"],
+            "discrepancia_motivo": disc_details["motivo"],
             "evaluacion": {
                 "proceso": proceso,
+                "proceso_negocio": proceso_negocio,
+                "dominio_tecnico": dominio_tecnico,
                 "criterio": criterio,
                 "impacto": impact,
                 "impacto_justificacion": impact_reason,
@@ -225,110 +558,87 @@ class SeverityEvaluator:
                 "workaround": has_workaround,
                 "workaround_gobernanza": workaround_gobernanza,
                 "sla_objetivo_minutos": sla_minutes,
+                "metricas_cuantitativas": quant_metrics,
+                "es_discrepancia": is_discrepancy,
+                "discrepancia_delta": disc_details["delta"],
+                "discrepancia_gravedad": disc_details["gravedad"],
+                "discrepancia_motivo": disc_details["motivo"],
+                "aging_escalated": aging_escalated,
             }
         }
 
     @staticmethod
+    def _score_patterns(patterns: list[re.Pattern], text: str) -> int:
+        if not text:
+            return 0
+        return sum(len(p.findall(text)) for p in patterns)
+
+    @classmethod
+    def _classify_process_multi_domain(
+        cls,
+        ticket: dict[str, Any],
+        epsilon: Optional[dict[str, Any]]
+    ) -> tuple[str, str, str]:
+        """Performs multi-domain weighted scoring and produces dual ITIL labeling.
+        
+        Weights:
+        - Grupo Resolutor / Asignado: 4.0
+        - Epsilon Sistemas: 3.0
+        - Título / Incidencia: 2.0
+        - Descripción / Problema / Impacto: 1.0
+        
+        Returns:
+            (proceso_principal, proceso_negocio, dominio_tecnico)
+        """
+        group = str(ticket.get("Grupo asignado") or ticket.get("Grupo Resolutor") or "")
+        title = str(ticket.get("Descripción") or ticket.get("descripcion") or (epsilon.get("titulo") if epsilon else "") or "")
+        
+        sistemas_text = ""
+        if epsilon and isinstance(epsilon.get("sistemas"), list):
+            sistemas_text = " ".join(str(s) for s in epsilon.get("sistemas", []) if s)
+        
+        desc = str(ticket.get("Descripción") or ticket.get("descripcion") or "")
+        problem_text = ""
+        if epsilon:
+            problem_text = f"{epsilon.get('problema', '')} {epsilon.get('impacto', '')}"
+        detail_corpus = f"{desc} {problem_text}"
+
+        scores: dict[str, float] = {}
+        for category, patterns in PROCESS_PATTERNS.items():
+            g_score = cls._score_patterns(patterns, group) * 4.0
+            s_score = cls._score_patterns(patterns, sistemas_text) * 3.0
+            t_score = cls._score_patterns(patterns, title) * 2.0
+            d_score = cls._score_patterns(patterns, detail_corpus) * 1.0
+            total = g_score + s_score + t_score + d_score
+            scores[category] = total
+
+        sorted_categories = sorted(scores.items(), key=lambda x: x[1], reverse=True)
+        top_cat, top_score = sorted_categories[0]
+
+        if top_score <= 0.0:
+            top_cat = "Sistemas Core"
+
+        business_candidates = [
+            (c, s) for c, s in sorted_categories if c in BUSINESS_PROCESS_CATEGORIES and s > 0.0
+        ]
+        top_business = business_candidates[0][0] if business_candidates else (
+            top_cat if top_cat in BUSINESS_PROCESS_CATEGORIES else "Operación IT"
+        )
+
+        technical_candidates = [
+            (c, s) for c, s in sorted_categories if c in TECHNICAL_DOMAIN_CATEGORIES and s > 0.0
+        ]
+        top_technical = technical_candidates[0][0] if technical_candidates else (
+            top_cat if top_cat in TECHNICAL_DOMAIN_CATEGORIES else "Sistemas Core"
+        )
+
+        return top_cat, top_business, top_technical
+
+    @staticmethod
     def _classify_process(ticket: dict[str, Any], epsilon: Optional[dict[str, Any]]) -> str:
         """Classifies incident into one of the 10 Critical Business / Technical Blocks (it-severity-matrix v2: 3.1 to 3.10)."""
-        text_corpus = ""
-        if epsilon:
-            text_corpus += f" {epsilon.get('problema', '')} {epsilon.get('impacto', '')} {epsilon.get('titulo', '')}"
-            if isinstance(epsilon.get("sistemas"), list):
-                text_corpus += " " + " ".join(epsilon.get("sistemas", []))
-        desc = ticket.get("Descripción") or ticket.get("descripcion") or ""
-        group = ticket.get("Grupo asignado") or ticket.get("Grupo Resolutor") or ""
-        text_corpus += f" {desc} {group}"
-        text_lower = text_corpus.lower()
-
-        # 3.8 Conectividad de Sedes, Call Centers (MSC) y Tiendas (RTV-TECSE RED DATOS / GNOC)
-        if any(k in text_lower for k in [
-            "rtv-tecse", "red datos", "ulises", "meneses", "caída de tienda", "caida de tienda",
-            "aislamiento de sede", "circuito backup", "circuito principal", "ambos circuitos"
-        ]) or ("circuito" in text_lower and any(s in text_lower for s in ["sede", "msc", "plataforma", "tienda", "wan", "mpls"])):
-            return "Conectividad de Sedes, Call Centers y Tiendas"
-
-        # 3.9 Infraestructura Core IT, Hipervisores (ESX), Servidores (PSeries), Almacenamiento (SAN), BBDD (Exadata) y Cloud (OCI/GCP)
-        if any(k in text_lower for k in [
-            "esx", "vmware", "pseries", "power9", "exadata", "hwsan", "spain almacenamiento",
-            "itx oci", "oci/gcp", "data mart fiscal", "backup osp", "hipervisor", "cabina san"
-        ]):
-            return "Infraestructura Core IT, BBDD y Cloud"
-
-        # 3.10 Autenticación / Gestión de Identidad (GDU / EVIDIAN) y Automatización Operativa (ROBOTFACTORY)
-        if any(k in text_lower for k in [
-            "gdu", "evidian", "gdu/acm", "robotfactory", "sso corporativo"
-        ]):
-            return "Identidad (GDU/EVIDIAN) y Automatización"
-
-        # 3.7 Middleware e Integración Transversal
-        if any(k in text_lower for k in [
-            "apigee", "openapi", "tibco", "gc middleware", "datapower", "occi",
-            "sbl_eai", "bus de integración", "bus de integracion", "api gateway"
-        ]):
-            return "Middleware e Integración Transversal"
-
-        # 3.5 y 3.6 Facturación y Cobros
-        if any(k in text_lower for k in [
-            "hpfms", "bscs", "open cobros", "excalibur", "sga", "mediación", "mediacion",
-            "hp-ium", "sap", "cobro", "cobros", "factura", "facturación", "facturacion",
-            "tarifica", "tarificación", "tarificacion", "abono", "abonos", "penalizacion",
-            "penalización", "sop_bss", "sop_smc_bscs", "sop_tmc_excalibur"
-        ]):
-            return "Facturación y Cobros"
-
-        # 3.3 Prepago
-        if any(k in text_lower for k in [
-            "prepago", "recarga", "recargas", "recargas aprs", "aprs", "ocs", "sop_ocs",
-            "alta de líneas prepago", "altas prepago"
-        ]):
-            return "Prepago"
-
-        # 3.2 / 3.4 Portabilidad
-        if any(k in text_lower for k in [
-            "portabilidad", "portabilidades", "flujo 2 am", "entidad de referencia",
-            "nodo portabilidad", "pomv", "ncrn"
-        ]):
-            return "Portabilidad"
-
-        # 3.2 Ventas / Contratación y Captación
-        if any(k in text_lower for k in [
-            "comprobante de venta", "comprobantes de venta", "comprobantes", "televenta",
-            "canal comercial", "neg_camp_ceres", "ceres", "updatecommercialactspa",
-            "econtrato", "pangea", "renove", "renovación de terminales",
-            "renovacion de terminales", "venta", "ventas", "contratación", "contratacion"
-        ]):
-            return "Ventas"
-
-        # 3.4 Provisión y Gestión de Pedidos
-        if any(k in text_lower for k in [
-            "provisión", "provision", "aprovisionamiento", "orden de móvil", "orden de fijo",
-            "órdenes", "ordenes", "alta de fijo", "alta de móvil", "renovación de beneficios",
-            "renovacion de beneficios", "sop_smc_teide", "teide", "fijo apl", "ip24",
-            "sigma", "luna", "myaddress", "altair a brújula", "brújula", "brujula", "gis fibra", "activateorder"
-        ]):
-            return "Provisión"
-
-        # 3.1 Contacto y Atención al Cliente (ATC)
-        if any(k in text_lower for k in [
-            "ficha cliente", "ficha de cliente", "des_soe_ficha", "apl_mov_soe", "ivr", "cti",
-            "frontales", "crm", "crm jazztel", "crm4telco", "siebel", "polar", "asistente",
-            "des_asistente", "djingo", "liveperson", "sop_djingo", "onuris", "sop_onuris",
-            "onconnect", "naboo", "boreal", "app mi orange", "mijazztel", "operador",
-            "operadores", "call center", "genesys", "altitude", "atención al cliente",
-            "atencion al cliente", "atc"
-        ]):
-            return "Atención al Cliente (ATC)"
-
-        # Operación y Monitorización (O&M)
-        if any(k in text_lower for k in [
-            "altair", "gnoc", "cpe", "cortes cpe", "vtemip", "zte", "uca", "supervisión",
-            "supervision", "monitorización", "monitorizacion", "cau", "cep cau agi", "ftth",
-            "fibra", "nodo central", "enlace", "routing core", "rac"
-        ]):
-            return "Operación y Monitorización (O&M)"
-
-        return "Sistemas Core"
+        top_cat, _, _ = SeverityEvaluator._classify_process_multi_domain(ticket, epsilon)
+        return top_cat
 
     @staticmethod
     def _determine_criterion(
@@ -337,51 +647,63 @@ class SeverityEvaluator:
         impact: str,
         urgency: str,
         ticket: dict[str, Any],
-        epsilon: Optional[dict[str, Any]]
+        epsilon: Optional[dict[str, Any]],
+        quant_metrics: Optional[dict[str, Any]] = None,
     ) -> str:
         """Determines the specific threshold or ITIL rule applied from the it-severity-matrix skill (3.1 to 3.10)."""
+        crit = "Regla de Oro N1: Triaje preventivo SL1/P1 en apertura por riesgo de impacto"
         if priority == "P1":
             if process == "Atención al Cliente (ATC)":
-                return "ATC (3.1): Frontales/CRM (>20% desviación en 30m) o Regla de Oro N1"
-            if process == "Ventas":
-                return "Ventas (3.2): Afectación canal comercial (>30% volumen) o bloqueo contratación"
-            if process == "Portabilidad":
-                return "Portabilidad (3.2/3.4): Flujo 2 AM o entidad de referencia (>2h retraso)"
-            if process == "Prepago":
-                return "Prepago (3.3): >10% errores o >30 min sin altas/recargas (APRS/OCS)"
-            if process == "Provisión":
-                return "Provisión (3.4): Órdenes en error (>20% móvil / >30% fijo) o Regla de Oro N1"
-            if process == "Facturación y Cobros":
-                return "Facturación/Cobros (3.5/3.6): >3h sin tarificación online o bloqueo ciclo activo"
-            if process == "Middleware e Integración Transversal":
-                return "Middleware (3.7): Caída o bloqueo transversal en bus/API (APIGEE/TIBCO/Datapower/OCCI)"
+                crit = "ATC (3.1): Frontales/CRM (>20% desviación en 30m) o Regla de Oro N1"
+            elif process == "Ventas":
+                crit = "Ventas (3.2): Afectación canal comercial (>30% volumen) o bloqueo contratación"
+            elif process == "Portabilidad":
+                crit = "Portabilidad (3.2/3.4): Flujo 2 AM o entidad de referencia (>2h retraso)"
+            elif process == "Prepago":
+                crit = "Prepago (3.3): >10% errores o >30 min sin altas/recargas (APRS/OCS)"
+            elif process == "Provisión":
+                crit = "Provisión (3.4): Órdenes en error (>20% móvil / >30% fijo) o Regla de Oro N1"
+            elif process == "Facturación y Cobros":
+                crit = "Facturación/Cobros (3.5/3.6): >3h sin tarificación online o bloqueo ciclo activo"
+            elif process == "Middleware e Integración Transversal":
+                crit = "Middleware (3.7): Caída o bloqueo transversal en bus/API (APIGEE/TIBCO/Datapower/OCCI)"
+            elif process == "Conectividad de Sedes, Call Centers y Tiendas":
+                crit = "Conectividad Sedes (3.8): Caída simultánea de circuitos (principal + backup) o aislamiento MSC"
+            elif process == "Infraestructura Core IT, BBDD y Cloud":
+                crit = "Infraestructura Core/Cloud (3.9): Corte troncal Cloud (OCI/GCP) o servidor/clúster sin absorción HA"
+            elif process == "Identidad (GDU/EVIDIAN) y Automatización":
+                crit = "Identidad y Automatización (3.10): Caída global de autenticación (GDU/EVIDIAN) o ROBOTFACTORY"
+            elif process == "Operación y Monitorización (O&M)":
+                crit = "O&M: Compromiso en herramienta esencial de supervisión (Regla de Oro N1)"
+
+        elif priority == "P2":
             if process == "Conectividad de Sedes, Call Centers y Tiendas":
-                return "Conectividad Sedes (3.8): Caída simultánea de circuitos (principal + backup) o aislamiento MSC"
-            if process == "Infraestructura Core IT, BBDD y Cloud":
-                return "Infraestructura Core/Cloud (3.9): Corte troncal Cloud (OCI/GCP) o servidor/clúster sin absorción HA"
-            if process == "Identidad (GDU/EVIDIAN) y Automatización":
-                return "Identidad y Automatización (3.10): Caída global de autenticación (GDU/EVIDIAN) o ROBOTFACTORY"
-            if process == "Operación y Monitorización (O&M)":
-                return "O&M: Compromiso en herramienta esencial de supervisión (Regla de Oro N1)"
-            return "Regla de Oro N1: Triaje preventivo SL1/P1 en apertura por riesgo de impacto"
+                crit = "Conectividad Sedes/Tiendas (3.8 SL2): Caída de circuito único con backup activo o tienda individual"
+            elif process == "Infraestructura Core IT, BBDD y Cloud":
+                crit = "Infraestructura Core/Cloud (3.9 SL2): Caída de nodo (ESX/PSeries/Exadata) o alerta SAN absorbida por HA"
+            elif process == "Identidad (GDU/EVIDIAN) y Automatización":
+                crit = "Identidad y Automatización (3.10 SL2): Degradación parcial en GDU/EVIDIAN o fallo acotado en ROBOTFACTORY"
+            elif process == "Middleware e Integración Transversal":
+                crit = "Middleware (3.7 SL2): Latencia elevada o errores intermitentes en pasarela API/bus con reintentos"
+            else:
+                crit = "SL2 Mayor: Degradación funcional o afectación en sede sin indisponibilidad global"
 
-        if priority == "P2":
-            if process == "Conectividad de Sedes, Call Centers y Tiendas":
-                return "Conectividad Sedes/Tiendas (3.8 SL2): Caída de circuito único con backup activo o tienda individual"
-            if process == "Infraestructura Core IT, BBDD y Cloud":
-                return "Infraestructura Core/Cloud (3.9 SL2): Caída de nodo (ESX/PSeries/Exadata) o alerta SAN absorbida por HA"
-            if process == "Identidad (GDU/EVIDIAN) y Automatización":
-                return "Identidad y Automatización (3.10 SL2): Degradación parcial en GDU/EVIDIAN o fallo acotado en ROBOTFACTORY"
-            if process == "Middleware e Integración Transversal":
-                return "Middleware (3.7 SL2): Latencia elevada o errores intermitentes en pasarela API/bus con reintentos"
-            return "SL2 Mayor: Degradación funcional o afectación en sede sin indisponibilidad global"
+        elif priority == "P3":
+            crit = "SL3 Menor: Bajo impacto en procesos secundarios o alarmas menores"
+        else:
+            crit = "SL4 Informativa: Seguimiento sin afectación directa a servicios"
 
-        if priority == "P3":
-            return "SL3 Menor: Bajo impacto en procesos secundarios o alarmas menores"
+        if quant_metrics:
+            if quant_metrics.get("sedes") is not None and quant_metrics["sedes"] >= 3:
+                return f"Umbral Cuantitativo (>=3 sedes: {quant_metrics['sedes']}) | {crit}"
+            if quant_metrics.get("usuarios") is not None and quant_metrics["usuarios"] >= 500:
+                return f"Umbral Cuantitativo (>=500 usuarios: {quant_metrics['usuarios']}) | {crit}"
+            if quant_metrics.get("desviacion_pct") is not None and quant_metrics["desviacion_pct"] >= 20.0:
+                return f"Umbral Cuantitativo (>={quant_metrics['desviacion_pct']}%) | {crit}"
 
-        return "SL4 Informativa: Seguimiento sin afectación directa a servicios"
+        return crit
 
-    def _evaluate_impact(self, ticket: dict[str, Any], epsilon: Optional[dict[str, Any]]) -> Tuple[str, str]:
+    def _evaluate_impact(self, ticket: dict[str, Any], epsilon: Optional[dict[str, Any]]) -> Tuple[str, str, dict[str, Any]]:
         text_corpus = ""
         if epsilon:
             text_corpus += f" {epsilon.get('problema', '')} {epsilon.get('impacto', '')}"
@@ -391,19 +713,55 @@ class SeverityEvaluator:
 
         ticket_impact = (ticket.get("Impacto") or "").strip().lower()
 
-        # 1. Regla Crítica (Impacto Alto)
-        if any(kw in text_lower for kw in self.CRITICAL_IMPACT_KEYWORDS) or ticket_impact == "masiva":
+        # Extraer métricas cuantitativas deterministas
+        quant_metrics = extract_quantitative_metrics(text_corpus)
+
+        # 0. Umbrales Cuantitativos Directos (SL1)
+        # Nota: Si el servicio cuenta con respaldo activo o el tráfico principal cursa normalmente (ej. enlaces secundarios),
+        # se clasifica como degradación funcional parcial SL2 (it-severity-matrix 3.8/3.9).
+        is_secondary_or_redundant = any(k in text_lower for k in [
+            "secundari", "tráfico principal cursando", "trafico principal cursando", "backup activo", "respaldo activo", "enlace secundario"
+        ])
+
+        if not is_secondary_or_redundant:
+            if quant_metrics["sedes"] is not None and quant_metrics["sedes"] >= 3:
+                return "Alto", f"Umbral cuantitativo superado: {quant_metrics['sedes']} sedes/tiendas afectadas (umbral crítico >= 3).", quant_metrics
+            if quant_metrics["usuarios"] is not None and quant_metrics["usuarios"] >= 500:
+                return "Alto", f"Umbral cuantitativo superado: {quant_metrics['usuarios']} usuarios/clientes afectados (umbral crítico >= 500).", quant_metrics
+            if quant_metrics["desviacion_pct"] is not None and quant_metrics["desviacion_pct"] >= 20.0:
+                return "Alto", f"Umbral cuantitativo superado: {quant_metrics['desviacion_pct']}% de afectación/desviación (umbral crítico >= 20%).", quant_metrics
+
+        # 1. Regla Crítica (Impacto Alto con filtro de negación sintáctica)
+        found_critical = False
+        for kw in self.CRITICAL_IMPACT_KEYWORDS:
+            for match in re.finditer(re.escape(kw), text_lower):
+                if not is_phrase_negated(text_lower, match.span()):
+                    found_critical = True
+                    break
+            if found_critical:
+                break
+
+        if found_critical or ticket_impact == "masiva":
             # Verificar si realmente es crítico o si solo menciona texto menor
             if "error tipográfico" in text_lower or "cosmético" in text_lower or "cosmetico" in text_lower:
-                return "Bajo", "Fallo cosmético sin interrupción de servicio."
-            return "Alto", "Afectación crítica o corte global sobre el servicio principal sin alternativa viable."
+                return "Bajo", "Fallo cosmético sin interrupción de servicio.", quant_metrics
+            return "Alto", "Afectación crítica o corte global sobre el servicio principal sin alternativa viable.", quant_metrics
 
-        # 2. Regla Moderada (Impacto Medio)
-        if any(kw in text_lower for kw in self.MODERATE_IMPACT_KEYWORDS) or ticket_impact in ("alto", "medio"):
-            return "Medio", "Degradación del servicio o afectación parcial con funcionalidad operativa."
+        # 2. Regla Moderada (Impacto Medio con filtro de negación)
+        found_moderate = False
+        for kw in self.MODERATE_IMPACT_KEYWORDS:
+            for match in re.finditer(re.escape(kw), text_lower):
+                if not is_phrase_negated(text_lower, match.span()):
+                    found_moderate = True
+                    break
+            if found_moderate:
+                break
+
+        if found_moderate or ticket_impact in ("alto", "medio"):
+            return "Medio", "Degradación del servicio o afectación parcial con funcionalidad operativa.", quant_metrics
 
         # 3. Regla Menor (Impacto Bajo)
-        return "Bajo", "Afectación acotada a componentes secundarios o usuarios aislados."
+        return "Bajo", "Afectación acotada a componentes secundarios o usuarios aislados.", quant_metrics
 
     def _evaluate_urgency(self, ticket: dict[str, Any], epsilon: Optional[dict[str, Any]]) -> Tuple[str, str, str]:
         text_corpus = ""
@@ -420,12 +778,31 @@ class SeverityEvaluator:
         has_workaround = "Desconocido"
         if "workaround" in text_lower or "solución temporal" in text_lower or "solucion alternativa" in text_lower or "export alternativo" in text_lower:
             has_workaround = "Sí"
-        elif "sin alternativa" in text_lower or "sin workaround" in text_lower:
+        elif "sin alternativa" in text_lower or "sin workaround" in text_lower or "sin solución temporal" in text_lower:
             has_workaround = "No"
+
+        # Epsilon bloqueos
+        epsilon_bloqueos_str = ""
+        if epsilon:
+            raw_blq = epsilon.get("bloqueos")
+            if isinstance(raw_blq, list):
+                epsilon_bloqueos_str = "; ".join(str(b) for b in raw_blq if b).strip()
+            elif isinstance(raw_blq, str):
+                epsilon_bloqueos_str = raw_blq.strip()
+
+        if epsilon_bloqueos_str:
+            blq_lower = epsilon_bloqueos_str.lower()
+            if any(k in blq_lower for k in ["sin alternativa", "sin workaround", "sin método", "sin metodo", "bloqueo", "esperando", "dependencia"]):
+                if has_workaround != "Sí":
+                    has_workaround = "No"
 
         # Si el ticket ya está cerrado o resuelto
         if "cerrad" in status or "resuelt" in status:
             return "Baja", "Incidencia ya resuelta o estabilizada por el equipo resolutor.", has_workaround
+
+        # Elevación de urgencia por bloqueos reportados por Epsilon IA sin workaround
+        if epsilon_bloqueos_str and has_workaround == "No":
+            return "Alta", f"Bloqueo operativo activo reportado por Epsilon IA: {epsilon_bloqueos_str[:100]}.", has_workaround
 
         # Urgencia Alta (Remedy exporta "Crítica" o "Alta")
         if any(kw in text_lower for kw in self.HIGH_URGENCY_KEYWORDS) or ticket_urgency in ("crítica", "critica", "alta"):
@@ -685,6 +1062,7 @@ class ExecutiveMessageGenerator:
 
         eval_data = evaluation.get("evaluacion") if isinstance(evaluation.get("evaluacion"), dict) else evaluation
         proceso = eval_data.get("proceso", "Sistemas Core")
+        dominio_tecnico = eval_data.get("dominio_tecnico")
         criterio = eval_data.get("criterio", "Regla de Oro N1")
         impacto = eval_data.get("impacto", "Alto")
         impacto_just = eval_data.get("impacto_justificacion", "Afectación crítica en servicio.")
@@ -692,6 +1070,9 @@ class ExecutiveMessageGenerator:
         urgencia_just = eval_data.get("urgencia_justificacion", "Impacto activo en vivo.")
         workaround = eval_data.get("workaround", "No")
         workaround_gob = eval_data.get("workaround_gobernanza", "Pendiente autorización IM-CSO (SL1 activa)" if workaround == "Sí" else "Sin workaround")
+        disc_motivo = evaluation.get("discrepancia_motivo") or eval_data.get("discrepancia_motivo")
+        disc_gravedad = evaluation.get("discrepancia_gravedad") or eval_data.get("discrepancia_gravedad")
+        aging_esc = evaluation.get("aging_escalated") or eval_data.get("aging_escalated")
 
         sistemas_list = []
         if resumen_ia and isinstance(resumen_ia.get("sistemas"), list):
@@ -730,6 +1111,14 @@ class ExecutiveMessageGenerator:
             "[1] CLASIFICACIÓN DEL TICKET",
             f"• Incidencia: {inc_id} ({sl_level})",
             f"• Proceso Crítico: {proceso}",
+        ]
+        if dominio_tecnico and dominio_tecnico != proceso:
+            lines.append(f"• Dominio Técnico: {dominio_tecnico}")
+        if disc_motivo:
+            lines.append(f"• Alerta de Subescalación: {disc_motivo} [{disc_gravedad}]")
+        if aging_esc:
+            lines.append("• Escalado por Envejecimiento: Elevado a P1 tras >=120 min activo sin workaround")
+        lines.extend([
             f"• Umbral de Emergencia: {criterio}",
             f"• Alcance y Sistemas: {sistemas_str}",
             f"• Impacto: {impacto} ({impacto_just})",
@@ -754,7 +1143,7 @@ class ExecutiveMessageGenerator:
             "• Canal de Escalado: Vía Telefónica obligatoria (Regla de Oro)",
             "• Gobernanza RACI: Incident Manager (R) / Customer & Service Ops IM-CSO (A)",
             "────────────────────────────────────────────────────────────"
-        ]
+        ])
         return "\n".join(lines)
 
 
@@ -910,7 +1299,7 @@ def evaluate_incidents_batch(
             continue
 
         epsilon_data = epsilon_client.get_resumen_ia(inc_id) if epsilon_client else None
-        evaluation = evaluator.evaluate(item, epsilon_data)
+        evaluation = evaluator.evaluate(item, epsilon_data, reference_time=reference_time)
 
         prio_sugerida = evaluation["prioridad_sugerida"]
         es_alta = evaluation["es_alta_prioridad"]
@@ -972,6 +1361,10 @@ def evaluate_incidents_batch(
                 "prioridad_sugerida": prio_sugerida,
                 "es_alta_prioridad": es_alta,
                 "es_discrepancia": es_disc,
+                "discrepancia_delta": evaluation.get("discrepancia_delta", 0),
+                "discrepancia_gravedad": evaluation.get("discrepancia_gravedad", "Sin discrepancia"),
+                "discrepancia_motivo": evaluation.get("discrepancia_motivo", ""),
+                "aging_escalated": evaluation.get("aging_escalated", False),
                 "estatus": item.get("Estatus") or "Asignado",
                 "fecha_envio": raw_date,
                 "fecha_apertura": raw_date,
@@ -992,6 +1385,10 @@ def evaluate_incidents_batch(
     sla_vencidos_count = sum(1 for it in high_priority_items if it.get("evaluacion", {}).get("sla_primera_notificacion_vencido"))
     escalados_tel_count = sum(1 for it in high_priority_items if it.get("evaluacion", {}).get("requiere_escalado_telefonico"))
     workaround_pendientes_count = sum(1 for it in high_priority_items if "Pendiente" in str(it.get("evaluacion", {}).get("workaround_gobernanza", "")))
+    disc_delta1_count = sum(1 for it in high_priority_items if it.get("discrepancia_delta") == 1)
+    disc_delta2_count = sum(1 for it in high_priority_items if it.get("discrepancia_delta") == 2)
+    disc_delta3_count = sum(1 for it in high_priority_items if it.get("discrepancia_delta") == 3)
+    aging_escaladas_p1_count = sum(1 for it in high_priority_items if it.get("aging_escalated"))
 
     catalog = {
         "_metadata": {
@@ -1007,6 +1404,10 @@ def evaluate_incidents_batch(
                 "p1_critical_count": p1_count,
                 "p2_high_count": p2_count,
                 "discrepancies_count": discrepancies_count,
+                "discrepancias_delta1_moderada_count": disc_delta1_count,
+                "discrepancias_delta2_mayor_count": disc_delta2_count,
+                "discrepancias_delta3_critica_count": disc_delta3_count,
+                "aging_escaladas_p1_count": aging_escaladas_p1_count,
                 "sla_primera_notificacion_vencidos_count": sla_vencidos_count,
                 "requiere_escalado_telefonico_count": escalados_tel_count,
                 "workaround_pendientes_cso_count": workaround_pendientes_count,
