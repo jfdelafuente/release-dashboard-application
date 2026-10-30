@@ -499,7 +499,7 @@
     const sistemasStr = (inc.sistemas && inc.sistemas.length > 0) ? inc.sistemas.join(', ') : 'No especificado';
     const titulo = inc.titulo || 'Sin título registrado';
 
-    return `[SOLICITUD URGENTE DE RECLASIFICACIÓN REMEDY - CRITERIO ITIL ORANGE]
+    return `[SOLICITUD URGENTE DE RECLASIFICACIÓN REMEDY - CRITERIO PROCESO OPERATIVO GESTIÓN EMERGENCIAS IT ORANGE]
 ────────────────────────────────────────────────────────────────────
 Incidencia Remedy: ${incId}
 Prioridad Actual Remedy: ${prioOrig} (Nominal / Subescalada)

@@ -1240,6 +1240,7 @@ def test_should_provide_remedy_reclassification_and_warroom_tools_in_monitor_js(
 
     # Funciones de construcción de textos de acción
     assert "function buildRemedyReclassificationText(" in content
+    assert "[SOLICITUD URGENTE DE RECLASIFICACIÓN REMEDY - CRITERIO PROCESO OPERATIVO GESTIÓN EMERGENCIAS IT ORANGE]" in content
     assert "PROCESO OPERATIVO GESTIÓN EMERGENCIAS IT ORANGE" in content
     assert "function buildTeamsWarRoomText(" in content
     assert "function generateAiDraftForIncident(" in content
