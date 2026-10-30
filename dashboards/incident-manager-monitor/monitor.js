@@ -513,7 +513,7 @@ DATOS DE IMPACTO Y PROCESO CRÍTICO:
 
 JUSTIFICACIÓN OPERATIVA (GOBERNANZA DE EMERGENCIAS IT):
 Conforme a la matriz oficial de criticidad IT de Orange y la Regla de Oro de Triaje N1, esta incidencia supera los umbrales de impacto en clientes y procesos críticos de negocio, por lo que su gestión debe elevarse inmediatamente a ${prioSug}.
-Se solicita al grupo resolutor asignar la severidad ${prioSug} en Remedy y aplicar los tiempos de resolución y escalado telefónico estipulados por ITIL.
+Se solicita al grupo resolutor asignar la severidad ${prioSug} en Remedy y aplicar los tiempos de resolución y escalado telefónico estipulados por PROCESO OPERATIVO GESTIÓN EMERGENCIAS IT ORANGE .
 ────────────────────────────────────────────────────────────────────`;
   }
 
