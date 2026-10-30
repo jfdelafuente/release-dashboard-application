@@ -234,3 +234,4 @@ def calculate_reconciled_reaction_lag(
             f"Detección a las {dt_detection_madrid.strftime('%H:%M CET')}, apertura Remedy a las {dt_remedy.strftime('%H:%M CET')} ({lag_minutes} min)."
         )
     }
+

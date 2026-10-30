@@ -106,3 +106,4 @@ def test_calculate_reconciled_reaction_lag_inc000004171670():
     assert res["naive_lag_minutes"] == 375  # 6h 15m without timezone conversion
     assert res["correction_minutes"] == 360  # 6 hours = 360 mins correction
     assert "15 minutos" in res["summary"]
+
