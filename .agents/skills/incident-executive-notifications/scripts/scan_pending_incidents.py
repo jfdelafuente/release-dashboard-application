@@ -130,7 +130,7 @@ def main():
         print(f"[{idx}] {inc_id} ({prio}) - {it.get('titulo')}")
         print(f"    Proceso:  {proceso} | Criterio: {criterio}")
         print(f"    Sistemas: {sistemas}")
-        print(f"    Epsilon IA: {'✨ Disponible' if has_epsilon else 'ℹ️ Solo metadatos Remedy'}")
+        print(f"    Epsilon IA: {'✨ Disponible' if has_epsilon else '⚠️ [MODO RESTRINGIDO]: Sin telemetría Epsilon. Prohibido conjeturar causas técnicas.'}")
         if has_epsilon:
             if res.get("problema"):
                 print(f"    • Problema:  {res.get('problema')[:80]}...")

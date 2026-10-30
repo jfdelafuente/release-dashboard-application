@@ -87,7 +87,8 @@ Para cada incidencia pendiente detectada, el asistente adopta las reglas de [`ag
    - **Mensaje para Dirección (versión completa):** Exactamente **un único párrafo** (monopárrafo), máximo **90 palabras**. Sin viñetas, sin encabezados internos.
    - **Versión aún más breve:** Máximo **30 palabras**, formato apto para SMS o canal de guardia (`P1/P2: <Impacto>. <Acción>. <Próxima actualización>`).
 2. **Priorizar síntesis técnica de Epsilon IA:** Si la incidencia cuenta con bloque Epsilon IA (`resumen_ia`: problema, impacto de negocio, solución en curso), úsalo como fuente de verdad técnica. Si no dispone de Epsilon IA, redacta a partir del título y sistemas Remedy.
-3. **Regla Anti-Alucinación:** No inventar horas, causas raíz ni métricas de clientes afectados no respaldadas en los datos del ticket.
+3. **Regla Anti-Alucinación Estricta:** No inventar horas, causas raíz ni métricas de clientes afectados no respaldadas en los datos del ticket.
+   - **En incidencias sin Epsilon IA (Modo Restringido):** Está TERMINANTEMENTE PROHIBIDO conjeturar causas técnicas ficticias (no atribuir fallos a bases de datos, redes, cuellos de botella ni microservicios inexistentes en el ticket). Indicar siempre que la causa se encuentra en fase de investigación activa por el grupo resolutor.
 
 #### Plantilla esperada de salida del agente:
 ```markdown

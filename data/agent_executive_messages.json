@@ -3,7 +3,7 @@
     "version": "1.0.0",
     "description": "Almacén oficial de redacciones ejecutivas generadas por el Agente incident-reporter",
     "source": "agents/it-incidents/incident-reporter.md",
-    "updated_at": "2026-10-30T12:35:21Z"
+    "updated_at": "2026-10-30T13:09:48Z"
   },
   "incidents": {
     "INC000004065609": {
@@ -800,28 +800,28 @@
     },
     "INC000004171670": {
       "apertura": {
-        "completo": "Se declara incidencia mayor P2 (INC000004171670) por degradación funcional en el entorno BSS Jazztel sobre el sistema DES_CRM4T. El servicio continúa parcialmente operativo, registrándose lentitud y dificultades intermitentes en la tramitación comercial y gestión de clientes. Los equipos especializados de soporte se encuentran analizando el rendimiento de la capa de aplicación y las consultas a base de datos para aislar el cuello de botella y restablecer las latencias estándar. Próxima actualización en 60 minutos.",
-        "breve": "Apertura P2 (INC000004171670): Degradación y lentitud en BSS Jazztel (DES_CRM4T) con operativa parcial. Soporte técnico analizando rendimiento. Próxima actualización 60 min.",
-        "generado_por_agente": true,
-        "origen": "incident-reporter",
-        "conteo_palabras_completo": 74,
-        "conteo_palabras_breve": 21
-      },
-      "seguimiento": {
-        "completo": "Seguimiento de la incidencia mayor P2 (INC000004171670) en BSS Jazztel. El equipo técnico ha identificado contención de recursos en las colas de procesamiento de DES_CRM4T asociada a un pico de transacciones concurrentes. Se han aplicado acciones de desahogo y optimización de hilos en los servidores de aplicación, observándose una recuperación progresiva de los tiempos de respuesta en las consultas de gestión. Se mantiene la monitorización en tiempo real hasta consolidar la estabilidad del entorno.",
-        "breve": "Seguimiento P2 (INC000004171670): Optimizadas colas de procesamiento en DES_CRM4T; mejoran tiempos de respuesta en BSS Jazztel bajo supervisión activa del equipo técnico.",
+        "completo": "Se declara incidencia mayor P2 (INC000004171670) por degradación funcional en CRM4TELCO dentro de Ficha Multimarca. Una anomalía de parámetros (clusterID=0) en la integración con GestorCatalogoDisponibleWS bloquea la carga del escaparate completo de terminales en el departamento Anticipación OUT, afectando a 15 operadores de la sede Andes en Medellín y limitando la oferta a modelos promocionados. El equipo DES_CRM4T trabaja en la corrección del parámetro para normalizar la operativa comercial. Próxima actualización en 60 minutos.",
+        "breve": "Apertura P2 (INC000004171670): Fallo de catálogo en CRM4TELCO impide cargar terminales en Anticipación OUT (Medellín). DES_CRM4T corrigiendo validación. Próxima actualización 60 min.",
         "generado_por_agente": true,
         "origen": "incident-reporter",
         "conteo_palabras_completo": 74,
         "conteo_palabras_breve": 22
       },
-      "cierre": {
-        "completo": "Se da por cerrada la incidencia mayor P2 (INC000004171670) en BSS Jazztel. Se confirma la recuperación total del rendimiento y la estabilidad del sistema DES_CRM4T tras normalizarse las colas y los procesos transaccionales de la plataforma comercial. Las operaciones de atención y tramitación se desarrollan con normalidad y latencias óptimas en todos los canales. El servicio queda completamente restablecido bajo la supervisión técnica preventiva rutinaria.",
-        "breve": "Cierre P2 (INC000004171670): Normalizado BSS Jazztel (DES_CRM4T) con tiempos de respuesta óptimos tras resolver saturación en aplicación; servicio completamente operativo.",
+      "seguimiento": {
+        "completo": "Seguimiento de la incidencia mayor P2 (INC000004171670) en CRM4TELCO. El equipo de desarrollo DES_CRM4T ha localizado la causa raíz en el método getConfiguracionSeguro() de GestorCatalogoDisponibleWS y se encuentra aplicando el parche de validación para el valor de clusterID. Se mantiene la afectación restringida a los 15 puestos de Anticipación OUT en Teleperformance Medellín, sin impacto en el resto de canales comerciales. Se estima validación en entorno productivo en 45 minutos.",
+        "breve": "Seguimiento P2 (INC000004171670): DES_CRM4T parchea validación en GestorCatalogoDisponibleWS de CRM4TELCO; se mantiene seguimiento sobre la plataforma de retención en Medellín.",
         "generado_por_agente": true,
         "origen": "incident-reporter",
-        "conteo_palabras_completo": 65,
+        "conteo_palabras_completo": 70,
         "conteo_palabras_breve": 20
+      },
+      "cierre": {
+        "completo": "Se da por cerrada la incidencia mayor P2 (INC000004171670) en CRM4TELCO. Se ha subsanado el parámetro clusterID en GestorCatalogoDisponibleWS, restableciéndose la visualización íntegra del catálogo de dispositivos no promocionados en el aplicativo de Anticipación OUT. Los 15 operadores de la sede Andes de Teleperformance Medellín operan con normalidad absoluta y sin incidencias. El servicio queda estabilizado bajo supervisión rutinaria.",
+        "breve": "Cierre P2 (INC000004171670): Normalizado escaparate en CRM4TELCO tras corregir parámetro clusterID en catálogo; operativa 100% restablecida en sede Medellín.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 59,
+        "conteo_palabras_breve": 19
       }
     }
   }

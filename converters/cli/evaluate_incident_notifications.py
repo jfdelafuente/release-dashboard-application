@@ -25,6 +25,15 @@ import urllib.error
 import urllib.request
 from typing import Any, Dict, List, Optional, Tuple
 
+try:
+    from converters.src.csv_to_json.timezone_utils import reconcile_milestones
+except ImportError:
+    try:
+        from src.csv_to_json.timezone_utils import reconcile_milestones
+    except ImportError:
+        sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
+        from converters.src.csv_to_json.timezone_utils import reconcile_milestones
+
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger("incident_evaluator")
 
@@ -984,11 +993,22 @@ class ExecutiveMessageGenerator:
                 blq = "; ".join(bloqueos) if isinstance(bloqueos, list) else str(bloqueos)
                 if blq.strip():
                     prompt_lines.append(f"• Bloqueos identificados: {blq}")
+            hitos = resumen_ia.get("hitosTecnicos") or resumen_ia.get("hitos_tecnicos")
+            if hitos and isinstance(hitos, list):
+                context_for_tz = f"{resumen_ia.get('impacto', '')} {resumen_ia.get('problema', '')} {titulo}"
+                reconciled = reconcile_milestones(hitos, context_text=context_for_tz)
+                prompt_lines.append("• Hitos cronológicos / técnicos:")
+                for r in reconciled:
+                    prompt_lines.append(f"  - {r['reconciled']}")
+                remote_item = next((r for r in reconciled if r.get("has_remote_tz")), None)
+                if remote_item:
+                    prompt_lines.append(f"  ℹ️ NOTA HORARIA ({remote_item['source_label']}): La detección técnica se registró a las {remote_item['source_str']} local ({remote_item['madrid_str']}). Usa siempre hora Madrid (CET) en las comunicaciones para Dirección.")
         else:
             prompt_lines.append("\n--- Metadatos del ticket (Epsilon IA pendiente) ---")
             prompt_lines.append(f"• Descripción: {titulo}")
             prompt_lines.append(f"• Impacto ticket: {ticket.get('Impacto') or ticket.get('impacto') or 'N/D'}")
             prompt_lines.append(f"• Urgencia ticket: {ticket.get('Urgencia', 'N/D')}")
+            prompt_lines.append("• ⚠️ REGLA ANTI-ALUCINACIÓN (Modo Restringido): Al no disponer de telemetría Epsilon IA, queda TERMINANTEMENTE PROHIBIDO conjeturar causas técnicas (bases de datos, cuellos de botella, microservicios, etc.). Redacta indicando que el equipo resolutor se encuentra investigando el origen de la anomalía.")
 
         prompt_lines.append("\nRedacta el mensaje en los dos niveles obligatorios:")
         prompt_lines.append("**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)")
