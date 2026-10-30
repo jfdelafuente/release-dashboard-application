@@ -443,7 +443,6 @@ Generado por Consola de Emergencias IT Orange - Motor de Triaje (Módulo 1)`;
               <th style="width: 170px;">Proceso Crítico</th>
               <th style="width: 110px;">Remedy Ini</th>
               <th style="width: 120px;">Severidad ITIL</th>
-              <th style="width: 130px;">Desvío / Delta</th>
               <th style="width: 180px; text-align: right;">Acciones</th>
             </tr>
           </thead>
@@ -543,15 +542,6 @@ Generado por Consola de Emergencias IT Orange - Motor de Triaje (Módulo 1)`;
         <td>
           <span class="triage-sev-badge ${itilBadgeClass}">${itilLabel}</span>
         </td>
-        <td class="triage-cell-delta">
-          ${isDisc ? (
-            delta >= 2
-              ? `<span class="triage-delta-badge delta-2" title="${escapeHtml(inc.discrepancia_gravedad || 'Mayor')}"><span aria-hidden="true">🚨</span> +${delta} Crítica</span>`
-              : `<span class="triage-delta-badge delta-1" title="${escapeHtml(inc.discrepancia_gravedad || 'Moderada')}"><span aria-hidden="true">⚠️</span> +${delta} Mayor</span>`
-          ) : (
-            `<span class="triage-delta-badge delta-0"><span aria-hidden="true">✅</span> Nominal OK</span>`
-          )}
-        </td>
         <td class="triage-cell-actions">
           <div class="triage-actions-cell-group">
             ${isDisc ? `
@@ -568,7 +558,7 @@ Generado por Consola de Emergencias IT Orange - Motor de Triaje (Módulo 1)`;
 
       <!-- Fila Plegable / Desplegable de Detalle Extendido -->
       <tr class="triage-row-detail ${isOpen ? 'is-open' : ''}" id="detail-row-${escapeHtml(incId)}" data-inc="${escapeHtml(incId)}">
-        <td colspan="8">
+        <td colspan="7">
           <div class="triage-detail-wrapper">
             <div class="triage-detail-grid">
               
