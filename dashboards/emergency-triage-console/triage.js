@@ -54,12 +54,6 @@
     kpiActive: document.getElementById('kpi-active'),
     kpiEmergencies: document.getElementById('kpi-emergencies'),
 
-    // Banner de Alerta Reclasificación
-    reclassBanner: document.getElementById('reclass-banner'),
-    reclassCountBadge: document.getElementById('reclass-count-badge'),
-    reclassDelta2Badge: document.getElementById('reclass-delta2-badge'),
-    reclassDelta1Badge: document.getElementById('reclass-delta1-badge'),
-
     // Controles de Filtrado
     tabAll: document.getElementById('tab-all'),
     tabReclassOnly: document.getElementById('tab-reclass-only'),
@@ -268,14 +262,6 @@
     if (dom.kpiSkipped) dom.kpiSkipped.textContent = discCount;
     if (dom.kpiActive) dom.kpiActive.textContent = p1Count;
     if (dom.kpiEmergencies) dom.kpiEmergencies.textContent = p2Count;
-
-    // Actualizar Panel de Alertas de Reclasificación Inmediata
-    const delta2Count = (kpis.discrepancias_delta2_mayor_count != null) ? kpis.discrepancias_delta2_mayor_count : state.incidents.filter(i => i.discrepancia_delta === 2).length;
-    const delta1Count = (kpis.discrepancias_delta1_moderada_count != null) ? kpis.discrepancias_delta1_moderada_count : state.incidents.filter(i => i.discrepancia_delta === 1).length;
-
-    if (dom.reclassCountBadge) dom.reclassCountBadge.textContent = discCount;
-    if (dom.reclassDelta2Badge) dom.reclassDelta2Badge.textContent = `${delta2Count} Mayor Severa (Delta +2)`;
-    if (dom.reclassDelta1Badge) dom.reclassDelta1Badge.textContent = `${delta1Count} Moderada (Delta +1)`;
 
     // Contadores de pestañas de filtrado
     const totalCount = state.incidents.length;

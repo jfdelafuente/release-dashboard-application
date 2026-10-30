@@ -53,11 +53,11 @@ def test_index_html_contains_core_elements():
     assert 'id="btn-help-criteria"' in html
     assert "Criterios Oficiales" in html
 
-    # Función 3: Alertas de Reclasificación Inmediata
-    assert 'id="reclass-banner"' in html
-    assert 'id="reclass-count-badge"' in html
+    # Función 3: Alertas de Reclasificación Inmediata y Feed
     assert 'id="tab-reclass-only"' in html
+    assert 'id="count-reclass"' in html
     assert 'id="triage-feed"' in html
+    assert 'id="reclass-banner"' not in html  # Eliminado para dar más espacio vertical al dashboard
 
     # Accesibilidad
     assert 'id="sr-announcements"' in html
