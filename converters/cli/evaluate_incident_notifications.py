@@ -1395,19 +1395,22 @@ class EpsilonClient:
         return None
 
 
-# Estados finales que no requieren notificación para no sobrecargar el sistema
+# Estados finales que no requieren notificación ni triaje
 TERMINAL_STATUSES = {
-    "cerrado", "cerrada", "closed",
-    "resuelto", "resuelta", "resolved",
-    "cancelado", "cancelada", "cancelled", "canceled"
+    "cerrado", "cerrada", "cerrados", "cerradas", "closed", "close",
+    "resuelto", "resuelta", "resueltos", "resueltas", "resolved", "resolve",
+    "cancelado", "cancelada", "cancelados", "canceladas", "cancelled", "canceled", "cancel"
 }
 
 
 def is_terminal_status(status: Optional[str]) -> bool:
-    """Indica si el estado de una incidencia es terminal (Cerrado, Resuelto, Cancelado)."""
+    """Indica si el estado de una incidencia es terminal (Cerrado, Resuelto, Canceladas)."""
     if not status:
         return False
-    return str(status).strip().lower() in TERMINAL_STATUSES
+    s = str(status).strip().lower()
+    if s in TERMINAL_STATUSES:
+        return True
+    return any(s.startswith(prefix) for prefix in ("cerrad", "resuel", "cancel", "clos", "resolv"))
 
 
 def evaluate_incidents_batch(
@@ -1622,13 +1625,32 @@ def main() -> int:
         logger.error("Error leyendo %s: %s", input_file, e)
         return 1
 
+    # Exclusión previa al motor de triaje:
+    # Las incidencias en estado "Cerrado", "Resuelto" o "Canceladas" no deben pasar por el motor de triaje.
+    total_raw = len(tickets)
+    active_tickets = [
+        t for t in tickets
+        if not is_terminal_status(
+            t.get("Estatus") or t.get("estatus") or t.get("Estado") or t.get("estado") or t.get("Status") or t.get("status") or ""
+        )
+    ]
+    terminal_count = total_raw - len(active_tickets)
+    logger.info(
+        "Filtro pre-triaje: %d incidencias totales leídas -> %d activas enviadas al motor de triaje (%d terminales descartadas sin procesar).",
+        total_raw,
+        len(active_tickets),
+        terminal_count,
+    )
+
     epsilon_client = EpsilonClient(base_url=args.base_url)
     catalog = evaluate_incidents_batch(
-        tickets=tickets,
+        tickets=active_tickets,
         epsilon_client=epsilon_client,
         limit=args.limit,
         source_file_name=input_file.name
     )
+    catalog["_metadata"]["total_source_tickets"] = total_raw
+    catalog["_metadata"]["terminal_tickets_omitted"] = terminal_count
 
     kpis = catalog["_metadata"]["kpis"]
     logger.info(

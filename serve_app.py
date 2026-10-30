@@ -823,6 +823,7 @@ if __name__ == '__main__':
     print(f"Sirviendo desde: {PROJECT_ROOT}")
     print(f"URL: http://localhost:{PORT}/")
     print(f"Dashboard Portal: http://localhost:{PORT}/dashboards/portal/")
+    print(f"Consola Triaje Emergencias: http://localhost:{PORT}/dashboards/emergency-triage-console/")
     print(f"Gestión de Problemas (proxy :3001): http://localhost:{PORT}/problemas")
     print(f"Nota: API principal FastAPI disponible en http://localhost:8000/docs")
     print("==================================================\n")

@@ -332,6 +332,32 @@ def test_should_skip_terminal_status_incidents_when_evaluating_batch():
     assert client_mock.get_resumen_ia.call_count == 2
 
 
+def test_should_recognize_plural_and_gender_variants_in_terminal_statuses():
+    """Validates that 'Cerrado', 'Resuelto', 'Canceladas' and all morphological variants are identified as terminal."""
+    from converters.cli.evaluate_incident_notifications import is_terminal_status
+
+    assert is_terminal_status("Cerrado") is True
+    assert is_terminal_status("cerrada") is True
+    assert is_terminal_status("Cerradas") is True
+    assert is_terminal_status("Resuelto") is True
+    assert is_terminal_status("resuelta") is True
+    assert is_terminal_status("Resueltas") is True
+    assert is_terminal_status("Cancelado") is True
+    assert is_terminal_status("cancelada") is True
+    assert is_terminal_status("Canceladas") is True
+    assert is_terminal_status("Closed") is True
+    assert is_terminal_status("Resolved") is True
+    assert is_terminal_status("Cancelled") is True
+
+    # Active statuses should NOT be terminal
+    assert is_terminal_status("Pendiente") is False
+    assert is_terminal_status("Asignado") is False
+    assert is_terminal_status("En Curso") is False
+    assert is_terminal_status("Abierto") is False
+    assert is_terminal_status("") is False
+    assert is_terminal_status(None) is False
+
+
 # ============================================================================
 # Cache, CLI & Resolution Tests (Constitution Principle II: >= 80% Coverage)
 # ============================================================================

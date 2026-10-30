@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Consola de Triaje y Reclasificación Automática · Orange Tech Operations</title>
+
+  <!-- Google Fonts: Inter y IBM Plex Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Framework Compartido del Portal Orange -->
+  <link rel="stylesheet" href="/dashboards/assets/topbar.css">
+  <link rel="stylesheet" href="/dashboards/assets/shared.css">
+  <link rel="stylesheet" href="/dashboards/assets/resumen-ia.css">
+  <link rel="stylesheet" href="/dashboards/assets/incident-notifications.css">
+
+  <!-- Estilos del Módulo 1 (Adaptado al Sistema de Diseño del Portal) -->
+  <link rel="stylesheet" href="./triage.css?v=20261030_1935">
+</head>
+<body>
+
+  <!-- Topbar Unificada del Portal Orange -->
+  <div id="mo-topbar-root" data-active="emergency-triage"></div>
+
+  <!-- Región para lectores de pantalla (Accesibilidad WCAG 2.1 AA) -->
+  <div id="sr-announcements" class="sr-only" role="status" aria-live="polite"></div>
+
+  <div class="triage-app-wrapper">
+
+    <!-- 1. Cabecera Institucional y Controles de Inspección -->
+    <header class="triage-header" role="banner">
+      <div class="triage-brand">
+        <div class="triage-logo-box" aria-label="Logo Orange">
+          <!-- Icono Cuadrado Naranja Oficial -->
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <rect width="24" height="24" rx="3" fill="#FFFFFF"/>
+            <rect x="3" y="15" width="18" height="6" fill="#FF7900"/>
+          </svg>
+        </div>
+        <div class="triage-title-group">
+          <span class="triage-eyebrow">Orange Tech Operations · Incident Management</span>
+          <h1 class="triage-title">Consola de Triaje y Reclasificación Automática</h1>
+          <p class="triage-subtitle">Módulo 1: Motor de Inspección Continua, Umbrales Críticos y Alertas de Subescalación (SL1/P1 & SL2/P2)</p>
+        </div>
+      </div>
+
+      <div class="triage-header-actions">
+        <!-- Indicador de conexión / inspección activa en vivo -->
+        <div id="live-pill" class="triage-live-pill" aria-label="Estado de la inspección continua">
+          <span class="triage-pulse-dot" aria-hidden="true"></span>
+          <span id="live-status-text">Inspección Activa</span>
+        </div>
+
+        <!-- Selector de frecuencia de inspección -->
+        <label for="auto-refresh-select" class="sr-only">Frecuencia de inspección automática</label>
+        <select id="auto-refresh-select" class="triage-select" title="Frecuencia de actualización continua">
+          <option value="15000">Inspección: cada 15s</option>
+          <option value="30000" selected>Inspección: cada 30s</option>
+          <option value="60000">Inspección: cada 60s</option>
+          <option value="0">Inspección: Pausada</option>
+        </select>
+
+        <!-- Botón de inspección manual inmediata -->
+        <button id="btn-refresh-now" class="triage-btn" title="Escanear catálogo ahora">
+          <span aria-hidden="true">🔄</span>
+          <span>Inspeccionar Ahora</span>
+        </button>
+
+        <!-- Botón de consulta de criterios oficiales de umbrales -->
+        <button id="btn-help-criteria" class="triage-btn triage-btn-primary btn-open-criteria" title="Consultar Umbrales de los 6 Procesos Críticos y Reglas de Oro">
+          <span aria-hidden="true">📘</span>
+          <span>Criterios Oficiales</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- 2. Función 1: Panel de Ingesta e Inspección Continua -->
+    <section class="triage-inspection-panel" aria-label="Función 1: Ingesta e Inspección Continua">
+      <div class="triage-source-meta-bar">
+        <div class="triage-source-info">
+          <span class="triage-source-badge">
+            <span aria-hidden="true">📥</span> Ingesta Activa
+          </span>
+          <span>Origen de Datos: <strong id="source-file-name" class="triage-source-file-name">Cargando...</strong></span>
+        </div>
+        <div class="triage-last-scan">
+          <span>Última Inspección:</span>
+          <strong id="last-scan-label">Sincronizando...</strong>
+        </div>
+      </div>
+
+      <!-- Métricas de Ingesta Global (Solo Incidencias Activas) -->
+      <div class="triage-kpi-grid">
+        <div class="triage-kpi-card kpi-scanned">
+          <div class="triage-kpi-header">
+            <span>Activas Ingestadas</span>
+            <span aria-hidden="true">📥</span>
+          </div>
+          <div class="triage-kpi-value-row">
+            <span id="kpi-scanned" class="triage-kpi-value">0</span>
+          </div>
+          <div class="triage-kpi-desc">Tickets activos en motor de triaje</div>
+        </div>
+
+        <div class="triage-kpi-card kpi-skipped">
+          <div class="triage-kpi-header">
+            <span>Discrepancias N1</span>
+            <span aria-hidden="true">⚠️</span>
+          </div>
+          <div class="triage-kpi-value-row">
+            <span id="kpi-skipped" class="triage-kpi-value">0</span>
+          </div>
+          <div class="triage-kpi-desc">Subescaladas a reclasificar</div>
+        </div>
+
+        <div class="triage-kpi-card kpi-active">
+          <div class="triage-kpi-header">
+            <span>Emergencias SL1 / P1</span>
+            <span aria-hidden="true">🚨</span>
+          </div>
+          <div class="triage-kpi-value-row">
+            <span id="kpi-active" class="triage-kpi-value">0</span>
+          </div>
+          <div class="triage-kpi-desc">Críticas confirmadas ITIL</div>
+        </div>
+
+        <div class="triage-kpi-card kpi-emergencies">
+          <div class="triage-kpi-header">
+            <span>Incidencias SL2 / P2</span>
+            <span aria-hidden="true">⚡</span>
+          </div>
+          <div class="triage-kpi-value-row">
+            <span id="kpi-emergencies" class="triage-kpi-value">0</span>
+          </div>
+          <div class="triage-kpi-desc">Mayores confirmadas ITIL</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. Función 3: Alertas de Reclasificación Inmediata (Banner de Detección) -->
+    <section id="reclass-banner" class="triage-reclass-alert-banner" aria-label="Función 3: Alertas de Reclasificación Inmediata">
+      <div class="triage-alert-content">
+        <div class="triage-alert-icon" aria-hidden="true">⚠️</div>
+        <div>
+          <h2 class="triage-alert-title">
+            <span>Alertas de Reclasificación Inmediata:</span>
+            <span id="reclass-count-badge" class="triage-alert-badge">0</span>
+            <span>Tickets Subescalados en Remedy</span>
+          </h2>
+          <p class="triage-alert-description">
+            El motor de triaje ha detectado tickets registrados erróneamente en Remedy con severidad <strong>Media (P3)</strong> o <strong>Alta (P2)</strong> cuyo impacto técnico vulnera los umbrales de <strong>Emergencia Crítica SL1 / P1</strong>. Se requiere reclasificación formal urgente en Remedy para activar el protocolo institucional de Orange.
+          </p>
+        </div>
+      </div>
+
+      <div class="triage-alert-breakdown">
+        <div id="reclass-delta2-badge" class="triage-delta-chip delta-2" title="Tickets registrados como Media (P3) y evaluados como P1 (SL1)">
+          0 Mayor Severa (Delta +2)
+        </div>
+        <div id="reclass-delta1-badge" class="triage-delta-chip delta-1" title="Tickets registrados como Alta (P2) y evaluados como P1 (SL1)">
+          0 Moderada (Delta +1)
+        </div>
+        <button type="button" class="triage-btn triage-btn-sm btn-open-criteria" style="background: rgba(255, 121, 0, 0.18); border-color: var(--triage-orange); color: #FFFFFF;" title="Consultar tabla completa de umbrales oficiales">
+          <span aria-hidden="true">📘</span> Criterios Oficiales
+        </button>
+      </div>
+    </section>
+
+    <!-- 4. Barra de Filtrado y Búsqueda del Triaje -->
+    <nav class="triage-control-bar" aria-label="Filtros y Búsqueda de Triaje">
+      <!-- Pestañas de Triaje -->
+      <div class="triage-tabs-group" role="tablist">
+        <button id="tab-reclass-only" class="triage-tab-btn active" role="tab" aria-selected="true" title="Ver solo tickets que requieren reclasificación inmediata en Remedy">
+          <span>⚡ Reclasificación Inmediata</span>
+          <span id="count-reclass" class="triage-tab-badge">0</span>
+        </button>
+        <button id="tab-all" class="triage-tab-btn" role="tab" aria-selected="false" title="Ver todas las incidencias de alta prioridad evaluadas">
+          <span>📋 Todas las Evaluadas</span>
+          <span id="count-all" class="triage-tab-badge">0</span>
+        </button>
+        <button id="tab-correct-only" class="triage-tab-btn" role="tab" aria-selected="false" title="Ver tickets correctamente clasificados en Remedy">
+          <span>✅ Severidad Correcta</span>
+          <span id="count-correct" class="triage-tab-badge">0</span>
+        </button>
+      </div>
+
+      <!-- Filtros Avanzados y Buscador -->
+      <div class="triage-filters-group">
+        <label for="filter-process" class="sr-only">Filtrar por Proceso Crítico</label>
+        <select id="filter-process" class="triage-select" title="Filtrar por Proceso de Negocio">
+          <option value="all">Todos los Procesos Críticos</option>
+          <option value="atención al cliente">Atención al Cliente (ATC)</option>
+          <option value="facturación">Facturación y Cobros</option>
+          <option value="provisión">Provisión y Cobertura</option>
+          <option value="ventas">Ventas y Canales</option>
+          <option value="portabilidad">Portabilidad</option>
+          <option value="prepago">Prepago</option>
+          <option value="middleware">Middleware Transversal</option>
+          <option value="sistemas core">Sistemas Core / Infraestructura</option>
+        </select>
+
+        <label for="filter-severity" class="sr-only">Filtrar por Severidad ITIL Evaluada</label>
+        <select id="filter-severity" class="triage-select" title="Filtrar por Severidad ITIL">
+          <option value="all">Todas las Severidades</option>
+          <option value="P1">Solo SL1 / P1 (Crítica)</option>
+          <option value="P2">Solo SL2 / P2 (Mayor)</option>
+        </select>
+
+        <div class="triage-search-box">
+          <span class="triage-search-icon" aria-hidden="true">🔍</span>
+          <label for="search-input" class="sr-only">Buscar por ID, sistema, proceso o palabra clave</label>
+          <input type="text" id="search-input" class="triage-search-input" placeholder="Buscar por ID, sistema, proceso...">
+        </div>
+      </div>
+    </nav>
+
+    <!-- 5. Feed de Incidencias Evaluadas (Tarjetas del Módulo 1) -->
+    <main id="triage-feed" class="triage-feed" aria-label="Listado de Incidencias de Emergencia Evaluadas">
+      <!-- Inyectado dinámicamente por triage.js -->
+      <div class="triage-empty-state">
+        <div class="triage-empty-icon" aria-hidden="true">🔄</div>
+        <div class="triage-empty-title">Cargando datos del motor de triaje...</div>
+        <p>Inspeccionando el catálogo de alta prioridad y evaluando umbrales.</p>
+      </div>
+    </main>
+
+  </div>
+
+  <!-- Modal / Cheat-Sheet Oficial de Criterios y Umbrales -->
+  <div id="modal-criteria" class="triage-modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div class="triage-modal-dialog">
+      <div class="triage-modal-header">
+        <h2 id="modal-title" class="triage-modal-title">
+          <span>📖 Matriz de Umbrales Oficiales de Emergencia IT (Orange)</span>
+        </h2>
+        <button id="btn-modal-close" class="triage-btn" aria-label="Cerrar ventana de criterios">✖</button>
+      </div>
+      <div class="triage-modal-body">
+        <p>
+          Conforme al procedimiento oficial de <strong>Gestión de Emergencias IT de Orange</strong> (Skill <code>orange-it-emergency-management</code> / <code>it-severity-matrix</code>), cualquier ticket que supere al menos uno de los siguientes umbrales debe clasificarse de inmediato como <strong>SL1 / P1 (Emergencia Crítica)</strong> o <strong>SL2 / P2 (Mayor)</strong>:
+        </p>
+
+        <table class="triage-threshold-table">
+          <thead>
+            <tr>
+              <th style="width: 25%;">Proceso Crítico</th>
+              <th style="width: 50%;">Umbral Cuantitativo de Emergencia (SL1 / P1)</th>
+              <th style="width: 25%;">Regla de Reclasificación</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>1. Atención al Cliente (ATC)</strong></td>
+              <td>Caída total de IVR/CTI. Colapso que descarte &gt;20% de llamadas durante 1h. Desviación &gt;20% en 30m en Frontales/CRM (Ficha Cliente, CRM Jazztel, Siebel 8, CRM4TELCO).</td>
+              <td>Subescalar a SL1 si Remedy registró P3/P4.</td>
+            </tr>
+            <tr>
+              <td><strong>2. Ventas y Canales</strong></td>
+              <td>Afectación &gt;30% del volumen de operaciones. Caída a &lt;15% de ventas diarias respecto a promedio de 4 días. Bloqueo en CERES, Actos Comerciales, Econtrato o Televenta.</td>
+              <td>Subescalar a SL1 de inmediato.</td>
+            </tr>
+            <tr>
+              <td><strong>3. Facturación, Mediación y Cobros</strong></td>
+              <td>Desviación &gt;1 día en cobro o batch. Más de 3h sin tarificación online (Mediación, HP-IUM, OCS). Afectación en ventana de ±3 días de ciclo de facturación (BSCS, Open Cobros, SAP).</td>
+              <td>Prioridad máxima SL1. Prohibida mitigación no supervisada.</td>
+            </tr>
+            <tr>
+              <td><strong>4. Provisión y Activación</strong></td>
+              <td>Órdenes Móvil: &gt;20% errores (&gt;10m al 100%). Órdenes Fijo/Fibra: &gt;30% errores (&gt;30m al 100%) en TEIDE, IP24, LUNA, SGA. Indisponibilidad de renovación de beneficios.</td>
+              <td>Subescalar a SL1 si supera 20%/30%.</td>
+            </tr>
+            <tr>
+              <td><strong>5. Portabilidad</strong></td>
+              <td>Imposibilidad de iniciar flujo a las 02:00 AM. Retraso &gt;2h en horario comercial (08:00 - 20:00). Caída de TEIDE/PANGEA.</td>
+              <td>Escalado a SL1 obligatorio.</td>
+            </tr>
+            <tr>
+              <td><strong>6. Prepago</strong></td>
+              <td>Recargas: &gt;10% errores o &gt;30 min sin recargas. Altas: &gt;10% errores o &gt;30 min sin altas operativas.</td>
+              <td>SL1 inmediato.</td>
+            </tr>
+            <tr>
+              <td><strong>7. Middleware & Cloud Core</strong></td>
+              <td>Caída masiva de APIGEE, TIBCO, Datapower, OCCI. Flapeo de enlaces troncales ITX con OCI/GCP o caída de hipervisores ESX/PSeries sin absorción HA.</td>
+              <td>SL1 con Escalado en Paralelo obligatorio.</td>
+            </tr>
+            <tr>
+              <td><strong>8. Regla de Oro N1</strong></td>
+              <td>Ante cualquier duda sobre el impacto real en clientes o procesos de negocio, <strong>clasifícala de inmediato como Emergencia (SL1 / P1)</strong>.</td>
+              <td>Suelo mínimo obligatorio.</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div style="background: rgba(255, 121, 0, 0.1); border-left: 4px solid var(--triage-orange); padding: 12px 16px; border-radius: 4px;">
+          <strong>Regla de Gobernanza de Workarounds:</strong> La aplicación de parches o workarounds provisionales NO desescala automáticamente la severidad del ticket y exige autorización formal de Customer & Service Ops (IM-CSO).
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Contenedor de Toasts de Notificación -->
+  <div id="toast-container" class="triage-toast-container" aria-live="polite"></div>
+
+  <!-- Scripts del Portal Orange y Lógica Operativa del Módulo 1 -->
+  <script src="/dashboards/assets/ui-feedback.js"></script>
+  <script src="/dashboards/assets/topbar.js"></script>
+  <script src="./triage.js?v=20261030_1935"></script>
+</body>
+</html>
+
