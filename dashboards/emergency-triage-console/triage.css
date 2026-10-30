@@ -100,21 +100,21 @@ body {
 .triage-app-wrapper {
   max-width: 1440px;
   margin: 0 auto;
-  padding: 24px 24px 60px 24px;
+  padding: 14px 20px 40px 20px;
 }
 
 /* --------------------------------------------------------------------------
-   1. Cabecera Institucional (Tarjeta Blanca Portal)
+   1. Cabecera Institucional (Tarjeta Blanca Portal Compacta)
    -------------------------------------------------------------------------- */
 .triage-header {
   display: flex;
   flex-direction: column;
-  gap: 14px;
-  padding: 20px 24px 16px 24px;
+  gap: 8px;
+  padding: 12px 18px 10px 18px;
   background: var(--triage-surface);
   border: 1px solid var(--triage-border);
-  border-radius: var(--radius-lg);
-  margin-bottom: 20px;
+  border-radius: var(--radius-md);
+  margin-bottom: 12px;
   box-shadow: var(--shadow-card);
 }
 
@@ -123,71 +123,92 @@ body {
   justify-content: space-between;
   align-items: center;
   flex-wrap: wrap;
-  gap: 18px;
+  gap: 12px;
   width: 100%;
 }
 
 .triage-brand {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 12px;
 }
 
 .triage-logo-box {
-  width: 44px;
-  height: 44px;
+  width: 34px;
+  height: 34px;
   background: var(--triage-orange);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-sm);
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 3px 10px rgba(255, 121, 0, 0.3);
+  box-shadow: 0 2px 6px rgba(255, 121, 0, 0.25);
   flex-shrink: 0;
 }
 
 .triage-logo-box svg {
-  width: 26px;
-  height: 26px;
+  width: 20px;
+  height: 20px;
 }
 
 .triage-title-group {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 2px;
 }
 
 .triage-eyebrow {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  font-size: 11px;
+  gap: 6px;
+  font-size: 10px;
   font-weight: 800;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
   color: #C2410C;
   background: var(--triage-orange-tint);
-  padding: 3px 10px;
+  padding: 1px 7px;
   border-radius: var(--radius-pill);
   width: fit-content;
   font-family: var(--font-mono);
 }
 
+.triage-title-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
 .triage-title {
-  font-size: 22px;
+  font-size: 18px;
   font-weight: 800;
   color: var(--triage-text-main);
   letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+.triage-module-badge {
+  display: inline-flex;
+  align-items: center;
+  background: var(--triage-orange-tint);
+  color: #C2410C;
+  border: 1px solid #FED7AA;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 800;
+  padding: 1px 7px;
+  border-radius: var(--radius-pill);
+  letter-spacing: 0.02em;
 }
 
 .triage-subtitle {
-  font-size: 13px;
-  color: var(--triage-text-muted);
+  display: none;
 }
 
 .triage-header-actions {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
   flex-wrap: wrap;
 }
 
@@ -195,10 +216,10 @@ body {
 .triage-live-pill {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 6px 14px;
+  gap: 6px;
+  padding: 5px 11px;
   border-radius: var(--radius-pill);
-  font-size: 12px;
+  font-size: 11.5px;
   font-weight: 700;
   background: var(--triage-green-bg);
   border: 1px solid var(--triage-green-border);
@@ -236,12 +257,13 @@ body {
   background: var(--triage-surface);
   border: 1px solid var(--triage-border);
   color: var(--triage-text-main);
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
-  padding: 8px 12px;
+  padding: 5px 9px;
   border-radius: var(--radius-sm);
   outline: none;
   cursor: pointer;
+  height: 32px;
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
@@ -253,16 +275,17 @@ body {
 .triage-btn {
   display: inline-flex;
   align-items: center;
-  gap: 7px;
-  padding: 8px 15px;
+  gap: 6px;
+  padding: 5px 12px;
   border-radius: var(--radius-sm);
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
   cursor: pointer;
   border: 1px solid var(--triage-border);
   background: var(--triage-surface);
   color: var(--triage-text-main);
   outline: none;
+  height: 32px;
   transition: all 0.18s ease;
   user-select: none;
   text-decoration: none;
@@ -303,8 +326,8 @@ body {
 .triage-inspection-panel {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  margin-bottom: 20px;
+  gap: 10px;
+  margin-bottom: 12px;
 }
 
 .triage-source-meta-bar {
@@ -312,12 +335,12 @@ body {
   justify-content: space-between;
   align-items: center;
   flex-wrap: wrap;
-  gap: 12px;
-  background: #FAF8F5;
+  gap: 8px;
+  background: var(--triage-surface-subtle);
   border: 1px solid var(--triage-border-light);
-  border-radius: var(--radius-sm);
-  padding: 7px 14px;
-  font-size: 12px;
+  border-radius: var(--radius-xs);
+  padding: 4px 10px;
+  font-size: 11.5px;
   color: var(--triage-text-muted);
   width: 100%;
 }
@@ -325,60 +348,60 @@ body {
 .triage-source-info {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
 }
 
 .triage-source-badge {
   background: var(--triage-orange-tint);
   color: #C2410C;
-  font-size: 11px;
+  font-size: 10.5px;
   font-weight: 700;
-  padding: 3px 9px;
+  padding: 2px 7px;
   border-radius: var(--radius-pill);
   font-family: var(--font-mono);
   display: inline-flex;
   align-items: center;
-  gap: 5px;
+  gap: 4px;
 }
 
 .triage-source-file-name {
   color: var(--triage-text-main);
   font-family: var(--font-mono);
-  font-size: 12.5px;
+  font-size: 12px;
 }
 
 .triage-last-scan {
   font-family: var(--font-mono);
-  font-size: 12px;
+  font-size: 11.5px;
 }
 
 .triage-last-scan strong {
   color: var(--triage-text-main);
 }
 
-/* Grid de KPIs de Ingesta (Formato Idéntico a shared.css de Portal) */
+/* Grid de KPIs de Ingesta Compacto */
 .triage-kpi-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: 16px;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
 }
 
 .triage-kpi-card {
   background: var(--triage-surface);
   border: 1px solid var(--triage-border);
-  border-radius: var(--radius-md);
-  padding: 20px 24px;
-  border-left: 4px solid var(--triage-border);
+  border-radius: var(--radius-sm);
+  padding: 8px 14px;
+  border-left: 3px solid var(--triage-border);
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  box-shadow: var(--shadow-card);
-  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  gap: 2px;
+  box-shadow: var(--shadow-subtle);
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
 }
 
 .triage-kpi-card:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-hover);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-card);
 }
 
 .triage-kpi-card.kpi-scanned {
@@ -401,7 +424,7 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -411,15 +434,15 @@ body {
 .triage-kpi-value-row {
   display: flex;
   align-items: baseline;
-  gap: 8px;
+  gap: 6px;
 }
 
 .triage-kpi-value {
   font-family: var(--font-mono);
-  font-size: 34px;
+  font-size: 22px;
   font-weight: 800;
   color: var(--triage-text-main);
-  line-height: 1.1;
+  line-height: 1.15;
   font-variant-numeric: tabular-nums;
 }
 
@@ -440,8 +463,9 @@ body {
 }
 
 .triage-kpi-desc {
-  font-size: 12px;
+  font-size: 11px;
   color: var(--triage-text-subtle);
+  line-height: 1.2;
 }
 
 /* --------------------------------------------------------------------------
@@ -531,41 +555,42 @@ body {
 }
 
 /* --------------------------------------------------------------------------
-   4. Barra de Filtrado y Búsqueda del Triaje
+   4. Barra de Filtrado y Búsqueda del Triaje (Compacta)
    -------------------------------------------------------------------------- */
 .triage-control-bar {
   display: flex;
   justify-content: space-between;
   align-items: center;
   flex-wrap: wrap;
-  gap: 14px;
+  gap: 10px;
   background: var(--triage-surface);
   border: 1px solid var(--triage-border);
-  border-radius: var(--radius-md);
-  padding: 14px 20px;
-  margin-bottom: 24px;
+  border-radius: var(--radius-sm);
+  padding: 7px 12px;
+  margin-bottom: 12px;
   box-shadow: var(--shadow-subtle);
 }
 
 .triage-tabs-group {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   flex-wrap: wrap;
 }
 
 .triage-tab-btn {
   display: inline-flex;
   align-items: center;
-  gap: 7px;
-  padding: 8px 16px;
+  gap: 6px;
+  padding: 5px 11px;
   border-radius: var(--radius-sm);
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
   background: var(--triage-bg);
   border: 1px solid var(--triage-border);
   color: var(--triage-text-muted);
   cursor: pointer;
+  height: 32px;
   transition: all 0.15s ease;
   outline: none;
 }
@@ -585,9 +610,9 @@ body {
 .triage-tab-badge {
   background: rgba(0, 0, 0, 0.08);
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: 10.5px;
   font-weight: 800;
-  padding: 1px 6px;
+  padding: 1px 5px;
   border-radius: var(--radius-pill);
 }
 
@@ -599,7 +624,7 @@ body {
 .triage-filters-group {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   flex-wrap: wrap;
 }
 
@@ -611,8 +636,8 @@ body {
 
 .triage-search-icon {
   position: absolute;
-  left: 10px;
-  font-size: 13px;
+  left: 9px;
+  font-size: 12px;
   color: var(--triage-text-subtle);
   pointer-events: none;
 }
@@ -621,10 +646,11 @@ body {
   background: var(--triage-surface);
   border: 1px solid var(--triage-border);
   color: var(--triage-text-main);
-  padding: 8px 12px 8px 32px;
+  padding: 5px 10px 5px 28px;
   border-radius: var(--radius-sm);
-  font-size: 13px;
-  width: 250px;
+  font-size: 12px;
+  width: 210px;
+  height: 32px;
   outline: none;
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
@@ -1545,7 +1571,7 @@ body {
    -------------------------------------------------------------------------- */
 @media (max-width: 900px) {
   .triage-header {
-    padding: 16px;
+    padding: 12px;
   }
   .triage-header-main {
     flex-direction: column;
@@ -1560,6 +1586,9 @@ body {
     align-items: flex-start;
     gap: 6px;
   }
+  .triage-kpi-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
   .triage-control-bar {
     flex-direction: column;
     align-items: stretch;
@@ -1567,7 +1596,10 @@ body {
   .triage-search-input {
     width: 100%;
   }
-  .triage-card-header {
-    flex-direction: column;
+}
+
+@media (max-width: 600px) {
+  .triage-kpi-grid {
+    grid-template-columns: 1fr;
   }
 }
