@@ -30,7 +30,8 @@
     processFilter: 'all',
     severityFilter: 'all',
     searchQuery: '',
-    expandedEpsilon: {}, // { [incId]: boolean }
+    expandedRows: {}, // { [incId]: boolean }
+    allExpanded: false,
     lastInspectionEpoch: 0,
     refreshIntervalMs: 30000,
     refreshTimer: null,
@@ -270,7 +271,7 @@
     if (dom.countReclass) dom.countReclass.textContent = discCount;
     if (dom.countCorrect) dom.countCorrect.textContent = correctCount;
 
-    // Renderizar Feed de Triaje
+    // Renderizar Feed de Triaje (Vista Tabular con Filas Plegables)
     renderFeed();
   }
 
@@ -360,12 +361,10 @@ Generado por Consola de Emergencias IT Orange - Motor de Triaje (Módulo 1)`;
   }
 
   // --------------------------------------------------------------------------
-  // Función 2: Renderizado del Feed de Triaje y Evaluador de Umbrales
+  // Función 2: Filtrado y Renderizado en Modo Tabular con Filas Plegables
   // --------------------------------------------------------------------------
 
-  function renderFeed() {
-    if (!dom.triageFeed) return;
-
+  function getFilteredIncidents() {
     let filtered = state.incidents.slice();
 
     // 1. Filtro de Pestaña Principal (Reclasificaciones vs Todas vs Correctas)
@@ -402,6 +401,14 @@ Generado por Consola de Emergencias IT Orange - Motor de Triaje (Módulo 1)`;
       });
     }
 
+    return filtered;
+  }
+
+  function renderFeed() {
+    if (!dom.triageFeed) return;
+
+    const filtered = getFilteredIncidents();
+
     if (filtered.length === 0) {
       dom.triageFeed.innerHTML = `
         <div class="triage-empty-state">
@@ -413,29 +420,60 @@ Generado por Consola de Emergencias IT Orange - Motor de Triaje (Módulo 1)`;
       return;
     }
 
-    dom.triageFeed.innerHTML = filtered.map(inc => renderTriageCard(inc)).join('');
+    const rowsHtml = filtered.map(inc => renderTableRow(inc)).join('');
 
-    // Adjuntar escuchadores de eventos para los botones de las tarjetas
-    attachCardEventListeners();
+    dom.triageFeed.innerHTML = `
+      <div class="triage-table-toolbar">
+        <div class="triage-table-count">
+          Mostrando <strong>${filtered.length}</strong> incidencia${filtered.length === 1 ? '' : 's'}
+        </div>
+        <button type="button" class="triage-btn-toggle-all" id="btn-toggle-all-rows" aria-label="${state.allExpanded ? 'Plegar todas las filas' : 'Expandir todas las filas'}">
+          <span aria-hidden="true">${state.allExpanded ? '▲' : '▼'}</span>
+          <span>${state.allExpanded ? 'Plegar Todas' : 'Expandir Todas'}</span>
+        </button>
+      </div>
+
+      <div class="triage-table-wrapper">
+        <table class="triage-table" aria-label="Tabla de Triaje de Incidencias">
+          <thead>
+            <tr>
+              <th style="width: 44px; text-align: center;" aria-label="Desplegable"></th>
+              <th style="width: 140px;">Incidencia</th>
+              <th style="min-width: 280px;">Título y Sistemas</th>
+              <th style="width: 170px;">Proceso Crítico</th>
+              <th style="width: 110px;">Remedy Ini</th>
+              <th style="width: 120px;">Severidad ITIL</th>
+              <th style="width: 130px;">Desvío / Delta</th>
+              <th style="width: 180px; text-align: right;">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${rowsHtml}
+          </tbody>
+        </table>
+      </div>
+    `;
+
+    // Adjuntar escuchadores de eventos para interacción con la tabla
+    attachFeedEventListeners();
   }
 
-  function renderTriageCard(inc) {
+  function renderTableRow(inc) {
     const incId = inc.id || 'INC000000000000';
     const isDisc = Boolean(inc.es_discrepancia || (inc.discrepancia_delta && inc.discrepancia_delta > 0));
     const delta = inc.discrepancia_delta || 0;
     const isP1 = inc.prioridad_sugerida === 'P1';
+    const isOpen = Boolean(state.expandedRows[incId]);
 
-    // Clases de estilo para borde de tarjeta
-    let cardClass = 'triage-card';
+    // Modificador de clase para la fila principal
+    let rowModifier = 'is-correct';
     if (isDisc) {
-      cardClass += delta === 1 ? ' is-discrepancy-delta1' : ' is-discrepancy';
-    } else {
-      cardClass += ' is-correct';
+      rowModifier = delta >= 2 ? 'is-discrepancy-delta2' : 'is-discrepancy-delta1';
     }
 
     const evaluacion = inc.evaluacion || {};
     const minsElapsed = evaluacion.minutos_desde_apertura || 0;
-    const proceso = evaluacion.proceso || evaluacion.proceso_negocio || 'Procesos Críticos de Negocio';
+    const proceso = evaluacion.proceso || evaluacion.proceso_negocio || 'Procesos Críticos';
     const criterio = evaluacion.criterio || 'Regla de Oro N1';
     const impactText = evaluacion.impacto_justificacion || inc.discrepancia_motivo || 'Impacto activo evaluado por el motor de triaje.';
     const urgencyText = evaluacion.urgencia_justificacion || 'Restablecimiento operativo requerido con máxima celeridad.';
@@ -460,165 +498,253 @@ Generado por Consola de Emergencias IT Orange - Motor de Triaje (Módulo 1)`;
     const estatusRaw = (inc.estatus || 'Pendiente').toLowerCase();
     const statusPillClass = estatusRaw.includes('curso') ? 'status-en-curso' : 'status-pendiente';
 
-    // Severidad Remedy original
+    // Severidad Remedy inicial
     const sevNominal = inc.prioridad_original || 'Media';
     let remedyBadgeClass = 'badge-remedy-media';
     if (sevNominal.toLowerCase().includes('alta')) remedyBadgeClass = 'badge-remedy-alta';
     if (sevNominal.toLowerCase().includes('crítica') || sevNominal.toLowerCase().includes('critica')) remedyBadgeClass = 'badge-remedy-critica';
 
-    // Severidad ITIL Evaluada
+    // Severidad ITIL sugerida
     const itilBadgeClass = isP1 ? 'badge-itil-sl1' : 'badge-itil-sl2';
-    const itilLabel = isP1 ? 'SL1 / P1 (Emergencia Crítica)' : 'SL2 / P2 (Mayor)';
+    const itilLabel = isP1 ? 'SL1 / P1' : 'SL2 / P2';
 
-    // Detalle Epsilon IA colapsable
-    const isEpsilonOpen = Boolean(state.expandedEpsilon[incId]);
+    // Epsilon IA resumen
     const resumenIa = inc.resumen_ia || {};
 
     return `
-      <article class="${cardClass}" id="card-${escapeHtml(incId)}" data-inc="${escapeHtml(incId)}">
-        
-        <!-- Cabecera de la Tarjeta -->
-        <div class="triage-card-header">
-          <div>
-            <div class="triage-ticket-meta">
-              <span class="triage-ticket-id">${escapeHtml(incId)}</span>
-              <span class="triage-status-pill ${statusPillClass}">${escapeHtml(inc.estatus || 'Pendiente')}</span>
-              <span class="triage-time-badge" title="Tiempo acumulado desde apertura en Remedy">
-                <span aria-hidden="true">⏱️</span> ${formatAgingMinutes(minsElapsed)}
-              </span>
-            </div>
-            <h2 class="triage-ticket-title">${escapeHtml(inc.titulo || 'Sin título')}</h2>
-            <div class="triage-systems-tags">
-              <span style="font-size: 11px; color: var(--triage-text-subtle); font-weight: 600;">Sistemas:</span>
-              ${sysTagsHtml || '<span class="triage-sys-tag">Sistemas Core</span>'}
-            </div>
+      <!-- Fila Resumen Principal (Modo Tabular) -->
+      <tr class="triage-row-main ${rowModifier} ${isOpen ? 'is-expanded' : ''}" data-inc="${escapeHtml(incId)}" role="button" tabindex="0" aria-expanded="${isOpen}">
+        <td style="text-align: center; width: 44px;">
+          <button type="button" class="triage-chevron-btn ${isOpen ? 'is-expanded' : ''}" data-inc="${escapeHtml(incId)}" aria-label="${isOpen ? 'Plegar detalle' : 'Desplegar detalle'}">
+            <span aria-hidden="true">▶</span>
+          </button>
+        </td>
+        <td class="triage-cell-id">
+          <span class="triage-id-link">${escapeHtml(incId)}</span>
+          <div class="triage-id-meta">
+            <span class="triage-status-pill ${statusPillClass}">${escapeHtml(inc.estatus || 'Pendiente')}</span>
+            <span style="font-family: var(--font-mono); font-size: 11px; color: var(--triage-text-subtle);" title="Tiempo transcurrido desde apertura">⏱️ ${formatAgingMinutes(minsElapsed)}</span>
           </div>
-        </div>
-
-        <!-- Función 3: Alerta de Reclasificación Inmediata (Comparador Remedy vs ITIL) -->
-        <div class="triage-reclass-box ${isDisc ? (delta === 1 ? 'is-delta1' : '') : 'is-nominal-ok'}">
-          <div class="triage-comparison-header">
+        </td>
+        <td class="triage-cell-title">
+          <div class="triage-title-text">${escapeHtml(inc.titulo || 'Sin título')}</div>
+          <div class="triage-systems-tags">
+            ${sysTagsHtml || '<span class="triage-sys-tag">Sistemas Core</span>'}
+          </div>
+        </td>
+        <td class="triage-cell-process">
+          <span class="triage-process-badge" style="font-size: 11.5px; padding: 4px 8px;">
+            <span aria-hidden="true">🏢</span> ${escapeHtml(proceso)}
+          </span>
+        </td>
+        <td>
+          <span class="triage-sev-badge ${remedyBadgeClass}">${escapeHtml(sevNominal)}</span>
+        </td>
+        <td>
+          <span class="triage-sev-badge ${itilBadgeClass}">${itilLabel}</span>
+        </td>
+        <td class="triage-cell-delta">
+          ${isDisc ? (
+            delta >= 2
+              ? `<span class="triage-delta-badge delta-2" title="${escapeHtml(inc.discrepancia_gravedad || 'Mayor')}"><span aria-hidden="true">🚨</span> +${delta} Crítica</span>`
+              : `<span class="triage-delta-badge delta-1" title="${escapeHtml(inc.discrepancia_gravedad || 'Moderada')}"><span aria-hidden="true">⚠️</span> +${delta} Mayor</span>`
+          ) : (
+            `<span class="triage-delta-badge delta-0"><span aria-hidden="true">✅</span> Nominal OK</span>`
+          )}
+        </td>
+        <td class="triage-cell-actions">
+          <div class="triage-actions-cell-group">
             ${isDisc ? `
-              <span class="triage-reclass-flag ${delta === 1 ? 'delta-1' : ''}">
-                <span aria-hidden="true">🚨</span> Subescalación N1 Detectada (+${delta} Nivel${delta > 1 ? 'es' : ''} - ${escapeHtml(inc.discrepancia_gravedad || 'Mayor')})
-              </span>
-            ` : `
-              <span class="triage-reclass-flag nominal-ok">
-                <span aria-hidden="true">✅</span> Severidad Nominal Correcta (Alineada con Criterio ITIL Orange)
-              </span>
-            `}
-          </div>
-
-          <div class="triage-sev-comparison-bar">
-            <div class="triage-sev-side">
-              <span class="triage-sev-side-label">Remedy Inicial:</span>
-              <span class="triage-sev-badge ${remedyBadgeClass}">${escapeHtml(sevNominal)}</span>
-            </div>
-            <span class="triage-sev-arrow" aria-hidden="true">➔</span>
-            <div class="triage-sev-side">
-              <span class="triage-sev-side-label">Severidad Real ITIL:</span>
-              <span class="triage-sev-badge ${itilBadgeClass}">${itilLabel}</span>
-            </div>
-          </div>
-
-          ${isDisc ? `
-            <div class="triage-reclass-reason">
-              <strong>Motivo del Dictamen de Reclasificación:</strong> ${escapeHtml(inc.discrepancia_motivo || 'Ticket clasificado por debajo del umbral objetivo corporativo de emergencias.')}
-            </div>
-          ` : ''}
-        </div>
-
-        <!-- Función 2: Evaluador de Umbrales Críticos de Negocio -->
-        <div class="triage-threshold-box">
-          <div class="triage-threshold-header">
-            <span class="triage-process-badge">
-              <span aria-hidden="true">🏢</span> Proceso: ${escapeHtml(proceso)}
-            </span>
-            ${metricChips.length > 0 ? `
-              <div class="triage-metrics-row">
-                ${metricChips.map(m => `<span class="triage-metric-chip">${escapeHtml(m)}</span>`).join('')}
-              </div>
-            ` : ''}
-          </div>
-
-          <div class="triage-threshold-rule">
-            <span style="color: var(--triage-orange); font-weight: 700;">Umbral Superado:</span> ${escapeHtml(criterio)}
-          </div>
-
-          <div class="triage-impact-text">
-            <strong>Impacto Técnico y Operativo:</strong> ${escapeHtml(impactText)}
-          </div>
-
-          <div class="triage-impact-text" style="font-size: 12px; color: var(--triage-text-muted);">
-            <strong>Urgencia Justificada:</strong> ${escapeHtml(urgencyText)}
-          </div>
-        </div>
-
-        <!-- Acciones del Módulo 1 -->
-        <div class="triage-card-actions">
-          <div class="triage-actions-left">
-            ${isDisc ? `
-              <button type="button" class="triage-btn-action-reclass btn-copy-reclass" data-inc="${escapeHtml(incId)}" title="Copiar solicitud formal al portapapeles para pegar en el worklog de Remedy">
-                <span aria-hidden="true">⚡</span> Copiar Solicitud Reclasificación Remedy
+              <button type="button" class="triage-btn-table-reclass btn-copy-reclass" data-inc="${escapeHtml(incId)}" title="Copiar solicitud formal al portapapeles para pegar en el worklog de Remedy">
+                <span aria-hidden="true">⚡</span> Reclasificar
               </button>
             ` : ''}
-
-            <button type="button" class="triage-btn-action-detail btn-toggle-epsilon" data-inc="${escapeHtml(incId)}">
-              <span aria-hidden="true">${isEpsilonOpen ? '🔼' : '🔍'}</span>
-              <span>${isEpsilonOpen ? 'Ocultar Epsilon IA' : 'Ver Detalle Epsilon IA'}</span>
-            </button>
-
-            <button type="button" class="triage-btn triage-btn-sm btn-copy-report" data-inc="${escapeHtml(incId)}" title="Copiar Reporte Oficial de Emergencias en 4 Bloques">
-              <span aria-hidden="true">📋</span> Reporte 4 Bloques
+            <button type="button" class="triage-btn-table-toggle btn-toggle-row" data-inc="${escapeHtml(incId)}">
+              <span>${isOpen ? 'Plegar ▴' : 'Detalle ▾'}</span>
             </button>
           </div>
+        </td>
+      </tr>
 
-          <div style="font-family: var(--font-mono); font-size: 11px; color: var(--triage-text-subtle);">
-            Ref: ${escapeHtml(incId)} · Regla N1
+      <!-- Fila Plegable / Desplegable de Detalle Extendido -->
+      <tr class="triage-row-detail ${isOpen ? 'is-open' : ''}" id="detail-row-${escapeHtml(incId)}" data-inc="${escapeHtml(incId)}">
+        <td colspan="8">
+          <div class="triage-detail-wrapper">
+            <div class="triage-detail-grid">
+              
+              <!-- Columna 1: Evaluador de Umbrales Críticos y Comparativa -->
+              <div class="triage-detail-col">
+                <div class="triage-threshold-box">
+                  <div class="triage-threshold-header">
+                    <span class="triage-process-badge">
+                      <span aria-hidden="true">🏢</span> Proceso: ${escapeHtml(proceso)}
+                    </span>
+                    ${metricChips.length > 0 ? `
+                      <div class="triage-metrics-row">
+                        ${metricChips.map(m => `<span class="triage-metric-chip">${escapeHtml(m)}</span>`).join('')}
+                      </div>
+                    ` : ''}
+                  </div>
+
+                  <div class="triage-threshold-rule">
+                    <span style="color: var(--triage-orange); font-weight: 700;">Umbral Superado:</span> ${escapeHtml(criterio)}
+                  </div>
+
+                  <div class="triage-impact-text">
+                    <strong>Impacto Técnico y Operativo:</strong> ${escapeHtml(impactText)}
+                  </div>
+
+                  <div class="triage-impact-text" style="font-size: 12px; color: var(--triage-text-muted);">
+                    <strong>Urgencia Justificada:</strong> ${escapeHtml(urgencyText)}
+                  </div>
+                </div>
+
+                <!-- Comparador Remedy vs ITIL y Motivo de Reclasificación -->
+                <div class="triage-reclass-box ${isDisc ? (delta === 1 ? 'is-delta1' : '') : 'is-nominal-ok'}" style="margin: 0;">
+                  <div class="triage-comparison-header">
+                    ${isDisc ? `
+                      <span class="triage-reclass-flag ${delta === 1 ? 'delta-1' : ''}">
+                        <span aria-hidden="true">🚨</span> Subescalación N1 Detectada (+${delta} Nivel${delta > 1 ? 'es' : ''} - ${escapeHtml(inc.discrepancia_gravedad || 'Mayor')})
+                      </span>
+                    ` : `
+                      <span class="triage-reclass-flag nominal-ok">
+                        <span aria-hidden="true">✅</span> Severidad Nominal Correcta (Alineada con Criterio ITIL Orange)
+                      </span>
+                    `}
+                  </div>
+
+                  <div class="triage-sev-comparison-bar">
+                    <div class="triage-sev-side">
+                      <span class="triage-sev-side-label">Remedy Inicial:</span>
+                      <span class="triage-sev-badge ${remedyBadgeClass}">${escapeHtml(sevNominal)}</span>
+                    </div>
+                    <span class="triage-sev-arrow" aria-hidden="true">➔</span>
+                    <div class="triage-sev-side">
+                      <span class="triage-sev-side-label">Severidad Real ITIL:</span>
+                      <span class="triage-sev-badge ${itilBadgeClass}">${isP1 ? 'SL1 / P1 (Emergencia Crítica)' : 'SL2 / P2 (Mayor)'}</span>
+                    </div>
+                  </div>
+
+                  ${isDisc ? `
+                    <div class="triage-reclass-reason">
+                      <strong>Motivo del Dictamen de Reclasificación:</strong> ${escapeHtml(inc.discrepancia_motivo || 'Ticket clasificado por debajo del umbral objetivo corporativo de emergencias.')}
+                    </div>
+                  ` : ''}
+                </div>
+              </div>
+
+              <!-- Columna 2: Diagnóstico Epsilon Resumen IA -->
+              <div class="triage-detail-col">
+                <div class="triage-detail-box" style="height: 100%;">
+                  <div class="triage-detail-box-title">
+                    <span style="display: flex; align-items: center; gap: 6px; color: var(--triage-text-main);">
+                      <span style="color: var(--triage-orange);">🤖</span> Diagnóstico Epsilon Resumen IA
+                    </span>
+                    <span style="font-size: 10.5px; font-family: var(--font-mono); color: var(--triage-text-subtle);">Telemetría Oficial</span>
+                  </div>
+
+                  <div class="triage-epsilon-grid" style="margin-top: 4px;">
+                    <div class="triage-epsilon-item">
+                      <span class="triage-epsilon-label">Problema Detectado</span>
+                      <span class="triage-epsilon-val">${escapeHtml(resumenIa.problema || 'En análisis técnico.')}</span>
+                    </div>
+                    <div class="triage-epsilon-item">
+                      <span class="triage-epsilon-label">Impacto Operativo</span>
+                      <span class="triage-epsilon-val">${escapeHtml(resumenIa.impacto || impactText)}</span>
+                    </div>
+                    <div class="triage-epsilon-item">
+                      <span class="triage-epsilon-label">Causa Raíz / Solución</span>
+                      <span class="triage-epsilon-val">${escapeHtml(resumenIa.solucion || 'Pendiente de confirmación definitiva.')}</span>
+                    </div>
+                    <div class="triage-epsilon-item">
+                      <span class="triage-epsilon-label">Siguiente Acción / Bloqueos</span>
+                      <span class="triage-epsilon-val">${escapeHtml(resumenIa.siguiente_accion || resumenIa.bloqueos || 'Coordinación con soporte resolutor.')}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+
+            <!-- Barra Inferior de Acciones -->
+            <div class="triage-detail-footer">
+              <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                ${isDisc ? `
+                  <button type="button" class="triage-btn-action-reclass btn-copy-reclass" data-inc="${escapeHtml(incId)}" title="Copiar solicitud formal al portapapeles para pegar en el worklog de Remedy">
+                    <span aria-hidden="true">⚡</span> Copiar Solicitud Reclasificación Remedy
+                  </button>
+                ` : ''}
+                <button type="button" class="triage-btn triage-btn-sm btn-copy-report" data-inc="${escapeHtml(incId)}" title="Copiar Reporte Oficial de Emergencias en 4 Bloques">
+                  <span aria-hidden="true">📋</span> Copiar Reporte 4 Bloques
+                </button>
+              </div>
+
+              <div style="font-family: var(--font-mono); font-size: 11px; color: var(--triage-text-subtle); display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">
+                <span>⏱️ SLA 1ª Notif: &lt;20m</span>
+                <span>🔄 Frecuencia: 60m</span>
+                <span>📞 Canal: Telefónico Obligatorio</span>
+              </div>
+            </div>
+
           </div>
-        </div>
-
-        <!-- Panel Colapsable de Epsilon IA -->
-        <div class="triage-epsilon-drawer ${isEpsilonOpen ? 'open' : ''}" id="epsilon-drawer-${escapeHtml(incId)}">
-          <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--triage-border); padding-bottom: 8px;">
-            <div style="font-size: 12px; font-weight: 700; color: var(--triage-text-main); display: flex; align-items: center; gap: 6px;">
-              <span style="color: var(--triage-orange);">🤖</span> Diagnóstico Técnico Epsilon Resumen IA
-            </div>
-            <span style="font-size: 11px; color: var(--triage-text-muted); font-family: var(--font-mono);">Telemetría Oficial</span>
-          </div>
-
-          <div class="triage-epsilon-grid">
-            <div class="triage-epsilon-item">
-              <span class="triage-epsilon-label">Problema Detectado</span>
-              <span class="triage-epsilon-val">${escapeHtml(resumenIa.problema || 'En análisis técnico.')}</span>
-            </div>
-            <div class="triage-epsilon-item">
-              <span class="triage-epsilon-label">Impacto Operativo</span>
-              <span class="triage-epsilon-val">${escapeHtml(resumenIa.impacto || impactText)}</span>
-            </div>
-            <div class="triage-epsilon-item">
-              <span class="triage-epsilon-label">Causa Raíz / Solución</span>
-              <span class="triage-epsilon-val">${escapeHtml(resumenIa.solucion || 'Pendiente de confirmación definitiva.')}</span>
-            </div>
-            <div class="triage-epsilon-item">
-              <span class="triage-epsilon-label">Bloqueos / Siguiente Acción</span>
-              <span class="triage-epsilon-val">${escapeHtml(resumenIa.siguiente_accion || resumenIa.bloqueos || 'Coordinación con soporte N2/N3.')}</span>
-            </div>
-          </div>
-        </div>
-
-      </article>
+        </td>
+      </tr>
     `;
   }
 
+  // Alias para mantener compatibilidad total
+  const renderTriageCard = renderTableRow;
+
   // --------------------------------------------------------------------------
-  // Event Listeners y Delegación
+  // Lógica de Plegado / Desplegado e Interacción
   // --------------------------------------------------------------------------
 
-  function attachCardEventListeners() {
-    // 1. Botón Copiar Solicitud Reclasificación Remedy
+  function toggleRow(incId, forceState) {
+    const isCurrentlyOpen = Boolean(state.expandedRows[incId]);
+    const nextState = (forceState !== undefined) ? forceState : !isCurrentlyOpen;
+    state.expandedRows[incId] = nextState;
+
+    const mainRow = document.querySelector(`.triage-row-main[data-inc="${incId}"]`);
+    const detailRow = document.querySelector(`.triage-row-detail[data-inc="${incId}"]`);
+    const chevronBtn = document.querySelector(`.triage-chevron-btn[data-inc="${incId}"]`);
+    const toggleBtn = document.querySelector(`.btn-toggle-row[data-inc="${incId}"]`);
+
+    if (mainRow) {
+      mainRow.classList.toggle('is-expanded', nextState);
+      mainRow.setAttribute('aria-expanded', String(nextState));
+    }
+    if (detailRow) {
+      detailRow.classList.toggle('is-open', nextState);
+    }
+    if (chevronBtn) {
+      chevronBtn.classList.toggle('is-expanded', nextState);
+      chevronBtn.setAttribute('aria-label', nextState ? 'Plegar detalle' : 'Desplegar detalle');
+    }
+    if (toggleBtn) {
+      toggleBtn.innerHTML = `<span>${nextState ? 'Plegar ▴' : 'Detalle ▾'}</span>`;
+    }
+  }
+
+  function toggleAllRows() {
+    state.allExpanded = !state.allExpanded;
+    const filtered = getFilteredIncidents();
+    filtered.forEach(inc => {
+      state.expandedRows[inc.id] = state.allExpanded;
+    });
+    renderFeed();
+  }
+
+  function attachFeedEventListeners() {
+    // 1. Botón Expandir Todas / Plegar Todas
+    const btnToggleAll = document.getElementById('btn-toggle-all-rows');
+    if (btnToggleAll) {
+      btnToggleAll.addEventListener('click', toggleAllRows);
+    }
+
+    // 2. Botón Copiar Solicitud Reclasificación Remedy
     document.querySelectorAll('.btn-copy-reclass').forEach(btn => {
-      btn.addEventListener('click', () => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
         const incId = btn.getAttribute('data-inc');
         const inc = state.incidents.find(i => i.id === incId);
         if (inc) {
@@ -628,9 +754,10 @@ Generado por Consola de Emergencias IT Orange - Motor de Triaje (Módulo 1)`;
       });
     });
 
-    // 2. Botón Copiar Reporte de Emergencia en 4 Bloques
+    // 3. Botón Copiar Reporte de Emergencia en 4 Bloques
     document.querySelectorAll('.btn-copy-report').forEach(btn => {
-      btn.addEventListener('click', () => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
         const incId = btn.getAttribute('data-inc');
         const inc = state.incidents.find(i => i.id === incId);
         if (inc) {
@@ -640,12 +767,31 @@ Generado por Consola de Emergencias IT Orange - Motor de Triaje (Módulo 1)`;
       });
     });
 
-    // 3. Botón Toggle Epsilon IA
-    document.querySelectorAll('.btn-toggle-epsilon').forEach(btn => {
-      btn.addEventListener('click', () => {
+    // 4. Chevron y Botón Toggle fila
+    document.querySelectorAll('.triage-chevron-btn, .btn-toggle-row').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
         const incId = btn.getAttribute('data-inc');
-        state.expandedEpsilon[incId] = !state.expandedEpsilon[incId];
-        renderFeed();
+        if (incId) toggleRow(incId);
+      });
+    });
+
+    // 5. Clic e interacción por teclado en la fila principal
+    document.querySelectorAll('.triage-row-main').forEach(row => {
+      row.addEventListener('click', (e) => {
+        // Ignorar si el clic ocurrió dentro de un botón interactivo
+        if (e.target.closest('button, a, input, select, textarea')) return;
+        const incId = row.getAttribute('data-inc');
+        if (incId) toggleRow(incId);
+      });
+
+      row.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          if (e.target.closest('button, a, input, select, textarea')) return;
+          e.preventDefault();
+          const incId = row.getAttribute('data-inc');
+          if (incId) toggleRow(incId);
+        }
       });
     });
   }
@@ -783,4 +929,3 @@ Generado por Consola de Emergencias IT Orange - Motor de Triaje (Módulo 1)`;
   }
 
 })();
-

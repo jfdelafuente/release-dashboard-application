@@ -628,12 +628,354 @@ body {
 }
 
 /* --------------------------------------------------------------------------
-   5. Feed de Tarjetas de Incidencias Evaluadas (Módulo 1)
+   5. Vista Tabular y Filas Plegables / Desplegables (Módulo 1)
    -------------------------------------------------------------------------- */
 .triage-feed {
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 14px;
+}
+
+.triage-table-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 2px 2px;
+}
+
+.triage-table-count {
+  font-size: 13px;
+  color: var(--triage-text-muted);
+}
+
+.triage-table-count strong {
+  color: var(--triage-text-main);
+  font-family: var(--font-mono);
+}
+
+.triage-btn-toggle-all {
+  background: var(--triage-surface);
+  border: 1px solid var(--triage-border);
+  color: var(--triage-text-main);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 14px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.15s ease;
+}
+
+.triage-btn-toggle-all:hover {
+  background: var(--triage-surface-hover);
+  border-color: var(--triage-orange);
+  color: var(--triage-orange-dark);
+}
+
+.triage-table-wrapper {
+  background: var(--triage-surface);
+  border: 1px solid var(--triage-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.triage-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 13px;
+  text-align: left;
+}
+
+.triage-table thead th {
+  background: #FAF8F5;
+  color: var(--triage-text-muted);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 12px 14px;
+  border-bottom: 2px solid var(--triage-border);
+  white-space: nowrap;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.triage-row-main {
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.triage-row-main td {
+  padding: 13px 14px;
+  vertical-align: middle;
+  border-bottom: 1px solid var(--triage-border-light);
+  background: var(--triage-surface);
+}
+
+.triage-row-main:hover td {
+  background-color: #FFF9F2;
+}
+
+.triage-row-main.is-expanded td {
+  background-color: #FFF4E8;
+  border-bottom-color: transparent;
+}
+
+/* Bordes identificadores a la izquierda */
+.triage-row-main.is-discrepancy-delta2 td:first-child {
+  border-left: 4px solid var(--triage-red-p1);
+}
+
+.triage-row-main.is-discrepancy-delta1 td:first-child {
+  border-left: 4px solid var(--triage-amber-p2);
+}
+
+.triage-row-main.is-correct td:first-child {
+  border-left: 4px solid var(--triage-green-ok);
+}
+
+/* Botón interactivo chevron */
+.triage-chevron-btn {
+  background: transparent;
+  border: none;
+  font-size: 12px;
+  color: var(--triage-text-subtle);
+  cursor: pointer;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-xs);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), color 0.15s ease, background 0.15s ease;
+}
+
+.triage-chevron-btn:hover {
+  background: rgba(0, 0, 0, 0.05);
+  color: var(--triage-text-main);
+}
+
+.triage-chevron-btn.is-expanded {
+  transform: rotate(90deg);
+  color: var(--triage-orange);
+}
+
+/* Células de datos principales */
+.triage-cell-id {
+  white-space: nowrap;
+}
+
+.triage-id-link {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--triage-text-main);
+  text-decoration: none;
+  display: block;
+}
+
+.triage-id-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.triage-cell-title {
+  min-width: 260px;
+}
+
+.triage-title-text {
+  font-weight: 600;
+  color: var(--triage-text-main);
+  line-height: 1.35;
+  margin-bottom: 6px;
+}
+
+.triage-cell-process {
+  white-space: nowrap;
+}
+
+.triage-cell-delta {
+  white-space: nowrap;
+}
+
+.triage-delta-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 800;
+  padding: 3px 8px;
+  border-radius: var(--radius-pill);
+}
+
+.triage-delta-badge.delta-2 {
+  background: var(--triage-red-bg);
+  border: 1px solid var(--triage-red-border);
+  color: var(--triage-red-text);
+}
+
+.triage-delta-badge.delta-1 {
+  background: var(--triage-amber-bg);
+  border: 1px solid var(--triage-amber-border);
+  color: var(--triage-amber-text);
+}
+
+.triage-delta-badge.delta-0 {
+  background: var(--triage-green-bg);
+  border: 1px solid var(--triage-green-border);
+  color: var(--triage-green-text);
+}
+
+/* Acciones en la fila de tabla */
+.triage-cell-actions {
+  white-space: nowrap;
+  text-align: right;
+}
+
+.triage-actions-cell-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.triage-btn-table-reclass {
+  background: var(--triage-orange);
+  border: 1px solid var(--triage-orange);
+  color: #FFFFFF;
+  font-size: 11.5px;
+  font-weight: 700;
+  padding: 5px 10px;
+  border-radius: var(--radius-xs);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.15s ease;
+  box-shadow: 0 1px 3px rgba(255, 121, 0, 0.2);
+}
+
+.triage-btn-table-reclass:hover {
+  background: var(--triage-orange-dark);
+  border-color: var(--triage-orange-dark);
+  transform: translateY(-1px);
+}
+
+.triage-btn-table-toggle {
+  background: var(--triage-surface);
+  border: 1px solid var(--triage-border);
+  color: var(--triage-text-muted);
+  font-size: 11.5px;
+  font-weight: 600;
+  padding: 5px 8px;
+  border-radius: var(--radius-xs);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.15s ease;
+}
+
+.triage-btn-table-toggle:hover {
+  background: var(--triage-surface-subtle);
+  border-color: #B8B2A9;
+  color: var(--triage-text-main);
+}
+
+/* Fila Plegable / Desplegable de Detalle */
+.triage-row-detail {
+  display: none;
+}
+
+.triage-row-detail.is-open {
+  display: table-row;
+}
+
+.triage-row-detail td {
+  padding: 0;
+  background: #FAF9F7;
+  border-bottom: 2px solid var(--triage-border);
+}
+
+.triage-detail-wrapper {
+  padding: 18px 22px 22px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  animation: detail-fade-in 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes detail-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.triage-detail-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+@media (max-width: 1024px) {
+  .triage-detail-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.triage-detail-col {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.triage-detail-box {
+  background: var(--triage-surface);
+  border: 1px solid var(--triage-border);
+  border-radius: var(--radius-sm);
+  padding: 14px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  box-shadow: var(--shadow-subtle);
+}
+
+.triage-detail-box-title {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--triage-text-subtle);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--triage-border-light);
+  padding-bottom: 6px;
+}
+
+.triage-detail-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--triage-border-light);
 }
 
 .triage-empty-state {
