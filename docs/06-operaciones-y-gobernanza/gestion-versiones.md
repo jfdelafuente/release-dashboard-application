@@ -10,7 +10,7 @@ La aplicación sigue el estándar [SemVer 2.0.0](https://semver.org/lang/es/):
 
 $$\text{MAJOR}.\text{MINOR}.\text{PATCH}$$
 
-- **Versión actual**: Se consulta en el archivo [VERSION](../VERSION) ubicado en la raíz del repositorio.
+- **Versión actual**: Se consulta en el archivo [VERSION](../../VERSION) ubicado en la raíz del repositorio.
 - **Ejemplo**: `0.2.0`
 
 ### Reglas de Incremento
@@ -31,7 +31,7 @@ $$\text{MAJOR}.\text{MINOR}.\text{PATCH}$$
 ### Procedimiento de Actualización
 
 1. **Momento**: Antes de fusionar un Pull Request hacia la rama `production` o `main`.
-2. **Actualización simultánea**: Debe actualizarse al mismo tiempo que la sección correspondiente en [CHANGELOG.md](../CHANGELOG.md).
+2. **Actualización simultánea**: Debe actualizarse al mismo tiempo que la sección correspondiente en [CHANGELOG.md](../../CHANGELOG.md).
 3. **Comando de actualización**:
    ```bash
    echo 0.2.1 > VERSION
@@ -39,7 +39,7 @@ $$\text{MAJOR}.\text{MINOR}.\text{PATCH}$$
    git commit -m "chore: bump version to 0.2.1"
    ```
 
-> **Garantía en el Despliegue**: El script [scripts/deploy-production.ps1](../scripts/deploy-production.ps1) comprueba la existencia de `VERSION` y lo empaqueta automáticamente dentro del artefacto runtime (`dist/release-dashboard-runtime.tar.gz`). Si el archivo no existiera localmente, genera automáticamente una versión basada en timestamp (`0.2.0-YYYYMMDD`).
+> **Garantía en el Despliegue**: El script [scripts/deploy-production.ps1](../../scripts/deploy-production.ps1) comprueba la existencia de `VERSION` y lo empaqueta automáticamente dentro del artefacto runtime (`dist/release-dashboard-runtime.tar.gz`). Si el archivo no existiera localmente, genera automáticamente una versión basada en timestamp (`0.2.0-YYYYMMDD`).
 
 ---
 
@@ -145,7 +145,7 @@ Antes de incrementar la versión y empaquetar para producción, deben superarse 
 
 ### 2. Documentación y Trazabilidad
 - [ ] Archivo `VERSION` actualizado.
-- [ ] Archivo [CHANGELOG.md](../CHANGELOG.md) actualizado con la fecha, versión y resumen de cambios categorizados (`Added`, `Changed`, `Fixed`, `Security`).
+- [ ] Archivo [CHANGELOG.md](../../CHANGELOG.md) actualizado con la fecha, versión y resumen de cambios categorizados (`Added`, `Changed`, `Fixed`, `Security`).
 - [ ] Manuales técnicos en `docs/` sincronizados si hubo modificaciones en arquitectura o endpoints.
 - [ ] Cumplimiento de marca corporativa estricto: **Orange** (prohibido MASORANGE u otras marcas).
 
@@ -194,11 +194,11 @@ El script `deploy-production.ps1` utilizará la versión existente en el archivo
 
 ## Documentación Relacionada
 
-- [DEPLOYMENT.md](DEPLOYMENT.md) — Manual integral de despliegue Standalone Runtime.
-- [DEVELOPMENT.md](DEVELOPMENT.md) — Flujos de trabajo y directrices de desarrollo local.
-- [GITHUB-BRANCH-PROTECTION.md](GITHUB-BRANCH-PROTECTION.md) — Reglas de ramas protegidas para `main` y `production`.
-- [PROJECT-STRUCTURE.md](PROJECT-STRUCTURE.md) — Arquitectura y mapa exhaustivo de directorios.
-- [LOGS.md](LOGS.md) — Estándar de bitácora técnica e intervenciones de producción.
+- [DEPLOYMENT.md](despliegue-vps.md) — Manual integral de despliegue Standalone Runtime.
+- [DEVELOPMENT.md](../01-primeros-pasos/desarrollo.md) — Flujos de trabajo y directrices de desarrollo local.
+- [GITHUB-BRANCH-PROTECTION.md](proteccion-ramas.md) — Reglas de ramas protegidas para `main` y `production`.
+- [PROJECT-STRUCTURE.md](../03-arquitectura-y-datos/estructura-proyecto.md) — Arquitectura y mapa exhaustivo de directorios.
+- [LOGS.md](logs-y-auditoria.md) — Estándar de bitácora técnica e intervenciones de producción.
 
 ---
 

@@ -19,7 +19,7 @@ flowchart LR
 ```
 
 1. **Desarrollo**: Se trabaja en ramas de feature numeradas (ej: `018-feature-name`).
-2. **Validación Previa**: Ejecución local de tests y linters antes del push (`pytest`, `flake8`, `bandit`). Consulta [`CI.md`](CI.md).
+2. **Validación Previa**: Ejecución local de tests y linters antes del push (`pytest`, `flake8`, `bandit`). Consulta [`CI.md`](integracion-continua-ci.md).
 3. **Pull Request e Integración Continua**: Se abre PR contra la rama `production`. GitHub Actions ejecuta automáticamente `tests.yml` (cobertura $\ge$ 80%) y `lint.yml`.
 4. **Merge**: Con los checks verdes y aprobación, se fusiona el PR en la rama `production`.
 5. **Despliegue a Producción**: Desde la máquina Windows se ejecuta `.\scripts\deploy-production.ps1`.
@@ -38,7 +38,7 @@ flowchart LR
 3. **Persistencia Estricta y Desacoplamiento de Datos**:
    - Los datos dinámicos están totalmente desacoplados del código en `/infocodes/var/storage/release-dashboard/` (`input/`, `output/`, `reports/`, `errors/`, `archive/`).
    - Los informes ejecutivos PPTX se centralizan en `/infocodes/var/storage/executive_pptx` (con symlink en `reports/executive`).
-   - Los logs residen fuera del árbol de releases en `/infocodes/var/log/release-dashboard/` (ver [`LOGS.md`](LOGS.md)).
+   - Los logs residen fuera del árbol de releases en `/infocodes/var/log/release-dashboard/` (ver [`LOGS.md`](logs-y-auditoria.md)).
    - En la raíz del proyecto y en cada release se mantienen symlinks transparentes hacia estas ubicaciones para garantizar 100% de retrocompatibilidad.
 4. **Copia Preventiva y Rollback Instantáneo**:
    - Cada despliegue genera automáticamente una copia de seguridad comprimida en `/infocodes/var/backups/release-dashboard-application/backup_YYYYMMDD_HHMMSS.tar.gz`.
@@ -225,8 +225,8 @@ La generación periódica de los JSONs que consumen los dashboards se realiza co
 
 ## 🔗 Documentación Relacionada
 
-- [**`CI.md`**](CI.md): Pipeline de Integración Continua, tests con pytest, umbral de cobertura (80%) y linters en GitHub Actions.
-- [**`LOGS.md`**](LOGS.md): Gestión de logs, rotación, comandos de diagnóstico y trazabilidad en producción.
-- [**`DASHBOARDS-API.md`**](DASHBOARDS-API.md): Catálogo de APIs, rutas y servicios consumidos por los frontends.
-- [**`PROJECT-STRUCTURE.md`**](PROJECT-STRUCTURE.md): Organización física del repositorio y convenciones de estructura.
-- [**`VERSION-MANAGEMENT.md`**](VERSION-MANAGEMENT.md): Política de versionado semántico y etiquetado git.
+- [**`CI.md`**](integracion-continua-ci.md): Pipeline de Integración Continua, tests con pytest, umbral de cobertura (80%) y linters en GitHub Actions.
+- [**`LOGS.md`**](logs-y-auditoria.md): Gestión de logs, rotación, comandos de diagnóstico y trazabilidad en producción.
+- [**`DASHBOARDS-API.md`**](../03-arquitectura-y-datos/dashboards-api.md): Catálogo de APIs, rutas y servicios consumidos por los frontends.
+- [**`PROJECT-STRUCTURE.md`**](../03-arquitectura-y-datos/estructura-proyecto.md): Organización física del repositorio y convenciones de estructura.
+- [**`VERSION-MANAGEMENT.md`**](gestion-versiones.md): Política de versionado semántico y etiquetado git.

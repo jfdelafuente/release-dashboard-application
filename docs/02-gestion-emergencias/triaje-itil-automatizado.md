@@ -367,8 +367,8 @@ python converters/cli/evaluate_incident_notifications.py --dry-run
 
 ## 8. Documentos y Referencias Relacionadas
 
-* **[CATALOGO-INCIDENCIAS-ALTA-PRIORIDAD.md](CATALOGO-INCIDENCIAS-ALTA-PRIORIDAD.md)**: Especificación técnica integral del catálogo JSON `high_priority_notifications.json`.
-* **[INCIDENT-EXECUTIVE-NOTIFICATIONS-WORKFLOW.md](INCIDENT-EXECUTIVE-NOTIFICATIONS-WORKFLOW.md)**: Flujo de redacción de mensajes oficiales para Dirección con la skill `incident-executive-notifications`.
-* **[MANUAL-OPERADOR-CONSOLA-OPERATIVA.md](MANUAL-OPERADOR-CONSOLA-OPERATIVA.md)**: Manual del Incident Manager en la Consola de Emergencias IT.
+* **[CATALOGO-INCIDENCIAS-ALTA-PRIORIDAD.md](catalogo-alta-prioridad.md)**: Especificación técnica integral del catálogo JSON `high_priority_notifications.json`.
+* **[INCIDENT-EXECUTIVE-NOTIFICATIONS-WORKFLOW.md](notificaciones-ejecutivas.md)**: Flujo de redacción de mensajes oficiales para Dirección con la skill `incident-executive-notifications`.
+* **[MANUAL-OPERADOR-CONSOLA-OPERATIVA.md](manual-consola-operativa.md)**: Manual del Incident Manager en la Consola de Emergencias IT.
 * **[it-severity-matrix SKILL.md](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/.agents/skills/it-severity-matrix/SKILL.md)**: Matriz cuantitativa oficial de severidades IT.
 * **[orange-it-emergency-management SKILL.md](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/.agents/skills/orange-it-emergency-management/SKILL.md)**: Protocolos operativos de escalado, War Room y gobernanza RACI.

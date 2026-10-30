@@ -308,11 +308,11 @@ Antes de poner en marcha o auditar el servidor, verificar:
 
 ## Documentación Relacionada
 
-- [DEPLOYMENT.md](DEPLOYMENT.md) — Manual integral de despliegue Standalone Runtime.
-- [PROJECT-STRUCTURE.md](PROJECT-STRUCTURE.md) — Arquitectura y mapa exhaustivo de directorios.
-- [VERSION-MANAGEMENT.md](VERSION-MANAGEMENT.md) — Política de versionado semántico y trazabilidad.
-- [TROUBLESHOOTING.md](TROUBLESHOOTING.md) — Diagnóstico y resolución de incidencias en VPS y local.
-- [LOGS.md](LOGS.md) — Estándar unificado de bitácora técnica e intervenciones.
+- [DEPLOYMENT.md](../06-operaciones-y-gobernanza/despliegue-vps.md) — Manual integral de despliegue Standalone Runtime.
+- [PROJECT-STRUCTURE.md](estructura-proyecto.md) — Arquitectura y mapa exhaustivo de directorios.
+- [VERSION-MANAGEMENT.md](../06-operaciones-y-gobernanza/gestion-versiones.md) — Política de versionado semántico y trazabilidad.
+- [TROUBLESHOOTING.md](../01-primeros-pasos/troubleshooting.md) — Diagnóstico y resolución de incidencias en VPS y local.
+- [LOGS.md](../06-operaciones-y-gobernanza/logs-y-auditoria.md) — Estándar unificado de bitácora técnica e intervenciones.
 
 ---
 

@@ -214,8 +214,8 @@ Example semantic versioning:
 
 ## Questions?
 
-- Check [TROUBLESHOOTING.md](TROUBLESHOOTING.md) for common issues
-- Review [PROJECT-STRUCTURE.md](PROJECT-STRUCTURE.md) for file organization
+- Check [TROUBLESHOOTING.md](../01-primeros-pasos/troubleshooting.md) for common issues
+- Review [PROJECT-STRUCTURE.md](../03-arquitectura-y-datos/estructura-proyecto.md) for file organization
 - Read existing code for patterns and conventions
 
 ## Code of Conduct

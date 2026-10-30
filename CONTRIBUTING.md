@@ -163,7 +163,7 @@ isort --check-only src/ cli/ tests/
 3. **Commit y Push**: Tras superar los linters y pruebas locales, sube la rama al repositorio remoto.
 4. **Pull Request hacia `production`**:
    - Describe con claridad el problema resuelto y las pruebas efectuadas.
-   - La rama `production` está sujeta a políticas de protección (ver [`docs/GITHUB-BRANCH-PROTECTION.md`](docs/GITHUB-BRANCH-PROTECTION.md)), requiriendo aprobación y CI verde.
+   - La rama `production` está sujeta a políticas de protección (ver [`docs/06-operaciones-y-gobernanza/proteccion-ramas.md`](docs/06-operaciones-y-gobernanza/proteccion-ramas.md)), requiriendo aprobación y CI verde.
 5. **Despliegue a Producción (VPS `10.132.26.96:8081`)**:
    - El despliegue se efectúa mediante el script PowerShell [`scripts/deploy-production.ps1`](scripts/deploy-production.ps1) desde la máquina local autorizada:
      ```powershell
@@ -175,12 +175,13 @@ isort --check-only src/ cli/ tests/
 
 ## 📚 Enlaces de Referencia
 
-- [Inicio Rápido (Quickstart)](docs/QUICKSTART.md)
-- [Guía de Desarrollo Local](docs/DEVELOPMENT.md)
-- [Procedimientos de Despliegue](docs/DEPLOYMENT.md)
-- [Protección de Ramas en GitHub](docs/GITHUB-BRANCH-PROTECTION.md)
-- [Resolución de Incidencias (Troubleshooting)](docs/TROUBLESHOOTING.md)
-- [Informe Ejecutivo Postmortem (PowerPoint)](docs/INFORME-EJECUTIVO-POSTMORTEM.md)
+- [Inicio Rápido (Quickstart)](docs/01-primeros-pasos/quickstart.md)
+- [Guía de Desarrollo Local](docs/01-primeros-pasos/desarrollo.md)
+- [Procedimientos de Despliegue](docs/06-operaciones-y-gobernanza/despliegue-vps.md)
+- [Protección de Ramas en GitHub](docs/06-operaciones-y-gobernanza/proteccion-ramas.md)
+- [Resolución de Incidencias (Troubleshooting)](docs/01-primeros-pasos/troubleshooting.md)
+- [Informe Ejecutivo Postmortem (PowerPoint)](docs/05-postmortem-y-reportes/informe-ejecutivo-postmortem.md)
+- [Índice General y Visor Interactivo Docsify](docs/README.md)
 
 ---
 

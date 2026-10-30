@@ -468,8 +468,8 @@ El script `csv_to_json.py` anterior era un conversor simple sin validación ni n
 
 **Related Documentation**:
 
-- Flujo de Gestión de Incidencias: [docs/INCIDENT-MANAGEMENT-WORKFLOW.md](docs/INCIDENT-MANAGEMENT-WORKFLOW.md)
-- Manual del Operador: [docs/MANUAL-OPERADOR-CONSOLA-OPERATIVA.md](docs/MANUAL-OPERADOR-CONSOLA-OPERATIVA.md)
+- Flujo de Gestión de Incidencias: [docs/02-gestion-emergencias/flujo-gestion-incidencias.md](docs/02-gestion-emergencias/flujo-gestion-incidencias.md)
+- Manual del Operador: [docs/02-gestion-emergencias/manual-consola-operativa.md](docs/02-gestion-emergencias/manual-consola-operativa.md)
 - Specification: [specs/014-emergency-operations-console/spec.md](specs/014-emergency-operations-console/spec.md)
 - Implementation Plan: [specs/014-emergency-operations-console/plan.md](specs/014-emergency-operations-console/plan.md)
 - Tasks: [specs/014-emergency-operations-console/tasks.md](specs/014-emergency-operations-console/tasks.md)
@@ -503,7 +503,7 @@ El script `csv_to_json.py` anterior era un conversor simple sin validación ni n
 - Modal interactivo accesible `ExecutiveReportModal.tsx` con precarga de URL Confluence, enlace de validación, alternativa para pegar texto/HTML y comprobación inteligente de versión en servidor en `../gestion-problemas-dashboard/components/ExecutiveReportModal.tsx`.
 - Integración del botón `📊 Generar PPT` en `../gestion-problemas-dashboard/components/IssuesTable.tsx`.
 - CLI autónomo de generación en `converters/cli/generate_executive_report.py`.
-- Documentación técnica y de arquitectura en `docs/INFORME-EJECUTIVO-POSTMORTEM.md` y actualización en `README.md`.
+- Documentación técnica y de arquitectura en `docs/05-postmortem-y-reportes/informe-ejecutivo-postmortem.md` y actualización en `README.md`.
 - Suite de pruebas unitarias al 100% (71 tests passing en `pytest converters/tests/unit/report_generator/`).
 
 **Related Documentation**:
@@ -683,8 +683,8 @@ El script `csv_to_json.py` anterior era un conversor simple sin validación ni n
 - Data Model: [specs/006-optimize-csv-converters/data-model.md](specs/006-optimize-csv-converters/data-model.md)
 - Testing Guide: [specs/006-optimize-csv-converters/quickstart.md](specs/006-optimize-csv-converters/quickstart.md)
 - Task Breakdown: [specs/006-optimize-csv-converters/tasks.md](specs/006-optimize-csv-converters/tasks.md) (80 tasks, 7 phases complete)
-- Test Structure: [docs/TEST_STRUCTURE.md](docs/TEST_STRUCTURE.md) - Hybrid organization for clarity
-- Test Structure Diagram: [docs/TEST_STRUCTURE_DIAGRAM.txt](docs/TEST_STRUCTURE_DIAGRAM.txt) - Visual reference
+- Test Structure: [docs/04-conversores/estructura-tests.md](docs/04-conversores/estructura-tests.md) - Hybrid organization for clarity
+- Test Structure Diagram: [docs/04-conversores/test-structure-diagram.txt](docs/04-conversores/test-structure-diagram.txt) - Visual reference
 
 <!-- SPECKIT END -->
 

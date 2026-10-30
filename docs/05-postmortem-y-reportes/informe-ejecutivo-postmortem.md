@@ -8,7 +8,7 @@ Guía para la generación de presentaciones PowerPoint (`.pptx`) corporativas Or
 
 Existen dos tipos de informes ejecutivos PowerPoint en la plataforma:
 
-| Característica | Informe Ejecutivo de Incidencia (Este documento) | Informe PPT de Postmortem por Release ([`INFORME-PPT-POSTMORTEM.md`](INFORME-PPT-POSTMORTEM.md)) |
+| Característica | Informe Ejecutivo de Incidencia (Este documento) | Informe PPT de Postmortem por Release ([`INFORME-PPT-POSTMORTEM.md`](informe-ppt-batch.md)) |
 |---|---|---|
 | **Ámbito** | **Una incidencia crítica individual** (ej: `2606S77393`). | **Una release completa** (ej: `2026R7`, `2026R8`). |
 | **Origen de Datos** | Postmortem en Confluence (URL o HTML) o datos estructurados. | Archivo `releases-data.js` con el histórico de despliegues. |
@@ -42,7 +42,7 @@ La forma recomendada de generar y consultar los informes ejecutivos es a través
    - **En local**: `http://localhost:8080/problemas` (servido por `serve_app.py` que reenvía a Next.js en `:3001`).
    - **En producción**: `http://10.132.26.96/problemas` (servido por Nginx).
 2. En la tabla de incidencias o problemas, pulsa el botón **`📊 Generar PPT`** de la fila correspondiente.
-3. Se abrirá el modal interactivo [`ExecutiveReportModal.tsx`](../gestion-problemas-dashboard/components/ExecutiveReportModal.tsx):
+3. Se abrirá el modal interactivo [`ExecutiveReportModal.tsx`](../../../gestion-problemas-dashboard/components/ExecutiveReportModal.tsx):
    - **Comprobación de caché**: El modal consulta automáticamente si ya existe un informe generado para esa referencia (`GET /api/reports/executive-incident/{ref}/status`). Si existe, ofrece descargarlo inmediatamente en 0 ms.
    - **Ingesta desde Confluence**: Puedes proporcionar la URL de la página de Confluence del postmortem (`https://confluence.si.orange.es/...`) o pegar directamente el contenido HTML o texto copiado de la página.
    - **Regeneración forzada**: Si los datos han cambiado, marca la casilla de forzar regeneración (`force=true`).
@@ -52,7 +52,7 @@ La forma recomendada de generar y consultar los informes ejecutivos es a través
 
 ## ⌨️ Generación por Línea de Comandos (CLI)
 
-El script [`converters/cli/generate_executive_report.py`](../converters/cli/generate_executive_report.py) permite generar presentaciones directamente desde terminal o integrarlas en tareas desatendidas:
+El script [`converters/cli/generate_executive_report.py`](../../converters/cli/generate_executive_report.py) permite generar presentaciones directamente desde terminal o integrarlas en tareas desatendidas:
 
 ### 1. Requisitos Previos
 
@@ -113,7 +113,7 @@ El motor de generación de informes ejecutivos reside centralizado en:
 👉 **`cso-incident-masivas-report/backend/report_generator/`**
 
 - En `release-dashboard-application`, los módulos en `converters/src/report_generator/` actúan como puentes de reexportación (*compatibility shims*).
-- El servidor [`serve_app.py`](../serve_app.py) delega las peticiones HTTP prioritariamente a la API FastAPI en `http://127.0.0.1:8000`, ejecutando fallback local si FastAPI no estuviera levantado.
+- El servidor [`serve_app.py`](../../serve_app.py) delega las peticiones HTTP prioritariamente a la API FastAPI en `http://127.0.0.1:8000`, ejecutando fallback local si FastAPI no estuviera levantado.
 
 ### Ubicaciones de Almacenamiento
 
@@ -128,7 +128,7 @@ Ambos servicios (`release-dashboard-application` y `cso-incident-masivas-report`
 
 ## 🔌 Endpoints REST
 
-La API REST expone tres endpoints para interactuar con los informes ejecutivos (ver detalle completo de payloads en [`docs/DASHBOARDS-API.md`](DASHBOARDS-API.md)):
+La API REST expone tres endpoints para interactuar con los informes ejecutivos (ver detalle completo de payloads en [`docs/DASHBOARDS-API.md`](../03-arquitectura-y-datos/dashboards-api.md)):
 
 1. **`POST /api/reports/executive-incident`**:
    Genera o actualiza el `.pptx`. Acepta `incidentRef`, `title`, `confluenceUrl`, `rawHtml` y `force` (booleano).
@@ -156,8 +156,8 @@ El parser de Confluence analiza etiquetas HTML estándar (`<table>`, `<h3>`, lis
 
 ## 🔗 Documentación Relacionada
 
-- [**`DASHBOARDS-API.md`**](DASHBOARDS-API.md): Especificación técnica de los endpoints `/api/reports/executive-incident/*`.
-- [**`INFORME-PPT-POSTMORTEM.md`**](INFORME-PPT-POSTMORTEM.md): Guía de generación del informe PPT por **Release**.
-- [**`DEVELOPMENT.md`**](DEVELOPMENT.md): Configuración del entorno de desarrollo y ejecución de `serve_app.py`.
-- [**`DEPLOYMENT.md`**](DEPLOYMENT.md): Despliegue en producción y topología de persistencia desacoplada.
-- [**`PROJECT-STRUCTURE.md`**](PROJECT-STRUCTURE.md): Organización del proyecto y mapeo de rutas `/infocodes/var/storage/`.
+- [**`DASHBOARDS-API.md`**](../03-arquitectura-y-datos/dashboards-api.md): Especificación técnica de los endpoints `/api/reports/executive-incident/*`.
+- [**`INFORME-PPT-POSTMORTEM.md`**](informe-ppt-batch.md): Guía de generación del informe PPT por **Release**.
+- [**`DEVELOPMENT.md`**](../01-primeros-pasos/desarrollo.md): Configuración del entorno de desarrollo y ejecución de `serve_app.py`.
+- [**`DEPLOYMENT.md`**](../06-operaciones-y-gobernanza/despliegue-vps.md): Despliegue en producción y topología de persistencia desacoplada.
+- [**`PROJECT-STRUCTURE.md`**](../03-arquitectura-y-datos/estructura-proyecto.md): Organización del proyecto y mapeo de rutas `/infocodes/var/storage/`.

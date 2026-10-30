@@ -62,7 +62,7 @@ Los dashboards consumen JSON de `/data/output/` (ruta root-absoluta), generados 
 - `*-postmortem.json`: datos de postmortem (opcional)
 - `index.json`: índice de datasets disponibles (auto-generado por `build_index.py`)
 
-Ver [Contrato JSON](../converters/docs/API.md) para la estructura detallada.
+Ver [Contrato JSON](../docs/03-arquitectura-y-datos/dashboards-api.md) para la estructura detallada.
 
 ### Navegador
 

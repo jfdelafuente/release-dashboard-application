@@ -4,7 +4,7 @@ Este documento describe la automatización de **Integración Continua (CI)** med
 
 > ℹ️ **Sobre el Despliegue (CD)**:
 > Este repositorio **no realiza despliegues continuos automáticos desde GitHub Actions** hacia el VPS.
-> El despliegue a producción se realiza en 1 clic desde la estación de desarrollo con el script automatizado [`scripts/deploy-production.ps1`](../scripts/deploy-production.ps1). Consulta la arquitectura y operativa completa en [**`DEPLOYMENT.md`**](DEPLOYMENT.md).
+> El despliegue a producción se realiza en 1 clic desde la estación de desarrollo con el script automatizado [`scripts/deploy-production.ps1`](../../scripts/deploy-production.ps1). Consulta la arquitectura y operativa completa en [**`DEPLOYMENT.md`**](despliegue-vps.md).
 
 ---
 
@@ -26,7 +26,7 @@ El repositorio ejecuta automáticamente dos workflows en GitHub Actions ante cad
 - **Entorno**: Ubuntu Latest con Python 3.11 y caché de paquetes `pip`.
 - **Pasos**:
   1. Instala dependencias desde `converters/requirements.txt` y `converters/requirements-dev.txt`.
-  2. Ejecuta `pytest tests/ -v --cov=src` respetando la configuración centralizada en [`converters/pytest.ini`](../converters/pytest.ini).
+  2. Ejecuta `pytest tests/ -v --cov=src` respetando la configuración centralizada en [`converters/pytest.ini`](../../converters/pytest.ini).
   3. **Umbral de cobertura (80%)**: Exige un mínimo del **80%** de cobertura en el código productivo de conversores. Si no se alcanza, el job falla (`exit 1`).
   4. Genera informe en el Job Summary y publica un comentario automático en el Pull Request con el porcentaje de cobertura obtenido.
   5. Sube métricas a Codecov (`codecov-action@v4`).
@@ -53,7 +53,7 @@ El repositorio ejecuta automáticamente dos workflows en GitHub Actions ante cad
   1. Todos los tests deben pasar exitosamente (cero fallos).
   2. Cobertura $\ge$ 80%.
   3. Flake8 estricto sin violaciones de sintaxis ni bugs.
-- **Despliegue tras Merge**: Una vez integrado el PR en `production`, el despliegue al VPS se realiza ejecutando `.\scripts\deploy-production.ps1` desde Windows (ver [`DEPLOYMENT.md`](DEPLOYMENT.md)).
+- **Despliegue tras Merge**: Una vez integrado el PR en `production`, el despliegue al VPS se realiza ejecutando `.\scripts\deploy-production.ps1` desde Windows (ver [`DEPLOYMENT.md`](despliegue-vps.md)).
 
 ---
 
@@ -110,7 +110,7 @@ bandit -r src cli --skip B101,B601
   ```powershell
   .\scripts\deploy-production.ps1
   ```
-  Consulta [`DEPLOYMENT.md`](DEPLOYMENT.md) para más detalles.
+  Consulta [`DEPLOYMENT.md`](despliegue-vps.md) para más detalles.
 
 ---
 
@@ -118,10 +118,10 @@ bandit -r src cli --skip B101,B601
 
 | Archivo | Propósito |
 |---|---|
-| [`.github/workflows/tests.yml`](../.github/workflows/tests.yml) | Workflow de ejecución de tests unitarios y validación de cobertura 80% |
-| [`.github/workflows/lint.yml`](../.github/workflows/lint.yml) | Workflow de linter, formato, análisis de seguridad y calidad de código |
-| [`converters/pytest.ini`](../converters/pytest.ini) | Configuración de pytest, marcadores y umbral de cobertura (`fail_under = 80`) |
-| [`converters/requirements.txt`](../converters/requirements.txt) | Dependencias de producción del entorno de conversores |
-| [`converters/requirements-dev.txt`](../converters/requirements-dev.txt) | Herramientas de test y linter (pytest, pytest-cov, black, flake8, pylint) |
-| [`docs/DEPLOYMENT.md`](DEPLOYMENT.md) | Guía oficial del despliegue a producción |
-| [`nginx.conf`](../nginx.conf) | Configuración de Nginx versionada y sincronizada al VPS |
+| [`.github/workflows/tests.yml`](../../.github/workflows/tests.yml) | Workflow de ejecución de tests unitarios y validación de cobertura 80% |
+| [`.github/workflows/lint.yml`](../../.github/workflows/lint.yml) | Workflow de linter, formato, análisis de seguridad y calidad de código |
+| [`converters/pytest.ini`](../../converters/pytest.ini) | Configuración de pytest, marcadores y umbral de cobertura (`fail_under = 80`) |
+| [`converters/requirements.txt`](../../converters/requirements.txt) | Dependencias de producción del entorno de conversores |
+| [`converters/requirements-dev.txt`](../../converters/requirements-dev.txt) | Herramientas de test y linter (pytest, pytest-cov, black, flake8, pylint) |
+| [`docs/DEPLOYMENT.md`](despliegue-vps.md) | Guía oficial del despliegue a producción |
+| [`nginx.conf`](../../nginx.conf) | Configuración de Nginx versionada y sincronizada al VPS |

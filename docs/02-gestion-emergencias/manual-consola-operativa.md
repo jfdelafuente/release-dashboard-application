@@ -541,8 +541,8 @@ Accede a los directorios de guardia actualizados a través de los enlaces dispon
 
 ## 16. Documentación y Flujos Relacionados
 
-* **[Flujo Integral de Gestión de Incidencias](INCIDENT-MANAGEMENT-WORKFLOW.md):** Procedimiento de ciclo de vida completo de extremo a extremo (detección, triaje N1, escalado telefónico 45m/105m, gobernanza de workarounds y traspaso a PIR).
-* **[Flujo de Notificaciones Ejecutivas](INCIDENT-EXECUTIVE-NOTIFICATIONS-WORKFLOW.md):** Manual de redacción de comunicados oficiales para Dirección y sincronización entre entornos.
+* **[Flujo Integral de Gestión de Incidencias](flujo-gestion-incidencias.md):** Procedimiento de ciclo de vida completo de extremo a extremo (detección, triaje N1, escalado telefónico 45m/105m, gobernanza de workarounds y traspaso a PIR).
+* **[Flujo de Notificaciones Ejecutivas](notificaciones-ejecutivas.md):** Manual de redacción de comunicados oficiales para Dirección y sincronización entre entornos.
 * **[Índice General de Documentación](README.md):** Catálogo maestro de manuales y especificaciones del proyecto.
 
 ---

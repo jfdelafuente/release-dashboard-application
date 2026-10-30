@@ -212,10 +212,10 @@ pip install -r requirements.txt -r requirements-dev.txt
 
 Cuando tus cambios estén listos y probados localmente:
 
-1. Consulta [DEPLOYMENT.md](DEPLOYMENT.md) para el flujo de despliegue mediante el script `deploy-production.ps1` (Standalone Runtime).
-2. Revisa [DEVELOPMENT.md](DEVELOPMENT.md) para estándares de desarrollo, linting y Git hooks.
-3. Consulta [GITHUB-BRANCH-PROTECTION.md](GITHUB-BRANCH-PROTECTION.md) para las reglas de PR y ramas protegidas (`main` y `production`).
-4. Revisa [LOGS.md](LOGS.md) para el formato unificado de bitácora técnica.
+1. Consulta [DEPLOYMENT.md](../06-operaciones-y-gobernanza/despliegue-vps.md) para el flujo de despliegue mediante el script `deploy-production.ps1` (Standalone Runtime).
+2. Revisa [DEVELOPMENT.md](desarrollo.md) para estándares de desarrollo, linting y Git hooks.
+3. Consulta [GITHUB-BRANCH-PROTECTION.md](../06-operaciones-y-gobernanza/proteccion-ramas.md) para las reglas de PR y ramas protegidas (`main` y `production`).
+4. Revisa [LOGS.md](../06-operaciones-y-gobernanza/logs-y-auditoria.md) para el formato unificado de bitácora técnica.
 
 ---
 

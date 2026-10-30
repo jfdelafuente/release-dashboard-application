@@ -266,11 +266,11 @@ Petición entrante (infocodes.si.orange.es:8081)
 ## Referencias y Documentación Relacionada
 
 - [README.md](../README.md) — Visión general y arranque rápido del proyecto.
-- [DEPLOYMENT.md](DEPLOYMENT.md) — Manual integral de despliegue, topología de red y protocolos de contingencia.
-- [DEVELOPMENT.md](DEVELOPMENT.md) — Guía completa de configuración de entorno, ejecución de tests y convenciones.
-- [GITHUB-BRANCH-PROTECTION.md](GITHUB-BRANCH-PROTECTION.md) — Reglas de protección de ramas para `production` y `main`.
-- [CI.md](CI.md) — Arquitectura y detalle de pipelines de GitHub Actions.
-- [LOGS.md](LOGS.md) — Estándar unificado de bitácora y registro de actividad técnica.
-- [INFORME-EJECUTIVO-POSTMORTEM.md](INFORME-EJECUTIVO-POSTMORTEM.md) — Guía de generación de informes individuales ejecutivos.
-- [INFORME-PPT-POSTMORTEM.md](INFORME-PPT-POSTMORTEM.md) — Generación masiva batch de informes PowerPoint.
-- [MIGRATION.md](MIGRATION.md) — Histórico de modernización, esquemas y compatibilidad con JavaScript.
+- [DEPLOYMENT.md](../06-operaciones-y-gobernanza/despliegue-vps.md) — Manual integral de despliegue, topología de red y protocolos de contingencia.
+- [DEVELOPMENT.md](../01-primeros-pasos/desarrollo.md) — Guía completa de configuración de entorno, ejecución de tests y convenciones.
+- [GITHUB-BRANCH-PROTECTION.md](../06-operaciones-y-gobernanza/proteccion-ramas.md) — Reglas de protección de ramas para `production` y `main`.
+- [CI.md](../06-operaciones-y-gobernanza/integracion-continua-ci.md) — Arquitectura y detalle de pipelines de GitHub Actions.
+- [LOGS.md](../06-operaciones-y-gobernanza/logs-y-auditoria.md) — Estándar unificado de bitácora y registro de actividad técnica.
+- [INFORME-EJECUTIVO-POSTMORTEM.md](../05-postmortem-y-reportes/informe-ejecutivo-postmortem.md) — Guía de generación de informes individuales ejecutivos.
+- [INFORME-PPT-POSTMORTEM.md](../05-postmortem-y-reportes/informe-ppt-batch.md) — Generación masiva batch de informes PowerPoint.
+- [MIGRATION.md](migracion-esquemas.md) — Histórico de modernización, esquemas y compatibilidad con JavaScript.

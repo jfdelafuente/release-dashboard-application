@@ -51,7 +51,7 @@ El usuario no necesita ejecutar comandos manuales en el flujo operativo ordinari
 2. **Dashboard de Postmortem** (`/dashboards/postmortem/?release=...`):
    - Pulsa el botón **"Descargar informe PPT"** en la barra superior del análisis de la release.
 
-Ambos botones invocan el endpoint REST `GET /api/reports/postmortem/{release}` en [`serve_app.py`](../serve_app.py) (local) o en el servidor Nginx de producción.
+Ambos botones invocan el endpoint REST `GET /api/reports/postmortem/{release}` en [`serve_app.py`](../../serve_app.py) (local) o en el servidor Nginx de producción.
 
 ---
 
@@ -166,15 +166,15 @@ Para comprobar qué dependencias faltan en el sistema:
 ```bash
 ldd ~/.local/share/choreographer/deps/chrome-linux64/chrome | grep "not found"
 ```
-Instala las bibliotecas faltantes en el servidor mediante el gestor de paquetes del sistema (`sudo apt install` o `sudo dnf install`). Consulta la sección de prerrequisitos de Linux en [`docs/VPS-REQUIREMENTS.md`](VPS-REQUIREMENTS.md).
+Instala las bibliotecas faltantes en el servidor mediante el gestor de paquetes del sistema (`sudo apt install` o `sudo dnf install`). Consulta la sección de prerrequisitos de Linux en [`docs/VPS-REQUIREMENTS.md`](../03-arquitectura-y-datos/vps-infraestructura.md).
 
 ---
 
 ## 🔗 Documentación Relacionada
 
 - [**`INFORME-EJECUTIVO-POSTMORTEM.md`**](INFORME-EJECUTIVO-POSTMORTEM.md): Guía del informe ejecutivo PowerPoint para **incidencias individuales**.
-- [**`DASHBOARDS-API.md`**](DASHBOARDS-API.md): Catálogo de APIs y servicios consumidos por los dashboards.
-- [**`DEPLOYMENT.md`**](DEPLOYMENT.md): Procedimiento de despliegue y topología VPS (`/infocodes/`).
-- [**`DEVELOPMENT.md`**](DEVELOPMENT.md): Entorno de desarrollo local y testing.
-- [**`PROJECT-STRUCTURE.md`**](PROJECT-STRUCTURE.md): Organización y persistencia desacoplada.
-- [**`VPS-REQUIREMENTS.md`**](VPS-REQUIREMENTS.md): Requisitos del sistema y paquetes del servidor Linux.
+- [**`DASHBOARDS-API.md`**](../03-arquitectura-y-datos/dashboards-api.md): Catálogo de APIs y servicios consumidos por los dashboards.
+- [**`DEPLOYMENT.md`**](../06-operaciones-y-gobernanza/despliegue-vps.md): Procedimiento de despliegue y topología VPS (`/infocodes/`).
+- [**`DEVELOPMENT.md`**](../01-primeros-pasos/desarrollo.md): Entorno de desarrollo local y testing.
+- [**`PROJECT-STRUCTURE.md`**](../03-arquitectura-y-datos/estructura-proyecto.md): Organización y persistencia desacoplada.
+- [**`VPS-REQUIREMENTS.md`**](../03-arquitectura-y-datos/vps-infraestructura.md): Requisitos del sistema y paquetes del servidor Linux.

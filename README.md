@@ -177,27 +177,37 @@ console.log(`Tendencia 7 días: ${metadata.kpis.trend_7d}%`);
 
 ## 📚 Documentación
 
+El repositorio cuenta con una estructura de documentación temática organizada y un **visor web interactivo Docsify** accesible localmente en `http://localhost:8080/docs/`.
+
 ### Guías Principales
 
 | Documento | Contenido |
 | ----------- | ----------- |
-| **[docs/QUICKSTART.md](docs/QUICKSTART.md)** | Setup completo |
-| **[docs/README.md](docs/README.md)** | Índice de documentación |
-| **[docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md)** | Solución de problemas comunes |
-| **[docs/DEVELOPMENT.md](docs/DEVELOPMENT.md)** | Entorno de desarrollo |
-| **[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)** | Procedimientos de despliegue |
+| **[docs/01-primeros-pasos/quickstart.md](docs/01-primeros-pasos/quickstart.md)** | Setup completo y primeros pasos |
+| **[docs/README.md](docs/README.md)** | Índice maestro de documentación y mapa temático |
+| **[docs/01-primeros-pasos/troubleshooting.md](docs/01-primeros-pasos/troubleshooting.md)** | Solución de problemas comunes |
+| **[docs/01-primeros-pasos/desarrollo.md](docs/01-primeros-pasos/desarrollo.md)** | Entorno de desarrollo local |
+| **[docs/06-operaciones-y-gobernanza/despliegue-vps.md](docs/06-operaciones-y-gobernanza/despliegue-vps.md)** | Procedimientos de despliegue en VPS |
 
-### Converters (API, arquitectura, testing)
+### Gestión de Emergencias IT
 
 | Documento | Contenido |
 | ----------- | ----------- |
-| **[converters/docs/API.md](converters/docs/API.md)** | Referencia técnica de los conversores |
-| **[docs/CATALOGO-INCIDENCIAS-ALTA-PRIORIDAD.md](docs/CATALOGO-INCIDENCIAS-ALTA-PRIORIDAD.md)** | Especificación técnica del catálogo de alta prioridad (`high_priority_notifications.json`) |
-| **[docs/TRIAJE-ITIL-AUTOMATIZADO.md](docs/TRIAJE-ITIL-AUTOMATIZADO.md)** | Manual del motor de triaje ITIL determinista, reglas de oro y detección de discrepancias N1 |
-| **[converters/docs/ARCHITECTURE.md](converters/docs/ARCHITECTURE.md)** | Arquitectura del módulo de conversión |
-| **[converters/docs/PERFORMANCE.md](converters/docs/PERFORMANCE.md)** | Decisiones de optimización, benchmarks |
-| **[converters/docs/TEST_STRUCTURE.md](converters/docs/TEST_STRUCTURE.md)** | Organización de tests por funcionalidad |
-| **[converters/docs/TESTING_BEST_PRACTICES.md](converters/docs/TESTING_BEST_PRACTICES.md)** | Guía de pytest fixtures y aislamiento |
+| **[docs/02-gestion-emergencias/triaje-itil-automatizado.md](docs/02-gestion-emergencias/triaje-itil-automatizado.md)** | Manual del motor de triaje ITIL determinista, reglas de oro y detección de discrepancias N1 |
+| **[docs/02-gestion-emergencias/catalogo-alta-prioridad.md](docs/02-gestion-emergencias/catalogo-alta-prioridad.md)** | Especificación técnica del catálogo de alta prioridad (`high_priority_notifications.json`) |
+| **[docs/02-gestion-emergencias/manual-consola-operativa.md](docs/02-gestion-emergencias/manual-consola-operativa.md)** | Manual de usuario para la Consola Operativa de Emergencias Orange |
+| **[docs/02-gestion-emergencias/flujo-gestion-incidencias.md](docs/02-gestion-emergencias/flujo-gestion-incidencias.md)** | Flujo de gestión operativa y escalados telefónicos |
+| **[docs/02-gestion-emergencias/notificaciones-ejecutivas.md](docs/02-gestion-emergencias/notificaciones-ejecutivas.md)** | Comunicaciones ejecutivas oficiales para Dirección e IM-CSO |
+
+### Conversores y Testing
+
+| Documento | Contenido |
+| ----------- | ----------- |
+| **[docs/04-conversores/README.md](docs/04-conversores/README.md)** | Referencia técnica de los conversores y catálogo de módulos |
+| **[docs/03-arquitectura-y-datos/estructura-proyecto.md](docs/03-arquitectura-y-datos/estructura-proyecto.md)** | Arquitectura y estructura del proyecto |
+| **[docs/04-conversores/rendimiento.md](docs/04-conversores/rendimiento.md)** | Decisiones de optimización, benchmarks |
+| **[docs/04-conversores/estructura-tests.md](docs/04-conversores/estructura-tests.md)** | Organización de tests por funcionalidad |
+| **[docs/04-conversores/buenas-practicas-testing.md](docs/04-conversores/buenas-practicas-testing.md)** | Guía de pytest fixtures y aislamiento |
 
 ### Especificaciones
 
@@ -264,7 +274,7 @@ converters/tests/
 └── e2e/                     # Tests end-to-end (incluye benchmarks de performance)
 ```
 
-Ver [converters/docs/TEST_STRUCTURE.md](converters/docs/TEST_STRUCTURE.md) para detalle completo.
+Ver [docs/04-conversores/estructura-tests.md](docs/04-conversores/estructura-tests.md) para detalle completo.
 
 ### Calidad de Código
 
@@ -308,14 +318,14 @@ release-dashboard-application/
 │   ├── src/report_generator/     # Motor de generación de presentaciones PPTX
 │   ├── scripts/bin/              # Wrappers .bat/.sh para los CLI
 │   ├── tests/                    # Suite de tests (unit/integration/e2e)
-│   ├── docs/                     # Documentación técnica de los converters
+│   ├── docs/                     # Redirección y referencia a docs/04-conversores/
 │   └── specs/                    # Especificaciones de features de los converters
 ├── data/                         # Almacenamiento de datos (git-ignored)
 │   ├── input/                    # CSVs de entrada
 │   ├── output/                   # JSONs generados + index.json
 │   └── errors/                   # Reportes de error de conversión
 ├── scripts/                      # Scripts de despliegue Standalone (deploy-production.ps1) y operación (status, rollback)
-├── docs/                         # Documentación general del proyecto
+├── docs/                         # Documentación general y visor interactivo Docsify (:8080/docs/)
 └── config/                       # Configuración (.env.example, hook pre-commit)
 ```
 
@@ -349,7 +359,7 @@ Genera bajo demanda presentaciones PowerPoint corporativas (`.pptx`) con el dise
 
 - **UI en Gestión de Problemas**: Botón `📊 Generar PPT` en cada incidencia en `/problemas`.
 - **CLI**: `python converters/cli/generate_executive_report.py --ref <CODIGO> --title "<TITULO>"`
-- **Detalles y arquitectura**: Ver [docs/INFORME-EJECUTIVO-POSTMORTEM.md](docs/INFORME-EJECUTIVO-POSTMORTEM.md).
+- **Detalles y arquitectura**: Ver [docs/05-postmortem-y-reportes/informe-ejecutivo-postmortem.md](docs/05-postmortem-y-reportes/informe-ejecutivo-postmortem.md).
 
 ---
 
@@ -375,7 +385,7 @@ En el propio servidor (`/infocodes/project/release-dashboard-application`), se d
 - `./status.sh`: Sondas de salud Nginx y comprobación de endpoints HTTP.
 - `./rollback.sh`: Reversión inmediata a una copia previa si fuera necesario.
 
-Ver [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) y [scripts/README.md](scripts/README.md) para más detalles.
+Ver [docs/06-operaciones-y-gobernanza/despliegue-vps.md](docs/06-operaciones-y-gobernanza/despliegue-vps.md) y [scripts/README.md](scripts/README.md) para más detalles.
 
 ---
 
@@ -390,10 +400,11 @@ Ver [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) y [scripts/README.md](scripts/READM
 
 ## 📞 Soporte
 
-- **¿Cómo empiezo?** → [docs/QUICKSTART.md](docs/QUICKSTART.md)
-- **¿Problemas?** → [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md)
-- **¿Desarrollo?** → [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md)
+- **¿Cómo empiezo?** → [docs/01-primeros-pasos/quickstart.md](docs/01-primeros-pasos/quickstart.md)
+- **¿Problemas?** → [docs/01-primeros-pasos/troubleshooting.md](docs/01-primeros-pasos/troubleshooting.md)
+- **¿Desarrollo?** → [docs/01-primeros-pasos/desarrollo.md](docs/01-primeros-pasos/desarrollo.md)
+- **Visor interactivo de documentación** → `http://localhost:8080/docs/`
 
 ---
 
-**Última actualización**: 2026-10-21
+**Última actualización**: 2026-10-30

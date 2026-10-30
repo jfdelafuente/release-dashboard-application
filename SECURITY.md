@@ -118,7 +118,7 @@ bash config/pre-commit-hook.sh
 ### Capa 3: GitHub Secret Scanning y Protección de Ramas
 
 - **Push Protection**: Bloqueo automático en GitHub ante cualquier intento de publicar tokens o claves reconocidas.
-- **Rama `production` protegida**: Requiere aprobaciones obligatorias de PR y paso exitoso de la suite de pruebas (516+ tests) antes de fusionar cualquier cambio (ver [`docs/GITHUB-BRANCH-PROTECTION.md`](docs/GITHUB-BRANCH-PROTECTION.md)).
+- **Rama `production` protegida**: Requiere aprobaciones obligatorias de PR y paso exitoso de la suite de pruebas (516+ tests) antes de fusionar cualquier cambio (ver [`docs/06-operaciones-y-gobernanza/proteccion-ramas.md`](docs/06-operaciones-y-gobernanza/proteccion-ramas.md)).
 
 ---
 

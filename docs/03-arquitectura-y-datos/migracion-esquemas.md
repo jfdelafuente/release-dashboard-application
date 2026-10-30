@@ -6,7 +6,7 @@ Guía técnica sobre la evolución del formato de datos generado por los convers
 
 ## 📌 Contexto de la Evolución
 
-El módulo de conversión de datos ([`converters/`](../converters/)) evolucionó desde scripts sencillos de transformación hacia un motor robusto con validación exhaustiva de esquemas, detección automática de codificación (`UTF-8`, `Windows-1252`, `Latin-1`), normalización de campos y precalculado de KPIs.
+El módulo de conversión de datos ([`converters/`](../../converters)) evolucionó desde scripts sencillos de transformación hacia un motor robusto con validación exhaustiva de esquemas, detección automática de codificación (`UTF-8`, `Windows-1252`, `Latin-1`), normalización de campos y precalculado de KPIs.
 
 ### Comparativa de Versiones
 
@@ -199,14 +199,14 @@ Cuando un CSV contiene filas que violan el esquema o tienen fechas corruptas, la
 ## ⚡ Rendimiento y Cobertura
 
 - **Velocidad de procesamiento**: Procesamiento en streaming de bajo consumo de memoria. Conversión de archivos de miles de registros en menos de 2 segundos.
-- **Calidad garantizada**: El módulo de conversores cuenta con más de **516 pruebas automatizadas** en [`converters/tests/`](../converters/tests/) que validan delimitadores, encodings, esquemas y límites numéricos, con cobertura obligatoria $\ge$ 80% en GitHub Actions.
+- **Calidad garantizada**: El módulo de conversores cuenta con más de **516 pruebas automatizadas** en [`converters/tests/`](../../converters/tests) que validan delimitadores, encodings, esquemas y límites numéricos, con cobertura obligatoria $\ge$ 80% en GitHub Actions.
 
 ---
 
 ## 🔗 Documentación Relacionada
 
 - [**`DASHBOARDS-API.md`**](DASHBOARDS-API.md): Especificación de APIs, rutas y persistencia de ficheros.
-- [**`PROJECT-STRUCTURE.md`**](PROJECT-STRUCTURE.md): Estructura del repositorio y desacoplamiento de `/infocodes/var/storage/`.
-- [**`CI.md`**](CI.md): Pipeline de Integración Continua y validación de cobertura.
-- [**`DEVELOPMENT.md`**](DEVELOPMENT.md): Entorno de desarrollo local y pruebas con pytest.
-- [**`converters/docs/API.md`**](../converters/docs/API.md): Referencia detallada de la API interna de los conversores.
+- [**`PROJECT-STRUCTURE.md`**](estructura-proyecto.md): Estructura del repositorio y desacoplamiento de `/infocodes/var/storage/`.
+- [**`CI.md`**](../06-operaciones-y-gobernanza/integracion-continua-ci.md): Pipeline de Integración Continua y validación de cobertura.
+- [**`DEVELOPMENT.md`**](../01-primeros-pasos/desarrollo.md): Entorno de desarrollo local y pruebas con pytest.
+- [**`converters/docs/API.md`**](../04-conversores/README.md): Referencia detallada de la API interna de los conversores.

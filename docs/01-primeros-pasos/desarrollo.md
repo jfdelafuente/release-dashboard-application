@@ -50,7 +50,7 @@ El indicador de la terminal mostrará el prefijo `(venv)`.
 
 ### Paso 3: Instalar Dependencias de Desarrollo
 
-El archivo [`requirements-dev.txt`](../requirements-dev.txt) incluye tanto las dependencias del servidor y generación de informes de producción (`python-pptx`, `matplotlib`, `plotly`, `kaleido`, `beautifulsoup4`) como las herramientas de test y calidad (`pytest`, `pytest-cov`, `black`, `flake8`, `pylint`, `bandit`):
+El archivo [`requirements-dev.txt`](../../requirements-dev.txt) incluye tanto las dependencias del servidor y generación de informes de producción (`python-pptx`, `matplotlib`, `plotly`, `kaleido`, `beautifulsoup4`) como las herramientas de test y calidad (`pytest`, `pytest-cov`, `black`, `flake8`, `pylint`, `bandit`):
 
 ```bash
 pip install --upgrade pip
@@ -90,7 +90,7 @@ Copy-Item config/pre-commit-hook.sh .git/hooks/pre-commit
 
 ## 💻 Ejecución del Servidor Local (`serve_app.py`)
 
-Para probar los dashboards en local se utiliza [`serve_app.py`](../serve_app.py), el servidor HTTP especializado del proyecto.
+Para probar los dashboards en local se utiliza [`serve_app.py`](../../serve_app.py), el servidor HTTP especializado del proyecto.
 
 ```bash
 python serve_app.py
@@ -153,7 +153,7 @@ Simula el proceso batch que ejecuta el cron de producción:
 
 ## 🧪 Pruebas Automatizadas (Testing)
 
-La suite de pruebas y su configuración ([`converters/pytest.ini`](../converters/pytest.ini)) residen en el directorio `converters/tests/`.
+La suite de pruebas y su configuración ([`converters/pytest.ini`](../../converters/pytest.ini)) residen en el directorio `converters/tests/`.
 
 ### Ejecutar Pruebas
 
@@ -177,7 +177,7 @@ pytest tests/ -k "postmortem" -v
 
 ### Cobertura de Código (Mínimo 80% requerido en CI)
 
-Tal como exige el pipeline de GitHub Actions ([`docs/CI.md`](CI.md)), la cobertura mínima de código requerida es del **80%**:
+Tal como exige el pipeline de GitHub Actions ([`docs/CI.md`](../06-operaciones-y-gobernanza/integracion-continua-ci.md)), la cobertura mínima de código requerida es del **80%**:
 
 ```bash
 cd converters
@@ -196,7 +196,7 @@ xdg-open htmlcov/index.html || open htmlcov/index.html
 
 ## 🎨 Estilo y Calidad de Código (Linters)
 
-El proyecto utiliza un conjunto estricto de comprobaciones alineadas con el workflow [`.github/workflows/lint.yml`](../.github/workflows/lint.yml):
+El proyecto utiliza un conjunto estricto de comprobaciones alineadas con el workflow [`.github/workflows/lint.yml`](../../.github/workflows/lint.yml):
 
 ```bash
 cd converters
@@ -304,10 +304,10 @@ pytest tests/ -v
 
 ## 🔗 Documentación Relacionada
 
-- [**`CI.md`**](CI.md): Pipeline de Integración Continua, cobertura y linters en GitHub Actions.
-- [**`DEPLOYMENT.md`**](DEPLOYMENT.md): Despliegue en 1 clic a producción (`deploy-production.ps1`), topología VPS y rollback atómico.
-- [**`LOGS.md`**](LOGS.md): Arquitectura de logs, auditoría y comandos de diagnóstico en producción.
-- [**`DASHBOARDS-API.md`**](DASHBOARDS-API.md): Catálogo de APIs, rutas y servicios consumidos por los frontends.
-- [**`PROJECT-STRUCTURE.md`**](PROJECT-STRUCTURE.md): Organización física del repositorio y convenciones de estructura.
-- [**`VERSION-MANAGEMENT.md`**](VERSION-MANAGEMENT.md): Política de versionado semántico y etiquetado git.
+- [**`CI.md`**](../06-operaciones-y-gobernanza/integracion-continua-ci.md): Pipeline de Integración Continua, cobertura y linters en GitHub Actions.
+- [**`DEPLOYMENT.md`**](../06-operaciones-y-gobernanza/despliegue-vps.md): Despliegue en 1 clic a producción (`deploy-production.ps1`), topología VPS y rollback atómico.
+- [**`LOGS.md`**](../06-operaciones-y-gobernanza/logs-y-auditoria.md): Arquitectura de logs, auditoría y comandos de diagnóstico en producción.
+- [**`DASHBOARDS-API.md`**](../03-arquitectura-y-datos/dashboards-api.md): Catálogo de APIs, rutas y servicios consumidos por los frontends.
+- [**`PROJECT-STRUCTURE.md`**](../03-arquitectura-y-datos/estructura-proyecto.md): Organización física del repositorio y convenciones de estructura.
+- [**`VERSION-MANAGEMENT.md`**](../06-operaciones-y-gobernanza/gestion-versiones.md): Política de versionado semántico y etiquetado git.
 - [**`QUICKSTART.md`**](QUICKSTART.md): Inicio rápido en 5 minutos para visualización local.

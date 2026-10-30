@@ -57,7 +57,7 @@ Diagnóstico, causas raíz y soluciones paso a paso para incidencias comunes dur
 - **Causa**: El archivo CSV no cumple con el esquema requerido (cabeceras incorrectas, delimitador incompatible, valores no permitidos en campos clave o codificación corrupta).
 - **Solución**:
   1. Lee el mensaje detallado en pantalla o revisa el informe generado en `data/errors/<nombre-archivo>_errors.json`.
-  2. Verifica que las columnas obligatorias existan conforme a la especificación en [converters/docs/API.md](../converters/docs/API.md).
+  2. Verifica que las columnas obligatorias existan conforme a la especificación en [converters/docs/API.md](../04-conversores/README.md).
   3. Asegúrate de que los campos normalizados contengan valores válidos (p. ej. *Urgencia*: `Baja`, `Media`, `Alta`, `Crítica`).
 
 ---
@@ -278,10 +278,10 @@ Si un despliegue produce una anomalía crítica en producción:
 ## Documentación Relacionada
 
 - [QUICKSTART.md](QUICKSTART.md) — Guía rápida de configuración en 5 minutos.
-- [DEVELOPMENT.md](DEVELOPMENT.md) — Flujos de trabajo y directrices de desarrollo local.
-- [DEPLOYMENT.md](DEPLOYMENT.md) — Manual integral de despliegue y topología del VPS.
-- [PROJECT-STRUCTURE.md](PROJECT-STRUCTURE.md) — Arquitectura y mapa exhaustivo de directorios.
-- [LOGS.md](LOGS.md) — Registro unificado de bitácora técnica e intervenciones.
+- [DEVELOPMENT.md](desarrollo.md) — Flujos de trabajo y directrices de desarrollo local.
+- [DEPLOYMENT.md](../06-operaciones-y-gobernanza/despliegue-vps.md) — Manual integral de despliegue y topología del VPS.
+- [PROJECT-STRUCTURE.md](../03-arquitectura-y-datos/estructura-proyecto.md) — Arquitectura y mapa exhaustivo de directorios.
+- [LOGS.md](../06-operaciones-y-gobernanza/logs-y-auditoria.md) — Registro unificado de bitácora técnica e intervenciones.
 
 ---
 

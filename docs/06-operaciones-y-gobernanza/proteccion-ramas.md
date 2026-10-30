@@ -14,7 +14,7 @@ El objetivo de estas reglas es blindar las ramas críticas contra sobrescrituras
 | **`main`** | Rama troncal de integración y referencia del historial base. | **Alta** | `main` |
 
 > [!IMPORTANT]
-> El script de despliegue [`scripts/deploy-production.ps1`](../scripts/deploy-production.ps1) opera sobre la rama `production`. Proteger esta rama garantiza que ningún cambio defectuoso o no testeado pueda alcanzar el entorno de producción.
+> El script de despliegue [`scripts/deploy-production.ps1`](../../scripts/deploy-production.ps1) opera sobre la rama `production`. Proteger esta rama garantiza que ningún cambio defectuoso o no testeado pueda alcanzar el entorno de producción.
 
 ---
 
@@ -46,9 +46,9 @@ A continuación se detalla la configuración que debe aplicarse tanto para la ra
 - [x] **Require branches to be up to date before merging**: Activado.
   - Obliga a sincronizar la rama de trabajo con los últimos cambios de la rama destino antes de poder fusionar.
 - [x] **Status Checks requeridos**:
-  Deben seleccionarse los siguientes jobs generados por los flujos de GitHub Actions ([`tests.yml`](../.github/workflows/tests.yml) y [`lint.yml`](../.github/workflows/lint.yml)):
+  Deben seleccionarse los siguientes jobs generados por los flujos de GitHub Actions ([`tests.yml`](../../.github/workflows/tests.yml) y [`lint.yml`](../../.github/workflows/lint.yml)):
   - **`Run Tests & Check Coverage`** / **`Test Result Summary`**:
-    Verifica que la suite completa de pruebas pase y que la cobertura de código sea igual o superior al **80%** (ver [`docs/CI.md`](CI.md)).
+    Verifica que la suite completa de pruebas pase y que la cobertura de código sea igual o superior al **80%** (ver [`docs/CI.md`](integracion-continua-ci.md)).
   - **`Lint & Format Check`**:
     Comprueba el cumplimiento de PEP 8 con `flake8`, el formato con `black` y el orden de imports con `isort`.
   - **`Security Checks`**:
@@ -178,8 +178,8 @@ Si ocurre una incidencia crítica en el entorno de producción que requiere una 
 
 ## 🔗 Documentación Relacionada
 
-- [**`CI.md`**](CI.md): Pipeline de Integración Continua, umbral de cobertura del 80% y linters.
-- [**`DEPLOYMENT.md`**](DEPLOYMENT.md): Despliegue en 1 clic al VPS con `deploy-production.ps1` y rollback atómico.
-- [**`DEVELOPMENT.md`**](DEVELOPMENT.md): Configuración del entorno local, testing y herramientas de formateo.
-- [**`VERSION-MANAGEMENT.md`**](VERSION-MANAGEMENT.md): Política de versionado semántico y etiquetado git.
-- [**`LOGS.md`**](LOGS.md): Trazabilidad, auditoría y análisis de logs en producción.
+- [**`CI.md`**](integracion-continua-ci.md): Pipeline de Integración Continua, umbral de cobertura del 80% y linters.
+- [**`DEPLOYMENT.md`**](despliegue-vps.md): Despliegue en 1 clic al VPS con `deploy-production.ps1` y rollback atómico.
+- [**`DEVELOPMENT.md`**](../01-primeros-pasos/desarrollo.md): Configuración del entorno local, testing y herramientas de formateo.
+- [**`VERSION-MANAGEMENT.md`**](gestion-versiones.md): Política de versionado semántico y etiquetado git.
+- [**`LOGS.md`**](logs-y-auditoria.md): Trazabilidad, auditoría y análisis de logs en producción.
