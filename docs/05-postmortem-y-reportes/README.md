@@ -21,3 +21,4 @@ Tras la estabilización o cierre de una incidencia SL1/P1 o SL2/P2, el proceso I
 1. **Generación Automatizada:** Extracción de datos del catálogo y síntesis de Epsilon Resumen IA.
 2. **Plantilla Corporativa:** Renderizado en formato PPTX oficial con líneas de tiempo verificadas y matriz de impacto.
 3. **Plan CAPA:** Registro de acciones correctoras y preventivas derivadas a Problem Management.
+

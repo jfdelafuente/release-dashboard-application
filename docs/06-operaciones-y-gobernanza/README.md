@@ -24,3 +24,4 @@ Procedimientos de entrega continua en el VPS de producción, control de versione
 1. **Protección de Producción:** Jamás se realiza push directo a `production`. Todo cambio debe pasar por PR con revisión obligatoria y CI en verde.
 2. **Despliegues Atómicos:** Todo despliegue en VPS se ejecuta mediante `deploy-production.ps1` creando una release fechada (`/releases/release_YYYYMMDD_HHMMSS/`) y conmutando el symlink `current` sin tiempo de inactividad.
 3. **Rollback en 1-Clic:** Si se detecta una degradación post-despliegue, `rollback.sh` conmuta de inmediato a la release previa sin compilar ni transferir ficheros.
+

@@ -3,7 +3,7 @@
     "version": "1.0.0",
     "description": "Almacén oficial de redacciones ejecutivas generadas por el Agente incident-reporter",
     "source": "agents/it-incidents/incident-reporter.md",
-    "updated_at": "2026-10-29T13:21:35Z"
+    "updated_at": "2026-10-30T12:35:21Z"
   },
   "incidents": {
     "INC000004065609": {
@@ -770,6 +770,58 @@
         "origen": "incident-reporter",
         "conteo_palabras_completo": 67,
         "conteo_palabras_breve": 21
+      }
+    },
+    "INC000004171650": {
+      "apertura": {
+        "completo": "Se declara incidencia crítica P1 (INC000004171650) por error funcional en Ficha de Cliente Orange en la plataforma ISGF de Murcia. La anomalía en el backend bffclientdashboard y el microservicio InteractionClient bloquea el botón de rechazo de campañas, impidiendo a los operadores tipificar llamadas e informar compromisos de pago sin canal alternativo en el frontal. Los equipos técnicos se encuentran diagnosticando el CircuitBreaker del servicio para restablecer la validación y recuperar la operativa comercial. Próxima actualización en 30 minutos.",
+        "breve": "Apertura P1 (INC000004171650): Fallo en Ficha de Cliente Orange bloquea rechazo de campañas y tipificación en ISGF Murcia. Soporte investigando microservicios. Próxima actualización 30 min.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 78,
+        "conteo_palabras_breve": 25
+      },
+      "seguimiento": {
+        "completo": "Seguimiento de la incidencia crítica P1 (INC000004171650) en Ficha de Cliente Orange. El equipo técnico ha identificado que las peticiones al endpoint de rechazo de campañas disparaban el CircuitBreaker de InteractionClient por un fallo en la validación de respuestas. Se ha implementado un ajuste de configuración en el microservicio bffclientdashboard y se verifica la absorción correcta de peticiones en ISGF Murcia. Los puestos de atención reanudan gradualmente la tipificación de llamadas bajo monitorización operativa estrecha.",
+        "breve": "Seguimiento P1 (INC000004171650): Ajustada validación en InteractionClient de Ficha Cliente Orange; operadores de ISGF Murcia reanudan tipificación bajo supervisión técnica activa.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 75,
+        "conteo_palabras_breve": 21
+      },
+      "cierre": {
+        "completo": "Se da por cerrada la incidencia crítica P1 (INC000004171650) en Ficha de Cliente Orange. Se ha restablecido plenamente el servicio de validación de rechazo de campañas en InteractionClient y el backend bffclientdashboard tras corregir el control de respuestas del microservicio. Los operadores del centro ISGF de Murcia tipifican llamadas y gestionan compromisos de pago con normalidad y sin errores en el frontal. La operativa comercial queda completamente recuperada y se mantiene la supervisión preventiva habitual.",
+        "breve": "Cierre P1 (INC000004171650): Restablecido rechazo de campañas y tipificación en Ficha Cliente Orange para ISGF Murcia tras estabilizar microservicios; servicio 100% operativo.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 75,
+        "conteo_palabras_breve": 22
+      }
+    },
+    "INC000004171670": {
+      "apertura": {
+        "completo": "Se declara incidencia mayor P2 (INC000004171670) por degradación funcional en el entorno BSS Jazztel sobre el sistema DES_CRM4T. El servicio continúa parcialmente operativo, registrándose lentitud y dificultades intermitentes en la tramitación comercial y gestión de clientes. Los equipos especializados de soporte se encuentran analizando el rendimiento de la capa de aplicación y las consultas a base de datos para aislar el cuello de botella y restablecer las latencias estándar. Próxima actualización en 60 minutos.",
+        "breve": "Apertura P2 (INC000004171670): Degradación y lentitud en BSS Jazztel (DES_CRM4T) con operativa parcial. Soporte técnico analizando rendimiento. Próxima actualización 60 min.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 74,
+        "conteo_palabras_breve": 21
+      },
+      "seguimiento": {
+        "completo": "Seguimiento de la incidencia mayor P2 (INC000004171670) en BSS Jazztel. El equipo técnico ha identificado contención de recursos en las colas de procesamiento de DES_CRM4T asociada a un pico de transacciones concurrentes. Se han aplicado acciones de desahogo y optimización de hilos en los servidores de aplicación, observándose una recuperación progresiva de los tiempos de respuesta en las consultas de gestión. Se mantiene la monitorización en tiempo real hasta consolidar la estabilidad del entorno.",
+        "breve": "Seguimiento P2 (INC000004171670): Optimizadas colas de procesamiento en DES_CRM4T; mejoran tiempos de respuesta en BSS Jazztel bajo supervisión activa del equipo técnico.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 74,
+        "conteo_palabras_breve": 22
+      },
+      "cierre": {
+        "completo": "Se da por cerrada la incidencia mayor P2 (INC000004171670) en BSS Jazztel. Se confirma la recuperación total del rendimiento y la estabilidad del sistema DES_CRM4T tras normalizarse las colas y los procesos transaccionales de la plataforma comercial. Las operaciones de atención y tramitación se desarrollan con normalidad y latencias óptimas en todos los canales. El servicio queda completamente restablecido bajo la supervisión técnica preventiva rutinaria.",
+        "breve": "Cierre P2 (INC000004171670): Normalizado BSS Jazztel (DES_CRM4T) con tiempos de respuesta óptimos tras resolver saturación en aplicación; servicio completamente operativo.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 65,
+        "conteo_palabras_breve": 20
       }
     }
   }

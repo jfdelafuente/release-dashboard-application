@@ -104,3 +104,4 @@ def test_root_documents_docs_links_resolve(root_doc):
             broken.append(f"{root_doc} -> {raw_url} (resuelto: {target_path})")
 
     assert not broken, f"Enlaces rotos hacia docs/ encontrados en {root_doc}:\n" + "\n".join(broken)
+

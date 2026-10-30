@@ -22,3 +22,4 @@ Guías esenciales para nuevos desarrolladores y colaboradores del proyecto Relea
 2. Inicia el servidor de desarrollo local con `python serve_app.py`.
 3. Consulta **[desarrollo.md](./desarrollo.md)** para ejecutar la suite de pruebas unitarias (`pytest converters/tests/unit/`).
 4. Si encuentras algún bloqueo en puertos o permisos en Windows, consulta **[troubleshooting.md](./troubleshooting.md)**.
+

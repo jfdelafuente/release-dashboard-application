@@ -23,3 +23,4 @@ Manuales operacionales, arquitectura de triaje determinista ITIL y gobernanza de
 * **Durante una crisis activa:** Accede a la Consola en `/dashboards/incident-manager-monitor/` y sigue el **[manual-consola-operativa.md](./manual-consola-operativa.md)**.
 * **Para justificar una subescalación N1:** Consulta la matriz y criterios en **[triaje-itil-automatizado.md](./triaje-itil-automatizado.md)**.
 * **Para emitir una comunicación a Dirección:** Revisa el estándar en **[notificaciones-ejecutivas.md](./notificaciones-ejecutivas.md)**.
+

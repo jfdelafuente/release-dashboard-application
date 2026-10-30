@@ -23,3 +23,4 @@ Documentación técnica del paquete Python de conversión de datos masivos Remed
 * **Detección Resiliente de Encoding**: Manejo automático de UTF-8, UTF-8 con BOM, Windows-1252 e ISO-8859-1.
 * **Normalización Heurística de Fechas**: Formateo unificado a estándar ISO 8601 y strings amigables para Remedy.
 * **Triaje ITIL Determinista**: Cálculo en lote de severidades de impacto/urgencia y enriquecimiento con Epsilon IA.
+

@@ -23,3 +23,4 @@ El sistema implementa una arquitectura **desacoplada**:
 1. **Frontend Estático:** Dashboards ligeros HTML/JS vanilla servidos vía Nginx o `serve_app.py`.
 2. **Capa de Datos Externa:** Los ficheros procesados residen fuera del repositorio de código (en `/infocodes/var/storage/release-dashboard/` en producción y en `data/` en local).
 3. **Microservicios Satélite:** Conexión semántica delegada al microservicio Epsilon IA y generación de presentaciones PPTX al backend FastAPI CSO.
+
