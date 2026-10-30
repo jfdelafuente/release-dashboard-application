@@ -186,43 +186,44 @@
     }
     setConnectionStatus('syncing', 'Inspeccionando...');
 
-    try {
-      // Intentar cargar directamente el catálogo actualizado de alta prioridad
-      const res = await fetch('/data/output/high_priority_notifications.json?t=' + Date.now());
-      if (!res.ok) {
-        throw new Error(`Error HTTP ${res.status} al leer el almacén`);
-      }
-      const data = await res.json();
-      processInspectionData(data);
-      setConnectionStatus('', 'Inspección Activa');
-      state.lastInspectionEpoch = Date.now();
-      updateRelativeTimeDisplay();
-      if (isManual) {
-        showToast('Inspección de catálogo completada exitosamente', 'success');
-      }
-    } catch (err) {
-      console.warn('[TriageEngine] Fallo al cargar high_priority_notifications.json, intentando endpoint API:', err);
+    const timestamp = Date.now();
+    const candidateUrls = [
+      '/data/output/high_priority_notifications.json?t=' + timestamp,
+      '../../data/output/high_priority_notifications.json?t=' + timestamp,
+      '/api/incident-manager/pending?t=' + timestamp,
+      '/api/incident-manager/emergency-cockpit?t=' + timestamp
+    ];
+
+    let lastError = null;
+    for (const url of candidateUrls) {
       try {
-        const apiRes = await fetch('/api/incident-manager/pending?t=' + Date.now());
-        if (apiRes.ok) {
-          const apiData = await apiRes.json();
-          processInspectionData(apiData);
-          setConnectionStatus('', 'Inspección Activa (API)');
+        const res = await fetch(url);
+        if (!res.ok) continue;
+        const data = await res.json();
+        if (data && (data.data || data.incidents || data.all_active_incidents || data.pending_incidents)) {
+          processInspectionData(data);
+          setConnectionStatus('', 'Inspección Activa');
           state.lastInspectionEpoch = Date.now();
           updateRelativeTimeDisplay();
-          if (isManual) showToast('Inspección completada vía API', 'success');
+          if (isManual) {
+            showToast('Inspección de catálogo completada exitosamente', 'success');
+          }
+          if (dom.btnRefreshNow) {
+            dom.btnRefreshNow.disabled = false;
+            dom.btnRefreshNow.innerHTML = `<span aria-hidden="true">🔄</span> Inspeccionar Ahora`;
+          }
           return;
         }
-      } catch (_) {
-        // Ignorar fallo de api y mostrar error
+      } catch (err) {
+        lastError = err;
       }
-      setConnectionStatus('error', 'Error de conexión');
-      showToast('Error al inspeccionar catálogo de incidencias: ' + err.message, 'error');
-    } finally {
-      if (dom.btnRefreshNow) {
-        dom.btnRefreshNow.disabled = false;
-        dom.btnRefreshNow.innerHTML = `<span aria-hidden="true">🔄</span> Inspeccionar Ahora`;
-      }
+    }
+
+    setConnectionStatus('error', 'Error de conexión');
+    showToast('Error al inspeccionar catálogo de incidencias: ' + (lastError ? lastError.message : 'No se encontraron datos'), 'error');
+    if (dom.btnRefreshNow) {
+      dom.btnRefreshNow.disabled = false;
+      dom.btnRefreshNow.innerHTML = `<span aria-hidden="true">🔄</span> Inspeccionar Ahora`;
     }
   }
 
@@ -247,7 +248,7 @@
       kpis: {}
     };
 
-    const rawList = payload.data || payload.incidents || [];
+    const rawList = payload.data || payload.incidents || payload.all_active_incidents || payload.pending_incidents || [];
     const list = Array.isArray(rawList) ? rawList : Object.values(rawList);
     // Filtrado estricto: las incidencias en estado Cerrado, Resuelto o Canceladas no entran al triaje
     state.incidents = list.filter(inc => !isTerminalStatus(inc.estatus || inc.estado || inc.status));
@@ -269,7 +270,6 @@
     if (dom.kpiEmergencies) dom.kpiEmergencies.textContent = p2Count;
 
     // Actualizar Panel de Alertas de Reclasificación Inmediata
-    const discCount = (kpis.discrepancies_count != null) ? kpis.discrepancies_count : state.incidents.filter(i => i.es_discrepancia).length;
     const delta2Count = (kpis.discrepancias_delta2_mayor_count != null) ? kpis.discrepancias_delta2_mayor_count : state.incidents.filter(i => i.discrepancia_delta === 2).length;
     const delta1Count = (kpis.discrepancias_delta1_moderada_count != null) ? kpis.discrepancias_delta1_moderada_count : state.incidents.filter(i => i.discrepancia_delta === 1).length;
 

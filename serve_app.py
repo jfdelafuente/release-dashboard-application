@@ -635,7 +635,11 @@ class CustomHTTPHandler(http.server.SimpleHTTPRequestHandler):
             importlib.reload(incident_manager_service)
             from incident_manager_service import get_pending_incidents_payload
             catalog_path = STORAGE_DIR / 'output' / 'high_priority_notifications.json'
+            if not catalog_path.exists():
+                catalog_path = PROJECT_ROOT / 'data' / 'output' / 'high_priority_notifications.json'
             store_path = STORAGE_DIR / 'agent_executive_messages.json'
+            if not store_path.exists():
+                store_path = PROJECT_ROOT / 'data' / 'agent_executive_messages.json'
             payload = get_pending_incidents_payload(catalog_path=catalog_path, store_path=store_path)
             self._send_json(200, payload)
         except Exception as e:
@@ -649,7 +653,11 @@ class CustomHTTPHandler(http.server.SimpleHTTPRequestHandler):
             importlib.reload(incident_manager_service)
             from incident_manager_service import get_emergency_cockpit_payload
             catalog_path = STORAGE_DIR / 'output' / 'high_priority_notifications.json'
+            if not catalog_path.exists():
+                catalog_path = PROJECT_ROOT / 'data' / 'output' / 'high_priority_notifications.json'
             store_path = STORAGE_DIR / 'agent_executive_messages.json'
+            if not store_path.exists():
+                store_path = PROJECT_ROOT / 'data' / 'agent_executive_messages.json'
 
             parsed_url = urllib.parse.urlparse(self.path)
             query_params = urllib.parse.parse_qs(parsed_url.query)
@@ -758,6 +766,8 @@ class CustomHTTPHandler(http.server.SimpleHTTPRequestHandler):
         if self.path.startswith('/data/'):
             clean_rel = self.path[len('/data/'):].split('?')[0].lstrip('/')
             file_on_storage = STORAGE_DIR / clean_rel
+            if not file_on_storage.is_file():
+                file_on_storage = PROJECT_ROOT / 'data' / clean_rel
             if file_on_storage.is_file():
                 try:
                     content = file_on_storage.read_bytes()
@@ -766,8 +776,7 @@ class CustomHTTPHandler(http.server.SimpleHTTPRequestHandler):
                     self.send_header('Content-type', content_type)
                     self.send_header('Content-Length', str(len(content)))
                     self.send_header('Access-Control-Allow-Origin', '*')
-                    if 'index.json' in clean_rel:
-                        self.send_header('Cache-Control', 'no-cache')
+                    self.send_header('Cache-Control', 'no-cache')
                     self.end_headers()
                     self.wfile.write(content)
                     return
