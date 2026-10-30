@@ -509,6 +509,7 @@ Generado por Consola de Emergencias IT Orange - Motor de Triaje (Módulo 1)`;
 
     // Epsilon IA resumen
     const resumenIa = inc.resumen_ia || {};
+    const epsilonBloqueos = Array.isArray(resumenIa.bloqueos) ? resumenIa.bloqueos.join('; ') : (resumenIa.bloqueos || '');
 
     return `
       <!-- Fila Resumen Principal (Modo Tabular) -->
@@ -519,7 +520,7 @@ Generado por Consola de Emergencias IT Orange - Motor de Triaje (Módulo 1)`;
           </button>
         </td>
         <td class="triage-cell-id">
-          <span class="triage-id-link">${escapeHtml(incId)}</span>
+          <span class="triage-id-link" data-inc="${escapeHtml(incId)}" title="Ver ficha técnica Epsilon IA">${escapeHtml(incId)}</span>
           <div class="triage-id-meta">
             <span class="triage-status-pill ${statusPillClass}">${escapeHtml(inc.estatus || 'Pendiente')}</span>
             <span style="font-family: var(--font-mono); font-size: 11px; color: var(--triage-text-subtle);" title="Tiempo transcurrido desde apertura">⏱️ ${formatAgingMinutes(minsElapsed)}</span>
@@ -626,11 +627,13 @@ Generado por Consola de Emergencias IT Orange - Motor de Triaje (Módulo 1)`;
               <!-- Columna 2: Diagnóstico Epsilon Resumen IA -->
               <div class="triage-detail-col">
                 <div class="triage-detail-box" style="height: 100%;">
-                  <div class="triage-detail-box-title">
+                  <div class="triage-detail-box-title" style="display: flex; justify-content: space-between; align-items: center;">
                     <span style="display: flex; align-items: center; gap: 6px; color: var(--triage-text-main);">
                       <span style="color: var(--triage-orange);">🤖</span> Diagnóstico Epsilon Resumen IA
                     </span>
-                    <span style="font-size: 10.5px; font-family: var(--font-mono); color: var(--triage-text-subtle);">Telemetría Oficial</span>
+                    <button type="button" class="btn-view-epsilon" data-inc="${escapeHtml(incId)}" title="Ver ficha técnica completa y línea de tiempo oficial en Epsilon IA" style="background: rgba(255, 121, 0, 0.08); border: 1px solid rgba(255, 121, 0, 0.3); border-radius: 4px; padding: 2px 8px; font-size: 11px; font-weight: 600; color: var(--triage-orange); cursor: pointer; display: inline-flex; align-items: center; gap: 4px;">
+                      <span aria-hidden="true">🔍</span> Ficha Completa
+                    </button>
                   </div>
 
                   <div class="triage-epsilon-grid" style="margin-top: 4px;">
@@ -648,7 +651,7 @@ Generado por Consola de Emergencias IT Orange - Motor de Triaje (Módulo 1)`;
                     </div>
                     <div class="triage-epsilon-item">
                       <span class="triage-epsilon-label">Siguiente Acción / Bloqueos</span>
-                      <span class="triage-epsilon-val">${escapeHtml(resumenIa.siguiente_accion || resumenIa.bloqueos || 'Coordinación con soporte resolutor.')}</span>
+                      <span class="triage-epsilon-val">${escapeHtml(resumenIa.siguiente_accion || epsilonBloqueos || 'Coordinación con soporte resolutor.')}</span>
                     </div>
                   </div>
                 </div>
@@ -757,7 +760,22 @@ Generado por Consola de Emergencias IT Orange - Motor de Triaje (Módulo 1)`;
       });
     });
 
-    // 4. Chevron y Botón Toggle fila
+    // 4. Botón Ver Ficha Completa Epsilon IA (abre modal interactivo)
+    document.querySelectorAll('.btn-view-epsilon, .triage-id-link').forEach(elem => {
+      elem.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const incId = elem.getAttribute('data-inc') || elem.textContent.trim();
+        if (incId) {
+          if (typeof window.openResumenIA === 'function') {
+            window.openResumenIA(incId);
+          } else if (window.ResumenIAModal && typeof window.ResumenIAModal.open === 'function') {
+            window.ResumenIAModal.open(incId);
+          }
+        }
+      });
+    });
+
+    // 5. Chevron y Botón Toggle fila
     document.querySelectorAll('.triage-chevron-btn, .btn-toggle-row').forEach(btn => {
       btn.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -766,7 +784,7 @@ Generado por Consola de Emergencias IT Orange - Motor de Triaje (Módulo 1)`;
       });
     });
 
-    // 5. Clic e interacción por teclado en la fila principal
+    // 6. Clic e interacción por teclado en la fila principal
     document.querySelectorAll('.triage-row-main').forEach(row => {
       row.addEventListener('click', (e) => {
         // Ignorar si el clic ocurrió dentro de un botón interactivo

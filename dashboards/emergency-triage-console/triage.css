@@ -813,6 +813,13 @@ body {
   color: var(--triage-text-main);
   text-decoration: none;
   display: block;
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.triage-id-link:hover {
+  color: var(--triage-orange);
+  text-decoration: underline;
 }
 
 .triage-id-meta {

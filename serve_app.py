@@ -226,6 +226,27 @@ class CustomHTTPHandler(http.server.SimpleHTTPRequestHandler):
                 self.wfile.write(content)
         except Exception as e:
             print(f"  Error proxy Epsilon IA: {e}")
+            # Resiliencia offline: Comprobar si existe snapshot en disco en data/.epsilon_cache
+            disk_cache_file = PROJECT_ROOT / "data" / ".epsilon_cache" / f"{codigo}.json"
+            if disk_cache_file.exists():
+                try:
+                    with open(disk_cache_file, "rb") as f:
+                        disk_content = f.read()
+                    print(f"  Fallback exitoso a caché en disco para Epsilon IA: {codigo}")
+                    EPSILON_CACHE[codigo] = (now, disk_content, 200)
+                    self.send_response(200)
+                    self.send_header('Content-Type', 'application/json; charset=utf-8')
+                    self.send_header('Access-Control-Allow-Origin', '*')
+                    self.send_header('Access-Control-Allow-Methods', 'GET, OPTIONS')
+                    self.send_header('Access-Control-Allow-Headers', '*')
+                    self.send_header('X-Cache-Status', 'DISK_FALLBACK')
+                    self.send_header('Content-Length', str(len(disk_content)))
+                    self.end_headers()
+                    self.wfile.write(disk_content)
+                    return
+                except Exception as read_err:
+                    print(f"  Error leyendo disk cache para Epsilon IA: {read_err}")
+
             err_payload = json.dumps({"success": False, "error": str(e)}, ensure_ascii=False).encode('utf-8')
             self.send_response(502)
             self.send_header('Content-Type', 'application/json; charset=utf-8')

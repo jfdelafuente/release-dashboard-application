@@ -1303,7 +1303,10 @@ class EpsilonClient:
 
     def __init__(self, base_url: str = "http://127.0.0.1:8081/api/epsilon/resumenIA", cache_dir: Optional[Path] = None, max_consecutive_failures: int = 3):
         self.base_url = base_url.rstrip("/")
-        self.cache_dir = cache_dir or Path("data/.epsilon_cache")
+        if cache_dir:
+            self.cache_dir = Path(cache_dir)
+        else:
+            self.cache_dir = Path(__file__).resolve().parents[2] / "data" / ".epsilon_cache"
         self.cache_dir.mkdir(parents=True, exist_ok=True)
         self.max_consecutive_failures = max_consecutive_failures
         self._server_offline = False
@@ -1313,6 +1316,17 @@ class EpsilonClient:
 
     def _get_cache_path(self, incident_code: str) -> Path:
         return self.cache_dir / f"{incident_code}.json"
+
+    def _read_cache_file(self, cache_file: Path) -> Optional[dict[str, Any]]:
+        try:
+            with open(cache_file, "r", encoding="utf-8") as f:
+                content = json.load(f)
+                if isinstance(content, dict) and "data" in content and isinstance(content["data"], dict):
+                    return content["data"]
+                return content
+        except Exception as e:
+            logger.debug("Error leyendo caché de %s: %s", cache_file, e)
+            return None
 
     def _fetch_from_url(self, target_base: str, incident_code: str) -> Optional[dict[str, Any]]:
         url = f"{target_base}/{incident_code}"
@@ -1335,23 +1349,28 @@ class EpsilonClient:
         return None
 
     def get_resumen_ia(self, incident_code: str, force_refresh: bool = False) -> Optional[dict[str, Any]]:
-        """Fetches AI summary for an incident, using local cache when valid."""
+        """Fetches AI summary for an incident, using local cache when valid or when server is offline."""
         cache_file = self._get_cache_path(incident_code)
 
+        # 1. Caché válida reciente
         if not force_refresh and cache_file.exists():
             try:
                 stat = cache_file.stat()
                 age = time.time() - stat.st_mtime
                 if age < self.CACHE_TTL_SECONDS:
-                    with open(cache_file, "r", encoding="utf-8") as f:
-                        return json.load(f)
+                    cached_data = self._read_cache_file(cache_file)
+                    if cached_data:
+                        return cached_data
             except Exception as e:
-                logger.debug("Error leyendo caché de %s: %s", incident_code, e)
+                logger.debug("Error comprobando caché de %s: %s", incident_code, e)
 
-        # Si el servidor ya falló repetidamente, evitar timeouts en bucle
+        # 2. Si el servidor ya falló repetidamente, usar caché en disco existente (resiliencia offline)
         if self._server_offline:
+            if cache_file.exists():
+                return self._read_cache_file(cache_file)
             return None
 
+        # 3. Petición de red contra endpoint principal y fallbacks
         try:
             data = self._fetch_from_url(self.base_url, incident_code)
             if data:
@@ -1385,12 +1404,16 @@ class EpsilonClient:
             if self._consecutive_failures >= self.max_consecutive_failures:
                 self._server_offline = True
                 logger.warning(
-                    "Servicio Epsilon no disponible en %s (%s). Se continuará la evaluación usando los metadatos de los tickets.",
+                    "Servicio Epsilon no disponible en %s (%s). Se continuará la evaluación usando caché en disco y metadatos de tickets.",
                     self.base_url,
                     net_err
                 )
             else:
                 logger.debug("Epsilon no disponible o error para %s (%s)", incident_code, net_err)
+
+            # Fallback a caché local si la red falló y tenemos archivo en disco (resiliencia offline)
+            if cache_file.exists():
+                return self._read_cache_file(cache_file)
 
         return None
 
@@ -1491,12 +1514,21 @@ def evaluate_incidents_batch(
 
             resumen_ia_block = None
             if epsilon_data:
+                hitos = epsilon_data.get("hitosTecnicos") or epsilon_data.get("hitos_tecnicos") or []
+                ultimo_hito = hitos[-1] if isinstance(hitos, list) and len(hitos) > 0 else ""
+                solucion_val = epsilon_data.get("solucion") or ultimo_hito or "En análisis técnico por equipo resolutor."
+
+                bloqueos_raw = epsilon_data.get("bloqueos", [])
+                bloqueos_str = "; ".join(bloqueos_raw) if isinstance(bloqueos_raw, list) else str(bloqueos_raw or "")
+                siguiente_accion_val = epsilon_data.get("siguienteAccion") or epsilon_data.get("siguiente_accion") or bloqueos_str or "Seguimiento técnico en curso."
+
                 resumen_ia_block = {
                     "problema": epsilon_data.get("problema", ""),
                     "impacto": epsilon_data.get("impacto", ""),
-                    "solucion": epsilon_data.get("solucion", ""),
-                    "bloqueos": "; ".join(epsilon_data.get("bloqueos", [])) if isinstance(epsilon_data.get("bloqueos"), list) else str(epsilon_data.get("bloqueos", "")),
-                    "siguiente_accion": epsilon_data.get("siguienteAccion", "")
+                    "solucion": solucion_val,
+                    "bloqueos": bloqueos_str,
+                    "siguiente_accion": siguiente_accion_val,
+                    "hitos_tecnicos": hitos if isinstance(hitos, list) else []
                 }
 
             high_priority_items.append({

@@ -406,8 +406,23 @@ def test_should_set_server_offline_after_consecutive_failures(tmp_path):
             client.get_resumen_ia(f"INC000{i}")
 
         assert client._server_offline is True
-        # Once offline, next call should return None immediately
+        # Once offline, call for non-cached incident should return None immediately
         assert client.get_resumen_ia("INC999") is None
+
+
+def test_should_fallback_to_cached_file_when_server_is_offline(tmp_path):
+    cache_dir = tmp_path / "cache"
+    cache_dir.mkdir()
+    code = "INC000789"
+    fake_data = {"codigo": code, "problema": "Cached problem offline"}
+    (cache_dir / f"{code}.json").write_text(json.dumps(fake_data), encoding="utf-8")
+
+    client = EpsilonClient(cache_dir=cache_dir)
+    client._server_offline = True
+
+    # Even though server is offline, existing cached file is returned (offline resilience)
+    res = client.get_resumen_ia(code)
+    assert res == fake_data
 
 
 def test_should_resolve_default_input_file_from_index_json(tmp_path):
