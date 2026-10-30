@@ -644,12 +644,28 @@
     },
     "INC000004168775": {
       "apertura": {
-        "completo": "Se notifica incidencia de prioridad alta P2 (INC000004168775) por indisponibilidad parcial en componentes de middleware y almacenamiento. La degradación compromete servicios intermedios de almacenamiento gestionados por SPAIN ALMACENAMIENTO, manteniéndose activos los canales de negocio mediante redundancias de infraestructura. Los especialistas de almacenamiento y sistemas intervienen en la plataforma para restablecer el servicio completo de middleware y normalizar la sincronización de datos. Próxima actualización en 2 horas.",
-        "breve": "Apertura P2 (INC000004168775): Indisponibilidad parcial en middleware y almacenamiento. Canales activos por redundancia. SPAIN ALMACENAMIENTO trabajando en restablecimiento. Próxima actualización en 2 horas.",
+        "completo": "Se declara incidencia crítica P1 (INC000004168775) por indisponibilidad total en componentes core de middleware y almacenamiento de SPAIN ALMACENAMIENTO, clasificada en SL1 por impacto transversal en sistemas corporativos. La anomalía afecta la sincronización y persistencia de datos. Los especialistas de almacenamiento y sistemas intervienen con máxima prioridad sobre la infraestructura para aislar la causa raíz y restablecer el servicio a la mayor brevedad. Próxima actualización en 30 minutos.",
+        "breve": "Apertura P1 (INC000004168775): Indisponibilidad crítica en middleware y almacenamiento core (SL1). SPAIN ALMACENAMIENTO interviniendo infraestructura. Próxima actualización 30 min.",
         "generado_por_agente": true,
         "origen": "incident-reporter",
-        "conteo_palabras_completo": 66,
-        "conteo_palabras_breve": 23
+        "conteo_palabras_completo": 69,
+        "conteo_palabras_breve": 21
+      },
+      "seguimiento": {
+        "completo": "Seguimiento de la incidencia crítica P1 (INC000004168775) en SPAIN ALMACENAMIENTO. Los grupos resolutores han identificado saturación en las controladoras de almacenamiento de middleware. Se ejecutan maniobras de rebalanceo de carga y reinicio secuencial de procesos para restablecer los accesos de datos. Se mantiene monitorización activa para asegurar la estabilidad operativa y descartar degradación en servicios dependientes. Próxima actualización en 30 minutos.",
+        "breve": "Seguimiento P1 (INC000004168775): Rebalanceo de controladoras y reinicio de procesos en SPAIN ALMACENAMIENTO; monitorizando recuperación de accesos a datos.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 62,
+        "conteo_palabras_breve": 18
+      },
+      "cierre": {
+        "completo": "Queda resuelta y cerrada la incidencia crítica P1 (INC000004168775) en SPAIN ALMACENAMIENTO. Tras las intervenciones técnicas de rebalanceo y estabilización de controladoras de almacenamiento, se confirma la recuperación íntegra de la persistencia de datos y middleware corporativo. Los sistemas dependientes operan con latencias y rendimiento nominales, verificándose la total ausencia de impacto en los servicios.",
+        "breve": "Cierre P1 (INC000004168775): Normalizado el servicio en SPAIN ALMACENAMIENTO tras estabilizar controladoras de almacenamiento; middleware operando con rendimiento nominal.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 55,
+        "conteo_palabras_breve": 19
       }
     },
     "INC000004152079": {

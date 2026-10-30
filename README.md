@@ -3,6 +3,7 @@
 Plataforma analítica y de reporting para la monitorización de calidad técnica en despliegues (*releases*), gestión de incidencias masivas y análisis postmortem operativo (entorno Orange).
 
 El repositorio centraliza:
+
 1. **La suite completa de frontends web (dashboards)**: Portal unificado con buscador y Resumen IA en tiempo real (Epsilon IA), Incidencias Masivas, Postmortem/Release, KPIs Históricos de Release, el editor/visor de **Reportes de Incidencias** y el **Catálogo de Agentes IA y Skills**.
 2. **El motor de conversión y normalización en Python**: Ingesta por lotes o web de CSVs de Remedy, detección de encoding/delimitador y pre-cálculo de KPIs analíticas.
 3. **El generador de presentaciones ejecutivas en PowerPoint (`.pptx`)**: Informes corporativos de release e incidencias individuales bajo demanda.
@@ -13,7 +14,7 @@ El repositorio centraliza:
 ## 📦 Arquitectura de Componentes
 
 | Componente | Ubicación | Descripción | Tecnología |
-|-----------|-----------|-------------|-----------|
+| ----------- | ----------- | ------------- | ----------- |
 | **Dashboards** | [`dashboards/`](dashboards/) | Frontends web estáticos: Portal, Incidencias Masivas, Postmortem/Release, Release KPIs, Reportes de Incidencias y **Catálogo de Agentes IA** | HTML5 / CSS3 / JavaScript (Vanilla ES6+) |
 | **Converters** | [`converters/`](converters/) | Motor de procesamiento CSV→JSON, saneamiento, validación y métricas pre-calculadas | Python 3.10+ / 3.11 |
 | **Report Generator** | [`converters/src/report_generator/`](converters/src/report_generator/) | Generación programática de presentaciones ejecutivas corporativas (`.pptx`) | `python-pptx`, `matplotlib`, `plotly` |
@@ -95,6 +96,7 @@ Los scripts de conversión están en [`converters/scripts/bin/`](converters/scri
 | `convert_postmortems.bat/sh` | Convierte postmortems a JSON | `data/input/*.csv` |
 
 **Características:**
+
 - ✅ Auto-detección de encoding (UTF-8, Windows-1252, Latin-1, ISO-8859-15)
 - ✅ Auto-detección de delimitadores (coma, punto y coma, tabulación)
 - ✅ Normalización de campos automática
@@ -106,6 +108,7 @@ Los scripts de conversión están en [`converters/scripts/bin/`](converters/scri
 ### Uso Programático en Python
 
 **Convertir Incidencias Masivas:**
+
 ```python
 import sys
 from pathlib import Path
@@ -128,6 +131,7 @@ print(f"Encoding detectado: {report['encoding_detected']}")
 ```
 
 **Convertir Postmortems:**
+
 ```python
 import sys
 from pathlib import Path
@@ -174,8 +178,9 @@ console.log(`Tendencia 7 días: ${metadata.kpis.trend_7d}%`);
 ## 📚 Documentación
 
 ### Guías Principales
+
 | Documento | Contenido |
-|-----------|-----------|
+| ----------- | ----------- |
 | **[docs/QUICKSTART.md](docs/QUICKSTART.md)** | Setup completo |
 | **[docs/README.md](docs/README.md)** | Índice de documentación |
 | **[docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md)** | Solución de problemas comunes |
@@ -183,17 +188,20 @@ console.log(`Tendencia 7 días: ${metadata.kpis.trend_7d}%`);
 | **[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)** | Procedimientos de despliegue |
 
 ### Converters (API, arquitectura, testing)
+
 | Documento | Contenido |
-|-----------|-----------|
+| ----------- | ----------- |
 | **[converters/docs/API.md](converters/docs/API.md)** | Referencia técnica de los conversores |
+| **[docs/CATALOGO-INCIDENCIAS-ALTA-PRIORIDAD.md](docs/CATALOGO-INCIDENCIAS-ALTA-PRIORIDAD.md)** | Especificación técnica del catálogo de alta prioridad (`high_priority_notifications.json`) |
 | **[converters/docs/ARCHITECTURE.md](converters/docs/ARCHITECTURE.md)** | Arquitectura del módulo de conversión |
 | **[converters/docs/PERFORMANCE.md](converters/docs/PERFORMANCE.md)** | Decisiones de optimización, benchmarks |
 | **[converters/docs/TEST_STRUCTURE.md](converters/docs/TEST_STRUCTURE.md)** | Organización de tests por funcionalidad |
 | **[converters/docs/TESTING_BEST_PRACTICES.md](converters/docs/TESTING_BEST_PRACTICES.md)** | Guía de pytest fixtures y aislamiento |
 
 ### Especificaciones
+
 | Documento | Contenido |
-|-----------|-----------|
+| ----------- | ----------- |
 | **[converters/specs/006-optimize-csv-converters/](converters/specs/006-optimize-csv-converters/)** | Optimización de los conversores |
 | **[converters/specs/004-postmortem-converter/](converters/specs/004-postmortem-converter/)** | Conversor de postmortem |
 | **[converters/specs/001-csv-to-json-workflow/](converters/specs/001-csv-to-json-workflow/)** | Flujo CSV→JSON original |
@@ -337,6 +345,7 @@ Generación de Informes PPTX / PDF (report_generator / html2pdf / pptxgen)
 ## 📊 Informe Ejecutivo de Incidencias Postmortem (PowerPoint)
 
 Genera bajo demanda presentaciones PowerPoint corporativas (`.pptx`) con el diseño y formato oficial de Orange a partir de datos de postmortem o páginas de Confluence:
+
 - **UI en Gestión de Problemas**: Botón `📊 Generar PPT` en cada incidencia en `/problemas`.
 - **CLI**: `python converters/cli/generate_executive_report.py --ref <CODIGO> --title "<TITULO>"`
 - **Detalles y arquitectura**: Ver [docs/INFORME-EJECUTIVO-POSTMORTEM.md](docs/INFORME-EJECUTIVO-POSTMORTEM.md).
@@ -352,6 +361,7 @@ El despliegue se realiza en 1 clic de forma segura y desatendida desde tu termin
 ```
 
 Opciones comunes:
+
 ```powershell
 .\scripts\deploy-production.ps1 -SkipCatalogBuild  # Desplegar sin regenerar el catálogo de agentes
 .\scripts\deploy-production.ps1 -VerifyOnly        # Consultar sondas de salud y estado en el VPS sin desplegar
@@ -360,6 +370,7 @@ Opciones comunes:
 ```
 
 En el propio servidor (`/infocodes/project/release-dashboard-application`), se dispone de herramientas de consulta rápida:
+
 - `./status.sh`: Sondas de salud Nginx y comprobación de endpoints HTTP.
 - `./rollback.sh`: Reversión inmediata a una copia previa si fuera necesario.
 

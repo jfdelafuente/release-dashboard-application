@@ -24,6 +24,7 @@
 - **[MANUAL-OPERADOR-CONSOLA-OPERATIVA.md](MANUAL-OPERADOR-CONSOLA-OPERATIVA.md)**: Manual de operación en tiempo real para el Incident Manager en la Consola de Emergencias IT Orange (triaje cuantitativo de 6 procesos críticos, ciclo de 4 estados, herramientas de acción inmediata: Reclasificación Remedy, Convocatoria War Room y Sugerir Borrador IA, cronometraje anti-drift a 45m/105m, gobernanza de workarounds con candado y reporte normalizado en 4 bloques).
 
 ### ⚙️ Conversores y Tratamiento de Datos
+- **[CATALOGO-INCIDENCIAS-ALTA-PRIORIDAD.md](CATALOGO-INCIDENCIAS-ALTA-PRIORIDAD.md)**: Especificación técnica y funcional del catálogo unificado de incidencias de alta prioridad y emergencias IT (`high_priority_notifications.json`), detalle de esquema `_metadata` + `data`, reglas ITIL, SLAs y gobernanza.
 - **[../converters/docs/API.md](../converters/docs/API.md)**: Contrato de datos y especificación de esquemas JSON generados (`_metadata` + `data`).
 - **[../converters/docs/CSV-TO-JSON-WORKFLOW.md](../converters/docs/CSV-TO-JSON-WORKFLOW.md)**: Flujo detallado de ingesta, normalización heurística, detección de encoding y validaciones.
 - **[../converters/docs/ARCHITECTURE.md](../converters/docs/ARCHITECTURE.md)**: Diseño y arquitectura modular del paquete conversor Python.
