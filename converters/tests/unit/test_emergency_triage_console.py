@@ -167,3 +167,166 @@ UMBRAL DE EMERGENCIA SUPERADO: {umbral}"""
     assert delta2_count == kpis.get("discrepancias_delta2_mayor_count")
     assert delta1_count == kpis.get("discrepancias_delta1_moderada_count")
 
+
+# ==============================================================================
+# PRUEBAS UNITARIAS PARA EL MÓDULO 2: ORQUESTADOR DEL PROCESO OPERATIVO
+# ==============================================================================
+
+PAPS_JSON_PATH = REPO_ROOT / "data" / "scheduled_changes_pap.json"
+
+
+def test_module_2_scheduled_changes_pap_dataset():
+    """Valida la integridad del catálogo de Trabajos Programados (PaP) recientes para detección de Rollback."""
+    assert PAPS_JSON_PATH.exists(), f"El archivo {PAPS_JSON_PATH} debe existir"
+
+    with open(PAPS_JSON_PATH, "r", encoding="utf-8") as f:
+        pap_data = json.load(f)
+
+    meta = pap_data.get("_metadata", {})
+    assert "total_changes" in meta
+    assert meta["total_changes"] >= 5
+    assert meta.get("filter_window_hours") == 6
+
+    changes = pap_data.get("changes", [])
+    assert len(changes) == meta["total_changes"]
+
+    # Validar campos obligatorios de cada PaP para permitir la orden formal de Rollback
+    for pap in changes:
+        assert pap.get("crq", "").startswith("CRQ"), "Debe tener un código CRQ válido"
+        assert len(pap.get("titulo", "")) > 0
+        assert isinstance(pap.get("sistemas", []), list) and len(pap["sistemas"]) > 0
+        assert len(pap.get("proceso_relacionado", "")) > 0
+        assert len(pap.get("rollback_plan", "")) > 0, "Debe tener un plan de rollback documentado"
+        assert len(pap.get("tiempo_rollback_estimado", "")) > 0
+        assert len(pap.get("contacto_guardia", "")) > 0
+
+    # Validar que existe al menos el cambio de CRM4TELCO y bffclientdashboard
+    crqs = [p["crq"] for p in changes]
+    assert "CRQ000000190422" in crqs
+    assert "CRQ000000190311" in crqs
+
+
+def test_module_2_index_html_orchestrator_elements():
+    """Valida que index.html contenga todos los componentes del Módulo 2 (War Room, Relojes, PaP, Bitácora)."""
+    html = (CONSOLE_DIR / "index.html").read_text(encoding="utf-8")
+
+    # 1. Pestaña y contador del Orquestador
+    assert 'id="tab-orchestrator"' in html
+    assert 'id="count-orchestrator"' in html
+
+    # 2. Modal Principal del Orquestador Operativo
+    assert 'id="modal-orchestrator"' in html
+    assert 'id="btn-orch-close"' in html
+    assert 'id="orch-inc-id"' in html
+    assert 'id="orch-im-name"' in html
+    assert 'id="orch-sev-badge"' in html
+    assert 'id="orch-global-aging-tag"' in html
+
+    # 3. Cuatro Relojes de Escalado Controlados
+    assert 'id="orch-clock-20m"' in html
+    assert 'id="clock-20m-timer"' in html
+    assert 'id="btn-action-20m"' in html
+
+    assert 'id="orch-clock-45m"' in html
+    assert 'id="clock-45m-timer"' in html
+    assert 'id="btn-action-45m"' in html
+
+    assert 'id="orch-clock-105m"' in html
+    assert 'id="clock-105m-timer"' in html
+    assert 'id="btn-action-105m"' in html
+
+    assert 'id="orch-clock-120m"' in html
+    assert 'id="clock-120m-timer"' in html
+    assert 'id="btn-action-120m"' in html
+
+    # 4. War Room & Microsoft Teams
+    assert 'id="orch-warroom-state"' in html
+    assert 'id="orch-teams-url-preview"' in html
+    assert 'id="orch-btn-join-teams"' in html
+    assert 'id="orch-btn-copy-teams"' in html
+
+    # 5. Monitor PaP
+    assert 'id="orch-pap-status-badge"' in html
+    assert 'id="orch-pap-container"' in html
+
+    # 6. Bitácora Interactiva (Live Incident Log)
+    assert 'id="orch-timeline-container"' in html
+    assert 'id="orch-log-form"' in html
+    assert 'id="orch-log-role"' in html
+    assert 'id="orch-log-text"' in html
+    assert 'id="btn-copy-full-log"' in html
+    assert 'id="btn-clear-log"' in html
+
+    # 7. Modales de Orden de Rollback y Notificación Ejecutiva
+    assert 'id="modal-rollback-order"' in html
+    assert 'id="rollback-order-text"' in html
+    assert 'id="btn-rollback-confirm-copy"' in html
+
+    assert 'id="modal-executive-comm"' in html
+    assert 'id="exec-comm-completo"' in html
+    assert 'id="exec-comm-breve"' in html
+    assert 'id="btn-copy-exec-completo"' in html
+
+
+def test_module_2_triage_css_orchestrator_styles():
+    """Valida las clases y reglas de estilo para los componentes del Módulo 2."""
+    css = (CONSOLE_DIR / "triage.css").read_text(encoding="utf-8")
+
+    # Diálogo modal y grid
+    assert ".orch-modal-dialog" in css
+    assert ".orch-clocks-grid" in css
+    assert ".orch-clock-card" in css
+    assert ".orch-clock-alarm-zone" in css
+    assert ".orch-clock-alarm-zone.is-alarm" in css
+
+    # War Room y Monitor PaP
+    assert ".orch-war-room-box" in css
+    assert ".orch-pap-box" in css
+    assert ".orch-btn-rollback" in css
+
+    # Bitácora
+    assert ".orch-timeline-container" in css
+    assert ".orch-timeline-entry" in css
+    assert ".orch-log-form" in css
+
+    # Botones de acción en tabla y footer
+    assert ".triage-btn-table-orchestrator" in css
+    assert ".triage-btn-action-orchestrator" in css
+
+
+def test_module_2_triage_js_orchestrator_logic():
+    """Valida la presencia y consistencia de las funciones operativas del Módulo 2 en triage.js."""
+    js = (CONSOLE_DIR / "triage.js").read_text(encoding="utf-8")
+
+    # Módulo 2 header y estado
+    assert "MÓDULO 2: ORQUESTADOR DEL PROCESO OPERATIVO DE EMERGENCIAS" in js
+    assert "Carlos Morales · Incident Manager de Guardia" in js
+    assert "loadScheduledChangesPaP" in js
+    assert "findMatchingPaP" in js
+
+    # Teams War Room
+    assert "generateTeamsWarRoomUrl" in js
+    assert "teams.microsoft.com" in js
+    assert "buildTeamsWarRoomCallText" in js
+
+    # Bitácora
+    assert "getOrInitLog" in js
+    assert "saveLog" in js
+    assert "addLogEntry" in js
+    assert "renderTimelineEntries" in js
+    assert "formatFullLogForClipboard" in js
+    assert "getRoleMeta" in js
+
+    # PaP y Rollback
+    assert "renderPapSection" in js
+    assert "openRollbackOrderModal" in js
+    assert "ORDEN FORMAL DE ROLLBACK INMEDIATO" in js
+
+    # Relojes y Escalados
+    assert "startOrchestratorClocks" in js
+    assert "updateOrchestratorClocks" in js
+    assert "openExecutiveCommModal" in js
+    assert "openEmergencyOrchestrator" in js
+    assert "closeEmergencyOrchestrator" in js
+
+

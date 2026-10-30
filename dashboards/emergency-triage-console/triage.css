@@ -1610,3 +1610,880 @@ body {
     grid-template-columns: 1fr;
   }
 }
+
+/* ==========================================================================
+   9. MÓDULO 2: ORQUESTADOR DEL PROCESO OPERATIVO DE EMERGENCIAS (SL1/P1)
+   War Room Teams · Monitor PaP & Rollback · 4 Relojes de Escalado · Live Log
+   ========================================================================== */
+
+/* Badges de Módulo en la Cabecera */
+.module-1-badge {
+  background: rgba(255, 121, 0, 0.12);
+  color: #C05A00;
+  border: 1px solid rgba(255, 121, 0, 0.35);
+}
+
+.module-2-badge {
+  background: rgba(239, 68, 68, 0.12);
+  color: #DC2626;
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.badge-orchestrator-count {
+  background: #DC2626 !important;
+  color: #FFFFFF !important;
+  font-weight: 800;
+}
+
+/* Botones de Activación del Orquestador en Tabla y Detalle */
+.triage-btn-action-orchestrator {
+  background: #B91C1C;
+  color: #FFFFFF;
+  border: 1px solid #991B1B;
+  border-radius: var(--radius-xs);
+  padding: 5px 10px;
+  font-size: 11.5px;
+  font-weight: 700;
+  font-family: var(--font-sans);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  transition: all 0.15s ease;
+  box-shadow: 0 1px 2px rgba(185, 28, 28, 0.2);
+}
+
+.triage-btn-action-orchestrator:hover {
+  background: #DC2626;
+  border-color: #B91C1C;
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(220, 38, 38, 0.35);
+}
+
+.triage-btn-table-orchestrator {
+  background: rgba(239, 68, 68, 0.1);
+  color: #B91C1C;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: var(--radius-xs);
+  padding: 3px 8px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.15s ease;
+}
+
+.triage-btn-table-orchestrator:hover {
+  background: #DC2626;
+  color: #FFFFFF;
+  border-color: #DC2626;
+}
+
+/* Contenedor Modal del Orquestador Operativo */
+.orch-modal-dialog {
+  max-width: 1160px;
+  width: 95vw;
+  max-height: 94vh;
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  overflow: hidden;
+  background: #F8F6F2;
+  border: 1px solid #D6D0C5;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.45);
+}
+
+.orch-modal-header {
+  padding: 18px 24px;
+  background: #181614;
+  color: #FFFFFF;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  border-bottom: 2px solid var(--triage-orange);
+  gap: 16px;
+}
+
+.orch-title-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.orch-alert-pulse-icon {
+  font-size: 24px;
+  animation: orch-pulse-siren 1.5s infinite;
+}
+
+@keyframes orch-pulse-siren {
+  0%, 100% { transform: scale(1); filter: drop-shadow(0 0 2px #EF4444); }
+  50% { transform: scale(1.15); filter: drop-shadow(0 0 8px #EF4444); }
+}
+
+.orch-title-col {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.orch-eyebrow {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--triage-orange);
+}
+
+.orch-modal-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 800;
+  color: #FFFFFF;
+  letter-spacing: -0.01em;
+}
+
+.orch-meta-badges {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+
+.orch-badge-id {
+  background: #2A2622;
+  color: #FFFFFF;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: var(--radius-xs);
+  border: 1px solid #453E37;
+}
+
+.orch-badge-sev {
+  background: #EF4444;
+  color: #FFFFFF;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 4px 10px;
+  border-radius: var(--radius-xs);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  box-shadow: 0 1px 3px rgba(239, 68, 68, 0.4);
+}
+
+.orch-badge-status {
+  background: #2563EB;
+  color: #FFFFFF;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 8px;
+  border-radius: var(--radius-xs);
+}
+
+.orch-badge-im {
+  background: rgba(255, 121, 0, 0.15);
+  color: #FFE6D0;
+  font-size: 12px;
+  padding: 4px 10px;
+  border-radius: var(--radius-xs);
+  border: 1px solid rgba(255, 121, 0, 0.4);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.orch-badge-im strong {
+  color: #FFAA55;
+  font-weight: 700;
+}
+
+.orch-btn-close {
+  background: #2A2622;
+  border: 1px solid #453E37;
+  color: #D1D5DB;
+  font-size: 14px;
+  padding: 6px 10px;
+  cursor: pointer;
+  border-radius: var(--radius-xs);
+  transition: all 0.15s ease;
+}
+
+.orch-btn-close:hover {
+  background: #DC2626;
+  border-color: #DC2626;
+  color: #FFFFFF;
+}
+
+.orch-modal-body {
+  padding: 20px 24px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* --------------------------------------------------------------------------
+   Sección 1: Relojes y Temporizadores de Escalado Controlados
+   -------------------------------------------------------------------------- */
+.orch-clocks-section {
+  background: #FFFFFF;
+  border: 1px solid var(--triage-border);
+  border-radius: var(--radius-md);
+  padding: 16px 20px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.04);
+}
+
+.orch-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.orch-section-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.orch-section-icon {
+  font-size: 22px;
+}
+
+.orch-section-title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--triage-text-main);
+  letter-spacing: -0.01em;
+}
+
+.orch-section-subtitle {
+  margin: 2px 0 0;
+  font-size: 11.5px;
+  color: var(--triage-text-muted);
+}
+
+.orch-aging-tag {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 700;
+  background: #F3F0EA;
+  color: var(--triage-text-main);
+  padding: 4px 10px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--triage-border);
+}
+
+.orch-clocks-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+}
+
+.orch-clock-card {
+  background: #FAF8F5;
+  border: 1px solid #E4DFD5;
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.orch-clock-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.orch-clock-name {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--triage-text-main);
+  line-height: 1.25;
+}
+
+.orch-clock-limit {
+  font-size: 10px;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  background: #EAE5DB;
+  color: var(--triage-text-muted);
+  padding: 2px 5px;
+  border-radius: 3px;
+  white-space: nowrap;
+}
+
+.orch-clock-time-display {
+  font-family: var(--font-mono);
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--triage-text-main);
+  letter-spacing: -0.03em;
+  margin: 2px 0;
+}
+
+.orch-clock-progress-bar {
+  height: 6px;
+  background: #E5E0D5;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.orch-clock-progress-fill {
+  height: 100%;
+  background: #10B981;
+  border-radius: 3px;
+  transition: width 0.3s ease, background 0.3s ease;
+}
+
+.orch-clock-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--triage-text-muted);
+}
+
+.orch-status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #10B981;
+}
+
+.orch-btn-clock-action {
+  margin-top: 4px;
+  background: #FFFFFF;
+  border: 1px solid var(--triage-border);
+  color: var(--triage-text-main);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 6px 10px;
+  border-radius: var(--radius-xs);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  transition: all 0.15s ease;
+}
+
+.orch-btn-clock-action:hover {
+  background: #F3EFE9;
+  border-color: #C0BAAF;
+}
+
+/* Modificadores de Estado de los Relojes */
+.orch-clock-card.is-warning {
+  border-color: #FCD34D;
+  background: #FFFBEB;
+}
+.orch-clock-card.is-warning .orch-clock-progress-fill {
+  background: #F59E0B;
+}
+.orch-clock-card.is-warning .orch-clock-time-display {
+  color: #B45309;
+}
+.orch-clock-card.is-warning .orch-status-dot {
+  background: #F59E0B;
+}
+
+.orch-clock-card.is-alarm {
+  border-color: #FCA5A5;
+  background: #FEF2F2;
+  box-shadow: 0 0 0 1px rgba(239, 68, 68, 0.2);
+}
+.orch-clock-card.is-alarm .orch-clock-progress-fill {
+  background: #EF4444;
+}
+.orch-clock-card.is-alarm .orch-clock-time-display {
+  color: #DC2626;
+}
+.orch-clock-card.is-alarm .orch-status-dot {
+  background: #EF4444;
+  animation: orch-pulse-dot 1s infinite;
+}
+
+.orch-clock-card.is-alarm .orch-btn-clock-action {
+  background: #EF4444;
+  border-color: #DC2626;
+  color: #FFFFFF;
+  font-weight: 700;
+}
+.orch-clock-card.is-alarm .orch-btn-clock-action:hover {
+  background: #DC2626;
+}
+
+.orch-clock-card.is-completed {
+  border-color: #86EFAC;
+  background: #F0FDF4;
+}
+.orch-clock-card.is-completed .orch-clock-time-display {
+  color: #166534;
+}
+.orch-clock-card.is-completed .orch-clock-progress-fill {
+  background: #10B981;
+}
+
+.orch-clock-alarm-zone.is-alarm {
+  border-color: #DC2626;
+  background: #450A0A;
+  color: #FFFFFF;
+}
+.orch-clock-alarm-zone.is-alarm .orch-clock-name {
+  color: #FCA5A5;
+}
+.orch-clock-alarm-zone.is-alarm .orch-clock-time-display {
+  color: #FFFFFF;
+}
+.orch-clock-alarm-zone.is-alarm .orch-clock-limit {
+  background: #7F1D1D;
+  color: #FCA5A5;
+}
+.orch-clock-alarm-zone.is-alarm .orch-clock-status {
+  color: #FECACA;
+}
+
+@keyframes orch-pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(1.3); }
+}
+
+/* --------------------------------------------------------------------------
+   Sección 2: Grid Dos Columnas (War Room + Monitor PaP)
+   -------------------------------------------------------------------------- */
+.orch-two-cols-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.orch-card-box {
+  background: #FFFFFF;
+  border: 1px solid var(--triage-border);
+  border-radius: var(--radius-md);
+  padding: 16px 20px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.04);
+  display: flex;
+  flex-direction: column;
+}
+
+.orch-box-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #ECE7DD;
+}
+
+.orch-box-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.orch-box-icon {
+  font-size: 18px;
+}
+
+.orch-box-title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--triage-text-main);
+}
+
+.orch-box-desc {
+  margin: 0 0 12px;
+  font-size: 12px;
+  color: var(--triage-text-muted);
+  line-height: 1.45;
+}
+
+/* War Room Teams */
+.orch-war-room-box {
+  background: var(--triage-surface);
+  border: 1px solid var(--triage-border);
+}
+
+.orch-pap-box {
+  background: var(--triage-surface);
+  border: 1px solid var(--triage-border);
+}
+
+.orch-war-room-state-pill {
+  font-size: 11px;
+  font-weight: 700;
+  background: #DCFCE7;
+  color: #166534;
+  padding: 3px 8px;
+  border-radius: var(--radius-pill);
+  border: 1px solid #86EFAC;
+}
+
+.orch-teams-link-box {
+  background: #F4F1EA;
+  border: 1px solid #DDD7CC;
+  border-radius: var(--radius-sm);
+  padding: 12px;
+  margin-bottom: 12px;
+}
+
+.orch-teams-link-text {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  color: #1E40AF;
+  word-break: break-all;
+  background: #FFFFFF;
+  padding: 8px 10px;
+  border-radius: 4px;
+  border: 1px solid #D5CEBF;
+  margin-bottom: 10px;
+}
+
+.orch-teams-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.orch-btn-teams-primary {
+  background: #464EB8; /* Microsoft Teams Indigo Corporativo */
+  color: #FFFFFF;
+  text-decoration: none;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 7px 14px;
+  border-radius: var(--radius-xs);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.15s ease;
+}
+
+.orch-btn-teams-primary:hover {
+  background: #3B429F;
+  color: #FFFFFF;
+  transform: translateY(-1px);
+}
+
+.orch-btn-teams-copy {
+  background: #FFFFFF;
+  border: 1px solid var(--triage-border);
+  color: var(--triage-text-main);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 7px 12px;
+  border-radius: var(--radius-xs);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.15s ease;
+}
+
+.orch-btn-teams-copy:hover {
+  background: #EFECE6;
+  border-color: #BCB4A5;
+}
+
+.orch-quorum-checklist {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.orch-quorum-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--triage-text-muted);
+  letter-spacing: 0.04em;
+}
+
+.orch-quorum-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.orch-quorum-tag {
+  background: #F5F3EF;
+  border: 1px solid #E0DBD1;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: var(--radius-xs);
+  color: var(--triage-text-main);
+}
+
+/* Monitor de Trabajos Programados (PaP) */
+.orch-pap-badge {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: var(--radius-pill);
+}
+
+.orch-pap-badge.is-matched {
+  background: #FEE2E2;
+  color: #991B1B;
+  border: 1px solid #FCA5A5;
+  animation: orch-pulse-dot 1.5s infinite;
+}
+
+.orch-pap-badge.is-none {
+  background: #DCFCE7;
+  color: #166534;
+  border: 1px solid #86EFAC;
+}
+
+.orch-pap-alert-card {
+  background: #FFF5F5;
+  border: 1.5px solid #F87171;
+  border-radius: var(--radius-sm);
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.orch-pap-top-alert {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  color: #991B1B;
+  font-size: 12.5px;
+  font-weight: 700;
+}
+
+.orch-pap-details-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  background: #FFFFFF;
+  border: 1px solid #FECACA;
+  border-radius: 4px;
+  padding: 10px;
+  font-size: 11.5px;
+}
+
+.orch-pap-field strong {
+  display: block;
+  font-size: 10px;
+  text-transform: uppercase;
+  color: var(--triage-text-muted);
+  margin-bottom: 2px;
+}
+
+.orch-pap-rollback-plan-box {
+  background: #FEF2F2;
+  border-left: 3px solid #DC2626;
+  padding: 8px 10px;
+  font-size: 11.5px;
+  color: #7F1D1D;
+  line-height: 1.4;
+}
+
+.orch-btn-rollback {
+  background: #DC2626;
+  color: #FFFFFF;
+  border: 1px solid #B91C1C;
+  font-size: 13px;
+  font-weight: 800;
+  padding: 10px 16px;
+  border-radius: var(--radius-xs);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: 0 2px 6px rgba(220, 38, 38, 0.35);
+  animation: orch-pulse-btn-rollback 2s infinite;
+  transition: all 0.2s ease;
+}
+
+.orch-btn-rollback:hover {
+  background: #B91C1C;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.5);
+}
+
+@keyframes orch-pulse-btn-rollback {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.5); }
+  50% { box-shadow: 0 0 0 8px rgba(220, 38, 38, 0); }
+}
+
+.orch-pap-rollback-in-progress {
+  background: #EFF6FF;
+  border: 1.5px solid #60A5FA;
+  border-radius: var(--radius-sm);
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.orch-pap-no-match-box {
+  background: #F7FBF8;
+  border: 1px solid #D5E8D8;
+  border-radius: var(--radius-sm);
+  padding: 18px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #274E2B;
+  font-size: 12.5px;
+}
+
+/* --------------------------------------------------------------------------
+   Sección 3: Bitácora Interactiva del Ticket Masivo (Live Incident Log)
+   -------------------------------------------------------------------------- */
+.orch-log-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.orch-log-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.orch-timeline-container {
+  max-height: 240px;
+  overflow-y: auto;
+  border: 1px solid #E5E0D5;
+  border-radius: var(--radius-sm);
+  background: #FAF8F5;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.orch-timeline-entry {
+  background: #FFFFFF;
+  border: 1px solid #E8E3D8;
+  border-left: 3px solid #8A857C;
+  border-radius: 4px;
+  padding: 8px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+}
+
+.orch-timeline-entry.role-im {
+  border-left-color: var(--triage-orange);
+}
+
+.orch-timeline-entry.role-rollback {
+  border-left-color: #DC2626;
+  background: #FFF9F9;
+}
+
+.orch-timeline-entry.role-escalado {
+  border-left-color: #2563EB;
+}
+
+.orch-timeline-entry.role-notificacion {
+  border-left-color: #F59E0B;
+}
+
+.orch-timeline-entry.role-warroom {
+  border-left-color: #464EB8;
+}
+
+.orch-entry-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.orch-entry-role-badge {
+  font-size: 10.5px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 3px;
+  background: #F1ECE2;
+  color: var(--triage-text-main);
+}
+
+.orch-entry-time {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--triage-text-subtle);
+}
+
+.orch-entry-text {
+  color: var(--triage-text-main);
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+.orch-log-form {
+  background: #F4F1EA;
+  border: 1px solid #DDD7CC;
+  border-radius: var(--radius-sm);
+  padding: 12px;
+}
+
+.orch-log-form-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.orch-form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.orch-form-field label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--triage-text-muted);
+}
+
+/* Responsive para el Orquestador */
+@media (max-width: 900px) {
+  .orch-clocks-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .orch-two-cols-grid {
+    grid-template-columns: 1fr;
+  }
+  .orch-log-form-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .orch-log-form-row .orch-form-field {
+    width: 100% !important;
+  }
+}
+
+@media (max-width: 600px) {
+  .orch-clocks-grid {
+    grid-template-columns: 1fr;
+  }
+}

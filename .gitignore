@@ -68,6 +68,7 @@ output/
 !data/output/agents_catalog.json
 !data/output/high_priority_notifications.json
 !data/agent_executive_messages.json
+!data/scheduled_changes_pap.json
 archive/
 
 # Temporary Files

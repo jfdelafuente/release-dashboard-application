@@ -44,7 +44,8 @@
             <span class="triage-eyebrow">Orange Tech Operations · Incident Management</span>
             <div class="triage-title-row">
               <h1 class="triage-title">Consola de Triaje y Reclasificación Automática</h1>
-              <span class="triage-module-badge">Módulo 1</span>
+              <span class="triage-module-badge module-1-badge" title="Motor de Inspección Continua, Umbrales Críticos y Alertas de Subescalación">Módulo 1: Triaje</span>
+              <span class="triage-module-badge module-2-badge" title="Orquestador del Proceso Operativo de Emergencias, War Room, PaP y Relojes">Módulo 2: Orquestador</span>
             </div>
           </div>
         </div>
@@ -146,11 +147,15 @@
 
     <!-- Barra de Filtrado y Búsqueda del Triaje -->
     <nav class="triage-control-bar" aria-label="Filtros y Búsqueda de Triaje">
-      <!-- Pestañas de Triaje -->
+      <!-- Pestañas de Triaje y Orquestador -->
       <div class="triage-tabs-group" role="tablist">
         <button id="tab-reclass-only" class="triage-tab-btn active" role="tab" aria-selected="true" title="Ver solo tickets que requieren reclasificación inmediata en Remedy">
           <span>⚡ Reclasificación Inmediata</span>
           <span id="count-reclass" class="triage-tab-badge">0</span>
+        </button>
+        <button id="tab-orchestrator" class="triage-tab-btn" role="tab" aria-selected="false" title="Filtrar emergencias críticas SL1/P1 activas para gestión operativa en War Room y Relojes">
+          <span>🚨 Orquestador SL1 / P1</span>
+          <span id="count-orchestrator" class="triage-tab-badge badge-orchestrator-count">0</span>
         </button>
         <button id="tab-all" class="triage-tab-btn" role="tab" aria-selected="false" title="Ver todas las incidencias de alta prioridad evaluadas">
           <span>📋 Todas las Evaluadas</span>
@@ -272,6 +277,309 @@
 
         <div style="background: rgba(255, 121, 0, 0.1); border-left: 4px solid var(--triage-orange); padding: 12px 16px; border-radius: 4px;">
           <strong>Regla de Gobernanza de Workarounds:</strong> La aplicación de parches o workarounds provisionales NO desescala automáticamente la severidad del ticket y exige autorización formal de Customer & Service Ops (IM-CSO).
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- MODAL / COCKPIT MÓDULO 2: ORQUESTADOR DEL PROCESO OPERATIVO DE EMERGENCIAS -->
+  <!-- ===================================================================== -->
+  <div id="modal-orchestrator" class="triage-modal-backdrop orch-modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="orch-modal-title">
+    <div class="triage-modal-dialog orch-modal-dialog">
+      
+      <!-- Cabecera del Orquestador Operativo -->
+      <div class="orch-modal-header">
+        <div class="orch-header-left">
+          <div class="orch-title-row">
+            <span class="orch-alert-pulse-icon" aria-hidden="true">🚨</span>
+            <div class="orch-title-col">
+              <span class="orch-eyebrow">Orange Tech Operations · Customer &amp; Service Ops (CSO)</span>
+              <h2 id="orch-modal-title" class="orch-modal-title">
+                Módulo 2: Orquestador del Proceso Operativo de Emergencias
+              </h2>
+            </div>
+          </div>
+          <div class="orch-meta-badges">
+            <span id="orch-inc-id" class="orch-badge-id">INC000000000000</span>
+            <span id="orch-sev-badge" class="orch-badge-sev">SL1 / P1 · Crítica</span>
+            <span id="orch-status-pill" class="orch-badge-status">Asignado</span>
+            <span class="orch-badge-im" title="Incident Manager asignado automáticamente a la emergencia">
+              <span class="orch-im-avatar" aria-hidden="true">👤</span>
+              <span>Incident Manager:</span>
+              <strong id="orch-im-name">Carlos Morales (Turno Activo CSO)</strong>
+            </span>
+          </div>
+        </div>
+        <div class="orch-header-right">
+          <button id="btn-orch-close" class="triage-btn orch-btn-close" aria-label="Cerrar Orquestador">✖</button>
+        </div>
+      </div>
+
+      <!-- Cuerpo del Orquestador Operativo -->
+      <div class="orch-modal-body">
+        
+        <!-- SECCIÓN 1: RELOJES Y TEMPORIZADORES DE ESCALADO CONTROLADOS -->
+        <section class="orch-section orch-clocks-section" aria-label="Relojes y Temporizadores de Escalado Controlados">
+          <div class="orch-section-header">
+            <div class="orch-section-title-wrap">
+              <span class="orch-section-icon" aria-hidden="true">⏱️</span>
+              <div>
+                <h3 class="orch-section-title">Relojes y Temporizadores de Escalado Controlados</h3>
+                <p class="orch-section-subtitle">Sincronizados en tiempo real según el protocolo oficial de Emergencias IT Orange</p>
+              </div>
+            </div>
+            <div id="orch-global-aging-tag" class="orch-aging-tag">⏱️ 0m activa</div>
+          </div>
+
+          <div class="orch-clocks-grid">
+            
+            <!-- Reloj 1: 20 min -->
+            <div class="orch-clock-card" id="orch-clock-20m">
+              <div class="orch-clock-top">
+                <span class="orch-clock-name">1ª Comunicación Ejecutiva</span>
+                <span class="orch-clock-limit">Límite 20m</span>
+              </div>
+              <div class="orch-clock-time-display" id="clock-20m-timer">20:00</div>
+              <div class="orch-clock-progress-bar">
+                <div class="orch-clock-progress-fill" id="clock-20m-fill" style="width: 0%;"></div>
+              </div>
+              <div class="orch-clock-status" id="clock-20m-status">
+                <span class="orch-status-dot"></span>
+                <span class="orch-status-label" id="clock-20m-status-text">Cuenta atrás SLA</span>
+              </div>
+              <button type="button" class="orch-btn-clock-action" id="btn-action-20m" title="Ver y copiar notificación ejecutiva para Dirección">
+                <span aria-hidden="true">📝</span> <span>Ver Notificación</span>
+              </button>
+            </div>
+
+            <!-- Reloj 2: 45 min -->
+            <div class="orch-clock-card" id="orch-clock-45m">
+              <div class="orch-clock-top">
+                <span class="orch-clock-name">1er Escalado Telefónico</span>
+                <span class="orch-clock-limit">Límite 45m</span>
+              </div>
+              <div class="orch-clock-time-display" id="clock-45m-timer">45:00</div>
+              <div class="orch-clock-progress-bar">
+                <div class="orch-clock-progress-fill" id="clock-45m-fill" style="width: 0%;"></div>
+              </div>
+              <div class="orch-clock-status" id="clock-45m-status">
+                <span class="orch-status-dot"></span>
+                <span class="orch-status-label" id="clock-45m-status-text">Avance técnico requerido</span>
+              </div>
+              <button type="button" class="orch-btn-clock-action" id="btn-action-45m" title="Confirmar llamada telefónica a soporte técnico resolutor N2/N3">
+                <span aria-hidden="true">📞</span> <span>Confirmar Escalado N2/N3</span>
+              </button>
+            </div>
+
+            <!-- Reloj 3: T+1h 45m (105 min) -->
+            <div class="orch-clock-card" id="orch-clock-105m">
+              <div class="orch-clock-top">
+                <span class="orch-clock-name">2º Escalado Jerárquico</span>
+                <span class="orch-clock-limit">Límite T+1h 45m</span>
+              </div>
+              <div class="orch-clock-time-display" id="clock-105m-timer">1h 45m</div>
+              <div class="orch-clock-progress-bar">
+                <div class="orch-clock-progress-fill" id="clock-105m-fill" style="width: 0%;"></div>
+              </div>
+              <div class="orch-clock-status" id="clock-105m-status">
+                <span class="orch-status-dot"></span>
+                <span class="orch-status-label" id="clock-105m-status-text">En monitorización</span>
+              </div>
+              <button type="button" class="orch-btn-clock-action" id="btn-action-105m" title="Confirmar escalado a Responsables de Área y Jefatura">
+                <span aria-hidden="true">👔</span> <span>2º Escalado Jerárquico</span>
+              </button>
+            </div>
+
+            <!-- Reloj 4: >2 horas (Estancamiento) -->
+            <div class="orch-clock-card orch-clock-alarm-zone" id="orch-clock-120m">
+              <div class="orch-clock-top">
+                <span class="orch-clock-name">Alarma Estancamiento</span>
+                <span class="orch-clock-limit">&gt; 2h sin resolver</span>
+              </div>
+              <div class="orch-clock-time-display" id="clock-120m-timer">2h 00m</div>
+              <div class="orch-clock-progress-bar">
+                <div class="orch-clock-progress-fill" id="clock-120m-fill" style="width: 0%;"></div>
+              </div>
+              <div class="orch-clock-status" id="clock-120m-status">
+                <span class="orch-status-dot"></span>
+                <span class="orch-status-label" id="clock-120m-status-text">Monitorización IM-CSO</span>
+              </div>
+              <button type="button" class="orch-btn-clock-action orch-btn-danger" id="btn-action-120m" title="Disparar alarma IM-CSO para re-convocatoria ejecutiva">
+                <span aria-hidden="true">🚨</span> <span>Re-convocar War Room CSO</span>
+              </button>
+            </div>
+
+          </div>
+        </section>
+
+        <!-- SECCIÓN 2: ACTIVACIÓN DE EMERGENCIA & WAR ROOM + MONITOR DE TRABAJOS PROGRAMADOS (PaP) -->
+        <div class="orch-two-cols-grid">
+          
+          <!-- Columna A: Activación & War Room Teams -->
+          <section class="orch-card-box orch-war-room-box" aria-label="Activación de Emergencia & War Room">
+            <div class="orch-box-header">
+              <div class="orch-box-title-wrap">
+                <span class="orch-box-icon" aria-hidden="true">📡</span>
+                <h3 class="orch-box-title">War Room &amp; Puente de Comunicación Microsoft Teams</h3>
+              </div>
+              <span class="orch-war-room-state-pill" id="orch-warroom-state">🟢 Sala Convocada</span>
+            </div>
+
+            <div class="orch-warroom-content">
+              <p class="orch-box-desc">
+                Puente de audio y coordinación unificado generado para la gestión técnica directa de la emergencia entre el Incident Manager, SMC y Resolutores:
+              </p>
+
+              <div class="orch-teams-link-box">
+                <div class="orch-teams-link-text" id="orch-teams-url-preview">
+                  https://teams.microsoft.com/l/meetup-join/...
+                </div>
+                <div class="orch-teams-actions">
+                  <a href="#" id="orch-btn-join-teams" target="_blank" rel="noopener noreferrer" class="orch-btn-teams-primary">
+                    <span aria-hidden="true">📞</span> <span>Unirse a War Room</span>
+                  </a>
+                  <button type="button" id="orch-btn-copy-teams" class="orch-btn-teams-copy">
+                    <span aria-hidden="true">📋</span> <span>Copiar Convocatoria Oficial</span>
+                  </button>
+                </div>
+              </div>
+
+              <div class="orch-quorum-checklist">
+                <span class="orch-quorum-label">Asistencia Técnica Obligatoria:</span>
+                <div class="orch-quorum-tags">
+                  <span class="orch-quorum-tag">👤 Incident Manager (CSO)</span>
+                  <span class="orch-quorum-tag">🖥️ SMC Operations Bridge</span>
+                  <span class="orch-quorum-tag">⚙️ Soporte Resolutor N2/N3</span>
+                  <span class="orch-quorum-tag">📦 Responsable de Aplicación</span>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- Columna B: Monitor de Trabajos Programados (PaP) -->
+          <section class="orch-card-box orch-pap-box" aria-label="Monitor de Trabajos Programados (PaP)">
+            <div class="orch-box-header">
+              <div class="orch-box-title-wrap">
+                <span class="orch-box-icon" aria-hidden="true">🔍</span>
+                <h3 class="orch-box-title">Monitor de Trabajos Programados (PaP)</h3>
+              </div>
+              <span id="orch-pap-status-badge" class="orch-pap-badge">Analizando...</span>
+            </div>
+
+            <div class="orch-pap-content" id="orch-pap-container">
+              <!-- Renderizado dinámicamente: alerta y botón de Rollback o mensaje de no-match -->
+            </div>
+          </section>
+
+        </div>
+
+        <!-- SECCIÓN 3: BITÁCORA DEL TICKET MASIVO (LIVE INCIDENT LOG) -->
+        <section class="orch-card-box orch-log-section" aria-label="Bitácora del Ticket Masivo">
+          <div class="orch-box-header">
+            <div class="orch-box-title-wrap">
+              <span class="orch-box-icon" aria-hidden="true">📜</span>
+              <div>
+                <h3 class="orch-box-title">Bitácora Interactiva del Ticket Masivo (Live Incident Log)</h3>
+                <p class="orch-box-desc" style="margin: 0;">Registro cronológico y auditable de hitos operativos, decisiones del IM y escalados</p>
+              </div>
+            </div>
+            <div class="orch-log-header-actions">
+              <button type="button" class="triage-btn triage-btn-sm" id="btn-copy-full-log" title="Copiar bitácora completa formateada para Remedy o correo">
+                <span aria-hidden="true">📋</span> <span>Copiar Bitácora</span>
+              </button>
+              <button type="button" class="triage-btn triage-btn-sm" id="btn-clear-log" title="Reiniciar bitácora del ticket actual">
+                <span aria-hidden="true">🔄</span> <span>Reiniciar</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Timeline de Entradas -->
+          <div class="orch-timeline-container" id="orch-timeline-container">
+            <!-- Entradas inyectadas dinámicamente -->
+          </div>
+
+          <!-- Formulario de Nuevo Hito -->
+          <form class="orch-log-form" id="orch-log-form">
+            <div class="orch-log-form-row">
+              <div class="orch-form-field" style="width: 220px;">
+                <label for="orch-log-role">Rol / Tipo de Hito</label>
+                <select id="orch-log-role" class="triage-select" style="width: 100%;">
+                  <option value="IM">👤 Incident Manager (IM)</option>
+                  <option value="TECNICO">⚙️ Soporte Técnico Resolutor</option>
+                  <option value="ESCALADO">📞 Escalado Telefónico</option>
+                  <option value="ROLLBACK">⏪ Rollback PaP</option>
+                  <option value="NOTIFICACION">📝 Notificación Ejecutiva</option>
+                  <option value="WARROOM">📡 War Room Update</option>
+                </select>
+              </div>
+              <div class="orch-form-field" style="flex: 1;">
+                <label for="orch-log-text">Mensaje / Avance Operativo</label>
+                <input type="text" id="orch-log-text" class="triage-search-input" style="width: 100%;" placeholder="Describe el avance técnico, interlocutor o acuerdo adoptado en la War Room..." required>
+              </div>
+              <button type="submit" class="triage-btn triage-btn-primary" style="height: 38px; align-self: flex-end;">
+                <span>➕ Registrar Hito</span>
+              </button>
+            </div>
+          </form>
+        </section>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL DE VISUALIZACIÓN / CONFIRMACIÓN DE ORDEN DE ROLLBACK FORMAL -->
+  <div id="modal-rollback-order" class="triage-modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="modal-rollback-title">
+    <div class="triage-modal-dialog" style="max-width: 680px;">
+      <div class="triage-modal-header" style="background: rgba(239, 68, 68, 0.08); border-bottom: 2px solid var(--triage-red-p1);">
+        <h2 id="modal-rollback-title" class="triage-modal-title" style="color: var(--triage-red-p1);">
+          <span>⏪ Orden Formal de Rollback Inmediato (IM-CSO)</span>
+        </h2>
+        <button id="btn-modal-rollback-close" class="triage-btn" aria-label="Cerrar modal de rollback">✖</button>
+      </div>
+      <div class="triage-modal-body">
+        <p style="margin-top: 0; font-size: 13px; color: var(--triage-text-muted);">
+          Como Incident Manager, confirmas la orden obligatoria de revertir el cambio ejecutado para mitigar de inmediato la indisponibilidad del servicio:
+        </p>
+        <pre id="rollback-order-text" style="background: #121110; color: #E5E7EB; padding: 14px; border-radius: 6px; font-family: var(--font-mono); font-size: 12px; line-height: 1.5; white-space: pre-wrap; border: 1px solid #33302B; max-height: 320px; overflow-y: auto;"></pre>
+        <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 16px;">
+          <button type="button" class="triage-btn" id="btn-rollback-cancel">Cancelar</button>
+          <button type="button" class="triage-btn triage-btn-primary" id="btn-rollback-confirm-copy" style="background: var(--triage-red-p1); border-color: var(--triage-red-p1);">
+            <span aria-hidden="true">📋</span> <span>Copiar Orden Formal y Registrar en Bitácora</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL DE NOTIFICACIÓN EJECUTIVA PARA DIRECCIÓN (RELOJ 20M) -->
+  <div id="modal-executive-comm" class="triage-modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="modal-exec-title">
+    <div class="triage-modal-dialog" style="max-width: 680px;">
+      <div class="triage-modal-header" style="background: rgba(255, 121, 0, 0.08); border-bottom: 2px solid var(--triage-orange);">
+        <h2 id="modal-exec-title" class="triage-modal-title" style="color: var(--triage-orange);">
+          <span>📝 1ª Comunicación Ejecutiva a Dirección (SLA 20m)</span>
+        </h2>
+        <button id="btn-modal-exec-close" class="triage-btn" aria-label="Cerrar modal de comunicación">✖</button>
+      </div>
+      <div class="triage-modal-body">
+        <p style="margin-top: 0; font-size: 13px; color: var(--triage-text-muted);">
+          Texto redactado conforme a la skill <code>incident-executive-notifications</code> para difusión a la Dirección de Operaciones y Negocio:
+        </p>
+        <div style="margin-bottom: 12px;">
+          <label style="display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--triage-text-muted); margin-bottom: 4px;">Versión Completa (hasta 90 palabras, monopárrafo):</label>
+          <div id="exec-comm-completo" style="background: #FAF8F5; border: 1px solid var(--triage-border); border-left: 4px solid var(--triage-orange); padding: 12px; border-radius: 4px; font-size: 13px; line-height: 1.5; color: var(--triage-text-main);"></div>
+        </div>
+        <div style="margin-bottom: 16px;">
+          <label style="display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--triage-text-muted); margin-bottom: 4px;">Versión Breve / SMS / Flash (hasta 30 palabras):</label>
+          <div id="exec-comm-breve" style="background: #FAF8F5; border: 1px solid var(--triage-border); border-left: 4px solid var(--triage-blue-info); padding: 10px; border-radius: 4px; font-size: 12.5px; line-height: 1.4; color: var(--triage-text-main);"></div>
+        </div>
+        <div style="display: flex; justify-content: flex-end; gap: 10px;">
+          <button type="button" class="triage-btn" id="btn-copy-exec-breve">
+            <span aria-hidden="true">📋</span> <span>Copiar Versión Breve</span>
+          </button>
+          <button type="button" class="triage-btn triage-btn-primary" id="btn-copy-exec-completo">
+            <span aria-hidden="true">📋</span> <span>Copiar Versión Completa y Registrar Envío</span>
+          </button>
         </div>
       </div>
     </div>
