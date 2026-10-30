@@ -546,6 +546,7 @@ class SeverityEvaluator:
             "discrepancia_delta": disc_details["delta"],
             "discrepancia_gravedad": disc_details["gravedad"],
             "discrepancia_motivo": disc_details["motivo"],
+            "aging_escalated": aging_escalated,
             "evaluacion": {
                 "proceso": proceso,
                 "proceso_negocio": proceso_negocio,
@@ -705,8 +706,12 @@ class SeverityEvaluator:
 
     def _evaluate_impact(self, ticket: dict[str, Any], epsilon: Optional[dict[str, Any]]) -> Tuple[str, str, dict[str, Any]]:
         text_corpus = ""
+        epsilon_impact = ""
+        epsilon_problema = ""
         if epsilon:
-            text_corpus += f" {epsilon.get('problema', '')} {epsilon.get('impacto', '')}"
+            epsilon_impact = str(epsilon.get("impacto") or "").strip()
+            epsilon_problema = str(epsilon.get("problema") or "").strip()
+            text_corpus += f" {epsilon_problema} {epsilon_impact}"
         desc = ticket.get("Descripción") or ticket.get("descripcion") or ""
         text_corpus += f" {desc}"
         text_lower = text_corpus.lower()
@@ -716,51 +721,87 @@ class SeverityEvaluator:
         # Extraer métricas cuantitativas deterministas
         quant_metrics = extract_quantitative_metrics(text_corpus)
 
+        # -1. Fallo cosmético o sin afectación de servicio
+        if any(k in text_lower for k in [
+            "error tipográfico", "error tipografico", "cosmético", "cosmetico",
+            "sin afectación", "sin afectacion", "problema cosmético", "problema cosmetico"
+        ]):
+            return "Bajo", "Fallo cosmético sin interrupción de servicio.", quant_metrics
+
         # 0. Umbrales Cuantitativos Directos (SL1)
         # Nota: Si el servicio cuenta con respaldo activo o el tráfico principal cursa normalmente (ej. enlaces secundarios),
         # se clasifica como degradación funcional parcial SL2 (it-severity-matrix 3.8/3.9).
         is_secondary_or_redundant = any(k in text_lower for k in [
-            "secundari", "tráfico principal cursando", "trafico principal cursando", "backup activo", "respaldo activo", "enlace secundario"
+            "secundari", "tráfico principal cursando", "trafico principal cursando",
+            "backup activo", "respaldo activo", "enlace secundario"
         ])
 
         if not is_secondary_or_redundant:
+            reasons = []
             if quant_metrics["sedes"] is not None and quant_metrics["sedes"] >= 3:
-                return "Alto", f"Umbral cuantitativo superado: {quant_metrics['sedes']} sedes/tiendas afectadas (umbral crítico >= 3).", quant_metrics
+                reasons.append(f"{quant_metrics['sedes']} sedes/tiendas afectadas (umbral crítico >= 3)")
             if quant_metrics["usuarios"] is not None and quant_metrics["usuarios"] >= 500:
-                return "Alto", f"Umbral cuantitativo superado: {quant_metrics['usuarios']} usuarios/clientes afectados (umbral crítico >= 500).", quant_metrics
+                reasons.append(f"{quant_metrics['usuarios']} usuarios/clientes afectados (umbral crítico >= 500)")
             if quant_metrics["desviacion_pct"] is not None and quant_metrics["desviacion_pct"] >= 20.0:
-                return "Alto", f"Umbral cuantitativo superado: {quant_metrics['desviacion_pct']}% de afectación/desviación (umbral crítico >= 20%).", quant_metrics
+                reasons.append(f"{quant_metrics['desviacion_pct']}% de afectación/desviación (umbral crítico >= 20%)")
 
-        # 1. Regla Crítica (Impacto Alto con filtro de negación sintáctica)
-        found_critical = False
+            if reasons:
+                return "Alto", f"Umbral cuantitativo superado: {', '.join(reasons)}.", quant_metrics
+
+        # 1. Regla Crítica (Impacto Alto con filtro de negación sintáctica en texto)
+        found_critical_kw = None
         for kw in self.CRITICAL_IMPACT_KEYWORDS:
             for match in re.finditer(re.escape(kw), text_lower):
                 if not is_phrase_negated(text_lower, match.span()):
-                    found_critical = True
+                    found_critical_kw = kw
                     break
-            if found_critical:
+            if found_critical_kw:
                 break
 
-        if found_critical or ticket_impact == "masiva":
-            # Verificar si realmente es crítico o si solo menciona texto menor
-            if "error tipográfico" in text_lower or "cosmético" in text_lower or "cosmetico" in text_lower:
-                return "Bajo", "Fallo cosmético sin interrupción de servicio.", quant_metrics
+        # 2. Diagnóstico de Epsilon Resumen IA (si está disponible)
+        epsilon_evaluated_high = False
+        if epsilon_impact:
+            ep_imp_lower = epsilon_impact.lower()
+            if any(ep_imp_lower.startswith(prefix) for prefix in ["alto", "crítico", "critico", "urgente"]) or \
+               ("afecta a todos los clientes" in ep_imp_lower or "100% en operativa" in ep_imp_lower or "15+ sedes" in ep_imp_lower):
+                epsilon_evaluated_high = True
+
+        # Decisión de Impacto Alto
+        if found_critical_kw or epsilon_evaluated_high:
+            if epsilon_impact and epsilon_evaluated_high:
+                clean_ep = re.sub(r"\s+", " ", epsilon_impact).strip()
+                return "Alto", f"Epsilon IA: {clean_ep[:180]}", quant_metrics
+            if found_critical_kw:
+                return "Alto", f"Afectación crítica detectada ('{found_critical_kw}') sobre el servicio principal sin alternativa viable.", quant_metrics
             return "Alto", "Afectación crítica o corte global sobre el servicio principal sin alternativa viable.", quant_metrics
 
-        # 2. Regla Moderada (Impacto Medio con filtro de negación)
-        found_moderate = False
+        # 3. Regla Moderada (Impacto Medio con filtro de negación)
+        found_moderate_kw = None
         for kw in self.MODERATE_IMPACT_KEYWORDS:
             for match in re.finditer(re.escape(kw), text_lower):
                 if not is_phrase_negated(text_lower, match.span()):
-                    found_moderate = True
+                    found_moderate_kw = kw
                     break
-            if found_moderate:
+            if found_moderate_kw:
                 break
 
-        if found_moderate or ticket_impact in ("alto", "medio"):
-            return "Medio", "Degradación del servicio o afectación parcial con funcionalidad operativa.", quant_metrics
+        # Si Epsilon está disponible con diagnóstico de afectación acotada o degradación
+        if epsilon_impact:
+            clean_ep = re.sub(r"\s+", " ", epsilon_impact).strip()
+            return "Medio", f"Epsilon IA: {clean_ep[:180]}", quant_metrics
 
-        # 3. Regla Menor (Impacto Bajo)
+        if found_moderate_kw:
+            return "Medio", f"Degradación funcional reportada ('{found_moderate_kw}') con servicio parcialmente operativo.", quant_metrics
+
+        # 4. Inferencia cuando Remedy marca "Masiva" o "Alto" o "Medio"
+        # En el export de Remedy todas las incidencias vienen con "Impacto: Masiva", lo que indica un ticket
+        # registrado en la mesa de seguimiento de incidencias de servicio.
+        # Al no presentar corte total ni superar umbrales de caída masiva (>=3 sedes, >=500 usuarios),
+        # se clasifica de forma determinista como Impacto Medio (degradación funcional / servicio alternativo / incidente mayor P2).
+        if ticket_impact in ("masiva", "alto", "medio"):
+            return "Medio", "Incidencia catalogada Masiva en Remedy evaluada como degradación funcional parcial sin corte total de servicio.", quant_metrics
+
+        # 5. Regla Menor (Impacto Bajo)
         return "Bajo", "Afectación acotada a componentes secundarios o usuarios aislados.", quant_metrics
 
     def _evaluate_urgency(self, ticket: dict[str, Any], epsilon: Optional[dict[str, Any]]) -> Tuple[str, str, str]:

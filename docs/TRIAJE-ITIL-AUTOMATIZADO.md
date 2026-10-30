@@ -106,22 +106,48 @@ El motor etiqueta simultáneamente dos dimensiones operativas:
 
 ---
 
-### Fase 4: Evaluación Heurística de Impacto, Urgencia y Métricas Cuantitativas
+### Fase 4: Evaluación Heurística de Impacto, Urgencia y Cálculo de `impacto_justificacion`
 
-#### A. Nivel de Impacto (`_evaluate_impact`)
+#### A. Nivel de Impacto y Justificación Contextual (`_evaluate_impact`)
 
-El evaluador combina análisis de umbrales cuantitativos numéricos con filtros sintácticos de negación:
+> [!IMPORTANT]
+> **Desacoplamiento del Campo "Impacto: Masiva" de Remedy:**
+> En los informes exportados de BMC Remedy / Smart IT, **el 100% de las incidencias del fichero origen vienen tipificadas con `Impacto: Masiva`** (condición inherente al informe de seguimiento de incidencias de servicio).
+> El motor algorítmico **no asume ciegamente que "Masiva" equivalga a un corte total SL1 / Alto**. De hacerlo, todas las incidencias colapsarían en P1, destruyendo la discriminación operativa entre Emergencias Críticas (SL1) e Incidencias Mayores (SL2).
+> El impacto y el campo `impacto_justificacion` se evalúan mediante una jerarquía discriminativa de 5 pasos:
 
-1. **Umbrales Cuantitativos Directos (SL1 Objetivo)**:
-   * **Sedes / Tiendas / Call Centers:** $\ge 3$ sedes afectadas $\to$ **Impacto Alto**.
-   * **Usuarios / Clientes / Líneas:** $\ge 500$ abonados afectados $\to$ **Impacto Alto**.
-   * **Desviación / Errores %:** $\ge 20\%$ de desviación o error $\to$ **Impacto Alto** (salvo que el texto documente explícitamente enlace secundario con tráfico principal cursando bajo redundancia activa, en cuyo caso se mantiene en SL2 / Medio).
-2. **Filtro de Negación Sintáctica en Español (`is_phrase_negated`)**:
-   Palabras clave críticas de caída (`caída total`, `corte total`, `sin servicio`) precedidas por conectores como `sin`, `no hay`, `descartada`, `se descarta` o `descarte de` quedan invalidadas para evitar elevaciones de impacto injustificadas:
-   * *"Se descarta caída total del servicio"* $\to$ No eleva a Impacto Alto.
-   * *"Corte total de fibra sin alternativa"* $\to$ Eleva a Impacto Alto.
-3. **Regla de Fallos Cosméticos**:
-   Si el texto contiene `error tipográfico` o `fallo cosmético`, el impacto se degrada deterministamente a **Bajo**.
+1. **Fallo Cosmético o Sin Afectación Operativa**:
+   * Si el texto o diagnóstico contiene `error tipográfico`, `cosmético` o `sin afectación al servicio`:
+     * `impacto = "Bajo"`
+     * `impacto_justificacion = "Fallo cosmético sin interrupción de servicio."`
+2. **Umbrales Cuantitativos Directos (SL1 Objetivo)**:
+   * **Sedes / Tiendas / Call Centers:** $\ge 3$ sedes afectadas.
+   * **Usuarios / Clientes / Líneas:** $\ge 500$ abonados afectados.
+   * **Desviación / Errores %:** $\ge 20\%$ de desviación o error.
+   *(Salvo que se documente enlace secundario con tráfico principal cursando bajo redundancia activa).*
+   * `impacto = "Alto"`
+   * `impacto_justificacion = "Umbral cuantitativo superado: {X} sedes/tiendas afectadas (umbral crítico >= 3), {Y}% de afectación (umbral crítico >= 20%)."`
+3. **Diagnóstico y Síntesis de Epsilon Resumen IA**:
+   * Si Epsilon IA diagnostica afectación crítica o califica el impacto como "Alto", "Crítico", o "100% en operativa":
+     * `impacto = "Alto"`
+     * `impacto_justificacion = "Epsilon IA: {diagnóstico conciso del impacto en clientes/sedes}"`
+   * Si Epsilon IA reporta afectación acotada a sedes/usuarios específicos (ej. 5 clientes, 10 usuarios, degradación funcional):
+     * `impacto = "Medio"`
+     * `impacto_justificacion = "Epsilon IA: {diagnóstico conciso de afectación parcial}"`
+4. **Palabras Clave Críticas y Moderadas con Filtro de Negación Sintáctica (`is_phrase_negated`)**:
+   * Términos críticos (`caída total`, `corte total`, `sin servicio`, `bloqueo general`) no negados:
+     * `impacto = "Alto"`
+     * `impacto_justificacion = "Afectación crítica detectada ('{kw}') sobre el servicio principal sin alternativa viable."`
+   * Términos de degradación (`degradación`, `lentitud`, `retraso`, `parcial`, `intermitente`):
+     * `impacto = "Medio"`
+     * `impacto_justificacion = "Degradación funcional reportada ('{kw}') con servicio parcialmente operativo."`
+5. **Inferencia Determinista sobre Tickets Masivos de Remedy**:
+   * Si el ticket viene con `Impacto: Masiva` pero no presenta evidencias de corte total ni supera umbrales cuantitativos:
+     * `impacto = "Medio"` (incidencia de alcance masivo evaluada como degradación funcional parcial o incidente mayor SL2).
+     * `impacto_justificacion = "Incidencia catalogada Masiva en Remedy evaluada como degradación funcional parcial sin corte total de servicio."`
+   * Si no cumple ninguna condición anterior:
+     * `impacto = "Bajo"`
+     * `impacto_justificacion = "Afectación acotada a componentes secundarios o usuarios aislados."`
 
 #### B. Nivel de Urgencia y Análisis de Bloqueos (`_evaluate_urgency`)
 
@@ -246,7 +272,7 @@ El resultado del triaje se almacena dentro de cada incidencia en el campo `"eval
     "dominio_tecnico": "Sistemas Core",
     "criterio": "ATC (3.1): Frontales/CRM (>20% desviación en 30m) o Regla de Oro N1",
     "impacto": "Alto",
-    "impacto_justificacion": "Afectación crítica o corte global sobre el servicio principal sin alternativa viable.",
+    "impacto_justificacion": "Epsilon IA: Alto. Afecta a proceso crítico de recogidas de equipos en bajas de servicios fijo. Riesgo de comunicaciones fallidas y penalizaciones incorrectas a clientes. Impacto 100% en operativa.",
     "urgencia": "Alta",
     "urgencia_justificacion": "Impacto activo en vivo que requiere restablecimiento inmediato.",
     "workaround": "No",

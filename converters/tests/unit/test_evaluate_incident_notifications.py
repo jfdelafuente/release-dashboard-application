@@ -969,6 +969,74 @@ def test_should_include_new_discrepancy_and_aging_kpis_in_batch_catalog():
     assert "+2 niveles" in item["discrepancia_motivo"]
 
 
+def test_should_discriminate_impact_when_remedy_impacto_is_masiva_without_total_outage():
+    """Remedy exports every row with 'Impacto': 'Masiva'. The engine must discriminate real impact."""
+    evaluator = SeverityEvaluator()
+
+    # Ticket with Remedy 'Masiva' but affecting only 5 customers with localized TV defect
+    ticket_masiva_acotado = {
+        "ID de incidencia": "INC000004161012",
+        "Prioridad": "Media",
+        "Descripción": "IP24 | Error funcional | ATAC Jazzplat - Guadalajara",
+        "Estatus": "Asignado",
+        "Fecha de envío": "30/10/2026 09:00",
+        "Urgencia": "Media",
+        "Impacto": "Masiva",
+        "Grupo Resolutor": "SOP_SMC_TEIDE"
+    }
+    epsilon_data = {
+        "problema": "Activación automática de TV libre en líneas multisede sin solicitud.",
+        "impacto": "5 clientes reclamando activación no solicitada de TV libre.",
+        "solucion": "Desactivación manual y depuración de script de activación."
+    }
+
+    ref_time = datetime(2026, 10, 30, 9, 30) # 30 min open
+    result = evaluator.evaluate(ticket_masiva_acotado, epsilon_data, reference_time=ref_time)
+
+    eval_data = result["evaluacion"]
+    # Must NOT blindly assign Alto just because Remedy says 'Masiva'
+    assert eval_data["impacto"] == "Medio"
+    assert "5 clientes reclamando" in eval_data["impacto_justificacion"]
+    assert eval_data["impacto_justificacion"].startswith("Epsilon IA:")
+    # Matrix: Medio + Media -> P2 (Incidencia Mayor)
+    assert result["prioridad_sugerida"] == "P2"
+
+
+def test_should_populate_dynamic_impact_justification_with_actual_evidence():
+    """Impact justification must be dynamic and reflective of real evidence, not a generic static string."""
+    evaluator = SeverityEvaluator()
+
+    # Case A: Quantitative threshold exceeded
+    ticket_quant = {
+        "ID de incidencia": "INC000004170500",
+        "Prioridad": "Media",
+        "Descripción": "Error funcional en Ficha Cliente Orange",
+        "Impacto": "Masiva",
+        "Urgencia": "Alta"
+    }
+    epsilon_quant = {
+        "problema": "Error al consultar permanencias.",
+        "impacto": "Impacto alto: 100% de errores en operativa, afecta a 4 sedes.",
+    }
+    res_quant = evaluator.evaluate(ticket_quant, epsilon_quant)
+    assert res_quant["evaluacion"]["impacto"] == "Alto"
+    assert "Umbral cuantitativo superado" in res_quant["evaluacion"]["impacto_justificacion"]
+    assert "4 sedes/tiendas afectadas" in res_quant["evaluacion"]["impacto_justificacion"]
+
+    # Case B: Ticket without Epsilon or critical keyword, but with Remedy 'Masiva'
+    ticket_remedy_only = {
+        "ID de incidencia": "INC000004171427",
+        "Prioridad": "Media",
+        "Descripción": "DJINGO | Consulta de operativa nocturna",
+        "Impacto": "Masiva",
+        "Urgencia": "Media"
+    }
+    res_remedy = evaluator.evaluate(ticket_remedy_only, None)
+    assert res_remedy["evaluacion"]["impacto"] == "Medio"
+    assert "Incidencia catalogada Masiva en Remedy" in res_remedy["evaluacion"]["impacto_justificacion"]
+
+
+
 
 
 
