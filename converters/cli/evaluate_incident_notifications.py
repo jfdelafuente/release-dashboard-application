@@ -716,7 +716,7 @@ class SeverityEvaluator:
         text_corpus += f" {desc}"
         text_lower = text_corpus.lower()
 
-        ticket_impact = (ticket.get("Impacto") or "").strip().lower()
+        ticket_impact = (ticket.get("Impacto") or ticket.get("impacto") or "").strip().lower()
 
         # Extraer métricas cuantitativas deterministas
         quant_metrics = extract_quantitative_metrics(text_corpus)
@@ -961,7 +961,7 @@ class ExecutiveMessageGenerator:
         else:
             prompt_lines.append("\n--- Metadatos del ticket (Epsilon IA pendiente) ---")
             prompt_lines.append(f"• Descripción: {titulo}")
-            prompt_lines.append(f"• Impacto ticket: {ticket.get('Impacto', 'N/D')}")
+            prompt_lines.append(f"• Impacto ticket: {ticket.get('Impacto') or ticket.get('impacto') or 'N/D'}")
             prompt_lines.append(f"• Urgencia ticket: {ticket.get('Urgencia', 'N/D')}")
 
         prompt_lines.append("\nRedacta el mensaje en los dos niveles obligatorios:")
