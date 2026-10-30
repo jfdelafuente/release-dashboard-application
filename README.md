@@ -193,6 +193,7 @@ console.log(`Tendencia 7 días: ${metadata.kpis.trend_7d}%`);
 | ----------- | ----------- |
 | **[converters/docs/API.md](converters/docs/API.md)** | Referencia técnica de los conversores |
 | **[docs/CATALOGO-INCIDENCIAS-ALTA-PRIORIDAD.md](docs/CATALOGO-INCIDENCIAS-ALTA-PRIORIDAD.md)** | Especificación técnica del catálogo de alta prioridad (`high_priority_notifications.json`) |
+| **[docs/TRIAJE-ITIL-AUTOMATIZADO.md](docs/TRIAJE-ITIL-AUTOMATIZADO.md)** | Manual del motor de triaje ITIL determinista, reglas de oro y detección de discrepancias N1 |
 | **[converters/docs/ARCHITECTURE.md](converters/docs/ARCHITECTURE.md)** | Arquitectura del módulo de conversión |
 | **[converters/docs/PERFORMANCE.md](converters/docs/PERFORMANCE.md)** | Decisiones de optimización, benchmarks |
 | **[converters/docs/TEST_STRUCTURE.md](converters/docs/TEST_STRUCTURE.md)** | Organización de tests por funcionalidad |
