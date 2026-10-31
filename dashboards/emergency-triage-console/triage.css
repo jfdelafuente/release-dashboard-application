@@ -2810,6 +2810,8 @@ body {
   width: 96%;
   max-height: 90vh;
   border-top: 4px solid #0284C7;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
 .comms-modal-header {
@@ -2827,6 +2829,7 @@ body {
   flex-direction: column;
   gap: 10px;
   flex: 1;
+  min-width: 0;
 }
 
 .comms-title-row {
@@ -2960,8 +2963,11 @@ body {
 .comms-modal-body {
   padding: 20px 24px;
   overflow-y: auto;
+  overflow-x: hidden;
   max-height: calc(90vh - 150px);
   background: #FFFFFF;
+  box-sizing: border-box;
+  width: 100%;
 }
 
 .comms-tab-panel {
@@ -3036,21 +3042,40 @@ body {
   gap: 4px;
 }
 
-/* Cuadrícula de Datos Automáticos Inyectados */
+/* Cuadrícula de Datos Automáticos Inyectados (Base 6 columnas para simetría 3+2) */
 .comms-ticket-meta-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: 10px;
   background: #FAF8F5;
   border: 1px solid #E5E7EB;
   border-radius: var(--radius-sm);
   padding: 12px 14px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .comms-meta-item {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 3px;
+  min-width: 0;
+  overflow: hidden;
+  background: #FFFFFF;
+  border: 1px solid #E5E7EB;
+  border-radius: var(--radius-xs);
+  padding: 8px 12px;
+  box-sizing: border-box;
+}
+
+.comms-meta-item.meta-col-3,
+.comms-meta-item.meta-span-2 {
+  grid-column: span 2;
+}
+
+.comms-meta-item.meta-col-2,
+.comms-meta-item.meta-span-3 {
+  grid-column: span 3;
 }
 
 .comms-meta-k {
@@ -3059,6 +3084,9 @@ body {
   text-transform: uppercase;
   color: #6B7280;
   letter-spacing: 0.03em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .comms-meta-v {
@@ -3069,6 +3097,7 @@ body {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  min-width: 0;
 }
 
 /* Editores de Plantilla */
@@ -3552,7 +3581,16 @@ body {
     grid-template-columns: 1fr;
   }
   .comms-ticket-meta-grid {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .comms-meta-item.meta-col-3,
+  .comms-meta-item.meta-span-2,
+  .comms-meta-item.meta-col-2,
+  .comms-meta-item.meta-span-3 {
+    grid-column: span 1;
+  }
+  .comms-meta-item:last-child {
+    grid-column: span 2;
   }
   .comms-contacts-grid {
     grid-template-columns: 1fr;
@@ -3562,5 +3600,12 @@ body {
 @media (max-width: 600px) {
   .comms-ticket-meta-grid {
     grid-template-columns: 1fr;
+  }
+  .comms-meta-item.meta-col-3,
+  .comms-meta-item.meta-span-2,
+  .comms-meta-item.meta-col-2,
+  .comms-meta-item.meta-span-3,
+  .comms-meta-item:last-child {
+    grid-column: span 1;
   }
 }

@@ -1323,12 +1323,27 @@ Proceder con la ejecución inmediata del procedimiento de Rollback. Confirmar in
 
     const data = generateDynamicTemplates(inc, phase);
 
-    // Actualizar grid de metadatos
-    if (dom.tplMetaSistemas) dom.tplMetaSistemas.textContent = data.meta.sistemas;
-    if (dom.tplMetaImpacto) dom.tplMetaImpacto.textContent = data.meta.impacto;
-    if (dom.tplMetaProveedor) dom.tplMetaProveedor.textContent = data.meta.proveedor;
-    if (dom.tplMetaWorkaround) dom.tplMetaWorkaround.textContent = data.meta.workaround;
-    if (dom.tplMetaDuracion) dom.tplMetaDuracion.textContent = data.meta.duracion;
+    // Actualizar grid de metadatos (con tooltips accesibles)
+    if (dom.tplMetaSistemas) {
+      dom.tplMetaSistemas.textContent = data.meta.sistemas;
+      dom.tplMetaSistemas.title = data.meta.sistemas;
+    }
+    if (dom.tplMetaImpacto) {
+      dom.tplMetaImpacto.textContent = data.meta.impacto;
+      dom.tplMetaImpacto.title = data.meta.impacto;
+    }
+    if (dom.tplMetaProveedor) {
+      dom.tplMetaProveedor.textContent = data.meta.proveedor;
+      dom.tplMetaProveedor.title = data.meta.proveedor;
+    }
+    if (dom.tplMetaWorkaround) {
+      dom.tplMetaWorkaround.textContent = data.meta.workaround;
+      dom.tplMetaWorkaround.title = data.meta.workaround;
+    }
+    if (dom.tplMetaDuracion) {
+      dom.tplMetaDuracion.textContent = data.meta.duracion;
+      dom.tplMetaDuracion.title = data.meta.duracion;
+    }
 
     // Actualizar textareas
     if (dom.tplTextCompleto) dom.tplTextCompleto.value = data.completo;
