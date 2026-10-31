@@ -345,7 +345,28 @@
             <!-- Reloj 1: 20 min -->
             <div class="orch-clock-card" id="orch-clock-20m">
               <div class="orch-clock-top">
-                <span class="orch-clock-name">1ª Comunicación Ejecutiva</span>
+                <div class="orch-clock-title-wrap">
+                  <span class="orch-clock-name">1ª Comunicación Ejecutiva</span>
+                  <div class="orch-clock-info-wrap">
+                    <button type="button" class="orch-clock-info-btn" id="btn-info-20m" aria-label="Información sobre la 1ª Comunicación Ejecutiva" aria-expanded="false" title="Información sobre la 1ª Comunicación">
+                      <span aria-hidden="true">ℹ️</span>
+                    </button>
+                    <div class="orch-clock-popup" id="popup-clock-20m" role="tooltip" aria-hidden="true">
+                      <div class="orch-popup-arrow"></div>
+                      <div class="orch-popup-header">
+                        <span class="orch-popup-icon" aria-hidden="true">📢</span>
+                        <span class="orch-popup-title">1ª Notificación a Dirección</span>
+                        <button type="button" class="orch-popup-close" data-close-popup="popup-clock-20m" aria-label="Cerrar pop-up">&times;</button>
+                      </div>
+                      <div class="orch-popup-body">
+                        Difusión oficial a Dirección (C-Level): declaración formal SL1, impacto en el servicio y War Room activa.
+                      </div>
+                      <div class="orch-popup-footer">
+                        <span class="orch-popup-sla">⏱️ Plazo normativo: ≤ 20 min</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
                 <span class="orch-clock-limit">Límite 20m</span>
               </div>
               <div class="orch-clock-time-display" id="clock-20m-timer">20:00</div>
@@ -356,10 +377,6 @@
                 <span class="orch-status-dot"></span>
                 <span class="orch-status-label" id="clock-20m-status-text">Cuenta atrás SLA</span>
               </div>
-              <div class="orch-clock-note" id="clock-20m-note">
-                <span class="orch-note-icon" aria-hidden="true">📢</span>
-                <span class="orch-note-text">Difusión oficial a Dirección (C-Level): declaración formal SL1, impacto en el servicio y War Room activa.</span>
-              </div>
               <button type="button" class="orch-btn-clock-action" id="btn-action-20m" title="Ver y copiar notificación ejecutiva para Dirección">
                 <span aria-hidden="true">📝</span> <span>Ver Notificación</span>
               </button>
@@ -368,7 +385,28 @@
             <!-- Reloj 2: 45 min -->
             <div class="orch-clock-card" id="orch-clock-45m">
               <div class="orch-clock-top">
-                <span class="orch-clock-name">1er Escalado Telefónico</span>
+                <div class="orch-clock-title-wrap">
+                  <span class="orch-clock-name">1er Escalado Telefónico</span>
+                  <div class="orch-clock-info-wrap">
+                    <button type="button" class="orch-clock-info-btn" id="btn-info-45m" aria-label="Información sobre el 1er Escalado Telefónico" aria-expanded="false" title="Información sobre el 1er Escalado">
+                      <span aria-hidden="true">ℹ️</span>
+                    </button>
+                    <div class="orch-clock-popup" id="popup-clock-45m" role="tooltip" aria-hidden="true">
+                      <div class="orch-popup-arrow"></div>
+                      <div class="orch-popup-header">
+                        <span class="orch-popup-icon" aria-hidden="true">📞</span>
+                        <span class="orch-popup-title">1er Escalado Telefónico N2/N3</span>
+                        <button type="button" class="orch-popup-close" data-close-popup="popup-clock-45m" aria-label="Cerrar pop-up">&times;</button>
+                      </div>
+                      <div class="orch-popup-body">
+                        Contacto directo de voz con resolutores N2/N3: exigencia de avance técnico y presencia obligatoria en War Room.
+                      </div>
+                      <div class="orch-popup-footer">
+                        <span class="orch-popup-sla">⏱️ Plazo normativo: ≤ 45 min</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
                 <span class="orch-clock-limit">Límite 45m</span>
               </div>
               <div class="orch-clock-time-display" id="clock-45m-timer">45:00</div>
@@ -379,10 +417,6 @@
                 <span class="orch-status-dot"></span>
                 <span class="orch-status-label" id="clock-45m-status-text">Avance técnico requerido</span>
               </div>
-              <div class="orch-clock-note" id="clock-45m-note">
-                <span class="orch-note-icon" aria-hidden="true">📞</span>
-                <span class="orch-note-text">Contacto directo de voz con resolutores N2/N3: exigencia de avance técnico y presencia obligatoria en War Room.</span>
-              </div>
               <button type="button" class="orch-btn-clock-action" id="btn-action-45m" title="Confirmar llamada telefónica a soporte técnico resolutor N2/N3">
                 <span aria-hidden="true">📞</span> <span>Confirmar Escalado N2/N3</span>
               </button>
@@ -391,7 +425,28 @@
             <!-- Reloj 3: T+1h 45m (105 min) -->
             <div class="orch-clock-card" id="orch-clock-105m">
               <div class="orch-clock-top">
-                <span class="orch-clock-name">2º Escalado Jerárquico</span>
+                <div class="orch-clock-title-wrap">
+                  <span class="orch-clock-name">2º Escalado Jerárquico</span>
+                  <div class="orch-clock-info-wrap">
+                    <button type="button" class="orch-clock-info-btn" id="btn-info-105m" aria-label="Información sobre el 2º Escalado Jerárquico" aria-expanded="false" title="Información sobre el 2º Escalado">
+                      <span aria-hidden="true">ℹ️</span>
+                    </button>
+                    <div class="orch-clock-popup" id="popup-clock-105m" role="tooltip" aria-hidden="true">
+                      <div class="orch-popup-arrow"></div>
+                      <div class="orch-popup-header">
+                        <span class="orch-popup-icon" aria-hidden="true">👔</span>
+                        <span class="orch-popup-title">2º Escalado Jerárquico</span>
+                        <button type="button" class="orch-popup-close" data-close-popup="popup-clock-105m" aria-label="Cerrar pop-up">&times;</button>
+                      </div>
+                      <div class="orch-popup-body">
+                        Escalado a Jefaturas de Área y Dirección Técnica: movilización de recursos extraordinarios por falta de mitigación.
+                      </div>
+                      <div class="orch-popup-footer">
+                        <span class="orch-popup-sla">⏱️ Plazo normativo: T+1h 45m</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
                 <span class="orch-clock-limit">Límite T+1h 45m</span>
               </div>
               <div class="orch-clock-time-display" id="clock-105m-timer">1h 45m</div>
@@ -402,10 +457,6 @@
                 <span class="orch-status-dot"></span>
                 <span class="orch-status-label" id="clock-105m-status-text">En monitorización</span>
               </div>
-              <div class="orch-clock-note" id="clock-105m-note">
-                <span class="orch-note-icon" aria-hidden="true">👔</span>
-                <span class="orch-note-text">Escalado a Jefaturas de Área y Dirección Técnica: movilización de recursos extraordinarios por falta de mitigación.</span>
-              </div>
               <button type="button" class="orch-btn-clock-action" id="btn-action-105m" title="Confirmar escalado a Responsables de Área y Jefatura">
                 <span aria-hidden="true">👔</span> <span>2º Escalado Jerárquico</span>
               </button>
@@ -414,7 +465,28 @@
             <!-- Reloj 4: >2 horas (Estancamiento) -->
             <div class="orch-clock-card orch-clock-alarm-zone" id="orch-clock-120m">
               <div class="orch-clock-top">
-                <span class="orch-clock-name">Alarma Estancamiento</span>
+                <div class="orch-clock-title-wrap">
+                  <span class="orch-clock-name">Alarma Estancamiento</span>
+                  <div class="orch-clock-info-wrap">
+                    <button type="button" class="orch-clock-info-btn" id="btn-info-120m" aria-label="Información sobre la Alarma de Estancamiento" aria-expanded="false" title="Información sobre la Alarma IM-CSO">
+                      <span aria-hidden="true">ℹ️</span>
+                    </button>
+                    <div class="orch-clock-popup" id="popup-clock-120m" role="tooltip" aria-hidden="true">
+                      <div class="orch-popup-arrow"></div>
+                      <div class="orch-popup-header">
+                        <span class="orch-popup-icon" aria-hidden="true">🚨</span>
+                        <span class="orch-popup-title">Alarma Estancamiento IM-CSO</span>
+                        <button type="button" class="orch-popup-close" data-close-popup="popup-clock-120m" aria-label="Cerrar pop-up">&times;</button>
+                      </div>
+                      <div class="orch-popup-body">
+                        Gabinete de crisis con Jefatura IM-CSO: decisión obligatoria sobre workarounds de emergencia o contingencia.
+                      </div>
+                      <div class="orch-popup-footer">
+                        <span class="orch-popup-sla">⏱️ Plazo normativo: &gt; 2h sin resolver</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
                 <span class="orch-clock-limit">&gt; 2h sin resolver</span>
               </div>
               <div class="orch-clock-time-display" id="clock-120m-timer">2h 00m</div>
@@ -424,10 +496,6 @@
               <div class="orch-clock-status" id="clock-120m-status">
                 <span class="orch-status-dot"></span>
                 <span class="orch-status-label" id="clock-120m-status-text">Monitorización IM-CSO</span>
-              </div>
-              <div class="orch-clock-note" id="clock-120m-note">
-                <span class="orch-note-icon" aria-hidden="true">🚨</span>
-                <span class="orch-note-text">Gabinete de crisis con Jefatura IM-CSO: decisión obligatoria sobre workarounds de emergencia o contingencia.</span>
               </div>
               <button type="button" class="orch-btn-clock-action orch-btn-danger" id="btn-action-120m" title="Disparar alarma IM-CSO para re-convocatoria ejecutiva">
                 <span aria-hidden="true">🚨</span> <span>Re-convocar War Room CSO</span>

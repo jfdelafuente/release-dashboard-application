@@ -105,28 +105,28 @@
     clock20mTimer: document.getElementById('clock-20m-timer'),
     clock20mFill: document.getElementById('clock-20m-fill'),
     clock20mStatusText: document.getElementById('clock-20m-status-text'),
-    clock20mNote: document.getElementById('clock-20m-note'),
+    popup20m: document.getElementById('popup-clock-20m'),
     btnAction20m: document.getElementById('btn-action-20m'),
 
     clock45mCard: document.getElementById('orch-clock-45m'),
     clock45mTimer: document.getElementById('clock-45m-timer'),
     clock45mFill: document.getElementById('clock-45m-fill'),
     clock45mStatusText: document.getElementById('clock-45m-status-text'),
-    clock45mNote: document.getElementById('clock-45m-note'),
+    popup45m: document.getElementById('popup-clock-45m'),
     btnAction45m: document.getElementById('btn-action-45m'),
 
     clock105mCard: document.getElementById('orch-clock-105m'),
     clock105mTimer: document.getElementById('clock-105m-timer'),
     clock105mFill: document.getElementById('clock-105m-fill'),
     clock105mStatusText: document.getElementById('clock-105m-status-text'),
-    clock105mNote: document.getElementById('clock-105m-note'),
+    popup105m: document.getElementById('popup-clock-105m'),
     btnAction105m: document.getElementById('btn-action-105m'),
 
     clock120mCard: document.getElementById('orch-clock-120m'),
     clock120mTimer: document.getElementById('clock-120m-timer'),
     clock120mFill: document.getElementById('clock-120m-fill'),
     clock120mStatusText: document.getElementById('clock-120m-status-text'),
-    clock120mNote: document.getElementById('clock-120m-note'),
+    popup120m: document.getElementById('popup-clock-120m'),
     btnAction120m: document.getElementById('btn-action-120m'),
 
     // War Room Teams
@@ -1144,6 +1144,7 @@ Proceder con la ejecución inmediata del procedimiento de Rollback. Confirmar in
       state.clocksTicker = null;
     }
     state.activeOrchIncId = null;
+    document.querySelectorAll('.orch-clock-info-wrap.is-open').forEach(w => w.classList.remove('is-open'));
     if (dom.modalOrchestrator) {
       dom.modalOrchestrator.classList.remove('open');
     }
@@ -1844,9 +1845,14 @@ Generado por Consola de Emergencias IT Orange - Motor de Triaje (Módulo 1)`;
       });
     }
 
-    // Escape universal para cerrar cualquier modal abierto
+    // Escape universal para cerrar cualquier popup o modal abierto
     window.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
+        const openPopups = document.querySelectorAll('.orch-clock-info-wrap.is-open');
+        if (openPopups.length > 0) {
+          closeAllClockPopups();
+          return;
+        }
         if (dom.modalBackdrop && dom.modalBackdrop.classList.contains('open')) {
           dom.modalBackdrop.classList.remove('open');
         }
@@ -1860,6 +1866,57 @@ Generado por Consola de Emergencias IT Orange - Motor de Triaje (Módulo 1)`;
           dom.modalExecutiveComm.classList.remove('open');
         }
       }
+    });
+
+    // Gestión interactiva de los Pop-ups de Notas Informativas en los 4 Relojes
+    function closeAllClockPopups() {
+      document.querySelectorAll('.orch-clock-info-wrap.is-open').forEach(wrap => {
+        wrap.classList.remove('is-open');
+        const btn = wrap.querySelector('.orch-clock-info-btn');
+        if (btn) btn.setAttribute('aria-expanded', 'false');
+        const popup = wrap.querySelector('.orch-clock-popup');
+        if (popup) popup.setAttribute('aria-hidden', 'true');
+      });
+    }
+
+    document.querySelectorAll('.orch-clock-info-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const wrap = btn.closest('.orch-clock-info-wrap');
+        if (!wrap) return;
+        const willOpen = !wrap.classList.contains('is-open');
+        closeAllClockPopups();
+        if (willOpen) {
+          wrap.classList.add('is-open');
+          btn.setAttribute('aria-expanded', 'true');
+          const popup = wrap.querySelector('.orch-clock-popup');
+          if (popup) popup.setAttribute('aria-hidden', 'false');
+        }
+      });
+    });
+
+    document.querySelectorAll('.orch-popup-close').forEach(closeBtn => {
+      closeBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const wrap = closeBtn.closest('.orch-clock-info-wrap');
+        if (wrap) {
+          wrap.classList.remove('is-open');
+          const btn = wrap.querySelector('.orch-clock-info-btn');
+          if (btn) btn.setAttribute('aria-expanded', 'false');
+          const popup = wrap.querySelector('.orch-clock-popup');
+          if (popup) popup.setAttribute('aria-hidden', 'true');
+        }
+      });
+    });
+
+    document.querySelectorAll('.orch-clock-popup').forEach(popup => {
+      popup.addEventListener('click', (e) => {
+        e.stopPropagation();
+      });
+    });
+
+    document.addEventListener('click', () => {
+      closeAllClockPopups();
     });
 
     // Formulario de Bitácora del Orquestador
