@@ -171,7 +171,6 @@
 
     // --- Referencias DOM Módulo 3: Centro de Comunicaciones y Matrices ---
     btnOpenCommsCenter: document.getElementById('btn-open-comms-center'),
-    btnOrchOpenComms: document.getElementById('btn-orch-open-comms'),
     modalCommsCenter: document.getElementById('modal-comms-center'),
     btnCommsClose: document.getElementById('btn-comms-close'),
     commsTicketSelect: document.getElementById('comms-ticket-select'),
@@ -2953,16 +2952,10 @@ Puente Teams: ${teamsUrl}
     }
 
     // --- Listeners Módulo 3: Centro de Comunicaciones y Matrices ---
-    // Apertura desde cabecera principal y cabecera del orquestador
+    // Apertura desde cabecera principal
     if (dom.btnOpenCommsCenter) {
       dom.btnOpenCommsCenter.addEventListener('click', () => {
         openCommsCenterModal(state.activeOrchIncId || null, 'tab-gateway');
-      });
-    }
-
-    if (dom.btnOrchOpenComms) {
-      dom.btnOrchOpenComms.addEventListener('click', () => {
-        openCommsCenterModal(state.activeOrchIncId, 'tab-gateway');
       });
     }
 
