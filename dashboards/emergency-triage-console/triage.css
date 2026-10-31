@@ -1830,7 +1830,7 @@ body {
 }
 
 /* --------------------------------------------------------------------------
-   Sección 1: Relojes y Temporizadores de Escalado Controlados
+   Sección 1: Gestión de Escalados de Emergencia (Dual Clock)
    -------------------------------------------------------------------------- */
 .orch-clocks-section {
   background: #FFFFFF;
