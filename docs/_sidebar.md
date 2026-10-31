@@ -13,6 +13,8 @@
   * [Triaje ITIL Automatizado](02-gestion-emergencias/triaje-itil-automatizado.md)
   * [Manual Consola Operativa](02-gestion-emergencias/manual-consola-operativa.md)
   * [Casos de Uso y Gaps Módulo 1](02-gestion-emergencias/casos-de-uso-evaluacion-modulo-1-triaje.md)
+  * [Casos de Uso y Gaps Módulo 2](02-gestion-emergencias/casos-de-uso-evaluacion-modulo-2-orquestador.md)
+  * [Plan de Usabilidad Consola Operativa](02-gestion-emergencias/plan-usabilidad-consola-operativa.md)
   * [Flujo de Incidencias y SLAs](02-gestion-emergencias/flujo-gestion-incidencias.md)
   * [Notificaciones Ejecutivas](02-gestion-emergencias/notificaciones-ejecutivas.md)
   * [Catálogo de Alta Prioridad](02-gestion-emergencias/catalogo-alta-prioridad.md)
