@@ -389,7 +389,7 @@
         }
       } catch (_) {}
     }
-    // Fallback integrado si no se alcanza el archivo por la red
+    // Fallback integrado si no se alcanza el archivo por la red (Marcados explícitamente como SIMULATED MOCK)
     state.paps = [
       {
         crq: 'CRQ000000190422',
@@ -405,7 +405,10 @@
         riesgo: 'Medio',
         rollback_plan: 'Revertir despliegue de pods Kubernetes a la imagen v24.7 y reiniciar endpoints de sincronización con Ficha multimarca.',
         tiempo_rollback_estimado: '12 minutos',
-        contacto_guardia: 'Guardia CRM Frontales (+34 91 222 3401)'
+        contacto_guardia: 'Guardia CRM Frontales (+34 91 222 3401)',
+        is_mock: true,
+        data_source: 'SIMULATED_MOCK',
+        mock_tag: '[MOCK / PENDIENTE API CMDB]'
       },
       {
         crq: 'CRQ000000190311',
@@ -421,7 +424,10 @@
         riesgo: 'Alto',
         rollback_plan: 'Detener réplicas v3.12 en APIGEE/Istio, restablecer enrutado del ingress hacia backend v3.11 y purgar caché Redis de customerAgreement.',
         tiempo_rollback_estimado: '8 minutos',
-        contacto_guardia: 'Guardia BFF Digital (+34 91 222 3402)'
+        contacto_guardia: 'Guardia BFF Digital (+34 91 222 3402)',
+        is_mock: true,
+        data_source: 'SIMULATED_MOCK',
+        mock_tag: '[MOCK / PENDIENTE API CMDB]'
       },
       {
         crq: 'CRQ000000189914',
@@ -437,7 +443,10 @@
         riesgo: 'Alto',
         rollback_plan: 'Conmutar el conector EMS JMS al bus de colas pasivo anterior y ejecutar reinicio escalonado de engines TIBCO BW en cluster.',
         tiempo_rollback_estimado: '15 minutos',
-        contacto_guardia: 'Guardia Middleware TIBCO (+34 91 222 3403)'
+        contacto_guardia: 'Guardia Middleware TIBCO (+34 91 222 3403)',
+        is_mock: true,
+        data_source: 'SIMULATED_MOCK',
+        mock_tag: '[MOCK / PENDIENTE API CMDB]'
       },
       {
         crq: 'CRQ000000188550',
@@ -453,7 +462,10 @@
         riesgo: 'Medio',
         rollback_plan: 'Reactivar la directiva TargetServer hacia el cluster legacy en Apigee y vaciar la tabla de rutas temporales.',
         tiempo_rollback_estimado: '5 minutos',
-        contacto_guardia: 'Guardia Apigee (+34 91 222 3404)'
+        contacto_guardia: 'Guardia Apigee (+34 91 222 3404)',
+        is_mock: true,
+        data_source: 'SIMULATED_MOCK',
+        mock_tag: '[MOCK / PENDIENTE API CMDB]'
       },
       {
         crq: 'CRQ000000187640',
@@ -469,7 +481,10 @@
         riesgo: 'Crítico',
         rollback_plan: 'Restaurar snapshot de tablas de parámetros CAS y relanzar el demonio colector HPFMS con las colas previas.',
         tiempo_rollback_estimado: '20 minutos',
-        contacto_guardia: 'Guardia Facturación/Mediación (+34 91 222 3405)'
+        contacto_guardia: 'Guardia Facturación/Mediación (+34 91 222 3405)',
+        is_mock: true,
+        data_source: 'SIMULATED_MOCK',
+        mock_tag: '[MOCK / PENDIENTE API CMDB]'
       }
     ];
   }
@@ -573,7 +588,7 @@ Convocado por Orange Tech Operations · IT Incident Management`;
           time: nowStr,
           role: 'PAP',
           roleLabel: '🔍 Monitor PaP',
-          text: `Coincidencia detectada con cambio reciente ${pap.crq}: "${pap.titulo}". Procedimiento de Rollback verificado disponible (${pap.tiempo_rollback_estimado}).`,
+          text: `[DATOS SIMULADOS / MOCK] Coincidencia detectada con cambio reciente ${pap.crq}: "${pap.titulo}". Procedimiento de Rollback verificado disponible (${pap.tiempo_rollback_estimado}).`,
           extraClass: 'role-rollback'
         });
       }
@@ -662,8 +677,19 @@ Convocado por Orange Tech Operations · IT Incident Management`;
       dom.orchPapBadge.className = 'orch-pap-badge is-matched';
       dom.orchPapBadge.textContent = `⚠️ Coincidencia: ${pap.crq}`;
 
+      const mockNoticeHtml = pap.is_mock ? `
+        <div class="triage-mock-banner" style="margin-bottom: 8px;">
+          <span aria-hidden="true">🧪</span>
+          <div>
+            <strong>DATOS SIMULADOS (MOCK · PENDIENTE API CMDB):</strong>
+            <div>Registro sintético para pruebas de cruce y reversión. Endpoint planificado: <code>GET /api/v1/cmdb/scheduled-changes</code>.</div>
+          </div>
+        </div>
+      ` : '';
+
       dom.orchPapContainer.innerHTML = `
         <div class="orch-pap-alert-card">
+          ${mockNoticeHtml}
           <div class="orch-pap-top-alert">
             <span aria-hidden="true">⚠️</span>
             <span>Trabajo Programado (PaP) reciente coincide con los sistemas afectados:</span>
@@ -671,7 +697,7 @@ Convocado por Orange Tech Operations · IT Incident Management`;
           <div class="orch-pap-details-grid">
             <div class="orch-pap-field">
               <strong>Código de Cambio</strong>
-              <span>${escapeHtml(pap.crq)}</span>
+              <span>${escapeHtml(pap.crq)} ${pap.is_mock ? '<span class="triage-mock-badge">🧪 MOCK</span>' : ''}</span>
             </div>
             <div class="orch-pap-field">
               <strong>Ventana de Ejecución</strong>
@@ -729,11 +755,12 @@ Convocado por Orange Tech Operations · IT Incident Management`;
     const incId = inc.id || 'INC000000000000';
     const imName = state.defaultIncidentManager;
     const nowStr = new Date().toLocaleString('es-ES');
+    const mockDisclaimer = pap && pap.is_mock ? '⚠️ [DATOS DE PRUEBA / SIMULACRO OPERATIVO MOCK · PENDIENTE API REMEDY CMDB]\n' : '';
     const orderText = `⏪ ORDEN FORMAL DE ROLLBACK INMEDIATO (IM-CSO) ⏪
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+${mockDisclaimer}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Ordenante: ${imName}
 Motivo: Indisponibilidad crítica ${incId} tras despliegue de cambio.
-Código de Cambio (PaP): ${pap.crq}
+Código de Cambio (PaP): ${pap.crq}${pap.is_mock ? ' [MOCK]' : ''}
 Título PaP: ${pap.titulo}
 Sistemas Impactados: ${(pap.sistemas || []).join(', ')}
 Plan de Rollback: ${pap.rollback_plan}

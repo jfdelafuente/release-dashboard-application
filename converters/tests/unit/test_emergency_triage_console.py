@@ -186,6 +186,9 @@ def test_module_2_scheduled_changes_pap_dataset():
     assert "total_changes" in meta
     assert meta["total_changes"] >= 5
     assert meta.get("filter_window_hours") == 6
+    assert meta.get("is_mock") is True, "El catálogo sintético debe estar marcado con is_mock=True"
+    assert meta.get("data_source_mode") == "SIMULATED_MOCK_DATA"
+    assert "target_api_spec" in meta
 
     changes = pap_data.get("changes", [])
     assert len(changes) == meta["total_changes"]
@@ -199,6 +202,9 @@ def test_module_2_scheduled_changes_pap_dataset():
         assert len(pap.get("rollback_plan", "")) > 0, "Debe tener un plan de rollback documentado"
         assert len(pap.get("tiempo_rollback_estimado", "")) > 0
         assert len(pap.get("contacto_guardia", "")) > 0
+        assert pap.get("is_mock") is True, "Cada registro simulado debe indicar is_mock=True"
+        assert pap.get("data_source") == "SIMULATED_MOCK"
+        assert "[MOCK" in pap.get("mock_tag", "")
 
     # Validar que existe al menos el cambio de CRM4TELCO y bffclientdashboard
     crqs = [p["crq"] for p in changes]
@@ -328,5 +334,33 @@ def test_module_2_triage_js_orchestrator_logic():
     assert "openExecutiveCommModal" in js
     assert "openEmergencyOrchestrator" in js
     assert "closeEmergencyOrchestrator" in js
+
+
+def test_mock_data_flags_badges_and_api_spec():
+    """Valida que los datos inventados estén explícitamente marcados y que exista la especificación de API REST."""
+    # 1. Validar marcas en index.html
+    html = (CONSOLE_DIR / "index.html").read_text(encoding="utf-8")
+    assert "triage-mock-badge" in html
+    assert "🧪 Mock On-Call · Pendiente API Guardias" in html
+    assert "🧪 Mock Puente · Pendiente Graph API" in html
+    assert "🧪 Mock Data · Pendiente API CMDB" in html
+    assert "AVISO DE DATOS SIMULADOS (MOCK)" in html
+
+    # 2. Validar estilos en triage.css
+    css = (CONSOLE_DIR / "triage.css").read_text(encoding="utf-8")
+    assert ".triage-mock-badge" in css
+    assert ".triage-mock-banner" in css
+    assert "#6B21A8" in css or "purple" in css or "#F3E8FF" in css
+
+    # 3. Validar especificación de API REST
+    api_spec_path = REPO_ROOT / "docs" / "api" / "remedy_cmdb_pap_spec.md"
+    assert api_spec_path.exists(), f"El documento de API spec {api_spec_path} debe existir"
+
+    spec_content = api_spec_path.read_text(encoding="utf-8")
+    assert "/api/v1/cmdb/scheduled-changes" in spec_content
+    assert "/api/v1/cmdb/scheduled-changes/{crq}/rollback-order" in spec_content
+    assert "is_mock" in spec_content
+    assert "BMC Remedy ITSM" in spec_content
+
 
 

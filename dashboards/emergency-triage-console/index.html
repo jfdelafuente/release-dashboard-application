@@ -308,6 +308,7 @@
               <span class="orch-im-avatar" aria-hidden="true">👤</span>
               <span>Incident Manager:</span>
               <strong id="orch-im-name">Carlos Morales (Turno Activo CSO)</strong>
+              <span class="triage-mock-badge" title="Asignación simulada para pruebas. Pendiente de integrar API de turnos/guardias on-call">🧪 Mock On-Call · Pendiente API Guardias</span>
             </span>
           </div>
         </div>
@@ -422,6 +423,7 @@
               <div class="orch-box-title-wrap">
                 <span class="orch-box-icon" aria-hidden="true">📡</span>
                 <h3 class="orch-box-title">War Room &amp; Puente de Comunicación Microsoft Teams</h3>
+                <span class="triage-mock-badge" title="Enlace generado mediante plantilla local. Pendiente conectar con Microsoft Graph API">🧪 Mock Puente · Pendiente Graph API</span>
               </div>
               <span class="orch-war-room-state-pill" id="orch-warroom-state">🟢 Sala Convocada</span>
             </div>
@@ -463,6 +465,7 @@
               <div class="orch-box-title-wrap">
                 <span class="orch-box-icon" aria-hidden="true">🔍</span>
                 <h3 class="orch-box-title">Monitor de Trabajos Programados (PaP)</h3>
+                <span class="triage-mock-badge" title="Catálogo de cambios simulado para pruebas de cruce y rollback. Pendiente conectar API Remedy CMDB">🧪 Mock Data · Pendiente API CMDB</span>
               </div>
               <span id="orch-pap-status-badge" class="orch-pap-badge">Analizando...</span>
             </div>
@@ -538,6 +541,13 @@
         <button id="btn-modal-rollback-close" class="triage-btn" aria-label="Cerrar modal de rollback">✖</button>
       </div>
       <div class="triage-modal-body">
+        <div class="triage-mock-banner">
+          <span aria-hidden="true">🧪</span>
+          <div>
+            <strong>AVISO DE DATOS SIMULADOS (MOCK):</strong>
+            <div>El catálogo de Trabajos Programados (PaP) y este plan de reversión son datos de prueba para verificar el flujo operativo. La orden formal se registra en la bitácora local y en el portapapeles mientras se implementa el endpoint REST del API de Remedy CMDB.</div>
+          </div>
+        </div>
         <p style="margin-top: 0; font-size: 13px; color: var(--triage-text-muted);">
           Como Incident Manager, confirmas la orden obligatoria de revertir el cambio ejecutado para mitigar de inmediato la indisponibilidad del servicio:
         </p>
