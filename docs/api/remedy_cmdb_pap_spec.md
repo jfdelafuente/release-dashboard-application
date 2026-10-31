@@ -14,6 +14,7 @@
 El propósito de esta especificación es definir los contratos de interfaz REST, modelos de datos y directivas de seguridad para la sustitución del catálogo estático de datos simulados (`data/scheduled_changes_pap.json`) por un servicio backend real conectado a **BMC Helix ITSM (Remedy Change Management)** y la **CMDB de Orange**.
 
 Esta integración permite al **Módulo 2 (Orquestador del Proceso Operativo de Emergencias)**:
+
 1. **Cruzar automáticamente** en tiempo real los sistemas y CIs afectados por una incidencia declarada en **SL1/P1** con las peticiones de cambio (**CRQ / PaP**) ejecutadas en las últimas horas (ventana estándar: 6 horas).
 2. **Proveer información auditable** del plan de reversión (*Rollback Plan*), tiempos de ejecución y contactos de guardia de soporte resolutor.
 3. **Despachar órdenes formales de rollback** desde la consola al SMC Operations Bridge y a los equipos resolutores.
@@ -54,10 +55,10 @@ Permite consultar los trabajos programados y cambios de infraestructura ejecutad
 | Parámetro | Tipo | Requerido | Valor por Defecto | Descripción |
 | :--- | :--- | :--- | :--- | :--- |
 | `systems` | `string` | **No** | *Vacío (todos)* | Lista de sistemas o CIs separados por coma (ej. `CRM4TELCO,Ficha multimarca`). |
-| `window_hours`| `integer`| **No** | `6` | Ventana de inspección hacia atrás en horas (mín: `1`, máx: `48`). |
+| `window_hours` | `integer` | **No** | `6` | Ventana de inspección hacia atrás en horas (mín: `1`, máx: `48`). |
 | `status` | `string` | **No** | `ALL_ACTIVE` | Filtro por estado del cambio: `EXECUTED`, `OBSERVATION`, `COMPLETED`, `ALL_ACTIVE`. |
 | `risk` | `string` | **No** | `ALL` | Filtro por nivel de riesgo: `CRITICAL`, `HIGH`, `MEDIUM`, `LOW`, `ALL`. |
-| `limit` | `integer`| **No** | `50` | Límite máximo de registros devueltos. |
+| `limit` | `integer` | **No** | `50` | Límite máximo de registros devueltos. |
 
 #### Respuesta Exitosa (`200 OK`)
 
@@ -192,7 +193,7 @@ Permite solicitar la reserva de un puente de War Room en Teams mediante la Micro
 - **Método:** `POST`
 - **Ruta:** `/api/v1/collaboration/teams/warroom`
 
-#### Request Body:
+#### Request Body
 
 ```json
 {
@@ -202,7 +203,7 @@ Permite solicitar la reserva de un puente de War Room en Teams mediante la Micro
 }
 ```
 
-#### Response (`201 Created`):
+#### Response (`201 Created`)
 
 ```json
 {
