@@ -1879,43 +1879,50 @@ Generado por Consola de Emergencias IT Orange - Motor de Triaje (Módulo 1)`;
       });
     }
 
-    document.querySelectorAll('.orch-clock-info-btn').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        const wrap = btn.closest('.orch-clock-info-wrap');
-        if (!wrap) return;
-        const willOpen = !wrap.classList.contains('is-open');
-        closeAllClockPopups();
-        if (willOpen) {
-          wrap.classList.add('is-open');
-          btn.setAttribute('aria-expanded', 'true');
-          const popup = wrap.querySelector('.orch-clock-popup');
-          if (popup) popup.setAttribute('aria-hidden', 'false');
-        }
-      });
-    });
-
-    document.querySelectorAll('.orch-popup-close').forEach(closeBtn => {
-      closeBtn.addEventListener('click', (e) => {
+    document.addEventListener('click', (e) => {
+      // 1. Clic en botón de cierre 'x'
+      const closeBtn = e.target.closest('.orch-popup-close');
+      if (closeBtn) {
+        e.preventDefault();
         e.stopPropagation();
         const wrap = closeBtn.closest('.orch-clock-info-wrap');
         if (wrap) {
           wrap.classList.remove('is-open');
           const btn = wrap.querySelector('.orch-clock-info-btn');
-          if (btn) btn.setAttribute('aria-expanded', 'false');
+          if (btn) {
+            btn.setAttribute('aria-expanded', 'false');
+            btn.focus();
+          }
           const popup = wrap.querySelector('.orch-clock-popup');
           if (popup) popup.setAttribute('aria-hidden', 'true');
         }
-      });
-    });
+        return;
+      }
 
-    document.querySelectorAll('.orch-clock-popup').forEach(popup => {
-      popup.addEventListener('click', (e) => {
+      // 2. Clic en botón disparador 'ℹ️'
+      const infoBtn = e.target.closest('.orch-clock-info-btn');
+      if (infoBtn) {
+        e.preventDefault();
         e.stopPropagation();
-      });
-    });
+        const wrap = infoBtn.closest('.orch-clock-info-wrap');
+        if (!wrap) return;
+        const willOpen = !wrap.classList.contains('is-open');
+        closeAllClockPopups();
+        if (willOpen) {
+          wrap.classList.add('is-open');
+          infoBtn.setAttribute('aria-expanded', 'true');
+          const popup = wrap.querySelector('.orch-clock-popup');
+          if (popup) popup.setAttribute('aria-hidden', 'false');
+        }
+        return;
+      }
 
-    document.addEventListener('click', () => {
+      // 3. Clic dentro del contenido de un pop-up (no cerrar)
+      if (e.target.closest('.orch-clock-popup')) {
+        return;
+      }
+
+      // 4. Clic fuera: cerrar cualquier pop-up abierto
       closeAllClockPopups();
     });
 

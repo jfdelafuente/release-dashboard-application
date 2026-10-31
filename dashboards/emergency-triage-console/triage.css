@@ -1998,16 +1998,6 @@ body {
   pointer-events: none;
 }
 
-/* Puente invisible para mantener el hover */
-.orch-clock-popup::before {
-  content: '';
-  position: absolute;
-  top: -10px;
-  left: 0;
-  right: 0;
-  height: 10px;
-}
-
 .orch-popup-arrow {
   position: absolute;
   top: -6px;
@@ -2044,17 +2034,21 @@ body {
   background: transparent;
   border: none;
   cursor: pointer;
-  font-size: 14px;
+  font-size: 16px;
+  font-weight: 700;
   line-height: 1;
   color: #9CA3AF;
-  padding: 1px 4px;
-  border-radius: 2px;
+  padding: 2px 6px;
+  border-radius: var(--radius-xs, 3px);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   transition: color 0.15s ease, background 0.15s ease;
 }
 
 .orch-popup-close:hover {
   color: #111827;
-  background: #F3F4F6;
+  background: #E5E7EB;
 }
 
 .orch-popup-body {
@@ -2081,9 +2075,7 @@ body {
   gap: 3px;
 }
 
-/* Visibilidad al hacer hover, focus-within o pulsar botón (.is-open) */
-.orch-clock-info-wrap:hover .orch-clock-popup,
-.orch-clock-info-wrap:focus-within .orch-clock-popup,
+/* Visibilidad exclusiva al activar el Pop-up (.is-open) */
 .orch-clock-info-wrap.is-open .orch-clock-popup {
   opacity: 1;
   visibility: visible;
