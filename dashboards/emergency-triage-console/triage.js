@@ -46,7 +46,15 @@
     orchestratorActivations: {}, // Timestamp de activación del Orquestador (Dual Clock) { [incId]: number }
     clockTimeBase: 'crisis', // 'crisis' (T0 Activación SL1) | 'remedy' (T0 Apertura Remedy)
     clocksTicker: null, // Timer de actualización de relojes
-    defaultIncidentManager: 'Carlos Morales · Incident Manager de Guardia (Turno Activo CSO)'
+    defaultIncidentManager: 'Carlos Morales · Incident Manager de Guardia (Turno Activo CSO)',
+
+    // --- Estado Módulo 3: Centro de Comunicaciones y Matrices ---
+    activeCommsIncId: null,
+    activeCommsTab: 'tab-templates',
+    activeCommsPhase: 'inicial',
+    activeContactsBrand: 'orange',
+    activeContactsDomain: 'ALL',
+    commsDispatchHistory: {} // { [incId]: Array }
   };
 
   // --- Referencias del DOM ---
@@ -159,7 +167,58 @@
     execCommCompleto: document.getElementById('exec-comm-completo'),
     execCommBreve: document.getElementById('exec-comm-breve'),
     btnCopyExecBreve: document.getElementById('btn-copy-exec-breve'),
-    btnCopyExecCompleto: document.getElementById('btn-copy-exec-completo')
+    btnCopyExecCompleto: document.getElementById('btn-copy-exec-completo'),
+
+    // --- Referencias DOM Módulo 3: Centro de Comunicaciones y Matrices ---
+    btnOpenCommsCenter: document.getElementById('btn-open-comms-center'),
+    btnOrchOpenComms: document.getElementById('btn-orch-open-comms'),
+    modalCommsCenter: document.getElementById('modal-comms-center'),
+    btnCommsClose: document.getElementById('btn-comms-close'),
+    commsTicketSelect: document.getElementById('comms-ticket-select'),
+    commsBrandIndicator: document.getElementById('comms-brand-indicator'),
+    commsBrandIcon: document.getElementById('comms-brand-icon'),
+    commsBrandText: document.getElementById('comms-brand-text'),
+    commsBrandPlatform: document.getElementById('comms-brand-platform'),
+
+    // Tabs
+    tabBtnTemplates: document.getElementById('tab-btn-templates'),
+    tabBtnGateway: document.getElementById('tab-btn-gateway'),
+    tabBtnContacts: document.getElementById('tab-btn-contacts'),
+    tabTemplates: document.getElementById('tab-templates'),
+    tabGateway: document.getElementById('tab-gateway'),
+    tabContacts: document.getElementById('tab-contacts'),
+
+    // Generador de Plantillas
+    tplPhaseSla: document.getElementById('tpl-phase-sla'),
+    tplMetaSistemas: document.getElementById('tpl-meta-sistemas'),
+    tplMetaImpacto: document.getElementById('tpl-meta-impacto'),
+    tplMetaInicio: document.getElementById('tpl-meta-inicio'),
+    tplMetaProveedor: document.getElementById('tpl-meta-proveedor'),
+    tplMetaWorkaround: document.getElementById('tpl-meta-workaround'),
+    tplMetaDuracion: document.getElementById('tpl-meta-duracion'),
+    tplTextCompleto: document.getElementById('tpl-text-completo'),
+    tplTextBreve: document.getElementById('tpl-text-breve'),
+    counterCompleto: document.getElementById('counter-completo'),
+    counterBreve: document.getElementById('counter-breve'),
+    btnCopyTplCompleto: document.getElementById('btn-copy-tpl-completo'),
+    btnCopyTplBreve: document.getElementById('btn-copy-tpl-breve'),
+    btnTplRegenerate: document.getElementById('btn-tpl-regenerate'),
+    btnTplLoadGateway: document.getElementById('btn-tpl-load-gateway'),
+
+    // Gateway Web de Explotación
+    gwSubject: document.getElementById('gw-subject'),
+    gwBody: document.getElementById('gw-body'),
+    btnGwCopyPayload: document.getElementById('btn-gw-copy-payload'),
+    btnGwDispatch: document.getElementById('btn-gw-dispatch'),
+    gwHistoryList: document.getElementById('gw-history-list'),
+
+    // Buscador de Contactos y Matrices
+    btnBrandOrange: document.getElementById('btn-brand-orange'),
+    btnBrandMasmovil: document.getElementById('btn-brand-masmovil'),
+    commsPlatformDirectLink: document.getElementById('comms-platform-direct-link'),
+    contactsSearchInput: document.getElementById('contacts-search-input'),
+    contactsDomainPills: document.getElementById('contacts-domain-pills'),
+    contactsCardsGrid: document.getElementById('contacts-cards-grid')
   };
 
   // --- Utilidades ---
@@ -822,64 +881,835 @@ Proceder con la ejecución inmediata del procedimiento de Rollback. Confirmar in
     }
   }
 
-  function openExecutiveCommModal(incId) {
-    const inc = state.incidents.find(i => i.id === incId);
-    if (!inc || !dom.modalExecutiveComm) return;
+  // =========================================================================
+  // MÓDULO 3: CENTRO DE COMUNICACIONES Y MATRICES DE CONTACTO
+  // =========================================================================
 
-    // Buscar si ya existen mensajes redactados
-    const msgs = inc.mensajes_ejecutivos || {};
+  // Catálogo Oficial de Contactos Técnicos y Matrices N2/N3 (GRIAL / Confluence)
+  const CONTACTS_DIRECTORY = [
+    // --- ORANGE / JAZZTEL (GRIAL: https://grial.orange.es) ---
+    {
+      id: 'cont-ora-01',
+      brand: 'orange',
+      domain: 'FRONT',
+      system: 'CRM4TELCO & Ficha de Cliente',
+      name: 'Guardia Frontales Comerciales (ATC / Distribuidores)',
+      provider: 'Indra Sistemas · Front Operations',
+      level: 'N2 / N3',
+      role: 'Soporte Frontales & Transaccional CRM',
+      phone: '+34 91 222 3401',
+      ext: '43401',
+      email: 'guardia.frontales.crm@orange.com',
+      sdm: 'Alfonso Ruiz · SDM Indra (+34 600 111 201)',
+      hours: '24x7 Turno Continuo',
+      platformUrl: 'https://grial.orange.es/sistemas/crm4telco'
+    },
+    {
+      id: 'cont-ora-02',
+      brand: 'orange',
+      domain: 'MIDDLE',
+      system: 'TIBCO EMS & Bus de Integración Transversal',
+      name: 'Guardia Middleware TIBCO & Bus Corporativo',
+      provider: 'Sopra Steria · Middleware Engineering',
+      level: 'N3',
+      role: 'Arquitectura & Broker de Mensajería TIBCO',
+      phone: '+34 91 222 3403',
+      ext: '43403',
+      email: 'guardia.tibco.integration@orange.com',
+      sdm: 'Elena Santamaría · Lead Architect (+34 600 111 203)',
+      hours: '24x7 Convocatoria Directa War Room',
+      platformUrl: 'https://grial.orange.es/sistemas/tibco-ems'
+    },
+    {
+      id: 'cont-ora-03',
+      brand: 'orange',
+      domain: 'MIDDLE',
+      system: 'Apigee API Gateway & Microservicios',
+      name: 'Guardia Pasarela de APIs Apigee',
+      provider: 'Minsait / Google Cloud Services',
+      level: 'N2 / N3',
+      role: 'Tráfico de APIs & Pasarelas B2B/B2C',
+      phone: '+34 91 222 3404',
+      ext: '43404',
+      email: 'guardia.apigee.core@orange.com',
+      sdm: 'David Garrido · API Platform Manager (+34 600 111 204)',
+      hours: '24x7 On-Call',
+      platformUrl: 'https://grial.orange.es/sistemas/apigee-gateway'
+    },
+    {
+      id: 'cont-ora-04',
+      brand: 'orange',
+      domain: 'BILLING',
+      system: 'HPFMS / BSCS / SEDNA (Facturación & Cobros)',
+      name: 'Guardia Tasación & Facturación Core',
+      provider: 'Ericsson España / DXC Technology',
+      level: 'N2 / N3',
+      role: 'Tarificación, Ciclos de Cobro y Mediación',
+      phone: '+34 91 222 3405',
+      ext: '43405',
+      email: 'guardia.billing.hpfms@orange.com',
+      sdm: 'Beatriz Morales · Billing Ops Lead (+34 600 111 205)',
+      hours: '24x7 Guardia Crítica',
+      platformUrl: 'https://grial.orange.es/sistemas/hpfms-billing'
+    },
+    {
+      id: 'cont-ora-05',
+      brand: 'orange',
+      domain: 'INFRA',
+      system: 'Infraestructura Core IT (VMware ESX / PSeries / Exadata / OCI)',
+      name: 'Guardia Datacenter, Servidores & Cloud Core',
+      provider: 'Kyndryl / Oracle Cloud España',
+      level: 'N3',
+      role: 'SRE Virtualización, Hypervisores & BBDD Críticas',
+      phone: '+34 91 222 3406',
+      ext: '43406',
+      email: 'guardia.infra.cloud@orange.com',
+      sdm: 'Marcos Vega · Principal SRE (+34 600 111 206)',
+      hours: '24x7 Intervención Inmediata',
+      platformUrl: 'https://grial.orange.es/sistemas/core-infra'
+    },
+    {
+      id: 'cont-ora-06',
+      brand: 'orange',
+      domain: 'IAM',
+      system: 'EVIDIAN / GDU / RobotFactory (Identidad & SSO)',
+      name: 'Guardia Autenticación Corporativa, Directorio & SSO',
+      provider: 'Evidian IAM Ops / Atos',
+      level: 'N2 / N3',
+      role: 'Gestión de Credenciales, MFA & Token Services',
+      phone: '+34 91 222 3407',
+      ext: '43407',
+      email: 'guardia.iam.evidian@orange.com',
+      sdm: 'Silvia Navarro · IAM Service Manager (+34 600 111 207)',
+      hours: '24x7 On-Call',
+      platformUrl: 'https://grial.orange.es/sistemas/iam-evidian'
+    },
+    {
+      id: 'cont-ora-07',
+      brand: 'orange',
+      domain: 'NETWORK',
+      system: 'Redes WAN Sedes & Conectividad CGRED',
+      name: 'Guardia Redes WAN Sedes, Tiendas & Datacenter',
+      provider: 'Orange Wholesale & Data Networks',
+      level: 'N2 / N3',
+      role: 'Circuitos Macro-LAN, SD-WAN & CGRED',
+      phone: '+34 91 222 3408',
+      ext: '43408',
+      email: 'guardia.cgred.redes@orange.com',
+      sdm: 'Ignacio Campos · NOC Operations Lead (+34 600 111 208)',
+      hours: '24x7 Turno Continuo NOC',
+      platformUrl: 'https://grial.orange.es/sistemas/redes-cgred'
+    },
+    {
+      id: 'cont-ora-08',
+      brand: 'orange',
+      domain: 'INFRA',
+      system: 'Customer & Service Operations (IM-CSO)',
+      name: 'Incident Management CSO (Gestión Emergencias)',
+      provider: 'Orange España Interno · Dirección de Operaciones',
+      level: 'Jefatura',
+      role: 'Orquestación de Emergencias, War Rooms & C-Level',
+      phone: '+34 91 222 3900',
+      ext: '43900',
+      email: 'im-cso-guardia@orange.com',
+      sdm: 'Carlos Morales · IM CSO Turno Activo (+34 600 111 900)',
+      hours: '24x7 Presencial / Remoto Activo',
+      platformUrl: 'https://grial.orange.es/escalados/im-cso'
+    },
+
+    // --- MASMOVIL / KRT (CONFLUENCE: https://confluence.masmovil.com) ---
+    {
+      id: 'cont-mm-01',
+      brand: 'masmovil',
+      domain: 'FRONT',
+      system: 'CRM KRT / Salesforce MM / Yoigo / Euskaltel',
+      name: 'Guardia Operaciones Front CRM MasMóvil',
+      provider: 'Accenture Interactive / Salesforce',
+      level: 'N2 / N3',
+      role: 'Atención Tiendas, Call Centers y Portabilidad MM',
+      phone: '+34 91 333 4501',
+      ext: '54501',
+      email: 'guardia.krt.salesforce@masmovil.com',
+      sdm: 'Javier Serrano · Service Lead Accenture (+34 611 222 301)',
+      hours: '24x7 On-Call Turno Rotativo',
+      platformUrl: 'https://confluence.masmovil.com/display/OPS/KRT+CRM+OnCall'
+    },
+    {
+      id: 'cont-mm-02',
+      brand: 'masmovil',
+      domain: 'MIDDLE',
+      system: 'Kong API Gateway & EventBus Matrix (Kafka)',
+      name: 'Guardia Integración Transversal & Streaming MM',
+      provider: 'Thoughtworks / DevOps SRE MasMóvil',
+      level: 'N3',
+      role: 'Event Streaming Kafka & Pasarelas Kong',
+      phone: '+34 91 333 4503',
+      ext: '54503',
+      email: 'guardia.eventbus.kong@masmovil.com',
+      sdm: 'Marta Gil · SRE Platform Manager (+34 611 222 303)',
+      hours: '24x7 War Room Directa',
+      platformUrl: 'https://confluence.masmovil.com/display/OPS/Kong+Matrix+Matrix'
+    },
+    {
+      id: 'cont-mm-03',
+      brand: 'masmovil',
+      domain: 'BILLING',
+      system: 'Netcracker Billing Core & Mediación MasMóvil',
+      name: 'Guardia Facturación & Recargas MasMóvil / Yoigo',
+      provider: 'Netcracker Technology / NTT Data',
+      level: 'N2 / N3',
+      role: 'Rating Online, Billing Cycles & Tasación Prepago/Pospago',
+      phone: '+34 91 333 4505',
+      ext: '54505',
+      email: 'guardia.netcracker.billing@masmovil.com',
+      sdm: 'Pablo Domínguez · Billing Lead (+34 611 222 305)',
+      hours: '24x7 Guardia Crítica',
+      platformUrl: 'https://confluence.masmovil.com/display/OPS/Netcracker+Billing'
+    },
+    {
+      id: 'cont-mm-04',
+      brand: 'masmovil',
+      domain: 'INFRA',
+      system: 'Cloud AWS Platform & Kubernetes EKS MM',
+      name: 'Guardia SRE Cloud & Infraestructura MasMóvil',
+      provider: 'AWS Enterprise Support / MM Cloud Ops',
+      level: 'N3',
+      role: 'Clústeres Kubernetes, Contenedores & Cloud VPC',
+      phone: '+34 91 333 4506',
+      ext: '54506',
+      email: 'guardia.aws.eks@masmovil.com',
+      sdm: 'Rodrigo Méndez · Head of Cloud Platform (+34 611 222 306)',
+      hours: '24x7 Incident Support',
+      platformUrl: 'https://confluence.masmovil.com/display/OPS/AWS+EKS+OnCall'
+    },
+    {
+      id: 'cont-mm-05',
+      brand: 'masmovil',
+      domain: 'IAM',
+      system: 'Keycloak SSO & Okta Identity MasMóvil',
+      name: 'Guardia Identidad & Gestión de Accesos MM',
+      provider: 'MM Cyber & Identity Operations',
+      level: 'N2 / N3',
+      role: 'Tokens OAuth2, Autenticación y Single Sign-On',
+      phone: '+34 91 333 4507',
+      ext: '54507',
+      email: 'guardia.iam.keycloak@masmovil.com',
+      sdm: 'Lucía Ramos · IAM Tech Lead (+34 611 222 307)',
+      hours: '24x7 On-Call',
+      platformUrl: 'https://confluence.masmovil.com/display/OPS/Keycloak+SSO'
+    },
+    {
+      id: 'cont-mm-06',
+      brand: 'masmovil',
+      domain: 'NETWORK',
+      system: 'NOC MasMóvil / Red de Transmisión & Fibra',
+      name: 'Guardia Red Transporte IP & Fibra MasMóvil',
+      provider: 'MM Network Operations / ZTE Support',
+      level: 'N2 / N3',
+      role: 'Troncales de Fibra, BGP & Enrutamiento Core',
+      phone: '+34 91 333 4508',
+      ext: '54508',
+      email: 'guardia.noc.transmision@masmovil.com',
+      sdm: 'Gonzalo Pardo · NOC Lead (+34 611 222 308)',
+      hours: '24x7 Turno Continuo NOC',
+      platformUrl: 'https://confluence.masmovil.com/display/OPS/NOC+Network+OnCall'
+    }
+  ];
+
+  function detectIncidentBrand(inc) {
+    if (!inc) return 'orange';
+    const textToScan = [
+      inc.id || '',
+      inc.titulo || '',
+      inc.descripcion || '',
+      Array.isArray(inc.sistemas) ? inc.sistemas.join(' ') : (inc.sistemas || ''),
+      inc.evaluacion?.proceso || '',
+      inc.evaluacion?.impacto_justificacion || '',
+      inc.evaluacion?.criterio || ''
+    ].join(' ').toLowerCase();
+
+    const mmKeywords = ['masmovil', 'másmóvil', 'krt', 'yoigo', 'euskaltel', 'telecable', 'r cable', 'matrix', 'kong', 'netcracker', 'salesforce mm', 'aws eks', 'keycloak'];
+    const isMasmovil = mmKeywords.some(kw => textToScan.includes(kw));
+    return isMasmovil ? 'masmovil' : 'orange';
+  }
+
+  function updateCommsBrandBadge(brand) {
+    const isOrange = brand === 'orange';
+    if (dom.commsBrandIndicator) {
+      dom.commsBrandIndicator.className = 'comms-brand-badge brand-' + brand;
+    }
+    if (dom.commsBrandIcon) {
+      dom.commsBrandIcon.textContent = isOrange ? '🟠' : '🟡';
+    }
+    if (dom.commsBrandText) {
+      dom.commsBrandText.innerHTML = isOrange ? 'Entorno: <strong>Orange / Jazztel</strong>' : 'Entorno: <strong>MasMóvil / KRT</strong>';
+    }
+    if (dom.commsBrandPlatform) {
+      dom.commsBrandPlatform.textContent = isOrange ? 'Directorio GRIAL' : 'Directorio Confluence';
+    }
+
+    // Actualizar botón enlace a plataforma oficial
+    if (dom.commsPlatformDirectLink) {
+      if (isOrange) {
+        dom.commsPlatformDirectLink.href = 'https://grial.orange.es';
+        dom.commsPlatformDirectLink.innerHTML = '<span>Abrir GRIAL Orange</span> <span aria-hidden="true">↗</span>';
+        dom.commsPlatformDirectLink.title = 'Abrir directorio oficial GRIAL Orange en pestaña nueva';
+      } else {
+        dom.commsPlatformDirectLink.href = 'https://confluence.masmovil.com';
+        dom.commsPlatformDirectLink.innerHTML = '<span>Abrir Confluence MM</span> <span aria-hidden="true">↗</span>';
+        dom.commsPlatformDirectLink.title = 'Abrir directorio oficial Confluence MasMóvil en pestaña nueva';
+      }
+    }
+
+    // Sincronizar botones de marca en pestaña de contactos
+    if (dom.btnBrandOrange && dom.btnBrandMasmovil) {
+      if (isOrange) {
+        dom.btnBrandOrange.classList.add('is-active');
+        dom.btnBrandMasmovil.classList.remove('is-active');
+      } else {
+        dom.btnBrandOrange.classList.remove('is-active');
+        dom.btnBrandMasmovil.classList.add('is-active');
+      }
+    }
+  }
+
+  function populateCommsTicketSelect(selectedIncId) {
+    if (!dom.commsTicketSelect) return;
+    const incidents = state.incidents || [];
+    if (incidents.length === 0) {
+      dom.commsTicketSelect.innerHTML = '<option value="">No hay incidencias cargadas</option>';
+      return;
+    }
+
+    const options = incidents.map(inc => {
+      const isSelected = inc.id === selectedIncId;
+      const sistemas = Array.isArray(inc.sistemas) ? inc.sistemas.join(', ') : (inc.sistemas || 'Core');
+      const sev = inc.prioridad_sugerida || 'SL2';
+      return `<option value="${escapeHtml(inc.id)}" ${isSelected ? 'selected' : ''}>${escapeHtml(inc.id)} · ${escapeHtml(sistemas)} (${sev})</option>`;
+    }).join('');
+
+    dom.commsTicketSelect.innerHTML = options;
+    if (selectedIncId) dom.commsTicketSelect.value = selectedIncId;
+  }
+
+  function countWords(str) {
+    if (!str || typeof str !== 'string') return 0;
+    const tokens = str.trim().split(/\s+/).filter(Boolean);
+    return tokens.length;
+  }
+
+  function updateWordCounters() {
+    // 1. Versión Completa (hasta 90 palabras)
+    if (dom.tplTextCompleto && dom.counterCompleto) {
+      const words = countWords(dom.tplTextCompleto.value);
+      if (words > 90) {
+        dom.counterCompleto.textContent = `${words} / 90 palabras ⚠️ (Excede el límite normativo)`;
+        dom.counterCompleto.className = 'comms-word-counter is-warning';
+      } else {
+        dom.counterCompleto.textContent = `${words} / 90 palabras`;
+        dom.counterCompleto.className = 'comms-word-counter is-valid';
+      }
+    }
+
+    // 2. Versión Breve (hasta 30 palabras)
+    if (dom.tplTextBreve && dom.counterBreve) {
+      const words = countWords(dom.tplTextBreve.value);
+      if (words > 30) {
+        dom.counterBreve.textContent = `${words} / 30 palabras ⚠️ (Excede el límite normativo)`;
+        dom.counterBreve.className = 'comms-word-counter is-warning';
+      } else {
+        dom.counterBreve.textContent = `${words} / 30 palabras`;
+        dom.counterBreve.className = 'comms-word-counter is-valid';
+      }
+    }
+  }
+
+  function generateDynamicTemplates(inc, phase = 'inicial') {
+    if (!inc) {
+      return {
+        completo: '',
+        breve: '',
+        meta: { sistemas: '-', impacto: '-', inicio: '-', proveedor: '-', workaround: '-', duracion: '-' }
+      };
+    }
+
+    const brand = detectIncidentBrand(inc);
     const evaluacion = inc.evaluacion || {};
+    const sistemas = Array.isArray(inc.sistemas) ? inc.sistemas.join(', ') : (inc.sistemas || 'Sistemas Core');
     const proceso = evaluacion.proceso || evaluacion.proceso_negocio || 'Atención al Cliente (ATC)';
+    const criterio = evaluacion.criterio || 'Regla de Oro N1';
+    const resumenIa = inc.resumen_ia || {};
+
+    const minsElapsed = evaluacion.minutos_desde_apertura || 25;
+    const totalDurationText = formatAgingMinutes(minsElapsed);
+    const inicioStr = evaluacion.fecha_apertura ? evaluacion.fecha_apertura.slice(11, 16) + 'h' : '14:15h';
+
+    // Métricas cuantitativas resumidas
+    const metrics = evaluacion.metricas_cuantitativas || {};
+    const mParts = [];
+    if (metrics.sedes != null) mParts.push(`${metrics.sedes} sedes`);
+    if (metrics.usuarios != null) mParts.push(`${metrics.usuarios.toLocaleString('es-ES')} usuarios`);
+    if (metrics.desviacion_pct != null) mParts.push(`${metrics.desviacion_pct}% desviación`);
+    const metricsLabel = mParts.length > 0 ? mParts.join(', ') : 'afectación transaccional activa';
+
+    // Proveedores según sistema y marca
+    let proveedores = brand === 'masmovil' ? 'Accenture Interactive, DevOps MM y SRE' : 'Indra Sistemas y Kyndryl';
+    if (sistemas.toLowerCase().includes('tibco')) proveedores = 'Sopra Steria Middleware y Arquitectura';
+    if (sistemas.toLowerCase().includes('facturación') || sistemas.toLowerCase().includes('hpfms')) proveedores = 'Ericsson España y DXC Technology';
+
+    // Workaround
+    const workaroundVal = evaluacion.workaround || 'Mitigación técnica en evaluación con IM-CSO';
+    const workaroundSentence = evaluacion.workaround
+      ? `Workaround activo autorizado por IM-CSO: ${evaluacion.workaround}.`
+      : 'Workaround operativo en validación coordinado con IM-CSO.';
+    const workaroundShort = evaluacion.workaround ? 'Workaround IM-CSO activo' : 'Mitigación en curso';
+
+    // Causa raíz / Diagnóstico
+    const diagRaw = resumenIa.problema || 'degradación en pool de hilos y saturación de conexiones';
+    const diagShort = diagRaw.length > 55 ? diagRaw.slice(0, 52) + '...' : diagRaw;
+    const causaRaw = resumenIa.solucion || resumenIa.problema || 'bloqueo transaccional por saturación de hilos en servidor';
+    const causaShort = causaRaw.length > 60 ? causaRaw.slice(0, 57) + '...' : causaRaw;
+
+    let completo = '';
+    let breve = '';
+
+    if (phase === 'inicial') {
+      completo = `[NOTIFICACIÓN INICIAL SL1] Declarada emergencia crítica en ${sistemas} afectando ${proceso} desde las ${inicioStr}. Umbral superado: ${criterio} (${metricsLabel}). War Room activa con Incident Management CSO (IM-CSO) y resolutores técnicos (${proveedores}) coordinando diagnóstico y mitigación inmediata. Servicios alternativos en evaluación operativa. Próxima actualización formal a Dirección en 60 minutos o de forma inmediata ante cualquier cambio de criticidad.`;
+      breve = `[SL1 INICIAL] Emergencia en ${sistemas} (${proceso}). Impacto: ${metricsLabel}. War Room activa con IM-CSO y soporte. Mitigación en curso.`;
+    } else if (phase === 'actualizacion') {
+      completo = `[ACTUALIZACIÓN SL1 - T+${minsElapsed}m] Continúa la gestión de la emergencia en ${sistemas} (${proceso}). Diagnóstico técnico en curso: ${diagShort}. ${workaroundSentence} Equipos resolutores (${proveedores}) ejecutan acciones de mitigación coordinadas por Incident Management CSO en War Room. Se monitorizan indicadores de recuperación. Próxima actualización formal en 60 minutos o ante variación significativa del impacto.`;
+      breve = `[SL1 UPDATE T+${minsElapsed}m] ${sistemas}: Diagnóstico en curso. ${workaroundShort}. War Room activa con IM-CSO. Próximo checkpoint en 60m.`;
+    } else {
+      // Cierre / Resolución
+      completo = `[RESOLUCIÓN Y CIERRE SL1] Restablecido al 100% el servicio en ${sistemas} tras ${totalDurationText} de afectación en ${proceso}. Causa técnica identificada y corregida: ${causaShort}. Pruebas de validación del servicio satisfactorias con canales de atención y monitorización estable con IM-CSO. Se convoca formalmente la sesión de Post-Incident Review (PIR) blameless dentro de las próximas 48 horas.`;
+      breve = `[SL1 RESUELTO] Normalizado el servicio en ${sistemas} (${proceso}) tras ${totalDurationText}. Validación satisfactoria. Post-Mortem (PIR) programado en 48h con IM-CSO.`;
+    }
+
+    return {
+      completo,
+      breve,
+      meta: {
+        sistemas,
+        impacto: `${criterio} (${metricsLabel})`,
+        inicio: inicioStr,
+        proveedor: proveedores,
+        workaround: workaroundVal,
+        duracion: totalDurationText
+      }
+    };
+  }
+
+  function renderCommsTemplateTab(inc, phase = 'inicial') {
+    state.activeCommsPhase = phase;
+
+    // Actualizar botones de fase
+    document.querySelectorAll('.comms-phase-btn').forEach(btn => {
+      const p = btn.getAttribute('data-phase');
+      if (p === phase) {
+        btn.classList.add('is-active');
+      } else {
+        btn.classList.remove('is-active');
+      }
+    });
+
+    // Actualizar SLA etiqueta
+    if (dom.tplPhaseSla) {
+      if (phase === 'inicial') {
+        dom.tplPhaseSla.textContent = '⏱️ SLA: ≤ 20 min desde apertura';
+      } else if (phase === 'actualizacion') {
+        dom.tplPhaseSla.textContent = '⏱️ Frecuencia: Cada 60 min (o <30m ante cambio de impacto)';
+      } else {
+        dom.tplPhaseSla.textContent = '⏱️ SLA: Inmediato tras validación de estabilidad';
+      }
+    }
+
+    if (!inc) return;
+
+    const data = generateDynamicTemplates(inc, phase);
+
+    // Actualizar grid de metadatos
+    if (dom.tplMetaSistemas) dom.tplMetaSistemas.textContent = data.meta.sistemas;
+    if (dom.tplMetaImpacto) dom.tplMetaImpacto.textContent = data.meta.impacto;
+    if (dom.tplMetaInicio) dom.tplMetaInicio.textContent = data.meta.inicio;
+    if (dom.tplMetaProveedor) dom.tplMetaProveedor.textContent = data.meta.proveedor;
+    if (dom.tplMetaWorkaround) dom.tplMetaWorkaround.textContent = data.meta.workaround;
+    if (dom.tplMetaDuracion) dom.tplMetaDuracion.textContent = data.meta.duracion;
+
+    // Actualizar textareas
+    if (dom.tplTextCompleto) dom.tplTextCompleto.value = data.completo;
+    if (dom.tplTextBreve) dom.tplTextBreve.value = data.breve;
+
+    updateWordCounters();
+  }
+
+  function transferTemplateToGateway() {
+    if (!state.activeCommsIncId) return;
+    const inc = state.incidents.find(i => i.id === state.activeCommsIncId);
+    if (!inc) return;
+
+    const brand = detectIncidentBrand(inc);
+    const brandTag = brand === 'masmovil' ? 'MASMÓVIL' : 'ORANGE';
     const sistemas = Array.isArray(inc.sistemas) ? inc.sistemas.join(', ') : (inc.sistemas || 'Sistemas Core');
 
-    let completo = msgs.apertura?.completo || msgs.completo;
-    let breve = msgs.apertura?.breve || msgs.breve;
+    let phaseTitle = 'Notificación Inicial';
+    if (state.activeCommsPhase === 'actualizacion') phaseTitle = 'Actualización de Seguimiento';
+    if (state.activeCommsPhase === 'cierre') phaseTitle = 'Resolución y Cierre Definitivo';
 
-    if (!completo) {
-      completo = `Incidencia crítica ${incId} en ${sistemas} impactando ${proceso}. Umbral superado: ${evaluacion.criterio || 'Regla de Oro N1'}. Resolutores N2/N3 convocados en War Room con IM-CSO. Foco en mitigación inmediata y diagnóstico. Próxima actualización en 60 minutos.`;
-    }
-    if (!breve) {
-      breve = `SL1 ${incId} en ${sistemas} (${proceso}). War Room activa con IM-CSO. Restablecimiento en curso.`;
-    }
+    const subject = `[EMERGENCIA SL1][${brandTag}] ${inc.id} - ${sistemas} - ${phaseTitle}`;
 
-    if (dom.execCommCompleto) dom.execCommCompleto.textContent = completo;
-    if (dom.execCommBreve) dom.execCommBreve.textContent = breve;
-
-    dom.modalExecutiveComm.classList.add('open');
-
-    if (dom.btnCopyExecBreve) {
-      dom.btnCopyExecBreve.onclick = () => {
-        copyToClipboard(breve, 'Versión breve copiada al portapapeles');
-      };
+    // Determinar qué cuerpo usar según canal seleccionado en gateway
+    const selectedChannel = document.querySelector('input[name="gw-channel"]:checked')?.value || 'dual';
+    let body = dom.tplTextCompleto ? dom.tplTextCompleto.value.trim() : '';
+    if (selectedChannel === 'sms' && dom.tplTextBreve) {
+      body = dom.tplTextBreve.value.trim();
     }
 
-    if (dom.btnCopyExecCompleto) {
-      dom.btnCopyExecCompleto.onclick = () => {
-        copyToClipboard(completo, 'Versión completa copiada para difusión a Dirección');
-        const escState = state.orchestratorEscalations[incId] || {};
-        escState.commDone = true;
-        state.orchestratorEscalations[incId] = escState;
-        try {
-          localStorage.setItem('emergency_esc_' + incId, JSON.stringify(escState));
-        } catch (_) {}
+    if (dom.gwSubject) dom.gwSubject.value = subject;
+    if (dom.gwBody) dom.gwBody.value = body;
+
+    switchCommsTab('tab-gateway');
+    showToast('Mensaje transferido al Gateway de la Web de Explotación', 'info');
+  }
+
+  function getCommsHistory(incId) {
+    if (!state.commsDispatchHistory) state.commsDispatchHistory = {};
+    if (!state.commsDispatchHistory[incId]) {
+      try {
+        const stored = localStorage.getItem('comms_history_' + incId);
+        if (stored) {
+          state.commsDispatchHistory[incId] = JSON.parse(stored);
+        } else {
+          state.commsDispatchHistory[incId] = [];
+        }
+      } catch (_) {
+        state.commsDispatchHistory[incId] = [];
+      }
+    }
+    return state.commsDispatchHistory[incId];
+  }
+
+  function saveCommsHistory(incId, list) {
+    if (!state.commsDispatchHistory) state.commsDispatchHistory = {};
+    state.commsDispatchHistory[incId] = list;
+    try {
+      localStorage.setItem('comms_history_' + incId, JSON.stringify(list));
+    } catch (_) {}
+  }
+
+  function renderGatewayHistory(incId) {
+    if (!dom.gwHistoryList) return;
+    const list = getCommsHistory(incId);
+    if (!list || list.length === 0) {
+      dom.gwHistoryList.innerHTML = `
+        <div style="text-align: center; color: #6B7280; font-size: 12px; padding: 12px 0;">
+          No hay despachos registrados para esta incidencia en la Web de Explotación.
+        </div>
+      `;
+      return;
+    }
+
+    const html = list.map(item => `
+      <div class="comms-gw-history-entry">
+        <div style="display: flex; flex-direction: column; gap: 2px;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <strong style="color: #111827;">${escapeHtml(item.asunto)}</strong>
+            <span style="background: #D1FAE5; color: #065F46; padding: 1px 6px; border-radius: 3px; font-weight: 700; font-size: 10.5px;">${escapeHtml(item.estado)}</span>
+          </div>
+          <div style="font-size: 11.5px; color: #4B5563;">${escapeHtml(item.cuerpo)}</div>
+          <div style="font-size: 10.5px; color: #6B7280; margin-top: 2px;">
+            Canal: <strong>${escapeHtml((item.canal || 'dual').toUpperCase())}</strong> · Colectivos: ${escapeHtml((item.colectivos || []).join(', '))} · Emisor: ${escapeHtml(item.autor)}
+          </div>
+        </div>
+        <div style="font-family: var(--font-mono); font-size: 11px; color: #6B7280; white-space: nowrap; margin-left: 12px;">
+          ⏱️ ${escapeHtml(item.timestamp)}
+        </div>
+      </div>
+    `).join('');
+
+    dom.gwHistoryList.innerHTML = html;
+  }
+
+  function dispatchGatewayMessage() {
+    const incId = state.activeCommsIncId;
+    if (!incId) {
+      showToast('Selecciona primero una incidencia activa', 'warning');
+      return;
+    }
+
+    const subject = dom.gwSubject ? dom.gwSubject.value.trim() : '';
+    const body = dom.gwBody ? dom.gwBody.value.trim() : '';
+
+    if (!subject) {
+      showToast('El asunto de la notificación no puede estar vacío', 'warning');
+      if (dom.gwSubject) dom.gwSubject.focus();
+      return;
+    }
+
+    if (!body) {
+      showToast('El cuerpo de la notificación no puede estar vacío', 'warning');
+      if (dom.gwBody) dom.gwBody.focus();
+      return;
+    }
+
+    const selectedChannel = document.querySelector('input[name="gw-channel"]:checked')?.value || 'dual';
+    const checkedGroups = Array.from(document.querySelectorAll('input[name="gw-group"]:checked')).map(cb => cb.value);
+
+    if (checkedGroups.length === 0) {
+      showToast('Debes marcar al menos un colectivo de distribución', 'warning');
+      return;
+    }
+
+    const groupNamesMap = {
+      direccion: 'Dirección (C-Level / Jefaturas)',
+      resolutores: 'Resolutores N2/N3 & Proveedores',
+      cso: 'Customer & Service Ops (IM-CSO)',
+      atc: 'Atención al Cliente (ATC/Tiendas)'
+    };
+    const collectiveLabels = checkedGroups.map(k => groupNamesMap[k] || k);
+
+    const nowStr = new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    const record = {
+      id: 'EXP-' + Date.now().toString(36).toUpperCase(),
+      incId,
+      timestamp: nowStr,
+      canal: selectedChannel,
+      colectivos: collectiveLabels,
+      asunto: subject,
+      cuerpo: body,
+      autor: state.defaultIncidentManager,
+      estado: 'Despachado OK (Web de Explotación)'
+    };
+
+    const history = getCommsHistory(incId);
+    history.unshift(record);
+    saveCommsHistory(incId, history);
+
+    // Si es notificación inicial (<20 min) o no se había marcado, completar reloj de 20 min
+    const escState = state.orchestratorEscalations[incId] || {};
+    if (state.activeCommsPhase === 'inicial' || !escState.commDone) {
+      escState.commDone = true;
+      state.orchestratorEscalations[incId] = escState;
+      try {
+        localStorage.setItem('emergency_esc_' + incId, JSON.stringify(escState));
+      } catch (_) {}
+      updateOrchestratorClocks();
+    }
+
+    // Registrar en la bitácora auditable del ticket
+    addLogEntry(
+      incId,
+      'NOTIFICACION',
+      '📡 Despacho Web de Explotación',
+      `Notificación oficial emitida vía canal [${selectedChannel.toUpperCase()}] a ${collectiveLabels.length} colectivos: "${subject}". Despachado por ${state.defaultIncidentManager}.`,
+      'role-notificacion'
+    );
+
+    renderGatewayHistory(incId);
+    showToast('Notificación despachada con éxito a través de Web de Explotación Orange', 'success');
+  }
+
+  function renderContactMatrices(brandFilter, searchQuery, domainFilter) {
+    if (!dom.contactsCardsGrid) return;
+    const brand = brandFilter || state.activeContactsBrand || 'orange';
+    const query = (searchQuery || '').trim().toLowerCase();
+    const domain = domainFilter || state.activeContactsDomain || 'ALL';
+
+    let filtered = CONTACTS_DIRECTORY.filter(c => c.brand === brand);
+
+    if (domain !== 'ALL') {
+      filtered = filtered.filter(c => c.domain === domain);
+    }
+
+    if (query) {
+      filtered = filtered.filter(c => {
+        const haystack = [
+          c.system,
+          c.name,
+          c.provider,
+          c.role,
+          c.phone,
+          c.ext,
+          c.sdm,
+          c.email,
+          c.domain
+        ].join(' ').toLowerCase();
+        return haystack.includes(query);
+      });
+    }
+
+    if (filtered.length === 0) {
+      dom.contactsCardsGrid.innerHTML = `
+        <div style="grid-column: 1 / -1; text-align: center; padding: 32px 16px; background: #FFFFFF; border: 1px dashed #CBD5E1; border-radius: 8px;">
+          <span style="font-size: 28px;" aria-hidden="true">🔍</span>
+          <h4 style="margin: 8px 0 4px 0; color: #1E293B; font-size: 14px;">No se encontraron contactos de guardia</h4>
+          <p style="margin: 0; font-size: 12px; color: #64748B;">Intenta con otros términos de búsqueda o cambia el filtro de dominio funcional.</p>
+        </div>
+      `;
+      return;
+    }
+
+    const isOrange = brand === 'orange';
+    const platformName = isOrange ? 'GRIAL Orange' : 'Confluence MM';
+
+    const cardsHtml = filtered.map(c => {
+      let levelClass = 'comms-level-n2';
+      if (c.level.includes('N3')) levelClass = 'comms-level-n3';
+      if (c.level.toLowerCase().includes('jefatura')) levelClass = 'comms-level-sdm';
+
+      return `
+        <div class="comms-contact-card" data-contact-id="${escapeHtml(c.id)}">
+          <div class="comms-card-top">
+            <div>
+              <div class="comms-card-team">${escapeHtml(c.name)}</div>
+              <div class="comms-card-domain">Dominio: <strong>${escapeHtml(c.domain)}</strong> · ${escapeHtml(c.provider)}</div>
+            </div>
+            <div class="comms-card-badges">
+              <span class="comms-badge-level ${levelClass}">${escapeHtml(c.level)}</span>
+            </div>
+          </div>
+
+          <div class="comms-card-systems">
+            <div style="font-weight: 700; color: #1F2937; margin-bottom: 2px;">🖥️ ${escapeHtml(c.system)}</div>
+            <div>👔 <strong>SDM / Lead:</strong> ${escapeHtml(c.sdm)}</div>
+            <div>⏰ <strong>Disponibilidad:</strong> ${escapeHtml(c.hours)}</div>
+            <div>✉️ <strong>Email:</strong> ${escapeHtml(c.email)}</div>
+          </div>
+
+          <div class="comms-card-actions">
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <a href="tel:${escapeHtml(c.phone.replace(/\s+/g, ''))}" class="comms-phone-btn" title="Llamar directamente al teléfono de guardia">
+                <span aria-hidden="true">📞</span> <span>${escapeHtml(c.phone)}</span>
+              </a>
+              <span style="font-family: var(--font-mono); font-size: 11px; color: #6B7280;">(Ext: ${escapeHtml(c.ext)})</span>
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <button type="button" class="triage-btn triage-btn-sm contact-btn-copy-phone" data-phone="${escapeHtml(c.phone)}" title="Copiar teléfono al portapapeles">
+                <span aria-hidden="true">📋</span> <span>Copiar</span>
+              </button>
+              <button type="button" class="triage-btn triage-btn-sm contact-btn-log-call" data-contact-id="${escapeHtml(c.id)}" style="background: #0284C7; color: #FFFFFF; border-color: #0284C7; font-weight: 600;" title="Registrar llamada de guardia en la bitácora del ticket">
+                <span aria-hidden="true">📝</span> <span>Registrar</span>
+              </button>
+              <a href="${escapeHtml(c.platformUrl)}" target="_blank" rel="noopener noreferrer" class="triage-btn triage-btn-sm" style="border: 1px solid #D1D5DB; font-weight: 600;" title="Abrir ficha en ${platformName}">
+                <span>${platformName}</span> <span aria-hidden="true">↗</span>
+              </a>
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    dom.contactsCardsGrid.innerHTML = cardsHtml;
+
+    // Vincular eventos internos de las tarjetas
+    dom.contactsCardsGrid.querySelectorAll('.contact-btn-copy-phone').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const phone = btn.getAttribute('data-phone');
+        if (phone) copyToClipboard(phone, `Teléfono ${phone} copiado al portapapeles`);
+      });
+    });
+
+    dom.contactsCardsGrid.querySelectorAll('.contact-btn-log-call').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const contactId = btn.getAttribute('data-contact-id');
+        const contact = CONTACTS_DIRECTORY.find(c => c.id === contactId);
+        if (!contact) return;
+        const targetIncId = state.activeCommsIncId || state.activeOrchIncId;
+        if (!targetIncId) {
+          showToast('Selecciona primero un ticket para registrar la llamada en su bitácora', 'warning');
+          return;
+        }
         addLogEntry(
-          incId,
-          'NOTIFICACION',
-          '📝 Notificación Ejecutiva',
-          `1ª Comunicación oficial a Dirección emitida y registrada (SLA <20m).`,
-          'role-notificacion'
+          targetIncId,
+          'ESCALADO',
+          '📞 Contacto Telefónico de Guardia',
+          `Llamada de guardia registrada a ${contact.system} (${contact.level}). Contacto: ${contact.sdm} · Tel: ${contact.phone} (Ext: ${contact.ext}). Soporte: ${contact.provider}.`,
+          'role-resolutor'
         );
-        updateOrchestratorClocks();
-        dom.modalExecutiveComm.classList.remove('open');
-        showToast('1ª Comunicación registrada en bitácora', 'success');
-      };
+        showToast(`Llamada a guardia de ${contact.system} registrada en la bitácora`, 'success');
+      });
+    });
+  }
+
+  function switchCommsTab(tabId) {
+    state.activeCommsTab = tabId;
+
+    // Pestañas botones
+    [dom.tabBtnTemplates, dom.tabBtnGateway, dom.tabBtnContacts].forEach(btn => {
+      if (!btn) return;
+      const target = btn.getAttribute('data-tab');
+      if (target === tabId) {
+        btn.classList.add('is-active');
+        btn.setAttribute('aria-selected', 'true');
+      } else {
+        btn.classList.remove('is-active');
+        btn.setAttribute('aria-selected', 'false');
+      }
+    });
+
+    // Paneles
+    [dom.tabTemplates, dom.tabGateway, dom.tabContacts].forEach(panel => {
+      if (!panel) return;
+      if (panel.id === tabId) {
+        panel.classList.add('is-active');
+      } else {
+        panel.classList.remove('is-active');
+      }
+    });
+  }
+
+  function openCommsCenterModal(incId, targetTab = 'tab-templates', targetPhase = 'inicial') {
+    if (!dom.modalCommsCenter) return;
+
+    let inc = state.incidents.find(i => i.id === incId);
+    if (!inc) {
+      if (state.activeOrchIncId) {
+        inc = state.incidents.find(i => i.id === state.activeOrchIncId);
+      }
+      if (!inc) {
+        inc = state.incidents.find(i => i.prioridad_sugerida === 'P1') || state.incidents[0];
+      }
     }
 
-    if (dom.btnModalExecClose) {
-      dom.btnModalExecClose.onclick = () => {
-        dom.modalExecutiveComm.classList.remove('open');
-      };
+    const effectiveIncId = inc ? inc.id : null;
+    state.activeCommsIncId = effectiveIncId;
+    state.activeCommsPhase = targetPhase || 'inicial';
+
+    // Poblar selector de tickets
+    populateCommsTicketSelect(effectiveIncId);
+
+    // Detectar marca corporativa
+    const brand = detectIncidentBrand(inc);
+    state.activeContactsBrand = brand;
+    updateCommsBrandBadge(brand);
+
+    // Renderizar pestaña de plantillas
+    if (inc) {
+      renderCommsTemplateTab(inc, state.activeCommsPhase);
+      renderGatewayHistory(effectiveIncId);
     }
+
+    // Renderizar directorio de contactos
+    renderContactMatrices(state.activeContactsBrand, dom.contactsSearchInput ? dom.contactsSearchInput.value : '', state.activeContactsDomain);
+
+    // Activar pestaña solicitada
+    switchCommsTab(targetTab || 'tab-templates');
+
+    // Abrir modal
+    dom.modalCommsCenter.classList.add('open');
+  }
+
+  function closeCommsCenterModal() {
+    if (dom.modalCommsCenter) {
+      dom.modalCommsCenter.classList.remove('open');
+    }
+  }
+
+  // Compatibilidad hacia atrás con el antiguo disparador de notificación ejecutiva
+  function openExecutiveCommModal(incId) {
+    openCommsCenterModal(incId, 'tab-templates', 'inicial');
   }
 
   function startOrchestratorClocks(inc) {
@@ -1444,6 +2274,9 @@ Generado por Consola de Emergencias IT Orange - Motor de Triaje (Módulo 1)`;
                 <span aria-hidden="true">🚨</span> Orquestador
               </button>
             ` : ''}
+            <button type="button" class="triage-btn-table-comms btn-open-comms-cell" data-inc="${escapeHtml(incId)}" title="Abrir Módulo 3: Centro de Comunicaciones y Matrices de Contacto GRIAL / Confluence">
+              <span aria-hidden="true">📡</span> Comms
+            </button>
             <button type="button" class="triage-btn-table-toggle btn-toggle-row" data-inc="${escapeHtml(incId)}">
               <span>${isOpen ? 'Plegar ▴' : 'Detalle ▾'}</span>
             </button>
@@ -1564,6 +2397,9 @@ Generado por Consola de Emergencias IT Orange - Motor de Triaje (Módulo 1)`;
                 <button type="button" class="triage-btn-action-orchestrator btn-open-orchestrator" data-inc="${escapeHtml(incId)}" title="Abrir Módulo 2: Orquestador Operativo, War Room Teams, Monitor PaP y Relojes">
                   <span aria-hidden="true">🚨</span> Abrir Orquestador Operativo &amp; War Room (Módulo 2)
                 </button>
+                <button type="button" class="triage-btn triage-btn-sm btn-open-comms-detail" data-inc="${escapeHtml(incId)}" title="Abrir Módulo 3: Comunicaciones Web de Explotación y Matrices de Contacto" style="background:#0284C7; border-color:#0284C7; color:#FFFFFF; font-weight:600;">
+                  <span aria-hidden="true">📡</span> Comunicaciones &amp; Matrices (Módulo 3)
+                </button>
                 <button type="button" class="triage-btn triage-btn-sm btn-copy-report" data-inc="${escapeHtml(incId)}" title="Copiar Reporte Oficial de Emergencias en 4 Bloques">
                   <span aria-hidden="true">📋</span> Copiar Reporte 4 Bloques
                 </button>
@@ -1682,6 +2518,15 @@ Generado por Consola de Emergencias IT Orange - Motor de Triaje (Módulo 1)`;
         e.stopPropagation();
         const incId = btn.getAttribute('data-inc');
         if (incId) openEmergencyOrchestrator(incId);
+      });
+    });
+
+    // 4b. Botón Abrir Centro de Comunicaciones y Matrices (Módulo 3)
+    document.querySelectorAll('.btn-open-comms-cell, .btn-open-comms-detail').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const incId = btn.getAttribute('data-inc');
+        if (incId) openCommsCenterModal(incId, 'tab-templates', 'inicial');
       });
     });
 
@@ -1845,6 +2690,16 @@ Generado por Consola de Emergencias IT Orange - Motor de Triaje (Módulo 1)`;
       });
     }
 
+    // Modal Centro de Comunicaciones y Matrices (Módulo 3)
+    if (dom.btnCommsClose) {
+      dom.btnCommsClose.addEventListener('click', closeCommsCenterModal);
+    }
+    if (dom.modalCommsCenter) {
+      dom.modalCommsCenter.addEventListener('click', (e) => {
+        if (e.target === dom.modalCommsCenter) closeCommsCenterModal();
+      });
+    }
+
     // Escape universal para cerrar cualquier popup o modal abierto
     window.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
@@ -1864,6 +2719,9 @@ Generado por Consola de Emergencias IT Orange - Motor de Triaje (Módulo 1)`;
         }
         if (dom.modalExecutiveComm && dom.modalExecutiveComm.classList.contains('open')) {
           dom.modalExecutiveComm.classList.remove('open');
+        }
+        if (dom.modalCommsCenter && dom.modalCommsCenter.classList.contains('open')) {
+          closeCommsCenterModal();
         }
       }
     });
@@ -2075,6 +2933,183 @@ Puente Teams: ${teamsUrl}
         );
         updateOrchestratorClocks();
         showToast('Alarma de Estancamiento disparada y notificada a IM-CSO', 'error');
+      });
+    }
+
+    // --- Listeners Módulo 3: Centro de Comunicaciones y Matrices ---
+    // Apertura desde cabecera principal y cabecera del orquestador
+    if (dom.btnOpenCommsCenter) {
+      dom.btnOpenCommsCenter.addEventListener('click', () => {
+        openCommsCenterModal(state.activeOrchIncId || null, 'tab-templates', 'inicial');
+      });
+    }
+
+    if (dom.btnOrchOpenComms) {
+      dom.btnOrchOpenComms.addEventListener('click', () => {
+        openCommsCenterModal(state.activeOrchIncId, 'tab-templates', 'inicial');
+      });
+    }
+
+    // Botones de consulta rápida a matrices en los Relojes 2 y 3
+    document.querySelectorAll('.btn-quick-contacts').forEach(btn => {
+      btn.addEventListener('click', () => {
+        openCommsCenterModal(state.activeOrchIncId, 'tab-contacts');
+      });
+    });
+
+    // Selector de ticket en modal de comunicaciones
+    if (dom.commsTicketSelect) {
+      dom.commsTicketSelect.addEventListener('change', (e) => {
+        const incId = e.target.value;
+        state.activeCommsIncId = incId;
+        const inc = state.incidents.find(i => i.id === incId);
+        const brand = detectIncidentBrand(inc);
+        state.activeContactsBrand = brand;
+        updateCommsBrandBadge(brand);
+        if (inc) {
+          renderCommsTemplateTab(inc, state.activeCommsPhase);
+          renderGatewayHistory(incId);
+        }
+        renderContactMatrices(state.activeContactsBrand, dom.contactsSearchInput ? dom.contactsSearchInput.value : '', state.activeContactsDomain);
+      });
+    }
+
+    // Pestañas del Centro de Comunicaciones
+    document.querySelectorAll('.comms-tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const targetTab = btn.getAttribute('data-tab');
+        if (targetTab) switchCommsTab(targetTab);
+      });
+    });
+
+    // Selector de fase en Generador de Plantillas
+    document.querySelectorAll('.comms-phase-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.comms-phase-btn').forEach(b => b.classList.remove('is-active'));
+        btn.classList.add('is-active');
+        const phase = btn.getAttribute('data-phase') || 'inicial';
+        state.activeCommsPhase = phase;
+        const inc = state.incidents.find(i => i.id === state.activeCommsIncId);
+        if (inc) {
+          renderCommsTemplateTab(inc, phase);
+        }
+      });
+    });
+
+    // Conteo en vivo de palabras en editores de plantilla
+    if (dom.tplTextCompleto) {
+      dom.tplTextCompleto.addEventListener('input', updateWordCounters);
+    }
+    if (dom.tplTextBreve) {
+      dom.tplTextBreve.addEventListener('input', updateWordCounters);
+    }
+
+    // Conteo en vivo en cuerpo del Gateway
+    const gwBodyCounter = document.getElementById('gw-body-counter');
+    if (dom.gwBody && gwBodyCounter) {
+      dom.gwBody.addEventListener('input', () => {
+        const words = countWords(dom.gwBody.value);
+        gwBodyCounter.textContent = `${words} palabras`;
+      });
+    }
+
+    // Copia de plantillas generadas
+    if (dom.btnCopyTplCompleto) {
+      dom.btnCopyTplCompleto.addEventListener('click', () => {
+        const txt = dom.tplTextCompleto ? dom.tplTextCompleto.value.trim() : '';
+        if (txt) copyToClipboard(txt, '¡Versión Completa copiada al portapapeles!');
+      });
+    }
+
+    if (dom.btnCopyTplBreve) {
+      dom.btnCopyTplBreve.addEventListener('click', () => {
+        const txt = dom.tplTextBreve ? dom.tplTextBreve.value.trim() : '';
+        if (txt) copyToClipboard(txt, '¡Versión Breve SMS copiada al portapapeles!');
+      });
+    }
+
+    // Regenerar texto con datos del ticket
+    if (dom.btnTplRegenerate) {
+      dom.btnTplRegenerate.addEventListener('click', () => {
+        const inc = state.incidents.find(i => i.id === state.activeCommsIncId);
+        if (inc) {
+          renderCommsTemplateTab(inc, state.activeCommsPhase);
+          showToast('Textos oficiales regenerados con datos actuales del ticket', 'info');
+        }
+      });
+    }
+
+    // Transferir plantilla generada al Gateway de la Web de Explotación
+    if (dom.btnTplLoadGateway) {
+      dom.btnTplLoadGateway.addEventListener('click', () => {
+        transferTemplateToGateway();
+      });
+    }
+
+    // Copiar Payload JSON para consumo API REST del Gateway
+    if (dom.btnGwCopyPayload) {
+      dom.btnGwCopyPayload.addEventListener('click', () => {
+        const incId = state.activeCommsIncId || 'INC-UNKNOWN';
+        const selectedChannel = document.querySelector('input[name="gw-channel"]:checked')?.value || 'dual';
+        const checkedGroups = Array.from(document.querySelectorAll('input[name="gw-group"]:checked')).map(cb => cb.value);
+        const payload = {
+          gateway: 'Web de Explotacion Orange',
+          api_endpoint: 'https://webexplotacion.orange.es/api/v2/notifications/dispatch',
+          incident_id: incId,
+          timestamp: new Date().toISOString(),
+          channel: selectedChannel,
+          target_groups: checkedGroups,
+          subject: dom.gwSubject ? dom.gwSubject.value : '',
+          message_body: dom.gwBody ? dom.gwBody.value : '',
+          sender: state.defaultIncidentManager
+        };
+        copyToClipboard(JSON.stringify(payload, null, 2), '¡Payload JSON copiado para consumo de API REST!');
+      });
+    }
+
+    // Despachar notificación formal en la Web de Explotación
+    if (dom.btnGwDispatch) {
+      dom.btnGwDispatch.addEventListener('click', dispatchGatewayMessage);
+    }
+
+    // Conmutación de marca en directorio de contactos
+    if (dom.btnBrandOrange) {
+      dom.btnBrandOrange.addEventListener('click', () => {
+        state.activeContactsBrand = 'orange';
+        dom.btnBrandOrange.classList.add('is-active');
+        if (dom.btnBrandMasmovil) dom.btnBrandMasmovil.classList.remove('is-active');
+        updateCommsBrandBadge('orange');
+        renderContactMatrices('orange', dom.contactsSearchInput ? dom.contactsSearchInput.value : '', state.activeContactsDomain);
+      });
+    }
+
+    if (dom.btnBrandMasmovil) {
+      dom.btnBrandMasmovil.addEventListener('click', () => {
+        state.activeContactsBrand = 'masmovil';
+        dom.btnBrandMasmovil.classList.add('is-active');
+        if (dom.btnBrandOrange) dom.btnBrandOrange.classList.remove('is-active');
+        updateCommsBrandBadge('masmovil');
+        renderContactMatrices('masmovil', dom.contactsSearchInput ? dom.contactsSearchInput.value : '', state.activeContactsDomain);
+      });
+    }
+
+    // Buscador en vivo de matrices de contacto
+    if (dom.contactsSearchInput) {
+      dom.contactsSearchInput.addEventListener('input', (e) => {
+        renderContactMatrices(state.activeContactsBrand, e.target.value, state.activeContactsDomain);
+      });
+    }
+
+    // Filtros de dominio funcional en matrices
+    if (dom.contactsDomainPills) {
+      dom.contactsDomainPills.querySelectorAll('button').forEach(pill => {
+        pill.addEventListener('click', () => {
+          dom.contactsDomainPills.querySelectorAll('button').forEach(p => p.classList.remove('is-active'));
+          pill.classList.add('is-active');
+          const domain = pill.getAttribute('data-domain') || 'ALL';
+          state.activeContactsDomain = domain;
+          renderContactMatrices(state.activeContactsBrand, dom.contactsSearchInput ? dom.contactsSearchInput.value : '', domain);
+        });
       });
     }
   }
