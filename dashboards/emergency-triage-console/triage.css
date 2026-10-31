@@ -1603,40 +1603,48 @@ body {
    ========================================================================== */
 
 .badge-orchestrator-count {
-  background: #DC2626 !important;
-  color: #FFFFFF !important;
+  background: rgba(255, 121, 0, 0.2) !important;
+  color: #C05A00 !important;
+  border: 1px solid rgba(255, 121, 0, 0.45);
   font-weight: 800;
+  transition: all 0.15s ease;
+}
+
+.triage-tab-btn.active .badge-orchestrator-count {
+  background: #FFFFFF !important;
+  color: #C05A00 !important;
+  border-color: #FFFFFF;
 }
 
 /* Botones de Activación del Orquestador en Tabla y Detalle */
 .triage-btn-action-orchestrator {
-  background: #B91C1C;
+  background: #FF7900;
   color: #FFFFFF;
-  border: 1px solid #991B1B;
+  border: 1px solid #E06A00;
   border-radius: var(--radius-xs);
-  padding: 5px 10px;
+  padding: 6px 12px;
   font-size: 11.5px;
   font-weight: 700;
   font-family: var(--font-sans);
   cursor: pointer;
   display: inline-flex;
   align-items: center;
-  gap: 5px;
+  gap: 6px;
   transition: all 0.15s ease;
-  box-shadow: 0 1px 2px rgba(185, 28, 28, 0.2);
+  box-shadow: 0 1px 3px rgba(255, 121, 0, 0.3);
 }
 
 .triage-btn-action-orchestrator:hover {
-  background: #DC2626;
-  border-color: #B91C1C;
+  background: #E06A00;
+  border-color: #C05A00;
   transform: translateY(-1px);
-  box-shadow: 0 3px 8px rgba(220, 38, 38, 0.35);
+  box-shadow: 0 3px 8px rgba(255, 121, 0, 0.45);
 }
 
 .triage-btn-table-orchestrator {
-  background: rgba(239, 68, 68, 0.1);
-  color: #B91C1C;
-  border: 1px solid rgba(239, 68, 68, 0.3);
+  background: rgba(255, 121, 0, 0.1);
+  color: #C05A00;
+  border: 1px solid rgba(255, 121, 0, 0.35);
   border-radius: var(--radius-xs);
   padding: 3px 8px;
   font-size: 11px;
@@ -1649,9 +1657,10 @@ body {
 }
 
 .triage-btn-table-orchestrator:hover {
-  background: #DC2626;
+  background: #FF7900;
   color: #FFFFFF;
-  border-color: #DC2626;
+  border-color: #FF7900;
+  box-shadow: 0 2px 6px rgba(255, 121, 0, 0.3);
 }
 
 /* Contenedor Modal del Orquestador Operativo */
@@ -1663,19 +1672,21 @@ body {
   flex-direction: column;
   padding: 0;
   overflow: hidden;
-  background: #F8F6F2;
-  border: 1px solid #D6D0C5;
+  background: #FAF8F5;
+  border: 1px solid #E2DDD3;
+  border-top: 4px solid #FF7900;
+  border-radius: var(--radius-md);
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.45);
 }
 
 .orch-modal-header {
   padding: 18px 24px;
-  background: #181614;
+  background: linear-gradient(135deg, #181614 0%, #221E1B 100%);
   color: #FFFFFF;
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  border-bottom: 2px solid var(--triage-orange);
+  border-bottom: 2px solid #FF7900;
   gap: 16px;
 }
 
@@ -1726,14 +1737,14 @@ body {
 }
 
 .orch-badge-id {
-  background: #2A2622;
-  color: #FFFFFF;
+  background: #2A2420;
+  color: #FFE6D0;
   font-family: var(--font-mono);
   font-size: 12px;
   font-weight: 700;
   padding: 4px 10px;
   border-radius: var(--radius-xs);
-  border: 1px solid #453E37;
+  border: 1px solid rgba(255, 121, 0, 0.4);
 }
 
 .orch-badge-sev {
@@ -1786,8 +1797,8 @@ body {
 }
 
 .orch-btn-close:hover {
-  background: #DC2626;
-  border-color: #DC2626;
+  background: #FF7900;
+  border-color: #FF7900;
   color: #FFFFFF;
 }
 
@@ -1804,7 +1815,8 @@ body {
    -------------------------------------------------------------------------- */
 .orch-clocks-section {
   background: #FFFFFF;
-  border: 1px solid var(--triage-border);
+  border: 1px solid #E2DDD3;
+  border-top: 3px solid #FF7900;
   border-radius: var(--radius-md);
   padding: 16px 20px;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.04);
@@ -1845,11 +1857,11 @@ body {
   font-family: var(--font-mono);
   font-size: 12px;
   font-weight: 700;
-  background: #F3F0EA;
+  background: #F8F6F2;
   color: var(--triage-text-main);
   padding: 4px 10px;
   border-radius: var(--radius-pill);
-  border: 1px solid var(--triage-border);
+  border: 1px solid #E2DDD3;
 }
 
 .orch-aging-dual-wrap {
@@ -1860,9 +1872,9 @@ body {
 }
 
 .orch-aging-tag.orch-aging-crisis {
-  background: rgba(239, 68, 68, 0.08);
-  border-color: rgba(239, 68, 68, 0.3);
-  color: #DC2626;
+  background: rgba(255, 121, 0, 0.1);
+  border-color: rgba(255, 121, 0, 0.35);
+  color: #C05A00;
 }
 
 .orch-clock-mode-selector {
@@ -1891,9 +1903,9 @@ body {
 }
 
 .orch-mode-btn.is-active {
-  background: #FFFFFF;
-  color: var(--triage-text-main);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  background: #FF7900;
+  color: #FFFFFF;
+  box-shadow: 0 1px 3px rgba(255, 121, 0, 0.3);
   font-weight: 700;
 }
 
@@ -1942,7 +1954,8 @@ body {
 .orch-clock-info-wrap.is-open .orch-clock-info-btn {
   opacity: 1;
   transform: scale(1.1);
-  background: rgba(0, 0, 0, 0.05);
+  color: #FF7900;
+  background: rgba(255, 121, 0, 0.08);
 }
 
 /* Pop-up flotante de la Nota Informativa */
@@ -2035,11 +2048,12 @@ body {
 
 .orch-popup-sla {
   font-size: 10px;
-  font-weight: 600;
-  color: #4B5563;
-  background: #F3EFE9;
+  font-weight: 700;
+  color: #C05A00;
+  background: #FFF7ED;
   padding: 2px 6px;
   border-radius: var(--radius-xs);
+  border: 1px solid #FFEDD5;
   display: inline-flex;
   align-items: center;
   gap: 3px;
@@ -2081,6 +2095,11 @@ body {
   position: relative;
 }
 
+.orch-clock-card:hover {
+  border-color: rgba(255, 121, 0, 0.5);
+  box-shadow: 0 3px 10px rgba(255, 121, 0, 0.12);
+}
+
 .orch-clock-top {
   display: flex;
   align-items: flex-start;
@@ -2099,9 +2118,10 @@ body {
   font-size: 10px;
   font-family: var(--font-mono);
   font-weight: 700;
-  background: #EAE5DB;
-  color: var(--triage-text-muted);
-  padding: 2px 5px;
+  background: #FFF7ED;
+  color: #C05A00;
+  padding: 2px 6px;
+  border: 1px solid #FFEDD5;
   border-radius: 3px;
   white-space: nowrap;
 }
@@ -2146,11 +2166,11 @@ body {
 
 .orch-btn-clock-action {
   margin-top: 4px;
-  background: #FFFFFF;
-  border: 1px solid var(--triage-border);
-  color: var(--triage-text-main);
+  background: #FFFDF9;
+  border: 1px solid rgba(255, 121, 0, 0.35);
+  color: #C05A00;
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 700;
   padding: 6px 10px;
   border-radius: var(--radius-xs);
   cursor: pointer;
@@ -2162,8 +2182,10 @@ body {
 }
 
 .orch-btn-clock-action:hover {
-  background: #F3EFE9;
-  border-color: #C0BAAF;
+  background: #FF7900;
+  border-color: #FF7900;
+  color: #FFFFFF;
+  box-shadow: 0 2px 6px rgba(255, 121, 0, 0.25);
 }
 
 /* Modificadores de Estado de los Relojes */
@@ -2289,6 +2311,14 @@ body {
 
 .orch-box-icon {
   font-size: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-xs);
+  background: rgba(255, 121, 0, 0.1);
+  color: #FF7900;
 }
 
 .orch-box-title {
@@ -2307,13 +2337,15 @@ body {
 
 /* War Room Teams */
 .orch-war-room-box {
-  background: var(--triage-surface);
-  border: 1px solid var(--triage-border);
+  background: #FAF8F5;
+  border: 1px solid #E2DDD3;
+  border-top: 3px solid #464EB8;
 }
 
 .orch-pap-box {
-  background: var(--triage-surface);
-  border: 1px solid var(--triage-border);
+  background: #FAF8F5;
+  border: 1px solid #E2DDD3;
+  border-top: 3px solid #FF7900;
 }
 
 .orch-war-room-state-pill {
@@ -2327,8 +2359,9 @@ body {
 }
 
 .orch-teams-link-box {
-  background: #F4F1EA;
-  border: 1px solid #DDD7CC;
+  background: #FFFDF9;
+  border: 1px solid #E8E3D8;
+  border-left: 3px solid #464EB8;
   border-radius: var(--radius-sm);
   padding: 12px;
   margin-bottom: 12px;
@@ -2374,11 +2407,11 @@ body {
 }
 
 .orch-btn-teams-copy {
-  background: #FFFFFF;
-  border: 1px solid var(--triage-border);
-  color: var(--triage-text-main);
+  background: #FFFDF9;
+  border: 1px solid rgba(255, 121, 0, 0.35);
+  color: #C05A00;
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 700;
   padding: 7px 12px;
   border-radius: var(--radius-xs);
   cursor: pointer;
@@ -2389,8 +2422,10 @@ body {
 }
 
 .orch-btn-teams-copy:hover {
-  background: #EFECE6;
-  border-color: #BCB4A5;
+  background: #FF7900;
+  border-color: #FF7900;
+  color: #FFFFFF;
+  box-shadow: 0 2px 6px rgba(255, 121, 0, 0.25);
 }
 
 .orch-quorum-checklist {
@@ -2414,13 +2449,13 @@ body {
 }
 
 .orch-quorum-tag {
-  background: #F5F3EF;
-  border: 1px solid #E0DBD1;
+  background: #FFF7ED;
+  border: 1px solid #FFEDD5;
   font-size: 11px;
   font-weight: 600;
   padding: 3px 8px;
   border-radius: var(--radius-xs);
-  color: var(--triage-text-main);
+  color: #9A3412;
 }
 
 /* Monitor de Trabajos Programados (PaP) */
@@ -2478,7 +2513,8 @@ body {
   display: block;
   font-size: 10px;
   text-transform: uppercase;
-  color: var(--triage-text-muted);
+  color: #C05A00;
+  font-weight: 700;
   margin-bottom: 2px;
 }
 
@@ -2546,6 +2582,9 @@ body {
    Sección 3: Bitácora Interactiva del Ticket Masivo (Live Incident Log)
    -------------------------------------------------------------------------- */
 .orch-log-section {
+  background: #FAF8F5;
+  border: 1px solid #E2DDD3;
+  border-top: 3px solid #FF7900;
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -2557,12 +2596,27 @@ body {
   gap: 8px;
 }
 
+#btn-copy-full-log {
+  background: rgba(255, 121, 0, 0.08);
+  border: 1px solid rgba(255, 121, 0, 0.35);
+  color: #C05A00;
+  font-weight: 700;
+  transition: all 0.15s ease;
+}
+
+#btn-copy-full-log:hover {
+  background: #FF7900;
+  color: #FFFFFF;
+  border-color: #FF7900;
+  box-shadow: 0 2px 6px rgba(255, 121, 0, 0.25);
+}
+
 .orch-timeline-container {
   max-height: 240px;
   overflow-y: auto;
-  border: 1px solid #E5E0D5;
+  border: 1px solid #E4DFD5;
   border-radius: var(--radius-sm);
-  background: #FAF8F5;
+  background: #FFFFFF;
   padding: 12px 14px;
   display: flex;
   flex-direction: column;
@@ -2583,7 +2637,9 @@ body {
 }
 
 .orch-timeline-entry.role-im {
-  border-left-color: var(--triage-orange);
+  border-left-color: #FF7900;
+  background: #FFFDF9;
+  border-color: #FFEDD5;
 }
 
 .orch-timeline-entry.role-rollback {
@@ -2615,8 +2671,9 @@ body {
   font-weight: 700;
   padding: 2px 6px;
   border-radius: 3px;
-  background: #F1ECE2;
-  color: var(--triage-text-main);
+  background: #FFF7ED;
+  color: #C05A00;
+  border: 1px solid #FFEDD5;
 }
 
 .orch-entry-time {
@@ -2632,8 +2689,8 @@ body {
 }
 
 .orch-log-form {
-  background: #F4F1EA;
-  border: 1px solid #DDD7CC;
+  background: linear-gradient(135deg, #FFF7ED 0%, #FAF8F5 100%);
+  border: 1px solid #FFEDD5;
   border-radius: var(--radius-sm);
   padding: 12px;
 }
@@ -2654,7 +2711,7 @@ body {
   font-size: 11px;
   font-weight: 700;
   text-transform: uppercase;
-  color: var(--triage-text-muted);
+  color: #C05A00;
 }
 
 /* Responsive para el Orquestador */
@@ -2744,8 +2801,8 @@ body {
 
 .orch-btn-clock-secondary {
   background: transparent;
-  border: 1px dashed #D1D5DB;
-  color: #4B5563;
+  border: 1px dashed rgba(255, 121, 0, 0.4);
+  color: #C05A00;
   font-size: 11px;
   font-weight: 600;
   padding: 4px 8px;
@@ -2760,9 +2817,9 @@ body {
 }
 
 .orch-btn-clock-secondary:hover {
-  background: #F3F4F6;
-  border-color: #9CA3AF;
-  color: #111827;
+  background: rgba(255, 121, 0, 0.1);
+  border-color: #FF7900;
+  color: #9A3412;
 }
 
 /* Modal del Módulo 3 */
@@ -3002,18 +3059,19 @@ body {
 }
 
 .comms-phase-btn.is-active {
-  background: #FFFFFF;
-  color: #C05A00;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  background: #FF7900;
+  color: #FFFFFF;
+  box-shadow: 0 1px 3px rgba(255, 121, 0, 0.3);
 }
 
 .comms-phase-sla {
   font-size: 11.5px;
   font-weight: 700;
-  color: #B45309;
-  background: #FEF3C7;
+  color: #C05A00;
+  background: #FFF7ED;
   padding: 3px 8px;
   border-radius: var(--radius-xs);
+  border: 1px solid #FFEDD5;
   display: inline-flex;
   align-items: center;
   gap: 4px;
@@ -3025,7 +3083,7 @@ body {
   grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: 10px;
   background: #FAF8F5;
-  border: 1px solid #E5E7EB;
+  border: 1px solid #E2DDD3;
   border-radius: var(--radius-sm);
   padding: 12px 14px;
   width: 100%;
@@ -3039,7 +3097,8 @@ body {
   min-width: 0;
   overflow: hidden;
   background: #FFFFFF;
-  border: 1px solid #E5E7EB;
+  border: 1px solid #FFEDD5;
+  border-top: 2px solid #FF7900;
   border-radius: var(--radius-xs);
   padding: 8px 12px;
   box-sizing: border-box;
@@ -3059,7 +3118,7 @@ body {
   font-size: 10.5px;
   font-weight: 700;
   text-transform: uppercase;
-  color: #6B7280;
+  color: #C05A00;
   letter-spacing: 0.03em;
   white-space: nowrap;
   overflow: hidden;
@@ -3085,13 +3144,14 @@ body {
 }
 
 .comms-editor-box {
-  background: #FAF8F5;
-  border: 1px solid #D6D0C5;
+  background: #FFFFFF;
+  border: 1px solid #E2DDD3;
   border-radius: var(--radius-sm);
   padding: 12px 14px;
   display: flex;
   flex-direction: column;
   gap: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 }
 
 .comms-editor-header {
@@ -3184,6 +3244,69 @@ body {
   padding-top: 6px;
   flex-wrap: wrap;
   gap: 10px;
+}
+
+#btn-copy-tpl-completo,
+#btn-copy-tpl-breve {
+  background: rgba(255, 121, 0, 0.08);
+  border: 1px solid rgba(255, 121, 0, 0.35);
+  color: #C05A00;
+  font-weight: 700;
+  transition: all 0.15s ease;
+}
+
+#btn-copy-tpl-completo:hover,
+#btn-copy-tpl-breve:hover {
+  background: #FF7900;
+  color: #FFFFFF;
+  border-color: #FF7900;
+  box-shadow: 0 2px 6px rgba(255, 121, 0, 0.25);
+}
+
+#btn-copy-exec-completo {
+  background: #FF7900;
+  border-color: #E06A00;
+  color: #FFFFFF;
+  font-weight: 700;
+  box-shadow: 0 1px 3px rgba(255, 121, 0, 0.3);
+  transition: all 0.15s ease;
+}
+
+#btn-copy-exec-completo:hover {
+  background: #E06A00;
+  border-color: #C05A00;
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(255, 121, 0, 0.4);
+}
+
+#btn-tpl-regenerate {
+  background: #FFFDF9;
+  border: 1px solid #E2DDD3;
+  color: var(--triage-text-main);
+  font-weight: 600;
+  transition: all 0.15s ease;
+}
+
+#btn-tpl-regenerate:hover {
+  background: rgba(255, 121, 0, 0.08);
+  border-color: rgba(255, 121, 0, 0.4);
+  color: #C05A00;
+}
+
+#btn-tpl-load-gateway {
+  background: #FF7900;
+  border: 1px solid #E06A00;
+  color: #FFFFFF;
+  font-weight: 700;
+  box-shadow: 0 1px 3px rgba(255, 121, 0, 0.3);
+  transition: all 0.15s ease;
+}
+
+#btn-tpl-load-gateway:hover {
+  background: #E06A00;
+  border-color: #C05A00;
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(255, 121, 0, 0.4);
 }
 
 /* Gateway Web de Explotación */
