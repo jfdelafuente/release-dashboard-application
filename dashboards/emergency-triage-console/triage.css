@@ -3733,3 +3733,376 @@ body {
     grid-column: span 1;
   }
 }
+
+/* ==========================================================================
+   11. Footer Corporativo de Operaciones IT (Orange Tech Operations)
+   ========================================================================== */
+
+.triage-footer {
+  margin-top: 40px;
+  background: #FFFFFF;
+  border: 1px solid var(--triage-border);
+  border-top: 4px solid var(--triage-orange);
+  border-radius: var(--radius-md);
+  box-shadow: 0 4px 16px rgba(12, 11, 9, 0.04);
+  overflow: hidden;
+}
+
+.triage-footer-top {
+  padding: 20px 24px;
+  background: linear-gradient(135deg, #FFFDF9 0%, #FAF8F5 100%);
+  border-bottom: 1px solid #EAE6DF;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.triage-footer-brand {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.triage-footer-logo-box {
+  width: 40px;
+  height: 40px;
+  background: #000000;
+  border-radius: var(--radius-xs);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  flex-shrink: 0;
+}
+
+.triage-footer-logo-box svg {
+  width: 28px;
+  height: 28px;
+  display: block;
+}
+
+.triage-footer-brand-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.triage-footer-brand-title {
+  font-size: 14.5px;
+  font-weight: 800;
+  color: var(--triage-text-main);
+  letter-spacing: -0.01em;
+}
+
+.triage-footer-brand-subtitle {
+  font-size: 12px;
+  font-weight: 700;
+  color: #C05A00;
+}
+
+.triage-footer-brand-desc {
+  font-size: 12px;
+  color: var(--triage-text-muted);
+  max-width: 580px;
+  line-height: 1.4;
+  margin-top: 2px;
+}
+
+.triage-footer-top-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.triage-footer-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #ECFDF5;
+  border: 1px solid #A7F3D0;
+  color: #065F46;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 6px 14px;
+  border-radius: var(--radius-pill);
+}
+
+.triage-footer-btn-top {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #FFFFFF;
+  border: 1px solid var(--triage-border);
+  color: var(--triage-text-main);
+  font-size: 12px;
+  font-weight: 700;
+  font-family: var(--font-sans);
+  padding: 6px 14px;
+  border-radius: var(--radius-xs);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.triage-footer-btn-top:hover {
+  background: #FFF7ED;
+  border-color: #FF7900;
+  color: #C05A00;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(255, 121, 0, 0.2);
+}
+
+.triage-footer-btn-top:focus-visible,
+.triage-footer-link-btn:focus-visible {
+  outline: 2px solid #FF7900;
+  outline-offset: 2px;
+}
+
+.triage-footer-grid {
+  padding: 24px;
+  display: grid;
+  grid-template-columns: 1.1fr 1.35fr 1fr;
+  gap: 24px;
+  background: #FFFFFF;
+}
+
+.triage-footer-col {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.triage-footer-col-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12.5px;
+  font-weight: 800;
+  color: var(--triage-text-main);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding-bottom: 6px;
+  border-bottom: 2px solid #FFEDD5;
+}
+
+.triage-footer-col-header .col-icon {
+  font-size: 14px;
+}
+
+.triage-footer-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.triage-footer-list-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.triage-footer-item-title {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--triage-text-main);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.triage-footer-item-desc {
+  font-size: 11.5px;
+  color: var(--triage-text-muted);
+  line-height: 1.4;
+}
+
+.triage-footer-quick-links {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.triage-footer-link-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #FFF7ED;
+  border: 1px solid #FFEDD5;
+  color: #9A3412;
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 700;
+  padding: 8px 12px;
+  border-radius: var(--radius-xs);
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.15s ease;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.triage-footer-link-btn:hover {
+  background: #FF7900;
+  border-color: #E06A00;
+  color: #FFFFFF;
+  box-shadow: 0 2px 6px rgba(255, 121, 0, 0.25);
+  transform: translateY(-1px);
+}
+
+.triage-footer-link-btn span:last-child {
+  margin-left: auto;
+  font-size: 11px;
+  opacity: 0.8;
+}
+
+.triage-footer-rule-card {
+  background: #FAF8F5;
+  border: 1px solid #EAE6DF;
+  border-left: 3px solid #FF7900;
+  border-radius: var(--radius-xs);
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.triage-footer-rule-card.rule-p1 {
+  border-left-color: var(--triage-red-p1);
+  background: #FEF2F2;
+  border-color: #FEE2E2;
+}
+
+.triage-footer-rule-card.rule-p1 .triage-footer-rule-k {
+  color: #991B1B;
+}
+
+.triage-footer-rule-k {
+  font-size: 11.5px;
+  font-weight: 800;
+  color: #C05A00;
+}
+
+.triage-footer-rule-v {
+  font-size: 11px;
+  color: var(--triage-text-muted);
+  line-height: 1.35;
+}
+
+.triage-footer-rule-v strong {
+  color: var(--triage-text-main);
+}
+
+.triage-footer-meta-table {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.triage-footer-meta-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11.5px;
+  padding: 6px 8px;
+  background: #FAF8F5;
+  border: 1px solid #EAE6DF;
+  border-radius: var(--radius-xs);
+}
+
+.triage-footer-meta-k {
+  color: var(--triage-text-muted);
+  font-weight: 600;
+}
+
+.triage-footer-meta-v {
+  color: var(--triage-text-main);
+  font-weight: 700;
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+
+.triage-footer-meta-v.badge-ver {
+  background: #FFF7ED;
+  color: #C05A00;
+  border: 1px solid #FFEDD5;
+  padding: 2px 6px;
+  border-radius: 3px;
+}
+
+.triage-footer-bottom {
+  padding: 14px 24px;
+  background: #181614;
+  color: #A39E93;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  font-size: 11px;
+  border-top: 1px solid #2A2420;
+  flex-wrap: wrap;
+}
+
+.triage-footer-bottom-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.triage-footer-bottom-left strong {
+  color: #FFFFFF;
+}
+
+.triage-footer-sep {
+  opacity: 0.4;
+}
+
+.triage-footer-bottom-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.triage-footer-pill-crisis {
+  background: #2A2420;
+  color: #FFE6D0;
+  border: 1px solid rgba(255, 121, 0, 0.4);
+  font-size: 10.5px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: var(--radius-xs);
+  letter-spacing: 0.02em;
+}
+
+/* Responsive Footer */
+@media (max-width: 1024px) {
+  .triage-footer-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+  .triage-footer-col:last-child {
+    grid-column: span 2;
+  }
+}
+
+@media (max-width: 680px) {
+  .triage-footer-top {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .triage-footer-grid {
+    grid-template-columns: 1fr;
+  }
+  .triage-footer-col:last-child {
+    grid-column: span 1;
+  }
+  .triage-footer-bottom {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+}

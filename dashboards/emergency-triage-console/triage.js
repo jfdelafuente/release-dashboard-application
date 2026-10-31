@@ -306,9 +306,14 @@
   }
 
   function setConnectionStatus(status, text) {
-    if (!dom.livePill || !dom.liveStatusText) return;
-    dom.livePill.className = `triage-live-pill ${status}`;
-    dom.liveStatusText.textContent = text;
+    if (dom.livePill && dom.liveStatusText) {
+      dom.livePill.className = `triage-live-pill ${status}`;
+      dom.liveStatusText.textContent = text;
+    }
+    const footerLiveStatus = document.getElementById('footer-live-status-text');
+    if (footerLiveStatus) {
+      footerLiveStatus.textContent = text;
+    }
   }
 
   // --------------------------------------------------------------------------
@@ -3142,6 +3147,37 @@ Puente Teams: ${teamsUrl}
           renderContactMatrices(state.activeContactsBrand, dom.contactsSearchInput ? dom.contactsSearchInput.value : '', domain);
         });
       });
+    }
+
+    // --- Listeners Footer Corporativo ---
+    const btnFooterScrollTop = document.getElementById('footer-btn-scroll-top');
+    if (btnFooterScrollTop) {
+      btnFooterScrollTop.addEventListener('click', () => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      });
+    }
+
+    const btnFooterMatrices = document.getElementById('footer-btn-matrices');
+    if (btnFooterMatrices) {
+      btnFooterMatrices.addEventListener('click', () => {
+        openCommsCenterModal(null, 'tab-matrices');
+      });
+    }
+
+    const footerEnvName = document.getElementById('footer-env-name');
+    if (footerEnvName) {
+      const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+      footerEnvName.textContent = isLocal ? 'Desarrollo Local (localhost)' : 'Producción VPS (infocodes)';
+    }
+
+    const footerScanFreq = document.getElementById('footer-scan-freq');
+    if (dom.autoRefreshSelect && footerScanFreq) {
+      const updateFooterFreq = () => {
+        const val = parseInt(dom.autoRefreshSelect.value, 10);
+        footerScanFreq.textContent = val === 0 ? 'Inspección: Pausada' : `Ciclo: ${val / 1000}s`;
+      };
+      dom.autoRefreshSelect.addEventListener('change', updateFooterFreq);
+      updateFooterFreq();
     }
   }
 
