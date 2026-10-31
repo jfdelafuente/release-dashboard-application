@@ -2274,9 +2274,6 @@ Generado por Consola de Emergencias IT Orange - Motor de Triaje (Módulo 1)`;
                 <span aria-hidden="true">🚨</span> Orquestador
               </button>
             ` : ''}
-            <button type="button" class="triage-btn-table-comms btn-open-comms-cell" data-inc="${escapeHtml(incId)}" title="Abrir Módulo 3: Centro de Comunicaciones y Matrices de Contacto GRIAL / Confluence">
-              <span aria-hidden="true">📡</span> Comms
-            </button>
             <button type="button" class="triage-btn-table-toggle btn-toggle-row" data-inc="${escapeHtml(incId)}">
               <span>${isOpen ? 'Plegar ▴' : 'Detalle ▾'}</span>
             </button>
@@ -2397,9 +2394,6 @@ Generado por Consola de Emergencias IT Orange - Motor de Triaje (Módulo 1)`;
                 <button type="button" class="triage-btn-action-orchestrator btn-open-orchestrator" data-inc="${escapeHtml(incId)}" title="Abrir Módulo 2: Orquestador Operativo, War Room Teams, Monitor PaP y Relojes">
                   <span aria-hidden="true">🚨</span> Abrir Orquestador Operativo &amp; War Room (Módulo 2)
                 </button>
-                <button type="button" class="triage-btn triage-btn-sm btn-open-comms-detail" data-inc="${escapeHtml(incId)}" title="Abrir Módulo 3: Comunicaciones Web de Explotación y Matrices de Contacto" style="background:#0284C7; border-color:#0284C7; color:#FFFFFF; font-weight:600;">
-                  <span aria-hidden="true">📡</span> Comunicaciones &amp; Matrices (Módulo 3)
-                </button>
                 <button type="button" class="triage-btn triage-btn-sm btn-copy-report" data-inc="${escapeHtml(incId)}" title="Copiar Reporte Oficial de Emergencias en 4 Bloques">
                   <span aria-hidden="true">📋</span> Copiar Reporte 4 Bloques
                 </button>
@@ -2518,15 +2512,6 @@ Generado por Consola de Emergencias IT Orange - Motor de Triaje (Módulo 1)`;
         e.stopPropagation();
         const incId = btn.getAttribute('data-inc');
         if (incId) openEmergencyOrchestrator(incId);
-      });
-    });
-
-    // 4b. Botón Abrir Centro de Comunicaciones y Matrices (Módulo 3)
-    document.querySelectorAll('.btn-open-comms-cell, .btn-open-comms-detail').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        const incId = btn.getAttribute('data-inc');
-        if (incId) openCommsCenterModal(incId, 'tab-templates', 'inicial');
       });
     });
 
@@ -2949,13 +2934,6 @@ Puente Teams: ${teamsUrl}
         openCommsCenterModal(state.activeOrchIncId, 'tab-templates', 'inicial');
       });
     }
-
-    // Botones de consulta rápida a matrices en los Relojes 2 y 3
-    document.querySelectorAll('.btn-quick-contacts').forEach(btn => {
-      btn.addEventListener('click', () => {
-        openCommsCenterModal(state.activeOrchIncId, 'tab-contacts');
-      });
-    });
 
     // Selector de ticket en modal de comunicaciones
     if (dom.commsTicketSelect) {
