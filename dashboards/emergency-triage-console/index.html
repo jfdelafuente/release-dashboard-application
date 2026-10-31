@@ -661,42 +661,148 @@
     </div>
   </div>
 
-  <!-- MODAL DE NOTIFICACIÓN EJECUTIVA PARA DIRECCIÓN (RELOJ 20M) -->
+  <!-- ==========================================================================
+       MODAL MÓDULO 2: GENERADOR DE PLANTILLAS DINÁMICAS DE EMERGENCIA
+       Regla Normativa Monopárrafo (≤90 palabras) y SMS Flash (≤30 palabras)
+       Fases: Inicial (<20m) · Actualización (Cada 1h / <30m) · Cierre / Resolución
+       ========================================================================== -->
   <div id="modal-executive-comm" class="triage-modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="modal-exec-title">
-    <div class="triage-modal-dialog" style="max-width: 680px;">
-      <div class="triage-modal-header" style="background: rgba(255, 121, 0, 0.08); border-bottom: 2px solid var(--triage-orange);">
-        <h2 id="modal-exec-title" class="triage-modal-title" style="color: var(--triage-orange);">
-          <span>📝 1ª Comunicación Ejecutiva a Dirección (SLA 20m)</span>
-        </h2>
-        <button id="btn-modal-exec-close" class="triage-btn" aria-label="Cerrar modal de comunicación">✖</button>
+    <div class="triage-modal-dialog comms-modal-dialog" style="border-top: 4px solid var(--triage-orange);">
+      
+      <!-- Cabecera del Generador de Plantillas (Módulo 2) -->
+      <div class="comms-modal-header" style="background: rgba(255, 121, 0, 0.05);">
+        <div class="comms-header-left">
+          <div class="comms-title-row">
+            <span class="comms-icon" aria-hidden="true" style="background: rgba(255, 121, 0, 0.12); color: var(--triage-orange);">📝</span>
+            <div class="comms-title-col">
+              <span class="comms-eyebrow" style="color: var(--triage-orange);">Módulo 2 · Protocolo Oficial de Comunicaciones de Crisis IT</span>
+              <h2 id="modal-exec-title" class="comms-modal-title">
+                Generador de Plantillas Dinámicas de Emergencia
+              </h2>
+            </div>
+          </div>
+          <div class="comms-meta-bar">
+            <span class="comms-picker-label">Incidencia Activa:</span>
+            <span id="exec-modal-inc-id" class="orch-badge-id">INC000000000000</span>
+            <span class="orch-badge-sev" style="background: rgba(239, 68, 68, 0.12); color: var(--triage-red-p1); border-color: rgba(239, 68, 68, 0.25);">SL1 / P1 · Crítica</span>
+          </div>
+        </div>
+        <div class="comms-header-right">
+          <button type="button" id="btn-modal-exec-close" class="triage-btn orch-btn-close" aria-label="Cerrar Generador de Plantillas">✖</button>
+        </div>
       </div>
-      <div class="triage-modal-body">
-        <p style="margin-top: 0; font-size: 13px; color: var(--triage-text-muted);">
-          Texto redactado conforme a la skill <code>incident-executive-notifications</code> para difusión a la Dirección de Operaciones y Negocio:
-        </p>
-        <div style="margin-bottom: 12px;">
-          <label style="display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--triage-text-muted); margin-bottom: 4px;">Versión Completa (hasta 90 palabras, monopárrafo):</label>
-          <div id="exec-comm-completo" style="background: #FAF8F5; border: 1px solid var(--triage-border); border-left: 4px solid var(--triage-orange); padding: 12px; border-radius: 4px; font-size: 13px; line-height: 1.5; color: var(--triage-text-main);"></div>
+
+      <!-- Cuerpo del Generador de Plantillas -->
+      <div class="comms-modal-body">
+        
+        <!-- Selector de Fase Normativa -->
+        <div class="comms-phase-bar">
+          <span class="comms-phase-label">Fase de la Notificación:</span>
+          <div class="comms-phase-buttons">
+            <button type="button" class="comms-phase-btn is-active" data-phase="inicial">
+              <span aria-hidden="true">📢</span> <span>Inicial (&lt;20 min)</span>
+            </button>
+            <button type="button" class="comms-phase-btn" data-phase="actualizacion">
+              <span aria-hidden="true">🔄</span> <span>Actualización (Cada 1h / &lt;30m)</span>
+            </button>
+            <button type="button" class="comms-phase-btn" data-phase="cierre">
+              <span aria-hidden="true">✅</span> <span>Cierre / Resolución</span>
+            </button>
+          </div>
+          <span class="comms-phase-sla" id="tpl-phase-sla">⏱️ SLA: ≤ 20 min desde apertura</span>
         </div>
-        <div style="margin-bottom: 16px;">
-          <label style="display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--triage-text-muted); margin-bottom: 4px;">Versión Breve / SMS / Flash (hasta 30 palabras):</label>
-          <div id="exec-comm-breve" style="background: #FAF8F5; border: 1px solid var(--triage-border); border-left: 4px solid var(--triage-blue-info); padding: 10px; border-radius: 4px; font-size: 12.5px; line-height: 1.4; color: var(--triage-text-main);"></div>
+
+        <!-- Cuadrícula de Datos Automáticos Inyectados del Ticket -->
+        <div class="comms-ticket-meta-grid">
+          <div class="comms-meta-item">
+            <span class="comms-meta-k">Sistemas Afectados:</span>
+            <span class="comms-meta-v" id="tpl-meta-sistemas">-</span>
+          </div>
+          <div class="comms-meta-item">
+            <span class="comms-meta-k">Impacto Cuali/Cuantitativo:</span>
+            <span class="comms-meta-v" id="tpl-meta-impacto">-</span>
+          </div>
+          <div class="comms-meta-item">
+            <span class="comms-meta-k">Hora de Inicio / Apertura:</span>
+            <span class="comms-meta-v" id="tpl-meta-inicio">-</span>
+          </div>
+          <div class="comms-meta-item">
+            <span class="comms-meta-k">Proveedores / Grupos Técnicos:</span>
+            <span class="comms-meta-v" id="tpl-meta-proveedor">-</span>
+          </div>
+          <div class="comms-meta-item">
+            <span class="comms-meta-k">Workaround / Mitigación:</span>
+            <span class="comms-meta-v" id="tpl-meta-workaround">-</span>
+          </div>
+          <div class="comms-meta-item">
+            <span class="comms-meta-k">Duración Total / Envejecimiento:</span>
+            <span class="comms-meta-v" id="tpl-meta-duracion">-</span>
+          </div>
         </div>
-        <div style="display: flex; justify-content: flex-end; gap: 10px;">
-          <button type="button" class="triage-btn" id="btn-copy-exec-breve">
-            <span aria-hidden="true">📋</span> <span>Copiar Versión Breve</span>
+
+        <!-- Editores de Plantilla en Doble Nivel Normativo -->
+        <div class="comms-editors-container">
+          
+          <!-- Versión Completa (hasta 90 palabras, monopárrafo) -->
+          <div class="comms-editor-box">
+            <div class="comms-editor-header">
+              <div class="comms-editor-title-wrap">
+                <span class="comms-editor-tag tag-completo">Versión Completa · Dirección / Email</span>
+                <span class="comms-editor-subtext">Monopárrafo formal</span>
+              </div>
+              <div class="comms-counter-wrap">
+                <span id="counter-completo" class="comms-word-counter is-valid">0 / 90 palabras</span>
+              </div>
+            </div>
+            <textarea id="tpl-text-completo" class="comms-textarea" rows="4" placeholder="Redacción automática de la versión completa..."></textarea>
+            <div class="comms-editor-footer">
+              <button type="button" class="triage-btn triage-btn-sm" id="btn-copy-tpl-completo" title="Copiar versión completa oficial al portapapeles">
+                <span aria-hidden="true">📋</span> <span>Copiar Versión Completa</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Versión Breve (hasta 30 palabras) -->
+          <div class="comms-editor-box">
+            <div class="comms-editor-header">
+              <div class="comms-editor-title-wrap">
+                <span class="comms-editor-tag tag-breve">Versión Breve · SMS / Flash / Audio</span>
+                <span class="comms-editor-subtext">Alerta ejecutiva ultra-sintética</span>
+              </div>
+              <div class="comms-counter-wrap">
+                <span id="counter-breve" class="comms-word-counter is-valid">0 / 30 palabras</span>
+              </div>
+            </div>
+            <textarea id="tpl-text-breve" class="comms-textarea" rows="3" placeholder="Redacción automática de la versión breve..."></textarea>
+            <div class="comms-editor-footer">
+              <button type="button" class="triage-btn triage-btn-sm" id="btn-copy-tpl-breve" title="Copiar versión breve al portapapeles">
+                <span aria-hidden="true">📱</span> <span>Copiar Versión SMS</span>
+              </button>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Barra de Acciones del Generador (Módulo 2) -->
+        <div class="comms-panel-actions">
+          <button type="button" class="triage-btn" id="btn-tpl-regenerate" title="Restaurar el texto generado automáticamente con los datos actuales del ticket">
+            <span aria-hidden="true">✨</span> <span>Regenerar con Datos del Ticket</span>
           </button>
-          <button type="button" class="triage-btn triage-btn-primary" id="btn-copy-exec-completo">
-            <span aria-hidden="true">📋</span> <span>Copiar Versión Completa y Registrar Envío</span>
+          <button type="button" class="triage-btn triage-btn-primary" id="btn-copy-exec-completo" title="Copiar versión completa y registrar automáticamente el envío en la bitácora auditable">
+            <span aria-hidden="true">📋</span> <span>Copiar y Registrar en Bitácora</span>
+          </button>
+          <button type="button" class="triage-btn" id="btn-tpl-load-gateway" style="background: #0284C7; color: #FFFFFF; border-color: #0284C7; font-weight: 600;" title="Transferir este mensaje al Gateway Web de Explotación (Módulo 3)">
+            <span aria-hidden="true">🚀</span> <span>Cargar en Gateway Web de Explotación (Módulo 3) ➔</span>
           </button>
         </div>
+
       </div>
     </div>
   </div>
 
   <!-- ==========================================================================
        MODAL / COCKPIT MÓDULO 3: CENTRO DE COMUNICACIONES Y MATRICES DE CONTACTO
-       Gateway SMS/Email Web de Explotación · Plantillas Dinámicas · Matrices GRIAL/Confluence
+       Gateway SMS/Email Web de Explotación · Buscador Matrices GRIAL/Confluence (N2/N3)
        ========================================================================== -->
   <div id="modal-comms-center" class="triage-modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="comms-modal-title">
     <div class="triage-modal-dialog comms-modal-dialog">
@@ -734,12 +840,9 @@
         </div>
       </div>
 
-      <!-- Barra de Pestañas del Módulo 3 -->
+      <!-- Barra de Pestañas del Módulo 3 (Solo Gateway y Matrices de Contacto) -->
       <nav class="comms-tabs-bar" role="tablist" aria-label="Secciones del Módulo 3">
-        <button type="button" class="comms-tab-btn is-active" id="tab-btn-templates" data-tab="tab-templates" role="tab" aria-selected="true" aria-controls="tab-templates">
-          <span aria-hidden="true">📝</span> <span>Generador de Plantillas Dinámicas</span>
-        </button>
-        <button type="button" class="comms-tab-btn" id="tab-btn-gateway" data-tab="tab-gateway" role="tab" aria-selected="false" aria-controls="tab-gateway">
+        <button type="button" class="comms-tab-btn is-active" id="tab-btn-gateway" data-tab="tab-gateway" role="tab" aria-selected="true" aria-controls="tab-gateway">
           <span aria-hidden="true">🚀</span> <span>Gateway Web de Explotación (SMS/Email)</span>
         </button>
         <button type="button" class="comms-tab-btn" id="tab-btn-contacts" data-tab="tab-contacts" role="tab" aria-selected="false" aria-controls="tab-contacts">
@@ -751,114 +854,9 @@
       <div class="comms-modal-body">
 
         <!-- ====================================================================
-             PANEL 1: GENERADOR DE PLANTILLAS DINÁMICAS
+             PANEL 1: GATEWAY WEB DE EXPLOTACIÓN (SMS / EMAIL)
              ==================================================================== -->
-        <section class="comms-tab-panel is-active" id="tab-templates" role="tabpanel" aria-labelledby="tab-btn-templates">
-          
-          <!-- Selector de Fase Normativa -->
-          <div class="comms-phase-bar">
-            <span class="comms-phase-label">Tipo de Notificación:</span>
-            <div class="comms-phase-buttons">
-              <button type="button" class="comms-phase-btn is-active" data-phase="inicial">
-                <span aria-hidden="true">📢</span> <span>Inicial (&lt;20 min)</span>
-              </button>
-              <button type="button" class="comms-phase-btn" data-phase="actualizacion">
-                <span aria-hidden="true">🔄</span> <span>Actualización (Cada 1h / &lt;30m)</span>
-              </button>
-              <button type="button" class="comms-phase-btn" data-phase="cierre">
-                <span aria-hidden="true">✅</span> <span>Cierre / Resolución</span>
-              </button>
-            </div>
-            <span class="comms-phase-sla" id="tpl-phase-sla">⏱️ SLA: ≤ 20 min desde apertura</span>
-          </div>
-
-          <!-- Cuadrícula de Datos Automáticos Inyectados del Ticket -->
-          <div class="comms-ticket-meta-grid">
-            <div class="comms-meta-item">
-              <span class="comms-meta-k">Sistemas Afectados:</span>
-              <span class="comms-meta-v" id="tpl-meta-sistemas">-</span>
-            </div>
-            <div class="comms-meta-item">
-              <span class="comms-meta-k">Impacto Cuali/Cuantitativo:</span>
-              <span class="comms-meta-v" id="tpl-meta-impacto">-</span>
-            </div>
-            <div class="comms-meta-item">
-              <span class="comms-meta-k">Hora de Inicio / Apertura:</span>
-              <span class="comms-meta-v" id="tpl-meta-inicio">-</span>
-            </div>
-            <div class="comms-meta-item">
-              <span class="comms-meta-k">Proveedores / Grupos Técnicos:</span>
-              <span class="comms-meta-v" id="tpl-meta-proveedor">-</span>
-            </div>
-            <div class="comms-meta-item">
-              <span class="comms-meta-k">Workaround / Mitigación:</span>
-              <span class="comms-meta-v" id="tpl-meta-workaround">-</span>
-            </div>
-            <div class="comms-meta-item">
-              <span class="comms-meta-k">Duración Total / Envejecimiento:</span>
-              <span class="comms-meta-v" id="tpl-meta-duracion">-</span>
-            </div>
-          </div>
-
-          <!-- Editores de Plantilla en Doble Nivel Normativo -->
-          <div class="comms-editors-container">
-            
-            <!-- Versión Completa (hasta 90 palabras, monopárrafo) -->
-            <div class="comms-editor-box">
-              <div class="comms-editor-header">
-                <div class="comms-editor-title-wrap">
-                  <span class="comms-editor-tag tag-completo">Versión Completa · Dirección / Email</span>
-                  <span class="comms-editor-subtext">Monopárrafo formal</span>
-                </div>
-                <div class="comms-counter-wrap">
-                  <span id="counter-completo" class="comms-word-counter is-valid">0 / 90 palabras</span>
-                </div>
-              </div>
-              <textarea id="tpl-text-completo" class="comms-textarea" rows="4" placeholder="Redacción automática de la versión completa..."></textarea>
-              <div class="comms-editor-footer">
-                <button type="button" class="triage-btn triage-btn-sm" id="btn-copy-tpl-completo" title="Copiar versión completa oficial al portapapeles">
-                  <span aria-hidden="true">📋</span> <span>Copiar Versión Completa</span>
-                </button>
-              </div>
-            </div>
-
-            <!-- Versión Breve (hasta 30 palabras) -->
-            <div class="comms-editor-box">
-              <div class="comms-editor-header">
-                <div class="comms-editor-title-wrap">
-                  <span class="comms-editor-tag tag-breve">Versión Breve · SMS / Flash / Audio</span>
-                  <span class="comms-editor-subtext">Alerta ejecutiva ultra-sintética</span>
-                </div>
-                <div class="comms-counter-wrap">
-                  <span id="counter-breve" class="comms-word-counter is-valid">0 / 30 palabras</span>
-                </div>
-              </div>
-              <textarea id="tpl-text-breve" class="comms-textarea" rows="3" placeholder="Redacción automática de la versión breve..."></textarea>
-              <div class="comms-editor-footer">
-                <button type="button" class="triage-btn triage-btn-sm" id="btn-copy-tpl-breve" title="Copiar versión breve al portapapeles">
-                  <span aria-hidden="true">📱</span> <span>Copiar Versión SMS</span>
-                </button>
-              </div>
-            </div>
-
-          </div>
-
-          <!-- Barra de Acciones del Generador -->
-          <div class="comms-panel-actions">
-            <button type="button" class="triage-btn" id="btn-tpl-regenerate" title="Restaurar el texto generado automáticamente con los datos actuales del ticket">
-              <span aria-hidden="true">✨</span> <span>Regenerar con Datos del Ticket</span>
-            </button>
-            <button type="button" class="triage-btn triage-btn-primary" id="btn-tpl-load-gateway" style="background:#0284C7; border-color:#0284C7;" title="Transferir este mensaje al Gateway de la Web de Explotación">
-              <span aria-hidden="true">🚀</span> <span>Cargar en Gateway Web de Explotación ➔</span>
-            </button>
-          </div>
-
-        </section>
-
-        <!-- ====================================================================
-             PANEL 2: GATEWAY WEB DE EXPLOTACIÓN (SMS / EMAIL)
-             ==================================================================== -->
-        <section class="comms-tab-panel" id="tab-gateway" role="tabpanel" aria-labelledby="tab-btn-gateway">
+        <section class="comms-tab-panel is-active" id="tab-gateway" role="tabpanel" aria-labelledby="tab-btn-gateway">
           
           <!-- Banner de Integración con Web de Explotación Orange -->
           <div class="comms-gateway-banner">

@@ -180,11 +180,9 @@
     commsBrandText: document.getElementById('comms-brand-text'),
     commsBrandPlatform: document.getElementById('comms-brand-platform'),
 
-    // Tabs
-    tabBtnTemplates: document.getElementById('tab-btn-templates'),
+    // Tabs Módulo 3
     tabBtnGateway: document.getElementById('tab-btn-gateway'),
     tabBtnContacts: document.getElementById('tab-btn-contacts'),
-    tabTemplates: document.getElementById('tab-templates'),
     tabGateway: document.getElementById('tab-gateway'),
     tabContacts: document.getElementById('tab-contacts'),
 
@@ -1367,8 +1365,14 @@ Proceder con la ejecución inmediata del procedimiento de Rollback. Confirmar in
     if (dom.gwSubject) dom.gwSubject.value = subject;
     if (dom.gwBody) dom.gwBody.value = body;
 
-    switchCommsTab('tab-gateway');
-    showToast('Mensaje transferido al Gateway de la Web de Explotación', 'info');
+    // Cerrar modal del Generador de Plantillas (Módulo 2)
+    if (dom.modalExecutiveComm) {
+      dom.modalExecutiveComm.classList.remove('open');
+    }
+
+    // Abrir Centro de Comunicaciones (Módulo 3) directamente en la pestaña del Gateway
+    openCommsCenterModal(inc.id, 'tab-gateway');
+    showToast('Plantilla cargada en el Gateway de la Web de Explotación (Módulo 3)', 'info');
   }
 
   function getCommsHistory(incId) {
@@ -1634,13 +1638,14 @@ Proceder con la ejecución inmediata del procedimiento de Rollback. Confirmar in
   }
 
   function switchCommsTab(tabId) {
-    state.activeCommsTab = tabId;
+    const validTab = (tabId === 'tab-contacts') ? 'tab-contacts' : 'tab-gateway';
+    state.activeCommsTab = validTab;
 
     // Pestañas botones
-    [dom.tabBtnTemplates, dom.tabBtnGateway, dom.tabBtnContacts].forEach(btn => {
+    [dom.tabBtnGateway, dom.tabBtnContacts].forEach(btn => {
       if (!btn) return;
       const target = btn.getAttribute('data-tab');
-      if (target === tabId) {
+      if (target === validTab) {
         btn.classList.add('is-active');
         btn.setAttribute('aria-selected', 'true');
       } else {
@@ -1650,9 +1655,9 @@ Proceder con la ejecución inmediata del procedimiento de Rollback. Confirmar in
     });
 
     // Paneles
-    [dom.tabTemplates, dom.tabGateway, dom.tabContacts].forEach(panel => {
+    [dom.tabGateway, dom.tabContacts].forEach(panel => {
       if (!panel) return;
-      if (panel.id === tabId) {
+      if (panel.id === validTab) {
         panel.classList.add('is-active');
       } else {
         panel.classList.remove('is-active');
@@ -1660,7 +1665,7 @@ Proceder con la ejecución inmediata del procedimiento de Rollback. Confirmar in
     });
   }
 
-  function openCommsCenterModal(incId, targetTab = 'tab-templates', targetPhase = 'inicial') {
+  function openCommsCenterModal(incId, targetTab = 'tab-gateway') {
     if (!dom.modalCommsCenter) return;
 
     let inc = state.incidents.find(i => i.id === incId);
@@ -1675,7 +1680,6 @@ Proceder con la ejecución inmediata del procedimiento de Rollback. Confirmar in
 
     const effectiveIncId = inc ? inc.id : null;
     state.activeCommsIncId = effectiveIncId;
-    state.activeCommsPhase = targetPhase || 'inicial';
 
     // Poblar selector de tickets
     populateCommsTicketSelect(effectiveIncId);
@@ -1685,9 +1689,8 @@ Proceder con la ejecución inmediata del procedimiento de Rollback. Confirmar in
     state.activeContactsBrand = brand;
     updateCommsBrandBadge(brand);
 
-    // Renderizar pestaña de plantillas
-    if (inc) {
-      renderCommsTemplateTab(inc, state.activeCommsPhase);
+    // Renderizar historial de despachos del gateway para este ticket
+    if (effectiveIncId) {
       renderGatewayHistory(effectiveIncId);
     }
 
@@ -1695,7 +1698,7 @@ Proceder con la ejecución inmediata del procedimiento de Rollback. Confirmar in
     renderContactMatrices(state.activeContactsBrand, dom.contactsSearchInput ? dom.contactsSearchInput.value : '', state.activeContactsDomain);
 
     // Activar pestaña solicitada
-    switchCommsTab(targetTab || 'tab-templates');
+    switchCommsTab(targetTab || 'tab-gateway');
 
     // Abrir modal
     dom.modalCommsCenter.classList.add('open');
@@ -1707,9 +1710,32 @@ Proceder con la ejecución inmediata del procedimiento de Rollback. Confirmar in
     }
   }
 
-  // Compatibilidad hacia atrás con el antiguo disparador de notificación ejecutiva
-  function openExecutiveCommModal(incId) {
-    openCommsCenterModal(incId, 'tab-templates', 'inicial');
+  // Módulo 2: Generador de Plantillas Dinámicas de Emergencia
+  function openExecutiveCommModal(incId, phase = 'inicial') {
+    if (!dom.modalExecutiveComm) return;
+
+    let inc = state.incidents.find(i => i.id === incId);
+    if (!inc && state.activeOrchIncId) {
+      inc = state.incidents.find(i => i.id === state.activeOrchIncId);
+    }
+    if (!inc) {
+      inc = state.incidents.find(i => i.prioridad_sugerida === 'P1') || state.incidents[0];
+    }
+    if (!inc) return;
+
+    state.activeCommsIncId = inc.id;
+    state.activeCommsPhase = phase || 'inicial';
+
+    const execModalIncId = document.getElementById('exec-modal-inc-id');
+    if (execModalIncId) {
+      execModalIncId.textContent = inc.id;
+    }
+
+    // Renderizar plantilla para la fase seleccionada
+    renderCommsTemplateTab(inc, state.activeCommsPhase);
+
+    // Abrir modal del Generador de Plantillas (Módulo 2)
+    dom.modalExecutiveComm.classList.add('open');
   }
 
   function startOrchestratorClocks(inc) {
@@ -2668,7 +2694,12 @@ Generado por Consola de Emergencias IT Orange - Motor de Triaje (Módulo 1)`;
       });
     }
 
-    // Modal Notificación Ejecutiva (Módulo 2)
+    // Modal Notificación Ejecutiva / Generador de Plantillas (Módulo 2)
+    if (dom.btnModalExecClose) {
+      dom.btnModalExecClose.addEventListener('click', () => {
+        if (dom.modalExecutiveComm) dom.modalExecutiveComm.classList.remove('open');
+      });
+    }
     if (dom.modalExecutiveComm) {
       dom.modalExecutiveComm.addEventListener('click', (e) => {
         if (e.target === dom.modalExecutiveComm) dom.modalExecutiveComm.classList.remove('open');
@@ -2925,13 +2956,13 @@ Puente Teams: ${teamsUrl}
     // Apertura desde cabecera principal y cabecera del orquestador
     if (dom.btnOpenCommsCenter) {
       dom.btnOpenCommsCenter.addEventListener('click', () => {
-        openCommsCenterModal(state.activeOrchIncId || null, 'tab-templates', 'inicial');
+        openCommsCenterModal(state.activeOrchIncId || null, 'tab-gateway');
       });
     }
 
     if (dom.btnOrchOpenComms) {
       dom.btnOrchOpenComms.addEventListener('click', () => {
-        openCommsCenterModal(state.activeOrchIncId, 'tab-templates', 'inicial');
+        openCommsCenterModal(state.activeOrchIncId, 'tab-gateway');
       });
     }
 
@@ -2945,7 +2976,6 @@ Puente Teams: ${teamsUrl}
         state.activeContactsBrand = brand;
         updateCommsBrandBadge(brand);
         if (inc) {
-          renderCommsTemplateTab(inc, state.activeCommsPhase);
           renderGatewayHistory(incId);
         }
         renderContactMatrices(state.activeContactsBrand, dom.contactsSearchInput ? dom.contactsSearchInput.value : '', state.activeContactsDomain);
@@ -3013,6 +3043,46 @@ Puente Teams: ${teamsUrl}
         if (inc) {
           renderCommsTemplateTab(inc, state.activeCommsPhase);
           showToast('Textos oficiales regenerados con datos actuales del ticket', 'info');
+        }
+      });
+    }
+
+    // Copiar y Registrar en Bitácora (Módulo 2: Generador de Plantillas)
+    if (dom.btnCopyExecCompleto) {
+      dom.btnCopyExecCompleto.addEventListener('click', () => {
+        const text = dom.tplTextCompleto ? dom.tplTextCompleto.value.trim() : '';
+        if (!text) {
+          showToast('No hay contenido en la versión completa para copiar', 'warning');
+          return;
+        }
+
+        copyToClipboard(text, '¡Versión Completa copiada al portapapeles!');
+
+        const incId = state.activeCommsIncId || state.activeOrchIncId;
+        if (incId) {
+          const phase = state.activeCommsPhase || 'inicial';
+          const phaseLabel = phase === 'inicial'
+            ? 'Inicial (<20 min)'
+            : (phase === 'actualizacion' ? 'Actualización (Seguimiento)' : 'Cierre / Resolución');
+
+          addLogEntry(
+            incId,
+            'NOTIFICACION',
+            `📢 Difusión Notificación Oficial (${phaseLabel})`,
+            `Notificación ejecutiva generada y registrada en bitácora. Contenido:\n"${text}"`,
+            'role-notificacion'
+          );
+
+          // Si es fase inicial o no estaba completado el reloj 1 (comms 20m):
+          const escState = state.orchestratorEscalations[incId] || {};
+          escState.commDone = true;
+          state.orchestratorEscalations[incId] = escState;
+          try {
+            localStorage.setItem('emergency_esc_' + incId, JSON.stringify(escState));
+          } catch (_) {}
+
+          updateOrchestratorClocks();
+          showToast('Notificación registrada en bitácora y Reloj 20m completado', 'success');
         }
       });
     }
