@@ -1603,7 +1603,7 @@ Proceder con la ejecución inmediata del procedimiento de Rollback. Confirmar in
               <button type="button" class="triage-btn triage-btn-sm contact-btn-copy-phone" data-phone="${escapeHtml(c.phone)}" title="Copiar teléfono al portapapeles">
                 <span aria-hidden="true">📋</span> <span>Copiar</span>
               </button>
-              <button type="button" class="triage-btn triage-btn-sm contact-btn-log-call" data-contact-id="${escapeHtml(c.id)}" style="background: #0284C7; color: #FFFFFF; border-color: #0284C7; font-weight: 600;" title="Registrar llamada de guardia en la bitácora del ticket">
+              <button type="button" class="triage-btn triage-btn-sm contact-btn-log-call" data-contact-id="${escapeHtml(c.id)}" style="background: #FF7900; color: #FFFFFF; border-color: #FF7900; font-weight: 600;" title="Registrar llamada de guardia en la bitácora del ticket">
                 <span aria-hidden="true">📝</span> <span>Registrar</span>
               </button>
               <a href="${escapeHtml(c.platformUrl)}" target="_blank" rel="noopener noreferrer" class="triage-btn triage-btn-sm" style="border: 1px solid #D1D5DB; font-weight: 600;" title="Abrir ficha en ${platformName}">
