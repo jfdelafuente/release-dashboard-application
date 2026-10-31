@@ -43,6 +43,8 @@
     orchestratorLogs: {}, // Bitácora interactiva por ticket { [incId]: Array }
     orchestratorRollbacks: {}, // Estado de Rollback por ticket { [incId]: boolean }
     orchestratorEscalations: {}, // Estado de confirmaciones de escalado { [incId]: Object }
+    orchestratorActivations: {}, // Timestamp de activación del Orquestador (Dual Clock) { [incId]: number }
+    clockTimeBase: 'crisis', // 'crisis' (T0 Activación SL1) | 'remedy' (T0 Apertura Remedy)
     clocksTicker: null, // Timer de actualización de relojes
     defaultIncidentManager: 'Carlos Morales · Incident Manager de Guardia (Turno Activo CSO)'
   };
@@ -94,30 +96,37 @@
     orchStatusPill: document.getElementById('orch-status-pill'),
     orchImName: document.getElementById('orch-im-name'),
     orchAgingTag: document.getElementById('orch-global-aging-tag'),
+    orchCrisisTimeTag: document.getElementById('orch-crisis-time-tag'),
+    btnModeCrisis: document.getElementById('btn-mode-crisis'),
+    btnModeRemedy: document.getElementById('btn-mode-remedy'),
 
     // Relojes de Escalado
     clock20mCard: document.getElementById('orch-clock-20m'),
     clock20mTimer: document.getElementById('clock-20m-timer'),
     clock20mFill: document.getElementById('clock-20m-fill'),
     clock20mStatusText: document.getElementById('clock-20m-status-text'),
+    clock20mHint: document.getElementById('clock-20m-hint'),
     btnAction20m: document.getElementById('btn-action-20m'),
 
     clock45mCard: document.getElementById('orch-clock-45m'),
     clock45mTimer: document.getElementById('clock-45m-timer'),
     clock45mFill: document.getElementById('clock-45m-fill'),
     clock45mStatusText: document.getElementById('clock-45m-status-text'),
+    clock45mHint: document.getElementById('clock-45m-hint'),
     btnAction45m: document.getElementById('btn-action-45m'),
 
     clock105mCard: document.getElementById('orch-clock-105m'),
     clock105mTimer: document.getElementById('clock-105m-timer'),
     clock105mFill: document.getElementById('clock-105m-fill'),
     clock105mStatusText: document.getElementById('clock-105m-status-text'),
+    clock105mHint: document.getElementById('clock-105m-hint'),
     btnAction105m: document.getElementById('btn-action-105m'),
 
     clock120mCard: document.getElementById('orch-clock-120m'),
     clock120mTimer: document.getElementById('clock-120m-timer'),
     clock120mFill: document.getElementById('clock-120m-fill'),
     clock120mStatusText: document.getElementById('clock-120m-status-text'),
+    clock120mHint: document.getElementById('clock-120m-hint'),
     btnAction120m: document.getElementById('btn-action-120m'),
 
     // War Room Teams
@@ -554,6 +563,7 @@ Convocado por Orange Tech Operations · IT Incident Management`;
 
     if (!entries || entries.length === 0) {
       const nowStr = new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      const remedyMins = inc?.evaluacion?.minutos_desde_apertura || 0;
       entries = [
         {
           id: 'log-1',
@@ -562,6 +572,14 @@ Convocado por Orange Tech Operations · IT Incident Management`;
           roleLabel: '🤖 Motor de Triaje',
           text: `Incidencia evaluada y clasificada como SL1 / P1 por superación de umbrales críticos. Apertura formal de proceso de emergencia.`,
           extraClass: 'role-warroom'
+        },
+        {
+          id: 'log-dualclock',
+          time: nowStr,
+          role: 'CRISIS_CLOCK',
+          roleLabel: '⏱️ Dual Clock (ITIL)',
+          text: `Inicializados temporizadores tácticos de War Room (T0_crisis: ${nowStr}). Envejecimiento Remedy acumulado en N1: ${formatAgingMinutes(remedyMins)}.`,
+          extraClass: 'role-im'
         },
         {
           id: 'log-2',
@@ -880,13 +898,40 @@ Proceder con la ejecución inmediata del procedimiento de Rollback. Confirmar in
 
     const evaluacion = inc.evaluacion || {};
     const baseMinutes = evaluacion.minutos_desde_apertura || 0;
-    const elapsedSeconds = Math.max(0, Math.floor(baseMinutes * 60) + Math.floor((Date.now() - (state.lastInspectionEpoch || Date.now())) / 1000));
-    const elapsedMinutes = Math.floor(elapsedSeconds / 60);
 
+    // 1. Reloj Global Remedy (envejecimiento acumulado del ticket en N1/Remedy)
+    const remedyElapsedSeconds = Math.max(0, Math.floor(baseMinutes * 60) + Math.floor((Date.now() - (state.lastInspectionEpoch || Date.now())) / 1000));
+    const remedyElapsedMinutes = Math.floor(remedyElapsedSeconds / 60);
+
+    // 2. Reloj Táctico de Crisis (T0 = momento de activación formal SL1 en el Orquestador)
+    const activationEpoch = state.orchestratorActivations[state.activeOrchIncId] || Date.now();
+    const crisisElapsedSeconds = Math.max(0, Math.floor((Date.now() - activationEpoch) / 1000));
+    const crisisElapsedMinutes = Math.floor(crisisElapsedSeconds / 60);
+    const crisisElapsedSec = crisisElapsedSeconds % 60;
+    const crisisPadSec = crisisElapsedSec < 10 ? '0' + crisisElapsedSec : crisisElapsedSec;
+
+    // Actualizar badges en la cabecera del orquestador
     if (dom.orchAgingTag) {
-      dom.orchAgingTag.textContent = `⏱️ ${formatAgingMinutes(elapsedMinutes)}`;
+      dom.orchAgingTag.textContent = `📋 Global Remedy: ${formatAgingMinutes(remedyElapsedMinutes)}`;
+    }
+    if (dom.orchCrisisTimeTag) {
+      dom.orchCrisisTimeTag.textContent = `🚨 Crisis SL1: ${crisisElapsedMinutes}m ${crisisPadSec}s`;
     }
 
+    // Sincronizar botones de modo de tiempo
+    const isCrisisMode = state.clockTimeBase === 'crisis';
+    if (dom.btnModeCrisis && dom.btnModeRemedy) {
+      if (isCrisisMode) {
+        dom.btnModeCrisis.classList.add('is-active');
+        dom.btnModeRemedy.classList.remove('is-active');
+      } else {
+        dom.btnModeCrisis.classList.remove('is-active');
+        dom.btnModeRemedy.classList.add('is-active');
+      }
+    }
+
+    // Tiempo activo para evaluar los 4 relojes de escalado
+    const elapsedSeconds = isCrisisMode ? crisisElapsedSeconds : remedyElapsedSeconds;
     const escState = state.orchestratorEscalations[state.activeOrchIncId] || {};
 
     // 1. Reloj 20 min: SLA 1ª Notificación a Dirección
@@ -894,6 +939,18 @@ Proceder con la ejecución inmediata del procedimiento de Rollback. Confirmar in
       const limit = 20 * 60; // 1200 seg
       const pct = Math.min(100, Math.round((elapsedSeconds / limit) * 100));
       dom.clock20mFill.style.width = pct + '%';
+
+      if (dom.clock20mHint) {
+        if (isCrisisMode) {
+          if (remedyElapsedMinutes > 20) {
+            dom.clock20mHint.innerHTML = `<span class="orch-clock-remedy-hint">⚠️ Apertura Remedy: ${formatAgingMinutes(remedyElapsedMinutes)} (Retraso N1)</span>`;
+          } else {
+            dom.clock20mHint.innerHTML = `<span class="orch-clock-remedy-hint">Apertura Remedy: ${formatAgingMinutes(remedyElapsedMinutes)}</span>`;
+          }
+        } else {
+          dom.clock20mHint.innerHTML = `<span class="orch-clock-remedy-hint">Base Remedy (${formatAgingMinutes(remedyElapsedMinutes)}) · T0 Crisis: +${crisisElapsedMinutes}m</span>`;
+        }
+      }
 
       if (escState.commDone) {
         dom.clock20mCard.className = 'orch-clock-card is-completed';
@@ -906,7 +963,7 @@ Proceder con la ejecución inmediata del procedimiento de Rollback. Confirmar in
         dom.clock20mCard.className = 'orch-clock-card is-alarm';
         const overdue = Math.floor((elapsedSeconds - limit) / 60);
         dom.clock20mTimer.textContent = `+${overdue}m SLA`;
-        dom.clock20mStatusText.textContent = '🚨 SLA 20m Excedido';
+        dom.clock20mStatusText.textContent = isCrisisMode ? '🚨 SLA 20m War Room Excedido' : '🚨 SLA 20m Remedy Excedido';
         if (dom.btnAction20m) {
           dom.btnAction20m.innerHTML = '<span>⚠️ Emitir Notificación Ya</span>';
         }
@@ -920,7 +977,10 @@ Proceder con la ejecución inmediata del procedimiento de Rollback. Confirmar in
           dom.clock20mStatusText.textContent = '⚠️ Alerta Próxima SLA';
         } else {
           dom.clock20mCard.className = 'orch-clock-card is-ok';
-          dom.clock20mStatusText.textContent = 'Cuenta atrás SLA';
+          dom.clock20mStatusText.textContent = isCrisisMode ? 'Cuenta atrás (T0 SL1)' : 'Cuenta atrás (Remedy)';
+        }
+        if (dom.btnAction20m) {
+          dom.btnAction20m.innerHTML = '<span>⚠️ Emitir Notificación Ya</span>';
         }
       }
     }
@@ -930,6 +990,14 @@ Proceder con la ejecución inmediata del procedimiento de Rollback. Confirmar in
       const limit = 45 * 60; // 2700 seg
       const pct = Math.min(100, Math.round((elapsedSeconds / limit) * 100));
       dom.clock45mFill.style.width = pct + '%';
+
+      if (dom.clock45mHint) {
+        if (isCrisisMode) {
+          dom.clock45mHint.innerHTML = `<span class="orch-clock-remedy-hint">Táctico War Room (Ref Remedy: ${formatAgingMinutes(remedyElapsedMinutes)})</span>`;
+        } else {
+          dom.clock45mHint.innerHTML = `<span class="orch-clock-remedy-hint">Envejecimiento acumulado Remedy</span>`;
+        }
+      }
 
       if (escState.esc45Done) {
         dom.clock45mCard.className = 'orch-clock-card is-completed';
@@ -961,6 +1029,14 @@ Proceder con la ejecución inmediata del procedimiento de Rollback. Confirmar in
       const pct = Math.min(100, Math.round((elapsedSeconds / limit) * 100));
       dom.clock105mFill.style.width = pct + '%';
 
+      if (dom.clock105mHint) {
+        if (isCrisisMode) {
+          dom.clock105mHint.innerHTML = `<span class="orch-clock-remedy-hint">Táctico War Room (Ref Remedy: ${formatAgingMinutes(remedyElapsedMinutes)})</span>`;
+        } else {
+          dom.clock105mHint.innerHTML = `<span class="orch-clock-remedy-hint">Envejecimiento acumulado Remedy</span>`;
+        }
+      }
+
       if (escState.esc105Done) {
         dom.clock105mCard.className = 'orch-clock-card is-completed';
         dom.clock105mTimer.textContent = 'Notificado';
@@ -991,6 +1067,14 @@ Proceder con la ejecución inmediata del procedimiento de Rollback. Confirmar in
       const pct = Math.min(100, Math.round((elapsedSeconds / limit) * 100));
       dom.clock120mFill.style.width = pct + '%';
 
+      if (dom.clock120mHint) {
+        if (isCrisisMode) {
+          dom.clock120mHint.innerHTML = `<span class="orch-clock-remedy-hint">Táctico War Room (Ref Remedy: ${formatAgingMinutes(remedyElapsedMinutes)})</span>`;
+        } else {
+          dom.clock120mHint.innerHTML = `<span class="orch-clock-remedy-hint">Envejecimiento acumulado Remedy</span>`;
+        }
+      }
+
       if (escState.esc120Done) {
         dom.clock120mCard.className = 'orch-clock-card is-completed';
         dom.clock120mTimer.textContent = 'Convocada';
@@ -1016,6 +1100,22 @@ Proceder con la ejecución inmediata del procedimiento de Rollback. Confirmar in
     if (!inc || !dom.modalOrchestrator) return;
 
     state.activeOrchIncId = incId;
+
+    // Cargar o inicializar timestamp de activación táctica de crisis (Dual Clock)
+    if (!state.orchestratorActivations[incId]) {
+      try {
+        const storedActivation = localStorage.getItem('emergency_activation_' + incId);
+        if (storedActivation) {
+          state.orchestratorActivations[incId] = parseInt(storedActivation, 10);
+        }
+      } catch (_) {}
+    }
+    if (!state.orchestratorActivations[incId] || isNaN(state.orchestratorActivations[incId])) {
+      state.orchestratorActivations[incId] = Date.now();
+      try {
+        localStorage.setItem('emergency_activation_' + incId, String(state.orchestratorActivations[incId]));
+      } catch (_) {}
+    }
 
     // Cargar estado de rollback previo si existe en localStorage
     if (state.orchestratorRollbacks[incId] === undefined) {
@@ -1822,16 +1922,39 @@ Generado por Consola de Emergencias IT Orange - Motor de Triaje (Módulo 1)`;
       });
     }
 
+    // Selector de Modo Dual Clock (T0 Crisis vs Envejecimiento Remedy)
+    if (dom.btnModeCrisis) {
+      dom.btnModeCrisis.addEventListener('click', () => {
+        state.clockTimeBase = 'crisis';
+        updateOrchestratorClocks();
+        showToast('Temporizadores en Modo Crisis (T0 Activación SL1)', 'info');
+      });
+    }
+    if (dom.btnModeRemedy) {
+      dom.btnModeRemedy.addEventListener('click', () => {
+        state.clockTimeBase = 'remedy';
+        updateOrchestratorClocks();
+        showToast('Temporizadores en Modo Remedy (Envejecimiento Contractual)', 'info');
+      });
+    }
+
     if (dom.btnClearLog) {
       dom.btnClearLog.addEventListener('click', () => {
         if (!state.activeOrchIncId) return;
         if (confirm(`¿Deseas reiniciar la bitácora operativa de ${state.activeOrchIncId}? Se restaurarán los hitos iniciales de activación.`)) {
           const inc = state.incidents.find(i => i.id === state.activeOrchIncId);
           localStorage.removeItem('emergency_log_' + state.activeOrchIncId);
+          localStorage.removeItem('emergency_activation_' + state.activeOrchIncId);
           delete state.orchestratorLogs[state.activeOrchIncId];
+          delete state.orchestratorActivations[state.activeOrchIncId];
+          state.orchestratorActivations[state.activeOrchIncId] = Date.now();
+          try {
+            localStorage.setItem('emergency_activation_' + state.activeOrchIncId, String(state.orchestratorActivations[state.activeOrchIncId]));
+          } catch (_) {}
           getOrInitLog(state.activeOrchIncId, inc);
           renderTimelineEntries(state.activeOrchIncId);
-          showToast('Bitácora reiniciada con éxito', 'info');
+          updateOrchestratorClocks();
+          showToast('Bitácora y temporizador de crisis reiniciados con éxito', 'info');
         }
       });
     }

@@ -320,17 +320,24 @@
       <!-- Cuerpo del Orquestador Operativo -->
       <div class="orch-modal-body">
         
-        <!-- SECCIÓN 1: RELOJES Y TEMPORIZADORES DE ESCALADO CONTROLADOS -->
+        <!-- SECCIÓN 1: RELOJES Y TEMPORIZADORES DE ESCALADO CONTROLADOS (DUAL CLOCK) -->
         <section class="orch-section orch-clocks-section" aria-label="Relojes y Temporizadores de Escalado Controlados">
           <div class="orch-section-header">
             <div class="orch-section-title-wrap">
               <span class="orch-section-icon" aria-hidden="true">⏱️</span>
               <div>
                 <h3 class="orch-section-title">Relojes y Temporizadores de Escalado Controlados</h3>
-                <p class="orch-section-subtitle">Sincronizados en tiempo real según el protocolo oficial de Emergencias IT Orange</p>
+                <p class="orch-section-subtitle">Dual Clock: Tiempos operativos de War Room coordinados con el envejecimiento global Remedy</p>
               </div>
             </div>
-            <div id="orch-global-aging-tag" class="orch-aging-tag">⏱️ 0m activa</div>
+            <div class="orch-aging-dual-wrap">
+              <div id="orch-global-aging-tag" class="orch-aging-tag" title="Tiempo total acumulado desde la apertura del ticket en BMC Remedy (SLA Contractual)">⏱️ Global Remedy: 0m</div>
+              <div id="orch-crisis-time-tag" class="orch-aging-tag orch-aging-crisis" title="Tiempo transcurrido desde la activación del proceso de Emergencia SL1 en esta consola">🚨 Crisis SL1: 0m</div>
+              <div class="orch-clock-mode-selector" role="group" aria-label="Base de tiempo de los relojes">
+                <button type="button" class="orch-mode-btn is-active" id="btn-mode-crisis" title="Mostrar cuenta atrás basada en la activación de la crisis actual (Recomendado)">⏱️ Modo Crisis (T0 SL1)</button>
+                <button type="button" class="orch-mode-btn" id="btn-mode-remedy" title="Mostrar tiempos acumulados desde la apertura del ticket en Remedy">📋 Modo Remedy</button>
+              </div>
+            </div>
           </div>
 
           <div class="orch-clocks-grid">
@@ -349,6 +356,7 @@
                 <span class="orch-status-dot"></span>
                 <span class="orch-status-label" id="clock-20m-status-text">Cuenta atrás SLA</span>
               </div>
+              <div class="orch-clock-remedy-hint" id="clock-20m-hint">SLA 1ª Notificación a Dirección</div>
               <button type="button" class="orch-btn-clock-action" id="btn-action-20m" title="Ver y copiar notificación ejecutiva para Dirección">
                 <span aria-hidden="true">📝</span> <span>Ver Notificación</span>
               </button>
@@ -368,6 +376,7 @@
                 <span class="orch-status-dot"></span>
                 <span class="orch-status-label" id="clock-45m-status-text">Avance técnico requerido</span>
               </div>
+              <div class="orch-clock-remedy-hint" id="clock-45m-hint">Protocolo telefónico obligatorio</div>
               <button type="button" class="orch-btn-clock-action" id="btn-action-45m" title="Confirmar llamada telefónica a soporte técnico resolutor N2/N3">
                 <span aria-hidden="true">📞</span> <span>Confirmar Escalado N2/N3</span>
               </button>
@@ -387,6 +396,7 @@
                 <span class="orch-status-dot"></span>
                 <span class="orch-status-label" id="clock-105m-status-text">En monitorización</span>
               </div>
+              <div class="orch-clock-remedy-hint" id="clock-105m-hint">Escalado a Jefatura de Área</div>
               <button type="button" class="orch-btn-clock-action" id="btn-action-105m" title="Confirmar escalado a Responsables de Área y Jefatura">
                 <span aria-hidden="true">👔</span> <span>2º Escalado Jerárquico</span>
               </button>
@@ -406,6 +416,7 @@
                 <span class="orch-status-dot"></span>
                 <span class="orch-status-label" id="clock-120m-status-text">Monitorización IM-CSO</span>
               </div>
+              <div class="orch-clock-remedy-hint" id="clock-120m-hint">Re-convocatoria IM-CSO</div>
               <button type="button" class="orch-btn-clock-action orch-btn-danger" id="btn-action-120m" title="Disparar alarma IM-CSO para re-convocatoria ejecutiva">
                 <span aria-hidden="true">🚨</span> <span>Re-convocar War Room CSO</span>
               </button>
