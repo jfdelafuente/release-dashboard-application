@@ -1938,6 +1938,32 @@ body {
   gap: 4px;
 }
 
+.orch-clock-note {
+  font-size: 11px;
+  line-height: 1.35;
+  color: var(--triage-text-muted);
+  background: rgba(0, 0, 0, 0.028);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: var(--radius-xs);
+  padding: 6px 8px;
+  margin-top: 2px;
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  text-align: left;
+}
+
+.orch-clock-note .orch-note-icon {
+  font-size: 12px;
+  line-height: 1.2;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.orch-clock-note .orch-note-text {
+  flex: 1;
+}
+
 .orch-clocks-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -2110,6 +2136,11 @@ body {
 }
 .orch-clock-alarm-zone.is-alarm .orch-clock-status {
   color: #FECACA;
+}
+.orch-clock-alarm-zone.is-alarm .orch-clock-note {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.15);
+  color: #FEE2E2;
 }
 
 @keyframes orch-pulse-dot {

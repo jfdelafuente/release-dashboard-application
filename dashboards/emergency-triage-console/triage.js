@@ -105,28 +105,28 @@
     clock20mTimer: document.getElementById('clock-20m-timer'),
     clock20mFill: document.getElementById('clock-20m-fill'),
     clock20mStatusText: document.getElementById('clock-20m-status-text'),
-    clock20mHint: document.getElementById('clock-20m-hint'),
+    clock20mNote: document.getElementById('clock-20m-note'),
     btnAction20m: document.getElementById('btn-action-20m'),
 
     clock45mCard: document.getElementById('orch-clock-45m'),
     clock45mTimer: document.getElementById('clock-45m-timer'),
     clock45mFill: document.getElementById('clock-45m-fill'),
     clock45mStatusText: document.getElementById('clock-45m-status-text'),
-    clock45mHint: document.getElementById('clock-45m-hint'),
+    clock45mNote: document.getElementById('clock-45m-note'),
     btnAction45m: document.getElementById('btn-action-45m'),
 
     clock105mCard: document.getElementById('orch-clock-105m'),
     clock105mTimer: document.getElementById('clock-105m-timer'),
     clock105mFill: document.getElementById('clock-105m-fill'),
     clock105mStatusText: document.getElementById('clock-105m-status-text'),
-    clock105mHint: document.getElementById('clock-105m-hint'),
+    clock105mNote: document.getElementById('clock-105m-note'),
     btnAction105m: document.getElementById('btn-action-105m'),
 
     clock120mCard: document.getElementById('orch-clock-120m'),
     clock120mTimer: document.getElementById('clock-120m-timer'),
     clock120mFill: document.getElementById('clock-120m-fill'),
     clock120mStatusText: document.getElementById('clock-120m-status-text'),
-    clock120mHint: document.getElementById('clock-120m-hint'),
+    clock120mNote: document.getElementById('clock-120m-note'),
     btnAction120m: document.getElementById('btn-action-120m'),
 
     // War Room Teams
@@ -940,18 +940,6 @@ Proceder con la ejecución inmediata del procedimiento de Rollback. Confirmar in
       const pct = Math.min(100, Math.round((elapsedSeconds / limit) * 100));
       dom.clock20mFill.style.width = pct + '%';
 
-      if (dom.clock20mHint) {
-        if (isCrisisMode) {
-          if (remedyElapsedMinutes > 20) {
-            dom.clock20mHint.innerHTML = `<span class="orch-clock-remedy-hint">⚠️ Apertura Remedy: ${formatAgingMinutes(remedyElapsedMinutes)} (Retraso N1)</span>`;
-          } else {
-            dom.clock20mHint.innerHTML = `<span class="orch-clock-remedy-hint">Apertura Remedy: ${formatAgingMinutes(remedyElapsedMinutes)}</span>`;
-          }
-        } else {
-          dom.clock20mHint.innerHTML = `<span class="orch-clock-remedy-hint">Base Remedy (${formatAgingMinutes(remedyElapsedMinutes)}) · T0 Crisis: +${crisisElapsedMinutes}m</span>`;
-        }
-      }
-
       if (escState.commDone) {
         dom.clock20mCard.className = 'orch-clock-card is-completed';
         dom.clock20mTimer.textContent = 'Enviada';
@@ -991,14 +979,6 @@ Proceder con la ejecución inmediata del procedimiento de Rollback. Confirmar in
       const pct = Math.min(100, Math.round((elapsedSeconds / limit) * 100));
       dom.clock45mFill.style.width = pct + '%';
 
-      if (dom.clock45mHint) {
-        if (isCrisisMode) {
-          dom.clock45mHint.innerHTML = `<span class="orch-clock-remedy-hint">Táctico War Room (Ref Remedy: ${formatAgingMinutes(remedyElapsedMinutes)})</span>`;
-        } else {
-          dom.clock45mHint.innerHTML = `<span class="orch-clock-remedy-hint">Envejecimiento acumulado Remedy</span>`;
-        }
-      }
-
       if (escState.esc45Done) {
         dom.clock45mCard.className = 'orch-clock-card is-completed';
         dom.clock45mTimer.textContent = 'Confirmado';
@@ -1029,14 +1009,6 @@ Proceder con la ejecución inmediata del procedimiento de Rollback. Confirmar in
       const pct = Math.min(100, Math.round((elapsedSeconds / limit) * 100));
       dom.clock105mFill.style.width = pct + '%';
 
-      if (dom.clock105mHint) {
-        if (isCrisisMode) {
-          dom.clock105mHint.innerHTML = `<span class="orch-clock-remedy-hint">Táctico War Room (Ref Remedy: ${formatAgingMinutes(remedyElapsedMinutes)})</span>`;
-        } else {
-          dom.clock105mHint.innerHTML = `<span class="orch-clock-remedy-hint">Envejecimiento acumulado Remedy</span>`;
-        }
-      }
-
       if (escState.esc105Done) {
         dom.clock105mCard.className = 'orch-clock-card is-completed';
         dom.clock105mTimer.textContent = 'Notificado';
@@ -1066,14 +1038,6 @@ Proceder con la ejecución inmediata del procedimiento de Rollback. Confirmar in
       const limit = 120 * 60; // 7200 seg
       const pct = Math.min(100, Math.round((elapsedSeconds / limit) * 100));
       dom.clock120mFill.style.width = pct + '%';
-
-      if (dom.clock120mHint) {
-        if (isCrisisMode) {
-          dom.clock120mHint.innerHTML = `<span class="orch-clock-remedy-hint">Táctico War Room (Ref Remedy: ${formatAgingMinutes(remedyElapsedMinutes)})</span>`;
-        } else {
-          dom.clock120mHint.innerHTML = `<span class="orch-clock-remedy-hint">Envejecimiento acumulado Remedy</span>`;
-        }
-      }
 
       if (escState.esc120Done) {
         dom.clock120mCard.className = 'orch-clock-card is-completed';
