@@ -189,7 +189,6 @@
     tplPhaseSla: document.getElementById('tpl-phase-sla'),
     tplMetaSistemas: document.getElementById('tpl-meta-sistemas'),
     tplMetaImpacto: document.getElementById('tpl-meta-impacto'),
-    tplMetaInicio: document.getElementById('tpl-meta-inicio'),
     tplMetaProveedor: document.getElementById('tpl-meta-proveedor'),
     tplMetaWorkaround: document.getElementById('tpl-meta-workaround'),
     tplMetaDuracion: document.getElementById('tpl-meta-duracion'),
@@ -1327,7 +1326,6 @@ Proceder con la ejecución inmediata del procedimiento de Rollback. Confirmar in
     // Actualizar grid de metadatos
     if (dom.tplMetaSistemas) dom.tplMetaSistemas.textContent = data.meta.sistemas;
     if (dom.tplMetaImpacto) dom.tplMetaImpacto.textContent = data.meta.impacto;
-    if (dom.tplMetaInicio) dom.tplMetaInicio.textContent = data.meta.inicio;
     if (dom.tplMetaProveedor) dom.tplMetaProveedor.textContent = data.meta.proveedor;
     if (dom.tplMetaWorkaround) dom.tplMetaWorkaround.textContent = data.meta.workaround;
     if (dom.tplMetaDuracion) dom.tplMetaDuracion.textContent = data.meta.duracion;
