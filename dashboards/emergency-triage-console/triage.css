@@ -2867,7 +2867,7 @@ body {
   flex-wrap: wrap;
 }
 
-.comms-ticket-picker {
+.comms-linked-ticket-wrap {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -2879,12 +2879,27 @@ body {
   color: var(--triage-text-muted);
 }
 
-.comms-select-ticket {
-  font-size: 12.5px;
+.comms-linked-ticket-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  font-size: 12px;
   font-weight: 700;
-  padding: 5px 10px;
-  border-radius: var(--radius-sm);
-  max-width: 320px;
+  transition: all 0.2s ease;
+}
+
+.comms-linked-ticket-badge.is-linked {
+  background: rgba(2, 132, 199, 0.1);
+  color: #0369A1;
+  border: 1px solid rgba(2, 132, 199, 0.3);
+}
+
+.comms-linked-ticket-badge.is-general {
+  background: #F3F4F6;
+  color: #4B5563;
+  border: 1px solid #E5E7EB;
 }
 
 .comms-brand-badge {

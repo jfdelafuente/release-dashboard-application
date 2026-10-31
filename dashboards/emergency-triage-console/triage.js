@@ -173,7 +173,9 @@
     btnOpenCommsCenter: document.getElementById('btn-open-comms-center'),
     modalCommsCenter: document.getElementById('modal-comms-center'),
     btnCommsClose: document.getElementById('btn-comms-close'),
-    commsTicketSelect: document.getElementById('comms-ticket-select'),
+    commsLinkedTicketBadge: document.getElementById('comms-linked-ticket-badge'),
+    commsLinkedTicketIcon: document.getElementById('comms-linked-ticket-icon'),
+    commsLinkedTicketText: document.getElementById('comms-linked-ticket-text'),
     commsBrandIndicator: document.getElementById('comms-brand-indicator'),
     commsBrandIcon: document.getElementById('comms-brand-icon'),
     commsBrandText: document.getElementById('comms-brand-text'),
@@ -1169,23 +1171,22 @@ Proceder con la ejecución inmediata del procedimiento de Rollback. Confirmar in
     }
   }
 
-  function populateCommsTicketSelect(selectedIncId) {
-    if (!dom.commsTicketSelect) return;
-    const incidents = state.incidents || [];
-    if (incidents.length === 0) {
-      dom.commsTicketSelect.innerHTML = '<option value="">No hay incidencias cargadas</option>';
-      return;
+  function updateCommsLinkedTicketBadge(inc) {
+    if (!dom.commsLinkedTicketBadge) return;
+    if (inc && inc.id) {
+      dom.commsLinkedTicketBadge.className = 'comms-linked-ticket-badge is-linked';
+      if (dom.commsLinkedTicketIcon) dom.commsLinkedTicketIcon.textContent = '📌';
+      if (dom.commsLinkedTicketText) {
+        const sev = inc.prioridad_sugerida || 'SL1';
+        dom.commsLinkedTicketText.textContent = `Ticket Vinculado: ${inc.id} (${sev})`;
+      }
+    } else {
+      dom.commsLinkedTicketBadge.className = 'comms-linked-ticket-badge is-general';
+      if (dom.commsLinkedTicketIcon) dom.commsLinkedTicketIcon.textContent = '🌐';
+      if (dom.commsLinkedTicketText) {
+        dom.commsLinkedTicketText.textContent = 'Despacho General · Sin ticket vinculado';
+      }
     }
-
-    const options = incidents.map(inc => {
-      const isSelected = inc.id === selectedIncId;
-      const sistemas = Array.isArray(inc.sistemas) ? inc.sistemas.join(', ') : (inc.sistemas || 'Core');
-      const sev = inc.prioridad_sugerida || 'SL2';
-      return `<option value="${escapeHtml(inc.id)}" ${isSelected ? 'selected' : ''}>${escapeHtml(inc.id)} · ${escapeHtml(sistemas)} (${sev})</option>`;
-    }).join('');
-
-    dom.commsTicketSelect.innerHTML = options;
-    if (selectedIncId) dom.commsTicketSelect.value = selectedIncId;
   }
 
   function countWords(str) {
@@ -1416,9 +1417,12 @@ Proceder con la ejecución inmediata del procedimiento de Rollback. Confirmar in
     if (!dom.gwHistoryList) return;
     const list = getCommsHistory(incId);
     if (!list || list.length === 0) {
+      const emptyNote = incId && incId !== 'GENERAL'
+        ? `No hay despachos registrados para la incidencia ${escapeHtml(incId)} en la Web de Explotación.`
+        : 'No hay despachos registrados en la Web de Explotación.';
       dom.gwHistoryList.innerHTML = `
         <div style="text-align: center; color: #6B7280; font-size: 12px; padding: 12px 0;">
-          No hay despachos registrados para esta incidencia en la Web de Explotación.
+          ${emptyNote}
         </div>
       `;
       return;
@@ -1446,11 +1450,7 @@ Proceder con la ejecución inmediata del procedimiento de Rollback. Confirmar in
   }
 
   function dispatchGatewayMessage() {
-    const incId = state.activeCommsIncId;
-    if (!incId) {
-      showToast('Selecciona primero una incidencia activa', 'warning');
-      return;
-    }
+    const incId = state.activeCommsIncId || 'GENERAL';
 
     const subject = dom.gwSubject ? dom.gwSubject.value.trim() : '';
     const body = dom.gwBody ? dom.gwBody.value.trim() : '';
@@ -1680,31 +1680,24 @@ Proceder con la ejecución inmediata del procedimiento de Rollback. Confirmar in
   function openCommsCenterModal(incId, targetTab = 'tab-gateway') {
     if (!dom.modalCommsCenter) return;
 
-    let inc = state.incidents.find(i => i.id === incId);
-    if (!inc) {
-      if (state.activeOrchIncId) {
-        inc = state.incidents.find(i => i.id === state.activeOrchIncId);
-      }
-      if (!inc) {
-        inc = state.incidents.find(i => i.prioridad_sugerida === 'P1') || state.incidents[0];
-      }
+    let inc = null;
+    if (incId) {
+      inc = state.incidents.find(i => i.id === incId);
     }
 
     const effectiveIncId = inc ? inc.id : null;
     state.activeCommsIncId = effectiveIncId;
 
-    // Poblar selector de tickets
-    populateCommsTicketSelect(effectiveIncId);
+    // Actualizar badge pasivo de contexto operativo (Opción B)
+    updateCommsLinkedTicketBadge(inc);
 
     // Detectar marca corporativa
-    const brand = detectIncidentBrand(inc);
+    const brand = inc ? detectIncidentBrand(inc) : (state.activeContactsBrand || 'orange');
     state.activeContactsBrand = brand;
     updateCommsBrandBadge(brand);
 
-    // Renderizar historial de despachos del gateway para este ticket
-    if (effectiveIncId) {
-      renderGatewayHistory(effectiveIncId);
-    }
+    // Renderizar historial de despachos del gateway para este ticket o general
+    renderGatewayHistory(effectiveIncId || 'GENERAL');
 
     // Renderizar directorio de contactos
     renderContactMatrices(state.activeContactsBrand, dom.contactsSearchInput ? dom.contactsSearchInput.value : '', state.activeContactsDomain);
@@ -2965,26 +2958,10 @@ Puente Teams: ${teamsUrl}
     }
 
     // --- Listeners Módulo 3: Centro de Comunicaciones y Matrices ---
-    // Apertura desde cabecera principal
+    // Apertura desde cabecera principal (Despacho General / Directorio)
     if (dom.btnOpenCommsCenter) {
       dom.btnOpenCommsCenter.addEventListener('click', () => {
-        openCommsCenterModal(state.activeOrchIncId || null, 'tab-gateway');
-      });
-    }
-
-    // Selector de ticket en modal de comunicaciones
-    if (dom.commsTicketSelect) {
-      dom.commsTicketSelect.addEventListener('change', (e) => {
-        const incId = e.target.value;
-        state.activeCommsIncId = incId;
-        const inc = state.incidents.find(i => i.id === incId);
-        const brand = detectIncidentBrand(inc);
-        state.activeContactsBrand = brand;
-        updateCommsBrandBadge(brand);
-        if (inc) {
-          renderGatewayHistory(incId);
-        }
-        renderContactMatrices(state.activeContactsBrand, dom.contactsSearchInput ? dom.contactsSearchInput.value : '', state.activeContactsDomain);
+        openCommsCenterModal(null, 'tab-gateway');
       });
     }
 

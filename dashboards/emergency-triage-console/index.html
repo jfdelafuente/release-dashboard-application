@@ -812,12 +812,13 @@
             </div>
           </div>
           <div class="comms-meta-bar">
-            <!-- Selector dinámico de Incidencia Activa -->
-            <div class="comms-ticket-picker">
-              <label for="comms-ticket-select" class="comms-picker-label">Incidencia Seleccionada:</label>
-              <select id="comms-ticket-select" class="triage-select comms-select-ticket" title="Seleccionar incidencia para comunicaciones y contactos">
-                <!-- Inyectado dinámicamente -->
-              </select>
+            <!-- Badge pasivo de Contexto Operativo (Opción B) -->
+            <div class="comms-linked-ticket-wrap">
+              <span class="comms-picker-label">Contexto Operativo:</span>
+              <span id="comms-linked-ticket-badge" class="comms-linked-ticket-badge is-general">
+                <span id="comms-linked-ticket-icon" aria-hidden="true">🌐</span>
+                <span id="comms-linked-ticket-text">Despacho General · Sin ticket vinculado</span>
+              </span>
             </div>
             <!-- Indicador Reactivo de Marca y Plataforma Oficial -->
             <div id="comms-brand-indicator" class="comms-brand-badge brand-orange">
