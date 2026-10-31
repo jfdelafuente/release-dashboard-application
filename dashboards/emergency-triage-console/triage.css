@@ -187,20 +187,6 @@ body {
   line-height: 1.2;
 }
 
-.triage-module-badge {
-  display: inline-flex;
-  align-items: center;
-  background: var(--triage-orange-tint);
-  color: #C2410C;
-  border: 1px solid #FED7AA;
-  font-family: var(--font-mono);
-  font-size: 10.5px;
-  font-weight: 800;
-  padding: 1px 7px;
-  border-radius: var(--radius-pill);
-  letter-spacing: 0.02em;
-}
-
 .triage-subtitle {
   display: none;
 }
@@ -1616,22 +1602,6 @@ body {
    War Room Teams · Monitor PaP & Rollback · 4 Relojes de Escalado · Live Log
    ========================================================================== */
 
-/* Badges de Módulo en la Cabecera */
-.module-1-badge {
-  background: rgba(255, 121, 0, 0.12);
-  color: #C05A00;
-  border: 1px solid rgba(255, 121, 0, 0.35);
-}
-
-.module-2-badge {
-  background: rgba(239, 68, 68, 0.12);
-  color: #DC2626;
-  border: 1px solid rgba(239, 68, 68, 0.35);
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-}
-
 .badge-orchestrator-count {
   background: #DC2626 !important;
   color: #FFFFFF !important;
@@ -2752,15 +2722,7 @@ body {
    Gateway SMS/Email Web de Explotación · Plantillas Dinámicas · Matrices GRIAL/Confluence
    ========================================================================== */
 
-/* Badges y Botones de Cabecera */
-.module-3-badge {
-  background: rgba(14, 165, 233, 0.12);
-  color: #0284C7;
-  border: 1px solid rgba(14, 165, 233, 0.35);
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-}
+/* Botón de Cabecera */
 
 .triage-btn-comms-header {
   background: rgba(14, 165, 233, 0.08);
