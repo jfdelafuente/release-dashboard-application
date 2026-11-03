@@ -237,22 +237,52 @@
     }
   }
 
+  // Feedback haptico multimodal sutil (Apple Physical Motion & Audio-Haptic Feedback)
+  function triggerHaptic(type = 'light') {
+    if (!('vibrate' in navigator)) return;
+    try {
+      if (type === 'light') navigator.vibrate(8);
+      else if (type === 'medium') navigator.vibrate(15);
+      else if (type === 'success') navigator.vibrate([10, 30, 15]);
+      else if (type === 'warning') navigator.vibrate([20, 40, 20]);
+    } catch (_) {}
+  }
+
   function showToast(message, type = 'info') {
     if (!dom.toastContainer) return;
+    triggerHaptic(type === 'success' ? 'success' : (type === 'error' ? 'warning' : 'light'));
     const toast = document.createElement('div');
-    toast.className = `triage-toast ${type}`;
+    toast.className = `triage-toast toast-${type} ${type}`;
     const icon = type === 'success' ? '✅' : (type === 'error' ? '❌' : 'ℹ️');
     toast.innerHTML = `<span aria-hidden="true">${icon}</span><span>${escapeHtml(message)}</span>`;
+    toast.title = 'Haz clic para descartar';
+    toast.addEventListener('click', () => {
+      toast.style.opacity = '0';
+      toast.style.transform = 'translateY(-10px) scale(0.96)';
+      toast.style.transition = 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)';
+      setTimeout(() => toast.remove(), 200);
+    });
     dom.toastContainer.appendChild(toast);
     setTimeout(() => {
       toast.style.opacity = '0';
-      toast.style.transform = 'translateY(12px)';
-      toast.style.transition = 'all 0.25s ease';
+      toast.style.transform = 'translateY(-10px) scale(0.96)';
+      toast.style.transition = 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)';
       setTimeout(() => toast.remove(), 250);
-    }, 3500);
+    }, 3800);
   }
 
-  function copyToClipboard(text, successMsg) {
+  function copyToClipboard(text, successMsg, triggerBtn = null) {
+    if (triggerBtn && triggerBtn.classList) {
+      const origHtml = triggerBtn.innerHTML;
+      triggerBtn.classList.add('is-copied');
+      triggerBtn.innerHTML = '<span aria-hidden="true">✓</span><span>¡Copiado!</span>';
+      setTimeout(() => {
+        triggerBtn.classList.remove('is-copied');
+        triggerBtn.innerHTML = origHtml;
+      }, 2000);
+    }
+    triggerHaptic('success');
+
     if (navigator.clipboard && navigator.clipboard.writeText) {
       navigator.clipboard.writeText(text).then(() => {
         showToast(successMsg, 'success');
@@ -857,7 +887,7 @@ Proceder con la ejecución inmediata del procedimiento de Rollback. Confirmar in
 
     if (dom.btnRollbackConfirmCopy) {
       dom.btnRollbackConfirmCopy.onclick = () => {
-        copyToClipboard(orderText, '¡Orden formal de Rollback copiada al portapapeles!');
+        copyToClipboard(orderText, '¡Orden formal de Rollback copiada al portapapeles!', dom.btnRollbackConfirmCopy);
         state.orchestratorRollbacks[incId] = true;
         addLogEntry(
           incId,
@@ -1985,7 +2015,7 @@ Proceder con la ejecución inmediata del procedimiento de Rollback. Confirmar in
     if (dom.orchBtnCopyTeams) {
       dom.orchBtnCopyTeams.onclick = () => {
         const text = buildTeamsWarRoomCallText(inc, teamsUrl);
-        copyToClipboard(text, '¡Convocatoria oficial para Teams copiada al portapapeles!');
+        copyToClipboard(text, '¡Convocatoria oficial para Teams copiada al portapapeles!', dom.orchBtnCopyTeams);
       };
     }
 
@@ -2524,7 +2554,7 @@ Generado por Consola de Emergencias IT Orange - Motor de Triaje (Módulo 1)`;
         const inc = state.incidents.find(i => i.id === incId);
         if (inc) {
           const text = buildFormalReclassificationText(inc);
-          copyToClipboard(text, `¡Solicitud de reclasificación para ${incId} copiada! Pégala en el log de Remedy.`);
+          copyToClipboard(text, `¡Solicitud de reclasificación para ${incId} copiada! Pégala en el log de Remedy.`, btn);
         }
       });
     });
@@ -2537,7 +2567,7 @@ Generado por Consola de Emergencias IT Orange - Motor de Triaje (Módulo 1)`;
         const inc = state.incidents.find(i => i.id === incId);
         if (inc) {
           const text = build4BlockEmergencyReport(inc);
-          copyToClipboard(text, `Reporte oficial de emergencia en 4 bloques copiado para ${incId}`);
+          copyToClipboard(text, `Reporte oficial de emergencia en 4 bloques copiado para ${incId}`, btn);
         }
       });
     });
@@ -2726,8 +2756,11 @@ Generado por Consola de Emergencias IT Orange - Motor de Triaje (Módulo 1)`;
       });
     }
 
-    // Escape universal para cerrar cualquier popup o modal abierto
+    // Atajos globales de teclado Apple-Style (Wayfinding, Agency & Control)
     window.addEventListener('keydown', (e) => {
+      const activeEl = document.activeElement;
+      const isEditing = activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA' || activeEl.isContentEditable);
+
       if (e.key === 'Escape') {
         const openPopups = document.querySelectorAll('.orch-clock-info-wrap.is-open');
         if (openPopups.length > 0) {
@@ -2748,6 +2781,65 @@ Generado por Consola de Emergencias IT Orange - Motor de Triaje (Módulo 1)`;
         }
         if (dom.modalCommsCenter && dom.modalCommsCenter.classList.contains('open')) {
           closeCommsCenterModal();
+        }
+        if (isEditing) {
+          activeEl.blur();
+        }
+        return;
+      }
+
+      if (isEditing) return; // Permitir escritura libre en inputs sin disparar atajos
+
+      // [1] Tab Reclasificacion
+      if (e.key === '1') {
+        if (dom.tabReclassOnly) {
+          triggerHaptic('light');
+          dom.tabReclassOnly.click();
+        }
+      }
+      // [2] Tab Orquestador SL1 / P1
+      else if (e.key === '2') {
+        if (dom.tabOrchestrator) {
+          triggerHaptic('light');
+          dom.tabOrchestrator.click();
+        }
+      }
+      // [3] Tab Todas
+      else if (e.key === '3') {
+        if (dom.tabAll) {
+          triggerHaptic('light');
+          dom.tabAll.click();
+        }
+      }
+      // [4] Tab Severidad Correcta
+      else if (e.key === '4') {
+        if (dom.tabCorrectOnly) {
+          triggerHaptic('light');
+          dom.tabCorrectOnly.click();
+        }
+      }
+      // [/] Foco directo en buscador
+      else if (e.key === '/') {
+        e.preventDefault();
+        if (dom.searchInput) {
+          dom.searchInput.focus();
+          dom.searchInput.select();
+        }
+      }
+      // [c] o [C] -> Abrir Centro de Comunicaciones (Modulo 3)
+      else if (e.key === 'c' || e.key === 'C') {
+        const isOrchOpen = dom.modalOrchestrator && dom.modalOrchestrator.classList.contains('open');
+        const isCommsOpen = dom.modalCommsCenter && dom.modalCommsCenter.classList.contains('open');
+        if (!isOrchOpen && !isCommsOpen) {
+          triggerHaptic('light');
+          openCommsCenterModal(null, 'tab-gateway');
+        }
+      }
+      // [?] o [h] -> Consultar Criterios Oficiales
+      else if (e.key === '?' || e.key === 'h' || e.key === 'H') {
+        if (dom.modalBackdrop) {
+          triggerHaptic('light');
+          dom.modalBackdrop.classList.add('open');
         }
       }
     });
@@ -2830,7 +2922,7 @@ Generado por Consola de Emergencias IT Orange - Motor de Triaje (Módulo 1)`;
       dom.btnCopyFullLog.addEventListener('click', () => {
         if (!state.activeOrchIncId) return;
         const fullText = formatFullLogForClipboard(state.activeOrchIncId);
-        copyToClipboard(fullText, '¡Bitácora completa copiada al portapapeles!');
+        copyToClipboard(fullText, '¡Bitácora completa copiada al portapapeles!', dom.btnCopyFullLog);
       });
     }
 
@@ -3013,14 +3105,14 @@ Puente Teams: ${teamsUrl}
     if (dom.btnCopyTplCompleto) {
       dom.btnCopyTplCompleto.addEventListener('click', () => {
         const txt = dom.tplTextCompleto ? dom.tplTextCompleto.value.trim() : '';
-        if (txt) copyToClipboard(txt, '¡Versión Completa copiada al portapapeles!');
+        if (txt) copyToClipboard(txt, '¡Versión Completa copiada al portapapeles!', dom.btnCopyTplCompleto);
       });
     }
 
     if (dom.btnCopyTplBreve) {
       dom.btnCopyTplBreve.addEventListener('click', () => {
         const txt = dom.tplTextBreve ? dom.tplTextBreve.value.trim() : '';
-        if (txt) copyToClipboard(txt, '¡Versión Breve SMS copiada al portapapeles!');
+        if (txt) copyToClipboard(txt, '¡Versión Breve SMS copiada al portapapeles!', dom.btnCopyTplBreve);
       });
     }
 
@@ -3044,7 +3136,7 @@ Puente Teams: ${teamsUrl}
           return;
         }
 
-        copyToClipboard(text, '¡Versión Completa copiada al portapapeles!');
+        copyToClipboard(text, '¡Versión Completa copiada al portapapeles!', dom.btnCopyExecCompleto);
 
         const incId = state.activeCommsIncId || state.activeOrchIncId;
         if (incId) {
@@ -3099,7 +3191,7 @@ Puente Teams: ${teamsUrl}
           message_body: dom.gwBody ? dom.gwBody.value : '',
           sender: state.defaultIncidentManager
         };
-        copyToClipboard(JSON.stringify(payload, null, 2), '¡Payload JSON copiado para consumo de API REST!');
+        copyToClipboard(JSON.stringify(payload, null, 2), '¡Payload JSON copiado para consumo de API REST!', dom.btnGwCopyPayload);
       });
     }
 

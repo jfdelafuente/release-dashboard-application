@@ -17,7 +17,7 @@
   <link rel="stylesheet" href="/dashboards/assets/incident-notifications.css">
 
   <!-- Estilos Consola de Emergencias - Apple Design System & Fluid UI -->
-  <link rel="stylesheet" href="./triage.css?v=apple_design_20261103">
+  <link rel="stylesheet" href="./triage.css?v=apple_design_fluid_v2">
 </head>
 <body>
 
@@ -200,6 +200,26 @@
         </div>
       </div>
     </nav>
+
+    <!-- Atajos Rápidos de Teclado Apple-Style (Wayfinding, Agency & Inmediatez) -->
+    <div class="triage-shortcuts-bar" role="region" aria-label="Atajos de teclado rápidos">
+      <span class="triage-shortcuts-title"><span aria-hidden="true">⌘</span> Atajos de Consola:</span>
+      <span class="triage-shortcut-item"><kbd>1</kbd> Reclasificación</span>
+      <span class="triage-shortcut-sep" aria-hidden="true">•</span>
+      <span class="triage-shortcut-item"><kbd>2</kbd> Orquestador SL1</span>
+      <span class="triage-shortcut-sep" aria-hidden="true">•</span>
+      <span class="triage-shortcut-item"><kbd>3</kbd> Todas</span>
+      <span class="triage-shortcut-sep" aria-hidden="true">•</span>
+      <span class="triage-shortcut-item"><kbd>4</kbd> Sev. Correcta</span>
+      <span class="triage-shortcut-sep" aria-hidden="true">•</span>
+      <span class="triage-shortcut-item"><kbd>/</kbd> Buscar</span>
+      <span class="triage-shortcut-sep" aria-hidden="true">•</span>
+      <span class="triage-shortcut-item"><kbd>C</kbd> Centro Comms</span>
+      <span class="triage-shortcut-sep" aria-hidden="true">•</span>
+      <span class="triage-shortcut-item"><kbd>?</kbd> Criterios</span>
+      <span class="triage-shortcut-sep" aria-hidden="true">•</span>
+      <span class="triage-shortcut-item"><kbd>Esc</kbd> Cerrar</span>
+    </div>
 
     <!-- 5. Feed de Incidencias Evaluadas (Tarjetas del Módulo 1) -->
     <main id="triage-feed" class="triage-feed" aria-label="Listado de Incidencias de Emergencia Evaluadas">
@@ -1198,7 +1218,7 @@
   <script src="/dashboards/assets/ui-feedback.js"></script>
   <script src="/dashboards/assets/topbar.js"></script>
   <script src="/dashboards/assets/resumen-ia.js"></script>
-  <script src="./triage.js?v=20261030_2040"></script>
+  <script src="./triage.js?v=apple_design_fluid_v2"></script>
 </body>
 </html>
 
