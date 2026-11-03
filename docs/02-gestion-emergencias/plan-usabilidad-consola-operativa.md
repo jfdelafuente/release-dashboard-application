@@ -231,3 +231,4 @@ Este backlog está diseñado en forma de lista de verificación (*Checklist*) pa
 
 *Documento técnico elaborado y aprobado para la hoja de ruta evolutiva de la Consola de Emergencias IT Orange.*  
 *Customer & Service Operations (CSO) · MasOrange Tech Operations.*
+
