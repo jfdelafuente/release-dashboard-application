@@ -199,36 +199,7 @@
           <input type="text" id="search-input" class="triage-search-input" placeholder="Buscar por ID, sistema, proceso...">
         </div>
 
-        <!-- Nota Informativa Flotante de Atajos Rápidos (No ocupa espacio vertical en consola) -->
-        <div class="orch-clock-info-wrap triage-shortcuts-wrap">
-          <button type="button" class="orch-clock-info-btn triage-shortcuts-trigger" id="btn-shortcuts-info" aria-label="Nota informativa: Atajos de teclado" aria-expanded="false" title="Nota informativa: Atajos de teclado de la consola (⌘ / k)">
-            <kbd class="triage-kbd-chip">⌘</kbd>
-            <span class="triage-shortcuts-trigger-text">Atajos</span>
-          </button>
-          <div class="orch-clock-popup triage-shortcuts-popup" id="popup-shortcuts" role="tooltip" aria-hidden="true">
-            <div class="orch-popup-arrow"></div>
-            <div class="orch-popup-header">
-              <span class="orch-popup-icon" aria-hidden="true">⌨️</span>
-              <span class="orch-popup-title">Nota Informativa · Atajos</span>
-              <button type="button" class="orch-popup-close apple-popup-close" data-close-popup="popup-shortcuts" aria-label="Cerrar nota informativa de atajos" title="Cerrar (Esc)">
-                <svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="2" y1="2" x2="10" y2="10"></line><line x1="10" y1="2" x2="2" y2="10"></line></svg>
-              </button>
-            </div>
-            <div class="orch-popup-body triage-shortcuts-body">
-              <div class="triage-shortcut-row"><kbd>1</kbd><span>Filtro Reclasificación Inmediata</span></div>
-              <div class="triage-shortcut-row"><kbd>2</kbd><span>Filtro Orquestador SL1 / P1</span></div>
-              <div class="triage-shortcut-row"><kbd>3</kbd><span>Filtro Todas las Incidencias</span></div>
-              <div class="triage-shortcut-row"><kbd>4</kbd><span>Filtro Severidad Correcta</span></div>
-              <div class="triage-shortcut-row"><kbd>/</kbd><span>Foco en campo de Búsqueda</span></div>
-              <div class="triage-shortcut-row"><kbd>C</kbd><span>Abrir Centro de Comunicaciones</span></div>
-              <div class="triage-shortcut-row"><kbd>?</kbd><span>Consultar Criterios Oficiales</span></div>
-              <div class="triage-shortcut-row"><kbd>Esc</kbd><span>Cerrar diálogos y notas emergentes</span></div>
-            </div>
-            <div class="orch-popup-footer">
-              <span class="orch-popup-sla">💡 Pulsa cualquier tecla rápida para ejecutar la acción al instante.</span>
-            </div>
-          </div>
-        </div>
+
       </div>
     </nav>
 
@@ -391,27 +362,6 @@
             </div>
           </div>
 
-          <!-- Nota Informativa de Atajos en el Footer (Zona de referencia sin interferir con la operativa) -->
-          <div class="triage-footer-shortcuts-card">
-            <div class="triage-footer-shortcuts-header">
-              <span aria-hidden="true">⌨️</span>
-              <span>Nota Informativa: Atajos de Consola</span>
-            </div>
-            <p class="triage-footer-shortcuts-desc">
-              Comandos de acceso rápido por teclado para turnos de guardia IM y crisis IT:
-            </p>
-            <div class="triage-footer-shortcuts-grid">
-              <div class="triage-footer-shortcut-item"><kbd>1</kbd> <span>Reclasificación</span></div>
-              <div class="triage-footer-shortcut-item"><kbd>2</kbd> <span>Orquestador SL1</span></div>
-              <div class="triage-footer-shortcut-item"><kbd>3</kbd> <span>Todas</span></div>
-              <div class="triage-footer-shortcut-item"><kbd>4</kbd> <span>Sev. Correcta</span></div>
-              <div class="triage-footer-shortcut-item"><kbd>/</kbd> <span>Buscar</span></div>
-              <div class="triage-footer-shortcut-item"><kbd>C</kbd> <span>Centro Comms</span></div>
-              <div class="triage-footer-shortcut-item"><kbd>?</kbd> <span>Criterios</span></div>
-              <div class="triage-footer-shortcut-item"><kbd>Esc</kbd> <span>Cerrar</span></div>
-            </div>
-          </div>
-
           <div class="triage-footer-quick-links" style="margin-top: 4px;">
             <a href="/docs/02-gestion-emergencias/manual-consola-operativa.md" target="_blank" rel="noopener noreferrer" class="triage-footer-link-btn" title="Consultar el Manual Oficial de la Consola">
               <span aria-hidden="true">📘</span>
@@ -421,6 +371,31 @@
           </div>
         </div>
 
+      </div>
+
+      <!-- Banda de Atajos de Teclado en el Footer (Zona de referencia rápida sin estorbar) -->
+      <div class="triage-footer-shortcuts-bar" role="region" aria-label="Atajos de teclado de la consola">
+        <div class="triage-footer-shortcuts-title">
+          <span class="triage-footer-shortcuts-icon" aria-hidden="true">⌨️</span>
+          <span>Atajos de Consola:</span>
+        </div>
+        <div class="triage-footer-shortcuts-items">
+          <span class="triage-footer-shortcut-item"><kbd>1</kbd> Reclasificación</span>
+          <span class="triage-footer-shortcut-sep" aria-hidden="true">•</span>
+          <span class="triage-footer-shortcut-item"><kbd>2</kbd> Orquestador SL1</span>
+          <span class="triage-footer-shortcut-sep" aria-hidden="true">•</span>
+          <span class="triage-footer-shortcut-item"><kbd>3</kbd> Todas</span>
+          <span class="triage-footer-shortcut-sep" aria-hidden="true">•</span>
+          <span class="triage-footer-shortcut-item"><kbd>4</kbd> Sev. Correcta</span>
+          <span class="triage-footer-shortcut-sep" aria-hidden="true">•</span>
+          <span class="triage-footer-shortcut-item"><kbd>/</kbd> Buscar</span>
+          <span class="triage-footer-shortcut-sep" aria-hidden="true">•</span>
+          <span class="triage-footer-shortcut-item"><kbd>C</kbd> Centro Comms</span>
+          <span class="triage-footer-shortcut-sep" aria-hidden="true">•</span>
+          <span class="triage-footer-shortcut-item"><kbd>?</kbd> Criterios</span>
+          <span class="triage-footer-shortcut-sep" aria-hidden="true">•</span>
+          <span class="triage-footer-shortcut-item"><kbd>Esc</kbd> Cerrar</span>
+        </div>
       </div>
 
       <!-- Barra Inferior: Copyright & Confidencialidad -->

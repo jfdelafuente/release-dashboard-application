@@ -2913,14 +2913,6 @@ Generado por Consola de Emergencias IT Orange - Motor de Triaje (Módulo 1)`;
           openCommsCenterModal(null, 'tab-gateway');
         }
       }
-      // [k] o [K] -> Alternar Nota Informativa de Atajos Rápidos
-      else if (e.key === 'k' || e.key === 'K') {
-        const btn = document.getElementById('btn-shortcuts-info');
-        if (btn) {
-          triggerHaptic('light');
-          btn.click();
-        }
-      }
       // [?] o [h] -> Consultar Criterios Oficiales
       else if (e.key === '?' || e.key === 'h' || e.key === 'H') {
         if (dom.modalBackdrop) {
