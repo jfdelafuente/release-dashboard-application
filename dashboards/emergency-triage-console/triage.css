@@ -1601,6 +1601,110 @@ body {
   gap: 10px;
 }
 
+/* ==========================================================================
+   Apple Design Standard Modal & Sheet Close Control (SF Symbols / macOS / iOS)
+   ========================================================================== */
+.apple-modal-close {
+  position: relative;
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+  min-height: 32px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 1px solid transparent;
+  cursor: pointer;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+  outline: none;
+  transition: transform 140ms cubic-bezier(0.16, 1, 0.3, 1),
+              background 140ms ease,
+              border-color 140ms ease,
+              box-shadow 140ms ease,
+              color 140ms ease;
+  flex-shrink: 0;
+}
+
+/* Expansion of hit target to 44px (Apple HIG minimum accessible touch target) */
+.apple-modal-close::after {
+  content: '';
+  position: absolute;
+  top: -6px;
+  left: -6px;
+  right: -6px;
+  bottom: -6px;
+  border-radius: 50%;
+}
+
+.apple-modal-close svg {
+  display: block;
+  pointer-events: none;
+  transition: transform 140ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.apple-modal-close:hover {
+  transform: scale(1.05);
+}
+
+.apple-modal-close:hover svg {
+  transform: rotate(90deg);
+}
+
+.apple-modal-close:active {
+  transform: scale(0.92);
+  transition-duration: 70ms;
+}
+
+.apple-modal-close:focus-visible {
+  outline: 2px solid var(--apple-blue);
+  outline-offset: 2px;
+}
+
+/* Light Surface Variant (macOS sheet light surface) */
+.apple-modal-close-light {
+  background: rgba(0, 0, 0, 0.05);
+  color: var(--apple-label-secondary, rgba(0, 0, 0, 0.65));
+  border-color: rgba(0, 0, 0, 0.08);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.apple-modal-close-light:hover {
+  background: rgba(0, 0, 0, 0.10);
+  color: var(--apple-label-primary, rgba(0, 0, 0, 0.90));
+  border-color: rgba(0, 0, 0, 0.14);
+}
+
+.apple-modal-close-light:active {
+  background: rgba(0, 0, 0, 0.16);
+  color: #000000;
+}
+
+/* Dark Surface Variant (macOS dark HUD / dark header) */
+.apple-modal-close-dark {
+  background: rgba(255, 255, 255, 0.14);
+  color: #FFFFFF;
+  border-color: rgba(255, 255, 255, 0.22);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+.apple-modal-close-dark:hover {
+  background: rgba(255, 255, 255, 0.26);
+  border-color: rgba(255, 255, 255, 0.35);
+  color: #FFFFFF;
+}
+
+.apple-modal-close-dark:active {
+  background: rgba(255, 255, 255, 0.36);
+  color: #FFFFFF;
+}
+
+
 .triage-modal-body {
   padding: 24px;
   overflow-y: auto;
@@ -1947,25 +2051,55 @@ body {
   font-weight: 700;
 }
 
+.orch-header-right,
+.comms-header-right {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-shrink: 0;
+}
+
 .orch-btn-close {
-  background: rgba(255, 255, 255, 0.15);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  color: #FFFFFF;
-  font-size: 13px;
-  width: 28px;
-  height: 28px;
+  position: relative;
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+  min-height: 32px;
+  border-radius: 50%;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  padding: 0;
   cursor: pointer;
-  border-radius: 50%;
-  transition: all 0.15s ease;
+  touch-action: manipulation;
+  outline: none;
+  background: rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  color: #FFFFFF;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  transition: transform 140ms cubic-bezier(0.16, 1, 0.3, 1),
+              background 140ms ease,
+              border-color 140ms ease,
+              color 140ms ease;
+  flex-shrink: 0;
 }
 
 .orch-btn-close:hover {
-  background: var(--triage-orange);
-  border-color: var(--triage-orange);
+  background: rgba(255, 255, 255, 0.26);
+  border-color: rgba(255, 255, 255, 0.35);
   color: #FFFFFF;
+  transform: scale(1.05);
+}
+
+.orch-btn-close:active {
+  transform: scale(0.92);
+  transition-duration: 70ms;
+}
+
+.orch-btn-close:focus-visible {
+  outline: 2px solid var(--apple-blue);
+  outline-offset: 2px;
 }
 
 .orch-modal-body {
@@ -2175,14 +2309,73 @@ body {
   flex: 1;
 }
 
-.orch-popup-close {
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  font-size: 14px;
-  line-height: 1;
+.orch-popup-close,
+.apple-popup-close {
+  position: relative;
+  width: 22px;
+  height: 22px;
+  min-width: 22px;
+  min-height: 22px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  background: rgba(0, 0, 0, 0.05);
+  border: 1px solid rgba(0, 0, 0, 0.08);
   color: var(--triage-text-subtle);
-  padding: 2px 4px;
+  cursor: pointer;
+  touch-action: manipulation;
+  outline: none;
+  transition: transform 140ms cubic-bezier(0.16, 1, 0.3, 1),
+              background 140ms ease,
+              border-color 140ms ease,
+              color 140ms ease;
+  flex-shrink: 0;
+}
+
+/* Expansion of hit target to 44px (Apple HIG minimum touch target) */
+.orch-popup-close::after,
+.apple-popup-close::after {
+  content: '';
+  position: absolute;
+  top: -11px;
+  left: -11px;
+  right: -11px;
+  bottom: -11px;
+  border-radius: 50%;
+}
+
+.orch-popup-close svg,
+.apple-popup-close svg {
+  display: block;
+  pointer-events: none;
+  transition: transform 140ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.orch-popup-close:hover,
+.apple-popup-close:hover {
+  background: rgba(0, 0, 0, 0.12);
+  border-color: rgba(0, 0, 0, 0.14);
+  color: var(--triage-text-main);
+  transform: scale(1.08);
+}
+
+.orch-popup-close:hover svg,
+.apple-popup-close:hover svg {
+  transform: rotate(90deg);
+}
+
+.orch-popup-close:active,
+.apple-popup-close:active {
+  transform: scale(0.90);
+  transition-duration: 70ms;
+}
+
+.orch-popup-close:focus-visible,
+.apple-popup-close:focus-visible {
+  outline: 2px solid var(--apple-blue);
+  outline-offset: 1px;
 }
 
 .orch-popup-body {

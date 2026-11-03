@@ -904,11 +904,13 @@ Proceder con la ejecución inmediata del procedimiento de Rollback. Confirmar in
 
     if (dom.btnRollbackCancel) {
       dom.btnRollbackCancel.onclick = () => {
+        triggerHaptic('light');
         dom.modalRollback.classList.remove('open');
       };
     }
     if (dom.btnModalRollbackClose) {
       dom.btnModalRollbackClose.onclick = () => {
+        triggerHaptic('light');
         dom.modalRollback.classList.remove('open');
       };
     }
@@ -2710,49 +2712,78 @@ Generado por Consola de Emergencias IT Orange - Motor de Triaje (Módulo 1)`;
 
     if (dom.btnModalClose && dom.modalBackdrop) {
       dom.btnModalClose.addEventListener('click', () => {
+        triggerHaptic('light');
         dom.modalBackdrop.classList.remove('open');
       });
       dom.modalBackdrop.addEventListener('click', (e) => {
-        if (e.target === dom.modalBackdrop) dom.modalBackdrop.classList.remove('open');
+        if (e.target === dom.modalBackdrop) {
+          triggerHaptic('light');
+          dom.modalBackdrop.classList.remove('open');
+        }
       });
     }
 
     // Modal Orquestador Operativo (Módulo 2)
     if (dom.btnOrchClose) {
-      dom.btnOrchClose.addEventListener('click', closeEmergencyOrchestrator);
+      dom.btnOrchClose.addEventListener('click', () => {
+        triggerHaptic('light');
+        closeEmergencyOrchestrator();
+      });
     }
     if (dom.modalOrchestrator) {
       dom.modalOrchestrator.addEventListener('click', (e) => {
-        if (e.target === dom.modalOrchestrator) closeEmergencyOrchestrator();
+        if (e.target === dom.modalOrchestrator) {
+          triggerHaptic('light');
+          closeEmergencyOrchestrator();
+        }
       });
     }
 
     // Modal Rollback (Módulo 2)
+    if (dom.btnModalRollbackClose) {
+      dom.btnModalRollbackClose.addEventListener('click', () => {
+        triggerHaptic('light');
+        if (dom.modalRollback) dom.modalRollback.classList.remove('open');
+      });
+    }
     if (dom.modalRollback) {
       dom.modalRollback.addEventListener('click', (e) => {
-        if (e.target === dom.modalRollback) dom.modalRollback.classList.remove('open');
+        if (e.target === dom.modalRollback) {
+          triggerHaptic('light');
+          dom.modalRollback.classList.remove('open');
+        }
       });
     }
 
     // Modal Notificación Ejecutiva / Generador de Plantillas (Módulo 2)
     if (dom.btnModalExecClose) {
       dom.btnModalExecClose.addEventListener('click', () => {
+        triggerHaptic('light');
         if (dom.modalExecutiveComm) dom.modalExecutiveComm.classList.remove('open');
       });
     }
     if (dom.modalExecutiveComm) {
       dom.modalExecutiveComm.addEventListener('click', (e) => {
-        if (e.target === dom.modalExecutiveComm) dom.modalExecutiveComm.classList.remove('open');
+        if (e.target === dom.modalExecutiveComm) {
+          triggerHaptic('light');
+          dom.modalExecutiveComm.classList.remove('open');
+        }
       });
     }
 
     // Modal Centro de Comunicaciones y Matrices (Módulo 3)
     if (dom.btnCommsClose) {
-      dom.btnCommsClose.addEventListener('click', closeCommsCenterModal);
+      dom.btnCommsClose.addEventListener('click', () => {
+        triggerHaptic('light');
+        closeCommsCenterModal();
+      });
     }
     if (dom.modalCommsCenter) {
       dom.modalCommsCenter.addEventListener('click', (e) => {
-        if (e.target === dom.modalCommsCenter) closeCommsCenterModal();
+        if (e.target === dom.modalCommsCenter) {
+          triggerHaptic('light');
+          closeCommsCenterModal();
+        }
       });
     }
 
@@ -2861,6 +2892,7 @@ Generado por Consola de Emergencias IT Orange - Motor de Triaje (Módulo 1)`;
       if (closeBtn) {
         e.preventDefault();
         e.stopPropagation();
+        triggerHaptic('light');
         const wrap = closeBtn.closest('.orch-clock-info-wrap');
         if (wrap) {
           wrap.classList.remove('is-open');
