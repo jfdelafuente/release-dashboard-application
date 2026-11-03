@@ -2922,6 +2922,58 @@ Generado por Consola de Emergencias IT Orange - Motor de Triaje (Módulo 1)`;
       }
     });
 
+    // Atajos de pie de página: Clic interactivo táctil para navegación rápida (Apple HIG Agency & Control)
+    document.querySelectorAll('.triage-footer-shortcut-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        const action = btn.getAttribute('data-key-action');
+        if (!action) return;
+        triggerHaptic('light');
+
+        if (action === '1') {
+          if (dom.tabReclassOnly) {
+            dom.tabReclassOnly.click();
+            window.scrollTo({ top: 320, behavior: 'smooth' });
+          }
+        } else if (action === '2') {
+          if (dom.tabOrchestrator) {
+            dom.tabOrchestrator.click();
+            window.scrollTo({ top: 320, behavior: 'smooth' });
+          }
+        } else if (action === '3') {
+          if (dom.tabAll) {
+            dom.tabAll.click();
+            window.scrollTo({ top: 320, behavior: 'smooth' });
+          }
+        } else if (action === '4') {
+          if (dom.tabCorrectOnly) {
+            dom.tabCorrectOnly.click();
+            window.scrollTo({ top: 320, behavior: 'smooth' });
+          }
+        } else if (action === '/') {
+          if (dom.searchInput) {
+            dom.searchInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            setTimeout(() => {
+              dom.searchInput.focus();
+              dom.searchInput.select();
+            }, 250);
+          }
+        } else if (action === 'c') {
+          const isOrchOpen = dom.modalOrchestrator && dom.modalOrchestrator.classList.contains('open');
+          const isCommsOpen = dom.modalCommsCenter && dom.modalCommsCenter.classList.contains('open');
+          if (!isOrchOpen && !isCommsOpen) {
+            openCommsCenterModal(null, 'tab-gateway');
+          }
+        } else if (action === '?') {
+          if (dom.modalBackdrop) {
+            dom.modalBackdrop.classList.add('open');
+          }
+        } else if (action === 'esc') {
+          window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+        }
+      });
+    });
+
     // Gestión interactiva de los Pop-ups de Notas Informativas en los 4 Relojes
     function closeAllClockPopups() {
       document.querySelectorAll('.orch-clock-info-wrap.is-open').forEach(wrap => {

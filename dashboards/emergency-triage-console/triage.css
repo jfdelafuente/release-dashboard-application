@@ -4621,77 +4621,134 @@ body {
   display: none !important;
 }
 
-/* Banda de Atajos de Teclado en el Footer (Apple HIG Reference Bar) */
+/* Banda de Atajos de Teclado en el Footer (Apple HIG Command Strip - Alto Contraste & Táctil) */
 .triage-footer-shortcuts-bar {
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: space-between;
   flex-wrap: wrap;
-  gap: 12px 18px;
-  padding: 14px 28px;
-  background: rgba(255, 255, 255, 0.025);
-  border-top: 1px solid rgba(255, 255, 255, 0.07);
-  font-size: 12px;
-  color: #98989D;
-  transition: background 0.2s ease, border-color 0.2s ease;
-}
-
-.triage-footer-shortcuts-bar:hover {
-  background: rgba(255, 255, 255, 0.045);
-  border-top-color: rgba(255, 121, 0, 0.3);
+  gap: 12px 20px;
+  padding: 12px 28px;
+  background: #1C1C1E;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.35);
+  position: relative;
+  z-index: 2;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
 }
 
 .triage-footer-shortcuts-title {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  font-weight: 600;
-  color: #FFFFFF;
-  letter-spacing: -0.01em;
-  font-size: 12px;
+  gap: 10px;
+  flex-shrink: 0;
 }
 
-.triage-footer-shortcuts-icon {
-  font-size: 13px;
+.triage-footer-shortcuts-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(255, 121, 0, 0.16);
+  color: #FF9F0A;
+  border: 1px solid rgba(255, 121, 0, 0.38);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  padding: 2.5px 8px;
+  border-radius: 9999px;
+  text-transform: uppercase;
+}
+
+.triage-footer-shortcuts-heading {
+  font-weight: 600;
+  color: #F2F2F7;
+  letter-spacing: -0.01em;
+  font-size: 12px;
 }
 
 .triage-footer-shortcuts-items {
   display: inline-flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 8px 14px;
+  gap: 8px 10px;
 }
 
-.triage-footer-shortcut-item {
+/* Botón interactivo de atajo táctil Apple-Style */
+.triage-footer-shortcut-btn {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-weight: 500;
+  padding: 4px 9px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 6px;
+  color: #F2F2F7;
   font-size: 11.5px;
-  color: rgba(255, 255, 255, 0.85);
+  font-weight: 500;
   letter-spacing: -0.01em;
+  cursor: pointer;
+  outline: none;
+  font-family: inherit;
+  transition: transform 140ms var(--ease-spring),
+              background-color 140ms ease,
+              border-color 140ms ease,
+              box-shadow 140ms ease;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
 }
 
-.triage-footer-shortcut-item kbd {
+.triage-footer-shortcut-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 121, 0, 0.45);
+  color: #FFFFFF;
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.35);
+}
+
+.triage-footer-shortcut-btn:focus-visible {
+  border-color: #FF7900;
+  box-shadow: 0 0 0 3px rgba(255, 121, 0, 0.35);
+}
+
+.triage-footer-shortcut-btn:active {
+  transform: scale(0.96) !important;
+  background: rgba(255, 121, 0, 0.22);
+  border-color: #FF7900;
+  transition: transform 60ms cubic-bezier(0.2, 0, 0, 1) !important;
+}
+
+.triage-footer-shortcut-btn kbd {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   min-width: 20px;
-  height: 19px;
+  height: 18px;
   padding: 0 5px;
   font-family: var(--font-mono);
   font-size: 10.5px;
-  font-weight: 700;
-  color: #FFFFFF;
-  background: rgba(255, 255, 255, 0.12);
-  border: 1px solid rgba(255, 255, 255, 0.22);
+  font-weight: 800;
+  color: #FF9F0A;
+  background: #2C2C2E;
+  border: 1px solid #48484A;
+  border-bottom: 2px solid #5C5C60;
   border-radius: 4px;
-  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.25);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+  line-height: 1;
 }
 
-.triage-footer-shortcut-sep {
-  color: rgba(255, 255, 255, 0.22);
-  font-size: 9px;
+.triage-footer-shortcut-btn:hover kbd {
+  background: #3A3A3C;
+  border-color: #636366;
+  border-bottom-color: #8E8E93;
+  color: #FFB340;
+}
+
+@media (max-width: 900px) {
+  .triage-footer-shortcuts-bar {
+    justify-content: flex-start;
+    padding: 12px 18px;
+  }
 }
 
 /* macOS-Style Elegant Scrollbars */

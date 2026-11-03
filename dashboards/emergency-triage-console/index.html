@@ -373,28 +373,37 @@
 
       </div>
 
-      <!-- Banda de Atajos de Teclado en el Footer (Zona de referencia rápida sin estorbar) -->
+      <!-- Banda de Atajos de Teclado en el Footer (Apple HIG Command Strip con Máximo Contraste) -->
       <div class="triage-footer-shortcuts-bar" role="region" aria-label="Atajos de teclado de la consola">
         <div class="triage-footer-shortcuts-title">
-          <span class="triage-footer-shortcuts-icon" aria-hidden="true">⌨️</span>
-          <span>Atajos de Consola:</span>
+          <span class="triage-footer-shortcuts-pill" aria-hidden="true">⌨️ ATAJOS</span>
+          <span class="triage-footer-shortcuts-heading">Navegación Rápida:</span>
         </div>
         <div class="triage-footer-shortcuts-items">
-          <span class="triage-footer-shortcut-item"><kbd>1</kbd> Reclasificación</span>
-          <span class="triage-footer-shortcut-sep" aria-hidden="true">•</span>
-          <span class="triage-footer-shortcut-item"><kbd>2</kbd> Orquestador SL1</span>
-          <span class="triage-footer-shortcut-sep" aria-hidden="true">•</span>
-          <span class="triage-footer-shortcut-item"><kbd>3</kbd> Todas</span>
-          <span class="triage-footer-shortcut-sep" aria-hidden="true">•</span>
-          <span class="triage-footer-shortcut-item"><kbd>4</kbd> Sev. Correcta</span>
-          <span class="triage-footer-shortcut-sep" aria-hidden="true">•</span>
-          <span class="triage-footer-shortcut-item"><kbd>/</kbd> Buscar</span>
-          <span class="triage-footer-shortcut-sep" aria-hidden="true">•</span>
-          <span class="triage-footer-shortcut-item"><kbd>C</kbd> Centro Comms</span>
-          <span class="triage-footer-shortcut-sep" aria-hidden="true">•</span>
-          <span class="triage-footer-shortcut-item"><kbd>?</kbd> Criterios</span>
-          <span class="triage-footer-shortcut-sep" aria-hidden="true">•</span>
-          <span class="triage-footer-shortcut-item"><kbd>Esc</kbd> Cerrar</span>
+          <button type="button" class="triage-footer-shortcut-btn" data-key-action="1" title="Activar filtro Reclasificación Inmediata (Tecla 1)">
+            <kbd>1</kbd> <span>Reclasificación</span>
+          </button>
+          <button type="button" class="triage-footer-shortcut-btn" data-key-action="2" title="Activar filtro Orquestador SL1/P1 (Tecla 2)">
+            <kbd>2</kbd> <span>Orquestador SL1</span>
+          </button>
+          <button type="button" class="triage-footer-shortcut-btn" data-key-action="3" title="Activar filtro Todas las Incidencias (Tecla 3)">
+            <kbd>3</kbd> <span>Todas</span>
+          </button>
+          <button type="button" class="triage-footer-shortcut-btn" data-key-action="4" title="Activar filtro Severidad Correcta (Tecla 4)">
+            <kbd>4</kbd> <span>Sev. Correcta</span>
+          </button>
+          <button type="button" class="triage-footer-shortcut-btn" data-key-action="/" title="Foco inmediato en buscador (Tecla /)">
+            <kbd>/</kbd> <span>Buscar</span>
+          </button>
+          <button type="button" class="triage-footer-shortcut-btn" data-key-action="c" title="Abrir Centro de Comunicaciones (Tecla C)">
+            <kbd>C</kbd> <span>Centro Comms</span>
+          </button>
+          <button type="button" class="triage-footer-shortcut-btn" data-key-action="?" title="Consultar Criterios Oficiales (Tecla ?)">
+            <kbd>?</kbd> <span>Criterios</span>
+          </button>
+          <button type="button" class="triage-footer-shortcut-btn" data-key-action="esc" title="Cerrar ventanas modales activas (Tecla Esc)">
+            <kbd>Esc</kbd> <span>Cerrar</span>
+          </button>
         </div>
       </div>
 
