@@ -301,6 +301,18 @@ body {
   color: #FFFFFF;
 }
 
+.triage-btn-secondary {
+  background: var(--triage-surface);
+  border-color: var(--triage-border);
+  color: var(--triage-text-muted);
+}
+
+.triage-btn-secondary:hover {
+  background: #FFF1F2;
+  border-color: #FDA4AF;
+  color: #E11D48;
+}
+
 .triage-btn-sm {
   padding: 6px 12px;
   font-size: 12px;
@@ -2659,6 +2671,26 @@ body {
   border-left-color: #464EB8;
 }
 
+.orch-timeline-entry.role-resolutor {
+  border-left-color: #64748B;
+  background: #F8FAFC;
+}
+
+.orch-timeline-entry.role-redes {
+  border-left-color: #0284C7;
+  background: #F0F9FF;
+}
+
+.orch-timeline-entry.role-sistemas {
+  border-left-color: #4F46E5;
+  background: #EEF2FF;
+}
+
+.orch-timeline-entry.role-dba {
+  border-left-color: #059669;
+  background: #ECFDF5;
+}
+
 .orch-entry-top {
   display: flex;
   align-items: center;
@@ -2728,6 +2760,10 @@ body {
   }
   .orch-log-form-row .orch-form-field {
     width: 100% !important;
+  }
+  .orch-form-actions {
+    width: 100%;
+    justify-content: flex-end;
   }
 }
 

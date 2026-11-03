@@ -795,6 +795,9 @@
                 <select id="orch-log-role" class="triage-select" style="width: 100%;">
                   <option value="IM">👤 Incident Manager (IM)</option>
                   <option value="TECNICO">⚙️ Soporte Técnico Resolutor</option>
+                  <option value="REDES">🌐 Redes & Comunicaciones</option>
+                  <option value="SISTEMAS">💻 Sistemas & Cloud</option>
+                  <option value="DBA">🗄️ Base de Datos (DBA)</option>
                   <option value="ESCALADO">📞 Escalado Telefónico</option>
                   <option value="ROLLBACK">⏪ Rollback PaP</option>
                   <option value="NOTIFICACION">📝 Notificación Ejecutiva</option>
@@ -805,9 +808,14 @@
                 <label for="orch-log-text">Mensaje / Avance Operativo</label>
                 <input type="text" id="orch-log-text" class="triage-search-input" style="width: 100%;" placeholder="Describe el avance técnico, interlocutor o acuerdo adoptado en la War Room..." required>
               </div>
-              <button type="submit" class="triage-btn triage-btn-primary" style="height: 38px; align-self: flex-end;">
-                <span>➕ Registrar Hito</span>
-              </button>
+              <div class="orch-form-actions" style="display: flex; gap: 8px; align-self: flex-end;">
+                <button type="submit" class="triage-btn triage-btn-primary" style="height: 38px; white-space: nowrap;">
+                  <span>➕ Registrar Hito</span>
+                </button>
+                <button type="button" id="btn-orch-log-clear" class="triage-btn triage-btn-secondary" style="height: 38px; white-space: nowrap;" title="Descartar borrador y limpiar campo">
+                  <span>🗑️ Descartar</span>
+                </button>
+              </div>
             </div>
           </form>
         </section>

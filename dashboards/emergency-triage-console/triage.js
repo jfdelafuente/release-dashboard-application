@@ -232,6 +232,7 @@
     // Banners de Borrador Recuperado (US-03 Continuidad Operativa)
     orchLogDraftAlert: document.getElementById('orch-log-draft-alert'),
     btnDiscardLogDraft: document.getElementById('btn-discard-log-draft'),
+    btnOrchLogClear: document.getElementById('btn-orch-log-clear'),
     tplDraftAlert: document.getElementById('tpl-draft-alert'),
     btnDiscardTplDraft: document.getElementById('btn-discard-tpl-draft')
   };
@@ -2060,6 +2061,7 @@ Proceder con la ejecución inmediata del procedimiento de Rollback. Confirmar in
         if (dom.orchLogDraftAlert) dom.orchLogDraftAlert.style.display = 'flex';
       } else {
         if (dom.orchLogText) dom.orchLogText.value = '';
+        if (dom.orchLogRole) dom.orchLogRole.value = 'IM';
         if (dom.orchLogDraftAlert) dom.orchLogDraftAlert.style.display = 'none';
       }
     } catch (_) {}
@@ -2848,6 +2850,12 @@ Generado por Consola de Emergencias IT Orange - Motor de Triaje (Módulo 1)`;
         return { label: '👤 Incident Manager', extraClass: 'role-im' };
       case 'TECNICO':
         return { label: '⚙️ Soporte Resolutor', extraClass: 'role-resolutor' };
+      case 'REDES':
+        return { label: '🌐 Redes & Comunicaciones', extraClass: 'role-redes' };
+      case 'SISTEMAS':
+        return { label: '💻 Sistemas & Cloud', extraClass: 'role-sistemas' };
+      case 'DBA':
+        return { label: '🗄️ Base de Datos (DBA)', extraClass: 'role-dba' };
       case 'ESCALADO':
         return { label: '📞 Escalado Telefónico', extraClass: 'role-escalado' };
       case 'ROLLBACK':
@@ -3111,6 +3119,18 @@ Generado por Consola de Emergencias IT Orange - Motor de Triaje (Módulo 1)`;
     }
 
     // --- Borradores Bitácora de Crisis (US-03) ---
+    function discardLogDraft() {
+      if (!state.activeOrchIncId) return;
+      try {
+        localStorage.removeItem('triage_draft_log_' + state.activeOrchIncId);
+        localStorage.removeItem('triage_draft_role_' + state.activeOrchIncId);
+      } catch (_) {}
+      if (dom.orchLogText) dom.orchLogText.value = '';
+      if (dom.orchLogRole) dom.orchLogRole.value = 'IM';
+      if (dom.orchLogDraftAlert) dom.orchLogDraftAlert.style.display = 'none';
+      showToast('Borrador de bitácora descartado', 'info');
+    }
+
     if (dom.orchLogText) {
       dom.orchLogText.addEventListener('input', () => {
         if (!state.activeOrchIncId) return;
@@ -3118,8 +3138,12 @@ Generado por Consola de Emergencias IT Orange - Motor de Triaje (Módulo 1)`;
         try {
           if (val && val.trim()) {
             localStorage.setItem('triage_draft_log_' + state.activeOrchIncId, val);
+            if (dom.orchLogRole) {
+              localStorage.setItem('triage_draft_role_' + state.activeOrchIncId, dom.orchLogRole.value);
+            }
           } else {
             localStorage.removeItem('triage_draft_log_' + state.activeOrchIncId);
+            localStorage.removeItem('triage_draft_role_' + state.activeOrchIncId);
             if (dom.orchLogDraftAlert) dom.orchLogDraftAlert.style.display = 'none';
           }
         } catch (_) {}
@@ -3136,16 +3160,10 @@ Generado por Consola de Emergencias IT Orange - Motor de Triaje (Módulo 1)`;
     }
 
     if (dom.btnDiscardLogDraft) {
-      dom.btnDiscardLogDraft.addEventListener('click', () => {
-        if (!state.activeOrchIncId) return;
-        try {
-          localStorage.removeItem('triage_draft_log_' + state.activeOrchIncId);
-          localStorage.removeItem('triage_draft_role_' + state.activeOrchIncId);
-        } catch (_) {}
-        if (dom.orchLogText) dom.orchLogText.value = '';
-        if (dom.orchLogDraftAlert) dom.orchLogDraftAlert.style.display = 'none';
-        showToast('Borrador de bitácora descartado', 'info');
-      });
+      dom.btnDiscardLogDraft.addEventListener('click', discardLogDraft);
+    }
+    if (dom.btnOrchLogClear) {
+      dom.btnOrchLogClear.addEventListener('click', discardLogDraft);
     }
 
     // --- Borradores Gateway Web de Explotación (US-03) ---
