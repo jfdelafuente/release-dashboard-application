@@ -3,7 +3,7 @@
     "version": "1.0.0",
     "description": "Almacén oficial de redacciones ejecutivas generadas por el Agente incident-reporter",
     "source": "agents/it-incidents/incident-reporter.md",
-    "updated_at": "2026-11-03T11:32:29Z"
+    "updated_at": "2026-11-03T16:18:46Z"
   },
   "incidents": {
     "INC000004065609": {
@@ -882,6 +882,26 @@
         "origen": "incident-reporter",
         "conteo_palabras_completo": 76,
         "conteo_palabras_breve": 28
+      }
+    },
+    "INC000004174169": {
+      "apertura": {
+        "completo": "Se ha detectado una incidencia de prioridad Media (INC000004174169) en el canal de Atención al Cliente, originada por un error funcional en el asistente virtual de WhatsApp (YGMM) integrado con LivePerson. La anomalía provoca el envío duplicado de encuestas de satisfacción tras la atención del agente, afectando a 10 usuarios en los servicios de Atención y Cambio de Domicilio de Jazzplat Bogotá. El equipo especializado de desarrollo (DES_ASISTENTE) se encuentra analizando el flujo para corregir la duplicidad. Próxima actualización en 60 minutos.",
+        "breve": "P3: Error funcional en asistente de WhatsApp duplicando encuestas de satisfacción. Afecta a 10 usuarios en Jazzplat Bogotá. DES_ASISTENTE analizando corrección. Próxima actualización en 60 min.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 82,
+        "conteo_palabras_breve": 26
+      }
+    },
+    "INC000004173771": {
+      "apertura": {
+        "completo": "Se declara incidencia crítica P1 (INC000004173771) por bloqueo total en la operativa de contratación de CRM4TELCO debido a falta de respuesta del servicio de Scoring. La incidencia bloquea el 100% de las ventas a 11 operadores en Teleperformance Medellín en los servicios de Atención, Retención y Ventas. El equipo de DES_CRM4T ha identificado registros bloqueados en la tabla LOG_SCORING y el soporte especializado se encuentra ejecutando un plan de regularización de base de datos para restablecer las contrataciones. Próxima actualización en 30 minutos.",
+        "breve": "P1: Bloqueo total de contrataciones en CRM4TELCO por Scoring. 11 operadores afectados en Medellín. En curso regularización de base de datos. Próxima actualización en 30 min.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 83,
+        "conteo_palabras_breve": 26
       }
     }
   }
