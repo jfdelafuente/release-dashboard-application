@@ -2212,11 +2212,16 @@ Generado por Consola de Emergencias IT Orange - Motor de Triaje (Módulo 1)`;
     dom.triageFeed.innerHTML = `
       <div class="triage-table-toolbar">
         <div class="triage-table-count">
-          Mostrando <strong>${filtered.length}</strong> incidencia${filtered.length === 1 ? '' : 's'}
+          Mostrando <strong>${filtered.length}</strong> incidencia${filtered.length === 1 ? '' : 's'} evaluada${filtered.length === 1 ? '' : 's'}
         </div>
         <button type="button" class="triage-btn-toggle-all" id="btn-toggle-all-rows" aria-label="${state.allExpanded ? 'Plegar todas las filas' : 'Expandir todas las filas'}">
-          <span aria-hidden="true">${state.allExpanded ? '▲' : '▼'}</span>
-          <span>${state.allExpanded ? 'Plegar Todas' : 'Expandir Todas'}</span>
+          ${state.allExpanded ? `
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 7.5L6 3.5l4 4"/></svg>
+            <span>Plegar Todas</span>
+          ` : `
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 4.5L6 8.5l4-4"/></svg>
+            <span>Expandir Todas</span>
+          `}
         </button>
       </div>
 
@@ -2225,11 +2230,11 @@ Generado por Consola de Emergencias IT Orange - Motor de Triaje (Módulo 1)`;
           <thead>
             <tr>
               <th style="width: 44px; text-align: center;" aria-label="Desplegable"></th>
-              <th style="width: 140px;">Incidencia</th>
+              <th style="width: 144px;">Incidencia</th>
               <th style="min-width: 280px;">Título y Sistemas</th>
               <th style="width: 170px;">Proceso Crítico</th>
               <th style="width: 110px;">Remedy Ini</th>
-              <th style="width: 120px;">Severidad ITIL</th>
+              <th style="width: 124px;">Severidad ITIL</th>
               <th style="width: 180px; text-align: right;">Acciones</th>
             </tr>
           </thead>
@@ -2251,7 +2256,7 @@ Generado por Consola de Emergencias IT Orange - Motor de Triaje (Módulo 1)`;
     const isP1 = inc.prioridad_sugerida === 'P1';
     const isOpen = Boolean(state.expandedRows[incId]);
 
-    // Modificador de clase para la fila principal
+    // Modificador de clase para la fila principal (Apple Indicator)
     let rowModifier = 'is-correct';
     if (isDisc) {
       rowModifier = delta >= 2 ? 'is-discrepancy-delta2' : 'is-discrepancy-delta1';
@@ -2264,7 +2269,7 @@ Generado por Consola de Emergencias IT Orange - Motor de Triaje (Módulo 1)`;
     const impactText = evaluacion.impacto_justificacion || inc.discrepancia_motivo || 'Impacto activo evaluado por el motor de triaje.';
     const urgencyText = evaluacion.urgencia_justificacion || 'Restablecimiento operativo requerido con máxima celeridad.';
 
-    // Métricas cuantitativas
+    // Métricas cuantitativas con dígitos tabulares
     const metrics = evaluacion.metricas_cuantitativas || {};
     const metricChips = [];
     if (metrics.sedes != null) metricChips.push(`🏢 ${metrics.sedes} Sedes`);
@@ -2280,13 +2285,15 @@ Generado por Consola de Emergencias IT Orange - Motor de Triaje (Módulo 1)`;
     const sistemasList = Array.isArray(inc.sistemas) ? inc.sistemas : (inc.sistemas ? [inc.sistemas] : []);
     const sysTagsHtml = sistemasList.map(s => `<span class="triage-sys-tag">${escapeHtml(s)}</span>`).join('');
 
-    // Estado del ticket
+    // Estado del ticket con dot status
     const estatusRaw = (inc.estatus || 'Pendiente').toLowerCase();
-    const statusPillClass = estatusRaw.includes('curso') ? 'status-en-curso' : 'status-pendiente';
+    const isEnCurso = estatusRaw.includes('curso');
+    const statusPillClass = isEnCurso ? 'status-en-curso' : 'status-pendiente';
 
     // Severidad Remedy inicial
     const sevNominal = inc.prioridad_original || 'Media';
     let remedyBadgeClass = 'badge-remedy-media';
+    if (sevNominal.toLowerCase().includes('baja')) remedyBadgeClass = 'badge-remedy-baja';
     if (sevNominal.toLowerCase().includes('alta')) remedyBadgeClass = 'badge-remedy-alta';
     if (sevNominal.toLowerCase().includes('crítica') || sevNominal.toLowerCase().includes('critica')) remedyBadgeClass = 'badge-remedy-critica';
 
@@ -2298,19 +2305,30 @@ Generado por Consola de Emergencias IT Orange - Motor de Triaje (Módulo 1)`;
     const resumenIa = inc.resumen_ia || {};
     const epsilonBloqueos = Array.isArray(resumenIa.bloqueos) ? resumenIa.bloqueos.join('; ') : (resumenIa.bloqueos || '');
 
+    // Aging style class
+    const agingAlertClass = minsElapsed > 120 ? 'is-aging-alert' : (minsElapsed > 45 ? 'is-aging-warn' : '');
+
     return `
-      <!-- Fila Resumen Principal (Modo Tabular) -->
+      <!-- Fila Resumen Principal (Modo Tabular Apple Design) -->
       <tr class="triage-row-main ${rowModifier} ${isOpen ? 'is-expanded' : ''}" data-inc="${escapeHtml(incId)}" role="button" tabindex="0" aria-expanded="${isOpen}">
-        <td style="text-align: center; width: 44px;">
-          <button type="button" class="triage-chevron-btn ${isOpen ? 'is-expanded' : ''}" data-inc="${escapeHtml(incId)}" aria-label="${isOpen ? 'Plegar detalle' : 'Desplegar detalle'}">
-            <span aria-hidden="true">▶</span>
+        <td class="triage-cell-expand" style="text-align: center; width: 44px;">
+          <button type="button" class="triage-chevron-btn ${isOpen ? 'is-expanded' : ''}" data-inc="${escapeHtml(incId)}" aria-label="${isOpen ? 'Plegar detalle de incidencia' : 'Desplegar detalle de incidencia'}">
+            <svg class="triage-chevron-icon" width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M4.5 2.5L8 6l-3.5 3.5"/>
+            </svg>
           </button>
         </td>
         <td class="triage-cell-id">
           <span class="triage-id-link" data-inc="${escapeHtml(incId)}" title="Ver ficha técnica Epsilon IA">${escapeHtml(incId)}</span>
           <div class="triage-id-meta">
-            <span class="triage-status-pill ${statusPillClass}">${escapeHtml(inc.estatus || 'Pendiente')}</span>
-            <span style="font-family: var(--font-mono); font-size: 11px; color: var(--triage-text-subtle);" title="Tiempo transcurrido desde apertura">⏱️ ${formatAgingMinutes(minsElapsed)}</span>
+            <span class="triage-status-pill ${statusPillClass}">
+              <span class="triage-status-dot" aria-hidden="true"></span>
+              <span>${escapeHtml(inc.estatus || 'Pendiente')}</span>
+            </span>
+            <span class="triage-aging-pill ${agingAlertClass}" title="Tiempo transcurrido desde apertura: ${minsElapsed} minutos">
+              <svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="6" cy="6" r="4.5"/><path d="M6 3.5V6l1.8 1.2"/></svg>
+              <span>${formatAgingMinutes(minsElapsed)}</span>
+            </span>
           </div>
         </td>
         <td class="triage-cell-title">
@@ -2320,36 +2338,45 @@ Generado por Consola de Emergencias IT Orange - Motor de Triaje (Módulo 1)`;
           </div>
         </td>
         <td class="triage-cell-process">
-          <span class="triage-process-badge" style="font-size: 11.5px; padding: 4px 8px;">
-            <span aria-hidden="true">🏢</span> ${escapeHtml(proceso)}
+          <span class="triage-process-badge" title="Proceso Crítico de Negocio">
+            <svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="2" width="8" height="8" rx="1.5"/><path d="M4.5 4.5h3M4.5 7h3"/></svg>
+            <span>${escapeHtml(proceso)}</span>
           </span>
         </td>
         <td>
           <span class="triage-sev-badge ${remedyBadgeClass}">${escapeHtml(sevNominal)}</span>
         </td>
         <td>
-          <span class="triage-sev-badge ${itilBadgeClass}">${itilLabel}</span>
+          <span class="triage-sev-badge ${itilBadgeClass}">
+            ${isP1 ? '<span class="triage-pulse-dot" aria-hidden="true"></span>' : ''}
+            <span>${itilLabel}</span>
+          </span>
         </td>
         <td class="triage-cell-actions">
           <div class="triage-actions-cell-group">
             ${isDisc ? `
               <button type="button" class="triage-btn-table-reclass btn-copy-reclass" data-inc="${escapeHtml(incId)}" title="Copiar solicitud formal al portapapeles para pegar en el worklog de Remedy">
-                <span aria-hidden="true">⚡</span> Reclasificar
+                <svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6.5 1.5L2 7h4l-0.5 3.5L10 5H6l0.5-3.5z"/></svg>
+                <span>Reclasificar</span>
               </button>
             ` : ''}
             ${isP1 ? `
               <button type="button" class="triage-btn-table-orchestrator btn-open-orchestrator" data-inc="${escapeHtml(incId)}" title="Abrir Módulo 2: Orquestador Operativo, War Room Teams y Relojes de Escalado">
-                <span aria-hidden="true">🚨</span> Orquestador
+                <svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 1.5v1.5M6 9v1.5M1.5 6h1.5M9 6h1.5M2.8 2.8l1.1 1.1M8.1 8.1l1.1 1.1M2.8 9.2l1.1-1.1M8.1 3.9l1.1-1.1"/></svg>
+                <span>Orquestador</span>
               </button>
             ` : ''}
-            <button type="button" class="triage-btn-table-toggle btn-toggle-row" data-inc="${escapeHtml(incId)}">
-              <span>${isOpen ? 'Plegar ▴' : 'Detalle ▾'}</span>
+            <button type="button" class="triage-btn-table-toggle btn-toggle-row" data-inc="${escapeHtml(incId)}" aria-label="${isOpen ? 'Plegar detalle' : 'Ver detalle'}">
+              <span>${isOpen ? 'Plegar' : 'Detalle'}</span>
+              <svg class="triage-btn-toggle-icon" width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="transform: ${isOpen ? 'rotate(180deg)' : 'rotate(0deg)'}; transition: transform 200ms var(--ease-spring);">
+                <path d="M2.5 4.5L6 8l3.5-3.5"/>
+              </svg>
             </button>
           </div>
         </td>
       </tr>
 
-      <!-- Fila Plegable / Desplegable de Detalle Extendido -->
+      <!-- Fila Plegable / Desplegable de Detalle Extendido (Apple Inset Grouped) -->
       <tr class="triage-row-detail ${isOpen ? 'is-open' : ''}" id="detail-row-${escapeHtml(incId)}" data-inc="${escapeHtml(incId)}">
         <td colspan="7">
           <div class="triage-detail-wrapper">
@@ -2360,7 +2387,8 @@ Generado por Consola de Emergencias IT Orange - Motor de Triaje (Módulo 1)`;
                 <div class="triage-threshold-box">
                   <div class="triage-threshold-header">
                     <span class="triage-process-badge">
-                      <span aria-hidden="true">🏢</span> Proceso: ${escapeHtml(proceso)}
+                      <svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="2" width="8" height="8" rx="1.5"/><path d="M4.5 4.5h3M4.5 7h3"/></svg>
+                      <span>Proceso: ${escapeHtml(proceso)}</span>
                     </span>
                     ${metricChips.length > 0 ? `
                       <div class="triage-metrics-row">
@@ -2370,28 +2398,31 @@ Generado por Consola de Emergencias IT Orange - Motor de Triaje (Módulo 1)`;
                   </div>
 
                   <div class="triage-threshold-rule">
-                    <span style="color: var(--triage-orange); font-weight: 700;">Umbral Superado:</span> ${escapeHtml(criterio)}
+                    <span class="triage-threshold-rule-label">Umbral Superado:</span>
+                    <span class="triage-threshold-rule-value">${escapeHtml(criterio)}</span>
                   </div>
 
                   <div class="triage-impact-text">
                     <strong>Impacto Técnico y Operativo:</strong> ${escapeHtml(impactText)}
                   </div>
 
-                  <div class="triage-impact-text" style="font-size: 12px; color: var(--triage-text-muted);">
+                  <div class="triage-impact-text triage-urgency-text">
                     <strong>Urgencia Justificada:</strong> ${escapeHtml(urgencyText)}
                   </div>
                 </div>
 
                 <!-- Comparador Remedy vs ITIL y Motivo de Reclasificación -->
-                <div class="triage-reclass-box ${isDisc ? (delta === 1 ? 'is-delta1' : '') : 'is-nominal-ok'}" style="margin: 0;">
+                <div class="triage-reclass-box ${isDisc ? (delta === 1 ? 'is-delta1' : '') : 'is-nominal-ok'}">
                   <div class="triage-comparison-header">
                     ${isDisc ? `
-                      <span class="triage-reclass-flag ${delta === 1 ? 'delta-1' : ''}">
-                        <span aria-hidden="true">🚨</span> Subescalación N1 Detectada (+${delta} Nivel${delta > 1 ? 'es' : ''} - ${escapeHtml(inc.discrepancia_gravedad || 'Mayor')})
+                      <span class="triage-reclass-flag ${delta === 1 ? 'delta-1' : 'delta-2'}">
+                        <svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 1.5l5.5 10H1.5L7 1.5z"/><path d="M7 5.5v2.5M7 10.5h.01"/></svg>
+                        <span>Subescalación N1 Detectada (+${delta} Nivel${delta > 1 ? 'es' : ''} · ${escapeHtml(inc.discrepancia_gravedad || 'Mayor')})</span>
                       </span>
                     ` : `
                       <span class="triage-reclass-flag nominal-ok">
-                        <span aria-hidden="true">✅</span> Severidad Nominal Correcta (Alineada con Criterio ITIL Orange)
+                        <svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.5 7.5l3 3 6-6"/></svg>
+                        <span>Severidad Nominal Correcta (Alineada con Criterio ITIL Orange)</span>
                       </span>
                     `}
                   </div>
@@ -2401,7 +2432,9 @@ Generado por Consola de Emergencias IT Orange - Motor de Triaje (Módulo 1)`;
                       <span class="triage-sev-side-label">Remedy Inicial:</span>
                       <span class="triage-sev-badge ${remedyBadgeClass}">${escapeHtml(sevNominal)}</span>
                     </div>
-                    <span class="triage-sev-arrow" aria-hidden="true">➔</span>
+                    <svg class="triage-sev-arrow-icon" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      <path d="M3 8h10M9 4l4 4-4 4"/>
+                    </svg>
                     <div class="triage-sev-side">
                       <span class="triage-sev-side-label">Severidad Real ITIL:</span>
                       <span class="triage-sev-badge ${itilBadgeClass}">${isP1 ? 'SL1 / P1 (Emergencia Crítica)' : 'SL2 / P2 (Mayor)'}</span>
@@ -2410,7 +2443,7 @@ Generado por Consola de Emergencias IT Orange - Motor de Triaje (Módulo 1)`;
 
                   ${isDisc ? `
                     <div class="triage-reclass-reason">
-                      <strong>Motivo del Dictamen de Reclasificación:</strong> ${escapeHtml(inc.discrepancia_motivo || 'Ticket clasificado por debajo del umbral objetivo corporativo de emergencias.')}
+                      <strong>Dictamen Oficial de Reclasificación:</strong> ${escapeHtml(inc.discrepancia_motivo || 'Ticket clasificado por debajo del umbral objetivo corporativo de emergencias.')}
                     </div>
                   ` : ''}
                 </div>
@@ -2418,17 +2451,19 @@ Generado por Consola de Emergencias IT Orange - Motor de Triaje (Módulo 1)`;
 
               <!-- Columna 2: Diagnóstico Epsilon Resumen IA -->
               <div class="triage-detail-col">
-                <div class="triage-detail-box" style="height: 100%;">
-                  <div class="triage-detail-box-title" style="display: flex; justify-content: space-between; align-items: center;">
-                    <span style="display: flex; align-items: center; gap: 6px; color: var(--triage-text-main);">
-                      <span style="color: var(--triage-orange);">🤖</span> Diagnóstico Epsilon Resumen IA
+                <div class="triage-detail-box">
+                  <div class="triage-detail-box-title">
+                    <span class="triage-detail-title-label">
+                      <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="var(--triage-orange)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="10" height="10" rx="2"/><circle cx="6.5" cy="7.5" r="1" fill="currentColor"/><circle cx="9.5" cy="7.5" r="1" fill="currentColor"/><path d="M6 10.5h4"/></svg>
+                      <span>Diagnóstico Epsilon Resumen IA</span>
                     </span>
-                    <button type="button" class="btn-view-epsilon" data-inc="${escapeHtml(incId)}" title="Ver ficha técnica completa y línea de tiempo oficial en Epsilon IA" style="background: rgba(255, 121, 0, 0.08); border: 1px solid rgba(255, 121, 0, 0.3); border-radius: 4px; padding: 2px 8px; font-size: 11px; font-weight: 600; color: var(--triage-orange); cursor: pointer; display: inline-flex; align-items: center; gap: 4px;">
-                      <span aria-hidden="true">🔍</span> Ficha Completa
+                    <button type="button" class="btn-view-epsilon triage-btn-epsilon-link" data-inc="${escapeHtml(incId)}" title="Ver ficha técnica completa y línea de tiempo oficial en Epsilon IA">
+                      <svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="5" cy="5" r="3.5"/><path d="M7.5 7.5L10.5 10.5"/></svg>
+                      <span>Ficha Completa</span>
                     </button>
                   </div>
 
-                  <div class="triage-epsilon-grid" style="margin-top: 4px;">
+                  <div class="triage-epsilon-grid">
                     <div class="triage-epsilon-item">
                       <span class="triage-epsilon-label">Problema Detectado</span>
                       <span class="triage-epsilon-val">${escapeHtml(resumenIa.problema || 'En análisis técnico.')}</span>
@@ -2451,26 +2486,31 @@ Generado por Consola de Emergencias IT Orange - Motor de Triaje (Módulo 1)`;
 
             </div>
 
-            <!-- Barra Inferior de Acciones -->
+            <!-- Barra Inferior de Acciones y Metas SLA -->
             <div class="triage-detail-footer">
-              <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+              <div class="triage-detail-footer-actions">
                 ${isDisc ? `
                   <button type="button" class="triage-btn-action-reclass btn-copy-reclass" data-inc="${escapeHtml(incId)}" title="Copiar solicitud formal al portapapeles para pegar en el worklog de Remedy">
-                    <span aria-hidden="true">⚡</span> Copiar Solicitud Reclasificación Remedy
+                    <svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7.5 1.5L2 8h4.5l-0.5 4.5L12 6H7.5l0.5-4.5z"/></svg>
+                    <span>Copiar Solicitud Reclasificación Remedy</span>
                   </button>
                 ` : ''}
                 <button type="button" class="triage-btn-action-orchestrator btn-open-orchestrator" data-inc="${escapeHtml(incId)}" title="Abrir Módulo 2: Orquestador Operativo, War Room Teams, Monitor PaP y Relojes">
-                  <span aria-hidden="true">🚨</span> Abrir Orquestador Operativo &amp; War Room (Módulo 2)
+                  <svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="7" cy="7" r="5.5"/><path d="M7 4.5v3M7 9.5h.01"/></svg>
+                  <span>Abrir Orquestador Operativo &amp; War Room (Módulo 2)</span>
                 </button>
                 <button type="button" class="triage-btn triage-btn-sm btn-copy-report" data-inc="${escapeHtml(incId)}" title="Copiar Reporte Oficial de Emergencias en 4 Bloques">
-                  <span aria-hidden="true">📋</span> Copiar Reporte 4 Bloques
+                  <svg width="12" height="12" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="8" height="9" rx="1.5"/><path d="M5 3V2a1 1 0 011-1h2a1 1 0 011 1v1M5 6h4M5 8.5h4"/></svg>
+                  <span>Copiar Reporte 4 Bloques</span>
                 </button>
               </div>
 
-              <div style="font-family: var(--font-mono); font-size: 11px; color: var(--triage-text-subtle); display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">
-                <span>⏱️ SLA 1ª Notif: &lt;20m</span>
-                <span>🔄 Frecuencia: 60m</span>
-                <span>📞 Canal: Telefónico Obligatorio</span>
+              <div class="triage-detail-sla-meta">
+                <span class="triage-sla-meta-item">⏱️ SLA 1ª Notif: <strong>&lt;20m</strong></span>
+                <span class="triage-sla-dot" aria-hidden="true">•</span>
+                <span class="triage-sla-meta-item">🔄 Frecuencia: <strong>60m</strong></span>
+                <span class="triage-sla-dot" aria-hidden="true">•</span>
+                <span class="triage-sla-meta-item">📞 Canal: <strong>Telefónico Obligatorio</strong></span>
               </div>
             </div>
 
@@ -2491,6 +2531,7 @@ Generado por Consola de Emergencias IT Orange - Motor de Triaje (Módulo 1)`;
     const isCurrentlyOpen = Boolean(state.expandedRows[incId]);
     const nextState = (forceState !== undefined) ? forceState : !isCurrentlyOpen;
     state.expandedRows[incId] = nextState;
+    triggerHaptic('light');
 
     const mainRow = document.querySelector(`.triage-row-main[data-inc="${incId}"]`);
     const detailRow = document.querySelector(`.triage-row-detail[data-inc="${incId}"]`);
@@ -2506,14 +2547,21 @@ Generado por Consola de Emergencias IT Orange - Motor de Triaje (Módulo 1)`;
     }
     if (chevronBtn) {
       chevronBtn.classList.toggle('is-expanded', nextState);
-      chevronBtn.setAttribute('aria-label', nextState ? 'Plegar detalle' : 'Desplegar detalle');
+      chevronBtn.setAttribute('aria-label', nextState ? 'Plegar detalle de incidencia' : 'Desplegar detalle de incidencia');
     }
     if (toggleBtn) {
-      toggleBtn.innerHTML = `<span>${nextState ? 'Plegar ▴' : 'Detalle ▾'}</span>`;
+      toggleBtn.innerHTML = `
+        <span>${nextState ? 'Plegar' : 'Detalle'}</span>
+        <svg class="triage-btn-toggle-icon" width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="transform: ${nextState ? 'rotate(180deg)' : 'rotate(0deg)'}; transition: transform 200ms var(--ease-spring);">
+          <path d="M2.5 4.5L6 8l3.5-3.5"/>
+        </svg>
+      `;
+      toggleBtn.setAttribute('aria-label', nextState ? 'Plegar detalle' : 'Ver detalle');
     }
   }
 
   function toggleAllRows() {
+    triggerHaptic('light');
     state.allExpanded = !state.allExpanded;
     const filtered = getFilteredIncidents();
     filtered.forEach(inc => {
@@ -2521,7 +2569,6 @@ Generado por Consola de Emergencias IT Orange - Motor de Triaje (Módulo 1)`;
     });
     renderFeed();
   }
-
   function getRoleMeta(roleKey) {
     switch (roleKey) {
       case 'IM':
