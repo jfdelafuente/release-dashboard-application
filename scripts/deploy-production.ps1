@@ -403,6 +403,11 @@ if (-not $SkipBuild) {
             Write-Ok "Catálogo de notificaciones de alta prioridad empaquetado en el artefacto runtime"
         }
 
+        if (Test-Path "$ProjectRoot\data\output\ingestion_audit_summary.json") {
+            Copy-Item "$ProjectRoot\data\output\ingestion_audit_summary.json" -Destination $DataOutStaging
+            Write-Ok "Resumen de auditoría de ingesta empaquetado en el artefacto runtime"
+        }
+
         if (Test-Path "$ProjectRoot\data\agent_executive_messages.json") {
             $DataRootStaging = Join-Path $StagingDir "data"
             Copy-Item "$ProjectRoot\data\agent_executive_messages.json" -Destination $DataRootStaging
@@ -500,10 +505,16 @@ mkdir -p "`$EXECUTIVE_STORAGE" "`$LOGS_BASE"
 # Enlace de sinergia entre informes ejecutivos y release dashboard
 ln -sfn "`$EXECUTIVE_STORAGE" "`$STORAGE_BASE/reports/executive"
 
-# Enlace de conveniencia hacia log de auditoría de ingesta en el directorio de logs del sistema
-if [ -f "`$STORAGE_BASE/logs/ingestion_audit.log" ]; then
-    ln -sfn "`$STORAGE_BASE/logs/ingestion_audit.log" "`$LOGS_BASE/ingestion_audit.log" 2>/dev/null || true
+# Asegurar ficheros base de auditoría en almacenamiento persistente si no existían
+if [ ! -f "`$STORAGE_BASE/output/ingestion_audit_summary.json" ]; then
+    echo '{"_metadata":{"timestamp":null,"source_file":null,"elapsed_seconds":0,"kpis":{"total_tickets":0,"terminales_omitidas_count":0,"con_resumen_ia_count":0,"completas_count":0,"parciales_count":0,"incompletas_count":0,"discrepancias_count":0}},"incidents":[]}' > "`$STORAGE_BASE/output/ingestion_audit_summary.json"
 fi
+if [ ! -f "`$STORAGE_BASE/logs/ingestion_audit.log" ]; then
+    touch "`$STORAGE_BASE/logs/ingestion_audit.log"
+fi
+
+# Enlace de conveniencia hacia log de auditoría de ingesta en el directorio de logs del sistema
+ln -sfn "`$STORAGE_BASE/logs/ingestion_audit.log" "`$LOGS_BASE/ingestion_audit.log" 2>/dev/null || true
 
 if [ ! -f "`$TMP_TAR" ]; then
     echo "ERROR: No se encuentra `$TMP_TAR en el servidor."
@@ -564,6 +575,10 @@ fi
 if [ -f "`$NEW_RELEASE_DIR/data/output/high_priority_notifications.json" ]; then
     echo "--> [Remoto] Sincronizando notificaciones de alta prioridad a `$STORAGE_BASE/output/high_priority_notifications.json..."
     cp -f "`$NEW_RELEASE_DIR/data/output/high_priority_notifications.json" "`$STORAGE_BASE/output/high_priority_notifications.json" 2>/dev/null || true
+fi
+if [ -f "`$NEW_RELEASE_DIR/data/output/ingestion_audit_summary.json" ]; then
+    echo "--> [Remoto] Sincronizando resumen de auditoría a `$STORAGE_BASE/output/ingestion_audit_summary.json..."
+    cp -f "`$NEW_RELEASE_DIR/data/output/ingestion_audit_summary.json" "`$STORAGE_BASE/output/ingestion_audit_summary.json" 2>/dev/null || true
 fi
 if [ -f "`$NEW_RELEASE_DIR/data/agent_executive_messages.json" ]; then
     echo "--> [Remoto] Sincronizando mensajes ejecutivos a `$STORAGE_BASE/agent_executive_messages.json..."

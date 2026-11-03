@@ -3996,6 +3996,7 @@ Puente Teams: ${teamsUrl}
     try {
       let data = null;
       let usingFallback = false;
+      let isEmptyState = false;
 
       // 1. Intentar endpoint dinámico de la API
       try {
@@ -4007,14 +4008,21 @@ Puente Teams: ${teamsUrl}
         console.warn('API /api/logs/ingestion no alcanzable, recurriendo a almacenamiento estático:', netErr);
       }
 
-      // 2. Si la API devolvió 404 o falló (servidor estático o serve_app.py sin reiniciar), leer de /data/
+      // 2. Si la API devolvió 404 o falló (servidor estático Nginx o sin API activa), leer de /data/
       if (!data || !data.success) {
         const timestamp = Date.now();
-        const summaryResp = await fetch('/data/output/ingestion_audit_summary.json?t=' + timestamp);
-        if (!summaryResp.ok) {
-          throw new Error(`HTTP ${summaryResp.status} al cargar resumen de auditoría`);
+        let summaryJson = null;
+
+        try {
+          const summaryResp = await fetch('/data/output/ingestion_audit_summary.json?t=' + timestamp);
+          if (summaryResp.ok) {
+            summaryJson = await summaryResp.json();
+          } else if (summaryResp.status !== 404) {
+            console.warn(`HTTP ${summaryResp.status} al consultar ingestion_audit_summary.json`);
+          }
+        } catch (fetchErr) {
+          console.warn('Error accediendo a ingestion_audit_summary.json:', fetchErr);
         }
-        const summaryJson = await summaryResp.json();
 
         let logTailText = 'Sin trazas de log disponibles.';
         try {
@@ -4028,34 +4036,82 @@ Puente Teams: ${teamsUrl}
           console.warn('No se pudo cargar el log estático:', logErr);
         }
 
-        data = {
-          success: true,
-          has_summary: true,
-          has_log: true,
-          summary: summaryJson,
-          log_tail: logTailText
-        };
-        usingFallback = true;
+        if (summaryJson && summaryJson._metadata) {
+          data = {
+            success: true,
+            has_summary: true,
+            has_log: logTailText !== 'Sin trazas de log disponibles.',
+            summary: summaryJson,
+            log_tail: logTailText
+          };
+          usingFallback = true;
+        } else {
+          // Entorno inicial limpio o sin ingestas registradas aún (404 controlado)
+          data = {
+            success: true,
+            has_summary: false,
+            has_log: logTailText !== 'Sin trazas de log disponibles.',
+            summary: {
+              _metadata: {
+                timestamp: null,
+                source_file: 'Ninguno (sin cargas registradas)',
+                elapsed_seconds: 0,
+                kpis: {
+                  total_tickets: 0,
+                  completas_count: 0,
+                  parciales_count: 0,
+                  incompletas_count: 0,
+                  terminales_omitidas_count: 0,
+                  con_resumen_ia_count: 0,
+                  sin_resumen_ia_count: 0,
+                  con_mensajes_ejecutivos_count: 0,
+                  sin_mensajes_ejecutivos_count: 0,
+                  discrepancias_count: 0
+                }
+              },
+              incidents: []
+            },
+            log_tail: logTailText !== 'Sin trazas de log disponibles.'
+              ? logTailText
+              : 'Aún no se ha registrado ningún proceso de ingesta en este entorno.\nSube un fichero CSV desde la sección de carga para iniciar la trazabilidad y la auditoría.'
+          };
+          usingFallback = true;
+          isEmptyState = true;
+        }
       }
 
       ingestionAuditData = data;
       renderIngestionAudit(data);
 
+      const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+
       if (dom.auditActionStatus) {
-        if (usingFallback) {
+        if (isEmptyState) {
           dom.auditActionStatus.style.display = 'flex';
           dom.auditActionStatus.className = 'audit-action-status is-warning';
-          dom.auditActionStatus.innerHTML = 'ℹ️ Datos cargados desde archivo local. Si mantienes <code>serve_app.py</code> en ejecución en tu terminal, <strong>reinícialo (Ctrl+C y python serve_app.py)</strong> para activar la API en vivo y reintentos de IA.';
+          dom.auditActionStatus.innerHTML = 'ℹ️ Sin cargas previas registradas. Sube un fichero CSV o ejecuta una conversión para generar las primeras trazas de auditoría.';
+        } else if (usingFallback) {
+          dom.auditActionStatus.style.display = 'flex';
+          dom.auditActionStatus.className = 'audit-action-status is-warning';
+          if (isLocal) {
+            dom.auditActionStatus.innerHTML = 'ℹ️ Datos cargados desde archivo local. Si mantienes <code>serve_app.py</code> en ejecución en tu terminal, <strong>reinícialo (Ctrl+C y python serve_app.py)</strong> para activar la API en vivo y reintentos de IA.';
+          } else {
+            dom.auditActionStatus.innerHTML = 'ℹ️ Mostrando trazas de auditoría y métricas del almacenamiento persistente.';
+          }
         } else if (showLoading) {
           dom.auditActionStatus.style.display = 'none';
         }
       }
     } catch (err) {
       console.error('Error cargando auditoría de ingesta:', err);
+      const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
       if (dom.auditActionStatus) {
         dom.auditActionStatus.style.display = 'flex';
         dom.auditActionStatus.className = 'audit-action-status is-error';
-        dom.auditActionStatus.innerHTML = `⚠️ No se pudo obtener la auditoría: ${err.message}. Asegúrate de reiniciar <code>python serve_app.py</code> en tu terminal.`;
+        const helpHint = isLocal
+          ? 'Asegúrate de reiniciar <code>python serve_app.py</code> en tu terminal.'
+          : 'Comprueba la conexión con el servidor o sube un nuevo fichero CSV.';
+        dom.auditActionStatus.innerHTML = `⚠️ No se pudo obtener la auditoría: ${escapeHtml(err.message || 'Error desconocido')}. ${helpHint}`;
       }
     }
   }
@@ -4234,7 +4290,11 @@ Puente Teams: ${teamsUrl}
       });
 
       if (resp.status === 404) {
-        throw new Error('Ruta /api/ingestion/retry-ia no encontrada (HTTP 404). Por favor, reinicia el servidor en tu terminal (Ctrl+C y "python serve_app.py") para activar los endpoints de reintento.');
+        const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+        const hint = isLocal
+          ? 'Por favor, reinicia el servidor en tu terminal (Ctrl+C y "python serve_app.py") para activar los endpoints de reintento.'
+          : 'El endpoint de reintento dinámico requiere ejecución backend. Puedes relanzarlo en el servidor con "python converters/cli/retry_epsilon_ia.py" o mediante una nueva carga CSV.';
+        throw new Error(`Ruta /api/ingestion/retry-ia no encontrada (HTTP 404). ${hint}`);
       }
 
       const result = await resp.json();
