@@ -3,7 +3,7 @@
     "version": "1.0.0",
     "description": "Almacén oficial de redacciones ejecutivas generadas por el Agente incident-reporter",
     "source": "agents/it-incidents/incident-reporter.md",
-    "updated_at": "2026-10-30T13:24:11Z"
+    "updated_at": "2026-11-03T11:32:29Z"
   },
   "incidents": {
     "INC000004065609": {
@@ -822,6 +822,66 @@
         "origen": "incident-reporter",
         "conteo_palabras_completo": 59,
         "conteo_palabras_breve": 19
+      }
+    },
+    "INC000004173009": {
+      "apertura": {
+        "completo": "Se declara incidencia crítica P1 (INC000004173009) por error funcional en la plataforma de gestión de campañas CERES en la sede OEST Oviedo. La anomalía, registrada inicialmente como P3, escala operativamente a P1 por tiempo transcurrido sin mitigación disponible, comprometiendo la operativa de los puestos de atención en dicha sede. El grupo resolutor CEP CAU AGI en coordinación con Soporte N1 CSO investiga activamente el origen del fallo funcional para restablecer el servicio a la mayor brevedad. Próxima actualización en 30 minutos.",
+        "breve": "Apertura P1 (INC000004173009): Error funcional en CERES para la sede OEST Oviedo. Sin mitigación disponible. Grupo resolutor investigando el origen. Próxima actualización en 30 minutos.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 81,
+        "conteo_palabras_breve": 25
+      }
+    },
+    "INC000004173638": {
+      "apertura": {
+        "completo": "Se declara incidencia crítica P1 (INC000004173638) por error funcional en la herramienta de campañas CERES en la sede ISGF Murcia. La incidencia, clasificada originalmente como P3, escala a P1 por superar 120 minutos en curso sin procedimiento de contención ni workaround validado, afectando la actividad de dicha sede comercial. El equipo técnico CEP CAU AGI junto al grupo especializado NEG_CAMP_CERES investiga el origen técnico de la degradación funcional para asegurar la recuperación operativa. Próxima actualización en 30 minutos.",
+        "breve": "Apertura P1 (INC000004173638): Error funcional en CERES para la sede ISGF Murcia. Escalada a P1 por tiempo transcurrido sin mitigación. Equipos resolutores investigando. Próxima actualización 30 min.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 78,
+        "conteo_palabras_breve": 27
+      }
+    },
+    "INC000004173662": {
+      "apertura": {
+        "completo": "Se declara incidencia mayor P2 (INC000004173662) por degradación funcional en el aplicativo Ficha Cliente Orange en la sede Madison Valladolid. La incidencia provoca dificultades operativas en la atención y consulta de clientes en dicha plataforma comercial, sin afectación general al resto de canales de la compañía. El grupo técnico resolutor APL_MOV_SOE realiza el análisis de la anomalía funcional para determinar su causa y aplicar las medidas correctoras necesarias. Próxima actualización en 60 minutos.",
+        "breve": "Apertura P2 (INC000004173662): Degradación funcional en Ficha Cliente Orange para la sede Madison Valladolid. Afectación local sin caída global. Grupo APL_MOV_SOE investigando. Próxima actualización en 60 minutos.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 73,
+        "conteo_palabras_breve": 27
+      }
+    },
+    "INC000004174137": {
+      "apertura": {
+        "completo": "Se declara incidencia mayor P2 (INC000004174137) por degradación funcional en el acceso y operativa de Ficha Cliente Orange en la sede OEST Oviedo. La anomalía afecta la gestión de operaciones comerciales de los agentes asignados en dicha plataforma local, manteniéndose operativo el servicio global en el resto de centros de soporte. El equipo de Soporte N1 CSO coordina el análisis técnico de los síntomas reportados para identificar el origen y restablecer el rendimiento nominal. Próxima actualización en 60 minutos.",
+        "breve": "Apertura P2 (INC000004174137): Fallo funcional en Ficha Cliente Orange en la sede OEST Oviedo. Afectación restringida a dicha sede. Soporte N1 CSO diagnosticando. Próxima actualización en 60 minutos.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 79,
+        "conteo_palabras_breve": 28
+      }
+    },
+    "INC000004174203": {
+      "apertura": {
+        "completo": "Se declara incidencia mayor P2 (INC000004174203) por anomalía funcional en el sistema CRM para los operadores de la plataforma Teleperformance en Medellín. El incidente impacta puntualmente en la tramitación comercial de dicha sede de atención al cliente, sin que se registre caída global en la plataforma central de CRM. El equipo de soporte técnico SOP_KRATOS se encuentra investigando el origen de los errores funcionales para aplicar medidas de contención técnica. Próxima actualización en 60 minutos.",
+        "breve": "Apertura P2 (INC000004174203): Incidencia funcional en CRM afectando a Teleperformance Medellín. Sin impacto en el resto de canales. SOP_KRATOS investigando causas. Próxima actualización en 60 minutos.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 75,
+        "conteo_palabras_breve": 26
+      }
+    },
+    "INC000004174206": {
+      "apertura": {
+        "completo": "Se declara incidencia mayor P2 (INC000004174206) por degradación funcional en el aplicativo Ficha Cliente Orange en el centro Madison Valladolid. La incidencia genera incidencias operativas en la interacción con clientes desde dicha sede, mientras que el resto de plataformas de atención opera con normalidad. El equipo de Soporte N1 CSO está realizando el diagnóstico técnico de los errores detectados para aislar la causa raíz y restablecer la estabilidad del servicio comercial. Próxima actualización en 60 minutos.",
+        "breve": "Apertura P2 (INC000004174206): Error funcional en Ficha Cliente Orange para Madison Valladolid. Impacto limitado a sede local. Soporte N1 CSO en diagnóstico técnico. Próxima actualización en 60 minutos.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 76,
+        "conteo_palabras_breve": 28
       }
     }
   }
