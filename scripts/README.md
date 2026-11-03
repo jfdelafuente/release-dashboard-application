@@ -126,3 +126,36 @@ Script para el mantenimiento preventivo y depuración de ficheros de registro (`
 ```bash
 15 2 * * 6 bash /infocodes/project/release-dashboard-application/current/scripts/maintenance.sh rotate-logs >> /infocodes/var/log/release-dashboard/maintenance.log 2>&1
 ```
+
+---
+
+## 🗑️ clean_system_data.py (Limpieza y Reseteo de Datos para Nuevas Cargas)
+
+Script multiplataforma para dejar el sistema completamente limpio antes de subir nuevos ficheros CSV de incidencias o postmortems.
+
+### Características:
+- Elimina los CSVs antiguos en `data/input/*.csv`.
+- Elimina los datasets JSON procesados `data/output/*-massive.json` y `*-postmortem.json`.
+- Vacía las carpetas `data/archive/`, `data/errors/` y la caché local de IA corporativa `data/.epsilon_cache/`.
+- Elimina informes PPTX antiguos en `data/reports/`.
+- Trunca el fichero de trazas `data/logs/ingestion_audit.log`.
+- Reinicializa a vacío `data/agent_executive_messages.json`, `data/output/index.json`, `data/output/high_priority_notifications.json` y `data/output/ingestion_audit_summary.json`.
+- **Protección estricta:** Conserva intactos `data/scheduled_changes_pap.json` (CRQs Remedy), `data/output/agents_catalog.json` (catálogo de agentes) y ficheros de control `.gitkeep`/`.gitignore`.
+
+### Uso:
+```bash
+# Modo interactivo (solicita confirmación antes de borrar):
+python scripts/clean_system_data.py
+# O en Windows:
+.\clean_data.bat
+
+# Simulación previa (muestra qué borraría sin modificar nada):
+python scripts/clean_system_data.py --dry-run
+
+# Ejecución desatendida directa:
+python scripts/clean_system_data.py --yes
+
+# Conservar la caché de Epsilon (.epsilon_cache/):
+python scripts/clean_system_data.py --keep-cache
+```
+

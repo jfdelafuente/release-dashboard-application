@@ -1368,7 +1368,14 @@
 
                 const originalBtnText = uploadBtn.textContent;
                 uploadBtn.disabled = true;
-                uploadBtn.textContent = 'Subiendo y convirtiendo...';
+                uploadBtn.textContent = 'Subiendo y procesando...';
+
+                // Capturar marca temporal actual de alertas para detectar cuándo finaliza el segundo plano
+                let currentHpTimestamp = null;
+                fetch('/data/output/high_priority_notifications.json?t=' + Date.now())
+                    .then(r => r.ok ? r.json() : null)
+                    .then(d => { currentHpTimestamp = d?._metadata?.generated_at || null; })
+                    .catch(() => {});
 
                 const formData = new FormData();
                 formData.append('file', file);
@@ -1376,12 +1383,23 @@
 
                 fetch('/api/upload', { method: 'POST', body: formData })
                     .then(response => response.json().then(data => ({ ok: response.ok, data })))
-                    .then(({ ok, data }) => {
+                    .then(async ({ ok, data }) => {
                         if (!ok || !data.success) {
                             throw new Error(data.error || 'Error al subir el archivo');
                         }
-                        if (window.Toast) Toast.success('Incidencias masivas subidas y procesadas con éxito');
-                        return autoLoadLatestData();
+                        if (window.Toast) {
+                            Toast.success('Incidencias masivas cargadas. Visualización lista.');
+                        }
+                        await autoLoadLatestData();
+
+                        // Si hay tareas en segundo plano (evaluación de alertas ejecutivas e IA)
+                        const hasBgTasks = data.background_tasks && data.background_tasks.includes('incident_notifications_evaluation');
+                        if (hasBgTasks) {
+                            if (window.Toast) {
+                                Toast.info('⏳ Analizando alertas ejecutivas y matriz de criticidad en segundo plano...');
+                            }
+                            watchBackgroundEvaluation(currentHpTimestamp);
+                        }
                     })
                     .catch(error => {
                         if (window.Toast) Toast.error('Error: ' + error.message);
@@ -1391,6 +1409,36 @@
                         uploadBtn.disabled = false;
                         uploadBtn.textContent = originalBtnText;
                     });
+            }
+
+            function watchBackgroundEvaluation(initialTimestamp) {
+                let attempts = 0;
+                const maxAttempts = 30; // 30 intentos * 2.5s = 75 segundos
+                const pollInterval = setInterval(async () => {
+                    attempts++;
+                    if (attempts > maxAttempts) {
+                        clearInterval(pollInterval);
+                        return;
+                    }
+                    try {
+                        const res = await fetch('/data/output/high_priority_notifications.json?t=' + Date.now());
+                        if (res.ok) {
+                            const hpData = await res.json();
+                            const newGenAt = hpData?._metadata?.generated_at;
+                            if (newGenAt && newGenAt !== initialTimestamp) {
+                                clearInterval(pollInterval);
+                                if (window.IncidentNotifications && typeof window.IncidentNotifications.refresh === 'function') {
+                                    await window.IncidentNotifications.refresh();
+                                }
+                                if (window.Toast) {
+                                    Toast.success('🔔 Alertas de alta prioridad y análisis IA actualizados');
+                                }
+                            }
+                        }
+                    } catch (e) {
+                        // Silencioso
+                    }
+                }, 2500);
             }
         });
 

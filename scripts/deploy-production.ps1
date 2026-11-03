@@ -494,11 +494,16 @@ fi
 
 echo "--> [Remoto] Asegurando estructura en /infocodes/var/storage y directorios de release..."
 mkdir -p "`$REMOTE_DIR" "`$BACKUP_BASE" "`$RELEASES_DIR" "`$SHARED_DIR" "`$NGINX_CONF_D"
-mkdir -p "`$STORAGE_BASE/input" "`$STORAGE_BASE/output" "`$STORAGE_BASE/reports" "`$STORAGE_BASE/errors" "`$STORAGE_BASE/archive"
+mkdir -p "`$STORAGE_BASE/input" "`$STORAGE_BASE/output" "`$STORAGE_BASE/reports" "`$STORAGE_BASE/errors" "`$STORAGE_BASE/archive" "`$STORAGE_BASE/logs"
 mkdir -p "`$EXECUTIVE_STORAGE" "`$LOGS_BASE"
 
 # Enlace de sinergia entre informes ejecutivos y release dashboard
 ln -sfn "`$EXECUTIVE_STORAGE" "`$STORAGE_BASE/reports/executive"
+
+# Enlace de conveniencia hacia log de auditoría de ingesta en el directorio de logs del sistema
+if [ -f "`$STORAGE_BASE/logs/ingestion_audit.log" ]; then
+    ln -sfn "`$STORAGE_BASE/logs/ingestion_audit.log" "`$LOGS_BASE/ingestion_audit.log" 2>/dev/null || true
+fi
 
 if [ ! -f "`$TMP_TAR" ]; then
     echo "ERROR: No se encuentra `$TMP_TAR en el servidor."

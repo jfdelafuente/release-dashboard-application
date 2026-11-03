@@ -234,7 +234,42 @@
     btnDiscardLogDraft: document.getElementById('btn-discard-log-draft'),
     btnOrchLogClear: document.getElementById('btn-orch-log-clear'),
     tplDraftAlert: document.getElementById('tpl-draft-alert'),
-    btnDiscardTplDraft: document.getElementById('btn-discard-tpl-draft')
+    btnDiscardTplDraft: document.getElementById('btn-discard-tpl-draft'),
+
+    // Consola de Auditoría de Carga & Telemetría IA (Atajo Shift+I)
+    modalIngestionAudit: document.getElementById('modal-ingestion-audit'),
+    btnModalAuditClose: document.getElementById('btn-modal-audit-close'),
+    btnModalAuditCloseBottom: document.getElementById('btn-modal-audit-close-bottom'),
+    btnAuditForceAll: document.getElementById('btn-audit-force-all'),
+    btnAuditRetryMissing: document.getElementById('btn-audit-retry-missing'),
+    btnAuditRefresh: document.getElementById('btn-audit-refresh'),
+    auditMetaSource: document.getElementById('audit-meta-source'),
+    auditActionStatus: document.getElementById('audit-action-status'),
+    auditKpiTotal: document.getElementById('audit-kpi-total'),
+    auditKpiSubTotal: document.getElementById('audit-kpi-sub-total'),
+    auditKpiIa: document.getElementById('audit-kpi-ia'),
+    auditKpiSubIa: document.getElementById('audit-kpi-sub-ia'),
+    auditKpiCompletas: document.getElementById('audit-kpi-completas'),
+    auditKpiParciales: document.getElementById('audit-kpi-parciales'),
+    auditKpiIncompletas: document.getElementById('audit-kpi-incompletas'),
+    auditKpiDiscrepancias: document.getElementById('audit-kpi-discrepancias'),
+    auditTabTickets: document.getElementById('audit-tab-tickets'),
+    auditTabLogs: document.getElementById('audit-tab-logs'),
+    auditTabTicketsCount: document.getElementById('audit-tab-tickets-count'),
+    auditViewTickets: document.getElementById('audit-view-tickets'),
+    auditViewLogs: document.getElementById('audit-view-logs'),
+    auditFilterSearch: document.getElementById('audit-filter-search'),
+    auditFilterState: document.getElementById('audit-filter-state'),
+    auditTicketsTbody: document.getElementById('audit-tickets-tbody'),
+    auditLogTerminal: document.getElementById('audit-log-terminal'),
+    btnAuditCopyLog: document.getElementById('btn-audit-copy-log'),
+    btnAuditScrollLog: document.getElementById('btn-audit-scroll-log'),
+
+    // Footer Colapsable / Desplegable (Gobernanza y Consola)
+    triageFooter: document.getElementById('triage-footer'),
+    triageFooterHeader: document.getElementById('triage-footer-header'),
+    footerBtnToggle: document.getElementById('footer-btn-toggle'),
+    footerExpandable: document.getElementById('triage-footer-expandable')
   };
 
   // --- Utilidades ---
@@ -432,7 +467,7 @@
 
     // Contadores de pestañas de filtrado
     const totalCount = state.incidents.length;
-    const correctCount = totalCount - discCount;
+    const correctCount = state.incidents.filter(i => !i.es_discrepancia && (!i.discrepancia_delta || i.discrepancia_delta === 0)).length;
     if (dom.countAll) dom.countAll.textContent = totalCount;
     if (dom.countReclass) dom.countReclass.textContent = discCount;
     if (dom.countCorrect) dom.countCorrect.textContent = correctCount;
@@ -1304,6 +1339,14 @@ Proceder con la ejecución inmediata del procedimiento de Rollback. Confirmar in
       // Cierre / Resolución
       completo = `[RESOLUCIÓN Y CIERRE SL1] Restablecido al 100% el servicio en ${sistemas} tras ${totalDurationText} de afectación en ${proceso}. Causa técnica identificada y corregida: ${causaShort}. Pruebas de validación del servicio satisfactorias con canales de atención y monitorización estable con IM-CSO. Se convoca formalmente la sesión de Post-Incident Review (PIR) blameless dentro de las próximas 48 horas.`;
       breve = `[SL1 RESUELTO] Normalizado el servicio en ${sistemas} (${proceso}) tras ${totalDurationText}. Validación satisfactoria. Post-Mortem (PIR) programado en 48h con IM-CSO.`;
+    }
+
+    // Si la incidencia ya cuenta con mensaje oficial pre-redactado por el agente incident-reporter, priorizarlo
+    const phaseKey = phase === 'inicial' ? 'apertura' : (phase === 'actualizacion' ? 'seguimiento' : 'cierre');
+    const msgPre = inc.mensajes_ejecutivos && inc.mensajes_ejecutivos[phaseKey];
+    if (msgPre && msgPre.completo && msgPre.estado !== 'pendiente') {
+      completo = msgPre.completo;
+      if (msgPre.breve) breve = msgPre.breve;
     }
 
     return {
@@ -2547,7 +2590,7 @@ Generado por Consola de Emergencias IT Orange - Motor de Triaje (Módulo 1)`;
           <thead>
             <tr>
               <th style="width: 44px; text-align: center;" aria-label="Desplegable"></th>
-              <th style="width: 140px;">Incidencia</th>
+              <th style="width: 175px;">Incidencia</th>
               <th style="min-width: 280px;">Título y Sistemas</th>
               <th style="width: 170px;">Proceso Crítico</th>
               <th style="width: 110px;">Remedy Ini</th>
@@ -2613,12 +2656,46 @@ Generado por Consola de Emergencias IT Orange - Motor de Triaje (Módulo 1)`;
     if (sevNominal.toLowerCase().includes('crítica') || sevNominal.toLowerCase().includes('critica')) remedyBadgeClass = 'badge-remedy-critica';
 
     // Severidad ITIL sugerida
-    const itilBadgeClass = isP1 ? 'badge-itil-sl1' : 'badge-itil-sl2';
-    const itilLabel = isP1 ? 'SL1 / P1' : 'SL2 / P2';
+    let itilBadgeClass = 'badge-itil-sl2';
+    let itilLabel = 'SL2 / P2';
+    let itilFullLabel = 'SL2 / P2 (Mayor)';
+    if (inc.prioridad_sugerida === 'P1') {
+      itilBadgeClass = 'badge-itil-sl1';
+      itilLabel = 'SL1 / P1';
+      itilFullLabel = 'SL1 / P1 (Emergencia Crítica)';
+    } else if (inc.prioridad_sugerida === 'P2') {
+      itilBadgeClass = 'badge-itil-sl2';
+      itilLabel = 'SL2 / P2';
+      itilFullLabel = 'SL2 / P2 (Mayor)';
+    } else if (inc.prioridad_sugerida === 'P3') {
+      itilBadgeClass = 'badge-itil-sl3';
+      itilLabel = 'SL3 / P3';
+      itilFullLabel = 'SL3 / P3 (Media)';
+    } else if (inc.prioridad_sugerida === 'P4') {
+      itilBadgeClass = 'badge-itil-sl4';
+      itilLabel = 'SL4 / P4';
+      itilFullLabel = 'SL4 / P4 (Baja)';
+    }
 
     // Epsilon IA resumen
     const resumenIa = inc.resumen_ia || {};
     const epsilonBloqueos = Array.isArray(resumenIa.bloqueos) ? resumenIa.bloqueos.join('; ') : (resumenIa.bloqueos || '');
+    const hasResumenIa = Boolean(
+      resumenIa && (
+        resumenIa.problema ||
+        resumenIa.impacto ||
+        resumenIa.solucion ||
+        resumenIa.causa_raiz
+      )
+    );
+
+    // Mensajes Ejecutivos completados (incident-reporter)
+    const msgsEjecutivos = inc.mensajes_ejecutivos || {};
+    const hasMensajesEjecutivos = Boolean(
+      (msgsEjecutivos.apertura && (msgsEjecutivos.apertura.completo || msgsEjecutivos.apertura.generado_por_agente) && msgsEjecutivos.apertura.estado !== 'pendiente') ||
+      (msgsEjecutivos.seguimiento && (msgsEjecutivos.seguimiento.completo || msgsEjecutivos.seguimiento.generado_por_agente) && msgsEjecutivos.seguimiento.estado !== 'pendiente') ||
+      (msgsEjecutivos.cierre && (msgsEjecutivos.cierre.completo || msgsEjecutivos.cierre.generado_por_agente) && msgsEjecutivos.cierre.estado !== 'pendiente')
+    );
 
     return `
       <!-- Fila Resumen Principal (Modo Tabular) -->
@@ -2629,7 +2706,23 @@ Generado por Consola de Emergencias IT Orange - Motor de Triaje (Módulo 1)`;
           </button>
         </td>
         <td class="triage-cell-id">
-          <span class="triage-id-link" data-inc="${escapeHtml(incId)}" title="Ver ficha técnica Epsilon IA">${escapeHtml(incId)}</span>
+          <div class="triage-id-row">
+            <span class="triage-id-link" data-inc="${escapeHtml(incId)}" title="Ver ficha técnica Epsilon IA">${escapeHtml(incId)}</span>
+            ${(hasResumenIa || hasMensajesEjecutivos) ? `
+              <div class="triage-micro-marks" role="group" aria-label="Información completada">
+                ${hasResumenIa ? `
+                  <button type="button" class="triage-micro-mark is-ia btn-view-epsilon" data-inc="${escapeHtml(incId)}" title="Resumen IA completado (Epsilon Telemetría) — Clic para abrir ficha técnica" aria-label="Resumen IA disponible">
+                    <span class="mark-icon" aria-hidden="true">✨</span><span>IA</span>
+                  </button>
+                ` : ''}
+                ${hasMensajesEjecutivos ? `
+                  <button type="button" class="triage-micro-mark is-comms btn-open-exec-comm" data-inc="${escapeHtml(incId)}" title="Mensaje Ejecutivo oficial completado (incident-reporter) — Clic para ver comunicación" aria-label="Mensaje Ejecutivo disponible">
+                    <span class="mark-icon" aria-hidden="true">📢</span><span>Comms</span>
+                  </button>
+                ` : ''}
+              </div>
+            ` : ''}
+          </div>
           <div class="triage-id-meta">
             <span class="triage-status-pill ${statusPillClass}">${escapeHtml(inc.estatus || 'Pendiente')}</span>
             <span style="font-family: var(--font-mono); font-size: 11px; color: var(--triage-text-subtle);" title="Tiempo transcurrido desde apertura">⏱️ ${formatAgingMinutes(minsElapsed)}</span>
@@ -2726,7 +2819,7 @@ Generado por Consola de Emergencias IT Orange - Motor de Triaje (Módulo 1)`;
                     <span class="triage-sev-arrow" aria-hidden="true">➔</span>
                     <div class="triage-sev-side">
                       <span class="triage-sev-side-label">Severidad Real ITIL:</span>
-                      <span class="triage-sev-badge ${itilBadgeClass}">${isP1 ? 'SL1 / P1 (Emergencia Crítica)' : 'SL2 / P2 (Mayor)'}</span>
+                      <span class="triage-sev-badge ${itilBadgeClass}">${itilFullLabel}</span>
                     </div>
                   </div>
 
@@ -2767,6 +2860,18 @@ Generado por Consola de Emergencias IT Orange - Motor de Triaje (Módulo 1)`;
                       <span class="triage-epsilon-label">Siguiente Acción / Bloqueos</span>
                       <span class="triage-epsilon-val">${escapeHtml(resumenIa.siguiente_accion || epsilonBloqueos || 'Coordinación con soporte resolutor.')}</span>
                     </div>
+                  </div>
+
+                  <div class="triage-detail-enrichment-bar" style="margin-top: 10px; padding-top: 8px; border-top: 1px dashed var(--triage-border-light); display: flex; align-items: center; justify-content: space-between; font-size: 11.5px;">
+                    <span style="color: var(--triage-text-muted);">
+                      <strong>Comunicación Oficial Dirección:</strong>
+                      ${hasMensajesEjecutivos ? `<span style="color: var(--triage-green-text); font-weight: 600;">✅ Redactada (incident-reporter)</span>` : `<span style="color: var(--triage-text-subtle); font-style: italic;">⏳ Pendiente de redacción oficial</span>`}
+                    </span>
+                    ${hasMensajesEjecutivos ? `
+                      <button type="button" class="btn-open-exec-comm" data-inc="${escapeHtml(incId)}" style="background: none; border: none; color: var(--triage-blue-text); font-weight: 600; cursor: pointer; text-decoration: underline; padding: 0;">
+                        Ver Mensaje Oficial ↗
+                      </button>
+                    ` : ''}
                   </div>
                 </div>
               </div>
@@ -2926,7 +3031,18 @@ Generado por Consola de Emergencias IT Orange - Motor de Triaje (Módulo 1)`;
       });
     });
 
-    // 6. Chevron y Botón Toggle fila
+        // 5b. Botón Ver Mensaje Ejecutivo Oficial (abre modal de comunicaciones de incident-reporter)
+    document.querySelectorAll('.btn-open-exec-comm').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const incId = btn.getAttribute('data-inc');
+        if (incId) {
+          openExecutiveCommModal(incId, 'inicial');
+        }
+      });
+    });
+
+// 6. Chevron y Botón Toggle fila
     document.querySelectorAll('.triage-chevron-btn, .btn-toggle-row').forEach(btn => {
       btn.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -3185,8 +3301,9 @@ Generado por Consola de Emergencias IT Orange - Motor de Triaje (Módulo 1)`;
       });
     }
 
-    // Escape universal para cerrar cualquier popup o modal abierto
+    // Escape universal y Atajos de Consola Globales
     window.addEventListener('keydown', (e) => {
+      // 1. Escape: cerrar cualquier modal o pop-up abierto
       if (e.key === 'Escape') {
         const openPopups = document.querySelectorAll('.orch-clock-info-wrap.is-open');
         if (openPopups.length > 0) {
@@ -3211,6 +3328,52 @@ Generado por Consola de Emergencias IT Orange - Motor de Triaje (Módulo 1)`;
         if (dom.modalShiftHandover && dom.modalShiftHandover.classList.contains('open')) {
           closeShiftHandoverModal();
         }
+        if (dom.modalIngestionAudit && dom.modalIngestionAudit.classList.contains('open')) {
+          closeIngestionAuditModal();
+        }
+        return;
+      }
+
+      // No interceptar atajos si el foco está en un campo de edición/texto
+      const activeEl = document.activeElement;
+      const tag = activeEl ? activeEl.tagName.toLowerCase() : '';
+      if (tag === 'input' || tag === 'textarea' || (activeEl && activeEl.isContentEditable)) {
+        return;
+      }
+
+      // Atajo 'F' / 'f': Plegar / Desplegar Footer
+      if ((e.key === 'f' || e.key === 'F') && !e.ctrlKey && !e.metaKey && !e.altKey && !e.shiftKey) {
+        e.preventDefault();
+        toggleFooter();
+        return;
+      }
+
+      // Atajo 'Shift+H': Informe Oficial de Traspaso de Guardia
+      if (e.shiftKey && (e.key === 'H' || e.key === 'h') && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        e.preventDefault();
+        openShiftHandoverModal();
+        return;
+      }
+
+      // Atajo 'Shift+M': Buscador de Matrices de Contacto (GRIAL / MasMóvil)
+      if (e.shiftKey && (e.key === 'M' || e.key === 'm') && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        e.preventDefault();
+        openCommsCenterModal(null, 'tab-contacts');
+        return;
+      }
+
+      // Atajo 'Shift+U': Matriz de Umbrales Oficiales de Emergencia IT
+      if (e.shiftKey && (e.key === 'U' || e.key === 'u') && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        e.preventDefault();
+        if (dom.modalBackdrop) dom.modalBackdrop.classList.add('open');
+        return;
+      }
+
+      // Atajo 'Shift+I' o 'Shift+C': Consola de Auditoría de Carga & Telemetría IA
+      if (e.shiftKey && (e.key === 'I' || e.key === 'i' || e.key === 'C' || e.key === 'c') && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        e.preventDefault();
+        openIngestionAuditModal();
+        return;
       }
     });
 
@@ -3666,7 +3829,88 @@ Puente Teams: ${teamsUrl}
       });
     }
 
-    // --- Listeners Footer Corporativo ---
+    // --- Funciones y Listeners Footer Corporativo Desplegable ---
+    function setFooterExpanded(expanded, persist = true) {
+      const footer = dom.triageFooter || document.getElementById('triage-footer');
+      const header = dom.triageFooterHeader || document.getElementById('triage-footer-header');
+      const toggleBtn = dom.footerBtnToggle || document.getElementById('footer-btn-toggle');
+      const expandable = dom.footerExpandable || document.getElementById('triage-footer-expandable');
+
+      if (!footer) return;
+
+      if (expanded) {
+        footer.classList.add('is-expanded');
+      } else {
+        footer.classList.remove('is-expanded');
+      }
+
+      if (header) {
+        header.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+      }
+      if (toggleBtn) {
+        toggleBtn.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+        const textSpan = toggleBtn.querySelector('.footer-toggle-text');
+        if (textSpan) {
+          textSpan.textContent = expanded ? 'Plegar' : 'Desplegar';
+        }
+      }
+      if (expandable) {
+        expandable.setAttribute('aria-hidden', expanded ? 'false' : 'true');
+      }
+
+      if (persist) {
+        try {
+          localStorage.setItem('triage_footer_expanded', expanded ? 'true' : 'false');
+        } catch (_) {}
+      }
+    }
+
+    function toggleFooter() {
+      const footer = dom.triageFooter || document.getElementById('triage-footer');
+      if (!footer) return;
+      const isExpanded = footer.classList.contains('is-expanded');
+      setFooterExpanded(!isExpanded, true);
+    }
+
+    function initFooterCollapse() {
+      // Estado inicial persistido (por defecto colapsado para maximizar el área de trabajo)
+      let isExpanded = false;
+      try {
+        const saved = localStorage.getItem('triage_footer_expanded');
+        isExpanded = (saved === 'true');
+      } catch (_) {}
+      setFooterExpanded(isExpanded, false);
+
+      // Clic directo en el botón de conmutación
+      const toggleBtn = dom.footerBtnToggle || document.getElementById('footer-btn-toggle');
+      if (toggleBtn) {
+        toggleBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          toggleFooter();
+        });
+      }
+
+      // Clic o pulsación (Enter/Espacio) en la cabecera del footer
+      const header = dom.triageFooterHeader || document.getElementById('triage-footer-header');
+      if (header) {
+        header.addEventListener('click', (e) => {
+          if (e.target.closest('#footer-btn-scroll-top, #footer-btn-toggle, a')) return;
+          toggleFooter();
+        });
+
+        header.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            if (e.target.closest('#footer-btn-scroll-top, #footer-btn-toggle, a')) return;
+            e.preventDefault();
+            toggleFooter();
+          }
+        });
+      }
+    }
+
+    // Inicializar colapso/despliegue del footer
+    initFooterCollapse();
+
     const btnFooterScrollTop = document.getElementById('footer-btn-scroll-top');
     if (btnFooterScrollTop) {
       btnFooterScrollTop.addEventListener('click', () => {
@@ -3677,7 +3921,7 @@ Puente Teams: ${teamsUrl}
     const btnFooterMatrices = document.getElementById('footer-btn-matrices');
     if (btnFooterMatrices) {
       btnFooterMatrices.addEventListener('click', () => {
-        openCommsCenterModal(null, 'tab-matrices');
+        openCommsCenterModal(null, 'tab-contacts');
       });
     }
 
@@ -3722,9 +3966,387 @@ Puente Teams: ${teamsUrl}
 
   // --- Inicialización ---
 
+
+  // ==========================================================================
+  // Módulo de Auditoría de Carga & Telemetría IA (Atajo Shift+I / Shift+C)
+  // ==========================================================================
+  let ingestionAuditData = null;
+  let activeAuditTab = 'tickets';
+
+  async function openIngestionAuditModal() {
+    if (!dom.modalIngestionAudit) return;
+    dom.modalIngestionAudit.classList.add('open');
+    dom.modalIngestionAudit.setAttribute('aria-hidden', 'false');
+    await loadIngestionAuditData();
+  }
+
+  function closeIngestionAuditModal() {
+    if (!dom.modalIngestionAudit) return;
+    dom.modalIngestionAudit.classList.remove('open');
+    dom.modalIngestionAudit.setAttribute('aria-hidden', 'true');
+  }
+
+  async function loadIngestionAuditData(showLoading = true) {
+    if (showLoading && dom.auditActionStatus) {
+      dom.auditActionStatus.style.display = 'flex';
+      dom.auditActionStatus.className = 'audit-action-status is-loading';
+      dom.auditActionStatus.innerHTML = '<span class="audit-spinner">⏳</span> Cargando estado de la carga y trazas de auditoría...';
+    }
+
+    try {
+      let data = null;
+      let usingFallback = false;
+
+      // 1. Intentar endpoint dinámico de la API
+      try {
+        const resp = await fetch('/api/logs/ingestion');
+        if (resp.ok) {
+          data = await resp.json();
+        }
+      } catch (netErr) {
+        console.warn('API /api/logs/ingestion no alcanzable, recurriendo a almacenamiento estático:', netErr);
+      }
+
+      // 2. Si la API devolvió 404 o falló (servidor estático o serve_app.py sin reiniciar), leer de /data/
+      if (!data || !data.success) {
+        const timestamp = Date.now();
+        const summaryResp = await fetch('/data/output/ingestion_audit_summary.json?t=' + timestamp);
+        if (!summaryResp.ok) {
+          throw new Error(`HTTP ${summaryResp.status} al cargar resumen de auditoría`);
+        }
+        const summaryJson = await summaryResp.json();
+
+        let logTailText = 'Sin trazas de log disponibles.';
+        try {
+          const logResp = await fetch('/data/logs/ingestion_audit.log?t=' + timestamp);
+          if (logResp.ok) {
+            const rawLog = await logResp.text();
+            const lines = rawLog.split('\n');
+            logTailText = lines.slice(-200).join('\n');
+          }
+        } catch (logErr) {
+          console.warn('No se pudo cargar el log estático:', logErr);
+        }
+
+        data = {
+          success: true,
+          has_summary: true,
+          has_log: true,
+          summary: summaryJson,
+          log_tail: logTailText
+        };
+        usingFallback = true;
+      }
+
+      ingestionAuditData = data;
+      renderIngestionAudit(data);
+
+      if (dom.auditActionStatus) {
+        if (usingFallback) {
+          dom.auditActionStatus.style.display = 'flex';
+          dom.auditActionStatus.className = 'audit-action-status is-warning';
+          dom.auditActionStatus.innerHTML = 'ℹ️ Datos cargados desde archivo local. Si mantienes <code>serve_app.py</code> en ejecución en tu terminal, <strong>reinícialo (Ctrl+C y python serve_app.py)</strong> para activar la API en vivo y reintentos de IA.';
+        } else if (showLoading) {
+          dom.auditActionStatus.style.display = 'none';
+        }
+      }
+    } catch (err) {
+      console.error('Error cargando auditoría de ingesta:', err);
+      if (dom.auditActionStatus) {
+        dom.auditActionStatus.style.display = 'flex';
+        dom.auditActionStatus.className = 'audit-action-status is-error';
+        dom.auditActionStatus.innerHTML = `⚠️ No se pudo obtener la auditoría: ${err.message}. Asegúrate de reiniciar <code>python serve_app.py</code> en tu terminal.`;
+      }
+    }
+  }
+
+  function renderIngestionAudit(data) {
+    if (!data) return;
+    const summary = data.summary || {};
+    const meta = summary._metadata || {};
+    const kpis = meta.kpis || {};
+    const incidents = summary.incidents || [];
+
+    if (dom.auditMetaSource) {
+      const src = meta.source_file || 'Fichero masivo';
+      const elapsed = meta.elapsed_seconds ? `(${meta.elapsed_seconds}s)` : '';
+      dom.auditMetaSource.textContent = `📁 ${src} ${elapsed}`;
+    }
+
+    const total = kpis.total_tickets || incidents.length || 0;
+    const terminal = kpis.terminales_omitidas_count || 0;
+    const activas = total - terminal;
+    const conIa = kpis.con_resumen_ia_count || 0;
+    const completas = kpis.completas_count || 0;
+    const parciales = kpis.parciales_count || 0;
+    const incompletas = kpis.incompletas_count || 0;
+    const disc = kpis.discrepancias_count || 0;
+
+    if (dom.auditKpiTotal) dom.auditKpiTotal.textContent = total;
+    if (dom.auditKpiSubTotal) dom.auditKpiSubTotal.textContent = `${activas} activas en triaje · ${terminal} terminales descartadas`;
+
+    const iaPercent = activas > 0 ? Math.round((conIa / activas) * 100) : 0;
+    if (dom.auditKpiIa) dom.auditKpiIa.textContent = `${conIa} / ${activas}`;
+    if (dom.auditKpiSubIa) dom.auditKpiSubIa.textContent = `${iaPercent}% Cobertura Activas`;
+
+    if (dom.auditKpiCompletas) dom.auditKpiCompletas.textContent = completas;
+    if (dom.auditKpiParciales) dom.auditKpiParciales.textContent = parciales;
+    if (dom.auditKpiIncompletas) dom.auditKpiIncompletas.textContent = incompletas;
+    if (dom.auditKpiDiscrepancias) dom.auditKpiDiscrepancias.textContent = disc;
+
+    filterAndRenderAuditTickets();
+
+    if (dom.auditLogTerminal) {
+      const logs = data.log_tail || 'Sin trazas disponibles en ingestion_audit.log';
+      dom.auditLogTerminal.textContent = logs;
+      dom.auditLogTerminal.scrollTop = dom.auditLogTerminal.scrollHeight;
+    }
+  }
+
+  function filterAndRenderAuditTickets() {
+    if (!ingestionAuditData || !dom.auditTicketsTbody) return;
+    const summary = ingestionAuditData.summary || {};
+    const allIncidents = summary.incidents || [];
+
+    const filterState = dom.auditFilterState ? dom.auditFilterState.value : 'active';
+    const searchQuery = dom.auditFilterSearch ? dom.auditFilterSearch.value.trim().toLowerCase() : '';
+
+    let filtered = allIncidents.filter(inc => {
+      if (filterState === 'active' && inc.is_terminal) return false;
+      if (filterState === 'COMPLETA' && inc.estado_informacion !== 'COMPLETA') return false;
+      if (filterState === 'PARCIAL' && inc.estado_informacion !== 'PARCIAL') return false;
+      if (filterState === 'INCOMPLETA' && inc.estado_informacion !== 'INCOMPLETA') return false;
+      if (filterState === 'NO_APLICA' && !inc.is_terminal) return false;
+
+      if (searchQuery) {
+        const textToSearch = [
+          inc.id || '',
+          inc.titulo || '',
+          inc.sistemas || '',
+          inc.proceso_critico || '',
+          inc.causa_global || '',
+          (inc.resumen_ia && inc.resumen_ia.causa_falta) || '',
+          (inc.mensajes_ejecutivos && inc.mensajes_ejecutivos.causa_falta) || ''
+        ].join(' ').toLowerCase();
+        if (!textToSearch.includes(searchQuery)) return false;
+      }
+      return true;
+    });
+
+    if (dom.auditTabTicketsCount) {
+      dom.auditTabTicketsCount.textContent = filtered.length;
+    }
+
+    if (filtered.length === 0) {
+      dom.auditTicketsTbody.innerHTML = `
+        <tr>
+          <td colspan="9" style="text-align: center; padding: 24px; color: var(--triage-text-muted);">
+            No se encontraron incidencias con los filtros aplicados.
+          </td>
+        </tr>
+      `;
+      return;
+    }
+
+    const rowsHtml = filtered.map(inc => {
+      const isTerminal = inc.is_terminal;
+      const estadoInfo = inc.estado_informacion || (isTerminal ? 'NO_APLICA' : 'INCOMPLETA');
+      
+      let badgeClass = 'audit-badge-terminal';
+      if (estadoInfo === 'COMPLETA') badgeClass = 'audit-badge-completa';
+      else if (estadoInfo === 'PARCIAL') badgeClass = 'audit-badge-parcial';
+      else if (estadoInfo === 'INCOMPLETA') badgeClass = 'audit-badge-incompleta';
+
+      const hasIa = inc.resumen_ia && inc.resumen_ia.disponible;
+      const iaOrigin = hasIa ? (inc.resumen_ia.origen || 'Epsilon') : 'No disponible';
+      const iaBadgeClass = hasIa ? 'audit-badge-ia-ok' : 'audit-badge-ia-fail';
+
+      const hasComms = inc.mensajes_ejecutivos && inc.mensajes_ejecutivos.disponible;
+      const commsFases = hasComms ? (inc.mensajes_ejecutivos.fases_aprobadas || []).join(', ') : 'Pendiente';
+
+      const discMotivo = inc.es_discrepancia ? `⚠️ ${inc.prioridad_nominal} ➔ ${inc.prioridad_sugerida}` : (inc.prioridad_sugerida || inc.prioridad_nominal || '-');
+
+      const causaFalta = inc.causa_global || (isTerminal ? `Omitido por estado final (${inc.estatus})` : 'Información completa');
+
+      const retryBtn = (!isTerminal) ? `
+        <button class="btn-ticket-retry-ia" data-inc-id="${escapeHtml(inc.id)}" title="Forzar consulta de Resumen IA en Epsilon">
+          ⚡ IA
+        </button>
+      ` : `<span style="color: #94a3b8; font-size: 11px;">-</span>`;
+
+      return `
+        <tr>
+          <td><strong style="color: #0284C7; font-family: var(--font-mono);">${escapeHtml(inc.id)}</strong></td>
+          <td title="${escapeHtml(inc.titulo || '')}">
+            <div style="max-width: 280px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600;">
+              ${escapeHtml(inc.titulo || 'Sin descripción')}
+            </div>
+            <div style="font-size: 10.5px; color: #64748B;">${escapeHtml(inc.sistemas || inc.proceso_critico || 'General')}</div>
+          </td>
+          <td><span style="font-size: 11.5px;">${escapeHtml(inc.estatus || 'Asignado')}</span></td>
+          <td><span style="font-size: 11px; font-weight: 700; ${inc.es_discrepancia ? 'color: #7C3AED;' : ''}">${escapeHtml(discMotivo)}</span></td>
+          <td><span class="audit-badge ${badgeClass}">${escapeHtml(estadoInfo)}</span></td>
+          <td>
+            <span class="audit-badge ${iaBadgeClass}">
+              ${hasIa ? '🤖 ' + escapeHtml(iaOrigin) : '❌ Falta IA'}
+            </span>
+          </td>
+          <td>
+            <span style="font-size: 11px; ${hasComms ? 'color: #059669; font-weight: 600;' : 'color: #94A3B8;'}">
+              ${hasComms ? '📢 ' + escapeHtml(commsFases) : '⏳ Sin redactar'}
+            </span>
+          </td>
+          <td style="font-size: 11px; color: ${isTerminal ? '#64748B' : (estadoInfo === 'COMPLETA' ? '#059669' : '#DC2626')};">
+            ${escapeHtml(causaFalta)}
+          </td>
+          <td style="text-align: center;">
+            ${retryBtn}
+          </td>
+        </tr>
+      `;
+    }).join('');
+
+    dom.auditTicketsTbody.innerHTML = rowsHtml;
+  }
+
+  async function triggerEpsilonRetry(options = {}) {
+    const { incidents = [], force = false, all = false } = options;
+
+    if (dom.auditActionStatus) {
+      dom.auditActionStatus.style.display = 'flex';
+      dom.auditActionStatus.className = 'audit-action-status is-loading';
+      const msg = all || force
+        ? '⚡ Conectando con API corporativa de Epsilon y forzando refresco general de Resumen IA...'
+        : incidents.length > 0
+          ? `⚡ Consultando Resumen IA en Epsilon para ${incidents.join(', ')}...`
+          : '🔄 Consultando Resumen IA para incidencias pendientes o con error...';
+      dom.auditActionStatus.innerHTML = `<span class="audit-spinner">⚡</span> ${msg}`;
+    }
+
+    if (dom.btnAuditForceAll) dom.btnAuditForceAll.disabled = true;
+    if (dom.btnAuditRetryMissing) dom.btnAuditRetryMissing.disabled = true;
+
+    try {
+      const resp = await fetch('/api/ingestion/retry-ia', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ incidents, force, all })
+      });
+
+      if (resp.status === 404) {
+        throw new Error('Ruta /api/ingestion/retry-ia no encontrada (HTTP 404). Por favor, reinicia el servidor en tu terminal (Ctrl+C y "python serve_app.py") para activar los endpoints de reintento.');
+      }
+
+      const result = await resp.json();
+      if (!resp.ok || !result.success) {
+        throw new Error(result.error || result.message || 'Error en relanzamiento');
+      }
+
+      if (dom.auditActionStatus) {
+        dom.auditActionStatus.className = 'audit-action-status is-success';
+        dom.auditActionStatus.innerHTML = `✅ ${result.message}`;
+      }
+
+      showToast(`✅ ${result.message}`, 'success');
+
+      await loadIngestionAuditData(false);
+      if (typeof performInspection === 'function') {
+        performInspection(false);
+      }
+    } catch (err) {
+      console.error('Error relanzando Resumen IA:', err);
+      if (dom.auditActionStatus) {
+        dom.auditActionStatus.className = 'audit-action-status is-error';
+        dom.auditActionStatus.innerHTML = `❌ Error en relanzamiento: ${err.message}`;
+      }
+      showToast(`❌ Error: ${err.message}`, 'error');
+    } finally {
+      if (dom.btnAuditForceAll) dom.btnAuditForceAll.disabled = false;
+      if (dom.btnAuditRetryMissing) dom.btnAuditRetryMissing.disabled = false;
+    }
+  }
+
+  function setupIngestionAuditListeners() {
+    if (dom.btnModalAuditClose) {
+      dom.btnModalAuditClose.addEventListener('click', closeIngestionAuditModal);
+    }
+    if (dom.btnModalAuditCloseBottom) {
+      dom.btnModalAuditCloseBottom.addEventListener('click', closeIngestionAuditModal);
+    }
+    if (dom.btnAuditRefresh) {
+      dom.btnAuditRefresh.addEventListener('click', () => loadIngestionAuditData(true));
+    }
+    if (dom.btnAuditForceAll) {
+      dom.btnAuditForceAll.addEventListener('click', () => {
+        if (confirm('¿Deseas forzar el refresco de Resumen IA en Epsilon para todas las incidencias activas ignorando la caché previa?')) {
+          triggerEpsilonRetry({ all: true, force: true });
+        }
+      });
+    }
+    if (dom.btnAuditRetryMissing) {
+      dom.btnAuditRetryMissing.addEventListener('click', () => {
+        triggerEpsilonRetry({ force: false });
+      });
+    }
+    if (dom.auditTabTickets && dom.auditTabLogs) {
+      dom.auditTabTickets.addEventListener('click', () => {
+        activeAuditTab = 'tickets';
+        dom.auditTabTickets.classList.add('is-active');
+        dom.auditTabTickets.setAttribute('aria-selected', 'true');
+        dom.auditTabLogs.classList.remove('is-active');
+        dom.auditTabLogs.setAttribute('aria-selected', 'false');
+        if (dom.auditViewTickets) dom.auditViewTickets.style.display = 'block';
+        if (dom.auditViewLogs) dom.auditViewLogs.style.display = 'none';
+      });
+      dom.auditTabLogs.addEventListener('click', () => {
+        activeAuditTab = 'logs';
+        dom.auditTabLogs.classList.add('is-active');
+        dom.auditTabLogs.setAttribute('aria-selected', 'true');
+        dom.auditTabTickets.classList.remove('is-active');
+        dom.auditTabTickets.setAttribute('aria-selected', 'false');
+        if (dom.auditViewLogs) {
+          dom.auditViewLogs.style.display = 'block';
+          if (dom.auditLogTerminal) dom.auditLogTerminal.scrollTop = dom.auditLogTerminal.scrollHeight;
+        }
+        if (dom.auditViewTickets) dom.auditViewTickets.style.display = 'none';
+      });
+    }
+    if (dom.auditFilterSearch) {
+      dom.auditFilterSearch.addEventListener('input', filterAndRenderAuditTickets);
+    }
+    if (dom.auditFilterState) {
+      dom.auditFilterState.addEventListener('change', filterAndRenderAuditTickets);
+    }
+    if (dom.auditTicketsTbody) {
+      dom.auditTicketsTbody.addEventListener('click', (e) => {
+        const retryBtn = e.target.closest('.btn-ticket-retry-ia');
+        if (retryBtn) {
+          const incId = retryBtn.dataset.incId;
+          if (incId) {
+            triggerEpsilonRetry({ incidents: [incId], force: true });
+          }
+        }
+      });
+    }
+    if (dom.btnAuditCopyLog) {
+      dom.btnAuditCopyLog.addEventListener('click', () => {
+        const text = dom.auditLogTerminal ? dom.auditLogTerminal.textContent : '';
+        copyToClipboard(text, '¡Trazas de auditoría copiadas al portapapeles!');
+      });
+    }
+    if (dom.btnAuditScrollLog) {
+      dom.btnAuditScrollLog.addEventListener('click', () => {
+        if (dom.auditLogTerminal) {
+          dom.auditLogTerminal.scrollTop = dom.auditLogTerminal.scrollHeight;
+        }
+      });
+    }
+  }
+
   async function init() {
     await loadScheduledChangesPaP();
     setupGlobalListeners();
+    setupIngestionAuditListeners();
     updateTabStyles();
     performInspection(false);
     resetAutoRefreshTimer();

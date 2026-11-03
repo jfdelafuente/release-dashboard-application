@@ -211,6 +211,59 @@ Cadena de texto multilinea formateada en los **4 bloques normativos** exigidos p
 
 ---
 
+#### F. Campos de Auditoría de Enriquecimiento y Completitud
+
+Para garantizar trazabilidad técnica y permitir al operador conocer por qué un ticket carece de ciertos datos sin tener que indagar en logs externos, cada registro incorpora metadatos de auditoría:
+
+* **`estado_informacion`** (`string`): Dictamen global de completitud de la incidencia:
+  * `"COMPLETA"`: Dispone tanto de Resumen IA como de Mensajes Ejecutivos oficiales redactados.
+  * `"PARCIAL"`: Dispone únicamente de uno de los dos bloques enriquecidos.
+  * `"INCOMPLETA"`: Carece de ambos bloques semánticos.
+  * `"NO_APLICA"`: Incidencia en estado terminal (`Cerrado`, `Resuelto`, `Cancelado`), omitida del circuito de emergencia conforme a la normativa ITIL.
+* **`causa_global`** (`string`): Resumen legible del diagnóstico de completitud.
+* **`resumen_ia.causa_falta`** (`string` | `null`): Cuando `resumen_ia` es nulo o incompleto, documenta la causa precisa:
+  * *"Incidencia en estado terminal 'Cerrado/Resuelto': omitida según ITIL/SRE"* (ahorro de llamadas externas).
+  * *"Epsilon devolvió respuesta vacía o sin campos estructurados (problema/impacto/solución)"*.
+  * *"Timeout o error HTTP al consultar Epsilon IA (/api/epsilon/resumenIA)"*.
+* **`mensajes_ejecutivos.causa_falta`** (`string` | `null`): Documenta el estado en el almacén de agentes:
+  * *"Pendiente de redacción oficial por el agente incident-reporter (sin entrada en data/agent_executive_messages.json)"*.
+  * *"Incidencia en estado terminal: no requiere comunicación oficial urgente"*.
+
+---
+
+### 3.3. Fichero Complementario de Auditoría (`ingestion_audit_summary.json`)
+
+De forma paralela a `high_priority_notifications.json`, el módulo [`converters/cli/ingestion_logger.py`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/converters/cli/ingestion_logger.py) genera el artefacto [`data/output/ingestion_audit_summary.json`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/data/output/ingestion_audit_summary.json):
+
+```json
+{
+  "_metadata": {
+    "type": "ingestion_audit_summary",
+    "version": "1.0.0",
+    "generated_at": "2026-11-03T15:20:00Z",
+    "source_file": "CS-Informe incidencias.csv",
+    "elapsed_seconds": 1.45,
+    "kpis": {
+      "total_tickets": 665,
+      "completas_count": 0,
+      "parciales_count": 18,
+      "incompletas_count": 0,
+      "terminales_omitidas_count": 647,
+      "con_resumen_ia_count": 18,
+      "sin_resumen_ia_count": 647,
+      "con_mensajes_ejecutivos_count": 0,
+      "sin_mensajes_ejecutivos_count": 665,
+      "discrepancias_count": 11
+    }
+  },
+  "incidents": [ ... ]
+}
+```
+
+Este documento alimenta la **Consola de Auditoría de Carga & Telemetría IA** accesible mediante el atajo <kbd>Shift</kbd> + <kbd>I</kbd>.
+
+---
+
 ## 🔍 4. Ejemplo JSON Completo y Anotado
 
 A continuación se muestra un registro real extraído del catálogo:

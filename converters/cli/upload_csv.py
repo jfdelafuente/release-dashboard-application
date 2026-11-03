@@ -19,9 +19,32 @@ Uso como CLI (otro repo/proceso, p. ej. el backend FastAPI):
 """
 
 import json
+import os
 import subprocess
 import sys
+import time
 from pathlib import Path
+
+try:
+    from converters.cli.ingestion_logger import (
+        get_log_file_path,
+        log_background_start,
+        log_conversion_result,
+        log_upload_start,
+    )
+except ImportError:
+    try:
+        from ingestion_logger import (
+            get_log_file_path,
+            log_background_start,
+            log_conversion_result,
+            log_upload_start,
+        )
+    except ImportError:
+        get_log_file_path = None
+        log_background_start = None
+        log_conversion_result = None
+        log_upload_start = None
 
 CONVERTER_SCRIPTS = {
     "massive": "convert_incidents.py",
@@ -29,7 +52,13 @@ CONVERTER_SCRIPTS = {
 }
 
 
-def run_upload(csv_path: Path, dashboard_type: str, project_root: Path, release_name: str = None) -> dict:
+def run_upload(
+    csv_path: Path,
+    dashboard_type: str,
+    project_root: Path = None,
+    release_name: str = None,
+    wait_eval: bool = False,
+) -> dict:
     """Ejecuta el conversor que corresponde a dashboard_type sobre csv_path.
 
     release_name solo se reenvía al conversor cuando dashboard_type es
@@ -45,6 +74,11 @@ def run_upload(csv_path: Path, dashboard_type: str, project_root: Path, release_
     project_root = Path(project_root) if project_root else Path.cwd()
     script_name = CONVERTER_SCRIPTS.get(dashboard_type, CONVERTER_SCRIPTS["massive"])
 
+    start_time = time.time()
+    file_size = csv_path.stat().st_size if csv_path.exists() else 0
+    if log_upload_start:
+        log_upload_start(csv_path.name, file_size, dashboard_type, project_root)
+
     # Priorizar el conversor dentro de project_root (p. ej. .../current/converters/cli/...)
     # para soportar cambios de symlink/rotación en procesos persistentes que conserven el módulo en memoria.
     candidate_paths = [
@@ -55,7 +89,10 @@ def run_upload(csv_path: Path, dashboard_type: str, project_root: Path, release_
     script_path = next((p for p in candidate_paths if p.exists()), candidate_paths[0])
 
     if not script_path.exists():
-        return {"success": False, "error": f"Converter no encontrado: {script_path}"}
+        err_msg = f"Converter no encontrado: {script_path}"
+        if log_conversion_result:
+            log_conversion_result(csv_path.name, False, time.time() - start_time, error_details=err_msg, project_root=project_root)
+        return {"success": False, "error": err_msg}
 
     command = [sys.executable, str(script_path), str(csv_path)]
     if dashboard_type == "postmortem" and release_name:
@@ -68,24 +105,56 @@ def run_upload(csv_path: Path, dashboard_type: str, project_root: Path, release_
         cwd=str(project_root),
     )
 
+    elapsed = time.time() - start_time
+
     if result.returncode != 0:
+        if log_conversion_result:
+            log_conversion_result(
+                csv_path.name,
+                False,
+                elapsed,
+                error_details=(result.stdout + result.stderr)[-4000:],
+                project_root=project_root,
+            )
         return {
             "success": False,
             "error": "El CSV se guardó pero falló la conversión a JSON",
             "details": (result.stdout + result.stderr)[-4000:],
         }
 
-    if dashboard_type == "massive":
-        _trigger_notifications_evaluation(project_root)
+    if log_conversion_result:
+        log_conversion_result(
+            csv_path.name,
+            True,
+            elapsed,
+            output_file=f"data/output/{csv_path.stem}.json",
+            project_root=project_root,
+        )
 
-    return {
+    bg_tasks = []
+    if dashboard_type == "massive":
+        proc = _trigger_notifications_evaluation(project_root, wait=wait_eval)
+        if proc is not None:
+            bg_tasks.append("incident_notifications_evaluation")
+
+    response_payload = {
         "success": True,
         "message": f"{csv_path.name} guardado en data/input/ y convertido correctamente",
     }
+    if bg_tasks:
+        response_payload["background_tasks"] = bg_tasks
+
+    return response_payload
 
 
-def _trigger_notifications_evaluation(project_root: Path) -> None:
-    """Dispara en segundo plano la regeneración del catálogo de alertas de alta prioridad."""
+def _trigger_notifications_evaluation(project_root: Path, wait: bool = False):
+    """Dispara en segundo plano la regeneración del catálogo de alertas de alta prioridad.
+
+    Si wait=False (por defecto), lanza el proceso en segundo plano asíncrono
+    vía subprocess.Popen desacoplado del ciclo HTTP para respuesta inmediata en < 0.5s.
+    Si wait=True, espera síncronamente a que finalice.
+    Las trazas de stdout y stderr se vuelcan a data/logs/ingestion_audit.log.
+    """
     candidate_paths = [
         project_root / "converters" / "cli" / "evaluate_incident_notifications.py",
         Path(__file__).resolve().parent / "evaluate_incident_notifications.py",
@@ -93,31 +162,63 @@ def _trigger_notifications_evaluation(project_root: Path) -> None:
     ]
     eval_script = next((p for p in candidate_paths if p.exists()), None)
     if not eval_script:
-        return
+        return None
 
     try:
-        subprocess.run(
-            [sys.executable, str(eval_script)],
-            capture_output=True,
-            text=True,
-            cwd=str(project_root),
-            timeout=60,
-        )
+        env = dict(os.environ)
+        env["PYTHONIOENCODING"] = "utf-8"
+        kwargs = {
+            "cwd": str(project_root),
+            "env": env,
+        }
+        log_file = None
+        if get_log_file_path:
+            try:
+                log_p = get_log_file_path(project_root)
+                log_file = open(log_p, "a", encoding="utf-8")
+                kwargs["stdout"] = log_file
+                kwargs["stderr"] = subprocess.STDOUT
+            except Exception:
+                kwargs["stdout"] = subprocess.DEVNULL
+                kwargs["stderr"] = subprocess.DEVNULL
+        else:
+            kwargs["stdout"] = subprocess.DEVNULL
+            kwargs["stderr"] = subprocess.DEVNULL
+
+        if sys.platform == "win32":
+            flags = 0
+            if hasattr(subprocess, "CREATE_NO_WINDOW"):
+                flags |= subprocess.CREATE_NO_WINDOW
+            if hasattr(subprocess, "DETACHED_PROCESS"):
+                flags |= subprocess.DETACHED_PROCESS
+            if flags:
+                kwargs["creationflags"] = flags
+        else:
+            kwargs["start_new_session"] = True
+
+        proc = subprocess.Popen([sys.executable, str(eval_script)], **kwargs)
+        if log_background_start:
+            log_background_start("evaluate_incident_notifications.py", proc.pid, project_root)
+
+        if wait:
+            proc.wait(timeout=60)
+        return proc
     except Exception:
-        pass
+        return None
 
 
 def main():
     if len(sys.argv) < 2:
-        print(json.dumps({"success": False, "error": "Uso: upload_csv.py <csv_path> [dashboard_type] [project_root]"}))
+        print(json.dumps({"success": False, "error": "Uso: upload_csv.py <csv_path> [dashboard_type] [project_root] [release_name] [--wait-eval]"}))
         return 1
 
     csv_path = Path(sys.argv[1])
     dashboard_type = sys.argv[2] if len(sys.argv) > 2 else "massive"
     project_root = Path(sys.argv[3]) if len(sys.argv) > 3 else Path.cwd()
-    release_name = sys.argv[4] if len(sys.argv) > 4 else None
+    release_name = sys.argv[4] if len(sys.argv) > 4 and not sys.argv[4].startswith("--") else None
+    wait_eval = "--wait-eval" in sys.argv
 
-    result = run_upload(csv_path, dashboard_type, project_root, release_name)
+    result = run_upload(csv_path, dashboard_type, project_root, release_name, wait_eval=wait_eval)
     print(json.dumps(result, ensure_ascii=False))
     return 0 if result["success"] else 1
 

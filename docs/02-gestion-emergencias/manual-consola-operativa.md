@@ -170,6 +170,42 @@ Todas las tarjetas de KPIs son **interactivas y clicables**: hacer clic en cualq
 
 ---
 
+### 4. Indicadores de Enriquecimiento de Datos (Telemetría IA y Agentes)
+
+Tanto en la tabla de Triaje Rápido como en las tarjetas detalladas, el operador dispone de indicadores visuales reactivos para verificar la completitud de la información de cada ticket:
+
+* **Badge Resumen IA:**
+  * `✓ IA Generado` (Verde): Análisis semántico disponible de Epsilon Resumen IA.
+  * `⚡ Caché` (Azul): Recuperado al instante desde la caché local en disco (`.epsilon_cache/`).
+  * `⚠️ Error IA: <causa>` (Rojo/Ámbar): Detalla el motivo técnico (timeout de red, token expirado o sin respuesta estructurada).
+  * `⏳ Pendiente / Terminal` (Gris): Incidencia en estado terminal (Cerrado/Resuelto) o en cola de procesamiento en segundo plano.
+* **Badge Mensajes Ejecutivos:**
+  * `✓ Redactado` (Verde): Mensajes para Dirección aprobados y consolidados en el almacén oficial (`agent_executive_messages.json`).
+  * `⏳ Pendiente` (Gris): Pendiente de redacción o validación por el agente `incident-reporter`.
+* **Badge Estado de Información Global:**
+  * `COMPLETA` (Verde): Incidencia con Resumen IA y Mensajes Ejecutivos oficiales listos.
+  * `PARCIAL` (Ámbar): Dispone de uno de los dos enriquecimientos; el tooltip explica la causa exacta del faltante.
+  * `INCOMPLETA` (Rojo): Sin Resumen IA ni comunicaciones ejecutivas.
+  * `NO_APLICA` (Gris): Tickets en estado terminal que no requieren tratamiento de emergencia.
+
+### 5. Atajos de Teclado del Cockpit Operativo
+
+Para optimizar los tiempos de respuesta del Incident Manager durante situaciones de crisis y permitir una navegación 100% libre de ratón, la Consola implementa atajos de teclado globales:
+
+| Atajo | Acción Operativa | Descripción |
+| :---: | :--- | :--- |
+| <kbd>F</kbd> | **Búsqueda Rápida** | Enfoca inmediatamente la caja de búsqueda para filtrar por ID (`INC...`), sistema o palabras clave. |
+| <kbd>Shift</kbd> + <kbd>H</kbd> | **Ayuda y Protocolo** | Despliega o cierra el panel lateral de ayuda contextual, matriz RACI y teléfonos de guardia. |
+| <kbd>Shift</kbd> + <kbd>M</kbd> | **Alternar Vista** | Conmuta entre la vista de **Triaje Rápido (Tabla)** y la vista de **Tarjetas Detalle**. |
+| <kbd>Shift</kbd> + <kbd>U</kbd> | **Subir Nuevo CSV** | Abre el diálogo modal para cargar un nuevo fichero masivo de incidencias. |
+| <kbd>Shift</kbd> + <kbd>I</kbd> o <kbd>Shift</kbd> + <kbd>C</kbd> | **Consola de Auditoría** | Abre la **Consola de Auditoría de Carga & Telemetría IA** (visor de trazas en vivo, balance de datos y reintento de IA). |
+| <kbd>Esc</kbd> | **Cerrar Diálogos** | Cierra cualquier modal abierto (ayuda, subida CSV, auditoría o confirmaciones). |
+
+> [!TIP]
+> Puedes consultar la ficha interactiva de atajos en cualquier momento pulsando <kbd>Shift</kbd> + <kbd>H</kbd> dentro de la Consola.
+
+---
+
 ## 5. Ciclo de Vida: Flujo de 4 Estados Operativos
 
 Para garantizar un control preciso del ciclo de vida de cada emergencia y saber exactamente en qué fase se encuentra cada incidente, la Consola implementa una máquina de **4 estados operativos**:
@@ -306,6 +342,25 @@ Acción Requerida: Conectarse inmediatamente al canal de audio para triaje técn
   * **Versión Completa para Dirección:** Garantiza exactamente **1 único párrafo** y un conteo $\le 90$ palabras (típicamente entre 55 y 75 palabras reales).
   * **Versión Breve (SMS / Guardia):** Garantiza $\le 30$ palabras (típicamente entre 17 y 23 palabras reales).
   * **Regla Anti-Alucinación:** El asistente utiliza exclusivamente datos confirmados del ticket (ID, proceso de negocio, criterio cuantitativo de afectación y sistemas involucrados), marcando como "en diagnóstico" cualquier causa aún no establecida.
+
+---
+
+### 4. Consola de Auditoría de Carga & Telemetría IA (Atajo: Shift + I / Shift + C)
+
+Para mantener una interfaz despejada para el Incident Manager durante la guardia sin recargar la pantalla con herramientas de diagnóstico técnico, la Consola integra una **ventana técnica de auditoría accesible exclusivamente por atajo de teclado**:
+
+* **Acceso Directo:** Pulsar <kbd>Shift</kbd> + <kbd>I</kbd> o <kbd>Shift</kbd> + <kbd>C</kbd> en cualquier momento.
+* **Componentes de la Consola de Auditoría:**
+  1. **Balance Global de Ingesta (KPIs):**
+     * Indicadores instantáneos de tickets procesados, información completa (`COMPLETA`), parcial (`PARCIAL`), incompleta (`INCOMPLETA`) y omitidas por estado terminal (`NO_APLICA`).
+     * Métricas de tiempos de ejecución y recuento con Resumen IA y Mensajes Ejecutivos.
+  2. **Diagnóstico Detallado de Faltantes por Incidencia:**
+     * Muestra para cada ticket el motivo normativo exacto de por qué no dispone de Resumen IA (`resumen_ia.causa_falta`, e.g., *"Incidencia en estado terminal 'Cerrado/Resuelto': omitida según ITIL/SRE"*, o *"Epsilon devolvió respuesta vacía"*).
+     * Muestra el motivo exacto de mensajes ejecutivos (`mensajes_ejecutivos.causa_falta`, e.g., *"Pendiente de redacción por el agente incident-reporter"*).
+  3. **Visor de Trazas en Streaming (`data/logs/ingestion_audit.log`):**
+     * Muestra las últimas líneas del fichero de log de auditoría con scroll automático hacia el final y botón de copiado rápido al portapapeles.
+  4. **Botón "Forzar Refresco / Reintentar Resumen IA":**
+     * Invoca el endpoint backend `POST /api/ingestion/retry-ia` para relanzar la telemetría semántica exclusivamente sobre incidencias vivas incompletas, actualizando automáticamente el catálogo y la vista.
 
 ---
 

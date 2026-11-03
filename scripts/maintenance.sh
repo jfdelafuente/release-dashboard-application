@@ -141,6 +141,37 @@ rotate_cron_log() {
 }
 
 # ------------------------------------------------------------------------------
+# 1b. Rotación segura de ingestion_audit.log (Copy-Truncate si > 10MB)
+# ------------------------------------------------------------------------------
+rotate_ingestion_log() {
+    local audit_log="${LOG_DIR}/ingestion_audit.log"
+    if [ ! -f "$audit_log" ] && [ -f "/infocodes/var/storage/release-dashboard/logs/ingestion_audit.log" ]; then
+        audit_log="/infocodes/var/storage/release-dashboard/logs/ingestion_audit.log"
+    fi
+
+    if [ ! -f "$audit_log" ]; then
+        return 0
+    fi
+
+    local size
+    size="$(file_size "$audit_log")"
+    local max_bytes=10485760 # 10 MB
+    if [ "$FORCE" -eq 0 ] && [ "$size" -lt "$max_bytes" ]; then
+        return 0
+    fi
+
+    log_info "Rotando log de auditoría ${audit_log} ($(du -h "$audit_log" 2>/dev/null | cut -f1)) con copy-truncate..."
+    cp -p "$audit_log" "${audit_log}.1"
+    : > "$audit_log"
+    if command -v gzip >/dev/null 2>&1; then
+        gzip -f "${audit_log}.1"
+        log_success "ingestion_audit.log rotado y comprimido a ingestion_audit.log.1.gz"
+    else
+        log_success "ingestion_audit.log rotado a ingestion_audit.log.1"
+    fi
+}
+
+# ------------------------------------------------------------------------------
 # 2. Compresión de logs intermedios (> COMPRESS_DAYS)
 # ------------------------------------------------------------------------------
 compress_old_logs() {
@@ -258,6 +289,19 @@ show_status() {
         echo "  - Archivo más reciente: $(basename "$newest") ($(stat -c%y "$newest" 2>/dev/null | cut -d' ' -f1))"
     fi
 
+    # Aviso sobre log de auditoría de ingesta
+    local audit_log="${LOG_DIR}/ingestion_audit.log"
+    if [ ! -f "$audit_log" ] && [ -f "/infocodes/var/storage/release-dashboard/logs/ingestion_audit.log" ]; then
+        audit_log="/infocodes/var/storage/release-dashboard/logs/ingestion_audit.log"
+    fi
+    if [ -f "$audit_log" ]; then
+        local asize
+        asize="$(du -h "$audit_log" 2>/dev/null | cut -f1)"
+        echo ""
+        echo "Log de auditoría de ingesta:"
+        echo "  - $(basename "$audit_log") (${asize})"
+    fi
+
     # Aviso sobre log de Nginx si está accesible
     if [ -f "/infocodes/nginx/logs/error.log" ]; then
         local ngx_size
@@ -292,6 +336,7 @@ case "$ACTION" in
     rotate-logs)
         log_info "=== Iniciando mantenimiento de logs: rotación y purga ==="
         rotate_cron_log
+        rotate_ingestion_log
         compress_old_logs
         purge_expired_logs
         log_success "=== Mantenimiento completado ==="

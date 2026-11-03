@@ -107,33 +107,31 @@
     async init() {
       this.mountBell();
       this.renderDrawer();
-      await this.loadData();
-      this.updateBadge();
+      await this.refresh();
       this.bindGlobalKeys();
       this.startPolling();
+    }
+
+    async refresh() {
+      await this.loadData();
+      this.updateBadge();
+      const drawer = document.getElementById('hp-drawer');
+      if (drawer && drawer.classList.contains('active')) {
+        this.renderCards();
+      }
     }
 
     startPolling() {
       // Polling periódico silencioso cada 2 minutos (120.000 ms)
       this.pollInterval = setInterval(async () => {
         if (document.hidden) return;
-        await this.loadData();
-        this.updateBadge();
-        const drawer = document.getElementById('hp-drawer');
-        if (drawer && drawer.classList.contains('active')) {
-          this.renderCards();
-        }
+        await this.refresh();
       }, 120000);
 
       // Refresco inmediato al reactivar o volver el foco a la pestaña
       document.addEventListener('visibilitychange', async () => {
         if (!document.hidden) {
-          await this.loadData();
-          this.updateBadge();
-          const drawer = document.getElementById('hp-drawer');
-          if (drawer && drawer.classList.contains('active')) {
-            this.renderCards();
-          }
+          await this.refresh();
         }
       });
     }

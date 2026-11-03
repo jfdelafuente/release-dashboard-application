@@ -1296,12 +1296,12 @@ class EpsilonClient:
     CACHE_TTL_SECONDS = 900  # 15 minutes
     CORPORATE_URL = "https://soptmc.si.orange.es/MonTMC/api/epsilon/resumenIA"
     DEFAULT_CANDIDATE_URLS = [
-        "http://127.0.0.1:8081/api/epsilon/resumenIA",
         "http://127.0.0.1:8080/api/epsilon/resumenIA",
+        "http://127.0.0.1:8081/api/epsilon/resumenIA",
         "https://soptmc.si.orange.es/MonTMC/api/epsilon/resumenIA",
     ]
 
-    def __init__(self, base_url: str = "http://127.0.0.1:8081/api/epsilon/resumenIA", cache_dir: Optional[Path] = None, max_consecutive_failures: int = 3):
+    def __init__(self, base_url: str = "http://127.0.0.1:8080/api/epsilon/resumenIA", cache_dir: Optional[Path] = None, max_consecutive_failures: int = 3):
         self.base_url = base_url.rstrip("/")
         if cache_dir:
             self.cache_dir = Path(cache_dir)
@@ -1311,8 +1311,9 @@ class EpsilonClient:
         self.max_consecutive_failures = max_consecutive_failures
         self._server_offline = False
         self._consecutive_failures = 0
-        self._allow_fallback = (base_url.rstrip("/") == "http://127.0.0.1:8081/api/epsilon/resumenIA")
+        self._allow_fallback = (base_url.rstrip("/") in self.DEFAULT_CANDIDATE_URLS)
         self._fallback_urls = [u for u in self.DEFAULT_CANDIDATE_URLS if u != self.base_url]
+        self.fetch_reasons: dict[str, str] = {}
 
     def _get_cache_path(self, incident_code: str) -> Path:
         return self.cache_dir / f"{incident_code}.json"
@@ -1360,6 +1361,7 @@ class EpsilonClient:
                 if age < self.CACHE_TTL_SECONDS:
                     cached_data = self._read_cache_file(cache_file)
                     if cached_data:
+                        self.fetch_reasons[incident_code] = "Caché local válida (HIT)"
                         return cached_data
             except Exception as e:
                 logger.debug("Error comprobando caché de %s: %s", incident_code, e)
@@ -1367,7 +1369,11 @@ class EpsilonClient:
         # 2. Si el servidor ya falló repetidamente, usar caché en disco existente (resiliencia offline)
         if self._server_offline:
             if cache_file.exists():
-                return self._read_cache_file(cache_file)
+                cached_data = self._read_cache_file(cache_file)
+                if cached_data:
+                    self.fetch_reasons[incident_code] = "Servidor offline, recuperado de caché local previa"
+                    return cached_data
+            self.fetch_reasons[incident_code] = "Servidor Epsilon offline y sin caché previa en disco"
             return None
 
         # 3. Petición de red contra endpoint principal y fallbacks
@@ -1375,13 +1381,21 @@ class EpsilonClient:
             data = self._fetch_from_url(self.base_url, incident_code)
             if data:
                 self._consecutive_failures = 0
+                self.fetch_reasons[incident_code] = "API Epsilon online 200 OK (datos frescos)"
                 try:
                     with open(cache_file, "w", encoding="utf-8") as f:
                         json.dump(data, f, ensure_ascii=False, indent=2)
                 except Exception as write_err:
                     logger.debug("No se pudo escribir caché para %s: %s", incident_code, write_err)
                 return data
+            else:
+                self.fetch_reasons[incident_code] = "Epsilon 200 OK pero respuesta sin datos"
         except (urllib.error.URLError, urllib.error.HTTPError, TimeoutError, OSError) as net_err:
+            if isinstance(net_err, urllib.error.HTTPError) and net_err.code == 404:
+                err_detail = "HTTP 404 (incidencia no indexada en telemetría Epsilon)"
+            else:
+                err_detail = f"{type(net_err).__name__} ({net_err})"
+
             if self._allow_fallback and self._fallback_urls:
                 for candidate in list(self._fallback_urls):
                     try:
@@ -1391,6 +1405,7 @@ class EpsilonClient:
                             self.base_url = candidate
                             self._fallback_urls.remove(candidate)
                             self._consecutive_failures = 0
+                            self.fetch_reasons[incident_code] = f"API Epsilon fallback ({candidate}) 200 OK"
                             try:
                                 with open(cache_file, "w", encoding="utf-8") as f:
                                     json.dump(cand_data, f, ensure_ascii=False, indent=2)
@@ -1413,9 +1428,32 @@ class EpsilonClient:
 
             # Fallback a caché local si la red falló y tenemos archivo en disco (resiliencia offline)
             if cache_file.exists():
-                return self._read_cache_file(cache_file)
+                cached_data = self._read_cache_file(cache_file)
+                if cached_data:
+                    self.fetch_reasons[incident_code] = f"Fallo de red ({err_detail}), recuperado de caché local previa"
+                    return cached_data
+
+            self.fetch_reasons[incident_code] = f"Epsilon no disponible: {err_detail}"
+
+        if incident_code not in self.fetch_reasons:
+            self.fetch_reasons[incident_code] = "Sin telemetría o no indexada en Epsilon"
 
         return None
+
+    def prefetch(self, incident_codes: list[str], max_workers: int = 5) -> None:
+        """Pre-descarga concurrentemente resúmenes IA en caché local para acelerar evaluaciones batch."""
+        if not incident_codes or self._server_offline:
+            return
+        uncached = [code for code in incident_codes if code and not self._get_cache_path(code).exists()]
+        if not uncached:
+            return
+        from concurrent.futures import ThreadPoolExecutor
+        workers = min(max_workers, len(uncached))
+        try:
+            with ThreadPoolExecutor(max_workers=workers) as executor:
+                list(executor.map(lambda c: self.get_resumen_ia(c), uncached))
+        except Exception as e:
+            logger.debug("Aviso en prefetch concurrente de Epsilon: %s", e)
 
 
 # Estados finales que no requieren notificación ni triaje
@@ -1441,7 +1479,9 @@ def evaluate_incidents_batch(
     epsilon_client: Optional[EpsilonClient] = None,
     limit: Optional[int] = None,
     source_file_name: str = "",
-    reference_time: Optional[datetime] = None
+    reference_time: Optional[datetime] = None,
+    write_audit: bool = True,
+    project_root: Optional[Any] = None
 ) -> dict[str, Any]:
     """Processes a batch of massive incidents and constructs the High Priority catalog with Orange IT Emergency Management."""
     evaluator = SeverityEvaluator()
@@ -1450,11 +1490,22 @@ def evaluate_incidents_batch(
     processed_tickets = tickets[:limit] if limit else tickets
     total_scanned = len(processed_tickets)
 
+    # Pre-cargar concurrentemente en caché solo si es una instancia real de EpsilonClient
+    if isinstance(epsilon_client, EpsilonClient):
+        active_codes = [
+            item.get("ID de incidencia") or item.get("id") or ""
+            for item in processed_tickets
+            if not is_terminal_status(item.get("Estatus") or item.get("estatus") or item.get("Estado") or item.get("estado") or "")
+        ]
+        epsilon_client.prefetch([c for c in active_codes if c])
+
     high_priority_items: list[dict[str, Any]] = []
     p1_count = 0
     p2_count = 0
     discrepancies_count = 0
     terminal_skipped_count = 0
+    batch_start_time = time.time()
+    audit_records: list[dict[str, Any]] = []
 
     for item in processed_tickets:
         inc_id = item.get("ID de incidencia") or item.get("id") or ""
@@ -1465,6 +1516,24 @@ def evaluate_incidents_batch(
         status_val = item.get("Estatus") or item.get("estatus") or item.get("Estado") or item.get("estado") or ""
         if is_terminal_status(status_val):
             terminal_skipped_count += 1
+            try:
+                from converters.cli.ingestion_logger import audit_incident_completeness
+            except ImportError:
+                try:
+                    from ingestion_logger import audit_incident_completeness
+                except ImportError:
+                    audit_incident_completeness = None
+            if audit_incident_completeness:
+                audit_records.append(
+                    audit_incident_completeness(
+                        item=item,
+                        epsilon_data=None,
+                        epsilon_reason=f"Omitido por estado terminal ({status_val})",
+                        agent_msgs=None,
+                        evaluation=None,
+                        is_terminal=True,
+                    )
+                )
             continue
 
         epsilon_data = epsilon_client.get_resumen_ia(inc_id) if epsilon_client else None
@@ -1482,83 +1551,129 @@ def evaluate_incidents_batch(
         elif prio_sugerida == "P2":
             p2_count += 1
 
-        # Construir mensajes ejecutivos y reporte de emergencia para alta prioridad o discrepancias
-        if es_alta or es_disc:
-            raw_date = item.get("Fecha de envío") or item.get("fecha_envio") or ""
-            parsed_date = parse_incident_datetime(raw_date)
-            sla_status = compute_emergency_sla_status(parsed_date, reference_time=reference_time)
+        # Procesar todos los tickets activos evaluados para el catálogo de triaje y notificaciones
+        raw_date = item.get("Fecha de envío") or item.get("fecha_envio") or ""
+        parsed_date = parse_incident_datetime(raw_date)
+        sla_status = compute_emergency_sla_status(parsed_date, reference_time=reference_time)
+        if not es_alta:
+            # Los SLAs de notificación urgente a dirección y escalado telefónico aplican a emergencias (P1/P2)
+            sla_status["sla_primera_notificacion_vencido"] = False
+            sla_status["requiere_escalado_telefonico"] = False
+            sla_status["escalado_estamentos_superiores"] = False
+            sla_status["proxima_ventana_update_minutos"] = None
 
-            eval_dict = dict(evaluation["evaluacion"])
-            eval_dict["fecha_apertura"] = raw_date
-            eval_dict["minutos_desde_apertura"] = sla_status["minutos_desde_apertura"]
-            eval_dict["sla_primera_notificacion_vencido"] = sla_status["sla_primera_notificacion_vencido"]
-            eval_dict["requiere_escalado_telefonico"] = sla_status["requiere_escalado_telefonico"]
-            eval_dict["escalado_estamentos_superiores"] = sla_status["escalado_estamentos_superiores"]
-            eval_dict["proxima_ventana_update_minutos"] = sla_status["proxima_ventana_update_minutos"]
-            evaluation["evaluacion"] = eval_dict
+        eval_dict = dict(evaluation["evaluacion"])
+        eval_dict["fecha_apertura"] = raw_date
+        eval_dict["minutos_desde_apertura"] = sla_status["minutos_desde_apertura"]
+        eval_dict["sla_primera_notificacion_vencido"] = sla_status["sla_primera_notificacion_vencido"]
+        eval_dict["requiere_escalado_telefonico"] = sla_status["requiere_escalado_telefonico"]
+        eval_dict["escalado_estamentos_superiores"] = sla_status["escalado_estamentos_superiores"]
+        eval_dict["proxima_ventana_update_minutos"] = sla_status["proxima_ventana_update_minutos"]
+        evaluation["evaluacion"] = eval_dict
 
-            mensajes = msg_generator.generate(item, evaluation, epsilon_data)
-            reporte_emergencia = msg_generator.generate_emergency_4blocks_report(
-                ticket=item,
-                evaluation=evaluation,
-                resumen_ia=epsilon_data,
-                sla_status=sla_status,
+        mensajes = msg_generator.generate(item, evaluation, epsilon_data)
+        reporte_emergencia = msg_generator.generate_emergency_4blocks_report(
+            ticket=item,
+            evaluation=evaluation,
+            resumen_ia=epsilon_data,
+            sla_status=sla_status,
+        )
+        # reporte_emergencia se expone exclusivamente en la raíz de la incidencia (evitando duplicidad en mensajes_ejecutivos)
+        
+        sistemas = []
+        if epsilon_data and isinstance(epsilon_data.get("sistemas"), list):
+            sistemas = epsilon_data["sistemas"]
+        elif item.get("Grupo asignado"):
+            sistemas = [item["Grupo asignado"]]
+
+        resumen_ia_block = None
+        if epsilon_data:
+            hitos = epsilon_data.get("hitosTecnicos") or epsilon_data.get("hitos_tecnicos") or []
+            ultimo_hito = hitos[-1] if isinstance(hitos, list) and len(hitos) > 0 else ""
+            solucion_val = epsilon_data.get("solucion") or ultimo_hito or "En análisis técnico por equipo resolutor."
+
+            bloqueos_raw = epsilon_data.get("bloqueos", [])
+            bloqueos_str = "; ".join(bloqueos_raw) if isinstance(bloqueos_raw, list) else str(bloqueos_raw or "")
+            siguiente_accion_val = epsilon_data.get("siguienteAccion") or epsilon_data.get("siguiente_accion") or bloqueos_str or "Seguimiento técnico en curso."
+
+            resumen_ia_block = {
+                "problema": epsilon_data.get("problema", ""),
+                "impacto": epsilon_data.get("impacto", ""),
+                "solucion": solucion_val,
+                "bloqueos": bloqueos_str,
+                "siguiente_accion": siguiente_accion_val,
+                "hitos_tecnicos": hitos if isinstance(hitos, list) else []
+            }
+
+        high_priority_items.append({
+            "id": inc_id,
+            "titulo": item.get("Descripción") or item.get("descripcion") or (epsilon_data.get("titulo") if epsilon_data else ""),
+            "sistemas": sistemas,
+            "prioridad_original": item.get("Prioridad") or "Media",
+            "prioridad_sugerida": prio_sugerida,
+            "es_alta_prioridad": es_alta,
+            "es_discrepancia": es_disc,
+            "discrepancia_delta": evaluation.get("discrepancia_delta", 0),
+            "discrepancia_gravedad": evaluation.get("discrepancia_gravedad", "Sin discrepancia"),
+            "discrepancia_motivo": evaluation.get("discrepancia_motivo", ""),
+            "aging_escalated": evaluation.get("aging_escalated", False),
+            "estatus": item.get("Estatus") or "Asignado",
+            "fecha_envio": raw_date,
+            "fecha_apertura": raw_date,
+            "evaluacion": eval_dict,
+            "resumen_ia": resumen_ia_block,
+            "mensajes_ejecutivos": mensajes,
+            "reporte_emergencia": reporte_emergencia,
+        })
+
+        try:
+            from converters.cli.ingestion_logger import audit_incident_completeness
+        except ImportError:
+            try:
+                from ingestion_logger import audit_incident_completeness
+            except ImportError:
+                audit_incident_completeness = None
+        if audit_incident_completeness:
+            eps_reason = None
+            if epsilon_client and hasattr(epsilon_client, "fetch_reasons"):
+                eps_reason = epsilon_client.fetch_reasons.get(inc_id)
+            agent_msgs_item = msg_generator.agent_store.get(inc_id) if hasattr(msg_generator, "agent_store") else None
+            audit_records.append(
+                audit_incident_completeness(
+                    item=item,
+                    epsilon_data=epsilon_data,
+                    epsilon_reason=eps_reason,
+                    agent_msgs=agent_msgs_item,
+                    evaluation=evaluation,
+                    is_terminal=False,
+                )
             )
-            # reporte_emergencia se expone exclusivamente en la raíz de la incidencia (evitando duplicidad en mensajes_ejecutivos)
-            
-            sistemas = []
-            if epsilon_data and isinstance(epsilon_data.get("sistemas"), list):
-                sistemas = epsilon_data["sistemas"]
-            elif item.get("Grupo asignado"):
-                sistemas = [item["Grupo asignado"]]
 
-            resumen_ia_block = None
-            if epsilon_data:
-                hitos = epsilon_data.get("hitosTecnicos") or epsilon_data.get("hitos_tecnicos") or []
-                ultimo_hito = hitos[-1] if isinstance(hitos, list) and len(hitos) > 0 else ""
-                solucion_val = epsilon_data.get("solucion") or ultimo_hito or "En análisis técnico por equipo resolutor."
-
-                bloqueos_raw = epsilon_data.get("bloqueos", [])
-                bloqueos_str = "; ".join(bloqueos_raw) if isinstance(bloqueos_raw, list) else str(bloqueos_raw or "")
-                siguiente_accion_val = epsilon_data.get("siguienteAccion") or epsilon_data.get("siguiente_accion") or bloqueos_str or "Seguimiento técnico en curso."
-
-                resumen_ia_block = {
-                    "problema": epsilon_data.get("problema", ""),
-                    "impacto": epsilon_data.get("impacto", ""),
-                    "solucion": solucion_val,
-                    "bloqueos": bloqueos_str,
-                    "siguiente_accion": siguiente_accion_val,
-                    "hitos_tecnicos": hitos if isinstance(hitos, list) else []
-                }
-
-            high_priority_items.append({
-                "id": inc_id,
-                "titulo": item.get("Descripción") or item.get("descripcion") or (epsilon_data.get("titulo") if epsilon_data else ""),
-                "sistemas": sistemas,
-                "prioridad_original": item.get("Prioridad") or "Media",
-                "prioridad_sugerida": prio_sugerida,
-                "es_alta_prioridad": es_alta,
-                "es_discrepancia": es_disc,
-                "discrepancia_delta": evaluation.get("discrepancia_delta", 0),
-                "discrepancia_gravedad": evaluation.get("discrepancia_gravedad", "Sin discrepancia"),
-                "discrepancia_motivo": evaluation.get("discrepancia_motivo", ""),
-                "aging_escalated": evaluation.get("aging_escalated", False),
-                "estatus": item.get("Estatus") or "Asignado",
-                "fecha_envio": raw_date,
-                "fecha_apertura": raw_date,
-                "evaluacion": eval_dict,
-                "resumen_ia": resumen_ia_block,
-                "mensajes_ejecutivos": mensajes,
-                "reporte_emergencia": reporte_emergencia,
-            })
-
-    # Ordenar: primero P1, luego discrepancias, luego P2
+    # Ordenar: primero P1, luego discrepancias, luego P2, luego resto
     def sort_key(doc: dict[str, Any]) -> tuple[int, int]:
-        prio_val = 0 if doc["prioridad_sugerida"] == "P1" else (1 if doc["prioridad_sugerida"] == "P2" else 2)
-        disc_val = 0 if doc["es_discrepancia"] else 1
+        prio_map = {"P1": 0, "P2": 1, "P3": 2, "P4": 3}
+        prio_val = prio_map.get(doc.get("prioridad_sugerida", "P3"), 2)
+        disc_val = 0 if doc.get("es_discrepancia") else 1
         return (prio_val, disc_val)
 
     high_priority_items.sort(key=sort_key)
+
+    try:
+        from converters.cli.ingestion_logger import write_batch_audit
+    except ImportError:
+        try:
+            from ingestion_logger import write_batch_audit
+        except ImportError:
+            write_batch_audit = None
+
+    if write_batch_audit and audit_records and write_audit:
+        elapsed_sec = time.time() - batch_start_time
+        write_batch_audit(
+            source_file=source_file_name or "massive_incidents",
+            audit_records=audit_records,
+            elapsed_sec=elapsed_sec,
+            project_root=project_root,
+        )
 
     sla_vencidos_count = sum(1 for it in high_priority_items if it.get("evaluacion", {}).get("sla_primera_notificacion_vencido"))
     escalados_tel_count = sum(1 for it in high_priority_items if it.get("evaluacion", {}).get("requiere_escalado_telefonico"))
@@ -1574,6 +1689,12 @@ def evaluate_incidents_batch(
             "version": "1.0.0",
             "generated_at": datetime.now(timezone.utc).isoformat(),
             "source_file": source_file_name,
+            "audit_completeness": {
+                "completas": sum(1 for r in audit_records if r.get("estado_informacion") == "COMPLETA"),
+                "parciales": sum(1 for r in audit_records if r.get("estado_informacion") == "PARCIAL"),
+                "incompletas": sum(1 for r in audit_records if r.get("estado_informacion") == "INCOMPLETA"),
+                "terminales_omitidas": terminal_skipped_count,
+            },
             "kpis": {
                 "total_scanned": total_scanned,
                 "terminal_skipped_count": terminal_skipped_count,
@@ -1632,7 +1753,7 @@ def main() -> int:
     parser.add_argument("--index", type=str, help="Alternative index.json path to resolve input file")
     parser.add_argument("--output", "-o", type=str, default="data/output/high_priority_notifications.json", help="Output JSON path")
     parser.add_argument("--limit", "-l", type=int, help="Limit number of incidents evaluated")
-    parser.add_argument("--base-url", type=str, default="http://127.0.0.1:8081/api/epsilon/resumenIA", help="Epsilon proxy base URL")
+    parser.add_argument("--base-url", type=str, default="http://127.0.0.1:8080/api/epsilon/resumenIA", help="Epsilon proxy base URL")
     parser.add_argument("--force", action="store_true", help="Force refresh ignoring local Epsilon cache")
     parser.add_argument("--dry-run", action="store_true", help="Perform evaluation without writing to output file")
 
@@ -1676,7 +1797,7 @@ def main() -> int:
 
     epsilon_client = EpsilonClient(base_url=args.base_url)
     catalog = evaluate_incidents_batch(
-        tickets=active_tickets,
+        tickets=tickets,
         epsilon_client=epsilon_client,
         limit=args.limit,
         source_file_name=input_file.name

@@ -197,6 +197,8 @@
           <option value="all">Todas las Severidades</option>
           <option value="P1">Solo SL1 / P1 (Crítica)</option>
           <option value="P2">Solo SL2 / P2 (Mayor)</option>
+          <option value="P3">Solo SL3 / P3 (Media)</option>
+          <option value="P4">Solo SL4 / P4 (Baja)</option>
         </select>
 
         <div class="triage-search-box">
@@ -218,10 +220,10 @@
     </main>
 
     <!-- 6. Footer Corporativo de Operaciones IT (Orange Tech Operations) -->
-    <footer class="triage-footer" role="contentinfo">
+    <footer class="triage-footer" role="contentinfo" id="triage-footer">
       
-      <!-- Banda Superior: Identidad, Misión y Estado en Vivo -->
-      <div class="triage-footer-top">
+      <!-- Banda Superior: Identidad, Misión y Estado en Vivo (Barra Desplegable) -->
+      <div class="triage-footer-top" id="triage-footer-header" role="button" tabindex="0" aria-expanded="false" aria-controls="triage-footer-expandable" title="Haz clic para desplegar u ocultar la información corporativa y reglas de gobernanza">
         <div class="triage-footer-brand">
           <div class="triage-footer-logo-box" aria-label="Logo Orange Tech Operations">
             <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -247,11 +249,18 @@
             <span aria-hidden="true">▲</span>
             <span>Volver Arriba</span>
           </button>
+          <button type="button" id="footer-btn-toggle" class="triage-footer-btn-toggle" aria-expanded="false" aria-controls="triage-footer-expandable" title="Desplegar u ocultar información de gobernanza y módulos">
+            <span class="footer-toggle-chevron" aria-hidden="true">▼</span>
+            <span class="footer-toggle-text">Desplegar</span>
+          </button>
         </div>
       </div>
 
-      <!-- Cuadrícula Central: Módulos, Reglas de Oro y Auditoría -->
-      <div class="triage-footer-grid">
+      <!-- Contenedor Desplegable: Cuadrícula y Barra Inferior -->
+      <div id="triage-footer-expandable" class="triage-footer-expandable" aria-hidden="true">
+
+        <!-- Cuadrícula Central: Módulos, Reglas de Oro y Auditoría -->
+        <div class="triage-footer-grid">
         
         <!-- Columna 1: Módulos Operativos de la Consola -->
         <div class="triage-footer-col">
@@ -378,6 +387,19 @@
               <span aria-hidden="true">↗</span>
             </a>
           </div>
+
+          <!-- Atajos de Consola -->
+          <div class="triage-footer-shortcuts-card">
+            <span class="triage-footer-shortcuts-title">⌨️ Atajos de Consola</span>
+            <div class="triage-footer-shortcuts-grid">
+              <span><kbd>F</kbd></span><span>Plegar / Desplegar Footer</span>
+              <span><kbd>Shift+H</kbd></span><span>Traspaso de Guardia</span>
+              <span><kbd>Shift+M</kbd></span><span>Matrices de Contacto</span>
+              <span><kbd>Shift+U</kbd></span><span>Matriz de Umbrales</span>
+              <span><kbd>Shift+I</kbd></span><span>Auditoría Carga &amp; IA</span>
+              <span><kbd>Esc</kbd></span><span>Cerrar Ventanas</span>
+            </div>
+          </div>
         </div>
 
       </div>
@@ -395,6 +417,8 @@
           <span class="triage-footer-pill-crisis">🚨 Modo Emergencia 24/7 · Niveles SL1-SL4</span>
         </div>
       </div>
+
+      </div><!-- Fin triage-footer-expandable -->
 
     </footer>
 
@@ -940,7 +964,7 @@
         <div class="comms-editors-container">
           
           <!-- Versión Completa (hasta 90 palabras, monopárrafo) -->
-          <div class="comms-editor-box">
+          <div class="comms-editor-box" id="exec-comm-completo">
             <div class="comms-editor-header">
               <div class="comms-editor-title-wrap">
                 <span class="comms-editor-tag tag-completo">Versión Completa · Dirección / Email</span>
@@ -959,7 +983,7 @@
           </div>
 
           <!-- Versión Breve (hasta 30 palabras) -->
-          <div class="comms-editor-box">
+          <div class="comms-editor-box" id="exec-comm-breve">
             <div class="comms-editor-header">
               <div class="comms-editor-title-wrap">
                 <span class="comms-editor-tag tag-breve">Versión Breve · SMS / Flash / Audio</span>
@@ -1250,6 +1274,202 @@
       <div class="triage-modal-footer" style="padding: 14px 20px; display: flex; justify-content: flex-end; gap: 10px; border-top: 1px solid var(--triage-border);">
         <button id="btn-modal-handover-close-bottom" class="triage-btn">Cerrar</button>
         <button id="btn-handover-copy-bottom" class="triage-btn triage-btn-primary" style="background: #0284C7; border-color: #0284C7;"><span>📋</span> Copiar y Cerrar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Consola de Auditoría de Carga & Telemetría IA (Atajo Shift+I) -->
+  <div id="modal-ingestion-audit" class="triage-modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="modal-audit-title" aria-hidden="true">
+    <div class="triage-modal-dialog audit-modal-dialog">
+      <!-- Cabecera de la Consola de Auditoría -->
+      <div class="triage-modal-header audit-modal-header">
+        <div class="audit-header-title-block">
+          <div class="audit-header-eyebrow">
+            <span>🛡️ Auditoría Continua de Carga · Trazabilidad ITIL &amp; Telemetría Epsilon IA</span>
+          </div>
+          <h2 id="modal-audit-title" class="triage-modal-title">
+            <span class="audit-title-icon" aria-hidden="true">📊</span>
+            <span>Consola de Auditoría de Carga &amp; Telemetría IA</span>
+          </h2>
+        </div>
+        <div class="audit-header-meta">
+          <span id="audit-meta-source" class="audit-source-pill" title="Origen de los datos">
+            <span>📁 Ingesta masiva</span>
+          </span>
+          <button id="btn-modal-audit-close" class="triage-btn" aria-label="Cerrar consola de carga">✖</button>
+        </div>
+      </div>
+
+      <!-- Cuerpo de la Consola de Auditoría -->
+      <div class="triage-modal-body audit-modal-body">
+        
+        <!-- Barra de Acciones Operativas y Refresco de IA -->
+        <div class="audit-actions-toolbar">
+          <div class="audit-actions-left">
+            <button id="btn-audit-force-all" class="triage-btn triage-btn-primary audit-btn-action" title="Relanza la consulta de todas las incidencias contra la API de Epsilon ignorando caché previa">
+              <span aria-hidden="true">⚡</span>
+              <span>Forzar Refresco General Resumen IA</span>
+            </button>
+            <button id="btn-audit-retry-missing" class="triage-btn audit-btn-action" title="Consulta únicamente las incidencias que no tienen Resumen IA o dieron error">
+              <span aria-hidden="true">🔄</span>
+              <span>Reintentar Incidencias Sin IA</span>
+            </button>
+            <button id="btn-audit-refresh" class="triage-btn audit-btn-action" title="Actualiza el estado y logs desde el servidor">
+              <span aria-hidden="true">📥</span>
+              <span>Refrescar Vista</span>
+            </button>
+          </div>
+          <div class="audit-actions-right">
+            <span class="audit-shortcut-hint">⌨️ Atajo de consola: <kbd>Shift+I</kbd></span>
+          </div>
+        </div>
+
+        <!-- Banner reactivo de estado / progreso -->
+        <div id="audit-action-status" class="audit-action-status" style="display: none;" role="status"></div>
+
+        <!-- Resumen Ejecutivo de KPIs (6 Métricas de Calidad de Ingesta) -->
+        <div class="audit-kpis-grid">
+          <div class="audit-kpi-card">
+            <div class="audit-kpi-header">
+              <span class="audit-kpi-title">Total Procesados</span>
+              <span class="audit-kpi-icon">📋</span>
+            </div>
+            <div id="audit-kpi-total" class="audit-kpi-value">-</div>
+            <div id="audit-kpi-sub-total" class="audit-kpi-sub">Cargando desglose...</div>
+          </div>
+
+          <div class="audit-kpi-card audit-kpi-card-ia">
+            <div class="audit-kpi-header">
+              <span class="audit-kpi-title">Cobertura Resumen IA</span>
+              <span class="audit-kpi-icon">🤖</span>
+            </div>
+            <div id="audit-kpi-ia" class="audit-kpi-value is-ia">-</div>
+            <div id="audit-kpi-sub-ia" class="audit-kpi-sub">Telemetría Epsilon</div>
+          </div>
+
+          <div class="audit-kpi-card audit-kpi-card-success">
+            <div class="audit-kpi-header">
+              <span class="audit-kpi-title">Completas</span>
+              <span class="audit-kpi-icon">✅</span>
+            </div>
+            <div id="audit-kpi-completas" class="audit-kpi-value is-success">-</div>
+            <div class="audit-kpi-sub">IA + Comms aprobados</div>
+          </div>
+
+          <div class="audit-kpi-card audit-kpi-card-warning">
+            <div class="audit-kpi-header">
+              <span class="audit-kpi-title">Parciales</span>
+              <span class="audit-kpi-icon">⚠️</span>
+            </div>
+            <div id="audit-kpi-parciales" class="audit-kpi-value is-warning">-</div>
+            <div class="audit-kpi-sub">Falta IA o Comms</div>
+          </div>
+
+          <div class="audit-kpi-card audit-kpi-card-danger">
+            <div class="audit-kpi-header">
+              <span class="audit-kpi-title">Incompletas</span>
+              <span class="audit-kpi-icon">❌</span>
+            </div>
+            <div id="audit-kpi-incompletas" class="audit-kpi-value is-danger">-</div>
+            <div class="audit-kpi-sub">Sin IA ni Comms</div>
+          </div>
+
+          <div class="audit-kpi-card audit-kpi-card-purple">
+            <div class="audit-kpi-header">
+              <span class="audit-kpi-title">Discrepancias ITIL</span>
+              <span class="audit-kpi-icon">⚖️</span>
+            </div>
+            <div id="audit-kpi-discrepancias" class="audit-kpi-value is-purple">-</div>
+            <div class="audit-kpi-sub">Nominal Remedy ≠ ITIL</div>
+          </div>
+        </div>
+
+        <!-- Selector de Pestañas (Tabs) -->
+        <div class="audit-tabs-nav" role="tablist">
+          <button id="audit-tab-tickets" class="audit-tab-btn is-active" role="tab" aria-selected="true" aria-controls="audit-view-tickets">
+            <span>📋 Auditoría de Incidencias</span>
+            <span id="audit-tab-tickets-count" class="audit-tab-badge">0</span>
+          </button>
+          <button id="audit-tab-logs" class="audit-tab-btn" role="tab" aria-selected="false" aria-controls="audit-view-logs">
+            <span>📟 Trazas de Ingesta en Vivo</span>
+            <span class="audit-tab-badge audit-tab-badge-live">LOG</span>
+          </button>
+        </div>
+
+        <!-- Pestaña 1: Desglose y Auditoría de Incidencias -->
+        <div id="audit-view-tickets" class="audit-tab-pane is-active" role="tabpanel">
+          <!-- Filtros y Búsqueda -->
+          <div class="audit-filters-bar">
+            <div class="audit-search-wrap">
+              <span class="audit-search-icon" aria-hidden="true">🔍</span>
+              <input type="text" id="audit-filter-search" class="triage-filter-input audit-search-input" placeholder="Buscar por ID, título, sistema o diagnóstico de causa...">
+            </div>
+            <div class="audit-select-wrap">
+              <label for="audit-filter-state" class="audit-filter-label">Filtrar Estado:</label>
+              <select id="audit-filter-state" class="triage-filter-select">
+                <option value="active" selected>Solo Activas en Triaje</option>
+                <option value="all">Todas (incluyendo Terminales)</option>
+                <option value="COMPLETA">Solo Completas (IA + Comms)</option>
+                <option value="PARCIAL">Solo Parciales</option>
+                <option value="INCOMPLETA">Solo Incompletas</option>
+                <option value="NO_APLICA">Solo Terminales (Cerrado/Resuelto)</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Tabla de Auditoría -->
+          <div class="audit-table-wrap">
+            <table class="audit-table">
+              <thead>
+                <tr>
+                  <th style="width: 130px;">Incidencia</th>
+                  <th style="min-width: 200px;">Título / Resumen</th>
+                  <th style="width: 100px;">Estatus</th>
+                  <th style="width: 110px;">Prioridad</th>
+                  <th style="width: 110px;">Estado Auditoría</th>
+                  <th style="width: 130px;">Resumen IA</th>
+                  <th style="width: 130px;">Comunicaciones</th>
+                  <th style="min-width: 220px;">Diagnóstico / Causa Falta</th>
+                  <th style="width: 90px; text-align: center;">Acción</th>
+                </tr>
+              </thead>
+              <tbody id="audit-tickets-tbody">
+                <tr>
+                  <td colspan="9" style="text-align: center; padding: 24px; color: var(--triage-text-muted);">
+                    Cargando auditoría de incidencias...
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Pestaña 2: Trazas de Ingesta en Vivo (Terminal Log) -->
+        <div id="audit-view-logs" class="audit-tab-pane" role="tabpanel" style="display: none;">
+          <div class="audit-logs-toolbar">
+            <div class="audit-logs-info">
+              <span>Ruta: <code>data/logs/ingestion_audit.log</code></span>
+            </div>
+            <div class="audit-logs-actions">
+              <button id="btn-audit-copy-log" class="triage-btn triage-btn-sm">
+                <span>📋</span> Copiar Trazas
+              </button>
+              <button id="btn-audit-scroll-log" class="triage-btn triage-btn-sm">
+                <span>⬇️</span> Ir al Final
+              </button>
+            </div>
+          </div>
+          <pre id="audit-log-terminal" class="audit-log-terminal">Cargando trazas de auditoría...</pre>
+        </div>
+
+      </div>
+
+      <!-- Pie de la Consola de Auditoría -->
+      <div class="triage-modal-footer audit-modal-footer">
+        <div class="audit-footer-tip">
+          <span>💡 Puedes abrir y cerrar esta consola en cualquier momento con el atajo <kbd>Shift+I</kbd> o <kbd>Shift+C</kbd> (o <kbd>Esc</kbd> para salir).</span>
+        </div>
+        <button id="btn-modal-audit-close-bottom" class="triage-btn">Cerrar</button>
       </div>
     </div>
   </div>

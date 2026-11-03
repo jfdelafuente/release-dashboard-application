@@ -24,11 +24,21 @@ Este documento describe la arquitectura, ubicación y operativa de los registros
 │
 ├── release-dashboard/                                # Logs de la aplicación y procesos batch
 │   ├── dashboards-cron.log                          # Salida estándar y errores del cron nocturno
-│   └── dashboards-generation-YYYYMMDD.log           # Bitácora detallada diaria de conversión batch CSV -> JSON
+│   ├── dashboards-generation-YYYYMMDD.log           # Bitácora detallada diaria de conversión batch CSV -> JSON
+│   └── ingestion_audit.log                          # Enlace simbólico -> /infocodes/var/storage/release-dashboard/logs/ingestion_audit.log
 │
 └── nginx/                                           # Logs del servidor web (puerto 8081)
     ├── infocodes.access.log                         # Registro de accesos HTTP y consultas a dashboards/APIs
     └── error.log                                    # Errores de Nginx y fallos de conexión a upstreams
+`
+
+`
+/infocodes/var/storage/release-dashboard/             # Almacenamiento desacoplado persistente (Single Source of Truth)
+│
+├── logs/
+│   └── ingestion_audit.log                          # Registro persistente y acumulativo de ingestas CSV y enriquecimiento IA
+└── output/
+    └── ingestion_audit_summary.json                 # Resumen estructurado JSON de la última carga (servido por Nginx en /data/)
 ```
 
 ---
@@ -122,6 +132,106 @@ awk '$9 ~ /^[45]/' /infocodes/var/log/nginx/infocodes.access.log | tail -n 20
 # 5. Listar las copias preventivas de despliegue disponibles para rollback:
 ls -lh /infocodes/var/backups/release-dashboard-application/
 ```
+
+---
+
+## 🔍 Trazabilidad y Auditoría de Ingesta Masiva y Telemetría Semántica
+
+Para garantizar la máxima transparencia operativa sobre qué incidencias disponen de información completa y justificar técnicamente cualquier dato faltante, el sistema incorpora un motor de auditoría continua ([`converters/cli/ingestion_logger.py`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/converters/cli/ingestion_logger.py)):
+
+### 1. Fichero de Log de Auditoría (`data/logs/ingestion_audit.log`)
+Registra de forma cronológica y persistente cada fase de la ingesta de tickets:
+
+```text
+================================================================================
+PROCESO DE INGESTA DE INCIDENCIAS - 2026-11-03 15:30:12
+================================================================================
+[2026-11-03 15:30:12] [UPLOAD_START] Fichero recibido: CS-Informe incidencias.csv (142,058 bytes) | Tipo: massive-incidents
+[2026-11-03 15:30:13] [CONVERT_OK] Conversión CSV a JSON completada en 0.420s (665 registros) -> Generado: 20261103-massive.json
+[2026-11-03 15:30:13] [BACKGROUND_TASK] Disparada tarea asíncrona 'evaluate_incident_notifications.py' (PID 14280) desacoplada del ciclo HTTP.
+
+--------------------------------------------------------------------------------
+AUDITORÍA DETALLADA DE INCIDENCIAS (665 tickets) - 2026-11-03 15:30:14
+Origen: CS-Informe incidencias.csv
+--------------------------------------------------------------------------------
+01. INC000004167733 | Estatus: En curso | Remedy: Media -> SUGERIDA P1 (DISCREPANCIA) | [PARCIAL]
+    Título: CORTE TOTAL // SEVILLA // LA FINCA
+    * Resumen IA: [OK] (Epsilon Telemetría IA)
+    * Mensajes Ejecutivos: [PENDIENTE] Causa: Pendiente de redacción oficial por el agente incident-reporter
+    * Criticidad ITIL: P1 (Proceso: O&M | Motivo: Umbral >20% desviación)
+    * Dictamen: Resumen IA OK | Mensajes ejecutivos faltantes: Pendiente de redacción
+
+02. INC000004128954 | Estatus: Cerrado | Remedy: Alta | [NO_APLICA]
+    Título: Degradación de balanceador frontal
+    * Resumen IA: [FALTA] Causa: Incidencia en estado terminal 'Cerrado' (Cerrado/Resuelto): omitida según ITIL/SRE
+    * Mensajes Ejecutivos: [PENDIENTE] Causa: Incidencia en estado terminal 'Cerrado': no requiere comunicación oficial urgente
+    * Dictamen: Incidencia en estado terminal (Cerrado)
+
+================================================================================
+BALANCE GLOBAL DE INFORMACIÓN DE INGESTA
+================================================================================
+  Total incidencias analizadas:      665
+  * Información COMPLETA (IA+Comms): 0
+  * Información PARCIAL:             18
+  * Información INCOMPLETA:          0
+  * Omitidas por Estado Terminal:    647
+  ------------------------------------------------
+  * Con Resumen IA disponible:       18 / 665
+  * Con Mensajes Ejecutivos listos:  0 / 665
+  * Con Discrepancias de severidad:  11 / 665
+  Tiempo total de evaluación:        1.45s
+================================================================================
+```
+
+### 2. Resumen Estructurado JSON (`data/output/ingestion_audit_summary.json`)
+Generado en paralelo en formato JSON para consumo inmediato por parte de la API backend (`GET /api/logs/ingestion`) y la Consola de Auditoría del Cockpit (<kbd>Shift</kbd> + <kbd>I</kbd>).
+
+---
+
+## 🧽 Procedimiento de Purga y Reseteo Seguro del Sistema
+
+Cuando un operador o desarrollador necesita **limpiar los datos previos de pruebas o cargas masivas antiguas para iniciar una nueva subida limpia desde cero**, debe emplear el script oficial de saneamiento ([`scripts/clean_system_data.py`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/scripts/clean_system_data.py)) o su acceso rápido en la raíz ([`clean_data.bat`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/clean_data.bat)).
+
+### Matriz de Acciones de Purga
+
+| Directorio / Fichero | Acción Ejecutada | Justificación Operativa |
+| :--- | :---: | :--- |
+| `data/input/*.csv` | **Eliminado** | Elimina ficheros CSV temporales de cargas previas. |
+| `data/output/*-massive.json` | **Eliminado** | Elimina datasets masivos antiguos. |
+| `data/output/*-postmortem.json` | **Eliminado** | Elimina datasets de postmortem antiguos. |
+| `data/archive/*` | **Eliminado** | Limpia el historial archivado. |
+| `data/errors/*` | **Eliminado** | Limpia reportes de error de CSVs previos. |
+| `data/reports/*.pptx` | **Eliminado** | Purga informes ejecutivos generados. |
+| `data/.epsilon_cache/*` | **Eliminado** *(salvo `--keep-cache`)* | Invalida respuestas semánticas en caché para forzar consultas frescas. |
+| `data/output/index.json` | **Reseteado** | Se restaura a plantilla válida: `{"massive": [], "postmortem": [], "last_updated": "<UTC>"}`. |
+| `data/output/active_incidents.json` | **Reseteado** | Se restaura a `{"_metadata": {"total": 0}, "data": []}`. |
+| `data/output/high_priority_notifications.json` | **Reseteado** | Se restaura a catálogo estructurado sin tickets. |
+| `data/output/ingestion_audit_summary.json` | **Reseteado** | Se restaura a métricas iniciales en cero. |
+| `data/agent_executive_messages.json` | **Reseteado** | Se restaura a plantilla vacía estructurada. |
+| `data/logs/ingestion_audit.log` | **Reseteado** | Se trunca a cero bytes con cabecera de inicialización limpia. |
+| **`data/input/scheduled_changes_pap.json`** | 🔒 **ESTRICTAMENTE PROTEGIDO** | **NUNCA se elimina ni modifica**: Calendario maestro de trabajos programados (PaP). |
+| **`data/output/agents_catalog.json`** | 🔒 **ESTRICTAMENTE PROTEGIDO** | **NUNCA se elimina ni modifica**: Catálogo oficial de agentes de IA y skills. |
+
+### Comandos de Ejecución:
+
+```powershell
+# 1. Simulación segura (Dry Run) sin modificar ningún fichero en disco (Recomendado antes de ejecutar):
+.\clean_data.bat --dry-run
+# o directamente con Python:
+python scripts/clean_system_data.py --dry-run
+
+# 2. Ejecución con solicitud de confirmación interactiva por teclado:
+.\clean_data.bat
+
+# 3. Ejecución directa desatendida (para pipelines o tests):
+.\clean_data.bat --yes
+
+# 4. Limpieza conservando la caché local de Epsilon Resumen IA:
+.\clean_data.bat --yes --keep-cache
+```
+
+> [!CAUTION]
+> El borrado de ficheros es irreversible. Se recomienda ejecutar siempre primero con `--dry-run` para previsualizar los ficheros que se eliminarán y los que se resetearán.
 
 ---
 

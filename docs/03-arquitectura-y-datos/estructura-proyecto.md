@@ -21,6 +21,7 @@ release-dashboard-application/
 ├── 📄 requirements-dev.txt          # Herramientas de testing, linting y análisis estático
 ├── 📄 skills-lock.json              # Registro de dependencias de agentes de IA
 ├── 📄 serve_app.py                  # Servidor local de desarrollo (puerto 8080, estáticos, subida CSV, proxies)
+├── 📄 clean_data.bat                 # Wrapper rápido en raíz para limpieza y reseteo seguro del sistema
 ├── 📄 nginx.conf                    # Configuración de Nginx (copia activa en /infocodes/nginx/conf/nginx.conf)
 │
 ├── 📁 converters/                   # Todo el código Python (CLI, lógica core, tests, docs, specs)
@@ -54,7 +55,11 @@ converters/
 │   ├── validate_kpis.py             # Valida el cálculo de KPIs contra el dataset
 │   ├── upload_csv.py                # Invocado por serve_app.py para la subida interactiva
 │   ├── generate_postmortem_report.py # Generación de informes ejecutivos PowerPoint
-│   └── test_performance.py          # Benchmark y métricas de procesamiento
+│   ├── test_performance.py          # Benchmark y métricas de procesamiento
+│   ├── ingestion_logger.py          # Trazabilidad y auditoría de ingesta y completitud (ingestion_audit.log)
+│   ├── retry_epsilon_ia.py          # Reintento y refresco selectivo de Resumen IA
+│   ├── evaluate_incident_notifications.py # Triaje ITIL, SLAs y catálogo de emergencias
+│   └── update_agent_message.py      # Persistencia de comunicados para Dirección
 │
 ├── src/csv_to_json/                 # Lógica de conversión (paquete modular)
 │   ├── converter.py                 # Orquestador de incidencias masivas
@@ -132,11 +137,13 @@ El tratamiento de los datos difiere deliberadamente entre el desarrollo local y 
 
 ```text
 Estructura de Datos:
-├── input/                      # Archivos CSV origen (subidos manualmente o por endpoint /api/upload)
-├── output/                     # Archivos JSON convertidos (*-massive.json, *-postmortem.json, index.json, agents_catalog.json, high_priority_notifications.json)
+├── input/                      # Archivos CSV origen (subidos manualmente o por endpoint /api/upload; scheduled_changes_pap.json protegido)
+├── output/                     # JSONs convertidos (*-massive.json, index.json, high_priority_notifications.json, ingestion_audit_summary.json)
 ├── reports/                    # Informes generados (presentaciones PowerPoint ejecutivas .pptx)
+├── logs/                       # Trazas de auditoría de ingesta en disco (ingestion_audit.log)
 ├── errors/                     # Informes de errores y discrepancias de validación por CSV
 ├── archive/                    # Archivos históricos archivados
+├── .epsilon_cache/             # Caché local en disco de respuestas semánticas de Epsilon IA
 └── agent_executive_messages.json # Almacén persistente acumulativo de redacciones del agente incident-reporter
 ```
 
@@ -157,6 +164,9 @@ scripts/
 ├── rollback.sh              # Reversión instantánea a backups preventivos o releases previas en VPS
 ├── generate-dashboards.sh   # Cron de procesamiento batch de CSVs a JSON en el VPS
 ├── deploy.sh                # Script informativo en servidor (orienta hacia status.sh o despliegue local)
+├── clean_system_data.py     # Script de purga segura y reseteo del sistema (--dry-run, --yes, --keep-cache)
+├── clean_system_data.bat    # Wrapper batch de limpieza para Windows
+├── clean_system_data.ps1    # Wrapper PowerShell de limpieza con control de errores
 └── README.md                # Referencia detallada de parámetros, crontab y diagnósticos
 ```
 

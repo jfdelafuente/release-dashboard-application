@@ -94,6 +94,7 @@ flowchart TD
 | **Reportes de Incidencias** | `/dashboards/reportes-incidencias/` | `GET /api/reports`<br/>`POST /api/reports`<br/>`GET /api/reports/{id}`<br/>`PUT /api/reports/{id}`<br/>`DELETE /api/reports/{id}`<br/>`POST /api/reports/{id}/duplicate?new_week={week}`<br/>`GET /api/reports/{id}/export`<br/>`GET /api/reports/{id}/legacy-pptx`<br/>`GET /api/health` |
 | **Catálogo de Agentes IA** | `/dashboards/agents-catalog/` | `GET /api/agents-catalog`<br/>`GET /data/output/agents_catalog.json` (fallback estático) |
 | **Gestión de Problemas** | `/problemas` | `GET /api/dashboard` (Jira)<br/>`POST /api/reports/executive-incident`<br/>`GET /api/reports/executive-incident/{ref}/status`<br/>`GET /api/reports/executive-incident/{ref}`<br/>`GET /api/healthz` y `GET /api/readyz` |
+| **Consola de Emergencias IT (Cockpit)** | `/dashboards/incident-manager-monitor/` | `GET /api/incident-manager/pending`<br/>`GET /api/logs/ingestion`<br/>`POST /api/ingestion/retry-ia` (alias `/api/epsilon/retry`)<br/>`GET /data/output/high_priority_notifications.json`<br/>`GET /data/output/ingestion_audit_summary.json` |
 | **Barra Superior Unificada** | *Compartida en todos* | `GET /api/health` (fallback a `GET /healthz`) |
 
 ---
@@ -305,6 +306,42 @@ Invocada por el cliente [`dashboards/reportes-incidencias/api-client.js`](file:/
       "version": "1.0.0",
       "source": "biblioteca-agentes"
     }
+  }
+  ```
+
+---
+
+### 10. Auditoría de Ingesta y Telemetría Semántica
+
+#### `GET /api/logs/ingestion`
+* **Invocado por**: Consola de Auditoría y Telemetría IA en el Cockpit del Incident Manager (<kbd>Shift</kbd> + <kbd>I</kbd>).
+* **Parámetros**: `?lines=N` (número de líneas a leer desde el final del log; por defecto `100`, máximo `1000`).
+* **Propósito**: Devuelve en tiempo real las últimas líneas de [`data/logs/ingestion_audit.log`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/data/logs/ingestion_audit.log) para diagnóstico de la carga de ficheros CSV, tiempos de conversión, llamadas a Epsilon y estado de enriquecimiento.
+* **Respuesta (`200 OK`)**: Texto plano estructurado (`text/plain; charset=utf-8`) o JSON envelope conteniendo las trazas.
+
+#### `POST /api/ingestion/retry-ia` (alias: `POST /api/epsilon/retry`)
+* **Invocado por**: Botón *"Forzar Refresco / Reintentar Resumen IA"* en la Consola de Auditoría.
+* **Payload JSON (opcional)**:
+  ```json
+  {
+    "incident_ids": ["INC000004167733", "INC000004152079"],
+    "force": true
+  }
+  ```
+* **Propósito**: Relanza de forma controlada el enriquecimiento semántico mediante Epsilon IA para aquellas incidencias activas que hayan quedado en estado `PARCIAL` o `INCOMPLETA` (por errores transitorios de red o timeouts).
+* **Comportamiento**:
+  1. Filtra automáticamente las incidencias en estado terminal (evitando peticiones redundantes).
+  2. Consulta Epsilon IA actualizando la caché local en `.epsilon_cache/`.
+  3. Regenera [`data/output/high_priority_notifications.json`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/data/output/high_priority_notifications.json) y [`data/output/ingestion_audit_summary.json`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/data/output/ingestion_audit_summary.json).
+  4. Registra el detalle del reintento en `data/logs/ingestion_audit.log`.
+* **Respuesta (`200 OK`)**:
+  ```json
+  {
+    "success": true,
+    "message": "Reintento de Resumen IA ejecutado correctamente",
+    "processed_count": 18,
+    "enriched_count": 18,
+    "failed_count": 0
   }
   ```
 

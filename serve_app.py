@@ -8,6 +8,7 @@ import os
 import re
 import json
 import sys
+import time
 import http.server
 import socketserver
 import urllib.parse
@@ -284,6 +285,8 @@ class CustomHTTPHandler(http.server.SimpleHTTPRequestHandler):
             self.handle_executive_report_generate()
         elif self.path == '/api/incident-manager/save-message' or self.path.startswith('/api/incident-manager/save-message?'):
             self.handle_incident_manager_save_message()
+        elif self.path in ('/api/ingestion/retry-ia', '/api/epsilon/retry') or self.path.split('?')[0].rstrip('/') in ('/api/ingestion/retry-ia', '/api/epsilon/retry'):
+            self.handle_ingestion_retry_ia()
         else:
             self.send_error(404, "Not Found")
 
@@ -365,14 +368,21 @@ class CustomHTTPHandler(http.server.SimpleHTTPRequestHandler):
         csv_path.write_bytes(file_bytes)
         print(f"  Guardado: {csv_path} ({len(file_bytes)} bytes)")
 
-        result = run_upload(csv_path, dashboard_type, PROJECT_ROOT, release_name)
+        t0 = time.perf_counter()
+        import upload_csv
+        import importlib
+        importlib.reload(upload_csv)
+        result = upload_csv.run_upload(csv_path, dashboard_type, PROJECT_ROOT, release_name, wait_eval=False)
+        elapsed = time.perf_counter() - t0
 
         if not result['success']:
             print(f"  Error de conversión: {result.get('details', result.get('error'))}")
             self._send_json(500, result)
             return
 
-        print(f"  Conversión OK: {filename}")
+        print(f"  Conversión OK: {filename} ({elapsed:.3f}s)")
+        if result.get('background_tasks'):
+            print(f"  [Segundo Plano] Tareas lanzadas: {result.get('background_tasks')}")
         self._send_json(200, result)
 
     def handle_report_download(self):
@@ -730,6 +740,118 @@ class CustomHTTPHandler(http.server.SimpleHTTPRequestHandler):
             print(f"  Error guardando mensaje de agente: {e}")
             self._send_json(500, {'success': False, 'error': str(e)})
 
+    def handle_ingestion_logs(self):
+        """Devuelve el resumen estructurado y las últimas trazas del log de auditoría de ingesta."""
+        try:
+            summary_path = STORAGE_DIR / 'output' / 'ingestion_audit_summary.json'
+            if not summary_path.exists():
+                summary_path = PROJECT_ROOT / 'data' / 'output' / 'ingestion_audit_summary.json'
+
+            log_path = STORAGE_DIR / 'logs' / 'ingestion_audit.log'
+            if not log_path.exists():
+                log_path = PROJECT_ROOT / 'data' / 'logs' / 'ingestion_audit.log'
+
+            summary_data = None
+            if summary_path.exists():
+                try:
+                    with open(summary_path, 'r', encoding='utf-8') as f:
+                        summary_data = json.load(f)
+                except Exception as e:
+                    print(f"  Error leyendo resumen de auditoría: {e}")
+
+            log_tail = []
+            if log_path.exists():
+                try:
+                    with open(log_path, 'r', encoding='utf-8', errors='replace') as f:
+                        lines = f.readlines()
+                        log_tail = lines[-200:]
+                except Exception as e:
+                    print(f"  Error leyendo log de auditoría: {e}")
+
+            self._send_json(200, {
+                'success': True,
+                'has_summary': summary_data is not None,
+                'has_log': log_path.exists(),
+                'summary': summary_data,
+                'log_tail': "".join(log_tail),
+            })
+        except Exception as e:
+            self._send_json(500, {'success': False, 'error': str(e)})
+
+    def handle_ingestion_retry_ia(self):
+        """Relanza la obtención de Resumen IA en Epsilon para incidencias con error o todas si se fuerza."""
+        try:
+            content_length = int(self.headers.get('Content-Length', 0))
+            raw_body = self.rfile.read(content_length).decode('utf-8') if content_length > 0 else '{}'
+            payload = json.loads(raw_body) if raw_body.strip() else {}
+
+            target_incidents = payload.get('incidents', [])
+            force = bool(payload.get('force', False))
+            all_active = bool(payload.get('all', False))
+
+            try:
+                from converters.cli.retry_epsilon_ia import (
+                    retry_incidents,
+                    find_missing_epsilon_incidents,
+                    find_all_active_incident_codes,
+                    CORPORATE_EPSILON_URL,
+                    LOCAL_PROXY_URL
+                )
+            except ImportError:
+                sys.path.insert(0, str(PROJECT_ROOT))
+                from converters.cli.retry_epsilon_ia import (
+                    retry_incidents,
+                    find_missing_epsilon_incidents,
+                    find_all_active_incident_codes,
+                    CORPORATE_EPSILON_URL,
+                    LOCAL_PROXY_URL
+                )
+
+            if not target_incidents:
+                if all_active or force:
+                    target_incidents = find_all_active_incident_codes(PROJECT_ROOT)
+                else:
+                    target_incidents = find_missing_epsilon_incidents(PROJECT_ROOT)
+
+            if not target_incidents:
+                self._send_json(200, {
+                    'success': True,
+                    'message': 'Todas las incidencias activas ya cuentan con Resumen IA. No hay pendientes de sincronización.',
+                    'count': 0,
+                    'results': {'success': [], 'failed': [], 'skipped_cached': []}
+                })
+                return
+
+            candidate_urls = [CORPORATE_EPSILON_URL, LOCAL_PROXY_URL]
+            results = retry_incidents(
+                incident_codes=target_incidents,
+                base_urls=candidate_urls,
+                force=force,
+                re_evaluate=True,
+                project_root=PROJECT_ROOT,
+            )
+
+            # Cargar resumen de auditoría actualizado
+            summary_path = PROJECT_ROOT / 'data' / 'output' / 'ingestion_audit_summary.json'
+            summary_data = None
+            if summary_path.exists():
+                try:
+                    with open(summary_path, 'r', encoding='utf-8') as f:
+                        summary_data = json.load(f)
+                except Exception:
+                    pass
+
+            self._send_json(200, {
+                'success': True,
+                'message': f"Relanzamiento finalizado: {len(results.get('success', []))} recuperadas, {len(results.get('skipped_cached', []))} ya cacheadas, {len(results.get('failed', []))} fallidas.",
+                'count': len(target_incidents),
+                'results': results,
+                'summary': summary_data,
+            })
+        except Exception as e:
+            self._send_json(500, {'success': False, 'error': str(e)})
+
+
     def _send_json(self, status, payload):
         body = json.dumps(payload, ensure_ascii=False).encode('utf-8')
         self.send_response(status)
@@ -762,6 +884,11 @@ class CustomHTTPHandler(http.server.SimpleHTTPRequestHandler):
 
         if self.path == '/api/incident-manager/pending' or self.path.startswith('/api/incident-manager/pending?'):
             self.handle_incident_manager_pending()
+            return
+
+        clean_path = self.path.split('?')[0].rstrip('/')
+        if clean_path == '/api/logs/ingestion' or self.path == '/api/logs/ingestion' or self.path.startswith('/api/logs/ingestion?'):
+            self.handle_ingestion_logs()
             return
 
         if self.path == '/api/incident-manager/emergency-cockpit' or self.path.startswith('/api/incident-manager/emergency-cockpit?'):

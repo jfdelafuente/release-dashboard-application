@@ -58,14 +58,40 @@ def test_run_upload_massive_triggers_notifications_evaluator(tmp_path):
     csv_file = tmp_path / "test.csv"
     csv_file.write_text("a,b,c", encoding="utf-8")
 
-    with patch("subprocess.run") as mock_run:
+    with patch("subprocess.run") as mock_run, patch("subprocess.Popen") as mock_popen:
         mock_run.return_value = MagicMock(returncode=0, stdout="ok", stderr="")
+        mock_popen.return_value = MagicMock()
         res = run_upload(csv_file, "massive", project_root=tmp_path)
 
         assert res["success"] is True
-        assert mock_run.call_count == 2
-        eval_args = mock_run.call_args_list[1][0][0]
+        assert mock_run.call_count == 1
+        assert mock_popen.call_count == 1
+        eval_args = mock_popen.call_args_list[0][0][0]
         assert Path(eval_args[1]) == eval_script
+        assert res.get("background_tasks") == ["incident_notifications_evaluation"]
+
+
+def test_run_upload_massive_with_wait_eval(tmp_path):
+    cli_dir = tmp_path / "converters" / "cli"
+    cli_dir.mkdir(parents=True, exist_ok=True)
+    custom_converter = cli_dir / CONVERTER_SCRIPTS["massive"]
+    custom_converter.write_text("# mock converter", encoding="utf-8")
+    eval_script = cli_dir / "evaluate_incident_notifications.py"
+    eval_script.write_text("# mock eval", encoding="utf-8")
+
+    csv_file = tmp_path / "test.csv"
+    csv_file.write_text("a,b,c", encoding="utf-8")
+
+    with patch("subprocess.run") as mock_run, patch("subprocess.Popen") as mock_popen:
+        mock_proc = MagicMock()
+        mock_popen.return_value = mock_proc
+        mock_run.return_value = MagicMock(returncode=0, stdout="ok", stderr="")
+        res = run_upload(csv_file, "massive", project_root=tmp_path, wait_eval=True)
+
+        assert res["success"] is True
+        assert mock_run.call_count == 1
+        assert mock_popen.call_count == 1
+        mock_proc.wait.assert_called_once_with(timeout=60)
 
 
 def test_run_upload_not_found_returns_error(tmp_path):
@@ -77,4 +103,20 @@ def test_run_upload_not_found_returns_error(tmp_path):
         res = run_upload(csv_file, "invalid", project_root=tmp_path)
         assert res["success"] is False
         assert "Converter no encontrado" in res["error"]
+
+
+def test_run_upload_converter_failure_returns_error(tmp_path):
+    cli_dir = tmp_path / "converters" / "cli"
+    cli_dir.mkdir(parents=True, exist_ok=True)
+    custom_converter = cli_dir / CONVERTER_SCRIPTS["massive"]
+    custom_converter.write_text("# mock converter", encoding="utf-8")
+
+    csv_file = tmp_path / "test.csv"
+    csv_file.write_text("a,b,c", encoding="utf-8")
+
+    with patch("subprocess.run") as mock_run:
+        mock_run.return_value = MagicMock(returncode=1, stdout="error syntax", stderr="details")
+        res = run_upload(csv_file, "massive", project_root=tmp_path)
+        assert res["success"] is False
+        assert "falló la conversión" in res["error"]
 

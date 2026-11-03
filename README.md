@@ -81,6 +81,7 @@ El directorio [`dashboards/`](dashboards/) aloja las interfaces web estáticas d
 - **[KPIs de Release](dashboards/release-kpis/)** (`dashboards/release-kpis/`): Serie histórica comparativa de métricas de calidad, incidencias y estabilidad entre distintas releases.
 - **[Reportes de Incidencias](dashboards/reportes-incidencias/)** (`dashboards/reportes-incidencias/`): Frontend del editor y visor de reportes semanales de incidencias de Orange. Incluye catálogo histórico (`index.html`), editor interactivo con selector de marcas (`editor.html`) y vista previa con exportación a PDF y PowerPoint (`preview.html`). Se comunica vía API REST con el backend FastAPI de `cso-incident-masivas-report`.
 - **[Catálogo de Agentes IA y Skills](dashboards/agents-catalog/)** (`dashboards/agents-catalog/`): Catálogo interactivo de agentes de IA y habilidades técnicas (*skills*) de la biblioteca corporativa. Incluye cabecera sobria y unificada con los dashboards hermanos, filtrado facetado por dominio tecnológico, buscador en tiempo real, visor modal de fichas técnicas completas con renderizado Markdown y generador en un clic de comandos CLI de despliegue (`.\deploy-agents.cmd`). Regenerado automáticamente desde `biblioteca-agentes` en cada despliegue a producción. Conectado a `GET /api/agents-catalog` con fallback estático.
+- **[Consola de Emergencias IT · Cockpit Operativo](dashboards/incident-manager-monitor/)** (`dashboards/incident-manager-monitor/`): Cockpit táctico del Incident Manager para turnos de guardia 24x7. Triaje ITIL objetivo según la matriz de 6 procesos críticos de Orange, cronómetros anti-drift con alertas de escalado telefónico obligatorio (45m resolutores / 105m Dirección y CSO), gobernanza estricta de *workarounds* con bloqueo de desescalada, asistente de comunicados ejecutivos (≤90 palabras para Dirección y ≤30 palabras breves) y reporte oficial en 4 bloques. Incluye atajos de teclado globales (<kbd>F</kbd>, <kbd>Shift</kbd>+<kbd>H</kbd>, <kbd>Shift</kbd>+<kbd>M</kbd>, <kbd>Shift</kbd>+<kbd>U</kbd>, <kbd>Esc</kbd>) y la **Consola de Auditoría de Carga & Telemetría IA** (<kbd>Shift</kbd>+<kbd>I</kbd> o <kbd>Shift</kbd>+<kbd>C</kbd>).
 
 > **Integración con otros sistemas**: Desde el Portal y la barra superior compartida también se enlaza a **Gestión de Problemas** (`/problemas`), aplicación servida por el backend de otro repositorio hermano en el mismo servidor VPS.
 
@@ -313,7 +314,7 @@ release-dashboard-application/
 │   ├── tests/                    # Tests unitarios JavaScript para lógica de dashboards
 │   └── assets/                   # Logos corporativos, tokens.css, topbar.css/js, resumen-ia.css/js
 ├── converters/                   # Módulo Python de conversión CSV→JSON y reporting
-│   ├── cli/                      # convert_incidents.py, convert_postmortems.py, build_index.py, build_agents_catalog.py, etc.
+│   ├── cli/                      # convert_incidents.py, evaluate_incident_notifications.py, ingestion_logger.py, retry_epsilon_ia.py...
 │   ├── src/csv_to_json/          # Lógica de conversión (encoding, normalización, validación)
 │   ├── src/report_generator/     # Motor de generación de presentaciones PPTX
 │   ├── scripts/bin/              # Wrappers .bat/.sh para los CLI
@@ -360,6 +361,29 @@ Genera bajo demanda presentaciones PowerPoint corporativas (`.pptx`) con el dise
 - **UI en Gestión de Problemas**: Botón `📊 Generar PPT` en cada incidencia en `/problemas`.
 - **CLI**: `python converters/cli/generate_executive_report.py --ref <CODIGO> --title "<TITULO>"`
 - **Detalles y arquitectura**: Ver [docs/05-postmortem-y-reportes/informe-ejecutivo-postmortem.md](docs/05-postmortem-y-reportes/informe-ejecutivo-postmortem.md).
+
+---
+
+## 🧽 Saneamiento y Purga Segura de Datos (`clean_data.bat`)
+
+Para restablecer el sistema a un estado limpio y comenzar a subir ficheros nuevos sin mezclar datos de pruebas ni históricos antiguos, se dispone del script oficial de purga segura:
+
+```powershell
+# 1. Simulación preventiva (Dry Run) sin modificar disco:
+.\clean_data.bat --dry-run
+
+# 2. Ejecución con confirmación interactiva:
+.\clean_data.bat
+
+# 3. Ejecución directa desatendida:
+.\clean_data.bat --yes
+```
+
+* **Qué se elimina:** CSVs temporales en `data/input/*.csv`, datasets convertidos `data/output/*-massive.json`, `data/output/*-postmortem.json`, históricos en `data/archive/`, reportes de error en `data/errors/`, informes generados en `data/reports/*.pptx` y caché en `data/.epsilon_cache/` (salvo `--keep-cache`).
+* **Qué se resetea:** `index.json`, `active_incidents.json`, `high_priority_notifications.json`, `ingestion_audit_summary.json`, `agent_executive_messages.json` y el log de auditoría `data/logs/ingestion_audit.log`.
+* **🔒 Archivos Estrictamente Protegidos (NUNCA se borran ni modifican):**
+  * `data/input/scheduled_changes_pap.json` (calendario corporativo PaP).
+  * `data/output/agents_catalog.json` (catálogo oficial de agentes IA).
 
 ---
 

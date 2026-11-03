@@ -59,11 +59,16 @@ if [ -n "$DATA_DIR" ]; then
     if [ -d "/infocodes/var/storage/executive_pptx" ]; then
         EXEC_COUNT=$(find "/infocodes/var/storage/executive_pptx" -name "*.pptx" 2>/dev/null | wc -l)
     fi
+    AUDIT_LOG_SIZE="0 B"
+    if [ -f "$DATA_DIR/logs/ingestion_audit.log" ]; then
+        AUDIT_LOG_SIZE=$(du -h "$DATA_DIR/logs/ingestion_audit.log" 2>/dev/null | cut -f1)
+    fi
     echo "Datos persistentes ($DATA_DIR):"
     echo "  - Input CSVs       : $CSV_COUNT"
     echo "  - Output JSONs     : $JSON_COUNT"
     echo "  - Informes Release : $PPTX_COUNT"
     echo "  - Informes Ejecutivos (/infocodes/var/storage/executive_pptx): $EXEC_COUNT"
+    echo "  - Log Auditoría Ingesta: $AUDIT_LOG_SIZE"
 fi
 
 echo ""
@@ -88,6 +93,8 @@ check_endpoint "Postmortem" "http://localhost:8081/dashboards/postmortem/"
 check_endpoint "Release KPIs" "http://localhost:8081/dashboards/release-kpis/"
 check_endpoint "Reportes Incidencias" "http://localhost:8081/dashboards/reportes-incidencias/"
 check_endpoint "Monitor Incident Manager" "http://localhost:8081/dashboards/incident-manager-monitor/"
+check_endpoint "Consola Triaje Emergencias" "http://localhost:8081/dashboards/emergency-triage-console/"
+check_endpoint "Auditoría de Ingesta" "http://localhost:8081/data/output/ingestion_audit_summary.json"
 check_endpoint "Catálogo de Agentes IA" "http://localhost:8081/dashboards/agents-catalog/"
 check_endpoint "Proxy API Epsilon" "http://localhost:8081/api/epsilon/resumenIA/INC000004141215"
 check_endpoint "Backend CSO Health" "http://localhost:8081/api/health"
