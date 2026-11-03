@@ -81,6 +81,12 @@
             <span aria-hidden="true">📘</span>
             <span>Criterios Oficiales</span>
           </button>
+
+          <!-- Botón de Traspaso de Guardia en 1 Clic (US-04 Usabilidad) -->
+          <button id="btn-shift-handover" class="triage-btn triage-btn-handover" title="Generar Informe de Traspaso de Guardia en 1 Clic (Shift Handover)">
+            <span aria-hidden="true">📋</span>
+            <span>Traspaso de Guardia</span>
+          </button>
         </div>
       </div>
 
@@ -289,6 +295,11 @@
             <button type="button" class="triage-footer-link-btn" id="footer-btn-matrices" title="Abrir directorio de guardias y matrices de contacto">
               <span aria-hidden="true">📡</span>
               <span>Matrices de Contacto (GRIAL/MM)</span>
+              <span aria-hidden="true">➔</span>
+            </button>
+            <button type="button" class="triage-footer-link-btn" id="footer-btn-handover" title="Generar Informe de Traspaso de Guardia en 1 Clic (Shift Handover)">
+              <span aria-hidden="true">📋</span>
+              <span>Informe Traspaso Guardia</span>
               <span aria-hidden="true">➔</span>
             </button>
           </div>
@@ -770,6 +781,12 @@
             <!-- Entradas inyectadas dinámicamente -->
           </div>
 
+          <!-- Banner de Borrador de Bitácora Recuperado (US-03) -->
+          <div id="orch-log-draft-alert" class="draft-recovered-banner" style="display: none;">
+            <span>💾 <strong>Borrador recuperado:</strong> Se ha restaurado la anotación pendiente en la bitácora.</span>
+            <button type="button" id="btn-discard-log-draft" class="draft-discard-btn">Descartar</button>
+          </div>
+
           <!-- Formulario de Nuevo Hito -->
           <form class="orch-log-form" id="orch-log-form">
             <div class="orch-log-form-row">
@@ -903,6 +920,12 @@
             <span class="comms-meta-k">Duración Total / Envejecimiento:</span>
             <span class="comms-meta-v" id="tpl-meta-duracion">-</span>
           </div>
+        </div>
+
+        <!-- Banner de Borrador de Plantilla Ejecutiva Recuperado (US-03) -->
+        <div id="tpl-draft-alert" class="draft-recovered-banner" style="display: none; margin-bottom: 12px;">
+          <span>💾 <strong>Borrador recuperado:</strong> Se han restaurado tus modificaciones previas en este comunicado.</span>
+          <button type="button" id="btn-discard-tpl-draft" class="draft-discard-btn">Restaurar Plantilla Original</button>
         </div>
 
         <!-- Editores de Plantilla en Doble Nivel Normativo -->
@@ -1188,6 +1211,38 @@
 
       </div>
 
+    </div>
+  </div>
+
+  <!-- Modal de Informe de Traspaso de Guardia en 1 Clic (US-04 Usabilidad) -->
+  <div id="modal-shift-handover" class="triage-modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="modal-handover-title">
+    <div class="triage-modal-dialog" style="max-width: 860px;">
+      <div class="triage-modal-header" style="background: rgba(14, 165, 233, 0.08); border-bottom: 2px solid #0284C7;">
+        <h2 id="modal-handover-title" class="triage-modal-title" style="color: #0369A1;">
+          <span>📋 Informe Oficial de Traspaso de Guardia (Shift Handover)</span>
+        </h2>
+        <button id="btn-modal-handover-close" class="triage-btn" aria-label="Cerrar ventana de traspaso">✖</button>
+      </div>
+      <div class="triage-modal-body" style="padding: 20px;">
+        <div class="handover-modal-intro" style="margin-bottom: 14px; font-size: 12.5px; color: var(--triage-text-muted); line-height: 1.45;">
+          <span>Este informe compila automáticamente el estado en tiempo real de todas las incidencias SL1 activas, discrepancias detectadas, estado de los relojes normativos (45m/105m), workarounds autorizados y cambios PaP para el relevo de turno de Incident Management y CCO.</span>
+        </div>
+        <div class="handover-actions-bar" style="display: flex; gap: 10px; margin-bottom: 12px; align-items: center; justify-content: space-between; flex-wrap: wrap;">
+          <div style="font-size: 12px; font-weight: 700; color: var(--triage-text);">
+            <span id="handover-meta-summary">Compilando datos de la guardia...</span>
+          </div>
+          <div style="display: flex; gap: 8px;">
+            <button id="btn-handover-copy" class="triage-btn triage-btn-primary" style="display: inline-flex; align-items: center; gap: 6px; background: #0284C7; border-color: #0284C7;">
+              <span>📋</span> Copiar Informe Markdown
+            </button>
+          </div>
+        </div>
+        <textarea id="handover-report-text" class="comms-textarea" rows="18" style="font-family: var(--font-mono, monospace); font-size: 11.5px; line-height: 1.5; width: 100%; white-space: pre-wrap;" readonly></textarea>
+      </div>
+      <div class="triage-modal-footer" style="padding: 14px 20px; display: flex; justify-content: flex-end; gap: 10px; border-top: 1px solid var(--triage-border);">
+        <button id="btn-modal-handover-close-bottom" class="triage-btn">Cerrar</button>
+        <button id="btn-handover-copy-bottom" class="triage-btn triage-btn-primary" style="background: #0284C7; border-color: #0284C7;"><span>📋</span> Copiar y Cerrar</button>
+      </div>
     </div>
   </div>
 

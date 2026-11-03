@@ -216,7 +216,24 @@
     commsPlatformDirectLink: document.getElementById('comms-platform-direct-link'),
     contactsSearchInput: document.getElementById('contacts-search-input'),
     contactsDomainPills: document.getElementById('contacts-domain-pills'),
-    contactsCardsGrid: document.getElementById('contacts-cards-grid')
+    contactsCardsGrid: document.getElementById('contacts-cards-grid'),
+
+    // Traspaso de Guardia en 1 Clic (US-04 Usabilidad)
+    btnShiftHandover: document.getElementById('btn-shift-handover'),
+    footerBtnHandover: document.getElementById('footer-btn-handover'),
+    modalShiftHandover: document.getElementById('modal-shift-handover'),
+    btnModalHandoverClose: document.getElementById('btn-modal-handover-close'),
+    btnModalHandoverCloseBottom: document.getElementById('btn-modal-handover-close-bottom'),
+    btnHandoverCopy: document.getElementById('btn-handover-copy'),
+    btnHandoverCopyBottom: document.getElementById('btn-handover-copy-bottom'),
+    handoverReportText: document.getElementById('handover-report-text'),
+    handoverMetaSummary: document.getElementById('handover-meta-summary'),
+
+    // Banners de Borrador Recuperado (US-03 Continuidad Operativa)
+    orchLogDraftAlert: document.getElementById('orch-log-draft-alert'),
+    btnDiscardLogDraft: document.getElementById('btn-discard-log-draft'),
+    tplDraftAlert: document.getElementById('tpl-draft-alert'),
+    btnDiscardTplDraft: document.getElementById('btn-discard-tpl-draft')
   };
 
   // --- Utilidades ---
@@ -422,6 +439,7 @@
 
     // Renderizar Feed de Triaje (Vista Tabular con Filas Plegables)
     renderFeed();
+    updateBrowserTitleAndFavicon();
   }
 
   function updateRelativeTimeDisplay() {
@@ -1351,9 +1369,31 @@ Proceder con la ejecución inmediata del procedimiento de Rollback. Confirmar in
       dom.tplMetaDuracion.title = data.meta.duracion;
     }
 
+    // Comprobar si existe borrador guardado en LocalStorage (US-03 Zero-Data-Loss)
+    let hasDraft = false;
+    let textCompleto = data.completo;
+    let textBreve = data.breve;
+
+    try {
+      const draftComp = localStorage.getItem(`triage_draft_tpl_comp_${inc.id}_${phase}`);
+      const draftBrev = localStorage.getItem(`triage_draft_tpl_brev_${inc.id}_${phase}`);
+      if (draftComp !== null && draftComp.trim() !== '' && draftComp !== data.completo) {
+        textCompleto = draftComp;
+        hasDraft = true;
+      }
+      if (draftBrev !== null && draftBrev.trim() !== '' && draftBrev !== data.breve) {
+        textBreve = draftBrev;
+        hasDraft = true;
+      }
+    } catch (_) {}
+
+    if (dom.tplDraftAlert) {
+      dom.tplDraftAlert.style.display = hasDraft ? 'flex' : 'none';
+    }
+
     // Actualizar textareas
-    if (dom.tplTextCompleto) dom.tplTextCompleto.value = data.completo;
-    if (dom.tplTextBreve) dom.tplTextBreve.value = data.breve;
+    if (dom.tplTextCompleto) dom.tplTextCompleto.value = textCompleto;
+    if (dom.tplTextBreve) dom.tplTextBreve.value = textBreve;
 
     updateWordCounters();
   }
@@ -1524,6 +1564,12 @@ Proceder con la ejecución inmediata del procedimiento de Rollback. Confirmar in
       `Notificación oficial emitida vía canal [${selectedChannel.toUpperCase()}] a ${collectiveLabels.length} colectivos: "${subject}". Despachado por ${state.defaultIncidentManager}.`,
       'role-notificacion'
     );
+
+    // Limpiar borrador guardado tras despacho exitoso (US-03)
+    try {
+      localStorage.removeItem('triage_draft_gw_subj_' + incId);
+      localStorage.removeItem('triage_draft_gw_body_' + incId);
+    } catch (_) {}
 
     renderGatewayHistory(incId);
     showToast('Notificación despachada con éxito a través de Web de Explotación Orange', 'success');
@@ -1703,6 +1749,14 @@ Proceder con la ejecución inmediata del procedimiento de Rollback. Confirmar in
 
     // Renderizar historial de despachos del gateway para este ticket o general
     renderGatewayHistory(effectiveIncId || 'GENERAL');
+
+    // Restaurar borrador de Gateway si existe (US-03 Zero-Data-Loss)
+    try {
+      const draftSubj = localStorage.getItem('triage_draft_gw_subj_' + (effectiveIncId || 'GENERAL'));
+      const draftBody = localStorage.getItem('triage_draft_gw_body_' + (effectiveIncId || 'GENERAL'));
+      if (draftSubj && dom.gwSubject) dom.gwSubject.value = draftSubj;
+      if (draftBody && dom.gwBody) dom.gwBody.value = draftBody;
+    } catch (_) {}
 
     // Renderizar directorio de contactos
     renderContactMatrices(state.activeContactsBrand, dom.contactsSearchInput ? dom.contactsSearchInput.value : '', state.activeContactsDomain);
@@ -1996,6 +2050,20 @@ Proceder con la ejecución inmediata del procedimiento de Rollback. Confirmar in
     getOrInitLog(incId, inc);
     renderTimelineEntries(incId);
 
+    // Restaurar borrador de bitácora no guardado (US-03 Zero-Data-Loss)
+    try {
+      const draftLog = localStorage.getItem('triage_draft_log_' + incId);
+      const draftRole = localStorage.getItem('triage_draft_role_' + incId);
+      if (draftLog && draftLog.trim()) {
+        if (dom.orchLogText) dom.orchLogText.value = draftLog;
+        if (dom.orchLogRole && draftRole) dom.orchLogRole.value = draftRole;
+        if (dom.orchLogDraftAlert) dom.orchLogDraftAlert.style.display = 'flex';
+      } else {
+        if (dom.orchLogText) dom.orchLogText.value = '';
+        if (dom.orchLogDraftAlert) dom.orchLogDraftAlert.style.display = 'none';
+      }
+    } catch (_) {}
+
     // 5. Iniciar Relojes de Escalado
     startOrchestratorClocks(inc);
 
@@ -2111,6 +2179,290 @@ Generado por Consola de Emergencias IT Orange - Motor de Triaje (Módulo 1)`;
 • Canal: Vía Telefónica obligatoria (Regla de Oro en SL1)
 • Hito: Convocatoria N2/N3 (45m) / Dirección IM-CSO (>105m)
 ────────────────────────────────────────────────────────────`;
+  }
+
+  // --------------------------------------------------------------------------
+  // Traspaso de Guardia en 1 Clic (US-04 Usabilidad) y Alertas Dinámicas (US-05)
+  // --------------------------------------------------------------------------
+
+  function getShiftLabel(now = new Date()) {
+    const hour = now.getHours();
+    if (hour >= 7 && hour < 15) {
+      return 'Turno Mañana (07:00 - 15:00) ➔ Relevo con Turno Tarde';
+    } else if (hour >= 15 && hour < 23) {
+      return 'Turno Tarde (15:00 - 23:00) ➔ Relevo con Turno Noche';
+    } else {
+      return 'Turno Noche (23:00 - 07:00) ➔ Relevo con Turno Mañana';
+    }
+  }
+
+  function buildShiftHandoverReport() {
+    const now = new Date();
+    const nowFormatted = now.toLocaleString('es-ES', {
+      day: '2-digit', month: '2-digit', year: 'numeric',
+      hour: '2-digit', minute: '2-digit', second: '2-digit'
+    });
+    const shiftLabel = getShiftLabel(now);
+
+    const activeIncidents = (state.incidents || []).filter(i => !isTerminalStatus(i.estatus || i.estado || i.status));
+    const activeSL1 = activeIncidents.filter(i => i.prioridad_sugerida === 'P1');
+    const activeSL2 = activeIncidents.filter(i => i.prioridad_sugerida === 'P2');
+    const discrepancies = activeIncidents.filter(i => i.es_discrepancia);
+    const workarounds = activeIncidents.filter(i => i.workaround || i.workaround_info);
+    const papsCount = (state.paps && Array.isArray(state.paps)) ? state.paps.length : 0;
+
+    let md = `# 📋 INFORME OFICIAL DE TRASPASO DE GUARDIA (SHIFT HANDOVER)\n`;
+    md += `**Fecha y Hora:** ${nowFormatted}\n`;
+    md += `**Turno Operativo:** ${shiftLabel}\n`;
+    md += `**Incident Manager de Guardia (Saliente):** ${state.defaultIncidentManager}\n`;
+    md += `**Fuente de Inspección:** ${state.metadata.source_file || 'high_priority_notifications.json'} (${state.metadata.generated_at || nowFormatted})\n\n`;
+    md += `---\n\n`;
+
+    // 1. Resumen Ejecutivo
+    md += `### 1. RESUMEN EJECUTIVO DE SITUACIÓN\n`;
+    md += `- **Incidencias Activas en Seguimiento:** ${activeIncidents.length}\n`;
+    md += `- **Críticas SL1 / P1 Activas:** ${activeSL1.length}\n`;
+    md += `- **Mayores SL2 / P2 Activas:** ${activeSL2.length}\n`;
+    md += `- **Discrepancias de Triaje (Subescaladas en Remedy):** ${discrepancies.length}\n`;
+    md += `- **Workarounds / Desvíos de Tráfico Autorizados:** ${workarounds.length}\n`;
+    md += `- **Trabajos Programados (PaP / CRQ) Concurrentes:** ${papsCount}\n\n`;
+    md += `---\n\n`;
+
+    // 2. Detalle SL1 Activas
+    md += `### 2. INCIDENCIAS CRÍTICAS SL1 / P1 EN CURSO\n`;
+    if (activeSL1.length === 0) {
+      md += `> ✅ **Sin incidencias SL1 activas.** Todos los servicios core y procesos críticos operan dentro de los parámetros nominales o sin emergencias abiertas al momento del relevo.\n\n`;
+    } else {
+      activeSL1.forEach(inc => {
+        const evaluacion = inc.evaluacion || {};
+        const sistemas = Array.isArray(inc.sistemas) ? inc.sistemas.join(', ') : (inc.sistemas || 'Sistemas Core');
+        const brand = detectIncidentBrand(inc).toUpperCase();
+
+        // Remedy Aging
+        const baseMin = evaluacion.minutos_desde_apertura || 0;
+        const remedyMin = Math.max(0, Math.floor(baseMin + (Date.now() - (state.lastInspectionEpoch || Date.now())) / 60000));
+
+        // Crisis War Room T0
+        let actEpoch = state.orchestratorActivations[inc.id];
+        if (!actEpoch) {
+          try {
+            const st = localStorage.getItem('emergency_activation_' + inc.id);
+            if (st) actEpoch = parseInt(st, 10);
+          } catch (_) {}
+        }
+        const crisisMin = actEpoch ? Math.max(0, Math.floor((Date.now() - actEpoch) / 60000)) : remedyMin;
+
+        // Escalation states
+        let escState = state.orchestratorEscalations[inc.id];
+        if (!escState) {
+          try {
+            const st = localStorage.getItem('emergency_esc_' + inc.id);
+            if (st) escState = JSON.parse(st);
+          } catch (_) {}
+        }
+        escState = escState || {};
+
+        const status45 = escState.esc45Done
+          ? '✅ Confirmado (Escalado N2/N3 ejecutado)'
+          : (crisisMin >= 45 ? `🚨 ALARMA VENCIDA (+${crisisMin - 45} min)` : `⏱️ En tiempo (${45 - crisisMin} min restantes)`);
+
+        const status105 = escState.esc105Done
+          ? '✅ Confirmado (2º Escalado Jerárquico ejecutado)'
+          : (crisisMin >= 105 ? `🚨 ALARMA JERÁRQUICA VENCIDA (+${crisisMin - 105} min)` : `⏱️ En tiempo (${105 - crisisMin} min restantes)`);
+
+        // Last log entry
+        let entries = state.orchestratorLogs[inc.id];
+        if (!entries || entries.length === 0) {
+          try {
+            const st = localStorage.getItem('emergency_log_' + inc.id);
+            if (st) entries = JSON.parse(st);
+          } catch (_) {}
+        }
+        let lastMilestone = 'Sin hitos adicionales registrados en la bitácora.';
+        if (entries && entries.length > 0) {
+          const last = entries[entries.length - 1];
+          lastMilestone = `[${last.time || '--:--'}] ${last.roleLabel || last.role || 'Hito'}: ${last.text}`;
+        }
+
+        const workaroundText = (inc.workaround || inc.workaround_info)
+          ? `⚠️ ACTIVO: ${inc.workaround_info || inc.descripcion_workaround || 'Desvío de tráfico temporal en curso'}`
+          : '❌ Sin workaround activo (Diagnóstico técnico directo hacia causa raíz)';
+
+        md += `#### 🚨 [${inc.id}] ${sistemas} - ${inc.titulo || 'Incidencia Crítica'}\n`;
+        md += `- **Estado Remedy:** ${inc.estatus || 'Asignado'} | **Dominio Marca:** ${brand}\n`;
+        md += `- **Proceso Crítico:** ${evaluacion.proceso || 'Transversal'} | **Impacto:** ${evaluacion.impacto_estimado || 'Crítico'}\n`;
+        md += `- **Dual Clock:**\n`;
+        md += `  - Envejecimiento Global Remedy: **${formatAgingMinutes(remedyMin)}**\n`;
+        md += `  - Reloj Táctico Crisis SL1: **${crisisMin} min**\n`;
+        md += `  - Reloj 45m (Escalado Telefónico N2/N3): **${status45}**\n`;
+        md += `  - Reloj 105m (2º Escalado Jerárquico): **${status105}**\n`;
+        md += `- **War Room Teams:** ${generateTeamsWarRoomUrl(inc.id)}\n`;
+        md += `- **Último Hito en Bitácora:** ${lastMilestone}\n`;
+        md += `- **Workaround / Desvío:** ${workaroundText}\n\n`;
+      });
+    }
+    md += `---\n\n`;
+
+    // 3. Discrepancias Detectadas
+    md += `### 3. DISCREPANCIAS DE TRIAJE DETECTADAS (PENDIENTES DE CORRECCIÓN REMEDY)\n`;
+    if (discrepancies.length === 0) {
+      md += `> ✅ **Sin discrepancias activas.** Todas las incidencias en curso cuentan con la severidad nominal de Remedy alineada con su criticidad técnica real.\n\n`;
+    } else {
+      discrepancies.forEach(d => {
+        const ev = d.evaluacion || {};
+        const sistemas = Array.isArray(d.sistemas) ? d.sistemas.join(', ') : (d.sistemas || 'Sistemas Core');
+        md += `- **[${d.id}]** Registrada en Remedy como **${d.prioridad_original || d.prioridad || 'P3/P4'}** ➔ Prioridad Real Requerida: **${d.prioridad_sugerida}**\n`;
+        md += `  - **Sistema:** ${sistemas} | **Título:** ${d.titulo}\n`;
+        md += `  - **Motivo de Subescalación:** ${ev.criterio_aplicado || d.regla_discrepancia || 'Umbral de Proceso Crítico o Regla de Oro N1 superados'}\n`;
+      });
+      md += `\n`;
+    }
+    md += `---\n\n`;
+
+    // 4. Workarounds Activos
+    md += `### 4. WORKAROUNDS Y MITIGACIONES OPERATIVAS EN VIGOR\n`;
+    if (workarounds.length === 0) {
+      md += `> ℹ️ **No hay workarounds provisionales activos.** No se registran desvíos de tráfico, bypass de pasarelas ni procedimientos de contingencia activos.\n\n`;
+    } else {
+      workarounds.forEach(w => {
+        md += `- **[${w.id}]**: ${w.workaround_info || w.descripcion_workaround || 'Contramedida provisional autorizada por IM-CSO.'}\n`;
+      });
+      md += `\n`;
+    }
+    md += `---\n\n`;
+
+    // 5. Monitor PaP
+    md += `### 5. TRABAJOS PROGRAMADOS (PaP / CRQ) EN VENTANA DE RIESGO\n`;
+    if (!state.paps || state.paps.length === 0) {
+      md += `> ℹ️ **Sin trabajos programados PaP concurrentes** registrados con posible correlación en la ventana actual.\n\n`;
+    } else {
+      state.paps.forEach(p => {
+        md += `- **[${p.crq}]** ${p.titulo}\n`;
+        md += `  - **Estado:** ${p.estado || 'En curso'} | **Ventana:** ${p.ventana || 'Activa'} | **Rollback Estimado:** ${p.tiempo_rollback_estimado || '15 min'}\n`;
+      });
+      md += `\n`;
+    }
+    md += `---\n`;
+    md += `*Informe generado automáticamente por la Consola de Triaje y Reclasificación IT · Orange Tech Operations*\n`;
+
+    const summaryText = `📊 ${activeSL1.length} SL1 activas · ${discrepancies.length} discrepancias · ${workarounds.length} workarounds · ${shiftLabel.split(' ➔ ')[0]}`;
+
+    return { reportMarkdown: md, summaryText };
+  }
+
+  function openShiftHandoverModal() {
+    if (!dom.modalShiftHandover) return;
+    const { reportMarkdown, summaryText } = buildShiftHandoverReport();
+
+    if (dom.handoverReportText) {
+      dom.handoverReportText.value = reportMarkdown;
+    }
+    if (dom.handoverMetaSummary) {
+      dom.handoverMetaSummary.textContent = summaryText;
+    }
+
+    copyToClipboard(reportMarkdown, '📋 Informe de Traspaso de Guardia generado y copiado al portapapeles');
+    dom.modalShiftHandover.classList.add('open');
+  }
+
+  function closeShiftHandoverModal() {
+    if (dom.modalShiftHandover) {
+      dom.modalShiftHandover.classList.remove('open');
+    }
+  }
+
+  // --- Alertas Dinámicas en Título de Pestaña y Favicon SVG (US-05) ---
+
+  let currentFaviconStatus = null;
+
+  function updateDynamicFavicon(status) {
+    if (currentFaviconStatus === status) return;
+    currentFaviconStatus = status;
+
+    let svg = '';
+    if (status === 'alarm') {
+      svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+        <circle cx="16" cy="16" r="15" fill="#DC2626"/>
+        <rect x="14.5" y="7" width="3" height="11" rx="1.5" fill="#FFFFFF"/>
+        <circle cx="16" cy="23" r="2" fill="#FFFFFF"/>
+      </svg>`;
+    } else if (status === 'warning') {
+      svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+        <circle cx="16" cy="16" r="15" fill="#EA580C"/>
+        <rect x="14.5" y="7" width="3" height="11" rx="1.5" fill="#FFFFFF"/>
+        <circle cx="16" cy="23" r="2" fill="#FFFFFF"/>
+      </svg>`;
+    } else if (status === 'discrepancy') {
+      svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+        <rect width="32" height="32" rx="6" fill="#F59E0B"/>
+        <path d="M17 5L9 18h6l-2 9 10-13h-6l2-9z" fill="#FFFFFF"/>
+      </svg>`;
+    } else {
+      svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+        <rect width="32" height="32" rx="6" fill="#FF7900"/>
+        <rect x="7" y="7" width="18" height="18" rx="2" fill="#FFFFFF"/>
+        <rect x="11" y="11" width="10" height="10" rx="1" fill="#FF7900"/>
+      </svg>`;
+    }
+
+    let link = document.querySelector("link[rel~='icon']");
+    if (!link) {
+      link = document.createElement('link');
+      link.rel = 'icon';
+      document.head.appendChild(link);
+    }
+    link.type = 'image/svg+xml';
+    link.href = 'data:image/svg+xml;utf8,' + encodeURIComponent(svg.trim());
+  }
+
+  function updateBrowserTitleAndFavicon() {
+    const activeIncidents = (state.incidents || []).filter(i => !isTerminalStatus(i.estatus || i.estado || i.status));
+    const activeSL1 = activeIncidents.filter(i => i.prioridad_sugerida === 'P1');
+    const discrepancies = activeIncidents.filter(i => i.es_discrepancia);
+
+    if (activeSL1.length > 0) {
+      let maxCrisisMin = 0;
+      activeSL1.forEach(inc => {
+        let actEpoch = state.orchestratorActivations[inc.id];
+        if (!actEpoch) {
+          try {
+            const st = localStorage.getItem('emergency_activation_' + inc.id);
+            if (st) actEpoch = parseInt(st, 10);
+          } catch (_) {}
+        }
+        let elapsedMin = 0;
+        if (actEpoch) {
+          elapsedMin = Math.floor((Date.now() - actEpoch) / 60000);
+        } else {
+          const baseMin = (inc.evaluacion && inc.evaluacion.minutos_desde_apertura) || 0;
+          elapsedMin = Math.floor(baseMin + (Date.now() - (state.lastInspectionEpoch || Date.now())) / 60000);
+        }
+        if (elapsedMin > maxCrisisMin) maxCrisisMin = elapsedMin;
+      });
+
+      if (maxCrisisMin >= 105) {
+        document.title = `🔥 (ALARMA DIR >105m) Consola de Triaje IT · Orange`;
+        updateDynamicFavicon('alarm');
+      } else if (maxCrisisMin >= 45) {
+        const rem105 = 105 - maxCrisisMin;
+        document.title = `⚠️ (45m Vencido · ${rem105}m p/Dir) Consola de Triaje IT · Orange`;
+        updateDynamicFavicon('alarm');
+      } else if (maxCrisisMin >= 35) {
+        const rem45 = 45 - maxCrisisMin;
+        document.title = `⏱️ (${maxCrisisMin}m/45m ¡Escalado Inminente!) Consola de Triaje IT · Orange`;
+        updateDynamicFavicon('warning');
+      } else {
+        const rem45 = 45 - maxCrisisMin;
+        document.title = `🚨 (${rem45}m p/45m · SL1 Activa) Consola de Triaje IT · Orange`;
+        updateDynamicFavicon('warning');
+      }
+    } else if (discrepancies.length > 0) {
+      document.title = `⚡ (${discrepancies.length} Discrepancias) Consola de Triaje IT · Orange`;
+      updateDynamicFavicon('discrepancy');
+    } else {
+      document.title = `Consola de Triaje IT · Orange Tech Operations`;
+      updateDynamicFavicon('normal');
+    }
   }
 
   // --------------------------------------------------------------------------
@@ -2726,6 +3078,95 @@ Generado por Consola de Emergencias IT Orange - Motor de Triaje (Módulo 1)`;
       });
     }
 
+    // --- Traspaso de Guardia en 1 Clic (US-04) ---
+    if (dom.btnShiftHandover) {
+      dom.btnShiftHandover.addEventListener('click', openShiftHandoverModal);
+    }
+    if (dom.footerBtnHandover) {
+      dom.footerBtnHandover.addEventListener('click', openShiftHandoverModal);
+    }
+    if (dom.btnModalHandoverClose) {
+      dom.btnModalHandoverClose.addEventListener('click', closeShiftHandoverModal);
+    }
+    if (dom.btnModalHandoverCloseBottom) {
+      dom.btnModalHandoverCloseBottom.addEventListener('click', closeShiftHandoverModal);
+    }
+    if (dom.btnHandoverCopy) {
+      dom.btnHandoverCopy.addEventListener('click', () => {
+        const txt = dom.handoverReportText ? dom.handoverReportText.value : '';
+        if (txt) copyToClipboard(txt, '📋 Informe de traspaso copiado al portapapeles');
+      });
+    }
+    if (dom.btnHandoverCopyBottom) {
+      dom.btnHandoverCopyBottom.addEventListener('click', () => {
+        const txt = dom.handoverReportText ? dom.handoverReportText.value : '';
+        if (txt) copyToClipboard(txt, '📋 Informe de traspaso copiado al portapapeles');
+        closeShiftHandoverModal();
+      });
+    }
+    if (dom.modalShiftHandover) {
+      dom.modalShiftHandover.addEventListener('click', (e) => {
+        if (e.target === dom.modalShiftHandover) closeShiftHandoverModal();
+      });
+    }
+
+    // --- Borradores Bitácora de Crisis (US-03) ---
+    if (dom.orchLogText) {
+      dom.orchLogText.addEventListener('input', () => {
+        if (!state.activeOrchIncId) return;
+        const val = dom.orchLogText.value;
+        try {
+          if (val && val.trim()) {
+            localStorage.setItem('triage_draft_log_' + state.activeOrchIncId, val);
+          } else {
+            localStorage.removeItem('triage_draft_log_' + state.activeOrchIncId);
+            if (dom.orchLogDraftAlert) dom.orchLogDraftAlert.style.display = 'none';
+          }
+        } catch (_) {}
+      });
+    }
+
+    if (dom.orchLogRole) {
+      dom.orchLogRole.addEventListener('change', () => {
+        if (!state.activeOrchIncId) return;
+        try {
+          localStorage.setItem('triage_draft_role_' + state.activeOrchIncId, dom.orchLogRole.value);
+        } catch (_) {}
+      });
+    }
+
+    if (dom.btnDiscardLogDraft) {
+      dom.btnDiscardLogDraft.addEventListener('click', () => {
+        if (!state.activeOrchIncId) return;
+        try {
+          localStorage.removeItem('triage_draft_log_' + state.activeOrchIncId);
+          localStorage.removeItem('triage_draft_role_' + state.activeOrchIncId);
+        } catch (_) {}
+        if (dom.orchLogText) dom.orchLogText.value = '';
+        if (dom.orchLogDraftAlert) dom.orchLogDraftAlert.style.display = 'none';
+        showToast('Borrador de bitácora descartado', 'info');
+      });
+    }
+
+    // --- Borradores Gateway Web de Explotación (US-03) ---
+    if (dom.gwSubject) {
+      dom.gwSubject.addEventListener('input', () => {
+        const incId = state.activeCommsIncId || 'GENERAL';
+        try {
+          localStorage.setItem('triage_draft_gw_subj_' + incId, dom.gwSubject.value);
+        } catch (_) {}
+      });
+    }
+
+    if (dom.gwBody) {
+      dom.gwBody.addEventListener('input', () => {
+        const incId = state.activeCommsIncId || 'GENERAL';
+        try {
+          localStorage.setItem('triage_draft_gw_body_' + incId, dom.gwBody.value);
+        } catch (_) {}
+      });
+    }
+
     // Escape universal para cerrar cualquier popup o modal abierto
     window.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
@@ -2748,6 +3189,9 @@ Generado por Consola de Emergencias IT Orange - Motor de Triaje (Módulo 1)`;
         }
         if (dom.modalCommsCenter && dom.modalCommsCenter.classList.contains('open')) {
           closeCommsCenterModal();
+        }
+        if (dom.modalShiftHandover && dom.modalShiftHandover.classList.contains('open')) {
+          closeShiftHandoverModal();
         }
       }
     });
@@ -2821,6 +3265,11 @@ Generado por Consola de Emergencias IT Orange - Motor de Triaje (Módulo 1)`;
         const meta = getRoleMeta(roleKey);
         addLogEntry(state.activeOrchIncId, roleKey, meta.label, text, meta.extraClass);
         if (dom.orchLogText) dom.orchLogText.value = '';
+        try {
+          localStorage.removeItem('triage_draft_log_' + state.activeOrchIncId);
+          localStorage.removeItem('triage_draft_role_' + state.activeOrchIncId);
+        } catch (_) {}
+        if (dom.orchLogDraftAlert) dom.orchLogDraftAlert.style.display = 'none';
         showToast('Hito operativo registrado en la bitácora', 'success');
       });
     }
@@ -2992,12 +3441,53 @@ Puente Teams: ${teamsUrl}
       });
     });
 
-    // Conteo en vivo de palabras en editores de plantilla
+    // Conteo en vivo de palabras y auto-guardado en LocalStorage (US-03)
     if (dom.tplTextCompleto) {
-      dom.tplTextCompleto.addEventListener('input', updateWordCounters);
+      dom.tplTextCompleto.addEventListener('input', () => {
+        updateWordCounters();
+        const incId = state.activeCommsIncId || state.activeOrchIncId;
+        if (incId) {
+          const key = `triage_draft_tpl_comp_${incId}_${state.activeCommsPhase || 'inicial'}`;
+          try {
+            localStorage.setItem(key, dom.tplTextCompleto.value);
+          } catch (_) {}
+        }
+      });
     }
     if (dom.tplTextBreve) {
-      dom.tplTextBreve.addEventListener('input', updateWordCounters);
+      dom.tplTextBreve.addEventListener('input', () => {
+        updateWordCounters();
+        const incId = state.activeCommsIncId || state.activeOrchIncId;
+        if (incId) {
+          const key = `triage_draft_tpl_brev_${incId}_${state.activeCommsPhase || 'inicial'}`;
+          try {
+            localStorage.setItem(key, dom.tplTextBreve.value);
+          } catch (_) {}
+        }
+      });
+    }
+
+    // Descartar borrador de plantilla ejecutiva y restaurar oficial
+    if (dom.btnDiscardTplDraft) {
+      dom.btnDiscardTplDraft.addEventListener('click', () => {
+        const incId = state.activeCommsIncId || state.activeOrchIncId;
+        const phase = state.activeCommsPhase || 'inicial';
+        if (incId) {
+          try {
+            localStorage.removeItem(`triage_draft_tpl_comp_${incId}_${phase}`);
+            localStorage.removeItem(`triage_draft_tpl_brev_${incId}_${phase}`);
+          } catch (_) {}
+          if (dom.tplDraftAlert) dom.tplDraftAlert.style.display = 'none';
+          const inc = state.incidents.find(i => i.id === incId);
+          if (inc) {
+            const data = generateDynamicTemplates(inc, phase);
+            if (dom.tplTextCompleto) dom.tplTextCompleto.value = data.completo;
+            if (dom.tplTextBreve) dom.tplTextBreve.value = data.breve;
+            updateWordCounters();
+          }
+          showToast('Borrador descartado. Plantilla oficial restaurada.', 'info');
+        }
+      });
     }
 
     // Conteo en vivo en cuerpo del Gateway
@@ -3024,13 +3514,22 @@ Puente Teams: ${teamsUrl}
       });
     }
 
-    // Regenerar texto con datos del ticket
+    // Regenerar texto con datos del ticket (limpia borradores)
     if (dom.btnTplRegenerate) {
       dom.btnTplRegenerate.addEventListener('click', () => {
-        const inc = state.incidents.find(i => i.id === state.activeCommsIncId);
-        if (inc) {
-          renderCommsTemplateTab(inc, state.activeCommsPhase);
-          showToast('Textos oficiales regenerados con datos actuales del ticket', 'info');
+        const incId = state.activeCommsIncId || state.activeOrchIncId;
+        const phase = state.activeCommsPhase || 'inicial';
+        if (incId) {
+          try {
+            localStorage.removeItem(`triage_draft_tpl_comp_${incId}_${phase}`);
+            localStorage.removeItem(`triage_draft_tpl_brev_${incId}_${phase}`);
+          } catch (_) {}
+          if (dom.tplDraftAlert) dom.tplDraftAlert.style.display = 'none';
+          const inc = state.incidents.find(i => i.id === incId);
+          if (inc) {
+            renderCommsTemplateTab(inc, phase);
+            showToast('Textos oficiales regenerados con datos actuales del ticket', 'info');
+          }
         }
       });
     }
@@ -3212,10 +3711,15 @@ Puente Teams: ${teamsUrl}
     performInspection(false);
     resetAutoRefreshTimer();
 
-    // Actualizar el reloj relativo de última inspección cada segundo
+    // Actualizar el reloj relativo de última inspección y alertas de pestaña/favicon cada segundo
     state.relativeTimer = setInterval(() => {
       updateRelativeTimeDisplay();
+      updateBrowserTitleAndFavicon();
     }, 1000);
+
+    document.addEventListener('visibilitychange', () => {
+      updateBrowserTitleAndFavicon();
+    });
   }
 
   // Disparar al cargar DOM

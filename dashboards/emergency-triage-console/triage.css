@@ -4106,3 +4106,61 @@ body {
     gap: 8px;
   }
 }
+
+/* --------------------------------------------------------------------------
+   12. Sprint 1 Usabilidad: Shift Handover & Zero-Data-Loss Drafts (US-03, US-04)
+   -------------------------------------------------------------------------- */
+
+/* Botón de Traspaso de Guardia en Cabecera */
+.triage-btn-handover {
+  background: rgba(14, 165, 233, 0.08);
+  border: 1px solid rgba(14, 165, 233, 0.4);
+  color: #0369A1;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.15s ease;
+}
+
+.triage-btn-handover:hover {
+  background: #0284C7;
+  color: #FFFFFF;
+  border-color: #0284C7;
+  box-shadow: 0 2px 6px rgba(14, 165, 233, 0.25);
+}
+
+/* Banner de Borrador Recuperado de LocalStorage (Zero-Data-Loss) */
+.draft-recovered-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: rgba(255, 121, 0, 0.09);
+  border: 1px solid rgba(255, 121, 0, 0.35);
+  border-left: 3px solid #FF7900;
+  border-radius: var(--radius-xs);
+  padding: 8px 14px;
+  font-size: 12px;
+  color: #9A4300;
+  animation: triageFadeIn 0.2s ease-out;
+}
+
+.draft-discard-btn {
+  background: transparent;
+  border: none;
+  color: #C05000;
+  text-decoration: underline;
+  cursor: pointer;
+  font-size: 11.5px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 3px;
+  white-space: nowrap;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+
+.draft-discard-btn:hover {
+  background: rgba(255, 121, 0, 0.15);
+  color: #7A3300;
+}
