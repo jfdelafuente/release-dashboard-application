@@ -134,16 +134,28 @@
     },
 
     // ---- persistence ----
+    getStorageKey() {
+      const reportId = (typeof ReportEditor !== 'undefined' && ReportEditor.currentReportId)
+        || new URLSearchParams(window.location.search).get('report');
+      return reportId ? `mo_inc_report_${reportId}` : STORAGE_KEY;
+    },
     load() {
       let init = null;
-      try { init = JSON.parse(localStorage.getItem(STORAGE_KEY)); } catch (e) {}
+      try {
+        const key = this.getStorageKey();
+        const raw = localStorage.getItem(key) || localStorage.getItem(STORAGE_KEY);
+        init = JSON.parse(raw);
+      } catch (e) {}
       if (!init || !Array.isArray(init.incidents)) init = { meta: defaultMeta(), incidents: seed(), openIdx: 0 };
       init.meta = Object.assign(defaultMeta(), init.meta || {});
       if (init.openIdx === undefined) init.openIdx = 0;
       return init;
     },
     save() {
-      try { localStorage.setItem(STORAGE_KEY, JSON.stringify({ meta: this.state.meta, incidents: this.state.incidents, openIdx: this.state.openIdx })); } catch (e) {}
+      try {
+        const key = this.getStorageKey();
+        localStorage.setItem(key, JSON.stringify({ meta: this.state.meta, incidents: this.state.incidents, openIdx: this.state.openIdx }));
+      } catch (e) {}
       document.dispatchEvent(new Event('incident-changed'));
     },
 

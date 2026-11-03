@@ -20,3 +20,187 @@ input:focus, select:focus, textarea:focus { border-color: #FF7900 !important; bo
   .mo-slide { box-shadow: none !important; margin: 0 !important; break-after: page; page-break-after: always; }
   @page { size: 1280px 720px; margin: 0; }
 }
+
+/* ==========================================================================
+   Conflict Banner and Concurrency Modal Styles
+   ========================================================================== */
+.conflict-alert-banner {
+  background: #FFF3CD;
+  color: #856404;
+  border-bottom: 2px solid #FFEBAA;
+  padding: 10px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 13px;
+  z-index: 100;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  animation: slideDown 0.3s ease-out;
+}
+.conflict-alert-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+}
+.conflict-alert-icon {
+  font-size: 20px;
+  line-height: 1;
+}
+.conflict-alert-text {
+  flex: 1;
+  line-height: 1.4;
+}
+.conflict-alert-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.btn-conflict-review {
+  background: #FF7900;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 14px;
+  font-weight: 600;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background .15s;
+}
+.btn-conflict-review:hover {
+  background: #E56C00;
+}
+.btn-conflict-download {
+  background: #fff;
+  color: #856404;
+  border: 1px solid #FFEBAA;
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-weight: 600;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background .15s;
+}
+.btn-conflict-download:hover {
+  background: #FEF9E7;
+}
+
+/* Conflict Modal */
+.conflict-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(4px);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  animation: fadeIn 0.2s ease-out;
+}
+.conflict-modal-window {
+  background: #FFFFFF;
+  color: #26241F;
+  border-radius: 12px;
+  max-width: 780px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.4);
+  border: 1px solid #E0DDD7;
+  display: flex;
+  flex-direction: column;
+}
+.conflict-modal-header {
+  padding: 20px 24px;
+  border-bottom: 1px solid #EAE7E1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #FDFCFB;
+}
+.conflict-modal-header h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #C0392B;
+}
+.conflict-modal-body {
+  padding: 24px;
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: #4A463F;
+}
+.conflict-diff-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin: 18px 0;
+}
+.conflict-card {
+  border-radius: 8px;
+  padding: 16px;
+  border: 1px solid #DEDAD3;
+}
+.conflict-card.local {
+  background: #F9F9F8;
+  border-left: 4px solid #FF7900;
+}
+.conflict-card.remote {
+  background: #F4F6F9;
+  border-left: 4px solid #2B78E4;
+}
+.conflict-card h4 {
+  margin: 0 0 10px;
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.conflict-card.local h4 { color: #E56C00; }
+.conflict-card.remote h4 { color: #2B78E4; }
+.conflict-card ul {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 12.5px;
+  color: #5C5852;
+}
+.conflict-card li {
+  margin-bottom: 5px;
+}
+.conflict-modal-footer {
+  padding: 16px 24px;
+  border-top: 1px solid #EAE7E1;
+  background: #FDFCFB;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.conflict-actions-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+@keyframes slideDown {
+  from { transform: translateY(-100%); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes pulseBadge {
+  0% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.15); opacity: 0.7; }
+  100% { transform: scale(1); opacity: 1; }
+}
+.badge-pulse {
+  animation: pulseBadge 1.8s infinite;
+}

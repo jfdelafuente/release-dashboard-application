@@ -35,7 +35,13 @@ const ApiClient = {
 
       if (!response.ok) {
         const error = await response.json().catch(() => ({ detail: response.statusText }));
-        throw new Error(error.detail || `HTTP ${response.status}`);
+        const message = typeof error.detail === 'string'
+          ? error.detail
+          : (error.detail?.message || JSON.stringify(error.detail || error));
+        const err = new Error(message || `HTTP ${response.status}`);
+        err.status = response.status;
+        err.data = error.detail || error;
+        throw err;
       }
 
       return await response.json();
@@ -66,10 +72,17 @@ const ApiClient = {
     });
   },
 
-  async updateReport(reportId, update) {
+  async updateReport(reportId, update, options = {}) {
+    const payload = { ...update };
+    if (options.expectedUpdatedAt) {
+      payload.expected_updated_at = options.expectedUpdatedAt;
+    }
+    if (options.force !== undefined) {
+      payload.force = !!options.force;
+    }
     return this.request(`/api/reports/${reportId}`, {
       method: 'PUT',
-      body: JSON.stringify(update),
+      body: JSON.stringify(payload),
     });
   },
 

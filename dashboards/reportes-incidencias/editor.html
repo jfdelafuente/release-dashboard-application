@@ -32,11 +32,27 @@
       <option value="published">Published</option>
     </select>
     <div style="margin-left:auto; display:flex; align-items:center; gap:10px;">
-      <span style="font-size:11px; color:#8A857C; display:inline-flex; align-items:center; gap:5px;"><span class="kbd-hint">Ctrl + S</span> Guardar</span>
+      <button id="btnManualSave" class="mo-btn" style="padding:5px 12px; font-size:11.5px; font-weight:600; background:#FF7900; color:#fff; border:none; border-radius:6px; cursor:pointer; display:inline-flex; align-items:center; gap:6px;" onclick="ReportEditor.saveReport()"><span style="font-size:12px;">💾</span> Guardar</button>
+      <span style="font-size:11px; color:#8A857C; display:inline-flex; align-items:center; gap:5px;"><span class="kbd-hint">Ctrl + S</span></span>
       <div id="saveStatusBadge" class="save-status-badge" style="font-size:11.5px; font-weight:600; padding:4px 12px; border-radius:20px; background:#2A2723; color:#A8A29E; display:inline-flex; align-items:center; gap:7px; border:1px solid #3C3934;">
         <span id="saveStatusDot" style="width:8px; height:8px; border-radius:50%; background:#28A745;"></span>
         <span id="saveStatusText">Guardado</span>
       </div>
+    </div>
+  </div>
+
+  <!-- Concurrent Edit Alert Banner -->
+  <div id="conflictAlertBanner" class="conflict-alert-banner" style="display:none;">
+    <div class="conflict-alert-content">
+      <span class="conflict-alert-icon">⚠️</span>
+      <div class="conflict-alert-text">
+        <strong>Modificación simultánea detectada:</strong>
+        <span id="conflictAlertMsg">Otro usuario ha guardado una versión más reciente de este informe. El autoguardado se ha pausado para proteger tus cambios.</span>
+      </div>
+    </div>
+    <div class="conflict-alert-actions">
+      <button class="btn-conflict-review" onclick="ReportEditor.openConflictModal()">Resolver conflicto / Comparar</button>
+      <button class="btn-conflict-download" onclick="ReportEditor.downloadLocalBackup()">Descargar mi borrador JSON</button>
     </div>
   </div>
 
@@ -90,12 +106,67 @@
   </div>
 </div>
 
+  <!-- Conflict Resolution Modal -->
+  <div id="conflictModal" class="conflict-modal-backdrop" style="display:none;">
+    <div class="conflict-modal-window">
+      <div class="conflict-modal-header">
+        <h3><span>⚠️</span> Conflicto de Concurrencia detectado</h3>
+        <button onclick="ReportEditor.closeConflictModal()" style="background:none; border:none; font-size:18px; color:#8A857C; cursor:pointer;" title="Cerrar ventana">✕</button>
+      </div>
+      <div class="conflict-modal-body">
+        <p style="margin-top:0;">
+          Mientras editabas este informe, <strong>otro usuario o sesión ha guardado modificaciones en el servidor</strong>. Para evitar la pérdida accidental de datos, el autoguardado se ha pausado.
+        </p>
+
+        <div class="conflict-diff-grid">
+          <div class="conflict-card local">
+            <h4>Tu versión local (Borrador actual)</h4>
+            <div id="conflictLocalSummary">
+              <ul>
+                <li>Incidencias actuales: <strong id="conflictLocalIncCount">0</strong></li>
+                <li>Última modificación local: <span id="conflictLocalTime">—</span></li>
+                <li>Rango: <span id="conflictLocalRange">—</span></li>
+              </ul>
+            </div>
+          </div>
+          <div class="conflict-card remote">
+            <h4>Versión en el Servidor (Guardada recientemente)</h4>
+            <div id="conflictRemoteSummary">
+              <ul>
+                <li>Incidencias en servidor: <strong id="conflictRemoteIncCount">0</strong></li>
+                <li>Guardado en servidor a las: <span id="conflictRemoteTime">—</span></li>
+                <li>Rango: <span id="conflictRemoteRange">—</span></li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <div id="conflictDiffDetails" style="background:#F7F6F4; border:1px solid #EAE7E1; border-radius:8px; padding:12px 16px; margin-bottom:16px; font-size:12.5px; max-height:160px; overflow-y:auto;">
+          <strong>Diferencias detectadas:</strong>
+          <div id="conflictDiffText" style="margin-top:6px; color:#5C5852; line-height:1.4;">Analizando diferencias...</div>
+        </div>
+
+        <div style="font-size:12px; color:#8A857C; line-height:1.4;">
+          <strong>¿Qué deseas hacer?</strong> Puedes fusionar automáticamente incorporando las incidencias nuevas del servidor, recargar la versión remota (se guardará una copia de seguridad en tu navegador) o forzar la sobrescritura con tus cambios actuales.
+        </div>
+      </div>
+      <div class="conflict-modal-footer">
+        <button class="btn-conflict-download" onclick="ReportEditor.downloadLocalBackup()">📥 Descargar mi copia JSON</button>
+        <div class="conflict-actions-right">
+          <button class="mo-btn" style="padding:8px 14px; background:#fff; border:1px solid #DEDAD3; border-radius:7px; font-size:12px; font-weight:600; color:#5C5852; cursor:pointer;" onclick="ReportEditor.resolveConflict('reload')">Recargar del servidor</button>
+          <button class="mo-btn" style="padding:8px 14px; background:#000; border:none; border-radius:7px; font-size:12px; font-weight:600; color:#fff; cursor:pointer;" onclick="ReportEditor.resolveConflict('merge')">Fusionar cambios (Recomendado)</button>
+          <button class="mo-btn" style="padding:8px 14px; background:#D43A2F; border:none; border-radius:7px; font-size:12px; font-weight:600; color:#fff; cursor:pointer;" onclick="ReportEditor.resolveConflict('force')">Sobrescribir servidor</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
 <script src="/dashboards/assets/ui-feedback.js"></script>
 <script src="/dashboards/assets/date.js"></script>
 <script src="utils/formatters.js"></script>
-<script src="api-client.js"></script>
+<script src="api-client.js?v=2"></script>
 <script src="report-render.js"></script>
 <script src="app.js"></script>
-<script src="editor.js?v=2"></script>
+<script src="editor.js?v=3"></script>
 </body>
 </html>
