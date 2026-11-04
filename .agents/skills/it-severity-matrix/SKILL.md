@@ -8,7 +8,7 @@ description: >-
   Identidad/Automatización (GDU/EVIDIAN/ROBOTFACTORY), la Regla de Oro del triaje N1 y el
   protocolo oficial de escalados de Emergencias (45 min / +1 hora / Alarma >2h) con IM-CSO.
 domain: it-incidents
-version: 2.2.0
+version: 2.3.0
 language: es
 owner: Orange Tech Operations
 metadata:
@@ -18,7 +18,7 @@ metadata:
   last_updated: 2026-11-04
 ---
 
-# Matriz de Severidad, Prioridad y Protocolo de Escalados IT (Orange) — v2.2
+# Matriz de Severidad, Prioridad y Protocolo de Escalados IT (Orange) — v2.3
 
 Esta skill actúa como el **Motor Determinista de Clasificación y Fuente Única de Verdad (SSOT)** para auditar, calcular y justificar el nivel objetivo de severidad y prioridad operativa (SL1/P1 a SL4/P4) en el ecosistema de incidentes de Orange Tech Operations.
 
@@ -72,6 +72,25 @@ flowchart TD
     R_SL1 --> FinalLevel
     R_SL2 --> FinalLevel
 ```
+
+### 1.1 Pipeline Secuencial de Razonamiento (5 Fases Obligatorias)
+
+Para garantizar la reproducibilidad y erradicar alucinaciones o clasificaciones arbitrarias, la IA debe seguir estrictamente este pipeline de razonamiento secuencial:
+
+1. **Fase 1: Extracción Rigurosa de Hechos (Data Extraction):**
+   - Aislar exclusivamente los datos objetivos comprobados en el ticket o telemetría (código, aplicativo, cola Remedy, porcentaje medido de error, volumen de llamadas caídas, sedes afectadas).
+   - *Barrera anti-alucinación:* Prohibido inferir métricas ausentes o asumir estados no documentados. Si un dato no está en el ticket, se registra como no disponible.
+2. **Fase 2: Evaluación de Umbral Específico (Specific Thresholds 3.1 - 3.10):**
+   - Contrastar los hechos extraídos con el catálogo canónico de Procesos Críticos (ATC, Ventas, Portabilidad, Prepago, Provisión, Cobros) e Infraestructura (Middleware, ESX/BBDD, Redes, Identidad).
+   - Si se cumple algún criterio objetivo de la Sección 3, se asigna la severidad correspondiente (`SL1/P1` o `SL2/P2`), prevaleciendo sobre cualquier prioridad administrativa de Remedy.
+3. **Fase 3: Cruce en Matriz General Remedy (General Matrix Fallback):**
+   - Si y solo si la incidencia no encaja en ningún umbral específico de la Sección 3, aplicar el cruce matricial normalizado de Impacto $\times$ Urgencia (Sección 4).
+4. **Fase 4: Principio de Precaución y Contingencia (Precautionary Principle & Fail-Safe):**
+   - *Principio Fail-Safe:* Si la información es incompleta o existe incertidumbre de alcance, aplicar la Regla de Oro N1 (§4.1): mantener o elevar a **`SL1 / P1 Preventivo`**, registrar `estado_informacion: INCOMPLETA` y formular las 3 preguntas clave (§2.4).
+   - *Auditoría de Workarounds:* Si existe solución temporal, comprobar si está formalmente autorizada por IM-CSO para autorizar el desescalado de máximo 1 nivel.
+5. **Fase 5: Formato Estandarizado y Contrato de Salida (Standardized Output):**
+   - Emitir la clasificación indexada obligatoriamente al artículo canónico de justificación (§2.2).
+   - En caso de generar mensaje ejecutivo, cumplir estrictamente el esquema de dos niveles ($\le 90$ palabras monopárrafo, $\le 30$ palabras telegráfico).
 
 ---
 
