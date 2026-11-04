@@ -78,6 +78,14 @@ stateDiagram-v2
 4. **Escalados Telefónicos Obligatorios:** Durante una Emergencia SL1, **todos los escalados se ejecutan exclusivamente por vía telefónica**, tanto en Horario Laboral (HL) como Fuera de Horario Laboral (FHL). Prohibido confiar en correos electrónicos o mensajes de chat para requerir soporte urgente.
 5. **Rollback Preventivo de Despliegues Recientes (PaP):** Si una incidencia SL1/P1 surge durante o inmediatamente después de un Trabajo Programado (PaP) o despliegue en ventana técnica, la instrucción por defecto del Incident Manager es **ejecutar el Rollback inmediato** del cambio antes de iniciar diagnósticos forenses prolongados.
 6. **Etiquetado Explícito N1 (`/SL1` y `/SL2`):** La presencia de `/SL1` o `/SL2` en el título normalizado de N1 actúa como suelo mínimo obligatorio (`SL1/P1` o `SL2/P2`). En Remedy, `Urgencia = Crítica` equivale a **Alta** y `Urgencia = Medio` a **Media**. El estado `Pendiente` no aminora la severidad activa.
+7. **Manejo Seguro de Errores y Datos Incompletos (Las 3 Preguntas Clave):** Si el ticket o notificación carece de métricas cuantitativas que confirmen o descarten el impacto:
+   - Se mantiene obligatoriamente el nivel **`SL1 Preventivo`** sin rebajar la guardia.
+   - Queda prohibido conjeturar cifras inexistentes o suponer que la falta de datos equivale a bajo impacto.
+   - Es mandatorio formular al Incident Manager o al grupo resolutor las **3 preguntas clave de desambiguación**:
+     1. *Impacto / Alcance:* ¿Existe corte total, bloqueo operativo o degradación perceptible para clientes/sedes?
+     2. *Proceso Crítico:* ¿Está comprometido alguno de los procesos clave (ATC, Ventas, Provisión, Cobros, Portabilidad o Core)?
+     3. *Workaround:* ¿Se dispone de un método alternativo formalmente validado por IM-CSO?
+   - Solo ante respuestas explícitas y contrastadas que descarten impacto crítico se autoriza reclasificar el incidente a un nivel inferior.
 
 ---
 

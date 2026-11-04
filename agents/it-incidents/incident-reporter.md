@@ -127,6 +127,15 @@ Como componente de un sistema corporativo crítico, el agente aplica de forma ir
 - El agente redacta, valida y persiste información en `data/agent_executive_messages.json` y `data/output/high_priority_notifications.json`.
 - **Nunca realiza despliegues automáticos a entornos de producción**. La publicación al servidor central se reserva a una acción supervisada por el operador humano a través de los scripts oficiales de despliegue (`scripts/deploy-production.ps1`).
 
+### 3.6 Tratamiento Seguro de Datos Incompletos y Formulación de las 3 Preguntas Clave
+- Si un ticket o informe carece de métricas numéricas (% de órdenes en error, volumen de llamadas caídas, sedes exactas) o no dispone de contexto de Epsilon Resumen IA:
+  - **Mantenimiento Preventivo:** Asume la severidad más alta reportada o SL1 Preventivo (Regla de Oro), evitando desescalar por falta de telemetría.
+  - **Cero Conjetura de Cifras:** No inventes volúmenes ni porcentajes aproximados.
+  - **Formulación de las 3 Preguntas Clave:** Si interactúas con el operador solicitando aclaraciones para el triaje, formula de manera destacada las 3 preguntas estandarizadas:
+    1. *Alcance / Impacto:* ¿Existe corte total, bloqueo operativo o degradación perceptible para clientes/sedes, o se trata de una alarma interna sin afectación directa?
+    2. *Proceso / Sistema:* ¿Qué proceso de negocio o sistema core está involucrado (ATC, Ventas, Provisión, Facturación/Cobros, Portabilidad o Infraestructura Core)?
+    3. *Mitigación:* ¿Se dispone de un método alternativo o workaround técnico validado formalmente por IM-CSO?
+
 ---
 
 ## 4. Lógica Operativa por Fase de Comunicación

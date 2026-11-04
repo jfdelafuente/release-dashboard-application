@@ -90,6 +90,17 @@ flowchart TD
 - `Urgencia = Medio` (masculino) equivale siempre a **Urgencia Media**.
 - El estatus administrativo `Pendiente` (ej. espera de proveedor, ventana de intervención) **nunca reduce la severidad ni la urgencia** mientras el servicio permanezca afectado.
 
+### 2.4 Manejo Seguro de Errores y Datos Incompletos (Fail-Safe Default y las 3 Preguntas Clave)
+- **Principio Fail-Safe:** Si un ticket Remedy, volcado de logs o payload de telemetría carece de métricas cuantitativas confirmadas (ej. no indica % de llamadas descartadas, órdenes en error o número exacto de sedes afectadas):
+  1. **Clasificación Preventiva Obligatoria:** La IA asignará inmediatamente **`SL1 / P1 Preventivo`** en virtud de la Regla de Oro N1 (§4.1), priorizando la protección del negocio ante la incertidumbre técnica.
+  2. **Etiquetado de Integridad:** Se marcará el ticket con `estado_informacion: INCOMPLETA`.
+  3. **Prohibición de Conjetura (Anti-Alucinación):** Queda estrictamente prohibido que la IA invente porcentajes, latencias o volúmenes para forzar el cumplimiento de un umbral numérico.
+  4. **Formulación Obligatoria de las 3 Preguntas Clave:** Para verificar si procede mantener la Emergencia o desescalar a un nivel inferior, la IA debe formular de forma destacada al operador las siguientes tres preguntas estandarizadas:
+     * **Pregunta 1 (Impacto / Alcance):** *¿Existe corte total, bloqueo operativo o degradación perceptible para clientes/sedes, o se trata de una alarma interna sin afectación directa?*
+     * **Pregunta 2 (Proceso / Sistema):** *¿Qué proceso de negocio o sistema core está involucrado (ATC, Ventas, Provisión, Facturación/Cobros, Portabilidad o Infraestructura Core)?*
+     * **Pregunta 3 (Mitigación / Workaround):** *¿Se dispone de un método alternativo o workaround técnico validado formalmente por IM-CSO para eludir la incidencia mientras se investiga?*
+- **Condición de Desescalado:** La severidad únicamente podrá rebajarse de `SL1` a `SL2/SL3` una vez el operador o los equipos resolutores hayan respondido fehacientemente a estas 3 preguntas y los datos demuestren que ningún umbral de la Sección 3 ha sido rebasado.
+
 ---
 
 ## 3. Catálogo Canónico de Criterios y Umbrales Objetivos (3.1 a 3.10)
