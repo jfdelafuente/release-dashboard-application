@@ -1,9 +1,15 @@
 {
   "_metadata": {
-    "version": "1.0.0",
+    "version": "1.2.0",
     "description": "Almacén oficial de redacciones ejecutivas generadas por el Agente incident-reporter",
     "source": "agents/it-incidents/incident-reporter.md",
-    "updated_at": "2026-11-03T16:18:46Z"
+    "skills_version": {
+      "incident-reporter": "1.2.0",
+      "it-severity-matrix": "2.1.0",
+      "orange-it-emergency-management": "2.1.0",
+      "incident-executive-notifications": "1.2.0"
+    },
+    "updated_at": "2026-11-04T10:25:22Z"
   },
   "incidents": {
     "INC000004065609": {

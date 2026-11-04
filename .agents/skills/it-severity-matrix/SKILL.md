@@ -7,49 +7,77 @@ description: >-
   Conectividad de Sedes/Circuitos, Infraestructura Core/Cloud (ESX/PSeries/Exadata/OCI/GCP),
   Identidad/Automatización (GDU/EVIDIAN/ROBOTFACTORY), la Regla de Oro del triaje N1 y el
   protocolo oficial de escalados de Emergencias (45 min / +1 hora / Alarma >2h) con IM-CSO.
+domain: it-incidents
+version: 2.1.0
+language: es
+owner: Orange Tech Operations
+metadata:
+  role: deterministic_classification_engine
+  ssot: true
+  security_level: internal_confidential
+  last_updated: 2026-11-04
 ---
 
-# Matriz de Severidad, Prioridad y Protocolo de Escalados IT (Orange) — v2
+# Matriz de Severidad, Prioridad y Protocolo de Escalados IT (Orange) — v2.1
 
-Esta skill establece el criterio estándar, objetivo y determinista para la detección, clasificación, asignación de severidad y protocolo de escalado técnico en la gestión de incidencias de Orange.
-
----
-
-## 1. Principios Generales del Triaje
-
-* **Responsable del Triaje Inicial:**
-  La detección y clasificación inicial la realiza el nivel **N1** (`CEP CAU AGI`, `GNOC`, `RTV-TECSE RED DATOS`, `SOPORTE N1 CSO`) mediante la monitorización directa de alarmas, análisis de tickets reiterativos, alertas de clientes o escalados procedentes de Negocio y Atención al Cliente (ATC).
-
-* **La "Regla de Oro" (Principio de Precaución):**
-  > En caso de duda o información incompleta sobre el impacto real de una incidencia, **debe clasificarse inicialmente como Emergencia (SL1 / P1 / Crítica)**, gestionarse y comunicarse como tal. Únicamente se reducirá la severidad si se confirma de forma explícita y verificada que el impacto es menor.
-
-* **Regla de Etiquetado Operativo Explícito (`/SL1` y `/SL2`) en Nomenclatura de N1:**
-  Si el título o descripción normalizada del ticket incluye la etiqueta explícita `/SL1` (`INDISPONIBILIDAD / <SISTEMA> / SL1`) o `/SL2` (`DEGRADACIÓN / <SISTEMA> / SL2`), dicha severidad actúa como **suelo mínimo obligatorio** (`SL1 / P1` o `SL2 / P2` respectivamente), prevaleciendo sobre posibles errores de grabación en los campos `Prioridad` (`Media`/`Alta`) o `Urgencia` (`Baja`/`Medio`) de Remedy.
-
-* **Normalización de Campos Remedy (`Urgencia` y `Estatus`):**
-  En las exportaciones de Remedy, `Urgencia = Crítica` equivale siempre a **Urgencia Alta** y `Urgencia = Medio` (masculino) equivale a **Urgencia Media**. El paso de un ticket a estado administrativo `Pendiente` (ej. a la espera de proveedor o ventana técnica) **nunca degrada su urgencia ni su severidad** mientras el impacto técnico o funcional persista.
+Esta skill actúa como el **Motor Determinista de Clasificación y Fuente Única de Verdad (SSOT)** para auditar, calcular y justificar el nivel objetivo de severidad y prioridad operativa (SL1/P1 a SL4/P4) en el ecosistema de incidentes de Orange Tech Operations.
 
 ---
 
-## 2. Niveles Generales de Severidad en IT (SL1 a SL4 / P1 a P4)
+## 1. Arquitectura de Decisión y Árbol Algorítmico
 
-| Nivel de Severidad | Denominación | Criterio de Afectación Operativa | SLAs Objetivos y Protocolo |
-| :---: | :--- | :--- | :--- |
-| **SL1 / P1** | **Emergencia (Crítica)** | Alto impacto o alto riesgo de generarlo en Procesos Críticos de Negocio, aislamiento de sedes/MSC, infraestructura core/cloud sin HA efectiva, middleware/integraciones, identidad/SSO, ciberseguridad o herramientas esenciales de O&M (monitorización/ticketing). | • **Respuesta:** < 15 min.<br>• **Comunicación:** Cada 30-60 min.<br>• **Puente:** War Room activa con Incident Manager.<br>• **Cierre:** Informe PIR (*Post-Mortem*) obligatorio. |
-| **SL2 / P2** | **Mayor** | Incidencias que afectan a equipos, circuitos, tiendas o infraestructuras (p. ej., degradación parcial, caída de un único circuito o nodo con redundancia/HA activa), pero donde **el servicio o proceso global sigue siendo funcional sin causar indisponibilidad masiva**. | • **Respuesta:** < 30-60 min.<br>• **Comunicación:** Cada 2-4 horas.<br>• **Acción:** Escalado inmediato a guardia N2/N3. |
-| **SL3 / P3** | **Menor** | Bajo o nulo impacto en procesos de negocio (p. ej., fallo parcial en procesos no críticos, alarmas menores o fallos aislados). | • **Respuesta:** < 4 horas laborales.<br>• **Acción:** Gestión en cola estándar de soporte N2. |
-| **SL4 / P4** | **Informativa** | Sin impacto directo en los servicios; incidencias o problemas de software que solo requieren registro y seguimiento. | • **Respuesta:** < 24 horas laborales.<br>• **Acción:** Registro en backlog evolutivo o seguimiento. |
+El triaje no se basa en apreciaciones subjetivas ni en la urgencia percibida por el usuario final, sino en la evaluación jerárquica y determinista de las siguientes etapas:
+
+```mermaid
+flowchart TD
+    Start["Inicio: Ingesta de Incidencia Remedy"] --> Step1{"Paso 1: ¿Existe etiqueta explícita N1?<br/>(/SL1 o /SL2 en Título)"}
+    Step1 -- Sí (/SL1) --> R_SL1["Asignar Suelo Mínimo: SL1 / P1"]
+    Step1 -- Sí (/SL2) --> R_SL2["Asignar Suelo Mínimo: SL2 / P2"]
+    Step1 -- No --> Step2{"Paso 2: ¿Supera umbral de Proceso Crítico?<br/>(Secciones 3.1 - 3.6)"}
+    Step2 -- Sí --> R_SL1
+    Step2 -- No --> Step3{"Paso 3: ¿Supera umbral Plataforma / Infra?<br/>(Secciones 3.7 - 3.10)"}
+    Step3 -- Sí (Corte / Sin HA) --> R_SL1
+    Step3 -- Sí (Con HA activa / 1 circuito) --> R_SL2
+    Step3 -- No --> Step4{"Paso 4: Cruce Matriz ITIL Remedy<br/>(Impacto x Urgencia Normalizada)"}
+    Step4 -- Cruce directo --> EvalMatrix["Calcular Nivel Preliminar (Sección 4)"]
+    EvalMatrix --> Step5{"Paso 5: ¿Existe incertidumbre de alcance?"}
+    Step5 -- Sí --> GoldenRule["Aplicar Regla de Oro:<br/>Elevar o Mantener SL1 / P1"]
+    Step5 -- No --> Step6{"Paso 6: ¿Existe Workaround validado?<br/>(Autorizado por IM-CSO)"}
+    Step6 -- Sí --> DecrSL["Desescalar máximo 1 nivel"]
+    Step6 -- No / Sin autorizar --> FinalLevel["Confirmar Nivel Definitivo"]
+    GoldenRule --> FinalLevel
+    DecrSL --> FinalLevel
+    R_SL1 --> FinalLevel
+    R_SL2 --> FinalLevel
+```
 
 ---
 
-## 3. Criterios de Emergencia (`SL1 / P1`) y Mayor (`SL2 / P2`) por Procesos Críticos, Integraciones e Infraestructura
+## 2. Principios de Seguridad y Gobernanza de Datos
 
-Cualquier incidencia que supere los umbrales críticos de los bloques `3.1` a `3.10` se cataloga **de forma automática como Emergencia (`SL1 / P1`)** (o como **`SL2 / P2`** cuando cumpla la condición de degradación parcial o redundancia activa indicada):
+### 2.1 Protección frente a Manipulación de Prioridad (Tampering Defense)
+- En muchas ocasiones, tickets de Remedy son registrados erróneamente con prioridades rebajadas (`Media` o `Baja`) por operadores noveles o por falta de datos en la apertura.
+- **Principio de Severidad Objetiva:** Si los parámetros técnicos del incidente (ej. indisponibilidad de IVR >20%, o fallo de APIGEE) superan los umbrales de la Sección 3, la clasificación **prevalece sobre el campo `Prioridad` de Remedy**, declarándose como discrepancia de severidad obligatoria.
+
+### 2.2 Trazabilidad y Contrato de Justificación
+- Toda determinación de severidad emitida por esta skill debe estar explícitamente indexada a un artículo de la Sección 3 o al cruce formal de la Sección 4.
+- Queda prohibido emitir clasificaciones genéricas sin indicar el umbral numérico o funcional que motivó la decisión.
+
+### 2.3 Tratamiento de Campos Remedy
+- `Urgencia = Crítica` en Remedy equivale siempre a **Urgencia Alta**.
+- `Urgencia = Medio` (masculino) equivale siempre a **Urgencia Media**.
+- El estatus administrativo `Pendiente` (ej. espera de proveedor, ventana de intervención) **nunca reduce la severidad ni la urgencia** mientras el servicio permanezca afectado.
+
+---
+
+## 3. Catálogo Canónico de Criterios y Umbrales Objetivos (3.1 a 3.10)
+
+Cualquier incidencia que cumpla las condiciones descritas se cataloga **automáticamente como Emergencia (`SL1 / P1`)** o como **Mayor (`SL2 / P2`)** según la condición técnica explícita:
 
 ### 3.1 Atención al Cliente (ATC) y Canales Digitales
 * **IVR y CTI:** Indisponibilidad o degradación en `IVR` o `CTI` (`SOP_TECNICO_CALL_CENTER`) que colapse o impida atender a **>20% de las llamadas** para cualquier marca/segmento, o cualquier IVR **descartando >20% de llamadas durante 1 hora**.
 * **Frontales / CRM y Asistentes:** Indisponibilidad o degradación con desviación de **>20% en 30 minutos** en volumen o errores en frontales y herramientas de operación: `Ficha de Cliente Orange` (`DES_SOE_FICHA` / `APL_MOV_SOE`), `CRM Jazztel` (`SOP_BSS_JAZZTEL`), `CRM4TELCO`, `Siebel 8`, `POLAR`, `LIVEPERSON` (`SOP_ASISTENTE`), `DJINGO` (`DES_DJINGO`), `ONURIS` (`SOP_ONURIS`), `ONCONNECT`, `NABOO`, `BOREAL`.
-* **Canales de Autogestión Digital (`SL2 / P2` -> `SL1 / P1`):** Degradación o indisponibilidad en `APP MI ORANGE`, `MIJAZZTEL` o `Web Mantenedores` (`SL2 / P2` en degradación funcional parcial; `SL1 / P1` si provoca corte total de acceso o supera los umbrales de ventas/recargas).
+* **Canales de Autogestión Digital (`SL2 / P2` $\rightarrow$ `SL1 / P1`):** Degradación o indisponibilidad en `APP MI ORANGE`, `MIJAZZTEL` o `Web Mantenedores` (`SL2 / P2` en degradación funcional parcial; `SL1 / P1` si provoca corte total de acceso o supera los umbrales de ventas/recargas).
 
 ### 3.2 Ventas
 * **Volumen de Operaciones:** Afectación en cualquier canal, segmento o marca que suponga un impacto en **más del 30% del volumen de operaciones**.
@@ -77,84 +105,81 @@ Cualquier incidencia que supere los umbrales críticos de los bloques `3.1` a `3
 
 ### 3.7 Capa de Integración / Middleware Transversal
 * **Middleware / Bus de Servicios / Pasarelas API:** Indisponibilidad, errores masivos de integración (`HTTP 404/500`, rechazos de payload) o timeouts en `APIGEE` / `OPENAPI` (`SOP_TMC_APIGEE`), `TIBCO`, `GC MIDDLEWARE`, `Datapower`, conectores `OCCI`, procesos batch de integración (`SBL_EAI`), microservicios transversales (`DES_SOE_MICROSERVICIOS`) o sincronización entre `PeopleSoft` (`FIJO APL Soporte PS`) y `Siebel 8` que afecten la comunicación entre dos o más Procesos Críticos o frontales multicanal.
-  * **Condición `SL1 / P1`:** Corte o fallo de integración sin redundancia que bloquea o corrompe operaciones en vivo hacia clientes o agentes (requiere **Escalado en Paralelo obligatorio**).
-  * **Condición `SL2 / P2`:** Indisponibilidad parcial de nodos de middleware donde la **redundancia de infraestructura** mantiene activos los canales de negocio, o desincronización acotada de campos no bloqueantes.
+  * **Condición `SL1 / P1`:** Corte o fallo de integración sin redundancia que bloquea operaciones en vivo hacia clientes o agentes (requiere **Escalado en Paralelo obligatorio**).
+  * **Condición `SL2 / P2`:** Indisponibilidad parcial de nodos donde la redundancia de infraestructura mantiene activos los canales, o desincronización acotada de campos secundarios.
 
 ### 3.8 Conectividad de Sedes, Call Centers (`MSC`) y Tiendas (`RTV-TECSE RED DATOS` / `GNOC`)
 * **Condición de disparo `SL1 / P1` (Emergencia):**
   * **Aislamiento de Sede / Call Center / MSC:** Indisponibilidad total de conectividad de voz o datos en una o varias sedes operativas o plataformas de Call Center / `MSC` (ej. `Sede Málaga MSC`, `Sede Zaragoza Pilar`, `Bilbao Zamudio-MSC`, `Sedes Barcelona 1 / Mataró`, `La Finca`).
   * **Doble Caída de Circuitos:** Caída simultánea de ambos circuitos de comunicaciones de una sede (`Circuito Ulises + Meneses`).
 * **Condición de disparo `SL2 / P2` (Mayor):**
-  * **Pérdida de Redundancia de Circuito:** Caída o degradación de **un único circuito** de comunicaciones de sede (`Ulises`, `Meneses`, `Palos-Bogotá`, `Palos-ISGF Lezama`) manteniendo el servicio operativo a través del circuito de respaldo.
-  * **Electrónica de Red Local o Tienda Física:** Degradación de firewall/switch de sede (`FW Torrejón`, `Switch central Yécora`) con camino alternativo, o **indisponibilidad completa de una Tienda física individual** (ej. `Tienda Calle Alcalá 149`, `Tienda Córdoba`).
+  * **Pérdida de Redundancia de Circuito:** Caída o degradación de **un único circuito** (`Ulises`, `Meneses`, `Palos-Bogotá`, `Palos-ISGF Lezama`) manteniendo el servicio operativo a través del circuito de respaldo.
+  * **Electrónica de Red Local o Tienda Física:** Degradación de switch/firewall local (`FW Torrejón`, `Switch central Yécora`) con camino alternativo, o **indisponibilidad completa de una Tienda física individual** (ej. `Tienda Calle Alcalá 149`, `Tienda Córdoba`).
 
 ### 3.9 Infraestructura Core IT, Hipervisores (`ESX`), Servidores (`PSeries`), Almacenamiento (`SAN`), BBDD (`Exadata`) y Cloud (`OCI`/`GCP`)
 * **Condición de disparo `SL1 / P1` (Emergencia):**
   * **Interconexión Cloud (`OCI` / `GCP` / `ITX`):** Caída o flapeo severo de enlaces troncales `ITX` con `GCP` y `OCI` (`OPER_COE_CLOUD` / `Atlas_Soporte_CLOUD`, ej. `ITX OCI GCP ULI-MEN`, `Conectividad GCP`, `Flapeos OCI`).
-  * **Cómputo y Virtualización sin HA efectiva (`PSeries Power9` / `ESX`):** Indisponibilidad de servidores críticos `PSeries Power9` (`Atlas_Soporte_Unix`) o hipervisores `ESX` (`Atlas_Soporte_Linux_Vmware`, ej. `ESX aotlxprvin...`) que provoque indisponibilidad de aplicativos o caída sin absorción por Alta Disponibilidad.
+  * **Cómputo y Virtualización sin HA efectiva (`PSeries Power9` / `ESX`):** Indisponibilidad de servidores críticos `PSeries Power9` (`Atlas_Soporte_Unix`) o hipervisores `ESX` (`Atlas_Soporte_Linux_Vmware`, ej. `ESX aotlxprvin...`) que provoque indisponibilidad de aplicativos sin absorción por Alta Disponibilidad.
   * **Almacenamiento SAN, BBDD Críticas y Backups (`HWSAN` / `Exadata` / `Data Mart Fiscal` / `BACKUP OSP`):** Caída de switches troncales de almacenamiento (`ADM. HWSAN`), indisponibilidad de `DATA MART FISCAL` (`Atlas_Soporte_BBDD`) o fallo global en `BACKUP OSP` (`T.S. BYR`).
 * **Condición de disparo `SL2 / P2` (Mayor):**
-  * Caída, reinicio o degradación de un nodo individual `ESX`, un servidor `PSeries`, una cabina de discos (`SPAIN ALMACENAMIENTO`, `es3iba02fte`), un filesystem `SAP BASIS` o un nodo de clúster (`Cluster Exadata Yécora`) cuando la **Alta Disponibilidad (HA) o redundancia mantiene el servicio productivo arriba**, pero con pérdida de capacidad o respaldo.
+  * Caída, reinicio o degradación de un nodo individual `ESX`, un servidor `PSeries`, una cabina de discos (`SPAIN ALMACENAMIENTO`, `es3iba02fte`), un filesystem `SAP BASIS` o un nodo de clúster (`Cluster Exadata Yécora`) cuando la **Alta Disponibilidad (HA) mantiene el servicio productivo arriba**, pero con pérdida de tolerancia a fallos.
 
 ### 3.10 Autenticación / Gestión de Identidad (`GDU` / `EVIDIAN`) y Automatización Operativa (`ROBOTFACTORY`)
 * **Condición de disparo `SL1 / P1` (Emergencia):**
-  * **Identidad y Control de Accesos (`GDU` / `EVIDIAN`):** Indisponibilidad global de `GDU` (`OPER_Soporte_GdU`) o del sistema de Single Sign-On `EVIDIAN` que impide el login o autenticación de operadores y usuarios en aplicaciones críticas.
-  * **Automatización RPA (`ROBOTFACTORY`):** Indisponibilidad total de `ROBOTFACTORY` que paraliza los flujos automáticos de activación y provisión (`Fijo Activacion LUNA` / `Atlas_Soporte_BBDD`) sin alternativa inmediata.
+  * **Identidad y Control de Accesos (`GDU` / `EVIDIAN`):** Indisponibilidad global de `GDU` (`OPER_Soporte_GdU`) o del sistema Single Sign-On `EVIDIAN` que impide el login de operadores y usuarios en aplicaciones críticas.
+  * **Automatización RPA (`ROBOTFACTORY`):** Indisponibilidad total de `ROBOTFACTORY` que paraliza los flujos automáticos de provisión (`Fijo Activacion LUNA` / `Atlas_Soporte_BBDD`) sin alternativa operativa inmediata.
 * **Condición de disparo `SL2 / P2` (Mayor):**
-  * Degradación parcial, lentitud de acceso o errores funcionales acotados en módulos de `GDU` (`GDU/ACM`) o `EVIDIAN`, o fallo parcial de robots en `ROBOTFACTORY` existiendo operativa manual de contingencia.
+  * Degradación parcial, lentitud de acceso o errores funcionales acotados en módulos de `GDU` (`GDU/ACM`) o `EVIDIAN`, o fallo parcial de robots existiendo contingencia manual.
 
 ---
 
-## 4. Matriz Determinista de Cruce y Regla de Desempate
+## 4. Matriz Determinista de Cruce (Impacto x Urgencia) y Desempate
 
-Para incidencias no recogidas expresamente en los puntos clave anteriores, se aplica el cruce de **Impacto** y **Urgencia**:
+Para incidencias no descritas en los umbrales explícitos de la Sección 3, se evalúa el cruce matricial normalizado:
 
 | Impacto \ Urgencia | Urgencia Alta (`Crítica` / `Alta`) | Urgencia Media (`Media` / `Medio`) | Urgencia Baja (`Baja`) |
 | :--- | :---: | :---: | :---: |
-| **Alto (Proceso core / indisponibilidad / `Masiva` sin redundancia)** | **SL1 / P1** | **SL1 / P1** *(SL2 si hay workaround validado)* | **SL2 / P2** |
+| **Alto (Proceso core / indisponibilidad masiva sin redundancia)** | **SL1 / P1** | **SL1 / P1** *(SL2 si hay workaround validado)* | **SL2 / P2** |
 | **Medio (Infraestructura con HA / 1 circuito / 1 sede / degradación parcial)** | **SL2 / P2** | **SL2 / P2** *(SL3 si hay workaround validado)* | **SL3 / P3** |
 | **Bajo (Fallo aislado o entorno no productivo)** | **SL3 / P3** | **SL3 / P3** | **SL4 / P4** |
 
-* **Regla de Desempate:** Un *workaround* solo desescala 1 nivel si está **técnicamente verificado, operativo en minutos, autorizado por IM-CSO y no genera fricción severa de negocio**.
-* **Información incompleta:** Si se desconoce el alcance o la viabilidad del workaround, aplica la **Regla de Oro** (mantener nivel superior).
+### 4.1 La Regla de Oro del Triaje N1 (Principio de Precaución)
+> Ante cualquier duda o falta de telemetría completa sobre el impacto real, **la incidencia se clasifica inmediatamente como Emergencia (`SL1 / P1`)**. La severidad únicamente se podrá reducir cuando se certifique con datos fehacientes que el alcance no compromete procesos críticos.
+
+### 4.2 Gobernanza de Workarounds
+- Un workaround técnico solo autoriza la desescalada de **un único nivel** (ej. de P1 a P2, o de P2 a P3) si y solo si:
+  1. Se encuentra técnicamente desplegado y verificado.
+  2. Ha sido formalmente **autorizado por Customer & Service Ops (IM-CSO)**.
+  3. No traslada una fricción inasumible hacia el cliente final ni hacia los agentes de atención.
 
 ---
 
-## 5. Procedimiento de Gestión de Emergencias IT (SL1 / P1) y Escalados
+## 5. Protocolo Operativo de Tiempos y Escalados
 
-El **Incident Manager (IM)** es el responsable de coordinar la resolución técnica, controlar los tiempos y activar los escalados.
+| Hito Temporal | Acción Operativa Obligatoria | Responsable |
+| :--- | :--- | :--- |
+| **$T_0$** | Detección, asignación de severidad y apertura de War Room en < 10 min. | N1 / Incident Manager |
+| **$T+20\text{ min}$** | Envío de la primera comunicación oficial a Dirección. | Incident Manager |
+| **$T+45\text{ min}$ (1er Escalado)** | Si no hay avances significativos en diagnóstico, **escalado telefónico** al siguiente nivel de proveedores y grupos resolutores. | Incident Manager |
+| **$T+1\text{h }45\text{ min}$ (2º Escalado)** | Si tras 1 hora adicional desde el primer escalado persiste la falta de avances, **segundo escalado telefónico** a estamentos superiores. | Incident Manager |
+| **$T > 2\text{ horas}$ (Alarma de Estancamiento)** | Ticket P1 en diagnóstico sin plan de acción validado $\rightarrow$ **Escalado de Dirección hacia Customer & Service Ops (IM-CSO)** y reconvocatoria de urgencia. | Incident Manager / IM-CSO |
 
-### 5.1 Umbrales Temporales de Escalado
-* **Primer Escalado (45 Minutos):**
-  Si transcurridos como máximo **45 minutos** desde la apertura/identificación de la emergencia no existe ningún avance técnico por parte del grupo asignado, el IM ejecutará un **escalado telefónico** al siguiente nivel de los proveedores y grupos involucrados, convocando una reunión de seguimiento con los responsables.
-* **Segundo Escalado (1 Hora Adicional - T+1h 45m):**
-  Si tras **1 hora adicional** desde el primer escalado continúa la falta de avances significativos o los planes de acción aplicados no han mitigado el impacto, el IM realizará un **segundo escalado al siguiente escalón superior**.
-* **Alarma por Estancamiento / Incidencia Bloqueada (>2 Horas sin Avance):**
-  Si una incidencia catalogada como **SL1 / P1** (o **SL2 / P2** crítica de continuidad) acumula **>2 horas** en estado `PENDIENTE` o `ASIGNADO`, en diagnóstico o sin un plan de acción validado por el Incident Manager, se activará de forma automática el **Escalado de Dirección hacia Customer & Service Ops (IM-CSO)**, reconvocando con carácter ejecutivo de urgencia la mesa técnica de la War Room.
-
-### 5.2 Canales y Reglas de Ejecución
-* **Vía Telefónica Obligatoria:** Durante una Emergencia SL1, **todos los escalados se realizan exclusivamente vía telefónica**, independientemente de si ocurren en Horario Laboral (HL) o Fuera de Horario Laboral (FHL).
-* **Coordinación con Customer & Service Ops (IM-CSO):**
-  Cuando se requiera escalar a niveles directivos o superiores de proveedores y grupos internos, el IM debe contactar con el equipo de **IM-CSO** para gestionar dicho escalado. Ambos roles pueden acordar excepciones a la norma general según la evolución de la crisis.
-* **Escalado en Paralelo (Casos Críticos):**
-  Ante caídas de componentes estructurales críticos (**CRM, Middleware/TIBCO/APIGEE, enlaces Cloud OCI/GCP, bases de datos RAC/Exadata, Racks/ESX/PSeries de infraestructura**) o incidencias de impacto masivo desproporcionado, los escalados no se realizan de forma secuencial, sino **en paralelo a todos los posibles grupos resolutores**. Esta regla también aplica de inmediato si existen dudas sobre qué grupo técnico es el responsable.
-
-### 5.3 Estructura de las Matrices de Contacto y Repositorios
-Las matrices de contacto están organizadas por capas operativas y marcas:
-* **Nivel 1 (N1):** Primer escalón de atención operativa (tanto interno de Orange como del proveedor de soporte).
-* **Niveles N2 y N3 (Especialistas y Proveedores):** Matrices específicas asociadas a cada aplicativo o elemento de infraestructura:
-  * **Entorno MasMóvil / KRT:** Documentadas y centralizadas en **Confluence**.
-  * **Entorno Orange / Jazztel:** Documentadas y centralizadas en la plataforma **GRIAL**.
+### 5.1 Reglas Clave de Escalado
+- **Canal Telefónico Obligatorio:** En Emergencias SL1, todos los escalados se realizan por llamada telefónica en HL y FHL.
+- **Escalado en Paralelo:** Ante incidentes estructurales (Middleware APIGEE/TIBCO, BBDD RAC/Exadata, cabinas SAN o racks de infraestructura), los grupos resolutores se convocan de forma simultánea en paralelo.
+- **Repositorios de Contacto:** Entornos Orange/Jazztel en **GRIAL**; entornos MasMóvil/KRT en **Confluence**.
 
 ---
 
-## 6. Formato de Justificación y Salida de la Skill
+## 6. Formato de Salida y Contrato de Justificación
 
-Al clasificar o auditar una incidencia con esta skill, emite el siguiente bloque normalizado:
+Al ejecutar el triaje o auditar un ticket, esta skill devuelve obligatoriamente este bloque estructurado:
 
-- **Severidad / Prioridad:** `[SL1/P1 | SL2/P2 | SL3/P3 | SL4/P4] - [Emergencia / Mayor / Menor / Informativa]`
-- **Proceso / Entorno Afectado:** `[3.1 ATC | 3.2 Ventas | 3.3 Portabilidad | 3.4 Prepago | 3.5 Provisión | 3.6 Facturación/Cobros | 3.7 Middleware/Integración | 3.8 Sedes/Circuitos/Tiendas | 3.9 Infraestructura Core/Cloud (ESX/PSeries/SAN/Exadata/OCI/GCP) | 3.10 Identidad/SSO y Automatización (GDU/EVIDIAN/ROBOTFACTORY)]`
-- **Justificación del Criterio:** `[Umbral específico superado de la Sección 3 / Etiqueta explícita N1 (/SL1 o /SL2) / Cruce Matriz Sección 4 / Regla de Oro por información preliminar]`
-- **Estado de Workaround:** `[No viable / En investigación / Redundancia HA activa / Operativo validado por IM-CSO]`
-- **Protocolo Requerido:** `[War Room + Escalado telefónico IM (45 min) | Escalado en Paralelo | Escalado Dirección IM-CSO (>2h sin avance) | Guardia N2/N3 | Cola estándar]`
-- **Matriz de Contacto de Referencia:** `[GRIAL (Orange/Jazztel) | Confluence (MasMóvil/KRT)]`
+```markdown
+- **Severidad / Prioridad:** [SL1/P1 | SL2/P2 | SL3/P3 | SL4/P4] - [Emergencia / Mayor / Menor / Informativa]
+- **Proceso / Entorno Afectado:** [3.1 ATC | 3.2 Ventas | 3.3 Portabilidad | 3.4 Prepago | 3.5 Provisión | 3.6 Facturación/Cobros | 3.7 Middleware/Integración | 3.8 Sedes/Circuitos/Tiendas | 3.9 Infraestructura Core/Cloud | 3.10 Identidad/Automatización]
+- **Justificación del Criterio:** [Citar umbral específico de la Sección 3 / Etiqueta explícita N1 / Cruce de Matriz / Regla de Oro]
+- **Estado de Workaround:** [No viable / En investigación / Redundancia HA activa / Operativo validado por IM-CSO]
+- **Protocolo Requerido:** [War Room + Escalado telefónico IM (45 min) | Escalado en Paralelo | Escalado Dirección IM-CSO (>2h sin avance) | Guardia N2/N3 | Cola estándar]
+- **Matriz de Contacto de Referencia:** [GRIAL (Orange/Jazztel) | Confluence (MasMóvil/KRT)]
+```

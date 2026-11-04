@@ -6,106 +6,144 @@ description: >-
   y alertas breves (<= 30 palabras) de incidencias IT de alta prioridad (P1, P2 y discrepancias) tras la
   subida de un nuevo fichero de incidencias o detección de tickets pendientes, adoptando el rol del agente
   incident-reporter y actualizando data/agent_executive_messages.json y las notificaciones locales del dashboard.
+domain: it-incidents
+version: 1.2.0
+language: es
+owner: Orange Tech Operations
+metadata:
+  role: executive_notification_orchestrator
+  pipeline_stage: post_ingestion_synthesis
+  security_level: internal_confidential
+  last_updated: 2026-11-04
 ---
 
-# Skill: Síntesis y Notificaciones Ejecutivas de Incidencias IT (`incident-executive-notifications`)
+# Síntesis y Notificaciones Ejecutivas de Incidencias IT (`incident-executive-notifications`) — v1.2
 
-Esta skill orquesta el flujo integral de detección, redacción ejecutiva y almacenamiento persistente de comunicaciones oficiales para incidencias IT críticas (P1, P2 y discrepancias de prioridad) en el Release Dashboard.
+Esta skill orquesta el ciclo de vida de **detección, redacción ejecutiva estructurada y persistencia local** de comunicaciones oficiales para incidencias IT críticas (P1, P2 y discrepancias de prioridad) en el Release Dashboard.
 
-Garantiza que **ninguna notificación dependa de plantillas genéricas o mecánicas (Vía A descartada)** y que cada ticket de alta prioridad cuente con una redacción contextualizada elaborada por el agente oficial `incident-reporter`.
+Garantiza que **ninguna comunicación dependa de plantillas genéricas mecánicas (Vía A descartada)** y que cada ticket cuente con una redacción personalizada elaborada por el agente oficial [`incident-reporter`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/agents/it-incidents/incident-reporter.md).
 
 > [!IMPORTANT]
-> **Separación de Responsabilidades y Seguridad:**
-> Esta skill opera en **entorno local**. Su alcance finaliza al generar, validar y persistir los mensajes localmente en `data/agent_executive_messages.json`. **Nunca despliega de forma autónoma a producción.** El despliegue al servidor es una acción desacoplada y explícita tras la revisión humana.
+> **Aislamiento de Entorno y Límite de Seguridad (Local vs Producción):**  
+> Esta skill opera exclusivamente sobre el **entorno de trabajo local**. Su cometido finaliza al auditar, redactar y persistir los mensajes en el almacén `data/agent_executive_messages.json`. **Nunca ejecuta despliegues autónomos a producción**. La publicación al servidor central es un acto deliberado, supervisado por el operador mediante `scripts/deploy-production.ps1`.
 
 ---
 
-## Cuándo activar esta skill
+## 1. Arquitectura del Pipeline de Datos Local
 
-- Tras cargar o actualizar un nuevo fichero CSV/Excel de incidencias Remedy en el entorno local.
-- Cuando el usuario solicite: *"redacta las incidencias pendientes"*, *"genera los mensajes ejecutivos"*, *"actualiza las notificaciones ejecutivas"* o *"procesa el fichero de incidencias"*.
-- Cuando se agreguen nuevos tickets a `data/incidents.json` o `data/output/high_priority_notifications.json`.
-
----
-
-## Flujo Operativo Paso a Paso
+El flujo de información se ejecuta de forma secuencial y auditable:
 
 ```mermaid
-flowchart TD
-    A["1. Carga / Actualización CSV en Local"] --> B["2. Evaluación de Severidad ITIL<br/>(evaluate_incident_notifications.py)"]
-    B --> C["3. Escaneo de Tickets Pendientes<br/>(scan_pending_incidents.py)"]
-    C --> D{"¿Hay pendientes?"}
-    D -- Sí --> E["4. Adopción de rol incident-reporter<br/>(Redacción ejecutiva <= 90 palabras)"]
-    E --> F["5. Guardado en almacén persistente<br/>(update_agent_message.py)"]
-    F --> C
-    D -- No --> G["6. Verificación Local y Preview al Usuario<br/>(Fin del alcance de la Skill)"]
-    G -. "Acción explícita" .-> H["7. Subida CSV a Producción + Despliegue<br/>(deploy-production.ps1)"]
+sequenceDiagram
+    autonumber
+    actor Operador as Operador / Usuario
+    participant FileSys as Fichero CSV / Remedy
+    participant EvalScript as evaluate_incident_notifications.py
+    participant Scanner as scan_pending_incidents.py
+    participant Agent as Agente incident-reporter
+    participant CLI as update_agent_message.py
+    participant Store as agent_executive_messages.json
+    participant Output as high_priority_notifications.json
+
+    Operador->>FileSys: Deposita / Actualiza CSV de Incidencias
+    Operador->>EvalScript: Ejecuta evaluación de severidad ITIL
+    EvalScript->>Output: Genera catálogo de alta prioridad preliminar
+    Operador->>Scanner: Escanea incidencias sin redacción oficial
+    Scanner-->>Operador: Lista de tickets pendientes y prompts ensamblados
+    loop Para cada incidencia pendiente
+        Operador->>Agent: Solicita redacción con contexto (Remedy / Epsilon)
+        Agent-->>Operador: Emite texto 2 niveles (<=90 y <=30 palabras)
+        Operador->>CLI: Ejecuta ingestión (--raw / --file / --completo)
+        CLI->>Store: Persiste mensaje en JSON (con validación atómica)
+        CLI->>EvalScript: Re-evalúa y sincroniza
+        EvalScript->>Output: Actualiza high_priority_notifications.json
+    end
+    Operador->>Scanner: Verificación final (0 pendientes)
+    Operador->>Operador: Presenta preview al usuario en chat
 ```
 
 ---
 
-### Paso 1: Evaluación y triaje del catálogo local
+## 2. Salvaguardas de Seguridad e Integridad de Datos
 
-Tras recibir o depositar el nuevo CSV de incidencias en local, ejecuta la evaluación ITIL de severidad:
+### 2.1 Validación Estricta de Parámetros
+- **Identificador de Incidencia:** Debe validar el formato estándar de Remedy (`INC\d{12}` o identificador alfanumérico corporativo).
+- **Fase Operativa:** Únicamente se aceptan los valores canónicos: `apertura`, `seguimiento` y `cierre`.
+- **Límites Físicos de Longitud:**
+  - Versión completa: Validada como **un único párrafo** (sin caracteres `\n` intermedios) y longitud $\le 90$ palabras.
+  - Versión breve: Validada en **una sola línea** y longitud $\le 30$ palabras.
+
+### 2.2 Integridad y Escritura Atómica
+- La persistencia en `data/agent_executive_messages.json` utiliza serialización segura (`json.dump` con codificación UTF-8 e indentación de 2 espacios) para evitar corrupción de fichero por concurrencia.
+- Los mensajes persisten con metadatos de auditoría: `fecha_actualizacion`, `fase`, `generado_por_agente: true`, `origen: "incident-reporter"` y conteo verificado de palabras.
+
+### 2.3 Tratamiento de Errores y Recuperación
+- **Fallo por formato Markdown incorrecto en modo `--raw`:** Si el CLI reporta `Error: No se pudo extraer la versión completa o breve`, utilizar la modalidad de parámetros directos (`--completo "..." --breve "..."`) o volcar el borrador a un archivo de texto e invocar `--file`.
+- **Fallo por exceso de palabras:** Reducir la redacción eliminando detalles técnicos redundantes y reintentar.
+
+---
+
+## 3. Guía de Ejecución Paso a Paso
+
+### Paso 1: Evaluación y triaje del catálogo local
+Tras cargar o depositar un nuevo CSV de incidencias en local, ejecuta el evaluador:
 
 ```powershell
 python converters/evaluate_incident_notifications.py
 ```
 
-Esto generará o actualizará `data/output/high_priority_notifications.json`, identificando todos los tickets P1, P2 y discrepancias activas, integrando el almacén acumulativo `data/agent_executive_messages.json`.
+Este comando:
+1. Aplica la matriz de severidad ITIL y los umbrales de la skill `it-severity-matrix`.
+2. Cruza los tickets con el almacén histórico `data/agent_executive_messages.json`.
+3. Genera o refresca `data/output/high_priority_notifications.json`.
 
 ---
 
 ### Paso 2: Escaneo de incidencias pendientes de redacción
-
-Para comprobar qué incidencias activas no tienen aún redacción oficial de agente, ejecuta el script auxiliar de la skill:
+Ejecuta el escáner de la skill para identificar tickets activos que carecen de redacción oficial:
 
 ```powershell
 python .agents/skills/incident-executive-notifications/scripts/scan_pending_incidents.py
 ```
 
-Para obtener el listado en formato JSON estructurado:
-
-```powershell
-python .agents/skills/incident-executive-notifications/scripts/scan_pending_incidents.py --json
-```
-
-Para ver el contexto técnico completo y el prompt ensamblado de una incidencia concreta:
-
-```powershell
-python .agents/skills/incident-executive-notifications/scripts/scan_pending_incidents.py --id INC000004168038
-```
+**Modos de escaneo avanzados:**
+- Formato JSON estructurado para automatización:
+  ```powershell
+  python .agents/skills/incident-executive-notifications/scripts/scan_pending_incidents.py --json
+  ```
+- Inspección detallada y prompt ensamblado de una incidencia específica:
+  ```powershell
+  python .agents/skills/incident-executive-notifications/scripts/scan_pending_incidents.py --id INC000004168038
+  ```
 
 ---
 
 ### Paso 3: Redacción adoptando el rol `incident-reporter`
+Para cada ticket pendiente, genera los mensajes siguiendo las reglas de [`agents/it-incidents/incident-reporter.md`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/agents/it-incidents/incident-reporter.md):
 
-Para cada incidencia pendiente detectada, el asistente adopta las reglas de [`agents/it-incidents/incident-reporter.md`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/agents/it-incidents/incident-reporter.md) y se apoya en `it-severity-matrix`:
+#### Reglas Obligatorias:
+1. **Dos niveles estricto:**
+   - **Mensaje para Dirección (versión completa):** Exactamente **un único párrafo** (monopárrafo), máximo **90 palabras**.
+   - **Versión aún más breve:** Máximo **30 palabras**, en una sola línea, apto para SMS/Teams.
+2. **Priorizar síntesis técnica de Epsilon IA:** Si la incidencia dispone de `resumen_ia` (problema, impacto, solución), úsalo como fuente de verdad técnica. Si no dispone de él, redacta a partir de los datos Remedy en Modo Restringido.
+3. **Regla Anti-Alucinación Estricta:** No inventar causas no demostradas ni cifras de afectados. En Modo Restringido indicar siempre que la causa está en fase de investigación por el grupo resolutor.
 
-#### Reglas de Redacción Obligatorias:
-1. **Dos niveles de salida:**
-   - **Mensaje para Dirección (versión completa):** Exactamente **un único párrafo** (monopárrafo), máximo **90 palabras**. Sin viñetas, sin encabezados internos.
-   - **Versión aún más breve:** Máximo **30 palabras**, formato apto para SMS o canal de guardia (`P1/P2: <Impacto>. <Acción>. <Próxima actualización>`).
-2. **Priorizar síntesis técnica de Epsilon IA:** Si la incidencia cuenta con bloque Epsilon IA (`resumen_ia`: problema, impacto de negocio, solución en curso), úsalo como fuente de verdad técnica. Si no dispone de Epsilon IA, redacta a partir del título y sistemas Remedy.
-3. **Regla Anti-Alucinación Estricta:** No inventar horas, causas raíz ni métricas de clientes afectados no respaldadas en los datos del ticket.
-   - **En incidencias sin Epsilon IA (Modo Restringido):** Está TERMINANTEMENTE PROHIBIDO conjeturar causas técnicas ficticias (no atribuir fallos a bases de datos, redes, cuellos de botella ni microservicios inexistentes en el ticket). Indicar siempre que la causa se encuentra en fase de investigación activa por el grupo resolutor.
-
-#### Plantilla esperada de salida del agente:
+#### Plantilla de Salida:
 ```markdown
 **Mensaje para Dirección (versión completa):**
-<Párrafo único formal de máximo 90 palabras que explica el servicio afectado, el alcance comercial/operativo, las acciones inmediatas en curso y el próximo hito de seguimiento.>
+<Párrafo único cohesionado de hasta 90 palabras que explica el servicio afectado, el impacto en clientes o negocio, las acciones en curso y la próxima ventana de actualización.>
 
 **Versión aún más breve:**
-<Alerta telegráfica de máximo 30 palabras: Criticidad, sistema, impacto clave, estado de soporte y ventana de reporte.>
+<Alerta telegráfica de hasta 30 palabras: Criticidad, servicio, impacto clave, estado de soporte y ventana de reporte.>
 ```
 
 ---
 
 ### Paso 4: Ingesta en el almacén persistente local
 
-Una vez redactado el texto para una incidencia, ingéstalo en el almacén oficial usando el CLI `update_agent_message.py`:
+Ingesta los mensajes generados a través del CLI oficial `update_agent_message.py`:
 
-#### Vía A (Directa por parámetro `--raw`):
+#### Modalidad 1: Vía directa `--raw` (Markdown completo copiado)
 ```powershell
 python converters/cli/update_agent_message.py --id <ID_INCIDENCIA> --phase apertura --raw "**Mensaje para Dirección (versión completa):**
 Se ha detectado una incidencia crítica en el sistema X...
@@ -114,55 +152,37 @@ Se ha detectado una incidencia crítica en el sistema X...
 P1: Caída de X. Impacto en facturación. Soporte investigando. Próxima actualización 30 min."
 ```
 
-#### Vía B (Desde archivo temporal o borrador):
+#### Modalidad 2: Desde fichero borrador `--file`
 ```powershell
-python converters/cli/update_agent_message.py --id <ID_INCIDENCIA> --phase apertura --file "ruta/al/borrador.txt"
+python converters/cli/update_agent_message.py --id <ID_INCIDENCIA> --phase apertura --file "scratch/borrador_INC000004168038.txt"
 ```
 
-#### Vía C (Parámetros separados):
+#### Modalidad 3: Por parámetros separados `--completo` y `--breve`
 ```powershell
-python converters/cli/update_agent_message.py --id <ID_INCIDENCIA> --phase apertura --completo "Texto completo..." --breve "Texto breve..."
+python converters/cli/update_agent_message.py --id <ID_INCIDENCIA> --phase apertura --completo "Texto completo monopárrafo..." --breve "Texto telegráfico breve..."
 ```
-
-> [!NOTE]
-> El comando valida automáticamente que la versión completa sea un único párrafo y no supere las 90 palabras, y que la versión breve no supere las 30 palabras. Tras guardar en `data/agent_executive_messages.json`, regenera automáticamente `data/output/high_priority_notifications.json`.
 
 ---
 
-### Paso 5: Verificación Local y Validación Humana (Fin de la Skill)
+### Paso 5: Verificación Local y Entrega
 
-1. Comprueba los tests unitarios:
+1. Ejecuta la suite de pruebas unitarias relevante:
    ```powershell
    python -m pytest converters/tests/unit/test_update_agent_message.py converters/tests/unit/test_evaluate_incident_notifications.py -v
    ```
-2. Ejecuta el escáner final:
+2. Comprueba que el escáner confirma el cierre de todas las redacciones:
    ```powershell
    python .agents/skills/incident-executive-notifications/scripts/scan_pending_incidents.py
    ```
-   Debe reportar: `✅ Todas las incidencias activas disponen de mensajes ejecutivos oficiales.`
+   *Salida esperada:* `✅ Todas las incidencias activas disponen de mensajes ejecutivos oficiales.`
 3. **Presenta el preview de los mensajes redactados al usuario en el chat.** La skill concluye aquí.
 
 ---
 
-### Paso Posterior Opcional: Publicación a Producción
-
-Cuando el usuario da el visto bueno a los mensajes y desea sincronizar la nueva versión con el servidor de producción:
-
-1. **Subir el CSV a producción:** Cargar el CSV a través de la interfaz web (`/dashboards/massive-incidents/`) para registrarlo en el almacenamiento persistente remoto.
-2. **Desplegar la sincronización:**
+### Paso Posterior Opcional: Despliegue Supervisado a Producción
+Cuando el usuario valide los textos y decida sincronizar con producción:
+1. Subir el CSV oficial mediante la consola web (`/dashboards/massive-incidents/`).
+2. Ejecutar el despliegue supervisado:
    ```powershell
    powershell -ExecutionPolicy Bypass -File scripts/deploy-production.ps1 -AgentsLibraryPath . -BypassSandbox true
    ```
-   Esto transferirá `agent_executive_messages.json` y `high_priority_notifications.json` a `/infocodes/var/storage/release-dashboard/` asegurando que tanto la tabla masiva como las notificaciones de producción muestren la información coherente y actualizada.
-
----
-
-## Estructura de Ficheros Relacionados
-
-- **Guía Operativa Integral:** [`docs/02-gestion-emergencias/notificaciones-ejecutivas.md`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/docs/02-gestion-emergencias/notificaciones-ejecutivas.md)
-- **Instrucciones de la skill:** [`.agents/skills/incident-executive-notifications/SKILL.md`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/.agents/skills/incident-executive-notifications/SKILL.md)
-- **Escáner de pendientes:** [`.agents/skills/incident-executive-notifications/scripts/scan_pending_incidents.py`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/.agents/skills/incident-executive-notifications/scripts/scan_pending_incidents.py)
-- **Utilidad CLI de ingestión:** [`converters/cli/update_agent_message.py`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/converters/cli/update_agent_message.py)
-- **Generador de notificaciones:** [`converters/evaluate_incident_notifications.py`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/converters/evaluate_incident_notifications.py)
-- **Almacén persistente:** [`data/agent_executive_messages.json`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/data/agent_executive_messages.json)
-- **Salida para el frontend:** [`data/output/high_priority_notifications.json`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/data/output/high_priority_notifications.json)
