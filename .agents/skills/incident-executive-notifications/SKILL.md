@@ -7,7 +7,7 @@ description: >-
   subida de un nuevo fichero de incidencias o detección de tickets pendientes, adoptando el rol del agente
   incident-reporter y actualizando data/agent_executive_messages.json y las notificaciones locales del dashboard.
 domain: it-incidents
-version: 1.2.0
+version: 1.4.0
 language: es
 owner: Orange Tech Operations
 metadata:
@@ -17,7 +17,7 @@ metadata:
   last_updated: 2026-11-04
 ---
 
-# Síntesis y Notificaciones Ejecutivas de Incidencias IT (`incident-executive-notifications`) — v1.2
+# Síntesis y Notificaciones Ejecutivas de Incidencias IT (`incident-executive-notifications`) — v1.4
 
 Esta skill orquesta el ciclo de vida de **detección, redacción ejecutiva estructurada y persistencia local** de comunicaciones oficiales para incidencias IT críticas (P1, P2 y discrepancias de prioridad) en el Release Dashboard.
 
@@ -68,7 +68,7 @@ sequenceDiagram
 
 ### 2.1 Validación Estricta de Parámetros
 - **Identificador de Incidencia:** Debe validar el formato estándar de Remedy (`INC\d{12}` o identificador alfanumérico corporativo).
-- **Fase Operativa:** Únicamente se aceptan los valores canónicos: `apertura`, `seguimiento` y `cierre`.
+- **Fase Operativa:** Únicamente se aceptan los valores canónicos: `apertura`, `seguimiento`, `reapertura` y `cierre`.
 - **Límites Físicos de Longitud:**
   - Versión completa: Validada como **un único párrafo** (sin caracteres `\n` intermedios) y longitud $\le 90$ palabras.
   - Versión breve: Validada en **una sola línea** y longitud $\le 30$ palabras.
@@ -83,13 +83,20 @@ sequenceDiagram
 
 ---
 
+### 2.4 Modo Auto-Borrador Provisional (Auto-Draft Mode) y Fase Reapertura
+- **Eliminación de la Ventana Ciega de Comunicación:** Durante ingestas masivas de ficheros, puede existir un lapso entre la detección técnica del incidente y la redacción personalizada por el operador. Con el flag `--auto-draft`, el evaluador genera de forma determinista un **borrador provisional** seguro:
+  - Marcado con `borrador_provisional: true` en metadatos y encabezado con el prefijo `[BORRADOR PROVISIONAL]`.
+  - Cumple estrictamente el contrato de dos niveles ($\le 90$ palabras monopárrafo, $\le 30$ palabras telegráfico) sin conjeturar causas raíz (estricta regla anti-alucinación).
+- **Soporte Canónico de Fase `reapertura`:** Diseñado específicamente para notificar recurrencias activas en tickets reactivados tras haber sido resueltos.
+- **Identificación en el Escáner:** `scan_pending_incidents.py` clasifica los tickets pendientes distinguiendo entre `[📝 BORRADOR PROVISIONAL]` (cobertura temporal activa) y `[⏳ PENDIENTE]` (sin comunicación).
+
 ## 3. Guía de Ejecución Paso a Paso
 
 ### Paso 1: Evaluación y triaje del catálogo local
 Tras cargar o depositar un nuevo CSV de incidencias en local, ejecuta el evaluador:
 
 ```powershell
-python converters/evaluate_incident_notifications.py
+python converters/cli/evaluate_incident_notifications.py --auto-draft
 ```
 
 Este comando:

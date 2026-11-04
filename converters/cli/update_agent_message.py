@@ -107,14 +107,14 @@ def update_agent_store(
     incident_id = incident_id.strip().upper()
     phase = phase.strip().lower()
 
-    if phase not in ("apertura", "seguimiento", "cierre"):
-        raise ValueError(f"Fase no válida: '{phase}'. Debe ser 'apertura', 'seguimiento' o 'cierre'.")
+    if phase not in ("apertura", "seguimiento", "reapertura", "cierre"):
+        raise ValueError(f"Fase no válida: '{phase}'. Debe ser 'apertura', 'seguimiento', 'reapertura' o 'cierre'.")
 
     data: dict[str, Any] = {
         "_metadata": {
-            "version": "1.2.0",
+            "version": "1.4.0",
             "skills_version": {
-                "incident-reporter": "1.2.0",
+                "incident-reporter": "1.4.0",
                 "it-severity-matrix": "2.2.0",
                 "orange-it-emergency-management": "2.2.0"
             },
@@ -240,7 +240,7 @@ def main():
         description="Actualiza data/agent_executive_messages.json con las salidas oficiales del Agente incident-reporter."
     )
     parser.add_argument("--id", "-i", dest="incident_id", help="ID de la incidencia (ej. INC000004159463)")
-    parser.add_argument("--phase", "-p", default="apertura", choices=["apertura", "seguimiento", "cierre"], help="Fase (apertura, seguimiento, cierre)")
+    parser.add_argument("--phase", "-p", default="apertura", choices=["apertura", "seguimiento", "reapertura", "cierre"], help="Fase (apertura, seguimiento, cierre)")
     parser.add_argument("--raw", "-r", help="Texto bruto copiado directamente del chat/LLM")
     parser.add_argument("--file", "-f", help="Ruta a un archivo que contiene la respuesta del LLM")
     parser.add_argument("--completo", help="Versión completa de Dirección explícita")

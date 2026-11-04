@@ -1199,9 +1199,116 @@ def test_should_escalate_stagnant_incident_over_2h_in_emergency_report():
     assert "🚨 ALARMA POR ESTANCAMIENTO (>2h): Escalado a Dirección IM-CSO" in report
     assert "2h 10m (130m)" in report
 
+def test_should_apply_reopening_aggravating_factor_when_ticket_is_reopened():
+    evaluator = SeverityEvaluator()
+    ticket_reopened = {
+        "ID de incidencia": "INC_REOPENED_001",
+        "Descripción": "Degradación en Ficha Cliente // Madison Valladolid",
+        "Estatus": "Asignado",
+        "Prioridad": "Media",
+        "Urgencia": "Baja",
+        "Impacto": "Medio",
+        "es_reapertura": True,
+    }
+    result = evaluator.evaluate(ticket_reopened, epsilon_data=None)
+
+    assert result["es_reapertura"] is True
+    assert result["evaluacion"]["es_reapertura"] is True
+    # Aggravating factor elevates Urgencia to Alta
+    assert result["evaluacion"]["urgencia"] == "Alta"
+    assert "recurrencia activa" in result["evaluacion"]["urgencia_justificacion"]
+    assert "Incidencia Reabierta (Recurrencia Activa)" in result["evaluacion"]["criterio"]
 
 
+def test_should_include_reapertura_phase_when_ticket_is_reopened():
+    generator = ExecutiveMessageGenerator()
+    ticket_reopened = {
+        "ID de incidencia": "INC_REOPENED_002",
+        "Descripción": "CRM | Error funcional | ISGF - Murcia",
+        "es_reapertura": True,
+    }
+    evaluation = {
+        "prioridad_sugerida": "P2",
+        "es_reapertura": True,
+        "evaluacion": {"es_reapertura": True, "proceso": "Atención al Cliente (ATC)"}
+    }
+    messages = generator.generate(ticket_reopened, evaluation, resumen_ia=None)
+
+    assert "reapertura" in messages
+    assert "apertura" in messages
+    assert "seguimiento" in messages
+    assert "cierre" in messages
+    assert "AVISO DE REAPERTURA" in messages["reapertura"]["prompt_agente"]
 
 
+def test_should_generate_auto_draft_provisional_messages_when_requested():
+    generator = ExecutiveMessageGenerator()
+    ticket_new = {
+        "ID de incidencia": "INC_PROVISIONAL_999",
+        "Descripción": "CAU // Aislamiento sede // CORTE TOTAL",
+        "Grupo asignado": "SOP_REDES",
+    }
+    evaluation = {
+        "prioridad_sugerida": "P1",
+        "es_alta_prioridad": True,
+        "evaluacion": {"proceso": "Conectividad de Sedes, Call Centers y Tiendas"}
+    }
+    epsilon_mock = {
+        "problema": "Corte de fibra principal en enlace troncal",
+        "impacto": "Aislamiento de sede y 60 puestos inoperativos",
+        "solucion": "Técnicos de planta externa en desplazamiento",
+        "siguienteAccion": "Verificación de empalme óptico",
+        "sistemas": ["SOP_REDES", "WAN_CORPORATIVA"]
+    }
+    messages = generator.generate(ticket_new, evaluation, resumen_ia=epsilon_mock, auto_draft=True)
 
+    for phase in ["apertura", "seguimiento", "cierre"]:
+        msg = messages[phase]
+        assert msg["generado_por_agente"] is False
+        assert msg["borrador_provisional"] is True
+        assert msg["estado"] == "borrador_provisional"
+        
+        comp = msg["completo"]
+        brev = msg["breve"]
+        assert comp.startswith("[BORRADOR PROVISIONAL]")
+        assert brev.startswith("[BORRADOR PROVISIONAL]")
+        
+        # Word limits and format checks
+        words_comp = comp.split()
+        words_brev = brev.split()
+        assert len(words_comp) <= 90
+        assert len(words_brev) <= 30
+        assert "\n" not in comp
+        assert "\n" not in brev
+        assert msg["conteo_palabras_completo"] == len(words_comp)
+        assert msg["conteo_palabras_breve"] == len(words_brev)
+
+
+def test_should_include_ingestion_delta_in_catalog_metadata():
+    tickets = [
+        {"ID de incidencia": "INC001", "Estatus": "Asignado", "Prioridad": "Alta", "Descripción": "Caída core"}
+    ]
+    delta_mock = {
+        "fichero_anterior": "prev_massive.json",
+        "total_actual": 1,
+        "total_anterior": 1,
+        "conteo_nuevos": 0,
+        "conteo_resueltos": 0,
+        "conteo_reabiertos": 1,
+        "tickets_reabiertos": ["INC001"]
+    }
+    catalog = evaluate_incidents_batch(
+        tickets=tickets,
+        epsilon_client=None,
+        source_file_name="curr_massive.json",
+        write_audit=False,
+        ingestion_delta=delta_mock
+    )
+    meta = catalog["_metadata"]
+    assert meta["version"] == "2.4.0"
+    assert meta["skills_version"]["it-severity-matrix"] == "2.4.0"
+    assert meta["skills_version"]["incident-reporter"] == "1.4.0"
+    assert meta["ingestion_delta"] == delta_mock
+    assert "reabiertas_count" in meta["kpis"]
+    assert "borradores_provisionales_count" in meta["kpis"]
 

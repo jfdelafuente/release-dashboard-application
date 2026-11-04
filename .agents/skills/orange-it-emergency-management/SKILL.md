@@ -8,7 +8,7 @@ description: >-
   Core/Cloud (ESX/PSeries/Exadata/OCI/GCP), Identidad/Automatización (GDU/EVIDIAN/ROBOTFACTORY)
   y protocolo de escalados telefónicos (45 min / +1h / Alarma >2h).
 domain: it-incidents
-version: 2.3.0
+version: 2.4.0
 language: es
 owner: Orange Tech Operations
 metadata:
@@ -17,7 +17,7 @@ metadata:
   last_updated: 2026-11-04
 ---
 
-# Gestión de Emergencias IT Orange (`orange-it-emergency-management`) — v2.3
+# Gestión de Emergencias IT Orange (`orange-it-emergency-management`) — v2.4
 
 Esta Skill capacita al modelo de IA para actuar como **Especialista Operativo en Gestión de Emergencias IT de Orange**. Su propósito es gobernar el ciclo de vida de crisis operativas, coordinar la *War Room*, verificar el cumplimiento riguroso de SLAs de comunicación y escalado telefónico, asegurar la gobernanza de *workarounds* autorizados por IM-CSO y gestionar la reversión inmediata de cambios (*Rollbacks* de PaP).
 
@@ -135,6 +135,16 @@ El **Incident Manager (IM)** coordina las acciones bajo este régimen temporal r
 4. **Escalado en Paralelo (Componentes Estructurales):** En caídas de componentes troncales (CRM, Middleware/TIBCO/APIGEE, enlaces Cloud OCI/GCP, BBDD RAC/Exadata, cabinas SAN) o ante dudas del grupo responsable, **el escalado se lanza simultáneamente en paralelo a todos los grupos resolutores potenciales**.
 
 ---
+
+
+### 5.2 Protocolo Operativo ante Incidencias Reabiertas (Recurrencia Activa)
+
+Cuando una incidencia transita de estado resuelto a activo (reapertura detectada por el analizador delta o por presencia de `Fecha de última resolución` en ticket en curso):
+
+1. **Reactivación Inmediata de War Room:** No existe periodo de espera; se reactiva de inmediato la sesión de crisis con el Incident Manager y grupos resolutores.
+2. **Auditoría de Mitigación Fallida:** Analizar de forma prioritaria por qué la solución o workaround previo resultó deficiente o inestable. Queda prohibido reaplicar la misma solución sin validación técnica reforzada.
+3. **Cronometría Acumulada y Escalado sin Cortesía:** El envejecimiento operativo se computa desde el $T_0$ de apertura original. Si el tiempo total acumulado supera 45 min o 2 horas, se dispara de inmediato el escalado telefónico al nivel correspondiente e IM-CSO sin conceder nueva ventana de cortesía.
+4. **Fase de Comunicación Oficial:** Se emite de inmediato un comunicado ejecutivo en fase `reapertura` a Dirección informando del síntoma recurrente y de la reactivación de los equipos técnicos.
 
 ## 6. Modelo de Gobernanza RACI
 

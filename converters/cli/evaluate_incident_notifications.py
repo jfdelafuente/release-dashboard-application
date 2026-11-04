@@ -27,12 +27,27 @@ from typing import Any, Dict, List, Optional, Tuple
 
 try:
     from converters.src.csv_to_json.timezone_utils import reconcile_milestones
+    from converters.src.csv_to_json.ingestion_delta import (
+        compute_ingestion_delta,
+        find_latest_archived_massive_file,
+        mark_reopened_tickets,
+    )
 except ImportError:
     try:
         from src.csv_to_json.timezone_utils import reconcile_milestones
+        from src.csv_to_json.ingestion_delta import (
+            compute_ingestion_delta,
+            find_latest_archived_massive_file,
+            mark_reopened_tickets,
+        )
     except ImportError:
         sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
         from converters.src.csv_to_json.timezone_utils import reconcile_milestones
+        from converters.src.csv_to_json.ingestion_delta import (
+            compute_ingestion_delta,
+            find_latest_archived_massive_file,
+            mark_reopened_tickets,
+        )
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger("incident_evaluator")
@@ -538,6 +553,18 @@ class SeverityEvaluator:
                     impact = "Medio"
                     impact_reason = "Etiquetado explícito /SL2 por N1 (Incidencia Mayor / Pérdida de redundancia o degradación)."
 
+        # Regla Canónica de Incidencias Reabiertas (it-severity-matrix v2.4):
+        # Transición de Resuelto/Cerrado a estado activo (Asignado/En Curso/Pendiente).
+        # Factor agravante: Urgencia Alta, riesgo de recurrencia activa y preservación del envejecimiento operativo acumulativo.
+        is_reopened = bool(ticket.get("es_reapertura"))
+        reopening_criterion_prefix = ""
+        if not is_closed and is_reopened:
+            if urgency in ("Baja", "Media"):
+                urgency = "Alta"
+                urgency_reason = "Incidencia reabierta tras resolución previa (recurrencia activa sin solución definitiva). Factor agravante aplicado: Urgencia Alta."
+                priority = self._calculate_matrix(impact, urgency, has_workaround)
+            reopening_criterion_prefix = "Incidencia Reabierta (Recurrencia Activa) | "
+
         # Regla Operativa de Aging Escalation:
         # P2 activa por >= 120 minutos sin workaround autorizado escala preventivamente a P1
         raw_date = ticket.get("Fecha de envío") or ticket.get("fecha_envio") or ""
@@ -561,6 +588,8 @@ class SeverityEvaluator:
 
         proceso, proceso_negocio, dominio_tecnico = self._classify_process_multi_domain(ticket, epsilon_data)
         criterio = self._determine_criterion(proceso, priority, impact, urgency, ticket, epsilon_data, quant_metrics)
+        if reopening_criterion_prefix:
+            criterio = reopening_criterion_prefix + criterio
         if aging_criterion_prefix:
             criterio = aging_criterion_prefix + criterio
 
@@ -582,6 +611,7 @@ class SeverityEvaluator:
             "discrepancia_gravedad": disc_details["gravedad"],
             "discrepancia_motivo": disc_details["motivo"],
             "aging_escalated": aging_escalated,
+            "es_reapertura": is_reopened,
             "evaluacion": {
                 "proceso": proceso,
                 "proceso_negocio": proceso_negocio,
@@ -600,6 +630,7 @@ class SeverityEvaluator:
                 "discrepancia_gravedad": disc_details["gravedad"],
                 "discrepancia_motivo": disc_details["motivo"],
                 "aging_escalated": aging_escalated,
+                "es_reapertura": is_reopened,
             }
         }
 
@@ -960,12 +991,16 @@ class ExecutiveMessageGenerator:
         sistemas_str = ", ".join(sistemas_list) if sistemas_list else "Servicios Core"
 
         prompt_lines = [
-            "Actúa como el agente incident-reporter v1.2 (comunicación ejecutiva oficial para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).",
+            "Actúa como el agente incident-reporter v1.4 (comunicación ejecutiva oficial para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).",
             f"Fase solicitada: {phase.upper()}",
             f"Incidencia: {inc_id} - {titulo}",
             f"Criticidad sugerida: {prio}",
             f"Sistemas involucrados: {sistemas_str}"
         ]
+        if phase.lower() == "reapertura":
+            prompt_lines.append(
+                "⚠️ AVISO DE REAPERTURA: La incidencia fue resuelta previamente pero ha vuelto a registrar afectación activa (recurrencia). Redacta el mensaje de reapertura informando del servicio afectado, síntoma de recurrencia, reactivación de equipos resolutores y próximo hito de seguimiento."
+            )
 
         eval_data = evaluation.get("evaluacion") if isinstance(evaluation.get("evaluacion"), dict) else evaluation
         proceso = eval_data.get("proceso")
@@ -1104,22 +1139,83 @@ class ExecutiveMessageGenerator:
                 logger.debug("No se pudo cargar el almacén de agentes: %s", e)
         return {}
 
+    @classmethod
+    def generate_provisional_draft(
+        cls,
+        ticket: dict[str, Any],
+        evaluation: dict[str, Any],
+        resumen_ia: Optional[dict[str, Any]],
+        phase: str = "apertura"
+    ) -> tuple[str, str]:
+        """Generates a strictly bounded, non-hallucinating provisional draft executive message
+        ([BORRADOR PROVISIONAL]) adhering to the incident-reporter contract:
+        - Versión completa: <= 90 words, single cohesive paragraph, no linebreaks.
+        - Versión breve: <= 30 words, single line.
+        """
+        inc_id = ticket.get("ID de incidencia") or ticket.get("id") or "INC"
+        raw_title = ticket.get("Descripción") or ticket.get("descripcion") or (resumen_ia.get("titulo") if resumen_ia else "")
+        prob_sint, scope, prob_brev = cls.synthesize_ticket_title(raw_title)
+        prio = evaluation.get("prioridad_sugerida", "P2")
+
+        sistemas_list = []
+        if resumen_ia and isinstance(resumen_ia.get("sistemas"), list):
+            sistemas_list = [s for s in resumen_ia["sistemas"] if s]
+        if not sistemas_list and ticket.get("Grupo asignado"):
+            sistemas_list = [ticket["Grupo asignado"]]
+        sistemas_str = ", ".join(sistemas_list) if sistemas_list else scope
+
+        problema = (resumen_ia.get("problema") if resumen_ia else "") or prob_sint
+        impacto = (resumen_ia.get("impacto") if resumen_ia else "") or f"afectación operativa en el servicio {scope}"
+        solucion = (resumen_ia.get("solucion") if resumen_ia else "") or "análisis técnico preliminar y diagnóstico de contención en curso"
+        sig_accion = (resumen_ia.get("siguienteAccion") or resumen_ia.get("siguiente_accion") if resumen_ia else "") or "revisión de logs y validación con equipo resolutor"
+
+        if phase == "apertura":
+            comp = f"[BORRADOR PROVISIONAL] Declarada apertura de incidencia {inc_id} ({prio}) por {problema}. Se registra {impacto}. Los equipos resolutores ({sistemas_str}) se encuentran movilizados ejecutando el diagnóstico técnico inicial y las labores de contención operativa del servicio. Se emitirá una nueva actualización de seguimiento en 60 minutos."
+            brev = f"[BORRADOR PROVISIONAL] {prio}/{inc_id}: {prob_brev}. Diagnóstico inicial por {sistemas_str}. Próximo hito en 60 min."
+        elif phase == "seguimiento":
+            comp = f"[BORRADOR PROVISIONAL] Seguimiento de incidencia {inc_id} ({prio}) en el servicio {scope}. Continúan las actuaciones de mitigación con foco en {solucion}. Como siguiente hito se contempla {sig_accion}. Se mantiene monitorización estrecha de la estabilidad del entorno. Próximo reporte de seguimiento en 60 minutos."
+            brev = f"[BORRADOR PROVISIONAL] {prio}/{inc_id}: Seguimiento en {scope}. Actuaciones en curso ({solucion[:35]}). Siguiente hito en 60 min."
+        elif phase == "reapertura":
+            comp = f"[BORRADOR PROVISIONAL] Reapertura de incidencia {inc_id} ({prio}) tras recurrencia de anomalía en {scope}. Se reactivan de inmediato las actuaciones de emergencia y la movilización de especialistas de {sistemas_str} para contener la afectación y restablecer el servicio a la mayor brevedad. Se informará de nuevos avances en 30 minutos."
+            brev = f"[BORRADOR PROVISIONAL] {prio}/{inc_id}: Reapertura en {scope} por recurrencia. Equipos técnicos reactivados. Actualización en 30 min."
+        else:  # cierre
+            comp = f"[BORRADOR PROVISIONAL] Conclusión y estabilización de la incidencia {inc_id} ({prio}) en el servicio {scope}. Restablecida la operatividad tras las intervenciones técnicas de {sistemas_str}. El servicio queda bajo observación preventiva para asegurar su estabilidad continuada. Se procederá a la emisión del informe Post-Incident Review."
+            brev = f"[BORRADOR PROVISIONAL] {prio}/{inc_id}: Servicio restablecido en {scope}. En observación preventiva. Traspaso a análisis postmortem."
+
+        clean_comp = cls._clean_text(comp)
+        clean_brev = cls._clean_text(brev)
+
+        clean_comp = cls._truncate_to_words(clean_comp, 90)
+        clean_brev = cls._truncate_to_words(clean_brev, 30)
+
+        return clean_comp, clean_brev
+
     def generate(
         self,
         ticket: dict[str, Any],
         evaluation: dict[str, Any],
-        resumen_ia: Optional[dict[str, Any]]
+        resumen_ia: Optional[dict[str, Any]],
+        auto_draft: bool = False
     ) -> dict[str, dict[str, Any]]:
         """Generates executive messages conforming to the incident-reporter agent persona.
         VIA A DISCARDED: Fixed template string concatenations are no longer used.
         Messages come exclusively from the official agent output store. If not yet processed by
-        the agent, messages are marked as pending with the structured prompt ready to run.
+        the agent:
+        - If auto_draft=True: Generates a strictly bounded [BORRADOR PROVISIONAL] message to prevent blind windows.
+        - If auto_draft=False: Marked as pending with the structured prompt ready to run.
         """
         inc_id = ticket.get("ID de incidencia") or ticket.get("id") or "INC"
         agent_msgs = self.agent_store.get(inc_id)
 
+        eval_data = evaluation.get("evaluacion") if isinstance(evaluation.get("evaluacion"), dict) else evaluation
+        is_reopened = bool(evaluation.get("es_reapertura") or eval_data.get("es_reapertura") or ticket.get("es_reapertura"))
+
+        phases = ["apertura", "seguimiento", "cierre"]
+        if is_reopened or (agent_msgs and "reapertura" in agent_msgs):
+            phases = ["apertura", "seguimiento", "reapertura", "cierre"]
+
         messages = {}
-        for phase in ["apertura", "seguimiento", "cierre"]:
+        for phase in phases:
             prompt = self.generate_agent_prompt(ticket, evaluation, resumen_ia, phase)
             if agent_msgs and phase in agent_msgs:
                 phase_data = agent_msgs[phase]
@@ -1131,7 +1227,20 @@ class ExecutiveMessageGenerator:
                     "conteo_palabras_completo": len(comp.split()),
                     "conteo_palabras_breve": len(brev.split()),
                     "generado_por_agente": True,
+                    "borrador_provisional": False,
                     "origen": phase_data.get("origen", "incident-reporter"),
+                    "prompt_agente": prompt,
+                }
+            elif auto_draft:
+                draft_comp, draft_brev = self.generate_provisional_draft(ticket, evaluation, resumen_ia, phase)
+                messages[phase] = {
+                    "completo": draft_comp,
+                    "breve": draft_brev,
+                    "conteo_palabras_completo": len(draft_comp.split()),
+                    "conteo_palabras_breve": len(draft_brev.split()),
+                    "generado_por_agente": False,
+                    "borrador_provisional": True,
+                    "estado": "borrador_provisional",
                     "prompt_agente": prompt,
                 }
             else:
@@ -1142,6 +1251,7 @@ class ExecutiveMessageGenerator:
                     "conteo_palabras_completo": 0,
                     "conteo_palabras_breve": 0,
                     "generado_por_agente": False,
+                    "borrador_provisional": False,
                     "estado": "pendiente",
                     "prompt_agente": prompt,
                 }
@@ -1496,7 +1606,9 @@ def evaluate_incidents_batch(
     source_file_name: str = "",
     reference_time: Optional[datetime] = None,
     write_audit: bool = True,
-    project_root: Optional[Any] = None
+    project_root: Optional[Any] = None,
+    auto_draft: bool = False,
+    ingestion_delta: Optional[dict[str, Any]] = None,
 ) -> dict[str, Any]:
     """Processes a batch of massive incidents and constructs the High Priority catalog with Orange IT Emergency Management."""
     evaluator = SeverityEvaluator()
@@ -1586,7 +1698,7 @@ def evaluate_incidents_batch(
         eval_dict["proxima_ventana_update_minutos"] = sla_status["proxima_ventana_update_minutos"]
         evaluation["evaluacion"] = eval_dict
 
-        mensajes = msg_generator.generate(item, evaluation, epsilon_data)
+        mensajes = msg_generator.generate(item, evaluation, epsilon_data, auto_draft=auto_draft)
         reporte_emergencia = msg_generator.generate_emergency_4blocks_report(
             ticket=item,
             evaluation=evaluation,
@@ -1701,15 +1813,16 @@ def evaluate_incidents_batch(
     catalog = {
         "_metadata": {
             "type": "high_priority_notifications",
-            "version": "2.3.0",
+            "version": "2.4.0",
             "skills_version": {
-                "it-severity-matrix": "2.3.0",
-                "orange-it-emergency-management": "2.3.0",
-                "incident-reporter": "1.3.0",
-                "incident-executive-notifications": "1.3.0"
+                "it-severity-matrix": "2.4.0",
+                "orange-it-emergency-management": "2.4.0",
+                "incident-reporter": "1.4.0",
+                "incident-executive-notifications": "1.4.0"
             },
             "generated_at": datetime.now(timezone.utc).isoformat(),
             "source_file": source_file_name,
+            "ingestion_delta": ingestion_delta,
             "audit_completeness": {
                 "completas": sum(1 for r in audit_records if r.get("estado_informacion") == "COMPLETA"),
                 "parciales": sum(1 for r in audit_records if r.get("estado_informacion") == "PARCIAL"),
@@ -1723,6 +1836,8 @@ def evaluate_incidents_batch(
                 "total_high_priority": p1_count + p2_count,
                 "p1_critical_count": p1_count,
                 "p2_high_count": p2_count,
+                "reabiertas_count": sum(1 for it in high_priority_items if it.get("evaluacion", {}).get("es_reapertura")),
+                "borradores_provisionales_count": sum(1 for it in high_priority_items if any(p.get("borrador_provisional") for p in it.get("mensajes_ejecutivos", {}).values())),
                 "discrepancies_count": discrepancies_count,
                 "discrepancias_delta1_moderada_count": disc_delta1_count,
                 "discrepancias_delta2_mayor_count": disc_delta2_count,
@@ -1777,6 +1892,8 @@ def main() -> int:
     parser.add_argument("--base-url", type=str, default="http://127.0.0.1:8080/api/epsilon/resumenIA", help="Epsilon proxy base URL")
     parser.add_argument("--force", action="store_true", help="Force refresh ignoring local Epsilon cache")
     parser.add_argument("--dry-run", action="store_true", help="Perform evaluation without writing to output file")
+    parser.add_argument("--auto-draft", action="store_true", help="Genera borradores provisionales [BORRADOR PROVISIONAL] para incidencias activas sin redacción oficial de agente.")
+    parser.add_argument("--archive-dir", type=str, default=None, help="Directorio de archivos masivos históricos (default: data/archive)")
 
     args = parser.parse_args()
     project_root = Path.cwd()
@@ -1816,12 +1933,42 @@ def main() -> int:
         terminal_count,
     )
 
+    # Ingestion Delta Analyzer: Comparar contra el archivo masivo precedente más reciente
+    archive_dir_path = Path(args.archive_dir) if args.archive_dir else (project_root / "data" / "archive")
+    latest_archived = find_latest_archived_massive_file(archive_dir_path, exclude_file=input_file)
+    ingestion_delta = None
+    if latest_archived and latest_archived.exists():
+        try:
+            with open(latest_archived, "r", encoding="utf-8") as f_prev:
+                raw_prev = json.load(f_prev)
+            prev_tickets = raw_prev.get("data", []) if isinstance(raw_prev, dict) else raw_prev
+            if isinstance(prev_tickets, list):
+                ingestion_delta = compute_ingestion_delta(tickets, prev_tickets, previous_file_name=latest_archived.name)
+                reabiertos_set = set(ingestion_delta.get("tickets_reabiertos", []))
+                reopened_count = mark_reopened_tickets(tickets, reabiertos_set)
+                logger.info(
+                    "Delta de ingesta vs %s: %d nuevos, %d resueltos, %d reabiertos (%d marcados en total).",
+                    latest_archived.name,
+                    ingestion_delta["conteo_nuevos"],
+                    ingestion_delta["conteo_resueltos"],
+                    ingestion_delta["conteo_reabiertos"],
+                    reopened_count,
+                )
+        except Exception as e_delta:
+            logger.warning("No se pudo calcular delta de ingesta vs %s: %s", latest_archived, e_delta)
+    else:
+        reopened_count = mark_reopened_tickets(tickets, set())
+        if reopened_count > 0:
+            logger.info("Detección intrínseca de reaperturas: %d incidencias reabiertas detectadas.", reopened_count)
+
     epsilon_client = EpsilonClient(base_url=args.base_url)
     catalog = evaluate_incidents_batch(
         tickets=tickets,
         epsilon_client=epsilon_client,
         limit=args.limit,
-        source_file_name=input_file.name
+        source_file_name=input_file.name,
+        auto_draft=args.auto_draft,
+        ingestion_delta=ingestion_delta,
     )
     catalog["_metadata"]["total_source_tickets"] = total_raw
     catalog["_metadata"]["terminal_tickets_omitted"] = terminal_count

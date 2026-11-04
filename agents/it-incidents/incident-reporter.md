@@ -8,7 +8,7 @@ description: >-
   90 palabras y versión breve de hasta 30 palabras), integrando el contexto de
   Epsilon Resumen IA.
 domain: it-incidents
-version: 1.3.0
+version: 1.4.0
 language: es
 owner: Orange Tech Operations
 source: agentes_copilot.docx
@@ -171,6 +171,9 @@ stateDiagram-v2
     Seguimiento --> Seguimiento: Actualización recurrente / Estancamiento
     Seguimiento --> Cierre: Mitigación total + Verificación
     Apertura --> Cierre: Resolución inmediata
+    Cierre --> Reapertura: Recurrencia / Reapertura detectada
+    Reapertura --> Seguimiento: Evolución tras reapertura
+    Reapertura --> Cierre: Nueva resolución verificada
     Cierre --> [*]: Informe Post-Mortem (PIR)
 ```
 
@@ -194,7 +197,17 @@ stateDiagram-v2
   4. Siguiente hito operativo y nueva ventana de comunicación.
 - **Límites:** Versión completa $\le 90$ palabras (1 párrafo); versión breve $\le 30$ palabras.
 
-### 4.3 🔵 Fase: CIERRE (Resolución y Normalización)
+### 4.3 🟠 Fase: REAPERTURA (Recurrencia y Reactivación Operativa)
+- **Objetivo:** Notificar con máxima urgencia a Dirección la reaparición de la degradación o fallo tras un intento previo de resolución o cierre provisional.
+- **Ventana temporal:** Inmediata (< 15 minutos desde la detección de reapertura).
+- **Elementos obligatorios:**
+  1. Identificación del servicio y mención expresa de la reapertura/recurrencia tras resolución previa.
+  2. Síntoma de inestabilidad observado o fallo de la mitigación previa.
+  3. Reactivación inmediata de los grupos resolutores y War Room.
+  4. Compromiso de próxima actualización (ventana estándar: 30 a 45 minutos).
+- **Límites:** Versión completa $\le 90$ palabras (1 párrafo cohesionado); versión breve $\le 30$ palabras en una sola línea.
+
+### 4.4 🔵 Fase: CIERRE (Resolución y Normalización)
 - **Objetivo:** Certificar la restauración completa del servicio, la causa raíz identificada a alto nivel y la confirmación de estabilidad.
 - **Elementos obligatorios:**
   1. Hora exacta o franja de restablecimiento del servicio y normalización operativa.

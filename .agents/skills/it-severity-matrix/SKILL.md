@@ -8,7 +8,7 @@ description: >-
   Identidad/Automatización (GDU/EVIDIAN/ROBOTFACTORY), la Regla de Oro del triaje N1 y el
   protocolo oficial de escalados de Emergencias (45 min / +1 hora / Alarma >2h) con IM-CSO.
 domain: it-incidents
-version: 2.3.0
+version: 2.4.0
 language: es
 owner: Orange Tech Operations
 metadata:
@@ -18,7 +18,7 @@ metadata:
   last_updated: 2026-11-04
 ---
 
-# Matriz de Severidad, Prioridad y Protocolo de Escalados IT (Orange) — v2.3
+# Matriz de Severidad, Prioridad y Protocolo de Escalados IT (Orange) — v2.4
 
 Esta skill actúa como el **Motor Determinista de Clasificación y Fuente Única de Verdad (SSOT)** para auditar, calcular y justificar el nivel objetivo de severidad y prioridad operativa (SL1/P1 a SL4/P4) en el ecosistema de incidentes de Orange Tech Operations.
 
@@ -211,6 +211,18 @@ Para incidencias no descritas en los umbrales explícitos de la Sección 3, se e
   1. Se encuentra técnicamente desplegado y verificado.
   2. Ha sido formalmente **autorizado por Customer & Service Ops (IM-CSO)**.
   3. No traslada una fricción inasumible hacia el cliente final ni hacia los agentes de atención.
+
+---
+
+### 4.3 Regla Canónica de Incidencias Reabiertas (Factor Agravante Operativo)
+
+Una incidencia se define operativamente como **Reabierta** cuando transita desde un estado terminal previo (`Resuelto`, `Cerrado`) hacia un estado activo (`Asignado`, `En Curso`, `Pendiente`), ya sea detectado por el analizador delta de ingestas sucesivas o intrínsecamente si presenta `Fecha de última resolución` no vacía en un ticket en curso.
+
+1. **Factor Agravante de Urgencia:** Al reabrirse un ticket, la urgencia operativa se eleva automáticamente a **`Alta`** (o se mantiene en `Alta/Crítica`), debido a que representa un fallo de la resolución previa o inestabilidad recurrente de la solución aplicada.
+2. **Recálculo Determinista de Prioridad:** Con Urgencia Alta, un impacto Alto resulta obligatoriamente en **SL1 / P1**, y un impacto Medio en **SL2 / P2**, eliminando cualquier tolerancia a prioridad menor.
+3. **Preservación del Aging Acumulado:** El cronómetro de envejecimiento (*aging*) de la incidencia **NO se resetea a cero**. Se calcula desde la `Fecha de apertura` original del ticket, acumulando el tiempo total que el servicio ha estado degradado o vulnerable.
+4. **Trazabilidad en Justificación:** La justificación del criterio se prefija formalmente con `Incidencia Reabierta (Recurrencia Activa) | [Criterio Técnico]`.
+5. **Activación Inmediata de Protocolo de Alarma:** Al no ser una primera ocurrencia, se obvia el margen de cortesía inicial; si el aging acumulado supera los umbrales de escalado (>45 min o >2h), se activa inmediatamente el escalado telefónico a IM-CSO y War Room.
 
 ---
 

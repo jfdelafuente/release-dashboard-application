@@ -93,6 +93,7 @@ def main():
                     "prioridad": it.get("prioridad_sugerida"),
                     "titulo": it.get("titulo"),
                     "sistemas": it.get("sistemas"),
+                    "has_draft": bool((it.get("mensajes_ejecutivos", {}).get("apertura") or {}).get("borrador_provisional")),
                     "has_epsilon": bool((it.get("resumen_ia") or {}).get("problema") or (it.get("resumen_ia") or {}).get("impacto"))
                 }
                 for it in pending_items
@@ -127,7 +128,10 @@ def main():
         ev = it.get("evaluacion") or {}
         proceso = ev.get("proceso") or "-"
         criterio = ev.get("criterio") or "-"
-        print(f"[{idx}] {inc_id} ({prio}) - {it.get('titulo')}")
+        ap = (it.get("mensajes_ejecutivos") or {}).get("apertura") or {}
+        has_draft = bool(ap.get("borrador_provisional"))
+        badge = " [📝 BORRADOR PROVISIONAL]" if has_draft else " [⏳ PENDIENTE]"
+        print(f"[{idx}] {inc_id} ({prio}) - {it.get('titulo')}{badge}")
         print(f"    Proceso:  {proceso} | Criterio: {criterio}")
         print(f"    Sistemas: {sistemas}")
         print(f"    Epsilon IA: {'✨ Disponible' if has_epsilon else '⚠️ [MODO RESTRINGIDO]: Sin telemetría Epsilon. Prohibido conjeturar causas técnicas.'}")
