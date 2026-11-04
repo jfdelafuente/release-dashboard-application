@@ -800,8 +800,48 @@ body {
 }
 
 /* Células de datos principales */
+.triage-cell-incident,
 .triage-cell-id {
-  vertical-align: top;
+  vertical-align: middle;
+}
+
+.triage-incident-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.triage-datetime-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 5px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+
+.triage-date-label {
+  color: var(--triage-text-muted);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.triage-aging-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 6px;
+  border-radius: var(--radius-xs);
+  background: var(--triage-surface-subtle);
+  color: var(--triage-text-subtle);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.triage-aging-badge.is-aging-warning {
+  background: rgba(239, 68, 68, 0.08);
+  color: #DC2626;
+  border: 1px solid rgba(239, 68, 68, 0.2);
 }
 
 .triage-id-row {
@@ -889,6 +929,13 @@ body {
   transform: translateY(-0.5px);
 }
 
+.triage-micro-mark.is-pending {
+  background: #F3F4F6;
+  color: #6B7280;
+  border-color: #E5E7EB;
+  cursor: default;
+}
+
 .triage-micro-mark .mark-icon {
   font-size: 10px;
   line-height: 1;
@@ -901,8 +948,17 @@ body {
   margin-top: 4px;
 }
 
+.triage-cell-title-comms,
 .triage-cell-title {
   min-width: 260px;
+  vertical-align: middle;
+}
+
+.triage-title-indicators {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 5px;
 }
 
 .triage-title-text {
@@ -912,8 +968,53 @@ body {
   margin-bottom: 6px;
 }
 
+.triage-cell-process-systems,
 .triage-cell-process {
   white-space: nowrap;
+  vertical-align: middle;
+}
+
+.triage-process-row {
+  display: flex;
+  align-items: center;
+}
+
+.triage-cell-remedy {
+  vertical-align: middle;
+  text-align: center;
+}
+
+.triage-cell-itil {
+  vertical-align: middle;
+  text-align: center;
+}
+
+.triage-itil-wrapper {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.triage-itil-delta-sub {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 5px;
+  border-radius: var(--radius-xs);
+  white-space: nowrap;
+}
+
+.triage-itil-delta-sub.delta-2 {
+  background: var(--triage-red-bg);
+  color: var(--triage-red-text);
+  border: 1px solid var(--triage-red-border);
+}
+
+.triage-itil-delta-sub.delta-1 {
+  background: var(--triage-amber-bg);
+  color: var(--triage-amber-text);
+  border: 1px solid var(--triage-amber-border);
 }
 
 .triage-cell-delta {

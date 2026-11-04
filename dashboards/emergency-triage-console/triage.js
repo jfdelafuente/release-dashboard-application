@@ -2514,6 +2514,59 @@ Generado por Consola de Emergencias IT Orange - Motor de Triaje (Módulo 1)`;
   // Función 2: Filtrado y Renderizado en Modo Tabular con Filas Plegables
   // --------------------------------------------------------------------------
 
+  function parseIncidentEpoch(inc) {
+    if (!inc) return 0;
+    const raw = inc.fecha_apertura || inc.evaluacion?.fecha_apertura || inc.fecha || inc.fecha_creacion;
+    if (raw) {
+      if (raw instanceof Date) return raw.getTime();
+      const s = String(raw).trim();
+      const clean = s.replace(/\s+[apAP]\.?$/, '');
+      const match = clean.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:\s+(\d{1,2}):(\d{2})(?::(\d{2}))?)?/);
+      if (match) {
+        const day = parseInt(match[1], 10);
+        const month = parseInt(match[2], 10) - 1;
+        const year = parseInt(match[3], 10);
+        const hour = match[4] ? parseInt(match[4], 10) : 0;
+        const minute = match[5] ? parseInt(match[5], 10) : 0;
+        const sec = match[6] ? parseInt(match[6], 10) : 0;
+        const d = new Date(year, month, day, hour, minute, sec);
+        if (!isNaN(d.getTime())) return d.getTime();
+      }
+      const isoEpoch = Date.parse(s);
+      if (!isNaN(isoEpoch)) return isoEpoch;
+    }
+    const mins = inc.evaluacion?.minutos_desde_apertura;
+    if (mins != null && !isNaN(mins)) {
+      return Date.now() - (Number(mins) * 60000);
+    }
+    return 0;
+  }
+
+  function formatFechaApertura(raw, mins) {
+    if (raw) {
+      if (raw instanceof Date) {
+        const d = String(raw.getDate()).padStart(2, '0');
+        const m = String(raw.getMonth() + 1).padStart(2, '0');
+        const y = raw.getFullYear();
+        const h = String(raw.getHours()).padStart(2, '0');
+        const min = String(raw.getMinutes()).padStart(2, '0');
+        return `${d}/${m}/${y} ${h}:${min}`;
+      }
+      const s = String(raw).trim();
+      return s.replace(/\s+[apAP]\.?$/, '');
+    }
+    if (mins != null && !isNaN(mins)) {
+      const approxDate = new Date(Date.now() - (Number(mins) * 60000));
+      const d = String(approxDate.getDate()).padStart(2, '0');
+      const m = String(approxDate.getMonth() + 1).padStart(2, '0');
+      const y = approxDate.getFullYear();
+      const h = String(approxDate.getHours()).padStart(2, '0');
+      const min = String(approxDate.getMinutes()).padStart(2, '0');
+      return `${d}/${m}/${y} ${h}:${min}`;
+    }
+    return 'Fecha n/d';
+  }
+
   function getFilteredIncidents() {
     let filtered = state.incidents.slice();
 
@@ -2553,6 +2606,13 @@ Generado por Consola de Emergencias IT Orange - Motor de Triaje (Módulo 1)`;
       });
     }
 
+    // 5. Ordenación por Fecha de Apertura (más recientes primero)
+    filtered.sort((a, b) => {
+      const epochA = parseIncidentEpoch(a);
+      const epochB = parseIncidentEpoch(b);
+      return epochB - epochA;
+    });
+
     return filtered;
   }
 
@@ -2589,12 +2649,11 @@ Generado por Consola de Emergencias IT Orange - Motor de Triaje (Módulo 1)`;
         <table class="triage-table" aria-label="Tabla de Triaje de Incidencias">
           <thead>
             <tr>
-              <th style="width: 44px; text-align: center;" aria-label="Desplegable"></th>
-              <th style="width: 175px;">Incidencia</th>
-              <th style="min-width: 280px;">Título y Sistemas</th>
-              <th style="width: 170px;">Proceso Crítico</th>
-              <th style="width: 110px;">Remedy Ini</th>
-              <th style="width: 120px;">Severidad ITIL</th>
+              <th style="min-width: 200px;">Incidencia / Apertura</th>
+              <th style="min-width: 270px;">Título / Resumen IA / Mensajes</th>
+              <th style="min-width: 190px;">Proceso Crítico y Sistemas</th>
+              <th style="width: 110px; text-align: center;">Remedy INI</th>
+              <th style="width: 130px; text-align: center;">Severidad ITIL</th>
               <th style="width: 180px; text-align: right;">Acciones</th>
             </tr>
           </thead>
@@ -2628,6 +2687,9 @@ Generado por Consola de Emergencias IT Orange - Motor de Triaje (Módulo 1)`;
     const criterio = evaluacion.criterio || 'Regla de Oro N1';
     const impactText = evaluacion.impacto_justificacion || inc.discrepancia_motivo || 'Impacto activo evaluado por el motor de triaje.';
     const urgencyText = evaluacion.urgencia_justificacion || 'Restablecimiento operativo requerido con máxima celeridad.';
+
+    const rawFecha = inc.fecha_apertura || evaluacion.fecha_apertura || inc.fecha || inc.fecha_creacion;
+    const fechaStr = formatFechaApertura(rawFecha, minsElapsed);
 
     // Métricas cuantitativas
     const metrics = evaluacion.metricas_cuantitativas || {};
@@ -2698,53 +2760,80 @@ Generado por Consola de Emergencias IT Orange - Motor de Triaje (Módulo 1)`;
     );
 
     return `
-      <!-- Fila Resumen Principal (Modo Tabular) -->
+      <!-- Fila Resumen Principal (Modo Tabular - 6 Columnas) -->
       <tr class="triage-row-main ${rowModifier} ${isOpen ? 'is-expanded' : ''}" data-inc="${escapeHtml(incId)}" role="button" tabindex="0" aria-expanded="${isOpen}">
-        <td style="text-align: center; width: 44px;">
-          <button type="button" class="triage-chevron-btn ${isOpen ? 'is-expanded' : ''}" data-inc="${escapeHtml(incId)}" aria-label="${isOpen ? 'Plegar detalle' : 'Desplegar detalle'}">
-            <span aria-hidden="true">▶</span>
-          </button>
-        </td>
-        <td class="triage-cell-id">
-          <div class="triage-id-row">
+        <!-- 1 Columna: Incidencia, Fecha Apertura y tiempo activa -->
+        <td class="triage-cell-incident triage-cell-id">
+          <div class="triage-incident-header">
+            <button type="button" class="triage-chevron-btn ${isOpen ? 'is-expanded' : ''}" data-inc="${escapeHtml(incId)}" aria-label="${isOpen ? 'Plegar detalle' : 'Desplegar detalle'}">
+              <span aria-hidden="true">▶</span>
+            </button>
             <span class="triage-id-link" data-inc="${escapeHtml(incId)}" title="Ver ficha técnica Epsilon IA">${escapeHtml(incId)}</span>
-            ${(hasResumenIa || hasMensajesEjecutivos) ? `
-              <div class="triage-micro-marks" role="group" aria-label="Información completada">
-                ${hasResumenIa ? `
-                  <button type="button" class="triage-micro-mark is-ia btn-view-epsilon" data-inc="${escapeHtml(incId)}" title="Resumen IA completado (Epsilon Telemetría) — Clic para abrir ficha técnica" aria-label="Resumen IA disponible">
-                    <span class="mark-icon" aria-hidden="true">✨</span><span>IA</span>
-                  </button>
-                ` : ''}
-                ${hasMensajesEjecutivos ? `
-                  <button type="button" class="triage-micro-mark is-comms btn-open-exec-comm" data-inc="${escapeHtml(incId)}" title="Mensaje Ejecutivo oficial completado (incident-reporter) — Clic para ver comunicación" aria-label="Mensaje Ejecutivo disponible">
-                    <span class="mark-icon" aria-hidden="true">📢</span><span>Comms</span>
-                  </button>
-                ` : ''}
-              </div>
-            ` : ''}
-          </div>
-          <div class="triage-id-meta">
             <span class="triage-status-pill ${statusPillClass}">${escapeHtml(inc.estatus || 'Pendiente')}</span>
-            <span style="font-family: var(--font-mono); font-size: 11px; color: var(--triage-text-subtle);" title="Tiempo transcurrido desde apertura">⏱️ ${formatAgingMinutes(minsElapsed)}</span>
+          </div>
+          <div class="triage-datetime-row">
+            <span class="triage-date-label" title="Fecha oficial de apertura en Remedy">📅 ${escapeHtml(fechaStr)}</span>
+            <span class="triage-aging-badge ${minsElapsed > 120 ? 'is-aging-warning' : ''}" title="Tiempo transcurrido desde apertura">⏱️ ${formatAgingMinutes(minsElapsed)}</span>
           </div>
         </td>
-        <td class="triage-cell-title">
+
+        <!-- 2 Columna: Titulo e iconos de Resumen IA y Mensajes -->
+        <td class="triage-cell-title-comms triage-cell-title">
           <div class="triage-title-text">${escapeHtml(inc.titulo || 'Sin título')}</div>
-          <div class="triage-systems-tags">
+          <div class="triage-title-indicators">
+            <div class="triage-micro-marks" role="group" aria-label="Indicadores de Resumen IA y Mensajes Ejecutivos">
+              ${hasResumenIa ? `
+                <button type="button" class="triage-micro-mark is-ia btn-view-epsilon" data-inc="${escapeHtml(incId)}" title="Resumen IA completado (Epsilon Telemetría) — Clic para abrir ficha técnica" aria-label="Resumen IA disponible">
+                  <span class="mark-icon" aria-hidden="true">✨</span><span>Resumen IA</span>
+                </button>
+              ` : `
+                <span class="triage-micro-mark is-pending" title="Resumen IA pendiente de análisis">
+                  <span class="mark-icon" aria-hidden="true">⏳</span><span>Sin IA</span>
+                </span>
+              `}
+              ${hasMensajesEjecutivos ? `
+                <button type="button" class="triage-micro-mark is-comms btn-open-exec-comm" data-inc="${escapeHtml(incId)}" title="Mensaje Ejecutivo oficial completado (incident-reporter) — Clic para ver comunicación" aria-label="Mensaje Ejecutivo disponible">
+                  <span class="mark-icon" aria-hidden="true">📢</span><span>Mensajes</span>
+                </button>
+              ` : `
+                <span class="triage-micro-mark is-pending" title="Mensajes ejecutivos pendientes de redacción">
+                  <span class="mark-icon" aria-hidden="true">⏳</span><span>Sin Mensajes</span>
+                </span>
+              `}
+            </div>
+          </div>
+        </td>
+
+        <!-- 3 Columna: Proceso Crítico y Sistemas -->
+        <td class="triage-cell-process-systems triage-cell-process">
+          <div class="triage-process-row">
+            <span class="triage-process-badge" style="font-size: 11.5px; padding: 4px 8px;">
+              <span aria-hidden="true">🏢</span> ${escapeHtml(proceso)}
+            </span>
+          </div>
+          <div class="triage-systems-tags" style="margin-top: 5px;">
             ${sysTagsHtml || '<span class="triage-sys-tag">Sistemas Core</span>'}
           </div>
         </td>
-        <td class="triage-cell-process">
-          <span class="triage-process-badge" style="font-size: 11.5px; padding: 4px 8px;">
-            <span aria-hidden="true">🏢</span> ${escapeHtml(proceso)}
-          </span>
-        </td>
-        <td>
+
+        <!-- 4 Columna: Remedy INI -->
+        <td class="triage-cell-remedy" style="text-align: center;">
           <span class="triage-sev-badge ${remedyBadgeClass}">${escapeHtml(sevNominal)}</span>
         </td>
-        <td>
-          <span class="triage-sev-badge ${itilBadgeClass}">${itilLabel}</span>
+
+        <!-- 5 Columna: Severidad Itil -->
+        <td class="triage-cell-itil" style="text-align: center;">
+          <div class="triage-itil-wrapper">
+            <span class="triage-sev-badge ${itilBadgeClass}">${itilLabel}</span>
+            ${isDisc ? `
+              <span class="triage-itil-delta-sub delta-${delta >= 2 ? '2' : '1'}" title="Discrepancia detectada: subescalación N1 de ${delta} nivel(es)">
+                +${delta} Nivel${delta > 1 ? 'es' : ''}
+              </span>
+            ` : ''}
+          </div>
         </td>
+
+        <!-- 6 Columna: Acciones -->
         <td class="triage-cell-actions">
           <div class="triage-actions-cell-group">
             ${isDisc ? `
@@ -2766,7 +2855,7 @@ Generado por Consola de Emergencias IT Orange - Motor de Triaje (Módulo 1)`;
 
       <!-- Fila Plegable / Desplegable de Detalle Extendido -->
       <tr class="triage-row-detail ${isOpen ? 'is-open' : ''}" id="detail-row-${escapeHtml(incId)}" data-inc="${escapeHtml(incId)}">
-        <td colspan="7">
+        <td colspan="6">
           <div class="triage-detail-wrapper">
             <div class="triage-detail-grid">
               
