@@ -8,7 +8,7 @@ description: >-
   Identidad/Automatización (GDU/EVIDIAN/ROBOTFACTORY), la Regla de Oro del triaje N1 y el
   protocolo oficial de escalados de Emergencias (45 min / +1 hora / Alarma >2h) con IM-CSO.
 domain: it-incidents
-version: 2.1.0
+version: 2.2.0
 language: es
 owner: Orange Tech Operations
 metadata:
@@ -18,9 +18,31 @@ metadata:
   last_updated: 2026-11-04
 ---
 
-# Matriz de Severidad, Prioridad y Protocolo de Escalados IT (Orange) — v2.1
+# Matriz de Severidad, Prioridad y Protocolo de Escalados IT (Orange) — v2.2
 
 Esta skill actúa como el **Motor Determinista de Clasificación y Fuente Única de Verdad (SSOT)** para auditar, calcular y justificar el nivel objetivo de severidad y prioridad operativa (SL1/P1 a SL4/P4) en el ecosistema de incidentes de Orange Tech Operations.
+
+---
+
+## 0. Delimitación de Alcance, Límites Operativos y Fronteras del Rol
+
+Esta Skill opera bajo un marco estricto de **Soporte a la Decisión Técnica y Triaje Determinista (Decision Support Engine)**. Sus fronteras operativas están claramente delimitadas:
+
+### 0.1 Capacidades en Alcance (In-Scope)
+- **Triaje y Clasificación Determinista:** Calcular y justificar el nivel objetivo de severidad y prioridad (SL1/P1 a SL4/P4) mediante reglas reproducibles y umbrales cuantitativos.
+- **Detección de Discrepancias y Tampering:** Identificar subescalaciones o inconsistencias entre la prioridad nominal de Remedy y el impacto real del incidente.
+- **Cronometría y Prescripción de Escalados:** Auditar tiempos de envejecimiento (*aging*) y prescribir con exactitud los hitos de escalado telefónico obligatorio (T+45 min, T+1h 45 min, Alarma >2h) y activación de *War Room*.
+- **Generación de Síntesis Técnica:** Proveer el contexto técnico normalizado para la toma de decisiones y redacción de comunicaciones ejecutivas.
+
+### 0.2 Capacidades Fuera de Alcance y Salvaguardas (Out-of-Scope / Non-Goals)
+- ❌ **Modificación Directa en BMC Remedy ITSM:** La skill NO realiza mutaciones directas sobre bases de datos ni APIs de Remedy. Toda reclasificación o cambio de estado es una recomendación formal que debe ser validada y aplicada por el operador humano.
+- ❌ **Llamadas Telefónicas Automatizadas (PBX / SIP / IVR):** La skill NO realiza llamadas telefónicas ni emite audio a centralitas. La ejecución de las llamadas obligatorias de guardia recae exclusivamente en el Incident Manager o equipo de N1/N2.
+- ❌ **Autorización Unilateral de Workarounds:** La skill NO tiene potestad para autorizar soluciones de contingencia; únicamente verifica si cuentan con la aprobación explícita y documentada de IM-CSO.
+- ❌ **Cierre Administrativo de Incidentes:** La skill evalúa condiciones técnicas de mitigación, pero el cierre formal del ticket requiere validación operativa humana.
+
+### 0.3 Cláusula de Transparencia ante el Usuario
+Si el usuario o el flujo de trabajo consulta sobre la ejecución de una acción externa, el modelo debe explicitar siempre su naturaleza asesora:
+> *"He determinado la criticidad SL1/P1 y el requerimiento de escalado telefónico inmediato; dicha llamada y la actualización en Remedy deben ser ejecutadas por el operador de guardia / Incident Manager."*
 
 ---
 

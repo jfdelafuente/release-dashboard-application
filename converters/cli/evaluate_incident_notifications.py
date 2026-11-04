@@ -1692,10 +1692,10 @@ def evaluate_incidents_batch(
     catalog = {
         "_metadata": {
             "type": "high_priority_notifications",
-            "version": "2.1.0",
+            "version": "2.2.0",
             "skills_version": {
-                "it-severity-matrix": "2.1.0",
-                "orange-it-emergency-management": "2.1.0",
+                "it-severity-matrix": "2.2.0",
+                "orange-it-emergency-management": "2.2.0",
                 "incident-reporter": "1.2.0",
                 "incident-executive-notifications": "1.2.0"
             },

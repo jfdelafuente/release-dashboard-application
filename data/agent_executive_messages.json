@@ -5,8 +5,8 @@
     "source": "agents/it-incidents/incident-reporter.md",
     "skills_version": {
       "incident-reporter": "1.2.0",
-      "it-severity-matrix": "2.1.0",
-      "orange-it-emergency-management": "2.1.0",
+      "it-severity-matrix": "2.2.0",
+      "orange-it-emergency-management": "2.2.0",
       "incident-executive-notifications": "1.2.0"
     },
     "updated_at": "2026-11-04T10:25:22Z"

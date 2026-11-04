@@ -115,8 +115,8 @@ def update_agent_store(
             "version": "1.2.0",
             "skills_version": {
                 "incident-reporter": "1.2.0",
-                "it-severity-matrix": "2.1.0",
-                "orange-it-emergency-management": "2.1.0"
+                "it-severity-matrix": "2.2.0",
+                "orange-it-emergency-management": "2.2.0"
             },
             "description": "Almacén oficial de redacciones ejecutivas generadas por el Agente incident-reporter",
             "source": "agents/it-incidents/incident-reporter.md",
