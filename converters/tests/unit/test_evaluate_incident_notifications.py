@@ -602,6 +602,45 @@ def test_should_classify_critical_processes_correctly():
     assert evaluator._classify_process(t_om, None) == "Operación y Monitorización (O&M)"
 
 
+def test_should_classify_catalog_systems_correctly():
+    """Validates that systems from catalogo-aplicaciones-criticas.csv are classified into the expected domain."""
+    evaluator = SeverityEvaluator()
+
+    # Facturación y Cobros
+    assert evaluator._classify_process({"Descripción": "Caída en tarificación KENAN_FX", "Grupo asignado": "FACT_OPS"}, None) == "Facturación y Cobros"
+    assert evaluator._classify_process({"Descripción": "Error en facturación masiva ABACUS BRM", "Grupo asignado": "BILLING"}, None) == "Facturación y Cobros"
+    assert evaluator._classify_process({"Descripción": "Interrupción del servicio OPENCOBROS", "Grupo asignado": "COBROS"}, None) == "Facturación y Cobros"
+
+    # Prepago
+    assert evaluator._classify_process({"Descripción": "Afectación en recargas TAO prepago", "Grupo asignado": "SMC_PREPAGO"}, None) == "Prepago"
+    assert evaluator._classify_process({"Descripción": "Error de aprovisionamiento en SEDNA", "Grupo asignado": "PREPAGO"}, None) == "Prepago"
+
+    # Portabilidad
+    assert evaluator._classify_process({"Descripción": "Fallo en tramitación PORTOS", "Grupo asignado": "PORTA_SMC"}, None) == "Portabilidad"
+    assert evaluator._classify_process({"Descripción": "Retraso en colas de SGP MOVIL", "Grupo asignado": "PORTA"}, None) == "Portabilidad"
+
+    # Ventas
+    assert evaluator._classify_process({"Descripción": "Caída de servicio de contratación KRATOS", "Grupo asignado": "CANAL_VENTA"}, None) == "Ventas"
+    assert evaluator._classify_process({"Descripción": "Error en terminales punto de venta AGORA", "Grupo asignado": "DISTRIBUCION"}, None) == "Ventas"
+
+    # Provisión
+    assert evaluator._classify_process({"Descripción": "Parada en tramitador de pedidos AURORA", "Grupo asignado": "PROV_CORE"}, None) == "Provisión"
+    assert evaluator._classify_process({"Descripción": "Bloqueo en flujo GIROS provisión fija", "Grupo asignado": "PROV_RED"}, None) == "Provisión"
+    assert evaluator._classify_process({"Descripción": "Fallo en motor SPM para planta de fibra", "Grupo asignado": "PROVISION"}, None) == "Provisión"
+
+    # ATC
+    assert evaluator._classify_process({"Descripción": "Error 500 en front IRIS de tiendas", "Grupo asignado": "ATC_CANAL"}, None) == "Atención al Cliente (ATC)"
+    assert evaluator._classify_process({"Descripción": "Indisponibilidad en CRM4TELCO Jazztel", "Grupo asignado": "JAZZTEL_ATC"}, None) == "Atención al Cliente (ATC)"
+    assert evaluator._classify_process({"Descripción": "Caída de login en ACME APP ORANGE", "Grupo asignado": "DIGITAL_APP"}, None) == "Atención al Cliente (ATC)"
+
+    # Identidad
+    assert evaluator._classify_process({"Descripción": "Fallo en servidor ADSELFSERVICE corporativo", "Grupo asignado": "SEGURIDAD_IAM"}, None) == "Identidad (GDU/EVIDIAN) y Automatización"
+    assert evaluator._classify_process({"Descripción": "Parada de procesos en RPA NICE", "Grupo asignado": "AUTOMATIZACION"}, None) == "Identidad (GDU/EVIDIAN) y Automatización"
+
+    # Middleware
+    assert evaluator._classify_process({"Descripción": "Colapso de cola WEBMETHODS transacciones", "Grupo asignado": "EAI_BUS"}, None) == "Middleware e Integración Transversal"
+
+
 def test_should_include_process_and_criterion_in_agent_prompt():
     generator = ExecutiveMessageGenerator()
     ticket = {
@@ -1306,7 +1345,7 @@ def test_should_include_ingestion_delta_in_catalog_metadata():
     )
     meta = catalog["_metadata"]
     assert meta["version"] == "2.5.0"
-    assert meta["skills_version"]["it-severity-matrix"] == "2.5.0"
+    assert meta["skills_version"]["it-severity-matrix"] == "2.6.0"
     assert meta["skills_version"]["incident-reporter"] == "1.4.0"
     assert meta["ingestion_delta"] == delta_mock
     assert "reabiertas_count" in meta["kpis"]

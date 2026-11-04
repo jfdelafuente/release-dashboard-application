@@ -8,7 +8,7 @@ description: >-
   Core/Cloud (ESX/PSeries/Exadata/OCI/GCP), Identidad/Automatización (GDU/EVIDIAN/ROBOTFACTORY)
   y protocolo de escalados telefónicos (45 min / +1h / Alarma >2h).
 domain: it-incidents
-version: 2.4.0
+version: 2.5.0
 language: es
 owner: Orange Tech Operations
 metadata:
@@ -17,7 +17,7 @@ metadata:
   last_updated: 2026-11-04
 ---
 
-# Gestión de Emergencias IT Orange (`orange-it-emergency-management`) — v2.4
+# Gestión de Emergencias IT Orange (`orange-it-emergency-management`) — v2.5
 
 Esta Skill capacita al modelo de IA para actuar como **Especialista Operativo en Gestión de Emergencias IT de Orange**. Su propósito es gobernar el ciclo de vida de crisis operativas, coordinar la *War Room*, verificar el cumplimiento riguroso de SLAs de comunicación y escalado telefónico, asegurar la gobernanza de *workarounds* autorizados por IM-CSO y gestionar la reversión inmediata de cambios (*Rollbacks* de PaP).
 
@@ -101,13 +101,19 @@ stateDiagram-v2
 | **SL4 / P4** | **Informativa** | Errores menores o anomalías sin impacto que se registran para seguimiento en *backlog*. | N/A | Planificada | Backlog de mantenimiento |
 
 > [!NOTE]
-> Para el catálogo exhaustivo de umbrales numéricos de negocio y técnicos (Secciones 3.1 a 3.10), consúltese la skill canónica [`it-severity-matrix`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/.agents/skills/it-severity-matrix/SKILL.md).
+> Para el catálogo exhaustivo de 120 sistemas oficiales (`CORE++` y `CORE`), umbrales numéricos (3.1 a 3.10) y glosario de acrónimos, consúltese la skill canónica [`it-severity-matrix`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/.agents/skills/it-severity-matrix/SKILL.md) y el [Catálogo Canónico de Sistemas y Colas Remedy](references/catalogo_sistemas_y_colas_remedy.md).
 
 ---
 
 ## 4. Umbrales Clave para Clasificación Inmediata SL1 / P1 y SL2 / P2
 
 La emergencia se declara de forma automática al superar cualquiera de estos escenarios clave:
+
+### 4.0 Regla Canónica sobre Sistemas CORE++ (Tier 0)
+Toda afectación con corte de servicio, indisponibilidad masiva o bloqueo operativo en un aplicativo del inventario **`CORE++`** (`BSCS`, `CALL CENTER CTI`, `IVR`, `FICHA DE CLIENTE`, `IRIS`, `CRM4TELCO`, `BOREAL`, `AURORA`, `LUNA`, `TEIDE`, `SIGMA`, `GIROS`, `OPENAPI/APIGEE`, `TIBCO`, `LDAP CORPORATIVO`, `IDENTITY`, `ACME APP/WEB ORANGE`, `ALTAMIRA`) **declara automáticamente la Emergencia SL1 / P1**.
+- **Convocatoria Inmediata:** War Room activa en <10 minutos y primer comunicado ejecutivo en <20 minutos.
+- **Tolerancia Cero en Escalados:** Los escalados telefónicos (T+45 min / T+1h 45 min / Alarma >2h) son estrictamente obligatorios y no admiten ventanas de cortesía.
+- **Gobernanza Reforzada de Workarounds:** Queda terminantemente prohibido aplicar soluciones de contorno o mitigación temporal sobre componentes `CORE++` sin la aprobación previa y por escrito de IM-CSO.
 
 ### 4.1 Procesos Críticos de Negocio
 * **ATC y Canales Digitales:** Colapso de IVR/CTI (>20% de llamadas no atendidas o descartadas durante 1h); desviación >20% en 30 min en herramientas de agente (`Ficha de Cliente Orange`, `CRM Jazztel`, `CRM4TELCO`, `Siebel 8`, `POLAR`, `LIVEPERSON`, `DJINGO`, `ONURIS`, `ONCONNECT`, `NABOO`, `BOREAL`); indisponibilidad de autogestión (`APP MI ORANGE`, `MIJAZZTEL`).

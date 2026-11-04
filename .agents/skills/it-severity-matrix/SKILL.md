@@ -3,12 +3,13 @@ name: it-severity-matrix
 alias: matriz-severidad-it
 description: >-
   Calcula y justifica el nivel de Severidad y Prioridad (SL1/P1 a SL4/P4) de incidencias IT
-  en Orange, aplicando los umbrales de los Procesos Críticos de Negocio, Middleware Transversal,
-  Conectividad de Sedes/Circuitos, Infraestructura Core/Cloud (ESX/PSeries/Exadata/OCI/GCP),
-  Identidad/Automatización (GDU/EVIDIAN/ROBOTFACTORY), la Regla de Oro del triaje N1 y el
-  protocolo oficial de escalados de Emergencias (45 min / +1 hora / Alarma >2h) con IM-CSO.
+  en Orange, aplicando los umbrales de los Procesos Críticos de Negocio, el Catálogo Oficial
+  de Aplicaciones Críticas (CORE++ / CORE), Middleware Transversal, Conectividad de Sedes/Circuitos,
+  Infraestructura Core/Cloud (ESX/PSeries/Exadata/OCI/GCP), Identidad/Automatización
+  (GDU/EVIDIAN/ROBOTFACTORY), la Regla de Oro del triaje N1 y el protocolo oficial de escalados
+  de Emergencias (45 min / +1 hora / Alarma >2h) con IM-CSO.
 domain: it-incidents
-version: 2.5.0
+version: 2.6.0
 language: es
 owner: Orange Tech Operations
 metadata:
@@ -18,7 +19,7 @@ metadata:
   last_updated: 2026-11-04
 ---
 
-# Matriz de Severidad, Prioridad y Protocolo de Escalados IT (Orange) — v2.5
+# Matriz de Severidad, Prioridad y Protocolo de Escalados IT (Orange) — v2.6
 
 Esta skill actúa como el **Motor Determinista de Clasificación y Fuente Única de Verdad (SSOT)** para auditar, calcular y justificar el nivel objetivo de severidad y prioridad operativa (SL1/P1 a SL4/P4) en el ecosistema de incidentes de Orange Tech Operations.
 
@@ -140,7 +141,17 @@ Para garantizar la reproducibilidad y erradicar alucinaciones o clasificaciones 
 Cualquier incidencia que cumpla las condiciones cuantitativas o cualitativas descritas en este catálogo se cataloga **automáticamente como Emergencia (`SL1 / P1`)** o como **Mayor (`SL2 / P2`)**, prevaleciendo sobre el campo `Prioridad` de Remedy.
 
 > [!NOTE]
-> **Modularidad y Carga Bajo Demanda:** El inventario exhaustivo de colas Remedy (`grupo_asignado`) vinculadas a cada componente tecnológico se encuentra desacoplado en el [Catálogo Canónico de Sistemas, Aplicativos y Colas Remedy](references/catalogo_sistemas_y_colas_remedy.md). La IA debe cargarlo mediante `read_file` únicamente cuando se requiera desambiguar un subsistema o verificar la asignación de un ticket.
+> **Modularidad y Carga Bajo Demanda:** El inventario exhaustivo de 120 sistemas oficiales (`CORE++` y `CORE`), colas Remedy (`grupo_asignado`) y glosario de acrónimos de telecomunicaciones se encuentra desacoplado en el [Catálogo Canónico de Sistemas, Aplicativos y Colas Remedy](references/catalogo_sistemas_y_colas_remedy.md). La IA debe cargarlo mediante `read_file` únicamente cuando se requiera desambiguar un subsistema, verificar la criticidad oficial o resolver la correspondencia con una cola técnica.
+
+### 3.0 Gobernanza de Tiers de Criticidad Oficial (`CORE++` vs `CORE`)
+
+El catálogo oficial de aplicaciones corporativas de Orange Tech Operations establece dos niveles canónicos de impacto:
+
+- **Tier 0 (`CORE++` — 39 Aplicaciones Ultra-Críticas):** Representan el corazón operativo de la compañía (`BSCS`, `CALL CENTER CTI`, `IVR`, `FICHA DE CLIENTE`, `IRIS`, `CRM4TELCO`, `BOREAL`, `AURORA`, `LUNA`, `TEIDE`, `SIGMA`, `GIROS`, `OPENAPI/APIGEE`, `TIBCO`, `LDAP CORPORATIVO`, `IDENTITY`, `ACME APP/WEB ORANGE`, `ALTAMIRA`, etc.).
+  - **Regla Determinista CORE++:** Toda indisponibilidad total, caída o bloqueo de servicio en un aplicativo `CORE++` impone de forma determinista el suelo **`SL1 / P1`**, activando la apertura de War Room (<10 min) y escalados telefónicos cada 45 min / +1h sin tolerar subescalación.
+- **Tier 1 (`CORE` — 81 Aplicaciones Críticas):** Sistemas con alto impacto en facturación, provisión, ventas, mediación o soporte mayor (`KENAN_FX`, `MEDIACION`, `ABACUS BRM`, `OCS`, `APRS`, `TAO`, `PORTOS`, `SGP MOVIL`, `POMV`, `TRAMITADOR SPM`, `DATAPOWER`, `WEBMETHODS`, `HPFMS`, `SCORING`, `SIEBEL`, `EPSILON`).
+  - **Regla Determinista CORE:** Una indisponibilidad total en aplicativo `CORE` sin mecanismo de redundancia/contingencia activa **`SL1 / P1`**; ante degradación parcial, subcanal secundario o contingencia activa se clasifica como **`SL2 / P2`**.
+- **Tier 2 (`Non-CORE con Pilares` — 66 Aplicaciones):** Aplicativos departamentales de soporte (Fraude como `HUNTER`/`BLACK-LIST`, Cobros como `OPENCOBROS`/`ARES`, Identidad como `GDU`/`ADSELFSERVICE`, o Citas `POLAR`) cuya severidad se determina según el cumplimiento de los umbrales específicos de las Secciones 3.1 a 3.10.
 
 ### Matriz Ejecutiva Resumen (Cheat-Sheet de Triaje Rápido)
 
