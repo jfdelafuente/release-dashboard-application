@@ -9,7 +9,7 @@
       "orange-it-emergency-management": "2.3.0",
       "incident-executive-notifications": "1.3.0"
     },
-    "updated_at": "2026-11-04T11:38:00Z"
+    "updated_at": "2026-11-04T12:05:00Z"
   },
   "incidents": {
     "INC000004065609": {
@@ -908,6 +908,84 @@
         "origen": "incident-reporter",
         "conteo_palabras_completo": 83,
         "conteo_palabras_breve": 26
+      }
+    },
+    "INC000004174655": {
+      "apertura": {
+        "completo": "Se declara incidencia crítica P1 (INC000004174655) en Ficha Cliente Orange originada por el envío erróneo del parámetro fibraOro con valor NO hacia el iframe de PROMETHEUS. La anomalía provoca diagnósticos técnicos incorrectos en la pestaña de soporte técnico para clientes con Fibra Oro activa, impidiendo la identificación precisa de averías en planta fija. El equipo de desarrollo DES_SOE_FICHA se encuentra interviniendo la lógica de invocación para corregir el mapeo del parámetro independientemente de la línea consultada. Próxima actualización en 30 minutos.",
+        "breve": "Apertura P1 (INC000004174655): Parámetro fibraOro enviado erróneamente como NO a PROMETHEUS en Ficha Cliente degrada soporte técnico de fibra fija. DES_SOE_FICHA interviniendo.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 79,
+        "conteo_palabras_breve": 23
+      },
+      "seguimiento": {
+        "completo": "Continúa el seguimiento de la incidencia P1 (INC000004174655) en Ficha Cliente Orange. El equipo de desarrollo DES_SOE_FICHA ha identificado el punto de discrepancia en el ensamblado del contexto de cliente hacia PROMETHEUS y prepara el parche de software para asegurar que el indicador fibraOro refleje el contrato real del abonado. Se realizan pruebas unitarias en entorno de preproducción antes de su despliegue para restablecer la correcta operativa en soporte técnico. Próxima actualización en 30 minutos.",
+        "breve": "Seguimiento P1 (INC000004174655): DES_SOE_FICHA prepara parche para corregir envío de fibraOro hacia PROMETHEUS. Pruebas en curso. Próxima actualización en 30 min.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 73,
+        "conteo_palabras_breve": 22
+      },
+      "cierre": {
+        "completo": "Se da por resuelta la incidencia crítica P1 (INC000004174655) tras el despliegue del parche correctivo en Ficha Cliente Orange. Se ha verificado que las consultas en el iframe de PROMETHEUS reconocen correctamente el atributo fibraOro para todos los clientes con servicio activo, normalizándose los flujos de soporte y diagnóstico en planta fija. El servicio opera con total estabilidad y sin anomalías residuales.",
+        "breve": "Cierre P1 (INC000004174655): Parche desplegado con éxito en Ficha Cliente. Normalizado el parámetro fibraOro y diagnóstico en PROMETHEUS. Incidencia resuelta.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 63,
+        "conteo_palabras_breve": 20
+      }
+    },
+    "INC000004175536": {
+      "apertura": {
+        "completo": "Se declara emergencia crítica P1 (INC000004175536) por degradación severa de conectividad en el Nodo Central de Portabilidad bajo protocolo SL1. La incidencia genera un encolamiento masivo de 603 puertos salientes en el subsistema móvil, concentrándose principalmente en intercambios hacia DIGI con 126 solicitudes, Yoigo con 125, y Vodafone y Movistar con 117 peticiones cada uno. Se ha constituido war room técnico y los especialistas de red de datos investigan los enlaces para restablecer el enrutamiento. Próxima actualización en 30 minutos.",
+        "breve": "Apertura P1 (INC000004175536): Degradación en Nodo Central Portabilidad retiene 603 solicitudes hacia DIGI, Yoigo, Vodafone y Movistar. War room y red de datos interviniendo.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 79,
+        "conteo_palabras_breve": 24
+      },
+      "seguimiento": {
+        "completo": "Prosigue el tratamiento de la emergencia P1 (INC000004175536) en el Nodo Central de Portabilidad. El equipo de red de datos ha mitigado la saturación en los enlaces de interconexión y las colas de procesamiento han comenzado a drenar progresivamente hacia los operadores receptores. Se mantiene la monitorización intensiva sobre el flujo de peticiones salientes para constatar la absorción total de los 603 puertos represados. Próxima actualización en 30 minutos.",
+        "breve": "Seguimiento P1 (INC000004175536): Mitigada saturación en enlaces del Nodo Central de Portabilidad. Drenado de colas salientes en curso bajo supervisión técnica.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 68,
+        "conteo_palabras_breve": 21
+      },
+      "cierre": {
+        "completo": "Se procede al cierre de la emergencia P1 (INC000004175536) en el Nodo Central de Portabilidad tras la estabilización definitiva de los interfaces de red. La totalidad de las 603 solicitudes de portabilidad retenidas han sido procesadas satisfactoriamente hacia las operadoras de destino sin pérdidas de información. Los canales de intercambio intercarrier operan con latencias óptimas y rendimiento normalizado.",
+        "breve": "Cierre P1 (INC000004175536): Restablecida la conectividad en Nodo Central Portabilidad. Colas de tramitación móvil drenadas al 100%. Incidencia resuelta.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 59,
+        "conteo_palabras_breve": 19
+      }
+    },
+    "INC000004174686": {
+      "apertura": {
+        "completo": "Se comunica incidencia de alta prioridad P2 (INC000004174686) en el sistema SGP por fallo funcional en el flujo de cancelación de portabilidades en la sede de ISGF Murcia. La aplicación permite completar los pasos previos pero no ejecuta la acción tras pulsar aceptar, afectando al cien por cien de las operativas con diez clientes en portabilidad entrante imposibilitados de cancelar en plazo legal. El grupo técnico de GC SGP Móvil interviene el módulo transaccional para desbloquear la tramitación. Próxima actualización en 60 minutos.",
+        "breve": "Apertura P2 (INC000004174686): Fallo en botón aceptar de SGP bloquea cancelaciones de portabilidad a 10 clientes en ISGF Murcia. GC SGP Móvil diagnosticando.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 83,
+        "conteo_palabras_breve": 23
+      },
+      "seguimiento": {
+        "completo": "Continúa la atención de la incidencia P2 (INC000004174686) en el sistema SGP. Los especialistas de GC SGP Móvil han localizado una excepción en el servicio transaccional que gestiona la confirmación de cancelación y aplican un ajuste correctivo en la capa de servicios. Se supervisa el comportamiento de las cancelaciones en cola para garantizar que los expedientes de los clientes afectados se cursen dentro del margen normativo. Próxima actualización en 60 minutos.",
+        "breve": "Seguimiento P2 (INC000004174686): Localizada excepción transaccional en confirmación de SGP. Aplicando ajuste para reactivar cancelaciones en plazo legal. Actualización en 60 min.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 72,
+        "conteo_palabras_breve": 22
+      },
+      "cierre": {
+        "completo": "Se notifica el cierre de la incidencia P2 (INC000004174686) tras solventarse la anomalía en el botón de confirmación de SGP. Se ha validado la correcta tramitación de las cancelaciones pendientes para los diez clientes afectados en la sede de ISGF Murcia, restableciendo la capacidad operativa de los gestores sin demoras administrativas. El servicio de cancelaciones de portabilidad móvil funciona con total normalidad.",
+        "breve": "Cierre P2 (INC000004174686): Resuelto el bloqueo de cancelaciones en SGP. Procesadas las solicitudes en ISGF Murcia con normalidad funcional.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 64,
+        "conteo_palabras_breve": 18
       }
     }
   }
