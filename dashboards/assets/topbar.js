@@ -8,6 +8,7 @@
    - KPIs Release (/dashboards/release-kpis/)
    - Reportes de Incidencias (/reportes-incidencias/index.html)
    - Gestión de Problemas (/problemas)
+   - Consola de Triaje (/dashboards/emergency-triage-console/)
    ============================================================ */
 
 (function () {
@@ -18,7 +19,7 @@
     { id: 'release-kpis', label: 'KPIs Release', href: '/dashboards/release-kpis/' },
     { id: 'reportes-incidencias', label: 'Reportes de Incidencias', href: '/dashboards/reportes-incidencias/' },
     { id: 'problemas', label: 'Gestión de Problemas', href: '/problemas' },
-    { id: 'agents-catalog', label: 'Agentes IA', href: '/dashboards/agents-catalog/' }
+    { id: 'emergency-triage', label: 'Consola de Triaje', href: '/dashboards/emergency-triage-console/' }
   ];
 
   function render() {

@@ -568,3 +568,26 @@ def test_orchestrator_sections_folded_by_default_phase1():
     assert "setOrchSectionCollapsed('warroom', true)" in js
     assert "setOrchSectionCollapsed('pap', true)" in js
     assert "setOrchSectionCollapsed('log', true)" in js
+
+
+def test_topbar_and_portal_navigation_integration():
+    """Valida que la Consola de Triaje esté integrada en la barra superior unificada y en el panel general del portal."""
+    topbar_js = (REPO_ROOT / "dashboards" / "assets" / "topbar.js").read_text(encoding="utf-8")
+    portal_html = (REPO_ROOT / "dashboards" / "portal" / "index.html").read_text(encoding="utf-8")
+    triage_html = (CONSOLE_DIR / "index.html").read_text(encoding="utf-8")
+
+    # 1. Validación en topbar.js: Consola de Triaje presente y Agentes IA reemplazado
+    assert "emergency-triage" in topbar_js
+    assert "Consola de Triaje" in topbar_js
+    assert "/dashboards/emergency-triage-console/" in topbar_js
+    assert "agents-catalog" not in topbar_js
+
+    # 2. Validación en portal/index.html: Card 4 enlazada a la Consola de Triaje
+    assert 'href="/dashboards/emergency-triage-console/"' in portal_html
+    assert "Consola de Triaje" in portal_html
+    assert "tag-emergency" in portal_html
+    assert 'href="/dashboards/agents-catalog/"' in portal_html
+    assert "Biblioteca de Agentes IA y Automatización" in portal_html
+
+    # 3. Validación de data-active en emergency-triage-console/index.html para sincronía con topbar.js
+    assert 'id="mo-topbar-root" data-active="emergency-triage"' in triage_html
