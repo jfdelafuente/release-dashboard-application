@@ -129,7 +129,10 @@ Para garantizar la reproducibilidad y erradicar alucinaciones o clasificaciones 
 
 ## 3. Catálogo Canónico de Criterios y Umbrales Objetivos (3.1 a 3.10)
 
-Cualquier incidencia que cumpla las condiciones descritas se cataloga **automáticamente como Emergencia (`SL1 / P1`)** o como **Mayor (`SL2 / P2`)** según la condición técnica explícita:
+Cualquier incidencia que cumpla las condiciones descritas se cataloga **automáticamente como Emergencia (`SL1 / P1`)** o como **Mayor (`SL2 / P2`)** según la condición técnica explícita.
+
+> [!NOTE]
+> **Modularidad y Carga Bajo Demanda:** El inventario exhaustivo de colas Remedy (`grupo_asignado`) vinculadas a cada componente se encuentra desacoplado en [Catálogo Canónico de Sistemas, Aplicativos y Colas Remedy](references/catalogo_sistemas_y_colas_remedy.md). La IA debe cargarlo mediante `read_file` únicamente cuando se requiera desambiguar un subsistema o verificar la asignación de un ticket.
 
 ### 3.1 Atención al Cliente (ATC) y Canales Digitales
 * **IVR y CTI:** Indisponibilidad o degradación en `IVR` o `CTI` (`SOP_TECNICO_CALL_CENTER`) que colapse o impida atender a **>20% de las llamadas** para cualquier marca/segmento, o cualquier IVR **descartando >20% de llamadas durante 1 hora**.

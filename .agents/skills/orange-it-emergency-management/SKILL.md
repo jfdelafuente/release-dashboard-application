@@ -145,7 +145,11 @@ El **Incident Manager (IM)** coordina las acciones bajo este régimen temporal r
 | **Grupos Resolutores (N2/N3)** | Ejecutan pruebas de diagnóstico, ejecutan planes técnicos de contención y rollback, e implementan soluciones autorizadas. | **C** (Consulted) |
 | **Service Desk / N1** | Monitorización de alarmas, triaje inicial, aplicación de la Regla de Oro y notificación inicial de tickets. | **I** (Informed) |
 
-- **Matrices de Contacto:** Consulta en **GRIAL** para el perímetro Orange/Jazztel y en **Confluence** para el perímetro MasMóvil/KRT.
+### 6.1 Desacoplamiento de Matrices de Contacto y Carga Bajo Demanda
+Para preservar la eficiencia de la ventana de contexto, el directorio detallado de contactos, colas Remedy por dominio tecnológico y canales de guardia operativa se desacopla en:
+👉 [Directorio de Escalados, Guardias y Matrices de Contacto](references/matriz_escalados_y_contactos.md)
+
+*Directriz para la IA:* Cargar este fichero de soporte mediante `read_file` **únicamente bajo demanda** cuando la situación operativa requiera identificar al grupo resolutor específico, convocar una guardia o activar un escalado telefónico en los hitos de 45m / 1h 45m / >2h. Las fuentes corporativas vivas de retén se consultan en **GRIAL** (Orange/Jazztel) y **Confluence** (MasMóvil/KRT).
 
 ---
 
