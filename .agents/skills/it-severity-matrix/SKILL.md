@@ -8,7 +8,7 @@ description: >-
   Identidad/Automatización (GDU/EVIDIAN/ROBOTFACTORY), la Regla de Oro del triaje N1 y el
   protocolo oficial de escalados de Emergencias (45 min / +1 hora / Alarma >2h) con IM-CSO.
 domain: it-incidents
-version: 2.4.0
+version: 2.5.0
 language: es
 owner: Orange Tech Operations
 metadata:
@@ -18,7 +18,7 @@ metadata:
   last_updated: 2026-11-04
 ---
 
-# Matriz de Severidad, Prioridad y Protocolo de Escalados IT (Orange) — v2.4
+# Matriz de Severidad, Prioridad y Protocolo de Escalados IT (Orange) — v2.5
 
 Esta skill actúa como el **Motor Determinista de Clasificación y Fuente Única de Verdad (SSOT)** para auditar, calcular y justificar el nivel objetivo de severidad y prioridad operativa (SL1/P1 a SL4/P4) en el ecosistema de incidentes de Orange Tech Operations.
 
@@ -137,79 +137,183 @@ Para garantizar la reproducibilidad y erradicar alucinaciones o clasificaciones 
 
 ## 3. Catálogo Canónico de Criterios y Umbrales Objetivos (3.1 a 3.10)
 
-Cualquier incidencia que cumpla las condiciones descritas se cataloga **automáticamente como Emergencia (`SL1 / P1`)** o como **Mayor (`SL2 / P2`)** según la condición técnica explícita.
+Cualquier incidencia que cumpla las condiciones cuantitativas o cualitativas descritas en este catálogo se cataloga **automáticamente como Emergencia (`SL1 / P1`)** o como **Mayor (`SL2 / P2`)**, prevaleciendo sobre el campo `Prioridad` de Remedy.
 
 > [!NOTE]
-> **Modularidad y Carga Bajo Demanda:** El inventario exhaustivo de colas Remedy (`grupo_asignado`) vinculadas a cada componente se encuentra desacoplado en [Catálogo Canónico de Sistemas, Aplicativos y Colas Remedy](references/catalogo_sistemas_y_colas_remedy.md). La IA debe cargarlo mediante `read_file` únicamente cuando se requiera desambiguar un subsistema o verificar la asignación de un ticket.
+> **Modularidad y Carga Bajo Demanda:** El inventario exhaustivo de colas Remedy (`grupo_asignado`) vinculadas a cada componente tecnológico se encuentra desacoplado en el [Catálogo Canónico de Sistemas, Aplicativos y Colas Remedy](references/catalogo_sistemas_y_colas_remedy.md). La IA debe cargarlo mediante `read_file` únicamente cuando se requiera desambiguar un subsistema o verificar la asignación de un ticket.
+
+### Matriz Ejecutiva Resumen (Cheat-Sheet de Triaje Rápido)
+
+| Dominio | Sistemas Core | Disparador Emergencia (`SL1 / P1`) | Disparador Mayor (`SL2 / P2`) | Límite Menor / Informativa (`SL3 / P3` / `SL4 / P4`) | Protocolo Inmediato |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **3.1 ATC / Digital** | IVR/CTI, CRM4TELCO, Ficha Cliente, CRM Jazztel, Siebel 8, App Mi Orange | Caída IVR (>20% descartadas/1h), fallo frontal (>20% error/30m) o corte total App | Degradación parcial de módulo CRM con canal alternativo o fallo no crítico en App | Puesto de agente aislado o error estético | War Room + Escalado IM (45m) |
+| **3.2 Ventas** | CERES, ECONTRATO, Actos Comerciales, PANGEA, Televenta | Impacto >30% operaciones, caída >15% ventas/día o bloqueo firma digital | Caída de subcanal comercial secundario (10-30%) con alternativa operativa | Incidencia en reporting o puesto comercial individual | War Room + Escalado IM (45m) |
+| **3.3 Portabilidad** | Flujo 2:00 AM, Entidad Referencia, PANGEA, TEIDE | Parada flujo nocturno (2:00 AM) o retraso >2h con entidad de referencia | Retraso moderado (30m-2h) sin pérdida de ventana de cambio | Rechazo de solicitud individual por error de datos | War Room + Escalado IM (45m) |
+| **3.4 Prepago** | RECARGAS APRS, OCS, Altas eSIM Prepago, Web Recargas | Recargas o Altas con >10% error o >30m sin actividad | Caída de canal de recarga externo secundario con App propia operativa | Fallo en recarga individual por saldo o bloqueo | War Room + Escalado IM (45m) |
+| **3.5 Provisión** | POMV, SIGMA, TEIDE, IP24, LUNA, ALTAIR, BRÚJULA, MYADDRESS | 100% renovación beneficios, provisión móvil >20% err/10m o fibra >30% err/30m | Lentitud en consulta de cobertura (MYADDRESS) o encolamiento recuperable | Inconsistencia en datos de planta de una orden puntual | War Room + Escalado IM (45m) |
+| **3.6 Facturación** | HP-IUM, OCS, BSCS, OPEN COBROS, EXCALIBUR, HPFMS | Desviación >1 día en cobro/batch, >3h sin tarificación online o parada en ciclo (±3d) | Retrasos en facturación no cíclica o duplicados sin impacto masivo | Incidencia puntual en servicio de valor añadido | War Room + Escalado IM (45m) |
+| **3.7 Middleware** | APIGEE, TIBCO, GC MIDDLEWARE, Datapower, OCCI, SBL_EAI | Bloqueo o HTTP 500 masivo entre 2+ procesos críticos o caída PeopleSoft↔Siebel | Nodo individual caído con redundancia activa absorbiendo tráfico | Timeout esporádico o endpoint de monitorización | Escalado en Paralelo obligatorio |
+| **3.8 Sedes / Red** | Sedes Call Center / MSC, Circuitos Ulises/Meneses, Red Tiendas | Aislamiento total de sede/MSC o doble caída de circuitos (Ulises + Meneses) | Caída de 1 circuito con backup activo o corte en 1 tienda física individual | Pérdida de wifi de cortesía o lentitud local leve | War Room (SL1) / Guardia N2 (SL2) |
+| **3.9 Infra / Cloud** | ITX OCI/GCP, PSeries Power9, ESX, HWSAN, Exadata Yécora | Caída enlace Cloud OCI/GCP, ESX/PSeries sin HA o fallo switch SAN/Exadata | Caída de nodo ESX/PSeries o Exadata con HA activa preservando servicio | Alarma preventiva de disco (>85%) o fuente redundante | Escalado en Paralelo / N2 Cloud |
+| **3.10 Identidad/RPA** | GDU, EVIDIAN SSO, ROBOTFACTORY | Caída global de login SSO o parada de robots paralizando provisión LUNA | Lentitud en GDU/ACM con bypass o contingencia manual | Error en alta/rol de usuario individual | War Room + Escalado IM (45m) |
+
+---
 
 ### 3.1 Atención al Cliente (ATC) y Canales Digitales
 
-* **IVR y CTI:** Indisponibilidad o degradación en `IVR` o `CTI` (`SOP_TECNICO_CALL_CENTER`) que colapse o impida atender a **>20% de las llamadas** para cualquier marca/segmento, o cualquier IVR **descartando >20% de llamadas durante 1 hora**.
-- **Frontales / CRM y Asistentes:** Indisponibilidad o degradación con desviación de **>20% en 30 minutos** en volumen o errores en frontales y herramientas de operación: `Ficha de Cliente Orange` (`DES_SOE_FICHA` / `APL_MOV_SOE`), `CRM Jazztel` (`SOP_BSS_JAZZTEL`), `CRM4TELCO`, `Siebel 8`, `POLAR`, `LIVEPERSON` (`SOP_ASISTENTE`), `DJINGO` (`DES_DJINGO`), `ONURIS` (`SOP_ONURIS`), `ONCONNECT`, `NABOO`, `BOREAL`.
-- **Canales de Autogestión Digital (`SL2 / P2` $\rightarrow$ `SL1 / P1`):** Degradación o indisponibilidad en `APP MI ORANGE`, `MIJAZZTEL` o `Web Mantenedores` (`SL2 / P2` en degradación funcional parcial; `SL1 / P1` si provoca corte total de acceso o supera los umbrales de ventas/recargas).
+**Sistemas y Aplicativos Core:** `IVR` / `CTI` (`SOP_TECNICO_CALL_CENTER`), `Ficha de Cliente Orange` (`DES_SOE_FICHA` / `APL_MOV_SOE`), `CRM Jazztel` (`SOP_BSS_JAZZTEL`), `CRM4TELCO`, `Siebel 8`, `POLAR`, `LIVEPERSON` (`SOP_ASISTENTE`), `DJINGO` (`DES_DJINGO`), `ONURIS` (`SOP_ONURIS`), `ONCONNECT`, `NABOO`, `BOREAL`, `APP MI ORANGE`, `MIJAZZTEL`.
 
-### 3.2 Ventas
+| Código Canónico | Nivel | Componente / Ámbito | Criterio Objetivo de Disparo | Protocolo Operativo |
+| :--- | :---: | :--- | :--- | :--- |
+| **ATC-P1-01** | **SL1 / P1** | IVR / CTI | Indisponibilidad o degradación en `IVR` o `CTI` que colapse o impida atender a **>20% de las llamadas** para cualquier marca/segmento, o cualquier IVR **descartando >20% de llamadas durante 1 hora**. | War Room + Escalado IM (45 min) |
+| **ATC-P1-02** | **SL1 / P1** | Frontales / CRM y Asistentes | Indisponibilidad o degradación con desviación de **>20% en 30 minutos** en volumen o errores en frontales y herramientas de operación (`Ficha de Cliente`, `CRM Jazztel`, `CRM4TELCO`, `Siebel 8`, etc.). | War Room + Escalado IM (45 min) |
+| **ATC-P1-03** | **SL1 / P1** | Canales de Autogestión Digital | Indisponibilidad o corte total de acceso en `APP MI ORANGE` o `MIJAZZTEL` que bloquee por completo el acceso de clientes a su autogestión y pago. | War Room + Escalado IM (45 min) |
+| **ATC-P2-01** | **SL2 / P2** | Frontales / CRM | Lentitud severa o indisponibilidad en un único módulo funcional o subsistema existiendo canal alternativo operativo sin interrupción del servicio de atención. | Coordinación N2/N3 con IM |
+| **ATC-P2-02** | **SL2 / P2** | Canales de Autogestión Digital | Degradación funcional parcial o indisponibilidad de módulos no críticos en `APP MI ORANGE`, `MIJAZZTEL` o `Web Mantenedores` (ej. consulta cosmética de factura o catálogo). | Gestión Guardia N2 |
+| **ATC-P3-01** | **SL3 / P3** | Entornos ATC | Incidencia aislada en un agente o puesto de trabajo, error de visualización menor o fallo funcional acotado a entornos no productivos / formación. | Cola estándar N2 |
 
-* **Volumen de Operaciones:** Afectación en cualquier canal, segmento o marca que suponga un impacto en **más del 30% del volumen de operaciones**.
-- **Caída Diaria:** Registrar **menos del 15% de ventas diarias** respecto al promedio de los 4 días equivalentes anteriores.
-- **Sistemas Críticos de Ventas:** Indisponibilidad o bloqueo en campañas, renoves y altas en `CERES` (`APL_MOV_CERES` / `NEG_CAMP_CERES`), grabación/cierre de `Actos Comerciales` (`updateCommercialActSPA`), firma y contratación en `ECONTRATO` (`Econtrato_N2`), `PANGEA` (altas/portas/migras) o `Televenta`.
+**Reglas de Frontera y Desempate:**
+- Si un CRM presenta fallos pero los operadores pueden tramitar la gestión por un frontal secundario sin demora grave, clasificar como **`ATC-P2-01`**.
+- Ante falta de telemetría sobre el % de llamadas o frontales afectados, aplica estrictamente la **Regla de Oro N1 (§4.1)**: clasificar como **`SL1 Preventivo`** y emitir las 3 preguntas clave.
 
-### 3.3 Portabilidad
+---
 
-* **Flujo Nocturno:** Imposibilidad de iniciar el flujo de portabilidad a las **2:00 AM**.
-- **Entidad de Referencia:** Fallos de comunicación con la entidad de referencia entre las **8:00 AM y las 8:00 PM** (indisponibilidad total o degradación con **>2 horas de retraso**).
-- **Sistemas Asociados:** Nodos de portabilidad fija/móvil y flujos de portabilidad en `PANGEA` / `TEIDE`.
+### 3.2 Ventas y Contratación Comercial
 
-### 3.4 Prepago
+**Sistemas y Aplicativos Core:** `CERES` (`APL_MOV_CERES` / `NEG_CAMP_CERES`), `Actos Comerciales` (`updateCommercialActSPA`), `ECONTRATO` (`Econtrato_N2`), `PANGEA` (altas/portas/migras), `Televenta`.
 
-* **Recargas:** **>10% de errores** o **>30 minutos sin actividad** por marca o canal (incluyendo `RECARGAS APRS`, `Recargas Web - App` y pasarelas de recarga).
-- **Alta de Líneas y eSIM Prepago:** **>10% de errores** o **>30 minutos sin altas** (incluyendo flujos de `Altas eSIM Prepago` y aprovisionamiento en `OCS`).
+| Código Canónico | Nivel | Componente / Ámbito | Criterio Objetivo de Disparo | Protocolo Operativo |
+| :--- | :---: | :--- | :--- | :--- |
+| **VNT-P1-01** | **SL1 / P1** | Volumen Comercial Global | Afectación en cualquier canal, segmento o marca que suponga un impacto en **más del 30% del volumen de operaciones comerciales**. | War Room + Escalado IM (45 min) |
+| **VNT-P1-02** | **SL1 / P1** | Caída Diaria de Ventas | Registrar **menos del 15% de ventas diarias** respecto al promedio de los 4 días equivalentes anteriores. | War Room + Escalado IM (45 min) |
+| **VNT-P1-03** | **SL1 / P1** | Sistemas Críticos de Contratación | Indisponibilidad o bloqueo en campañas, renoves y altas en `CERES`, grabación/cierre de `Actos Comerciales`, firma digital y contratación en `ECONTRATO`, o flujos de venta en `PANGEA` / `Televenta`. | War Room + Escalado IM (45 min) |
+| **VNT-P2-01** | **SL2 / P2** | Subcanales Comerciales | Caída de un subcanal comercial específico con afectación entre el 10% y el 30% de operaciones, disponiendo de derivación operativa hacia otros canales. | Coordinación N2/N3 con IM |
+| **VNT-P2-02** | **SL2 / P2** | Catálogo y Promociones | Anomalía en la visualización o aplicación de una oferta o promoción acotada que no impida la contratación general del resto del catálogo. | Gestión Guardia N2 |
+| **VNT-P3-01** | **SL3 / P3** | Reporting de Ventas | Errores en cuadros de mando de ventas, dashboards de comisiones o incidencias en puestos comerciales individuales sin impacto transaccional. | Cola estándar N2 |
 
-### 3.5 Provisión y Cobertura
+**Reglas de Frontera y Desempate:**
+- Si el fallo impide la firma digital (`ECONTRATO`), la incidencia es **`VNT-P1-03`** inmediata debido al bloqueo directo de ingresos contractuales.
 
-* **Beneficios:** Indisponibilidad del **100% de renovaciones de beneficios**.
-- **Órdenes de Móvil:** **>20% de errores** o el **100% de provisiones en error por >10 minutos** (incluyendo `PROVISIÓN MÓVIL`, `Cambio de eSIM`, `POMV` / `SOP_TEC_PROVISION`, `SIGMA` / `SOP_TMC_SIGMA`).
-- **Órdenes de Fijo y Fibra:** **>30% de errores** o el **100% de provisiones en error por >30 minutos** (incluyendo `TEIDE` / `SOP_SMC_TEIDE`, `IP24`, `LUNA` / `Fijo Activacion LUNA`, `ALTAIR` / llamada `ALTAIR a BRÚJULA`, `MYADDRESS` / consulta de cobertura, `GIS FIBRA`, `SGA` / `SOP_TMC_HPE`, `Prerreserva Numeración Fijo` y `Provisión Fijo contra Adamo`).
+---
+
+### 3.3 Portabilidad Fija y Móvil
+
+**Sistemas y Aplicativos Core:** Nodos de portabilidad en `PANGEA` / `TEIDE`, pasarelas con Entidad de Referencia de Portabilidad.
+
+| Código Canónico | Nivel | Componente / Ámbito | Criterio Objetivo de Disparo | Protocolo Operativo |
+| :--- | :---: | :--- | :--- | :--- |
+| **POR-P1-01** | **SL1 / P1** | Flujo Nocturno Batch | Imposibilidad de iniciar el flujo de portabilidad a las **2:00 AM**. | War Room + Escalado IM (45 min) |
+| **POR-P1-02** | **SL1 / P1** | Entidad de Referencia | Fallos de comunicación con la entidad de referencia entre las **8:00 AM y las 8:00 PM** (indisponibilidad total o degradación con **>2 horas de retraso**). | War Room + Escalado IM (45 min) |
+| **POR-P1-03** | **SL1 / P1** | Nodos Core de Portabilidad | Bloqueo o parálisis en nodos de portabilidad fija/móvil y flujos de portabilidad en `PANGEA` / `TEIDE`. | War Room + Escalado IM (45 min) |
+| **POR-P2-01** | **SL2 / P2** | Encolamiento con Entidad | Retrasos en intercambios con la entidad de referencia entre **30 minutos y 2 horas**, sin pérdida inminente de la ventana regulatoria de cambio. | Coordinación N2/N3 con IM |
+| **POR-P3-01** | **SL3 / P3** | Solicitud Individual | Rechazo o incoherencia en una solicitud individual de portabilidad por discrepancia de datos de abonado o validación de operador donante. | Cola estándar N2 |
+
+**Reglas de Frontera y Desempate:**
+- Cualquier riesgo de incumplimiento de los plazos legales regulados ante la entidad de referencia promueve la incidencia a **`POR-P1-02`**.
+
+---
+
+### 3.4 Prepago y Recargas
+
+**Sistemas y Aplicativos Core:** `RECARGAS APRS`, `Recargas Web - App`, pasarelas bancarias y aprovisionamiento prepago en `OCS` (`SOP_TMC_OCS`).
+
+| Código Canónico | Nivel | Componente / Ámbito | Criterio Objetivo de Disparo | Protocolo Operativo |
+| :--- | :---: | :--- | :--- | :--- |
+| **PRE-P1-01** | **SL1 / P1** | Transaccionalidad de Recargas | **>10% de errores** o **>30 minutos sin actividad** en recargas por marca o canal (incluyendo `RECARGAS APRS`, pasarelas Web y App). | War Room + Escalado IM (45 min) |
+| **PRE-P1-02** | **SL1 / P1** | Altas y eSIM Prepago | **>10% de errores** o **>30 minutos sin altas** (flujos de `Altas eSIM Prepago` y aprovisionamiento en `OCS`). | War Room + Escalado IM (45 min) |
+| **PRE-P2-01** | **SL2 / P2** | Canal Secundario de Recarga | Caída de un canal de distribución externo secundario (ej. un distribuidor concreto) manteniéndose operativos los canales directos (App, Web y red de cajeros). | Coordinación N2/N3 con IM |
+| **PRE-P3-01** | **SL3 / P3** | Transacción Aislada | Fallo en recarga de una línea individual por saldo insuficiente o rechazo puntual de tarjeta de crédito del cliente. | Cola estándar N2 |
+
+---
+
+### 3.5 Provisión y Cobertura (Fijo, Fibra y Móvil)
+
+**Sistemas y Aplicativos Core:** `POMV` (`SOP_TEC_PROVISION`), `SIGMA` (`SOP_TMC_SIGMA`), `TEIDE` (`SOP_SMC_TEIDE`), `IP24`, `LUNA` (`Fijo Activacion LUNA`), `ALTAIR` / `BRÚJULA`, `MYADDRESS`, `GIS FIBRA`, `SGA` (`SOP_TMC_HPE`), `Adamo` provisión.
+
+| Código Canónico | Nivel | Componente / Ámbito | Criterio Objetivo de Disparo | Protocolo Operativo |
+| :--- | :---: | :--- | :--- | :--- |
+| **PRV-P1-01** | **SL1 / P1** | Renovación de Beneficios | Indisponibilidad del **100% de renovaciones de beneficios** de clientes. | War Room + Escalado IM (45 min) |
+| **PRV-P1-02** | **SL1 / P1** | Provisión Móvil | **>20% de errores** o el **100% de provisiones en error por >10 minutos** (incluyendo `PROVISIÓN MÓVIL`, `Cambio de eSIM`, `POMV`, `SIGMA`). | War Room + Escalado IM (45 min) |
+| **PRV-P1-03** | **SL1 / P1** | Provisión Fijo y Fibra | **>30% de errores** o el **100% de provisiones en error por >30 minutos** (incluyendo `TEIDE`, `IP24`, `LUNA`, llamada `ALTAIR a BRÚJULA`, `SGA`, provisión contra `Adamo`). | War Room + Escalado IM (45 min) |
+| **PRV-P2-01** | **SL2 / P2** | Consultas de Cobertura | Indisponibilidad o lentitud severa en `MYADDRESS`, consulta de cobertura o `GIS FIBRA` que ralentice la venta pero permita reintentos. | Coordinación N2/N3 con IM |
+| **PRV-P2-02** | **SL2 / P2** | Encolamiento de Órdenes | Encolamiento con retraso en la ejecución de órdenes de provisión (<20% error móvil o <30% fijo) absorbible por reintentos programados. | Gestión Guardia N2 |
+| **PRV-P3-01** | **SL3 / P3** | Orden Individual | Error en provisión de un abonado individual debido a datos de planta externa incompletos o rechazo de IDU. | Cola estándar N2 |
+
+**Reglas de Frontera y Desempate:**
+- Si la provisión móvil se detiene por más de 10 minutos al 100%, la clasificación es automáticamente **`PRV-P1-02`**, con independencia de la hora del día.
+
+---
 
 ### 3.6 Facturación, Mediación y Cobros
 
-* **Fecha de Cobro / Tarificación Batch:** Desviación **>1 día en la fecha de cobro** o en la tarificación batch por marca.
-- **Tarificación Online y Mediación:** Más de **3 horas sin tarificación online** por marca o caída/degradación crítica en `MEDIACIÓN` (`APL_FIJ_HP-IUM_OSP` / `HP-IUM`) u `OCS` (`SOP_TMC_OCS`).
-- **Ciclo de Facturación y Sistemas de Cobro:** Indisponibilidad o degradación severa en la ventana de **±3 días de cada ciclo**, o bloqueo operativo en `BSCS` / `BSCS Online` (`SOP_TMC_BSCS_ONLINE`), `OPEN COBROS` (`COBROS Y RECOBROS - CONTROL`), `EXCALIBUR` (`SOP_TMC_EXCALIBUR`), `HPFMS` (`FRAUDE` - propagación de bloqueos/desbloqueos de líneas a red) y `SAP` facturación.
+**Sistemas y Aplicativos Core:** `MEDIACIÓN` (`APL_FIJ_HP-IUM_OSP` / `HP-IUM`), `OCS` (`SOP_TMC_OCS`), `BSCS` / `BSCS Online` (`SOP_TMC_BSCS_ONLINE`), `OPEN COBROS` (`COBROS Y RECOBROS - CONTROL`), `EXCALIBUR` (`SOP_TMC_EXCALIBUR`), `HPFMS` (`FRAUDE`), `SAP` facturación.
+
+| Código Canónico | Nivel | Componente / Ámbito | Criterio Objetivo de Disparo | Protocolo Operativo |
+| :--- | :---: | :--- | :--- | :--- |
+| **FAC-P1-01** | **SL1 / P1** | Cobro y Tarificación Batch | Desviación **>1 día en la fecha de cobro** o en la tarificación batch por marca. | War Room + Escalado IM (45 min) |
+| **FAC-P1-02** | **SL1 / P1** | Tarificación Online / Mediación | Más de **3 horas sin tarificación online** por marca o caída/degradación crítica en `MEDIACIÓN` (`HP-IUM`) u `OCS`. | War Room + Escalado IM (45 min) |
+| **FAC-P1-03** | **SL1 / P1** | Ciclo de Facturación y Fraude | Indisponibilidad o degradación severa en la ventana de **±3 días de cada ciclo**, bloqueo operativo en `BSCS`/`BSCS Online`, `OPEN COBROS`, `EXCALIBUR` o parada en `HPFMS` (bloqueos de líneas por fraude). | War Room + Escalado IM (45 min) |
+| **FAC-P2-01** | **SL2 / P2** | Facturación Extraciclo | Retraso en generación de facturas rectificativas, duplicados o procesos fuera de la ventana crítica de ciclo (±3 días) sin afectar a ingresos. | Coordinación N2/N3 con IM |
+| **FAC-P3-01** | **SL3 / P3** | Ajuste o Factura Puntual | Error en visualización de desglose de factura en un abonado particular o anomalía en facturación de un servicio de valor añadido menor. | Cola estándar N2 |
+
+---
 
 ### 3.7 Capa de Integración / Middleware Transversal
 
-* **Middleware / Bus de Servicios / Pasarelas API:** Indisponibilidad, errores masivos de integración (`HTTP 404/500`, rechazos de payload) o timeouts en `APIGEE` / `OPENAPI` (`SOP_TMC_APIGEE`), `TIBCO`, `GC MIDDLEWARE`, `Datapower`, conectores `OCCI`, procesos batch de integración (`SBL_EAI`), microservicios transversales (`DES_SOE_MICROSERVICIOS`) o sincronización entre `PeopleSoft` (`FIJO APL Soporte PS`) y `Siebel 8` que afecten la comunicación entre dos o más Procesos Críticos o frontales multicanal.
-  - **Condición `SL1 / P1`:** Corte o fallo de integración sin redundancia que bloquea operaciones en vivo hacia clientes o agentes (requiere **Escalado en Paralelo obligatorio**).
-  - **Condición `SL2 / P2`:** Indisponibilidad parcial de nodos donde la redundancia de infraestructura mantiene activos los canales, o desincronización acotada de campos secundarios.
+**Sistemas y Aplicativos Core:** `APIGEE` / `OPENAPI` (`SOP_TMC_APIGEE`), `TIBCO`, `GC MIDDLEWARE`, `Datapower`, conectores `OCCI`, `SBL_EAI`, `DES_SOE_MICROSERVICIOS`, sincronización `PeopleSoft` (`FIJO APL Soporte PS`) ↔ `Siebel 8`.
+
+| Código Canónico | Nivel | Componente / Ámbito | Criterio Objetivo de Disparo | Protocolo Operativo |
+| :--- | :---: | :--- | :--- | :--- |
+| **MID-P1-01** | **SL1 / P1** | Pasarelas API / Bus Core | Indisponibilidad, errores masivos (`HTTP 404/500`, rechazos de payload) o timeouts generalizados en `APIGEE`, `TIBCO` o `Datapower` que afecten la comunicación entre **dos o más Procesos Críticos**. | **Escalado en Paralelo obligatorio** + War Room |
+| **MID-P1-02** | **SL1 / P1** | Sincronización Estructural | Parada crítica en procesos batch de integración (`SBL_EAI`), conectores `OCCI` o sincronización `PeopleSoft` ↔ `Siebel 8` con bloqueo transaccional. | **Escalado en Paralelo obligatorio** + War Room |
+| **MID-P2-01** | **SL2 / P2** | Redundancia de Clúster API | Indisponibilidad de uno o más nodos de `APIGEE` o `TIBCO` cuando la redundancia de balanceo mantiene arriba el servicio pero con pérdida de tolerancia a picos. | Coordinación N2/N3 con IM |
+| **MID-P2-02** | **SL2 / P2** | Microservicio Secundario | Errores o degradación acotados a un microservicio específico (`DES_SOE_MICROSERVICIOS`) que no interrumpe los flujos transaccionales críticos. | Gestión Guardia N2 |
+| **MID-P3-01** | **SL3 / P3** | Alarma Técnica de Bus | Timeouts aislados en endpoints de telemetría interna o avisos de degradación sin rechazo transaccional medible. | Cola estándar N2 |
+
+**Reglas de Frontera y Desempate:**
+- Cualquier incidencia en la capa Middleware que impacte simultáneamente a ATC y Ventas requiere **Escalado en Paralelo inmediato** a todos los grupos resolutores.
+
+---
 
 ### 3.8 Conectividad de Sedes, Call Centers (`MSC`) y Tiendas (`RTV-TECSE RED DATOS` / `GNOC`)
 
-* **Condición de disparo `SL1 / P1` (Emergencia):**
-  - **Aislamiento de Sede / Call Center / MSC:** Indisponibilidad total de conectividad de voz o datos en una o varias sedes operativas o plataformas de Call Center / `MSC` (ej. `Sede Málaga MSC`, `Sede Zaragoza Pilar`, `Bilbao Zamudio-MSC`, `Sedes Barcelona 1 / Mataró`, `La Finca`).
-  - **Doble Caída de Circuitos:** Caída simultánea de ambos circuitos de comunicaciones de una sede (`Circuito Ulises + Meneses`).
-- **Condición de disparo `SL2 / P2` (Mayor):**
-  - **Pérdida de Redundancia de Circuito:** Caída o degradación de **un único circuito** (`Ulises`, `Meneses`, `Palos-Bogotá`, `Palos-ISGF Lezama`) manteniendo el servicio operativo a través del circuito de respaldo.
-  - **Electrónica de Red Local o Tienda Física:** Degradación de switch/firewall local (`FW Torrejón`, `Switch central Yécora`) con camino alternativo, o **indisponibilidad completa de una Tienda física individual** (ej. `Tienda Calle Alcalá 149`, `Tienda Córdoba`).
+**Sistemas y Enlaces Core:** Circuitos troncales `Ulises`, `Meneses`, sedes `Málaga MSC`, `Zaragoza Pilar`, `Bilbao Zamudio-MSC`, `Barcelona 1 / Mataró`, `La Finca`, red de Tiendas físicas.
 
-### 3.9 Infraestructura Core IT, Hipervisores (`ESX`), Servidores (`PSeries`), Almacenamiento (`SAN`), BBDD (`Exadata`) y Cloud (`OCI`/`GCP`)
+| Código Canónico | Nivel | Componente / Ámbito | Criterio Objetivo de Disparo | Protocolo Operativo |
+| :--- | :---: | :--- | :--- | :--- |
+| **RED-P1-01** | **SL1 / P1** | Aislamiento de Sede / Call Center | Indisponibilidad total de conectividad de voz o datos en una o varias sedes operativas, Call Centers o `MSC` (`Málaga`, `Zaragoza`, `Zamudio`, `Barcelona`, `La Finca`). | War Room + Escalado IM (45 min) |
+| **RED-P1-02** | **SL1 / P1** | Doble Caída de Circuitos | Caída simultánea de ambos circuitos de comunicaciones troncales de una sede (`Circuito Ulises + Meneses`). | War Room + Escalado IM (45 min) |
+| **RED-P2-01** | **SL2 / P2** | Pérdida de Redundancia | Caída o degradación de **un único circuito** (`Ulises`, `Meneses`, `Palos-Bogotá`, `Palos-ISGF Lezama`) manteniendo el servicio operativo a través del circuito de respaldo. | Coordinación N2/N3 con IM |
+| **RED-P2-02** | **SL2 / P2** | Red Local o Tienda Física | Degradación de switch/firewall local (`FW Torrejón`, `Switch central Yécora`) con bypass, o **indisponibilidad completa de una Tienda física individual** (`Alcalá 149`, `Córdoba`, etc.). | Gestión Guardia N2 / Soporte Red |
+| **RED-P3-01** | **SL3 / P3** | Conectividad Menor | Avería de wifi de cortesía en tienda o fallo de cableado estructurado en una única posición de trabajo en sede. | Cola estándar N2 |
 
-* **Condición de disparo `SL1 / P1` (Emergencia):**
-  - **Interconexión Cloud (`OCI` / `GCP` / `ITX`):** Caída o flapeo severo de enlaces troncales `ITX` con `GCP` y `OCI` (`OPER_COE_CLOUD` / `Atlas_Soporte_CLOUD`, ej. `ITX OCI GCP ULI-MEN`, `Conectividad GCP`, `Flapeos OCI`).
-  - **Cómputo y Virtualización sin HA efectiva (`PSeries Power9` / `ESX`):** Indisponibilidad de servidores críticos `PSeries Power9` (`Atlas_Soporte_Unix`) o hipervisores `ESX` (`Atlas_Soporte_Linux_Vmware`, ej. `ESX aotlxprvin...`) que provoque indisponibilidad de aplicativos sin absorción por Alta Disponibilidad.
-  - **Almacenamiento SAN, BBDD Críticas y Backups (`HWSAN` / `Exadata` / `Data Mart Fiscal` / `BACKUP OSP`):** Caída de switches troncales de almacenamiento (`ADM. HWSAN`), indisponibilidad de `DATA MART FISCAL` (`Atlas_Soporte_BBDD`) o fallo global en `BACKUP OSP` (`T.S. BYR`).
-- **Condición de disparo `SL2 / P2` (Mayor):**
-  - Caída, reinicio o degradación de un nodo individual `ESX`, un servidor `PSeries`, una cabina de discos (`SPAIN ALMACENAMIENTO`, `es3iba02fte`), un filesystem `SAP BASIS` o un nodo de clúster (`Cluster Exadata Yécora`) cuando la **Alta Disponibilidad (HA) mantiene el servicio productivo arriba**, pero con pérdida de tolerancia a fallos.
+---
+
+### 3.9 Infraestructura Core IT, Virtualización (`ESX`), Cómputo (`PSeries`), Almacenamiento (`SAN`), BBDD (`Exadata`) y Cloud (`OCI`/`GCP`)
+
+**Sistemas y Plataformas Core:** Hipervisores `ESX` (`Atlas_Soporte_Linux_Vmware`), servidores `PSeries Power9` (`Atlas_Soporte_Unix`), switches `HWSAN` (`ADM. HWSAN`), `DATA MART FISCAL` (`Atlas_Soporte_BBDD`), `BACKUP OSP` (`T.S. BYR`), enlaces `ITX OCI GCP` (`OPER_COE_CLOUD`), clúster `Exadata Yécora`.
+
+| Código Canónico | Nivel | Componente / Ámbito | Criterio Objetivo de Disparo | Protocolo Operativo |
+| :--- | :---: | :--- | :--- | :--- |
+| **INF-P1-01** | **SL1 / P1** | Interconexión Cloud Troncal | Caída o flapeo severo de enlaces troncales `ITX` con `GCP` u `OCI` (`ITX OCI GCP ULI-MEN`, conectividad general `OCI` o `GCP`). | **Escalado en Paralelo obligatorio** + War Room |
+| **INF-P1-02** | **SL1 / P1** | Cómputo / Hipervisores sin HA | Indisponibilidad de servidores críticos `PSeries Power9` o hipervisores `ESX` que provoquen parada de aplicativos productivos sin absorción por Alta Disponibilidad. | War Room + Escalado IM (45 min) |
+| **INF-P1-03** | **SL1 / P1** | SAN, BBDD Core y Backups | Caída de switches troncales de almacenamiento (`ADM. HWSAN`), caída de `DATA MART FISCAL` o fallo global que paralice los ciclos de `BACKUP OSP`. | War Room + Escalado IM (45 min) |
+| **INF-P2-01** | **SL2 / P2** | Pérdida de Redundancia de Plataforma | Caída, reinicio o degradación de un nodo individual `ESX`, servidor `PSeries`, cabina de discos (`SPAIN ALMACENAMIENTO`), filesystem `SAP BASIS` o nodo de clúster `Exadata Yécora` cuando la **Alta Disponibilidad (HA) mantiene el servicio productivo arriba**, pero con pérdida de tolerancia a fallos. | Coordinación N2/N3 con IM |
+| **INF-P3-01** | **SL3 / P3** | Alerta Preventiva de Capacidad | Alarma preventiva de ocupación en filesystem no crítico (>85%) o fallo en una de las fuentes de alimentación redundantes de un rack. | Cola estándar N2 |
+
+---
 
 ### 3.10 Autenticación / Gestión de Identidad (`GDU` / `EVIDIAN`) y Automatización Operativa (`ROBOTFACTORY`)
 
-* **Condición de disparo `SL1 / P1` (Emergencia):**
-  - **Identidad y Control de Accesos (`GDU` / `EVIDIAN`):** Indisponibilidad global de `GDU` (`OPER_Soporte_GdU`) o del sistema Single Sign-On `EVIDIAN` que impide el login de operadores y usuarios en aplicaciones críticas.
-  - **Automatización RPA (`ROBOTFACTORY`):** Indisponibilidad total de `ROBOTFACTORY` que paraliza los flujos automáticos de provisión (`Fijo Activacion LUNA` / `Atlas_Soporte_BBDD`) sin alternativa operativa inmediata.
-- **Condición de disparo `SL2 / P2` (Mayor):**
-  - Degradación parcial, lentitud de acceso o errores funcionales acotados en módulos de `GDU` (`GDU/ACM`) o `EVIDIAN`, o fallo parcial de robots existiendo contingencia manual.
+**Sistemas y Herramientas Core:** `GDU` / `GDU/ACM` (`OPER_Soporte_GdU`), `EVIDIAN` SSO, `ROBOTFACTORY` (`Fijo Activacion LUNA` / `Atlas_Soporte_BBDD`).
 
----
+| Código Canónico | Nivel | Componente / Ámbito | Criterio Objetivo de Disparo | Protocolo Operativo |
+| :--- | :---: | :--- | :--- | :--- |
+| **IDE-P1-01** | **SL1 / P1** | SSO / Identidad Global | Indisponibilidad global de `GDU` o del Single Sign-On `EVIDIAN` que impida el acceso y login de operadores y usuarios en aplicaciones críticas de negocio. | War Room + Escalado IM (45 min) |
+| **IDE-P1-02** | **SL1 / P1** | Automatización RPA Core | Indisponibilidad total de `ROBOTFACTORY` que paralice los flujos automáticos de provisión (`Fijo Activacion LUNA` / BBDD) sin alternativa operativa inmediata. | War Room + Escalado IM (45 min) |
+| **IDE-P2-01** | **SL2 / P2** | Degradación Parcial de Identidad | Degradación parcial, lentitud de acceso o fallos funcionales acotados a módulos secundarios de `GDU` (`GDU/ACM`) o `EVIDIAN`, existiendo vía alternativa de login. | Coordinación N2/N3 con IM |
+| **IDE-P2-02** | **SL2 / P2** | Robots Individuales con Contingencia | Fallo en un robot o proceso individual de `ROBOTFACTORY` cuando existe contingencia operativa manual para absorber las órdenes. | Gestión Guardia N2 |
+| **IDE-P3-01** | **SL3 / P3** | Gestión de Usuario Individual | Incidencia en el aprovisionamiento de permisos o reseteo de contraseña de un usuario individual. | Cola estándar N2 |
 
 ## 4. Matriz Determinista de Cruce (Impacto x Urgencia) y Desempate
 

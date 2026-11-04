@@ -1813,9 +1813,9 @@ def evaluate_incidents_batch(
     catalog = {
         "_metadata": {
             "type": "high_priority_notifications",
-            "version": "2.4.0",
+            "version": "2.5.0",
             "skills_version": {
-                "it-severity-matrix": "2.4.0",
+                "it-severity-matrix": "2.5.0",
                 "orange-it-emergency-management": "2.4.0",
                 "incident-reporter": "1.4.0",
                 "incident-executive-notifications": "1.4.0"
