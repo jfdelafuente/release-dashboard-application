@@ -155,6 +155,17 @@
     btnCopyFullLog: document.getElementById('btn-copy-full-log'),
     btnClearLog: document.getElementById('btn-clear-log'),
 
+    // Secciones Plegables del Módulo 2
+    orchWarRoomSection: document.getElementById('orch-war-room-section'),
+    orchWarRoomHeader: document.getElementById('orch-war-room-header'),
+    btnToggleWarRoom: document.getElementById('btn-toggle-war-room'),
+    orchPapSection: document.getElementById('orch-pap-section'),
+    orchPapHeader: document.getElementById('orch-pap-header'),
+    btnTogglePap: document.getElementById('btn-toggle-pap'),
+    orchLogSection: document.getElementById('orch-log-section'),
+    orchLogHeader: document.getElementById('orch-log-header'),
+    btnToggleLog: document.getElementById('btn-toggle-log'),
+
     // Modales Secundarios
     modalRollback: document.getElementById('modal-rollback-order'),
     btnModalRollbackClose: document.getElementById('btn-modal-rollback-close'),
@@ -2112,6 +2123,11 @@ Proceder con la ejecución inmediata del procedimiento de Rollback. Confirmar in
     // 5. Iniciar Relojes de Escalado
     startOrchestratorClocks(inc);
 
+    // 5.5 Plegar por defecto las secciones en Módulo 2 (Fase 1: Bitácora, War Room y Monitor de Trabajos)
+    setOrchSectionCollapsed('warroom', true);
+    setOrchSectionCollapsed('pap', true);
+    setOrchSectionCollapsed('log', true);
+
     // 6. Abrir Modal
     dom.modalOrchestrator.classList.add('open');
     showToast(`Orquestador Operativo activado para ${incId}`, 'info');
@@ -2127,6 +2143,82 @@ Proceder con la ejecución inmediata del procedimiento de Rollback. Confirmar in
     if (dom.modalOrchestrator) {
       dom.modalOrchestrator.classList.remove('open');
     }
+  }
+
+  function setOrchSectionCollapsed(sectionName, isCollapsed) {
+    let sectionEl, btnEl, headerEl;
+    if (sectionName === 'warroom') {
+      sectionEl = dom.orchWarRoomSection || document.getElementById('orch-war-room-section');
+      btnEl = dom.btnToggleWarRoom || document.getElementById('btn-toggle-war-room');
+      headerEl = dom.orchWarRoomHeader || document.getElementById('orch-war-room-header');
+    } else if (sectionName === 'pap') {
+      sectionEl = dom.orchPapSection || document.getElementById('orch-pap-section');
+      btnEl = dom.btnTogglePap || document.getElementById('btn-toggle-pap');
+      headerEl = dom.orchPapHeader || document.getElementById('orch-pap-header');
+    } else if (sectionName === 'log') {
+      sectionEl = dom.orchLogSection || document.getElementById('orch-log-section');
+      btnEl = dom.btnToggleLog || document.getElementById('btn-toggle-log');
+      headerEl = dom.orchLogHeader || document.getElementById('orch-log-header');
+    }
+    if (!sectionEl) return;
+
+    if (isCollapsed) {
+      sectionEl.classList.add('is-collapsed');
+      if (btnEl) btnEl.setAttribute('aria-expanded', 'false');
+      if (headerEl) headerEl.setAttribute('aria-expanded', 'false');
+    } else {
+      sectionEl.classList.remove('is-collapsed');
+      if (btnEl) btnEl.setAttribute('aria-expanded', 'true');
+      if (headerEl) headerEl.setAttribute('aria-expanded', 'true');
+    }
+  }
+
+  function toggleOrchSection(sectionName) {
+    let sectionEl;
+    if (sectionName === 'warroom') sectionEl = dom.orchWarRoomSection || document.getElementById('orch-war-room-section');
+    else if (sectionName === 'pap') sectionEl = dom.orchPapSection || document.getElementById('orch-pap-section');
+    else if (sectionName === 'log') sectionEl = dom.orchLogSection || document.getElementById('orch-log-section');
+    if (!sectionEl) return;
+    const isCurrentlyCollapsed = sectionEl.classList.contains('is-collapsed');
+    setOrchSectionCollapsed(sectionName, !isCurrentlyCollapsed);
+  }
+
+  function initOrchestratorCollapsibleSections() {
+    const sections = [
+      { key: 'warroom', headerId: 'orch-war-room-header', btnId: 'btn-toggle-war-room' },
+      { key: 'pap', headerId: 'orch-pap-header', btnId: 'btn-toggle-pap' },
+      { key: 'log', headerId: 'orch-log-header', btnId: 'btn-toggle-log' }
+    ];
+
+    sections.forEach(({ key, headerId, btnId }) => {
+      const header = document.getElementById(headerId);
+      const btn = document.getElementById(btnId);
+
+      if (btn) {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          toggleOrchSection(key);
+        });
+      }
+
+      if (header) {
+        header.addEventListener('click', (e) => {
+          if (e.target.closest('#btn-copy-full-log, #btn-clear-log, #orch-btn-join-teams, #orch-btn-copy-teams, a, button:not(.orch-box-toggle-btn)')) return;
+          toggleOrchSection(key);
+        });
+
+        header.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            if (e.target.closest('#btn-copy-full-log, #btn-clear-log, #orch-btn-join-teams, #orch-btn-copy-teams, a, button:not(.orch-box-toggle-btn)')) return;
+            e.preventDefault();
+            toggleOrchSection(key);
+          }
+        });
+      }
+
+      // Por defecto en Fase 1: dejarlas plegadas
+      setOrchSectionCollapsed(key, true);
+    });
   }
 
   function formatFullLogForClipboard(incId) {
@@ -3999,6 +4091,9 @@ Puente Teams: ${teamsUrl}
 
     // Inicializar colapso/despliegue del footer
     initFooterCollapse();
+
+    // Inicializar secciones plegables del Módulo 2 (plegadas por defecto en Fase 1)
+    initOrchestratorCollapsibleSections();
 
     const btnFooterScrollTop = document.getElementById('footer-btn-scroll-top');
     if (btnFooterScrollTop) {

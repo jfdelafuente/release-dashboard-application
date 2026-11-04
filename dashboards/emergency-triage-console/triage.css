@@ -2481,6 +2481,87 @@ body {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 16px;
+  align-items: start;
+}
+
+/* Cabeceras colapsables e interactividad en Módulo 2 */
+.orch-box-collapsible-header {
+  cursor: pointer;
+  user-select: none;
+  transition: background-color 0.15s ease;
+  border-radius: var(--radius-xs);
+  padding: 4px 6px;
+  margin: -4px -6px 12px -6px;
+}
+
+.orch-box-collapsible-header:hover {
+  background-color: rgba(0, 0, 0, 0.025);
+}
+
+.orch-box-collapsible-header:focus-visible {
+  outline: 2px solid var(--triage-orange);
+  outline-offset: 2px;
+}
+
+.orch-box-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.orch-box-toggle-btn {
+  background: #FFFFFF;
+  border: 1px solid var(--triage-border);
+  border-radius: var(--radius-xs);
+  width: 26px;
+  height: 26px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--triage-text-subtle);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.15s ease, border-color 0.15s ease;
+  padding: 0;
+  flex-shrink: 0;
+}
+
+.orch-box-toggle-btn:hover {
+  background: #F8FAFC;
+  color: var(--triage-text-main);
+  border-color: #CBD5E1;
+}
+
+.orch-box-chevron {
+  display: inline-block;
+  font-size: 10px;
+  line-height: 1;
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  transform: rotate(0deg); /* Desplegado: apunta hacia abajo ▼ */
+}
+
+/* Estado Plegado / Collapsed (Fase 1: Plegadas por defecto) */
+.orch-card-box.is-collapsed {
+  padding-bottom: 12px;
+}
+
+.orch-card-box.is-collapsed .orch-box-chevron {
+  transform: rotate(-90deg); /* Plegado: apunta a la derecha ▶ */
+}
+
+.orch-card-box.is-collapsed .orch-box-header {
+  margin-bottom: 0;
+  border-bottom: none;
+  padding-bottom: 4px;
+}
+
+.orch-card-box.is-collapsed .orch-warroom-content,
+.orch-card-box.is-collapsed .orch-pap-content,
+.orch-card-box.is-collapsed .orch-log-body {
+  display: none !important;
+}
+
+.orch-log-section.is-collapsed {
+  gap: 0;
 }
 
 .orch-card-box {

@@ -524,3 +524,47 @@ def test_triage_table_6_columns_layout_and_date_sorting():
     assert ".triage-cell-itil" in css
     assert ".triage-itil-delta-sub" in css
 
+
+
+def test_orchestrator_sections_folded_by_default_phase1():
+    """Valida que las secciones de Bitácora, WarRoom y Monitor de Trabajos estén plegadas por defecto en el Módulo 2."""
+    html = (CONSOLE_DIR / "index.html").read_text(encoding="utf-8")
+    css = (CONSOLE_DIR / "triage.css").read_text(encoding="utf-8")
+    js = (CONSOLE_DIR / "triage.js").read_text(encoding="utf-8")
+
+    # 1. Validación en index.html: existencia de clases is-collapsed y botones de conmutación
+    assert 'id="orch-war-room-section" class="orch-card-box orch-war-room-box is-collapsed"' in html or (
+        'id="orch-war-room-section"' in html and 'orch-war-room-box is-collapsed' in html
+    )
+    assert 'id="orch-pap-section"' in html and 'orch-pap-box is-collapsed' in html
+    assert 'id="orch-log-section"' in html and 'orch-log-section is-collapsed' in html
+
+    # Cabeceras interactivas y botones de toggle
+    assert 'id="orch-war-room-header"' in html
+    assert 'id="btn-toggle-war-room"' in html
+    assert 'id="orch-pap-header"' in html
+    assert 'id="btn-toggle-pap"' in html
+    assert 'id="orch-log-header"' in html
+    assert 'id="btn-toggle-log"' in html
+    assert 'class="orch-log-body"' in html
+
+    # Atributos de accesibilidad iniciales (plegado = aria-expanded="false")
+    assert 'aria-expanded="false"' in html
+
+    # 2. Validación en triage.css: estilos de colapso, rotación del chevron y ocultación de contenido
+    assert ".orch-box-collapsible-header" in css
+    assert ".orch-box-toggle-btn" in css
+    assert ".orch-box-chevron" in css
+    assert ".orch-card-box.is-collapsed" in css
+    assert ".orch-card-box.is-collapsed .orch-warroom-content" in css
+    assert ".orch-card-box.is-collapsed .orch-pap-content" in css
+    assert ".orch-card-box.is-collapsed .orch-log-body" in css
+    assert "transform: rotate(-90deg)" in css
+
+    # 3. Validación en triage.js: métodos de gestión y restablecimiento a plegado por defecto
+    assert "initOrchestratorCollapsibleSections" in js
+    assert "setOrchSectionCollapsed" in js
+    assert "toggleOrchSection" in js
+    assert "setOrchSectionCollapsed('warroom', true)" in js
+    assert "setOrchSectionCollapsed('pap', true)" in js
+    assert "setOrchSectionCollapsed('log', true)" in js

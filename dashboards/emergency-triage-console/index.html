@@ -721,14 +721,19 @@
         <div class="orch-two-cols-grid">
           
           <!-- Columna A: Activación & War Room Teams -->
-          <section class="orch-card-box orch-war-room-box" aria-label="Activación de Emergencia & War Room">
-            <div class="orch-box-header">
+          <section class="orch-card-box orch-war-room-box is-collapsed" id="orch-war-room-section" aria-label="Activación de Emergencia & War Room">
+            <div class="orch-box-header orch-box-collapsible-header" id="orch-war-room-header" role="button" tabindex="0" aria-expanded="false" aria-controls="orch-warroom-content" title="Plegar / desplegar War Room">
               <div class="orch-box-title-wrap">
                 <span class="orch-box-icon" aria-hidden="true">📡</span>
                 <h3 class="orch-box-title">War Room &amp; Puente de Comunicación Microsoft Teams</h3>
                 <span class="triage-mock-badge" title="Enlace generado mediante plantilla local. Pendiente conectar con Microsoft Graph API">🧪 Mock Puente · Pendiente Graph API</span>
               </div>
-              <span class="orch-war-room-state-pill" id="orch-warroom-state">🟢 Sala Convocada</span>
+              <div class="orch-box-header-actions">
+                <span class="orch-war-room-state-pill" id="orch-warroom-state">🟢 Sala Convocada</span>
+                <button type="button" class="orch-box-toggle-btn" id="btn-toggle-war-room" aria-label="Plegar o desplegar sección War Room" aria-expanded="false" title="Plegar o desplegar War Room">
+                  <span class="orch-box-chevron" aria-hidden="true">▼</span>
+                </button>
+              </div>
             </div>
 
             <div class="orch-warroom-content">
@@ -763,14 +768,19 @@
           </section>
 
           <!-- Columna B: Monitor de Trabajos Programados (PaP) -->
-          <section class="orch-card-box orch-pap-box" aria-label="Monitor de Trabajos Programados (PaP)">
-            <div class="orch-box-header">
+          <section class="orch-card-box orch-pap-box is-collapsed" id="orch-pap-section" aria-label="Monitor de Trabajos Programados (PaP)">
+            <div class="orch-box-header orch-box-collapsible-header" id="orch-pap-header" role="button" tabindex="0" aria-expanded="false" aria-controls="orch-pap-container" title="Plegar / desplegar Monitor de Trabajos Programados (PaP)">
               <div class="orch-box-title-wrap">
                 <span class="orch-box-icon" aria-hidden="true">🔍</span>
                 <h3 class="orch-box-title">Monitor de Trabajos Programados (PaP)</h3>
                 <span class="triage-mock-badge" title="Catálogo de cambios simulado para pruebas de cruce y rollback. Pendiente conectar API Remedy CMDB">🧪 Mock Data · Pendiente API CMDB</span>
               </div>
-              <span id="orch-pap-status-badge" class="orch-pap-badge">Analizando...</span>
+              <div class="orch-box-header-actions">
+                <span id="orch-pap-status-badge" class="orch-pap-badge">Analizando...</span>
+                <button type="button" class="orch-box-toggle-btn" id="btn-toggle-pap" aria-label="Plegar o desplegar sección Monitor PaP" aria-expanded="false" title="Plegar o desplegar Monitor PaP">
+                  <span class="orch-box-chevron" aria-hidden="true">▼</span>
+                </button>
+              </div>
             </div>
 
             <div class="orch-pap-content" id="orch-pap-container">
@@ -781,8 +791,8 @@
         </div>
 
         <!-- SECCIÓN 3: BITÁCORA DEL TICKET MASIVO (LIVE INCIDENT LOG) -->
-        <section class="orch-card-box orch-log-section" aria-label="Bitácora del Ticket Masivo">
-          <div class="orch-box-header">
+        <section class="orch-card-box orch-log-section is-collapsed" id="orch-log-section" aria-label="Bitácora del Ticket Masivo">
+          <div class="orch-box-header orch-box-collapsible-header" id="orch-log-header" role="button" tabindex="0" aria-expanded="false" aria-controls="orch-log-body" title="Plegar / desplegar Bitácora Operativa">
             <div class="orch-box-title-wrap">
               <span class="orch-box-icon" aria-hidden="true">📜</span>
               <div>
@@ -797,51 +807,56 @@
               <button type="button" class="triage-btn triage-btn-sm" id="btn-clear-log" title="Reiniciar bitácora del ticket actual">
                 <span aria-hidden="true">🔄</span> <span>Reiniciar</span>
               </button>
+              <button type="button" class="orch-box-toggle-btn" id="btn-toggle-log" aria-label="Plegar o desplegar sección Bitácora" aria-expanded="false" title="Plegar o desplegar Bitácora">
+                <span class="orch-box-chevron" aria-hidden="true">▼</span>
+              </button>
             </div>
           </div>
 
-          <!-- Timeline de Entradas -->
-          <div class="orch-timeline-container" id="orch-timeline-container">
-            <!-- Entradas inyectadas dinámicamente -->
-          </div>
-
-          <!-- Banner de Borrador de Bitácora Recuperado (US-03) -->
-          <div id="orch-log-draft-alert" class="draft-recovered-banner" style="display: none;">
-            <span>💾 <strong>Borrador recuperado:</strong> Se ha restaurado la anotación pendiente en la bitácora.</span>
-            <button type="button" id="btn-discard-log-draft" class="draft-discard-btn">Descartar</button>
-          </div>
-
-          <!-- Formulario de Nuevo Hito -->
-          <form class="orch-log-form" id="orch-log-form">
-            <div class="orch-log-form-row">
-              <div class="orch-form-field" style="width: 220px;">
-                <label for="orch-log-role">Rol / Tipo de Hito</label>
-                <select id="orch-log-role" class="triage-select" style="width: 100%;">
-                  <option value="IM">👤 Incident Manager (IM)</option>
-                  <option value="TECNICO">⚙️ Soporte Técnico Resolutor</option>
-                  <option value="REDES">🌐 Redes & Comunicaciones</option>
-                  <option value="SISTEMAS">💻 Sistemas & Cloud</option>
-                  <option value="DBA">🗄️ Base de Datos (DBA)</option>
-                  <option value="ESCALADO">📞 Escalado Telefónico</option>
-                  <option value="ROLLBACK">⏪ Rollback PaP</option>
-                  <option value="NOTIFICACION">📝 Notificación Ejecutiva</option>
-                  <option value="WARROOM">📡 War Room Update</option>
-                </select>
-              </div>
-              <div class="orch-form-field" style="flex: 1;">
-                <label for="orch-log-text">Mensaje / Avance Operativo</label>
-                <input type="text" id="orch-log-text" class="triage-search-input" style="width: 100%;" placeholder="Describe el avance técnico, interlocutor o acuerdo adoptado en la War Room..." required>
-              </div>
-              <div class="orch-form-actions" style="display: flex; gap: 8px; align-self: flex-end;">
-                <button type="submit" class="triage-btn triage-btn-primary" style="height: 38px; white-space: nowrap;">
-                  <span>➕ Registrar Hito</span>
-                </button>
-                <button type="button" id="btn-orch-log-clear" class="triage-btn triage-btn-secondary" style="height: 38px; white-space: nowrap;" title="Descartar borrador y limpiar campo">
-                  <span>🗑️ Descartar</span>
-                </button>
-              </div>
+          <div class="orch-log-body" id="orch-log-body">
+            <!-- Timeline de Entradas -->
+            <div class="orch-timeline-container" id="orch-timeline-container">
+              <!-- Entradas inyectadas dinámicamente -->
             </div>
-          </form>
+
+            <!-- Banner de Borrador de Bitácora Recuperado (US-03) -->
+            <div id="orch-log-draft-alert" class="draft-recovered-banner" style="display: none;">
+              <span>💾 <strong>Borrador recuperado:</strong> Se ha restaurado la anotación pendiente en la bitácora.</span>
+              <button type="button" id="btn-discard-log-draft" class="draft-discard-btn">Descartar</button>
+            </div>
+
+            <!-- Formulario de Nuevo Hito -->
+            <form class="orch-log-form" id="orch-log-form">
+              <div class="orch-log-form-row">
+                <div class="orch-form-field" style="width: 220px;">
+                  <label for="orch-log-role">Rol / Tipo de Hito</label>
+                  <select id="orch-log-role" class="triage-select" style="width: 100%;">
+                    <option value="IM">👤 Incident Manager (IM)</option>
+                    <option value="TECNICO">⚙️ Soporte Técnico Resolutor</option>
+                    <option value="REDES">🌐 Redes & Comunicaciones</option>
+                    <option value="SISTEMAS">💻 Sistemas & Cloud</option>
+                    <option value="DBA">🗄️ Base de Datos (DBA)</option>
+                    <option value="ESCALADO">📞 Escalado Telefónico</option>
+                    <option value="ROLLBACK">⏪ Rollback PaP</option>
+                    <option value="NOTIFICACION">📝 Notificación Ejecutiva</option>
+                    <option value="WARROOM">📡 War Room Update</option>
+                  </select>
+                </div>
+                <div class="orch-form-field" style="flex: 1;">
+                  <label for="orch-log-text">Mensaje / Avance Operativo</label>
+                  <input type="text" id="orch-log-text" class="triage-search-input" style="width: 100%;" placeholder="Describe el avance técnico, interlocutor o acuerdo adoptado en la War Room..." required>
+                </div>
+                <div class="orch-form-actions" style="display: flex; gap: 8px; align-self: flex-end;">
+                  <button type="submit" class="triage-btn triage-btn-primary" style="height: 38px; white-space: nowrap;">
+                    <span>➕ Registrar Hito</span>
+                  </button>
+                  <button type="button" id="btn-orch-log-clear" class="triage-btn triage-btn-secondary" style="height: 38px; white-space: nowrap;" title="Descartar borrador y limpiar campo">
+                    <span>🗑️ Descartar</span>
+                  </button>
+                </div>
+              </div>
+            </form>
+          </div>
         </section>
 
       </div>
