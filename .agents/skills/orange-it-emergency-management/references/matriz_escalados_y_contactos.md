@@ -120,3 +120,4 @@ flowchart TD
    - Fecha y hora exacta de la llamada.
    - Persona contactada (o indicación de *sin respuesta en primer intento* y llamada al sustituto de guardia).
    - Acuerdos alcanzados y tiempo estimado de conexión.
+

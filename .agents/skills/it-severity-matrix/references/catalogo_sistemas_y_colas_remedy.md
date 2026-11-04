@@ -28,3 +28,4 @@ Este documento detalla el inventario canónico de sistemas, subsistemas y colas 
 
 1. **Reasignación Ficticia:** Si un ticket describe una afectación en un sistema de la Sección 3 pero la cola asignada (`grupo_asignado`) es genérica (ej. `SERVICE_DESK_N1` o `SOPORTE_GENERICO`), el sistema de triaje **debe basarse en el impacto funcional sobre el aplicativo** y no en el estatus de la cola receptora.
 2. **Elevación Automática:** La asignación a una cola técnica especializada (ej. `SOP_TMC_APIGEE` o `SOP_BSCS_BILLING`) junto con términos de indisponibilidad total confirma la criticidad de la incidencia, activando el protocolo de severidad objetiva.
+
