@@ -4,7 +4,7 @@ alias: comunicador-incidencias
 description: >-
   Experto en comunicación ejecutiva de incidencias de sistemas para Dirección en
   grandes organizaciones de servicios/telecomunicaciones. Redacta mensajes de
-  apertura, seguimiento o cierre en dos niveles estrictos (versión completa de hasta
+  apertura, seguimiento, reapertura o cierre en dos niveles estrictos (versión completa de hasta
   90 palabras y versión breve de hasta 30 palabras), integrando el contexto de
   Epsilon Resumen IA.
 domain: it-incidents
