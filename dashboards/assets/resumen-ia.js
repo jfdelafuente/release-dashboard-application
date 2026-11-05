@@ -246,10 +246,11 @@
         let hitosHtml = '';
         if (hitos.length > 0) {
             const hitosItems = hitos.map(h => {
-                const sepIdx = h.indexOf(':');
-                if (sepIdx > 0 && sepIdx <= 15) {
-                    const datePart = h.substring(0, sepIdx).trim();
-                    const textPart = h.substring(sepIdx + 1).trim();
+                // Formato con corchetes: "[DD/MM/YYYY HH:mm:ss]: Texto", "[DD/MM/YYYY HH:mm]: Texto", "[DD/MM/YYYY]: Texto" o "[S/F]: Texto"
+                const bracketMatch = h.match(/^\[(.*?)\]:\s*(.*)$/);
+                if (bracketMatch) {
+                    const datePart = bracketMatch[1].trim();
+                    const textPart = bracketMatch[2].trim();
                     return `
                         <div class="resumen-ia-timeline-item">
                             <span class="resumen-ia-timeline-dot" aria-hidden="true"></span>
@@ -258,6 +259,21 @@
                         </div>
                     `;
                 }
+
+                // Formato histórico sin corchetes: "DD/MM/YYYY HH:mm:ss: Texto" o "DD/MM/YYYY: Texto"
+                const datePrefixMatch = h.match(/^(\d{2}\/\d{2}\/\d{4}(?:\s+\d{2}:\d{2}(?::\d{2})?)?):\s*(.*)$/);
+                if (datePrefixMatch) {
+                    const datePart = datePrefixMatch[1].trim();
+                    const textPart = datePrefixMatch[2].trim();
+                    return `
+                        <div class="resumen-ia-timeline-item">
+                            <span class="resumen-ia-timeline-dot" aria-hidden="true"></span>
+                            <span class="resumen-ia-timeline-date">${escapeHtml(datePart)}</span>
+                            <span>${escapeHtml(textPart)}</span>
+                        </div>
+                    `;
+                }
+
                 return `
                     <div class="resumen-ia-timeline-item">
                         <span class="resumen-ia-timeline-dot" aria-hidden="true"></span>
