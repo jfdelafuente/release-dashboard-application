@@ -1,82 +1,99 @@
 # Especificación Técnica: Catálogo de Incidencias de Alta Prioridad (`high_priority_notifications.json`)
 
-Documentación técnica y funcional del fichero [`data/output/high_priority_notifications.json`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/data/output/high_priority_notifications.json), el catálogo unificado y enriquecido de incidencias IT de alta prioridad (P1, P2 y discrepancias de subescalación N1) en el entorno Orange.
+Documentación técnica, funcional y de arquitectura del fichero [`data/output/high_priority_notifications.json`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/data/output/high_priority_notifications.json), el catálogo unificado y enriquecido de incidencias IT de alta prioridad (P1, P2 y discrepancias de subescalación N1) en el entorno Orange Tech Operations.
+
+* **Versión del Esquema:** `2.6.0`
+* **Skills de Referencia:** `it-severity-matrix` (v2.7.0), `orange-it-emergency-management` (v2.6.0), `incident-reporter` (v1.5.0), `incident-executive-notifications` (v1.5.0), `incident-triage-review` (v1.0.0).
 
 ---
 
 ## 📌 1. Propósito y Alcance
 
-El catálogo `high_priority_notifications.json` constituye la **Fuente Única de Verdad (Single Source of Truth)** para el seguimiento, triaje operativo y comunicación ejecutiva de incidencias críticas en la plataforma:
+El catálogo `high_priority_notifications.json` constituye la **Fuente Única de Verdad (Single Source of Truth)** para el triaje automatizado, el gobierno de crisis IT y la toma de decisiones del Incident Manager y los operadores de consola:
 
-1. **Triaje ITIL Automatizado**: Evalúa el impacto real sobre el negocio de todos los tickets masivos de Remedy, aplicando la matriz oficial de criticidad de Orange ([`it-severity-matrix`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/.agents/skills/it-severity-matrix/SKILL.md)).
-2. **Detección de Discrepancias (Subescalación N1)**: Identifica tickets que fueron clasificados nominalmente como P3 (Media) o P4 (Baja) en Remedy pero cuyo impacto real supera los umbrales de P1 (SL1) o P2 (SL2).
-3. **Control de SLAs de Crisis y Escalados**: Monitoriza los cronómetros oficiales de Orange IT Emergency Management: 20 minutos (1ª Notificación a Dirección), 45 minutos (Escalado telefónico obligatorio a N3/Proveedor) y 105 minutos (2º Escalado a Dirección y CSO).
-4. **Almacén de Comunicaciones Oficiales para Dirección**: Consolida los textos ejecutivos oficiales en 3 fases (**Apertura**, **Seguimiento** y **Cierre**) con versiones de hasta 90 palabras (monopárrafo) y alertas breves de hasta 30 palabras generadas por el agente [`incident-reporter`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/agents/it-incidents/incident-reporter.md).
-5. **Alimentación de Dashboards**: Proporciona los datos en tiempo real para la **Consola de Emergencias IT del Incident Manager** ([`dashboards/incident-manager-monitor/`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/dashboards/incident-manager-monitor/)), el **Centro de Notificaciones** y los endpoints de la API backend.
+1. **Triaje ITIL Automatizado & Calibrado**: Evalúa el impacto y la urgencia real sobre el negocio de todos los tickets masivos de Remedy aplicando la matriz corporativa de Orange ([`it-severity-matrix`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/.agents/skills/it-severity-matrix/SKILL.md)), evitando tanto la subescalación de N1 como el sobreescalado ciego por tiempo.
+2. **Guía Determinista para el Operador (`guia_operador`)**: Proporciona instrucciones operativas unívocas, categorizadas y accionables para que el operador de consola sepa exactamente qué protocolo activar, qué canal utilizar y si procede o no convocar War Room o emitir comunicaciones ejecutivas.
+3. **Discriminación de Tipologías Operativas**: Diferencia de forma automatizada entre:
+   - **Emergencias Críticas Vivas (`EMERGENCIA_VIVA`)**: Caídas masivas o de servicios core sin mitigación.
+   - **Resoluciones Planificadas y Batches (`RESOLUCION_PLANIFICADA`)**: Tickets con pases RFC o ventanas batch periódicas programadas (con techo P2 y exención estricta de aging).
+   - **Estancamientos Locales (`ESTANCAMIENTO_LOCAL`)**: Incidencias departamentales ($\le 20$ usuarios o sede única sin caída central) que no deben inflarse a emergencias corporativas nacionales.
+   - **Tickets Zombi de Remedy (`TICKET_ZOMBI_REMEDY`)**: Desincronizaciones donde el problema ya fue cerrado/cancelado en Jira pero sigue como `Asignado` en Remedy, desescalando a P3 administrativo.
+4. **Control de SLAs de Crisis y Cronómetros de Escalado**: Monitoriza los cronómetros de Orange IT Emergency Management: 20 min (1ª Notificación a Dirección), 45 min (Escalado telefónico obligatorio a IM-CSO/N3) y 105 min / >2h (Alarma por estancamiento y escalado a estamentos superiores).
+5. **Consolidación de Comunicaciones Ejecutivas**: Almacena los comunicados oficiales auditados para Dirección (**Apertura**, **Seguimiento** y **Cierre**) cumpliendo los límites normativos ($\le 90$ palabras monopárrafo y $\le 30$ palabras en versión breve).
+6. **Alimentación de Interfaces**: Provee los datos en tiempo real a la **Consola de Triaje y Operaciones** ([`dashboards/emergency-triage-console/`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/dashboards/emergency-triage-console/)), el **Monitor del Incident Manager** ([`dashboards/incident-manager-monitor/`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/dashboards/incident-manager-monitor/)) y los endpoints REST de la aplicación.
 
 ---
 
 ## 🏛️ 2. Arquitectura y Flujo de Generación
 
-El catálogo es generado mediante el script CLI [`evaluate_incident_notifications.py`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/converters/cli/evaluate_incident_notifications.py):
+El catálogo es generado de forma programática por el CLI [`evaluate_incident_notifications.py`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/converters/cli/evaluate_incident_notifications.py):
 
 ```mermaid
 flowchart TD
     subgraph Inputs["1. Fuentes de Datos de Entrada"]
         RMD["Remedy Export Masivo<br/>(data/output/*-massive.json)"]
-        EPS["Microservicio Epsilon IA<br/>(/api/epsilon/resumenIA/{cod})"]
-        AG_STORE["Almacén Oficial de Agentes<br/>(data/agent_executive_messages.json)"]
-        RULES["Reglas ITIL y Emergencias<br/>(it-severity-matrix & orange-it-emergency-management)"]
+        HIST["Snapshot Anterior Masivo<br/>(Detección Delta Ingesta)"]
+        EPS["Microservicio / Caché Epsilon IA<br/>(data/.epsilon_cache/*.json)"]
+        AG_STORE["Almacén de Agentes Saneado<br/>(data/agent_executive_messages.json)"]
+        RULES["Skills ITIL & Gobernanza<br/>(it-severity-matrix, orange-it-emergency-management, incident-triage-review)"]
     end
 
     subgraph Engine["2. Motor Evaluador CLI (evaluate_incident_notifications.py)"]
-        FILTER["Filtro de Estados Terminales<br/>(Descarta Cerrado / Resuelto / Cancelado)"]
-        EVAL_IMP_URG["Evaluación de Impacto y Urgencia<br/>(Keywords + Nomenclatura /SL1 /SL2)"]
-        PROC_CLASS["Clasificación en 10 Procesos Críticos<br/>(ATC, Ventas, Prepago, Provisión, etc.)"]
-        TIMERS["Cálculo de Tiempos y Cronómetros SLA<br/>(20m Notif / 45m Audio / 105m Dir)"]
-        MSG_MERGE["Cruce de Mensajes de Agente<br/>(Store oficial vs Prompt estructurado)"]
-        REPORT_GEN["Generación Reporte 4 Bloques<br/>(Formato oficial Emergencias IT)"]
+        FILTER["Filtro Pre-Triaje<br/>(Descarta estados terminales: Resuelto, Cerrado, Cancelado)"]
+        DELTA_CALC["Cálculo Delta Ingesta<br/>(Nuevos, Resueltos, Reabiertos)"]
+        ZOMBIE_DET["Detector de Tickets Zombi<br/>(Jira Resuelto/Cancelado vs Remedy Asignado)"]
+        PLAN_DET["Detector de Resoluciones Planificadas<br/>(Pases RFC + Batches periódicos como lunes 06h)"]
+        SCOPE_DET["Discriminador de Alcance Local<br/>(Sede única <= 20 usuarios sin caída central)"]
+        AGING_EVAL["Gobernanza de Aging Escalation<br/>(Escala P2 a P1 tras 120m si no hay plan ni scope local)"]
+        GUIDE_GEN["Generador de guia_operador<br/>(Categoría, Alerta, Acción, Canal, Flags CSO/Dir)"]
+        MSG_ALIGN["Cruce & Coherencia de Mensajes Ejecutivos<br/>(incident-reporter / audit_executive_messages_coherence)"]
+        REPORT_GEN["Generación Reporte 4 Bloques ITIL"]
     end
 
     subgraph Output["3. Salida y Consumidores"]
         CATALOG["data/output/high_priority_notifications.json"]
-        MONITOR["Consola Incident Manager Monitor<br/>(dashboards/incident-manager-monitor/)"]
-        NOTIF_CTR["Centro de Notificaciones en Portal"]
-        API_SVC["Endpoint API /api/incident-manager/pending"]
+        CONSOLE["Consola de Triaje de Emergencias<br/>(dashboards/emergency-triage-console/)"]
+        MONITOR["Monitor Incident Manager<br/>(dashboards/incident-manager-monitor/)"]
+        AUDIT_CLI["Auditor de Triaje CLI<br/>(review_incident_triage.py)"]
     end
 
     RMD --> FILTER
-    FILTER --> EVAL_IMP_URG
-    EPS -.-> EVAL_IMP_URG
-    RULES --> EVAL_IMP_URG
-    EVAL_IMP_URG --> PROC_CLASS
-    PROC_CLASS --> TIMERS
-    TIMERS --> MSG_MERGE
-    AG_STORE --> MSG_MERGE
-    MSG_MERGE --> REPORT_GEN
+    HIST --> DELTA_CALC
+    FILTER --> ZOMBIE_DET
+    ZOMBIE_DET --> PLAN_DET
+    PLAN_DET --> SCOPE_DET
+    SCOPE_DET --> AGING_EVAL
+    EPS -.-> AGING_EVAL
+    RULES --> AGING_EVAL
+    AGING_EVAL --> GUIDE_GEN
+    GUIDE_GEN --> MSG_ALIGN
+    AG_STORE --> MSG_ALIGN
+    MSG_ALIGN --> REPORT_GEN
     REPORT_GEN --> CATALOG
 
+    CATALOG --> CONSOLE
     CATALOG --> MONITOR
-    CATALOG --> NOTIF_CTR
-    CATALOG --> API_SVC
+    CATALOG --> AUDIT_CLI
 ```
 
-### Comando de Generación
+### Comando Oficial de Generación
 ```bash
-python converters/cli/evaluate_incident_notifications.py
+python converters/cli/evaluate_incident_notifications.py --input "data/output/CS-Informe incidencias P1,  P2 y P3 - 2026S2 - 04 Nov 2026 (5)-massive.json"
 ```
-* **Opciones admitidas**:
-  * `--input, -i`: Ruta al archivo masivo JSON de entrada (por defecto resuelve el más reciente vía `data/output/index.json`).
+
+* **Parámetros admitidos:**
+  * `--input, -i`: Ruta al archivo JSON masivo de entrada (resuelve el más reciente automáticamente si se omite).
   * `--output, -o`: Ruta de destino (por defecto `data/output/high_priority_notifications.json`).
-  * `--limit, -l`: Límite de incidencias a procesar (útil para pruebas).
-  * `--base-url`: URL del microservicio Epsilon IA (por defecto `http://127.0.0.1:8081/api/epsilon/resumenIA`).
-  * `--dry-run`: Ejecuta la evaluación y muestra métricas por consola sin escribir en disco.
+  * `--limit, -l`: Límite numérico de incidencias para depuración o pruebas.
+  * `--base-url`: URL base del microservicio Epsilon IA (por defecto `http://127.0.0.1:8080/api/epsilon/resumenIA`).
+  * `--force`: Invalida la caché de Epsilon y fuerza reconsultas.
+  * `--dry-run`: Evalúa en memoria y muestra métricas por consola sin sobreescribir el JSON de salida.
 
 ---
 
-## 📋 3. Especificación Detallada del Esquema JSON
+## 📋 3. Especificación Detallada del Esquema JSON (v2.6.0)
 
-El documento JSON se compone de dos secciones raíz: **`_metadata`** y **`data`**.
+El fichero se divide en dos bloques raíz: **`_metadata`** y **`data`**.
 
 ```json
 {
@@ -89,266 +106,286 @@ El documento JSON se compone de dos secciones raíz: **`_metadata`** y **`data`*
 
 ### 3.1. Bloque `_metadata`
 
-Proporciona trazabilidad completa sobre la ejecución y resume los indicadores clave (KPIs) del conjunto de incidencias:
+Proporciona trazabilidad completa del procesamiento, versiones de skills aplicadas, deltas de ingesta y los 18 contadores cuantitativos de control:
 
 | Campo | Tipo | Descripción |
 | :--- | :--- | :--- |
-| `type` | `string` | Identificador de tipo de documento: `"high_priority_notifications"`. |
-| `version` | `string` | Versión del esquema: `"1.0.0"`. |
-| `generated_at` | `string (ISO-8601 UTC)` | Timestamp exacto de generación (ej. `"2026-10-30T09:54:43.655120+00:00"`). |
-| `source_file` | `string` | Nombre del fichero masivo origen procesado (ej. `"CS-Informe incidencias P1, P2 y P3 - 2026 - 29 Oct 2026-massive.json"`). |
-| `kpis` | `object` | Diccionario con los 10 contadores cuantitativos del lote. |
+| `type` | `string` | `"high_priority_notifications"`. |
+| `version` | `string` | Versión del esquema (`"2.6.0"`). |
+| `skills_version` | `object` | Versiones exactas de las skills empleadas durante el triaje: `it-severity-matrix` (2.7.0), `orange-it-emergency-management` (2.6.0), `incident-reporter` (1.5.0), `incident-executive-notifications` (1.5.0). |
+| `generated_at` | `string (ISO-8601 UTC)` | Fecha/hora UTC de generación (ej. `"2026-11-04T18:52:07.834784+00:00"`). |
+| `source_file` | `string` | Nombre base del archivo masivo procesado. |
+| `ingestion_delta` | `object` | Comparativa contra el lote masivo previo (fichero anterior, conteo nuevos, resueltos, reabiertos e IDs específicos). |
+| `audit_completeness` | `object` | Desglose de completitud semántica: `completas`, `parciales`, `incompletas` y `terminales_omitidas`. |
+| `kpis` | `object` | Contadores agregados para el Incident Manager (ver tabla inferior). |
+| `total_source_tickets`| `integer` | Total de tickets presentes en el archivo fuente original. |
+| `terminal_tickets_omitted` | `integer` | Tickets terminales excluidos del triaje activo conforme a ITIL. |
 
-#### Sub-campos de `_metadata.kpis`
-* **`total_scanned`** (`integer`): Cantidad total de tickets contenidos en el archivo de entrada.
-* **`terminal_skipped_count`** (`integer`): Incidencias omitidas por encontrarse ya en estado terminal (`Cerrado`, `Resuelto`, `Cancelado`).
-* **`active_evaluated_count`** (`integer`): Incidencias activas sobre las que se aplicó el triaje (`total_scanned - terminal_skipped_count`).
-* **`total_high_priority`** (`integer`): Incidencias activas clasificadas en severidad alta (`p1_critical_count + p2_high_count`).
-* **`p1_critical_count`** (`integer`): Tickets evaluados como severidad **P1 / SL1 (Emergencia Crítica)**.
-* **`p2_high_count`** (`integer`): Tickets evaluados como severidad **P2 / SL2 (Incidencia Mayor)**.
-* **`discrepancies_count`** (`integer`): Tickets donde el cálculo ITIL supera la severidad nominal de Remedy (subescalación detectada).
-* **`sla_primera_notificacion_vencidos_count`** (`integer`): Incidencias con más de 20 minutos desde su apertura sin emitir la 1ª notificación a Dirección.
-* **`requiere_escalado_telefonico_count`** (`integer`): Incidencias con 45 minutos o más de apertura que exigen convocatoria telefónica/audio a N3 o proveedores.
-* **`workaround_pendientes_cso_count`** (`integer`): Incidencias con solución temporal (workaround) que requieren autorización formal de IM-CSO antes de desescalar.
+#### Contadores de `_metadata.kpis` (18 KPIs)
+| KPI | Tipo | Significado Operativo |
+| :--- | :---: | :--- |
+| `total_scanned` | `int` | Total de tickets leídos del archivo fuente. |
+| `terminal_skipped_count` | `int` | Tickets descartados por estar en estado final (`Cerrado`, `Resuelto`, `Cancelado`). |
+| `active_evaluated_count` | `int` | Tickets vivos sometidos a evaluación activa (`total_scanned - terminal_skipped_count`). |
+| `total_high_priority` | `int` | Suma de incidencias activas clasificadas como **P1** o **P2**. |
+| `p1_critical_count` | `int` | Total de tickets evaluados como **P1 Crítico** (Emergencias Vivas). |
+| `p2_high_count` | `int` | Total de tickets evaluados como **P2 Mayor**. |
+| `reabiertas_count` | `int` | Tickets reabiertos que aplican factor agravante ITIL. |
+| `borradores_provisionales_count` | `int` | Mensajes generados en modo borrador preliminar. |
+| `discrepancies_count` | `int` | Total de tickets con subescalación N1 (Remedy < ITIL). |
+| `discrepancias_delta1_moderada_count` | `int` | Subescalación de +1 nivel (ej. Nominal P3 $\rightarrow$ Evaluado P2). |
+| `discrepancias_delta2_mayor_count` | `int` | Subescalación de +2 niveles (ej. Nominal P3 $\rightarrow$ Evaluado P1). |
+| `discrepancias_delta3_critica_count` | `int` | Subescalación de +3 niveles (ej. Nominal P4 $\rightarrow$ Evaluado P1). |
+| `aging_escaladas_p1_count` | `int` | Incidencias P2 escaladas operativamente a P1 por superar 120m sin workaround. |
+| **`tickets_zombi_count`** | `int` | **Tickets cancelados/resueltos en Jira que siguen activos en Remedy.** |
+| **`resoluciones_planificadas_count`** | `int` | **Tickets asociados a RFC programadas o batches periódicos (exentos de aging).** |
+| **`estancamientos_locales_count`** | `int` | **Tickets departamentales ($\le 20$ usuarios o sede única) acotados a P2/P3 local.** |
+| `sla_primera_notificacion_vencidos_count` | `int` | Tickets con $>20$ min desde apertura sin comunicado a Dirección. |
+| `requiere_escalado_telefonico_count` | `int` | Tickets activos $\ge 45$ min que exigen llamada a IM-CSO. |
+| `workaround_pendientes_cso_count` | `int` | Incidencias con mitigación transitoria pendientes de validación formal por CSO. |
 
 ---
 
 ### 3.2. Bloque `data[]`: Campos por Incidencia
 
-El array `data` contiene la lista de incidencias filtradas (solo aquellas evaluadas como **P1**, **P2** o con **discrepancia de subescalación**). Cada elemento dispone de los siguientes campos:
+El array `data` contiene los tickets activos evaluados de alta prioridad o discrepancias, ordenados operativamente (emergencias vivas primero, seguidas de incidencias mayores, y con los tickets zombi relegados al final de la cola).
 
-#### A. Identificación y Metadatos de Cabecera
-* **`id`** (`string`): Código Remedy oficial del ticket (ej. `"INC000004156790"`).
-* **`titulo`** (`string`): Descripción o título de la incidencia.
-* **`sistemas`** (`array[string]`): Lista de aplicativos o plataformas comprometidas (ej. `["DES_SOE_FICHA"]` o `["SPAIN ALMACENAMIENTO"]`). Proviene de Epsilon Resumen IA o del campo `"Grupo asignado"` del ticket.
-* **`prioridad_original`** (`string`): Severidad nominal asignada en Remedy por N1 (ej. `"Media"`, `"Alta"`, `"Crítica"`).
-* **`prioridad_sugerida`** (`string`): Severidad real calculada tras evaluar impacto y urgencia (`"P1"` o `"P2"`).
-* **`es_alta_prioridad`** (`boolean`): `true` si la prioridad calculada es P1 o P2.
-* **`es_discrepancia`** (`boolean`): `true` si la prioridad calculada es más crítica que la nominal de Remedy (ej. Remedy = Media P3, pero calculada = P1 o P2).
-* **`estatus`** (`string`): Estado operativo en Remedy (ej. `"Asignado"`, `"En curso"`).
-* **`fecha_envio`** / **`fecha_apertura`** (`string`): Timestamp de apertura registrado en Remedy (ej. `"14/10/2026 13:26 a"`).
+#### A. Identificación y Severidades
+* **`id`** (`string`): Identificador Remedy oficial (ej. `"INC000004175558"`).
+* **`titulo`** (`string`): Título limpio y sintetizado de la incidencia.
+* **`sistemas`** (`array[string]`): Lista de sistemas, microservicios o interfaces involucradas.
+* **`prioridad_original`** (`string`): Severidad nominal N1 registrada en Remedy (`"Media"`, `"Alta"`, `"Crítica"`).
+* **`prioridad_sugerida`** (`string`): Criticidad real dictaminada por el motor (`"P1"`, `"P2"`, `"P3"`).
+* **`es_alta_prioridad`** (`boolean`): `true` si la prioridad sugerida es P1 o P2.
+* **`estatus`** (`string`): Estado en Remedy (`"Asignado"`, `"En curso"`, `"Pendiente"`).
+* **`fecha_envio`** / **`fecha_apertura`** (`string`): Fechas de registro en Remedy.
+
+#### B. Metadatos de Discrepancia y Clasificación Especial (Nuevos en v2.6.0)
+* **`es_discrepancia`** (`boolean`): `true` si la prioridad evaluada difiere de la nominal.
+* **`discrepancia_delta`** (`integer`): Magnitud del desajuste ($0, 1, 2$ o $3$).
+* **`discrepancia_gravedad`** (`string`): `"Mayor Severa"` ($\ge 2$), `"Moderada"` ($1$) o vacía ($0$).
+* **`discrepancia_motivo`** (`string`): Justificación técnica detallada de la subescalación o ajuste.
+* **`aging_escalated`** (`boolean`): `true` si el ticket escaló de P2 a P1 por transcurrir $\ge 120$ min sin mitigación.
+* **`es_planificada`** (`boolean`): `true` si la solución está programada en un pase RFC o proceso batch periódico.
+* **`detalle_planificacion`** (`string`): Fecha y descripción del pase comprometido (ej. `"Proceso batch planificado (Lunes 06h)"` o `"Pase comprometido 17/11/2026"`).
+* **`es_zombi`** (`boolean`): `true` si el ticket ya fue cancelado o resuelto en Jira pero sigue en `Asignado` en Remedy.
+* **`detalle_zombi`** (`string`): Evidencia de la desincronización (ej. `"Ticket cancelado en Jira como Resuelto/No Aplica"`).
+* **`es_local_departamental`** (`boolean`): `true` si la afectación está acotada a $\le 20$ usuarios o una única sede sin indisponibilidad total de servicio.
 
 ---
 
-#### B. Sub-objeto `evaluacion`
-Contiene la justificación cuantitativa y cualitativa del triaje conforme a las skills [`it-severity-matrix`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/.agents/skills/it-severity-matrix/SKILL.md) y [`orange-it-emergency-management`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/.agents/skills/orange-it-emergency-management/SKILL.md):
+### 3.3. El Objeto `guia_operador`: Especificación Exhaustiva
 
-| Campo | Tipo | Valores / Ejemplo | Descripción Técnica |
+Ubicado tanto en la raíz de cada incidencia (`data[i].guia_operador`) como dentro de `data[i].evaluacion.guia_operador`, este objeto proporciona la **inteligencia de decisión para la consola**:
+
+```json
+"guia_operador": {
+  "categoria_operativa": "RESOLUCION_PLANIFICADA",
+  "alerta_consola": "📅 RESOLUCIÓN PLANIFICADA: Proceso batch planificado (Lunes 06h)",
+  "accion_recomendada": "Monitorizar pase programado. No convocar War Room ni escalar telefónicamente a IM-CSO salvo que falle el pase.",
+  "canal_escalado": "Mesa de Cambios (CAB) / Seguimiento de Releases",
+  "prioridad_operativa_consola": "P2 Alta",
+  "requiere_llamada_cso": false,
+  "requiere_comunicado_direccion": false
+}
+```
+
+#### Diccionario de Campos de `guia_operador`
+
+| Campo | Tipo | Valores Posibles | Propósito y Comportamiento |
 | :--- | :--- | :--- | :--- |
-| `proceso` | `string` | `"Atención al Cliente (ATC)"`, `"Ventas"`, `"Prepago"`, `"Portabilidad"`, `"Provisión"`, `"Facturación y Cobros"`, `"Middleware e Integración Transversal"`, `"Conectividad de Sedes, Call Centers y Tiendas"`, `"Infraestructura Core IT, BBDD y Cloud"`, `"Identidad (GDU/EVIDIAN) y Automatización"` o `"Sistemas Core"`. | Clasificación en uno de los 10 Procesos Críticos de Negocio de Orange según el módulo afectado y el grupo resolutor. |
-| `criterio` | `string` | Ej. `"ATC (3.1): Frontales/CRM (>20% desviación en 30m) o Regla de Oro N1"` | Umbral numérico o regla de triaje de la matriz ITIL superado. |
-| `impacto` | `string` | `"Alto"`, `"Medio"`, `"Bajo"` | Nivel de impacto en servicio o usuarios. |
-| `impacto_justificacion` | `string` | Ej. `"Afectación crítica o corte global sobre el servicio principal sin alternativa viable."` | Razón cualitativa del nivel de impacto. |
-| `urgencia` | `string` | `"Alta"`, `"Media"`, `"Baja"` | Nivel de urgencia temporal. |
-| `urgencia_justificacion` | `string` | Ej. `"Incidencia en tratamiento con contención operativa transitoria."` | Razón cualitativa de la urgencia. |
-| `workaround` | `string` | `"Sí"`, `"No"`, `"Desconocido"` | Detección automática de medidas de mitigación transitorias. |
-| `workaround_gobernanza` | `string` | Ej. `"Pendiente autorización IM-CSO (SL1 activa)"` o `"Sin workaround (Resolución directa requerida)"` | Estado institucional del workaround conforme a la **Regla de Oro 3** (prohibida la desescalada sin erradicación total). |
-| `sla_objetivo_minutos` | `integer` | `15` (P1), `60` (P2), `240` (P3), `1440` (P4) | Tiempo diana de resolución ITIL. |
-| `minutos_desde_apertura` | `integer` | Minutos (ej. `4240`) | Tiempo real transcurrido desde la apertura en Remedy. |
-| `sla_primera_notificacion_vencido`| `boolean` | `true` si `minutos_desde_apertura > 20` | Alerta de vencimiento del SLA de 1ª comunicación a Dirección (<20m). |
-| `requiere_escalado_telefonico` | `boolean` | `true` si `minutos_desde_apertura >= 45` | Alerta de 1er escalado obligatorio por canal telefónico/audio a N3. |
-| `escalado_estamentos_superiores`| `boolean` | `true` si `minutos_desde_apertura >= 105` | Alerta de 2º escalado a Dirección y CSO (45m + 1h). |
-| `proxima_ventana_update_minutos` | `integer` | Minutos restantes (1-60) | Minutos para la siguiente actualización horaria obligatoria. |
+| **`categoria_operativa`** | `enum string` | <ul><li>`EMERGENCIA_VIVA`</li><li>`RESOLUCION_PLANIFICADA`</li><li>`ESTANCAMIENTO_LOCAL`</li><li>`TICKET_ZOMBI_REMEDY`</li><li>`SEGUIMIENTO_ESTANDAR`</li></ul> | Define la tipología de tratamiento operativo. Determina el orden de atención y los protocolos a seguir. |
+| **`alerta_consola`** | `string` | Texto descriptivo con emoji badge (ej. `🚨 EMERGENCIA CRÍTICA P1 ACTIVA`, `📅 RESOLUCIÓN PLANIFICADA: ...`, `⚠️ TICKET ZOMBI: ...`, `⏳ ESTANCAMIENTO LOCAL (>2h): ...`). | Mensaje visual de impacto inmediato que se renderiza en la cabecera de la tarjeta o fila de la consola. |
+| **`accion_recomendada`** | `string` | Instrucción procedimental en lenguaje claro y directo. | Le indica al operador qué acción ejecutar y qué acciones omitir de forma expresa para evitar errores operativos. |
+| **`canal_escalado`** | `string` | <ul><li>`Vía Telefónica IM-CSO / Teams War Room`</li><li>`Mesa de Cambios (CAB) / Seguimiento de Releases`</li><li>`Grupo Resolutor Remedy / IM de Turno`</li><li>`Mesa de Incidencias (BMC Remedy)`</li></ul> | Señala el canal técnico u organizativo correcto donde debe interactuar el operador. |
+| **`prioridad_operativa_consola`** | `string` | `"P1 Crítico"`, `"P2 Alta"`, `"P2 Local"`, `"P3 Cierre Administrativo"`, `"P3 Media"`. | Nivel de criticidad calibrado que debe reflejar la consola para el operador de turno. |
+| **`requiere_llamada_cso`** | `boolean` | `true` o `false` | Bandera booleana: si es `true`, exige llamada telefónica obligatoria al Incident Manager de Customer & Service Ops (IM-CSO) tras superar 45 minutos. |
+| **`requiere_comunicado_direccion`**| `boolean` | `true` o `false` | Bandera booleana: si es `true`, habilita y exige la emisión de comunicados ejecutivos oficiales de Apertura/Seguimiento. Si es `false`, previene saturar a Dirección. |
 
 ---
 
-#### C. Sub-objeto `resumen_ia`
-Información semántica enriquecida obtenida de **Epsilon Resumen IA** (`/api/epsilon/resumenIA/{id}`):
+### 3.4. Matriz de Comportamiento Operativo por Categoría
 
-* **`problema`** (`string`): Resumen sintético del fallo técnico analizado por Epsilon.
-* **`impacto`** (`string`): Afectación en clientes o procesos de negocio.
-* **`solucion`** (`string`): Causa raíz identificada o plan técnico de solución.
-* **`bloqueos`** (`string`): Impedimentos activos entre equipos de soporte.
-* **`siguiente_accion`** (`string`): Siguiente hito planificado por el equipo de guardia.
+La siguiente matriz gobierna el tratamiento que el motor y la consola aplican a cada categoría:
 
-> [!NOTE]
-> **Tolerancia a Fallos / Modo Offline:** Si el microservicio Epsilon no se encuentra disponible (o falla por permisos de red), este bloque se asigna como `null` y la evaluación continúa normalmente utilizando los metadatos del ticket de Remedy.
-
----
-
-#### D. Sub-objeto `mensajes_ejecutivos`
-Estructura de comunicaciones oficiales para Dirección en las 3 fases del ciclo de vida ITIL: **`apertura`**, **`seguimiento`** y **`cierre`**:
-
-```json
-"mensajes_ejecutivos": {
-  "apertura": {
-    "completo": "Se declara incidencia crítica P1...",
-    "breve": "Apertura P1 (...): ...",
-    "conteo_palabras_completo": 73,
-    "conteo_palabras_breve": 21,
-    "generado_por_agente": true,
-    "origen": "incident-reporter",
-    "estado": "completado",
-    "prompt_agente": "Actúa como el agente incident-reporter..."
-  },
-  "seguimiento": { ... },
-  "cierre": { ... },
-  "reporte_emergencia": "🚨 REPORTE DE EMERGENCIA IT..."
-}
-```
-
-Cada fase incluye:
-* **`completo`** (`string`): Redacción ejecutiva oficial para Dirección: **máximo 90 palabras** en un **único párrafo cohesionado**.
-* **`breve`** (`string`): Alerta ultracorta para canal SMS o Teams: **máximo 30 palabras**.
-* **`conteo_palabras_completo`** (`integer`): Conteo exacto de palabras de la versión completa ($\le 90$).
-* **`conteo_palabras_breve`** (`integer`): Conteo exacto de palabras de la versión breve ($\le 30$).
-* **`generado_por_agente`** (`boolean`):
-  * `true`: Si el mensaje proviene del almacén oficial persistente [`data/agent_executive_messages.json`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/data/agent_executive_messages.json).
-  * `false`: Si la redacción aún no ha sido generada o aprobada.
-* **`origen`** (`string`): Identificador del agente (`"incident-reporter"`).
-* **`estado`** (`string`): `"pendiente"` si aún no existe texto en el almacén; omitido o `"completado"` si ya existe.
-* **`prompt_agente`** (`string`): Prompt estructurado preconstruido con todo el contexto necesario (ID, título, sistemas, criticidad, proceso, umbral y Epsilon) listo para ejecutarse en el LLM bajo demanda.
+| Categoría Operativa | Prioridad Máxima | ¿Aplica Aging Escalation? | Escalado Telefónico CSO (>45m) | War Room Teams (>1h) | Comunicado Dirección | Acción Operativa Obligatoria |
+| :--- | :---: | :---: | :---: | :---: | :---: | :--- |
+| **`EMERGENCIA_VIVA`** | **P1** | **Sí** ($\ge 120m \rightarrow P1$) | **🟢 SÍ (Obligatorio)** | **🟢 SÍ** | **🟢 SÍ ($\le 90$ palabras)** | Intervención inmediata, audio obligatorio y apertura de War Room. |
+| **`RESOLUCION_PLANIFICADA`** | **P2** | **❌ EXENTO** (Techo P2) | ⚪ NO (Salvo fallo del pase) | ⚪ NO | ⚪ NO | Monitorizar fecha/hora del pase RFC o batch semanal comprometido. |
+| **`ESTANCAMIENTO_LOCAL`** | **P2 / P3** | **❌ EXENTO** (Techo P2) | ⚪ NO | ⚪ NO | ⚪ NO | Reclamar avance técnico al Grupo Resolutor asignado vía Remedy. |
+| **`TICKET_ZOMBI_REMEDY`** | **P3** | **❌ EXENTO** (Techo P3) | ⚪ NO | ⚪ NO | ⚪ NO | Solicitar Cierre Administrativo formal a la Mesa en BMC Remedy. |
+| **`SEGUIMIENTO_ESTANDAR`** | **P3 / P4** | ⚪ No | ⚪ NO | ⚪ NO | ⚪ NO | Tratamiento estándar conforme a cola resolutora de Remedy. |
 
 ---
 
-#### E. Campo `reporte_emergencia`
-Cadena de texto multilinea formateada en los **4 bloques normativos** exigidos por [`orange-it-emergency-management`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/.agents/skills/orange-it-emergency-management/SKILL.md) para sincronización técnica y gobernanza:
+### 3.5. Sub-objeto `evaluacion`
 
-1. **`[1] CLASIFICACIÓN DEL TICKET`**: ID, Severidad ITIL (SL1/SL2), Proceso Crítico, Umbral superado, Alcance y Sistemas, Impacto y Urgencia.
-2. **`[2] ESTADO DE COMUNICACIONES Y SLAS`**: Minutos transcurridos, estado de 1ª Notificación (<20 min) y frecuencia de actualizaciones (30/60 min).
-3. **`[3] PLAN DE ACCIÓN Y GOBERNANZA DE WORKAROUNDS`**: Diagnóstico técnico, acciones en curso, siguiente hito y estado de gobernanza del workaround (bloqueo de desescalada).
-4. **`[4] ESTADO DE ESCALADO TELEFÓNICO`**: Fase de escalado según cronómetro (Normal / 45m / +105m), canal de audio obligatorio y roles RACI (Incident Manager como Responsable, IM-CSO como Aprobador).
+Contiene el desglose técnico y los cronómetros ITIL calculados por el motor:
 
----
-
-#### F. Campos de Auditoría de Enriquecimiento y Completitud
-
-Para garantizar trazabilidad técnica y permitir al operador conocer por qué un ticket carece de ciertos datos sin tener que indagar en logs externos, cada registro incorpora metadatos de auditoría:
-
-* **`estado_informacion`** (`string`): Dictamen global de completitud de la incidencia:
-  * `"COMPLETA"`: Dispone tanto de Resumen IA como de Mensajes Ejecutivos oficiales redactados.
-  * `"PARCIAL"`: Dispone únicamente de uno de los dos bloques enriquecidos.
-  * `"INCOMPLETA"`: Carece de ambos bloques semánticos.
-  * `"NO_APLICA"`: Incidencia en estado terminal (`Cerrado`, `Resuelto`, `Cancelado`), omitida del circuito de emergencia conforme a la normativa ITIL.
-* **`causa_global`** (`string`): Resumen legible del diagnóstico de completitud.
-* **`resumen_ia.causa_falta`** (`string` | `null`): Cuando `resumen_ia` es nulo o incompleto, documenta la causa precisa:
-  * *"Incidencia en estado terminal 'Cerrado/Resuelto': omitida según ITIL/SRE"* (ahorro de llamadas externas).
-  * *"Epsilon devolvió respuesta vacía o sin campos estructurados (problema/impacto/solución)"*.
-  * *"Timeout o error HTTP al consultar Epsilon IA (/api/epsilon/resumenIA)"*.
-* **`mensajes_ejecutivos.causa_falta`** (`string` | `null`): Documenta el estado en el almacén de agentes:
-  * *"Pendiente de redacción oficial por el agente incident-reporter (sin entrada en data/agent_executive_messages.json)"*.
-  * *"Incidencia en estado terminal: no requiere comunicación oficial urgente"*.
+* **`proceso`** / **`proceso_negocio`** (`string`): Uno de los 10 Procesos Críticos corporativos de Orange (ATC, Ventas, Facturación, Middleware, etc.).
+* **`dominio_tecnico`** (`string`): Dominio tecnológico (`"Sistemas Core"`, `"Infraestructura Cloud"`, `"Redes"`, etc.).
+* **`criterio`** (`string`): Regla específica de `it-severity-matrix` superada.
+* **`impacto`** / **`urgencia`** (`string`): Nivel (`"Alto"`, `"Medio"`, `"Bajo"`).
+* **`impacto_justificacion`** / **`urgencia_justificacion`** (`string`): Texto explicativo con evidencia extraída de Epsilon o Remedy.
+* **`workaround`** (`string`): `"Sí"`, `"No"` o `"Desconocido"`.
+* **`workaround_gobernanza`** (`string`): Dictamen de gobernanza (bloqueo de desescalada sin erradicación).
+* **`sla_objetivo_minutos`** (`integer`): Objetivo de resolución (15m P1, 60m P2, 240m P3).
+* **`minutos_desde_apertura`** (`integer`): Tiempo transcurrido real.
+* **`sla_primera_notificacion_vencido`** (`boolean`): `true` si tiempo $> 20$ min.
+* **`requiere_escalado_telefonico`** (`boolean`): `true` si tiempo $\ge 45$ min.
+* **`escalado_estamentos_superiores`** (`boolean`): `true` si tiempo $\ge 105$ min o $> 2$ horas.
+* **`metricas_cuantitativas`** (`object`): Valores numéricos de telemetría extraídos:
+  * `sedes` (`integer` | `null`): Número de centros afectados.
+  * `usuarios` (`integer` | `null`): Agentes u operadores impactados.
+  * `desviacion_pct` (`float` | `null`): Caída porcentual de tráfico o transacciones.
+  * `detalles` (`array[string]`): Hechos cuantificados aislados.
 
 ---
 
-### 3.3. Fichero Complementario de Auditoría (`ingestion_audit_summary.json`)
+### 3.6. Sub-objeto `resumen_ia`
 
-De forma paralela a `high_priority_notifications.json`, el módulo [`converters/cli/ingestion_logger.py`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/converters/cli/ingestion_logger.py) genera el artefacto [`data/output/ingestion_audit_summary.json`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/data/output/ingestion_audit_summary.json):
+Datos semánticos provistos por el microservicio o la caché local de **Epsilon Resumen IA**:
 
+* **`problema`** (`string`): Descripción sintética del síntoma técnico.
+* **`impacto`** (`string`): Afectación operativa y de negocio reportada.
+* **`solucion`** (`string`): Diagnóstico de causa raíz o medidas paliativas aplicadas.
+* **`bloqueos`** (`string`): Impedimentos de avance entre grupos resolutores.
+* **`siguiente_accion`** (`string`): Siguiente hito acordado.
+* **`hitos_tecnicos`** (`array[string]`): Cronología verificada de actuaciones de soporte.
+
+---
+
+### 3.7. Sub-objeto `mensajes_ejecutivos`
+
+Estructura de comunicaciones formales oficiales para Dirección generadas por [`incident-reporter`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/agents/it-incidents/incident-reporter.md) y auditadas por [`audit_executive_messages_coherence.py`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/converters/cli/audit_executive_messages_coherence.py):
+
+* Fases disponibles: **`apertura`**, **`seguimiento`** y **`cierre`**.
+* Campos de cada fase:
+  * **`completo`** (`string`): Texto oficial para Dirección ($\le 90$ palabras, exactamente un único párrafo cohesionado).
+  * **`breve`** (`string`): Alerta ultracorta para canales de mensajería rápida ($\le 30$ palabras, una sola línea).
+  * **`conteo_palabras_completo`** (`integer`): Palabras reales de la versión completa.
+  * **`conteo_palabras_breve`** (`integer`): Palabras reales de la versión breve.
+  * **`generado_por_agente`** (`boolean`): `true` si proviene del almacén persistente oficial.
+  * **`origen`** (`string`): `"incident-reporter"`.
+  * **`prompt_agente`** (`string`): Contexto estructurado precalculado para invocar al LLM si el mensaje está pendiente.
+
+---
+
+### 3.8. Campo `reporte_emergencia`
+
+Texto formateado en los **4 bloques normativos** de Orange IT Emergency Management:
+1. `[1] CLASIFICACIÓN DEL TICKET`: Severidad ITIL real, proceso, umbral y sistemas.
+2. `[2] ESTADO DE COMUNICACIONES Y SLAS`: Cronómetros de 20m, 60m y estado de War Room.
+3. `[3] PLAN DE ACCIÓN Y GOBERNANZA DE WORKAROUNDS`: Causa técnica, hitos y control de workaround.
+4. `[4] ESTADO DE ESCALADO TELEFÓNICO`: Canal de audio obligatorio, escalados a N3/CSO y roles RACI.
+
+---
+
+## 🔍 4. Ejemplos Reales Ilustrativos
+
+### Ejemplo 1: Emergencia Viva P1 (`INC000004175558`)
 ```json
 {
-  "_metadata": {
-    "type": "ingestion_audit_summary",
-    "version": "1.0.0",
-    "generated_at": "2026-11-03T15:20:00Z",
-    "source_file": "CS-Informe incidencias.csv",
-    "elapsed_seconds": 1.45,
-    "kpis": {
-      "total_tickets": 665,
-      "completas_count": 0,
-      "parciales_count": 18,
-      "incompletas_count": 0,
-      "terminales_omitidas_count": 647,
-      "con_resumen_ia_count": 18,
-      "sin_resumen_ia_count": 647,
-      "con_mensajes_ejecutivos_count": 0,
-      "sin_mensajes_ejecutivos_count": 665,
-      "discrepancias_count": 11
-    }
-  },
-  "incidents": [ ... ]
-}
-```
-
-Este documento alimenta la **Consola de Auditoría de Carga & Telemetría IA** accesible mediante el atajo <kbd>Shift</kbd> + <kbd>I</kbd>.
-
----
-
-## 🔍 4. Ejemplo JSON Completo y Anotado
-
-A continuación se muestra un registro real extraído del catálogo:
-
-```json
-{
-  "id": "INC000004167733",
-  "titulo": "CORTE TOTAL // SEVILLA // LA FINCA",
-  "sistemas": [
-    "ROUTING_CORE"
-  ],
+  "id": "INC000004175558",
+  "titulo": "A-Red de Datos | Acceso | Jazzplat - Guadalajara",
   "prioridad_original": "Media",
   "prioridad_sugerida": "P1",
-  "es_alta_prioridad": true,
   "es_discrepancia": true,
-  "estatus": "En curso",
-  "fecha_envio": "26/10/2026 23:46 a",
-  "fecha_apertura": "26/10/2026 23:46 a",
-  "evaluacion": {
-    "proceso": "Operación y Monitorización (O&M)",
-    "criterio": "ATC (3.1): Frontales/CRM (>20% desviación en 30m) o Regla de Oro N1",
-    "impacto": "Alto",
-    "impacto_justificacion": "Afectación crítica o corte global sobre el servicio principal sin alternativa viable.",
-    "urgencia": "Alta",
-    "urgencia_justificacion": "Impacto activo en vivo que requiere restablecimiento inmediato.",
-    "workaround": "Desconocido",
-    "workaround_gobernanza": "No identificado",
-    "sla_objetivo_minutos": 15,
-    "fecha_apertura": "26/10/2026 23:46 a",
-    "minutos_desde_apertura": 4240,
-    "sla_primera_notificacion_vencido": true,
-    "requiere_escalado_telefonico": true,
-    "escalado_estamentos_superiores": true,
-    "proxima_ventana_update_minutos": 20
-  },
-  "resumen_ia": null,
-  "mensajes_ejecutivos": {
-    "apertura": {
-      "completo": "Se declara incidencia crítica P1 (INC000004167733) por corte total de conectividad en el enlace entre Sevilla y La Finca. La anomalía interrumpe la sincronización de servicios y tráfico de red sobre el nodo principal sin canal alternativo activo, afectando a la operativa interna y a la monitorización de sistemas. Los equipos de infraestructura de red y comunicaciones investigan el origen de la caída y coordinan maniobras de conmutación para restablecer el servicio a la mayor brevedad. Próxima actualización en 30 minutos.",
-      "breve": "Apertura P1 (INC000004167733): Corte total de enlace Sevilla - La Finca sin ruta alternativa. Equipos de red coordinando conmutación. Próxima actualización 30 min.",
-      "conteo_palabras_completo": 78,
-      "conteo_palabras_breve": 22,
-      "generado_por_agente": true,
-      "origen": "incident-reporter",
-      "prompt_agente": "Actúa como el agente incident-reporter..."
-    },
-    "seguimiento": {
-      "completo": "Seguimiento de la incidencia P1 (INC000004167733) sobre el corte total entre Sevilla y La Finca. Los especialistas de red han verificado la caída a nivel de capa física en el circuito principal. Se ha iniciado el levantamiento manual del enlace de respaldo y el reencaminamiento dinámico del tráfico para restaurar los servicios críticos de monitorización. Se mantiene supervisión continua de las interfaces para validar la estabilidad del enlace secundario antes de confirmar la recuperación del tráfico troncal.",
-      "breve": "Seguimiento P1 (INC000004167733): Identificada caída en capa física del enlace Sevilla-La Finca; reencaminando tráfico por circuito secundario bajo supervisión técnica.",
-      "conteo_palabras_completo": 72,
-      "conteo_palabras_breve": 19,
-      "generado_por_agente": true,
-      "origen": "incident-reporter",
-      "prompt_agente": "Actúa como el agente incident-reporter..."
-    },
-    "cierre": {
-      "completo": "Queda resuelta y cerrada la incidencia crítica P1 (INC000004167733) en el enlace Sevilla - La Finca. Tras la intervención técnica y sustitución del módulo óptico defectuoso en la interfaz troncal, se ha normalizado la conectividad sobre el circuito principal. El tráfico opera con plena estabilidad y latencias nominales, habiéndose deshabilitado la ruta provisional de contingencia. Se confirma la total recuperación del servicio y se mantiene supervisión preventiva habitual de las líneas de comunicación.",
-      "breve": "Cierre P1 (INC000004167733): Normalizado enlace Sevilla - La Finca tras sustituir módulo óptico; tráfico restablecido sobre circuito principal sin incidencias.",
-      "conteo_palabras_completo": 70,
-      "conteo_palabras_breve": 19,
-      "generado_por_agente": true,
-      "origen": "incident-reporter",
-      "prompt_agente": "Actúa como el agente incident-reporter..."
-    }
-  },
-  "reporte_emergencia": "🚨 REPORTE DE EMERGENCIA IT - ORANGE TECH OPERATIONS\n────────────────────────────────────────────────────────────\n[1] CLASIFICACIÓN DEL TICKET\n• Incidencia: INC000004167733 (SL1 (Emergencia Crítica))\n• Proceso Crítico: Operación y Monitorización (O&M)\n• Umbral de Emergencia: ATC (3.1): Frontales/CRM (>20% desviación en 30m) o Regla de Oro N1\n• Alcance y Sistemas: ROUTING_CORE\n• Impacto: Alto (Afectación crítica o corte global sobre el servicio principal sin alternativa viable.)\n• Urgencia: Alta (Impacto activo en vivo que requiere restablecimiento inmediato.)\n\n[2] ESTADO DE COMUNICACIONES Y SLAS\n• Tiempo desde Apertura: 4240 min\n• 1ª Notificación a Dirección: ⚠️ SLA 1ª Notificación VENCIDO (>20 min - 4240 min transcurridos)\n• Frecuencia de Actualizaciones: Cada 60 min (o <30m ante cambios críticos)\n• War Room / Teams: Liderado por Incident Manager (IM)\n\n[3] PLAN DE ACCIÓN Y GOBERNANZA DE WORKAROUNDS\n• Diagnóstico Técnico: CORTE TOTAL // SEVILLA // LA FINCA\n• Acciones en Curso: Diagnóstico y contención técnica en curso por equipos resolutores\n• Siguiente Hito: Auditoría preventiva PaP y restablecimiento de servicio\n• Workaround: Desconocido | Gobernanza: No identificado\n• Regla de Oro: Prohibida la desescalada automática sin erradicación total del impacto\n• Revisión Trabajos Programados (PaP): Auditoría preventiva de Rollback en curso\n\n[4] ESTADO DE ESCALADO TELEFÓNICO\n• Protocolo de Tiempos: 🚨 2º Escalado Requerido a Estamentos Superiores (+4240 min transcurridos)\n• Canal de Escalado: Vía Telefónica obligatoria (Regla de Oro)\n• Gobernanza RACI: Incident Manager (R) / Customer & Service Ops IM-CSO (A)\n────────────────────────────────────────────────────────────"
+  "discrepancia_delta": 2,
+  "es_planificada": false,
+  "es_zombi": false,
+  "es_local_departamental": false,
+  "guia_operador": {
+    "categoria_operativa": "EMERGENCIA_VIVA",
+    "alerta_consola": "🚨 EMERGENCIA CRÍTICA P1 ACTIVA",
+    "accion_recomendada": "Aplicar protocolo IM-CSO: Escalar telefónicamente a IM-CSO si >45m y convocar War Room si >1h.",
+    "canal_escalado": "Vía Telefónica IM-CSO / Teams War Room",
+    "prioridad_operativa_consola": "P1 Crítico",
+    "requiere_llamada_cso": true,
+    "requiere_comunicado_direccion": true
+  }
+}
+```
+
+### Ejemplo 2: Resolución Planificada en Batch Periódico (`INC000004169386`)
+```json
+{
+  "id": "INC000004169386",
+  "titulo": "Ficha Cliente Orange | Error funcional | ISGF - Murcia",
+  "prioridad_original": "Media",
+  "prioridad_sugerida": "P2",
+  "aging_escalated": false,
+  "es_planificada": true,
+  "detalle_planificacion": "Proceso batch planificado (Lunes 06h)",
+  "es_zombi": false,
+  "guia_operador": {
+    "categoria_operativa": "RESOLUCION_PLANIFICADA",
+    "alerta_consola": "📅 RESOLUCIÓN PLANIFICADA: Proceso batch planificado (Lunes 06h)",
+    "accion_recomendada": "Monitorizar pase programado. No convocar War Room ni escalar telefónicamente a IM-CSO salvo que falle el pase.",
+    "canal_escalado": "Mesa de Cambios (CAB) / Seguimiento de Releases",
+    "prioridad_operativa_consola": "P2 Alta",
+    "requiere_llamada_cso": false,
+    "requiere_comunicado_direccion": false
+  }
+}
+```
+
+### Ejemplo 3: Estancamiento Local Acotado a P2 Local (`INC000004162280`)
+```json
+{
+  "id": "INC000004162280",
+  "titulo": "Siebel 8 | Error funcional | OEST - Oviedo",
+  "prioridad_original": "Media",
+  "prioridad_sugerida": "P2",
+  "aging_escalated": false,
+  "es_planificada": false,
+  "es_zombi": false,
+  "es_local_departamental": true,
+  "guia_operador": {
+    "categoria_operativa": "ESTANCAMIENTO_LOCAL",
+    "alerta_consola": "⏳ ESTANCAMIENTO LOCAL (>2h): 15d 2h (21750m) en SOP_SMC_TEIDE",
+    "accion_recomendada": "Reclamar avance técnico al Grupo Resolutor vía Remedy. No convocar War Room por alcance acotado (departamental <=20 usuarios o sede única sin caída total).",
+    "canal_escalado": "Grupo Resolutor Remedy / IM de Turno",
+    "prioridad_operativa_consola": "P2 Local",
+    "requiere_llamada_cso": false,
+    "requiere_comunicado_direccion": false
+  }
+}
+```
+
+### Ejemplo 4: Ticket Zombi para Cierre Administrativo (`INC000004164611`)
+```json
+{
+  "id": "INC000004164611",
+  "titulo": "Ficha Cliente Orange | Error funcional | Foundever - Sevilla",
+  "prioridad_original": "Media",
+  "prioridad_sugerida": "P3",
+  "es_planificada": false,
+  "es_zombi": true,
+  "detalle_zombi": "Ticket cancelado en Jira como Resuelto/No Aplica",
+  "guia_operador": {
+    "categoria_operativa": "TICKET_ZOMBI_REMEDY",
+    "alerta_consola": "⚠️ TICKET ZOMBI: Ticket cancelado en Jira como Resuelto/No Aplica",
+    "accion_recomendada": "Solicitar Cierre Administrativo formal a la Mesa en BMC Remedy al estar resuelto/cancelado en Jira. No requiere investigación técnica.",
+    "canal_escalado": "Mesa de Incidencias (BMC Remedy)",
+    "prioridad_operativa_consola": "P3 Cierre Administrativo",
+    "requiere_llamada_cso": false,
+    "requiere_comunicado_direccion": false
+  }
 }
 ```
 
 ---
 
-## ⚙️ 5. Integración con Frontends y Consumidores
+## 🛠️ 5. Gobernanza y Buenas Prácticas de Mantenimiento
 
-| Consumidor | Archivo / Endpoint | Campos Clave Utilizados | Comportamiento |
-| :--- | :--- | :--- | :--- |
-| **Consola del Incident Manager** | [`dashboards/incident-manager-monitor/monitor.js`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/dashboards/incident-manager-monitor/monitor.js) | `prioridad_sugerida`, `es_discrepancia`, `minutos_desde_apertura`, `mensajes_ejecutivos`, `workaround` | <ul><li>Calcula los contadores de los chips de urgencia (`🚨 Requieren Acción Ya`, `📞 Escalados Vencidos`, `⚖️ Discrepancias`).</li><li>Renderiza banners de escalado dinámico (45m / 105m) y el candado de gobernanza de workaround.</li><li>Muestra las píldoras de estado de comunicaciones (`Ap`, `Seg`, `Cie`).</li></ul> |
-| **Centro de Notificaciones** | [`dashboards/assets/incident-notifications.js`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/dashboards/assets/incident-notifications.js) | `mensajes_ejecutivos`, `prioridad_sugerida`, `es_discrepancia` | Alimenta el dropdown flotante de notificaciones en la barra superior unificada de todos los dashboards. |
-| **API Backend Incident Manager** | `GET /api/incident-manager/pending` | `_metadata.kpis`, `data` | Endpoint HTTP que sirve los datos agregados para integración con sistemas externos o proxy Python. |
-| **Generador de Informes PPTX** | `converters/cli/generate_executive_report.py` | `evaluacion`, `resumen_ia`, `reporte_emergencia` | Extrae el diagnóstico y la cronología verificada para maquetar la presentación ejecutiva corporativa. |
-
----
-
-## 🛠️ 6. Mantenimiento y Buenas Prácticas
-
-1. **Regeneración tras Ingesta**: Siempre que se incorpore un nuevo CSV masivo a `data/input/` o mediante subida web, debe re-ejecutarse `evaluate_incident_notifications.py` para refrescar este catálogo.
-2. **Preservación del Almacén de Agentes**: No modificar manualmente [`data/agent_executive_messages.json`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/data/agent_executive_messages.json) sin respetar la estructura `completo` / `breve` y los límites de palabras ($\le 90$ y $\le 30$).
-3. **Caché de Epsilon IA**: Las respuestas de Epsilon se almacenan localmente en `data/.epsilon_cache/` durante 15 minutos (TTL 900s) para evitar sobrecargar el microservicio corporativo. Si se requiere invalidar la caché, usar la opción `--force`.
-
+1. **Regeneración tras Ingesta Masiva**: Al incorporar un nuevo archivo masivo a `data/output/`, ejecutar siempre `python converters/cli/evaluate_incident_notifications.py --input <fichero>` para regenerar el catálogo.
+2. **Auditoría de Coherencia**: Antes de publicar o difundir comunicados a Dirección, verificar que no existan discrepancias mediante:
+   ```bash
+   python converters/cli/audit_executive_messages_coherence.py
+   ```
+3. **Revisión y Calibración de Triaje**: Para auditar la concordancia entre Remedy e ITIL, ejecutar la herramienta de la skill `incident-triage-review`:
+   ```bash
+   python .agents/skills/incident-triage-review/scripts/review_incident_triage.py
+   ```
+4. **Respeto a las Reglas de Oro**: Ninguna incidencia puede desescalarse automáticamente por la mera existencia de un workaround sin validación formal documentada de IM-CSO (Regla de Oro 3).

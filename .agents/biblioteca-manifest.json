@@ -1,13 +1,55 @@
 {
     "sourceRepository":  "C:\\Users\\jose.delafuente\\Claude\\Projects\\biblioteca-agentes",
-    "updatedAt":  "2026-10-29T13:35:44+01:00",
+    "updatedAt":  "2026-11-04T16:17:13+01:00",
     "installedAgents":  [
+                            {
+                                "name":  "incident-analyzer",
+                                "domain":  "it-incidents",
+                                "version":  "1.2.0",
+                                "relPath":  "agents/it-incidents/incident-analyzer.md",
+                                "description":  "Analizador de Incidencias IT que identifica el impacto (actual y riesgo potencial), la causa (distinguiendo causa raíz, evento desencadenante, factores contribuyentes e inferencias), la solución aplicada y la solución recomendada/planificada en formato narrativo continuo, junto con datos faltantes y nivel de confianza objetivo.",
+                                "skills":  [
+                                               "it-severity-matrix",
+                                               "orange-it-emergency-management",
+                                               "postmortem-pir-workflow"
+                                           ]
+                            },
+                            {
+                                "name":  "incident-describer",
+                                "domain":  "it-incidents",
+                                "version":  "1.0.0",
+                                "relPath":  "agents/it-incidents/incident-describer.md",
+                                "description":  "Redactor de Incidencias orientado a Incident Managers. Transforma notas técnicas, apuntes rápidos o mensajes de gestión de incidentes en comunicaciones claras, concisas y profesionales en español (actualizaciones, rechazos, explicaciones de GAPs, acuerdos, escalados y comunicaciones ejecutivas).",
+                                "skills":  [
+                                               "it-severity-matrix"
+                                           ]
+                            },
+                            {
+                                "name":  "incident-markdown-generator",
+                                "domain":  "it-incidents",
+                                "version":  "1.1.0",
+                                "relPath":  "agents/it-incidents/incident-markdown-generator.md",
+                                "description":  "Genera el informe ejecutivo estructurado en Markdown (Etapa 1 de revisión intermedia) para incidencias de servicio a partir de una URL de Confluence, un archivo HTML exportado o un archivo Markdown con notas no estructuradas, antes de renderizar la presentación PowerPoint definitiva.",
+                                "skills":  [
+                                               "incident-markdown-workflow"
+                                           ]
+                            },
+                            {
+                                "name":  "incident-report-publisher",
+                                "domain":  "it-incidents",
+                                "version":  "1.0.0",
+                                "relPath":  "agents/it-incidents/incident-report-publisher.md",
+                                "description":  "Automatiza de principio a fin la extracción desde Excel (.xlsm), construcción literal, verificación programática, conversión a HTML y despliegue en producción (VPS) del Informe de Incidencias Pendientes por Proyecto.",
+                                "skills":  [
+                                               "incident-report-pipeline"
+                                           ]
+                            },
                             {
                                 "name":  "incident-reporter",
                                 "domain":  "it-incidents",
-                                "version":  "1.1.0",
+                                "version":  "1.4.0",
                                 "relPath":  "agents/it-incidents/incident-reporter.md",
-                                "description":  "Experto en comunicación ejecutiva de incidencias de sistemas para Dirección en grandes organizaciones de servicios/telecomunicaciones. Redacta mensajes de apertura, seguimiento o cierre en dos niveles estrictos (versión completa de hasta 90 palabras y versión breve de hasta 30 palabras), integrando el contexto de Epsilon Resumen IA.",
+                                "description":  "Experto en comunicación ejecutiva de incidencias de sistemas para Dirección en grandes organizaciones de servicios/telecomunicaciones. Redacta mensajes de apertura, seguimiento, reapertura o cierre en dos niveles estrictos (versión completa de hasta 90 palabras y versión breve de hasta 30 palabras), integrando el contexto de Epsilon Resumen IA.",
                                 "skills":  [
                                                "it-severity-matrix",
                                                "orange-it-emergency-management",
@@ -19,7 +61,9 @@
     "installedSkills":  [
                             "it-severity-matrix",
                             "orange-it-emergency-management",
-                            "incident-executive-notifications",
-                            "postmortem-pir-workflow"
+                            "postmortem-pir-workflow",
+                            "incident-markdown-workflow",
+                            "incident-report-pipeline",
+                            "incident-executive-notifications"
                         ]
 }

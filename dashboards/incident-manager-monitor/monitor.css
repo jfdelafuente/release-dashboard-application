@@ -1812,3 +1812,174 @@ table.im-raci-table th {
 
 
 
+
+
+/* Guía del Operador en Incident Manager Monitor */
+.im-op-guidance-panel {
+  background: #ffffff;
+  border: 1px solid #E2E8F0;
+  border-left: 4px solid #94A3B8;
+  border-radius: 6px;
+  padding: 12px 14px;
+  margin-top: 10px;
+  margin-bottom: 12px;
+}
+
+.im-op-guidance-panel.is-emergencia {
+  border-left-color: #EF4444;
+  background: linear-gradient(90deg, rgba(239, 68, 68, 0.05) 0%, #FFFFFF 100%);
+}
+
+.im-op-guidance-panel.is-planificada {
+  border-left-color: #3B82F6;
+  background: linear-gradient(90deg, rgba(59, 130, 246, 0.05) 0%, #FFFFFF 100%);
+}
+
+.im-op-guidance-panel.is-estancamiento {
+  border-left-color: #F59E0B;
+  background: linear-gradient(90deg, rgba(245, 158, 11, 0.05) 0%, #FFFFFF 100%);
+}
+
+.im-op-guidance-panel.is-zombi {
+  border-left-color: #8B5CF6;
+  background: linear-gradient(90deg, rgba(139, 92, 246, 0.05) 0%, #FFFFFF 100%);
+}
+
+.im-op-guidance-panel.is-seguimiento {
+  border-left-color: #10B981;
+  background: linear-gradient(90deg, rgba(16, 185, 129, 0.05) 0%, #FFFFFF 100%);
+}
+
+.im-op-guidance-panel.is-infratriaje {
+  border-left-color: #F59E0B;
+  background: linear-gradient(90deg, rgba(245, 158, 11, 0.06) 0%, #FFFFFF 100%);
+}
+
+.im-op-guidance-panel.is-multisede {
+  border-left-color: #0D9488;
+  background: linear-gradient(90deg, rgba(13, 148, 136, 0.06) 0%, #FFFFFF 100%);
+}
+
+.im-op-guidance-panel.is-workaround {
+  border-left-color: #6366F1;
+  background: linear-gradient(90deg, rgba(99, 102, 241, 0.06) 0%, #FFFFFF 100%);
+}
+
+.im-op-guidance-panel.is-reapertura {
+  border-left-color: #DC2626;
+  background: linear-gradient(90deg, rgba(220, 38, 38, 0.06) 0%, #FFFFFF 100%);
+}
+
+.im-op-guidance-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #F1F5F9;
+}
+
+.im-op-cat-badge {
+  font-size: 10.5px;
+  font-weight: 800;
+  padding: 2px 7px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  color: #FFFFFF;
+}
+
+.im-op-cat-badge.is-emergencia { background: #EF4444; }
+.im-op-cat-badge.is-planificada { background: #3B82F6; }
+.im-op-cat-badge.is-estancamiento { background: #D97706; }
+.im-op-cat-badge.is-zombi { background: #7C3AED; }
+.im-op-cat-badge.is-seguimiento { background: #059669; }
+.im-op-cat-badge.is-infratriaje { background: #D97706; }
+.im-op-cat-badge.is-multisede { background: #0F766E; }
+.im-op-cat-badge.is-workaround { background: #4F46E5; }
+.im-op-cat-badge.is-reapertura { background: #B91C1C; }
+
+.im-op-flags {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.im-op-flag {
+  font-size: 11px;
+  padding: 2px 7px;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+.im-op-flag.cso-yes { background: #FEE2E2; color: #991B1B; font-weight: 700; }
+.im-op-flag.cso-no { background: #F3F4F6; color: #6B7280; }
+.im-op-flag.comms-yes { background: #DBEAFE; color: #1E40AF; font-weight: 700; }
+.im-op-flag.comms-no { background: #F3F4F6; color: #6B7280; }
+.im-op-flag.channel { background: #FEF3C7; color: #92400E; font-weight: 600; }
+
+.im-op-guidance-body {
+  margin-top: 8px;
+}
+
+.im-op-action-label {
+  font-family: var(--im-font-mono, monospace);
+  font-size: 10px;
+  font-weight: 700;
+  color: #FF7900;
+  letter-spacing: 0.5px;
+  margin-bottom: 3px;
+}
+
+.im-op-action-text {
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: #334155;
+  margin: 0;
+}
+
+
+/* Barra de enlace a Docsify en IM Monitor */
+.im-op-doc-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  background: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  border-left: 3px solid #FF7900;
+  border-radius: 4px;
+  padding: 6px 10px;
+  margin-top: 8px;
+}
+
+.im-op-doc-title {
+  font-size: 11.5px;
+  color: #1E293B;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.im-op-doc-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: #FF7900;
+  color: #FFFFFF;
+  text-decoration: none;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 9px;
+  border-radius: 4px;
+  transition: all 0.15s ease-in-out;
+}
+
+.im-op-doc-link:hover {
+  background: #E06900;
+  color: #FFFFFF;
+  text-decoration: none;
+  transform: translateY(-1px);
+}

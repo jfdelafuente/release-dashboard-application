@@ -438,7 +438,7 @@ def test_enrichment_indicators_ia_and_executive_comms():
         
         msgs = inc.get("mensajes_ejecutivos") or {}
         has_exec = False
-        for phase in ("apertura", "seguimiento", "cierre"):
+        for phase in ("apertura", "seguimiento", "reapertura", "cierre"):
             p = msgs.get(phase) or {}
             if (p.get("completo") or p.get("generado_por_agente")) and p.get("estado") != "pendiente":
                 has_exec = True
@@ -449,7 +449,9 @@ def test_enrichment_indicators_ia_and_executive_comms():
         elif not has_ia and not has_exec:
             inc_with_neither += 1
 
-    assert inc_with_both >= 15, "La mayoría de las incidencias activas deben tener Resumen IA y Comms completos"
+    assert inc_with_both > 0, "Debe existir al menos una incidencia activa con Resumen IA y Comms completos"
+    ratio = inc_with_both / len(incidents)
+    assert ratio >= 0.70, f"Al menos el 70% de las incidencias activas deben tener Resumen IA y Comms completos (actual: {inc_with_both}/{len(incidents)} = {ratio:.1%})"
 
 
 def test_ingestion_audit_console_and_shortcuts():

@@ -4996,3 +4996,383 @@ body {
 .btn-ticket-retry-ia:hover {
   background: #DBEAFE;
 }
+
+
+/* ==========================================================================
+   GUÍA DEL OPERADOR DE CONSOLA (Schema v2.6.0 - incident-triage-review)
+   ========================================================================== */
+
+/* Badges operativos en la tabla principal */
+.triage-op-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 4px;
+  letter-spacing: 0.2px;
+  white-space: nowrap;
+}
+
+.triage-op-badge.is-emergencia-viva {
+  background: rgba(239, 68, 68, 0.12);
+  color: #DC2626;
+  border: 1px solid rgba(239, 68, 68, 0.35);
+}
+
+.triage-op-badge.is-resolucion-planificada {
+  background: rgba(59, 130, 246, 0.12);
+  color: #2563EB;
+  border: 1px solid rgba(59, 130, 246, 0.35);
+}
+
+.triage-op-badge.is-estancamiento-local {
+  background: rgba(245, 158, 11, 0.12);
+  color: #D97706;
+  border: 1px solid rgba(245, 158, 11, 0.35);
+}
+
+.triage-op-badge.is-ticket-zombi {
+  background: rgba(139, 92, 246, 0.12);
+  color: #7C3AED;
+  border: 1px solid rgba(139, 92, 246, 0.35);
+}
+
+.triage-op-badge.is-seguimiento-estandar {
+  background: rgba(16, 185, 129, 0.12);
+  color: #059669;
+  border: 1px solid rgba(16, 185, 129, 0.35);
+}
+
+.triage-micro-mark.is-cso-required {
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  color: #DC2626;
+  font-weight: 700;
+}
+
+.triage-status-pill.status-zombi {
+  background: rgba(139, 92, 246, 0.15);
+  color: #7C3AED;
+  border: 1px solid rgba(139, 92, 246, 0.4);
+  font-weight: 700;
+}
+
+.triage-status-pill.status-planificada {
+  background: rgba(59, 130, 246, 0.15);
+  color: #2563EB;
+  border: 1px solid rgba(59, 130, 246, 0.4);
+  font-weight: 700;
+}
+
+.triage-status-pill.status-infratriaje {
+  background: rgba(245, 158, 11, 0.15);
+  color: #B45309;
+  border: 1px solid rgba(245, 158, 11, 0.4);
+  font-weight: 700;
+}
+
+.triage-status-pill.status-multisede {
+  background: rgba(16, 185, 129, 0.15);
+  color: #047857;
+  border: 1px solid rgba(16, 185, 129, 0.4);
+  font-weight: 700;
+}
+
+.triage-status-pill.status-workaround {
+  background: rgba(99, 102, 241, 0.15);
+  color: #4F46E5;
+  border: 1px solid rgba(99, 102, 241, 0.4);
+  font-weight: 700;
+}
+
+.triage-status-pill.status-reapertura {
+  background: rgba(239, 68, 68, 0.15);
+  color: #DC2626;
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  font-weight: 700;
+}
+
+/* Tarjeta Destacada de Guía Operativa en el Detalle */
+.triage-operator-guidance-card {
+  background: #ffffff;
+  border: 1px solid var(--triage-border, #E2E8F0);
+  border-left: 5px solid #94A3B8;
+  border-radius: 8px;
+  padding: 14px 18px;
+  margin-bottom: 16px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.triage-operator-guidance-card.is-emergencia-viva {
+  border-left-color: #EF4444;
+  background: linear-gradient(90deg, rgba(239, 68, 68, 0.06) 0%, rgba(255, 255, 255, 0.98) 100%);
+}
+
+.triage-operator-guidance-card.is-resolucion-planificada {
+  border-left-color: #3B82F6;
+  background: linear-gradient(90deg, rgba(59, 130, 246, 0.06) 0%, rgba(255, 255, 255, 0.98) 100%);
+}
+
+.triage-operator-guidance-card.is-estancamiento-local {
+  border-left-color: #F59E0B;
+  background: linear-gradient(90deg, rgba(245, 158, 11, 0.06) 0%, rgba(255, 255, 255, 0.98) 100%);
+}
+
+.triage-operator-guidance-card.is-ticket-zombi {
+  border-left-color: #8B5CF6;
+  background: linear-gradient(90deg, rgba(139, 92, 246, 0.06) 0%, rgba(255, 255, 255, 0.98) 100%);
+}
+
+.triage-operator-guidance-card.is-seguimiento-estandar {
+  border-left-color: #10B981;
+  background: linear-gradient(90deg, rgba(16, 185, 129, 0.06) 0%, rgba(255, 255, 255, 0.98) 100%);
+}
+
+.triage-operator-guidance-card.is-infratriaje-remedy {
+  border-left-color: #F59E0B;
+  background: linear-gradient(90deg, rgba(245, 158, 11, 0.08) 0%, rgba(255, 255, 255, 0.98) 100%);
+}
+
+.triage-operator-guidance-card.is-multisede-parcial {
+  border-left-color: #0D9488;
+  background: linear-gradient(90deg, rgba(13, 148, 136, 0.08) 0%, rgba(255, 255, 255, 0.98) 100%);
+}
+
+.triage-operator-guidance-card.is-workaround-autorizado {
+  border-left-color: #6366F1;
+  background: linear-gradient(90deg, rgba(99, 102, 241, 0.08) 0%, rgba(255, 255, 255, 0.98) 100%);
+}
+
+.triage-operator-guidance-card.is-reapertura-activa {
+  border-left-color: #DC2626;
+  background: linear-gradient(90deg, rgba(220, 38, 38, 0.08) 0%, rgba(255, 255, 255, 0.98) 100%);
+}
+
+.triage-op-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.triage-op-title-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.triage-op-badge-large {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 4px 10px;
+  border-radius: 5px;
+}
+
+.triage-op-badge-large.is-emergencia-viva {
+  background: #EF4444;
+  color: #FFFFFF;
+}
+
+.triage-op-badge-large.is-resolucion-planificada {
+  background: #2563EB;
+  color: #FFFFFF;
+}
+
+.triage-op-badge-large.is-estancamiento-local {
+  background: #D97706;
+  color: #FFFFFF;
+}
+
+.triage-op-badge-large.is-ticket-zombi {
+  background: #7C3AED;
+  color: #FFFFFF;
+}
+
+.triage-op-badge-large.is-seguimiento-estandar {
+  background: #059669;
+  color: #FFFFFF;
+}
+
+.triage-op-badge-large.is-infratriaje-remedy {
+  background: #D97706;
+  color: #FFFFFF;
+}
+
+.triage-op-badge-large.is-multisede-parcial {
+  background: #0F766E;
+  color: #FFFFFF;
+}
+
+.triage-op-badge-large.is-workaround-autorizado {
+  background: #4F46E5;
+  color: #FFFFFF;
+}
+
+.triage-op-badge-large.is-reapertura-activa {
+  background: #B91C1C;
+  color: #FFFFFF;
+}
+
+.triage-op-alert-text {
+  font-size: 14.5px;
+  font-weight: 700;
+  color: var(--triage-text-main, #1E293B);
+  margin: 0;
+}
+
+.triage-op-protocol-flags {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.triage-op-protocol-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11.5px;
+  padding: 4px 9px;
+  border-radius: 5px;
+  font-weight: 500;
+}
+
+.triage-op-protocol-pill.pill-cso-yes {
+  background: #FEE2E2;
+  color: #991B1B;
+  border: 1px solid #FCA5A5;
+  font-weight: 700;
+}
+
+.triage-op-protocol-pill.pill-cso-no {
+  background: #F3F4F6;
+  color: #6B7280;
+  border: 1px solid #E5E7EB;
+}
+
+.triage-op-protocol-pill.pill-comms-yes {
+  background: #DBEAFE;
+  color: #1E40AF;
+  border: 1px solid #93C5FD;
+  font-weight: 700;
+}
+
+.triage-op-protocol-pill.pill-comms-no {
+  background: #F3F4F6;
+  color: #6B7280;
+  border: 1px solid #E5E7EB;
+}
+
+.triage-op-protocol-pill.pill-channel {
+  background: #FEF3C7;
+  color: #92400E;
+  border: 1px solid #FCD34D;
+  font-weight: 600;
+}
+
+.triage-op-body {
+  margin-top: 10px;
+}
+
+.triage-op-action-box {
+  background: rgba(0, 0, 0, 0.025);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 6px;
+  padding: 10px 14px;
+}
+
+.triage-op-action-kicker {
+  font-family: var(--font-mono, monospace);
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  color: var(--triage-orange, #FF7900);
+  display: block;
+  margin-bottom: 4px;
+}
+
+.triage-op-action-desc {
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--triage-text-main, #1E293B);
+  font-weight: 500;
+  margin: 0;
+}
+
+.triage-btn-zombi-copy {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #7C3AED;
+  color: #FFFFFF;
+  border: none;
+  border-radius: 5px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.triage-btn-zombi-copy:hover {
+  background: #6D28D9;
+}
+
+
+/* Barra de Vinculación Directa con Procedimiento en Docsify */
+.triage-op-scenario-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  background: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  border-left: 3px solid var(--triage-orange, #FF7900);
+  border-radius: 6px;
+  padding: 8px 12px;
+  margin-top: 10px;
+}
+
+.triage-op-scenario-title {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #1E293B;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.triage-btn-scenario-doc {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #FF7900;
+  color: #FFFFFF;
+  text-decoration: none;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 5px 12px;
+  border-radius: 5px;
+  box-shadow: 0 1px 2px rgba(255, 121, 0, 0.25);
+  transition: all 0.15s ease-in-out;
+}
+
+.triage-btn-scenario-doc:hover {
+  background: #E06900;
+  color: #FFFFFF;
+  text-decoration: none;
+  box-shadow: 0 2px 4px rgba(224, 105, 0, 0.35);
+  transform: translateY(-1px);
+}

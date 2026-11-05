@@ -50,11 +50,21 @@ def count_words(text: str) -> int:
     return len([w for w in text.split() if w.strip()])
 
 
+def is_terminal_status(status: Optional[str]) -> bool:
+    if not status:
+        return False
+    s = status.strip().lower()
+    return any(k in s for k in ["resuelt", "cerrad", "cancel", "anulad"])
+
+
 def audit_incident_messages(
     incident_id: str,
     stored_phases: dict[str, Any],
     epsilon_data: Optional[dict[str, Any]] = None,
-    remedy_title: str = ""
+    remedy_title: str = "",
+    remedy_status: str = "",
+    suggested_priority: str = "",
+    is_aging_escalated: bool = False
 ) -> list[CoherenceIssue]:
     """
     Audits executive messages for a single incident across all phases (apertura, seguimiento, cierre).
@@ -73,6 +83,19 @@ def audit_incident_messages(
         evidence_text += " " + " ".join(bloqueos).lower()
         sistemas = epsilon_data.get("sistemas") or []
         evidence_text += " " + " ".join(sistemas).lower()
+
+    # 0. Lifecycle Coherence: Prohibición de mensaje de cierre en tickets activos
+    cierre_data = stored_phases.get("cierre")
+    if cierre_data and isinstance(cierre_data, dict):
+        has_cierre = bool(cierre_data.get("completo") or cierre_data.get("breve"))
+        if has_cierre and remedy_status and not is_terminal_status(remedy_status):
+            issues.append(CoherenceIssue(
+                incident_id=incident_id,
+                phase="cierre",
+                level="ERROR",
+                rule="LIFECYCLE_STATUS_MISMATCH",
+                message=f"El ticket figura en estado '{remedy_status}' en Remedy pero existe un mensaje oficial de fase 'cierre' publicado."
+            ))
 
     for phase in ("apertura", "seguimiento", "cierre"):
         phase_data = stored_phases.get(phase)
@@ -119,6 +142,22 @@ def audit_incident_messages(
                     level="ERROR",
                     rule="MONOPARRAFO_BREVE",
                     message="Versión breve contiene múltiples párrafos o saltos de línea."
+                ))
+
+        # 2. Priority Alignment Coherence
+        if suggested_priority and (completo or breve):
+            norm_sug = suggested_priority.upper()
+            prios_found = set(re.findall(r"\b(P[1-4])\b", f"{completo} {breve}"))
+            # Exception: Apertura P2 is legitimate when an incident opened as P2 and escalated to P1 via aging
+            if phase == "apertura" and norm_sug == "P1" and "P2" in prios_found and is_aging_escalated:
+                pass
+            elif norm_sug in ("P1", "P2", "P3", "P4") and prios_found and norm_sug not in prios_found:
+                issues.append(CoherenceIssue(
+                    incident_id=incident_id,
+                    phase=phase,
+                    level="WARNING",
+                    rule="PRIORITY_ALIGNMENT_MISMATCH",
+                    message=f"El mensaje cita criticidad {','.join(sorted(prios_found))} pero la prioridad evaluada por la consola es '{norm_sug}'."
                 ))
 
         # 2. Anti-Hallucination & Evidence Grounding
@@ -208,13 +247,18 @@ def run_audit(root: Optional[Path] = None, target_id: Optional[str] = None) -> d
     incidents_store = store_data.get("incidents", {})
 
     # Load notifications for remedy metadata if available
-    remedy_titles = {}
+    remedy_metadata = {}
     if notif_path.exists():
         try:
             with open(notif_path, "r", encoding="utf-8") as f:
                 n_data = json.load(f)
                 for it in n_data.get("data", []):
-                    remedy_titles[it.get("id")] = it.get("titulo", "")
+                    remedy_metadata[it.get("id")] = {
+                        "titulo": it.get("titulo", ""),
+                        "estatus": it.get("estatus", ""),
+                        "prioridad_sugerida": it.get("prioridad_sugerida", ""),
+                        "aging_escalated": it.get("aging_escalated", False) or it.get("evaluacion", {}).get("aging_escalated", False)
+                    }
         except Exception:
             pass
 
@@ -236,8 +280,20 @@ def run_audit(root: Optional[Path] = None, target_id: Optional[str] = None) -> d
             except Exception:
                 pass
 
-        remedy_t = remedy_titles.get(inc_id, "")
-        issues = audit_incident_messages(inc_id, phases, eps_data, remedy_t)
+        meta = remedy_metadata.get(inc_id, {})
+        remedy_t = meta.get("titulo", "")
+        remedy_s = meta.get("estatus", "")
+        sug_prio = meta.get("prioridad_sugerida", "")
+        is_aging = bool(meta.get("aging_escalated", False))
+        issues = audit_incident_messages(
+            incident_id=inc_id,
+            stored_phases=phases,
+            epsilon_data=eps_data,
+            remedy_title=remedy_t,
+            remedy_status=remedy_s,
+            suggested_priority=sug_prio,
+            is_aging_escalated=is_aging
+        )
         all_issues.extend(issues)
 
     errors = [asdict(i) for i in all_issues if i.level == "ERROR"]

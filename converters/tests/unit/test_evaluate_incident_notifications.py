@@ -602,6 +602,45 @@ def test_should_classify_critical_processes_correctly():
     assert evaluator._classify_process(t_om, None) == "Operación y Monitorización (O&M)"
 
 
+def test_should_classify_catalog_systems_correctly():
+    """Validates that systems from catalogo-aplicaciones-criticas.csv are classified into the expected domain."""
+    evaluator = SeverityEvaluator()
+
+    # Facturación y Cobros
+    assert evaluator._classify_process({"Descripción": "Caída en tarificación KENAN_FX", "Grupo asignado": "FACT_OPS"}, None) == "Facturación y Cobros"
+    assert evaluator._classify_process({"Descripción": "Error en facturación masiva ABACUS BRM", "Grupo asignado": "BILLING"}, None) == "Facturación y Cobros"
+    assert evaluator._classify_process({"Descripción": "Interrupción del servicio OPENCOBROS", "Grupo asignado": "COBROS"}, None) == "Facturación y Cobros"
+
+    # Prepago
+    assert evaluator._classify_process({"Descripción": "Afectación en recargas TAO prepago", "Grupo asignado": "SMC_PREPAGO"}, None) == "Prepago"
+    assert evaluator._classify_process({"Descripción": "Error de aprovisionamiento en SEDNA", "Grupo asignado": "PREPAGO"}, None) == "Prepago"
+
+    # Portabilidad
+    assert evaluator._classify_process({"Descripción": "Fallo en tramitación PORTOS", "Grupo asignado": "PORTA_SMC"}, None) == "Portabilidad"
+    assert evaluator._classify_process({"Descripción": "Retraso en colas de SGP MOVIL", "Grupo asignado": "PORTA"}, None) == "Portabilidad"
+
+    # Ventas
+    assert evaluator._classify_process({"Descripción": "Caída de servicio de contratación KRATOS", "Grupo asignado": "CANAL_VENTA"}, None) == "Ventas"
+    assert evaluator._classify_process({"Descripción": "Error en terminales punto de venta AGORA", "Grupo asignado": "DISTRIBUCION"}, None) == "Ventas"
+
+    # Provisión
+    assert evaluator._classify_process({"Descripción": "Parada en tramitador de pedidos AURORA", "Grupo asignado": "PROV_CORE"}, None) == "Provisión"
+    assert evaluator._classify_process({"Descripción": "Bloqueo en flujo GIROS provisión fija", "Grupo asignado": "PROV_RED"}, None) == "Provisión"
+    assert evaluator._classify_process({"Descripción": "Fallo en motor SPM para planta de fibra", "Grupo asignado": "PROVISION"}, None) == "Provisión"
+
+    # ATC
+    assert evaluator._classify_process({"Descripción": "Error 500 en front IRIS de tiendas", "Grupo asignado": "ATC_CANAL"}, None) == "Atención al Cliente (ATC)"
+    assert evaluator._classify_process({"Descripción": "Indisponibilidad en CRM4TELCO Jazztel", "Grupo asignado": "JAZZTEL_ATC"}, None) == "Atención al Cliente (ATC)"
+    assert evaluator._classify_process({"Descripción": "Caída de login en ACME APP ORANGE", "Grupo asignado": "DIGITAL_APP"}, None) == "Atención al Cliente (ATC)"
+
+    # Identidad
+    assert evaluator._classify_process({"Descripción": "Fallo en servidor ADSELFSERVICE corporativo", "Grupo asignado": "SEGURIDAD_IAM"}, None) == "Identidad (GDU/EVIDIAN) y Automatización"
+    assert evaluator._classify_process({"Descripción": "Parada de procesos en RPA NICE", "Grupo asignado": "AUTOMATIZACION"}, None) == "Identidad (GDU/EVIDIAN) y Automatización"
+
+    # Middleware
+    assert evaluator._classify_process({"Descripción": "Colapso de cola WEBMETHODS transacciones", "Grupo asignado": "EAI_BUS"}, None) == "Middleware e Integración Transversal"
+
+
 def test_should_include_process_and_criterion_in_agent_prompt():
     generator = ExecutiveMessageGenerator()
     ticket = {
@@ -1199,9 +1238,273 @@ def test_should_escalate_stagnant_incident_over_2h_in_emergency_report():
     assert "🚨 ALARMA POR ESTANCAMIENTO (>2h): Escalado a Dirección IM-CSO" in report
     assert "2h 10m (130m)" in report
 
+def test_should_apply_reopening_aggravating_factor_when_ticket_is_reopened():
+    evaluator = SeverityEvaluator()
+    ticket_reopened = {
+        "ID de incidencia": "INC_REOPENED_001",
+        "Descripción": "Degradación en Ficha Cliente // Madison Valladolid",
+        "Estatus": "Asignado",
+        "Prioridad": "Media",
+        "Urgencia": "Baja",
+        "Impacto": "Medio",
+        "es_reapertura": True,
+    }
+    result = evaluator.evaluate(ticket_reopened, epsilon_data=None)
+
+    assert result["es_reapertura"] is True
+    assert result["evaluacion"]["es_reapertura"] is True
+    # Aggravating factor elevates Urgencia to Alta
+    assert result["evaluacion"]["urgencia"] == "Alta"
+    assert "recurrencia activa" in result["evaluacion"]["urgencia_justificacion"]
+    assert "Incidencia Reabierta (Recurrencia Activa)" in result["evaluacion"]["criterio"]
+
+
+def test_should_include_reapertura_phase_when_ticket_is_reopened():
+    generator = ExecutiveMessageGenerator()
+    ticket_reopened = {
+        "ID de incidencia": "INC_REOPENED_002",
+        "Descripción": "CRM | Error funcional | ISGF - Murcia",
+        "es_reapertura": True,
+    }
+    evaluation = {
+        "prioridad_sugerida": "P2",
+        "es_reapertura": True,
+        "evaluacion": {"es_reapertura": True, "proceso": "Atención al Cliente (ATC)"}
+    }
+    messages = generator.generate(ticket_reopened, evaluation, resumen_ia=None)
+
+    assert "reapertura" in messages
+    assert "apertura" in messages
+    assert "seguimiento" in messages
+    assert "cierre" in messages
+    assert "AVISO DE REAPERTURA" in messages["reapertura"]["prompt_agente"]
+
+
+def test_should_generate_auto_draft_provisional_messages_when_requested():
+    generator = ExecutiveMessageGenerator()
+    ticket_new = {
+        "ID de incidencia": "INC_PROVISIONAL_999",
+        "Descripción": "CAU // Aislamiento sede // CORTE TOTAL",
+        "Grupo asignado": "SOP_REDES",
+    }
+    evaluation = {
+        "prioridad_sugerida": "P1",
+        "es_alta_prioridad": True,
+        "evaluacion": {"proceso": "Conectividad de Sedes, Call Centers y Tiendas"}
+    }
+    epsilon_mock = {
+        "problema": "Corte de fibra principal en enlace troncal",
+        "impacto": "Aislamiento de sede y 60 puestos inoperativos",
+        "solucion": "Técnicos de planta externa en desplazamiento",
+        "siguienteAccion": "Verificación de empalme óptico",
+        "sistemas": ["SOP_REDES", "WAN_CORPORATIVA"]
+    }
+    messages = generator.generate(ticket_new, evaluation, resumen_ia=epsilon_mock, auto_draft=True)
+
+    for phase in ["apertura", "seguimiento", "cierre"]:
+        msg = messages[phase]
+        assert msg["generado_por_agente"] is False
+        assert msg["borrador_provisional"] is True
+        assert msg["estado"] == "borrador_provisional"
+        
+        comp = msg["completo"]
+        brev = msg["breve"]
+        assert comp.startswith("[BORRADOR PROVISIONAL]")
+        assert brev.startswith("[BORRADOR PROVISIONAL]")
+        
+        # Word limits and format checks
+        words_comp = comp.split()
+        words_brev = brev.split()
+        assert len(words_comp) <= 90
+        assert len(words_brev) <= 30
+        assert "\n" not in comp
+        assert "\n" not in brev
+        assert msg["conteo_palabras_completo"] == len(words_comp)
+        assert msg["conteo_palabras_breve"] == len(words_brev)
+
+
+def test_should_include_ingestion_delta_in_catalog_metadata():
+    tickets = [
+        {"ID de incidencia": "INC001", "Estatus": "Asignado", "Prioridad": "Alta", "Descripción": "Caída core"}
+    ]
+    delta_mock = {
+        "fichero_anterior": "prev_massive.json",
+        "total_actual": 1,
+        "total_anterior": 1,
+        "conteo_nuevos": 0,
+        "conteo_resueltos": 0,
+        "conteo_reabiertos": 1,
+        "tickets_reabiertos": ["INC001"]
+    }
+    catalog = evaluate_incidents_batch(
+        tickets=tickets,
+        epsilon_client=None,
+        source_file_name="curr_massive.json",
+        write_audit=False,
+        ingestion_delta=delta_mock
+    )
+    meta = catalog["_metadata"]
+    assert meta["version"] == "2.6.0"
+    assert meta["skills_version"]["it-severity-matrix"] == "2.7.0"
+    assert meta["skills_version"]["incident-reporter"] == "1.5.0"
+    assert meta["ingestion_delta"] == delta_mock
+    assert "reabiertas_count" in meta["kpis"]
+    assert "borradores_provisionales_count" in meta["kpis"]
 
 
 
+def test_should_not_escalate_p2_to_p1_by_aging_when_planned_resolution_exists():
+    evaluator = SeverityEvaluator()
+    ticket = {
+        "ID de incidencia": "INC000004122710",
+        "Descripción": "FICHA DE CLIENTE // ERROR FUNCIONAL",
+        "Prioridad": "Media",
+        "Impacto": "Masiva",
+        "Urgencia": "3-Medio",
+        "Estatus": "Pendiente",
+        "Fecha de envío": "08/09/2026 16:04",
+    }
+    epsilon_data = {
+        "titulo": "Ficha de Cliente - Error en propagación de teléfono",
+        "problema": "No se propagan teléfonos de contacto en recogidas de fijo",
+        "impacto": "Alto. Afecta al 100% de las recogidas de equipamiento de fijo",
+        "solucion": "La PR está desarrollada y lista para desplegarse, con fecha prevista de subida a producción el 17/11/2026.",
+        "siguienteAccion": "Despliegue de la PR en producción el 17/11/2026",
+        "sistemas": ["Ficha de Cliente", "TEIDE", "PeopleSoft"]
+    }
+    ref_time = datetime(2026, 11, 4, 12, 0, 0)
+    result = evaluator.evaluate(ticket, epsilon_data, reference_time=ref_time)
+
+    assert result["prioridad_sugerida"] == "P2"
+    assert result["aging_escalated"] is False
+    assert result["es_planificada"] is True
+    assert "17/11/2026" in result["detalle_planificacion"]
+    assert "Resolución Planificada" in result["evaluacion"]["criterio"]
 
 
+def test_should_detect_zombie_ticket_and_cap_priority_at_p3_administrative():
+    evaluator = SeverityEvaluator()
+    ticket = {
+        "ID de incidencia": "INC000004164611",
+        "Descripción": "Ficha Cliente Orange | Error funcional | Foundever - Sevilla",
+        "Prioridad": "Media",
+        "Impacto": "Masiva",
+        "Urgencia": "Alta",
+        "Estatus": "Asignado",
+        "Fecha de envío": "15/10/2026 10:00",
+        "Notas": "Ticket cancelado en Jira como Resuelto/No Aplica tras validación de despliegue."
+    }
+    epsilon_data = {
+        "titulo": "Ficha Cliente - Error en Foundever Sevilla",
+        "problema": "Error funcional en grabación",
+        "solucion": "Ticket cancelado en Jira como Resuelto/No Aplica. El comportamiento es el esperado según especificación.",
+        "siguienteAccion": "Cierre administrativo en Remedy.",
+        "hitos_tecnicos": ["15/10/2026: Incidencia resuelta en Jira como No Aplica"]
+    }
+    ref_time = datetime(2026, 11, 4, 12, 0, 0)
+    result = evaluator.evaluate(ticket, epsilon_data, reference_time=ref_time)
 
+    assert result["es_zombi"] is True
+    assert "Jira" in result["detalle_zombi"]
+    assert result["prioridad_sugerida"] == "P3"
+    assert result["aging_escalated"] is False
+    assert "cierre administrativo" in result["evaluacion"]["urgencia_justificacion"].lower()
+
+
+def test_should_detect_planned_resolution_for_recurring_batch_schedule():
+    evaluator = SeverityEvaluator()
+    ticket = {
+        "ID de incidencia": "INC000004169386",
+        "Descripción": "Ficha Cliente Orange | Error funcional | ISGF - Murcia",
+        "Prioridad": "Media",
+        "Impacto": "Masiva",
+        "Urgencia": "Alta",
+        "Estatus": "Pendiente",
+        "Fecha de envío": "22/10/2026 12:00",
+    }
+    epsilon_data = {
+        "titulo": "Ficha Cliente - Error en reconciliación de crédito",
+        "problema": "Desfase de importes en BSCS para clientes de crédito comercial",
+        "impacto": "Alto. Afecta a procesos de reconciliación de facturación",
+        "solucion": "La regularización automática se ejecutará en la conciliación BSCS programada el lunes 06h.",
+        "siguienteAccion": "Monitorizar conciliación BSCS el lunes 06h.",
+    }
+    ref_time = datetime(2026, 11, 4, 12, 0, 0)
+    result = evaluator.evaluate(ticket, epsilon_data, reference_time=ref_time)
+
+    assert result["es_planificada"] is True
+    assert "Lunes 06h" in result["detalle_planificacion"] or "BSCS" in result["detalle_planificacion"]
+    assert result["prioridad_sugerida"] == "P2"
+    assert result["aging_escalated"] is False
+
+
+def test_should_cap_single_site_small_departmental_ticket_at_p2_and_flag_local_stagnation():
+    evaluator = SeverityEvaluator()
+    ticket = {
+        "ID de incidencia": "INC000004162280",
+        "Descripción": "Siebel 8 | Error funcional | OEST - Oviedo (10 usuarios afectados)",
+        "Prioridad": "Media",
+        "Impacto": "Masiva",
+        "Urgencia": "Alta",
+        "Estatus": "En Curso",
+        "Fecha de envío": "18/10/2026 09:00",
+        "Grupo asignado": "SOP_SMC_TEIDE"
+    }
+    epsilon_data = {
+        "titulo": "Siebel 8 - Error funcional en OEST Oviedo",
+        "problema": "10 agentes de OEST Oviedo no pueden tramitar ofertas de TV",
+        "impacto": "Afecta a 10 usuarios de la plataforma de Oviedo",
+        "solucion": "En análisis técnico por equipo resolutor",
+        "siguienteAccion": "Pendiente parche de configuración"
+    }
+    ref_time = datetime(2026, 11, 4, 12, 0, 0)
+    result = evaluator.evaluate(ticket, epsilon_data, reference_time=ref_time)
+
+    assert result["es_local_departamental"] is True
+    assert result["prioridad_sugerida"] == "P2"
+    assert result["aging_escalated"] is False
+    assert "Estancamiento Local" in result["evaluacion"]["criterio"]
+
+
+def test_should_generate_actionable_operator_guidance_for_console_operator():
+    tickets = [
+        {
+            "ID de incidencia": "INC000004164611",
+            "Descripción": "Ficha Cliente | Jira cancelado | Foundever",
+            "Prioridad": "Media",
+            "Estatus": "Asignado",
+            "Fecha de envío": "15/10/2026 10:00",
+            "Notas": "Ticket cancelado en Jira como Resuelto/No Aplica"
+        },
+        {
+            "ID de incidencia": "INC000004169386",
+            "Descripción": "Ficha Cliente | Conciliación BSCS lunes 06h",
+            "Prioridad": "Media",
+            "Estatus": "Pendiente",
+            "Fecha de envío": "22/10/2026 12:00",
+            "Notas": "Pase programado en conciliación bscs lunes 06h"
+        }
+    ]
+    ref_time = datetime(2026, 11, 4, 12, 0, 0)
+    catalog = evaluate_incidents_batch(
+        tickets=tickets,
+        epsilon_client=None,
+        write_audit=False,
+        reference_time=ref_time
+    )
+
+    items = catalog["data"]
+    zombie_item = next(it for it in items if it["id"] == "INC000004164611")
+    guia_zombie = zombie_item.get("guia_operador")
+    assert guia_zombie is not None
+    assert guia_zombie["categoria_operativa"] == "TICKET_ZOMBI_REMEDY"
+    assert "Cierre Administrativo" in guia_zombie["accion_recomendada"]
+    assert guia_zombie["requiere_llamada_cso"] is False
+    assert guia_zombie["requiere_comunicado_direccion"] is False
+
+    planned_item = next(it for it in items if it["id"] == "INC000004169386")
+    guia_planned = planned_item.get("guia_operador")
+    assert guia_planned is not None
+    assert guia_planned["categoria_operativa"] == "RESOLUCION_PLANIFICADA"
+    assert "Monitorizar pase" in guia_planned["accion_recomendada"]
+    assert guia_planned["requiere_llamada_cso"] is False
