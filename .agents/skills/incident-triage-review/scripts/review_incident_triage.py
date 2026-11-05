@@ -433,6 +433,10 @@ def main():
 
     elif args.all:
         results = reviewer.review_all_active()
+        total = len(results)
+        conformes = sum(1 for r in results if r["es_conforme"])
+        con_anomalias = total - conformes
+
         if args.json:
             print(json.dumps(results, indent=2, ensure_ascii=False))
         elif args.markdown:
@@ -440,9 +444,6 @@ def main():
                 print(format_markdown_report(r))
                 print("\n---\n")
         else:
-            total = len(results)
-            conformes = sum(1 for r in results if r["es_conforme"])
-            con_anomalias = total - conformes
             print("=" * 70)
             print(f" AUDITORÍA DE TRIAJE EN LOTE ({total} incidencias analizadas)")
             print(f" Conformes: {conformes} | Con anomalías o inconsistencias: {con_anomalias}")
