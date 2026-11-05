@@ -84,7 +84,6 @@ ACCIONES INMEDIATAS (PROTOCOLOS SIN CORTESÍA):
 ## 🔗 6. Enlaces y Recursos Rápidos
 
 * [Consola de Triaje y Emergencias IT ↗](/dashboards/emergency-triage-console/ ':ignore :target=_blank')
-* [Cockpit del Incident Manager ↗](/dashboards/incident-manager-monitor/ ':ignore :target=_blank')
 * [Protocolo Completo de Gobernanza IM-CSO](02-gestion-emergencias/protocolo-im-cso-escenarios-triaje.md)
 * [Escenario 1: Emergencia Viva Crítica](02-gestion-emergencias/escenarios/escenario-1-emergencia-viva.md)
 * [Escenario 7: Soluciones de Contorno y Candado 🔒](02-gestion-emergencias/escenarios/escenario-7-workaround-autorizado.md)

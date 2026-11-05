@@ -100,7 +100,6 @@ severidad del ticket ni autoriza su desescalado a P3 ni su cierre. El ticket per
 ## 🔗 7. Enlaces y Recursos Rápidos
 
 * [Consola de Triaje y Emergencias IT ↗](/dashboards/emergency-triage-console/ ':ignore :target=_blank')
-* [Cockpit del Incident Manager ↗](/dashboards/incident-manager-monitor/ ':ignore :target=_blank')
 * [Protocolo Completo de Gobernanza IM-CSO](02-gestion-emergencias/protocolo-im-cso-escenarios-triaje.md)
 * [Escenario 1: Emergencia Viva Crítica](02-gestion-emergencias/escenarios/escenario-1-emergencia-viva.md)
 * [Escenario 8: Reactivación Exprés por Reapertura Activa](02-gestion-emergencias/escenarios/escenario-8-reapertura-activa.md)

@@ -464,7 +464,7 @@ El script `csv_to_json.py` anterior era un conversor simple sin validación ni n
 
 **Branch**: `production`
 
-**Objective**: Consola operativa de emergencias Orange en tiempo real (`dashboards/incident-manager-monitor/`) que detecta discrepancias con métricas cuantitativas exactas de los 6 procesos críticos, controla cronológicamente los tiempos de escalado telefónico obligatorio a los 45 min y +1h, bloquea activamente desescaladas indebidas por workarounds no erradicados o no autorizados por IM-CSO, y despliega el reporte normalizado de 4 bloques con panel de gobernanza RACI.
+**Objective**: Consola operativa de emergencias Orange en tiempo real (`dashboards/emergency-triage-console/`) que detecta discrepancias con métricas cuantitativas exactas de los 6 procesos críticos, controla cronológicamente los tiempos de escalado telefónico obligatorio a los 45 min y +1h, bloquea activamente desescaladas indebidas por workarounds no erradicados o no autorizados por IM-CSO, y despliega el reporte normalizado de 4 bloques con panel de gobernanza RACI.
 
 **Related Documentation**:
 

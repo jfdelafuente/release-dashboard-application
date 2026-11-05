@@ -23,7 +23,7 @@ Directorio oficial de guías procedimentales modulares por escenario post-triaje
 
 ## 🖥️ Integración con las Consolas Operativas
 
-Desde la [Consola de Triaje y Emergencias IT ↗](/dashboards/emergency-triage-console/ ':ignore :target=_blank') y el [Cockpit del Incident Manager ↗](/dashboards/incident-manager-monitor/ ':ignore :target=_blank'), el operador puede acceder en un solo clic a la guía correspondiente al escenario en el que se encuentra clasificada la incidencia mediante:
+Desde la [Consola de Triaje y Emergencias IT ↗](/dashboards/emergency-triage-console/ ':ignore :target=_blank'), el operador puede acceder en un solo clic a la guía correspondiente al escenario en el que se encuentra clasificada la incidencia mediante:
 1. **Botón Directo en la Tarjeta:** `📖 Ver Procedimiento Escenario X ↗` que abre directamente la guía específica en Docsify.
 2. **Ventana Modal Interactiva:** `⚡ Guía Rápida & Trazas` que permite consultar en pantalla los pasos inmediatos y copiar al portapapeles la traza oficial de Remedy correspondiente sin salir de la consola.
 

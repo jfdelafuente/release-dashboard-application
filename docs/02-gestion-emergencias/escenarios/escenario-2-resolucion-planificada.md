@@ -103,7 +103,6 @@ Se notifica al Incident Manager para aplicar la exención de aging (RESOLUCION_P
 ## 🔗 6. Enlaces y Recursos Rápidos
 
 * [Consola de Triaje y Emergencias IT ↗](/dashboards/emergency-triage-console/ ':ignore :target=_blank')
-* [Cockpit del Incident Manager ↗](/dashboards/incident-manager-monitor/ ':ignore :target=_blank')
 * [Protocolo Completo de Gobernanza IM-CSO](02-gestion-emergencias/protocolo-im-cso-escenarios-triaje.md)
 * [Escenario 3: Ticket Zombi Remedy](02-gestion-emergencias/escenarios/escenario-3-ticket-zombi-remedy.md)
 * [Escenario 7: Soluciones de Contorno y Workaround 🔒](02-gestion-emergencias/escenarios/escenario-7-workaround-autorizado.md)

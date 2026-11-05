@@ -120,7 +120,6 @@ RESUMEN DE LA COMUNICACIÓN Y COMPROMISOS:
 ## 🔗 5. Enlaces y Recursos Rápidos
 
 * [Consola de Triaje y Emergencias IT ↗](/dashboards/emergency-triage-console/ ':ignore :target=_blank')
-* [Cockpit del Incident Manager ↗](/dashboards/incident-manager-monitor/ ':ignore :target=_blank')
 * [Protocolo Completo de Gobernanza IM-CSO](02-gestion-emergencias/protocolo-im-cso-escenarios-triaje.md)
 * [Escenario 7: Gobernanza de Workaround y Candado Activo 🔒](02-gestion-emergencias/escenarios/escenario-7-workaround-autorizado.md)
 * [Escenario 8: Reactivación Exprés por Reapertura Activa](02-gestion-emergencias/escenarios/escenario-8-reapertura-activa.md)

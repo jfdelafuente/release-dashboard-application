@@ -43,7 +43,7 @@ flowchart TD
     end
 
     subgraph FASE_2["2. TRIAJE OPERATIVO 'DE UN VISTAZO' (T0 - T+5m)"]
-        A5 --> B1["Consola Operativa (incident-manager-monitor)"]
+        A5 --> B1["Consola Operativa (emergency-triage-console)"]
         A6 --> B1
         B1 --> B2{"Evaluación de Estado Operativo"}
         B2 -->|"SL1 sin mensaje oficial"| B3["🚨 TRATAR YA (SL1)"]
@@ -105,7 +105,7 @@ flowchart TD
 #### Paso 1.1: Recepción e Ingesta del CSV Remedy
 * **Opción A (Recomendada - Vía Web Local):**
   1. Con el servidor local iniciado (`python serve_app.py` en `:8080`), accede a:  
-     **[http://localhost:8080/dashboards/incident-manager-monitor/](http://localhost:8080/dashboards/incident-manager-monitor/)**
+     **[http://localhost:8080/dashboards/emergency-triage-console/](http://localhost:8080/dashboards/emergency-triage-console/)**
   2. En el panel superior, haz clic en **"Seleccionar archivo"** y sube el archivo de incidencias descargado de Remedy (`CS-Informe incidencias P1, P2 y P3 - *.csv`).
   3. El sistema procesa el archivo, calcula los minutos transcurridos desde la apertura Remedy de cada ticket y actualiza el catálogo en tiempo real.
 * **Opción B (Línea de Comandos):**
@@ -282,7 +282,7 @@ powershell -ExecutionPolicy Bypass -File scripts/deploy-production.ps1 -AgentsLi
 
 * El script compilará el runtime inmutable, subirá los ficheros de datos (`agent_executive_messages.json` y `high_priority_notifications.json`) a la ruta persistente `/infocodes/var/storage/release-dashboard/` y verificará el estado HTTP del servidor (`200 OK`).
 * Accede a la Consola de Producción para verificar la coherencia de los indicadores:  
-  **[http://infocodes.si.orange.es:8081/dashboards/incident-manager-monitor/](http://infocodes.si.orange.es:8081/dashboards/incident-manager-monitor/)**
+  **[http://infocodes.si.orange.es:8081/dashboards/emergency-triage-console/](http://infocodes.si.orange.es:8081/dashboards/emergency-triage-console/)**
 
 ---
 
@@ -347,7 +347,7 @@ powershell -ExecutionPolicy Bypass -File scripts/deploy-production.ps1 -AgentsLi
 
 * **Guía Operativa de Notificaciones Ejecutivas:** [`docs/INCIDENT-EXECUTIVE-NOTIFICATIONS-WORKFLOW.md`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/docs/INCIDENT-EXECUTIVE-NOTIFICATIONS-WORKFLOW.md)
 * **Manual del Operador de la Consola:** [`docs/MANUAL-OPERADOR-CONSOLA-OPERATIVA.md`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/docs/MANUAL-OPERADOR-CONSOLA-OPERATIVA.md)
-* **Consola Operativa (HTML/JS/CSS):** [`dashboards/incident-manager-monitor/`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/dashboards/incident-manager-monitor/)
+* **Consola Operativa (HTML/JS/CSS):** [`dashboards/emergency-triage-console/`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/dashboards/emergency-triage-console/)
 * **Servicio Backend de Gestión de Incidencias:** [`converters/cli/incident_manager_service.py`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/converters/cli/incident_manager_service.py)
 * **Skill Especialista en Emergencias IT Orange:** [`.agents/skills/orange-it-emergency-management/SKILL.md`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/.agents/skills/orange-it-emergency-management/SKILL.md)
 * **Skill Matriz de Severidad y Escalados:** [`.agents/skills/it-severity-matrix/SKILL.md`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/.agents/skills/it-severity-matrix/SKILL.md)
