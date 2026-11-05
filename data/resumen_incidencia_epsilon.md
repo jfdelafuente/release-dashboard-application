@@ -17,7 +17,7 @@ Sigue estrictamente estas reglas:
 
 1. CONCISIÓN Y LÍMITES POR CAMPO:
    - `problema`: máximo 40 palabras.
-   - `impacto`: máximo 30 palabras.
+   - `impacto`: máximo 30 palabras. Debe cuantificar el alcance (volumen de usuarios, sedes o servicios afectados) y especificar explícitamente si existe método alternativo (workaround) o si no existe alternativa disponible.
    - `solucion`: máximo 45 palabras.
    - `hitosTecnicos`: máximo 5 a 6 hitos (ver regla 5).
    - Sé directo, técnico y conciso, sin fórmulas de cortesía ni redundancias.
@@ -46,7 +46,12 @@ Sigue estrictamente estas reglas:
    - Los hitos seleccionados deben presentarse ordenados cronológicamente de más antiguo a más reciente (orden ascendente).
 
 6. BLOQUEOS (`bloqueos`):
-   - Debe listar dependencias externas, bloqueos por terceros proveedores o escalados sin respuesta.
+   - Debe listar dependencias externas, bloqueos por terceros proveedores, ventanas de release o escalados sin respuesta.
+   - Estandarización de prefijos: Si hay bloqueo, inicia cada elemento categorizándolo con un prefijo entre corchetes para facilitar su clasificación:
+     * `[Ventana Release]: ` (espera de despliegue/parche planificado).
+     * `[Dependencia Terceros]: ` (proveedor externo, red, hardware).
+     * `[Validación Negocio]: ` (esperando pruebas o visto bueno de usuario/peticionario).
+     * `[Escalado Grupo]: ` (a la espera de respuesta de otro grupo resolutor interno).
    - Si no existe un bloqueo activo o dependencia explícita, devuelve un array vacío: [].
 
 7. REGLAS CONDICIONALES DE CAMPOS:
@@ -79,7 +84,7 @@ Devuelve **únicamente** este JSON (omitiendo condicionalmente las claves indica
   "titulo": "Título conciso y descriptivo del problema funcional o técnico",
   "estadoActual": "Estado de Remedy (ej. ASIGNADO, EN CURSO, PENDIENTE, RESUELTO, CERRADO)",
   "problema": "Descripción sintética del síntoma técnico, error observado y alcance funcional",
-  "impacto": "Afectación en clientes, sedes, transacciones o criticidad del servicio",
+  "impacto": "Afectación en clientes/sedes/volumen + indicar explícitamente si hay método alternativo o no (máx 30 palabras)",
   "solucion": "Causa raíz + acción implementada/intentada + resultado/verificación (incluir ineficacia o rechazo del peticionario si fue reabierta; omitir solo si está en diagnóstico sin datos de solución)",
   "sistemas": [
     "NombreSistema1",
@@ -91,7 +96,7 @@ Devuelve **únicamente** este JSON (omitiendo condicionalmente las claves indica
     "[DD/MM/YYYY]: Hito con fecha únicamente cuando no conste hora"
   ],
   "bloqueos": [
-    "Descripción de bloqueo activo o dependencia (devolver [] si no hay bloqueos)"
+    "[Categoría]: Descripción con prefijo [Ventana Release], [Dependencia Terceros], [Validación Negocio] o [Escalado Grupo] (devolver [] si no hay)"
   ],
   "siguienteAccion": "Próximo paso técnico acordado en notas (Omitir si no hay compromiso explícito o si está resuelta)"
 }
@@ -120,7 +125,7 @@ Devuelve **únicamente** este JSON (omitiendo condicionalmente las claves indica
   "titulo": "Ficha de Cliente - Error en sincronización de teléfono en recogidas de fijo",
   "estadoActual": "Pendiente",
   "problema": "El módulo de recogidas de equipamiento fijo no propaga el teléfono de contacto modificado hacia PS y Siebel 8 debido a un fallo en el microservicio MDG.",
-  "impacto": "Medio. Afecta a la logística inversa de routers en bajas de fibra, con riesgo de envíos fallidos al transportista.",
+  "impacto": "Medio. Afecta a la logística inversa de routers en bajas de fibra, con riesgo de envíos fallidos al transportista. Sin método alternativo disponible.",
   "solucion": "Bug identificado en microservicio de sincronización MDG. Parche de corrección por proveedor comprometido para despliegue en release del 12/11/2026.",
   "sistemas": [
     "Ficha de Cliente",
@@ -133,7 +138,7 @@ Devuelve **únicamente** este JSON (omitiendo condicionalmente las claves indica
     "[03/11/2026 14:00]: N2 aísla el error en el microservicio MDG y traslada requerimiento al equipo de desarrollo."
   ],
   "bloqueos": [
-    "Dependencia de entrega de parche por proveedor planificado para release del 12/11/2026."
+    "[Ventana Release]: Dependencia de entrega y despliegue de parche por proveedor planificado para release del 12/11/2026."
   ],
   "siguienteAccion": "Despliegue y validación del parche en ventana del 12/11/2026."
 }
@@ -170,12 +175,12 @@ EPSILON_SYSTEM_PROMPT = """Eres un analista experto en fiabilidad y gestión de 
 Tu tarea es analizar el volcado JSON de la incidencia Remedy adjunta y generar un resumen técnico y ejecutivo riguroso en formato JSON.
 
 Reglas:
-1. Concisión por campo: problema <= 40 palabras, impacto <= 30 palabras, solucion <= 45 palabras.
+1. Concisión por campo: problema <= 40 palabras, impacto <= 30 palabras (cuantificar alcance y especificar si hay método alternativo/workaround o no), solucion <= 45 palabras.
 2. No repitas contenido entre campos.
 3. No incluyas datos personales salvo grupos técnicos, usuarios asignados o peticionario explícitos en los datos.
 4. `sistemas`: array de strings con nombres de aplicaciones afectadas.
 5. `hitosTecnicos`: máximo 5-6 hitos clave priorizando los más recientes sobre los antiguos (ordenados cronológicamente). Cada elemento inicia con marca adaptativa `[DD/MM/YYYY HH:mm:ss]: `, `[DD/MM/YYYY HH:mm]: ` o `[DD/MM/YYYY]: ` según precisión real (prohibido inventar ':00' o '00:00:00'). No uses rangos temporales ni la solución final aquí.
-6. `bloqueos`: array de dependencias o bloqueos activos; devuelve [] si no hay bloqueos.
+6. `bloqueos`: array de dependencias o bloqueos activos categorizados con prefijo (ej. [Ventana Release], [Dependencia Terceros], [Validación Negocio], [Escalado Grupo]); devuelve [] si no hay bloqueos.
 7. Reglas condicionales de campos:
    - `solucion`: incluir si está resuelta/cerrada, si hay causa/workaround/planificación en release, o si hubo acción inefectiva/reapertura por el peticionario. Omitir únicamente si está en diagnóstico inicial sin causa ni acción previa.
    - `siguienteAccion`: incluir ÚNICAMENTE si hay un compromiso o próximo paso técnico explícitamente acordado en notas; prohibido inferir recomendaciones no presentes. Omitir si está resuelta o no hay acción explícita.
@@ -187,11 +192,11 @@ Devuelve ÚNICAMENTE un JSON con este esquema:
   "titulo": "string",
   "estadoActual": "string",
   "problema": "string",
-  "impacto": "string",
+  "impacto": "string (alcance + método alternativo si/no)",
   "solucion": "string (opcional - omitir solo si está en diagnóstico sin datos de causa/solución)",
   "sistemas": ["string"],
   "hitosTecnicos": ["string"],
-  "bloqueos": ["string"],
+  "bloqueos": ["[Categoría]: string"],
   "siguienteAccion": "string (opcional - omitir si no hay compromiso explícito en notas)"
 }
 """
@@ -238,7 +243,7 @@ public final class EpsilonPrompts {
 
         1. CONCISIÓN Y LÍMITES POR CAMPO:
            - `problema`: máximo 40 palabras.
-           - `impacto`: máximo 30 palabras.
+           - `impacto`: máximo 30 palabras. Debe cuantificar el alcance (volumen de usuarios, sedes o servicios afectados) y especificar explícitamente si existe método alternativo (workaround) o si no existe alternativa disponible.
            - `solucion`: máximo 45 palabras.
            - `hitosTecnicos`: máximo 5 a 6 hitos (ver regla 5).
            - Sé directo, técnico y conciso, sin fórmulas de cortesía ni redundancias.
@@ -267,7 +272,12 @@ public final class EpsilonPrompts {
            - Los hitos seleccionados deben presentarse ordenados cronológicamente de más antiguo a más reciente (orden ascendente).
 
         6. BLOQUEOS (`bloqueos`):
-           - Lista dependencias externas, bloqueos por terceros proveedores o escalados sin respuesta.
+           - Debe listar dependencias externas, bloqueos por terceros proveedores, ventanas de release o escalados sin respuesta.
+           - Estandarización de prefijos: Si hay bloqueo, inicia cada elemento categorizándolo con un prefijo entre corchetes:
+             * `[Ventana Release]: ` (espera de despliegue/parche planificado).
+             * `[Dependencia Terceros]: ` (proveedor externo, red, hardware).
+             * `[Validación Negocio]: ` (esperando pruebas o visto bueno de usuario/peticionario).
+             * `[Escalado Grupo]: ` (a la espera de respuesta de otro grupo resolutor interno).
            - Si no existe un bloqueo activo o dependencia explícita, devuelve un array vacío: [].
 
         7. REGLAS CONDICIONALES DE CAMPOS:
@@ -293,7 +303,7 @@ public final class EpsilonPrompts {
           "titulo": "Título conciso y descriptivo del problema funcional o técnico",
           "estadoActual": "Estado de Remedy (ej. ASIGNADO, EN CURSO, PENDIENTE, RESUELTO, CERRADO)",
           "problema": "Descripción sintética del síntoma técnico, error observado y alcance funcional (máx 40 palabras)",
-          "impacto": "Afectación en clientes, sedes, transacciones o criticidad del servicio (máx 30 palabras)",
+          "impacto": "Afectación en clientes, sedes, transacciones + método alternativo si/no (máx 30 palabras)",
           "solucion": "Causa raíz + acción implementada/intentada + resultado/verificación (incluir ineficacia o rechazo del peticionario si fue reabierta; omitir solo si está en diagnóstico sin datos de solución)",
           "sistemas": ["NombreSistema1", "NombreSistema2"],
           "hitosTecnicos": [
@@ -301,7 +311,7 @@ public final class EpsilonPrompts {
             "[DD/MM/YYYY HH:mm]: Acción o diagnóstico con minutos",
             "[DD/MM/YYYY]: Hito con fecha únicamente cuando no conste hora"
           ],
-          "bloqueos": ["Descripción de bloqueo activo o dependencia (devolver [] si no hay)"],
+          "bloqueos": ["[Categoría]: Descripción de bloqueo con prefijo (devolver [] si no hay)"],
           "siguienteAccion": "Próximo paso técnico acordado en notas (Omitir si no hay compromiso explícito o si está resuelta)"
         }
         """;
@@ -371,5 +381,77 @@ public class EpsilonResumenService {
             .call()
             .entity(EpsilonResumenResponse.class); // Mapeo directo y tipado al record
     }
+}
+```
+
+---
+
+## 6. Evolución Futura del Esquema: Metadatos de Triaje Automatizado (Vía 2)
+
+> **Nota de Arquitectura:** Esta sección documenta la ampliación no intrusiva del contrato API prevista para fases posteriores. Al implementarse como un objeto JSON opcional (`triaje`), cumple el principio de **compatibilidad hacia adelante (non-breaking change)**: los consumidores existentes que no requieran estos campos los ignorarán automáticamente (vía `@JsonIgnoreProperties(ignoreUnknown = true)` en Jackson o deserializadores estándar), mientras que los nuevos servicios podrán explotar reglas de triaje deterministas sin necesidad de parsear expresiones regulares sobre el texto libre.
+
+### 6.1 Propuesta de Objeto de Triaje Opcional
+
+```json
+{
+  "success": true,
+  "titulo": "...",
+  "estadoActual": "...",
+  "problema": "...",
+  "impacto": "...",
+  "solucion": "...",
+  "sistemas": [...],
+  "hitosTecnicos": [...],
+  "bloqueos": [...],
+  "siguienteAccion": "...",
+  
+  "triaje": {
+    "escenario": "RESOLUCION_PLANIFICADA",
+    "workaround": false,
+    "multisede": true,
+    "alertaInfratriaje": false,
+    "desgloseSedes": [
+      { "sede": "Bosch-Vigo", "estado": "OK_CONFIRMADO" },
+      { "sede": "Madison-Valladolid", "estado": "FALLO_ACTIVO" }
+    ]
+  }
+}
+```
+
+### 6.2 Definición de Campos del Objeto `triaje`
+
+| Campo | Tipo | Valores posibles / Descripción | Utilidad operativa |
+|---|---|---|---|
+| `escenario` | `string` | `"EMERGENCIA_ACTIVA"`, `"RESOLUCION_PLANIFICADA"`, `"RESOLUCION_PARCIAL"`, `"REAPERTURA"`, `"ESTANCAMIENTO"` | Permite clasificar y filtrar incidencias en dashboards sin análisis heurístico de texto. |
+| `workaround` | `boolean` | `true` si existe solución de contingencia temporal documentada; `false` si es bloqueo total sin alternativa. | Calibración inmediata de la urgencia real en la cola del Incident Manager. |
+| `multisede` | `boolean` | `true` si afecta a más de una sede o centro territorial. | Prevención de falsos cierres en Remedy (`LIFECYCLE_STATUS_MISMATCH`). |
+| `alertaInfratriaje` | `boolean` | `true` si la severidad nominal de Remedy es inferior al impacto real en negocio (ej. SL3 nominal que bloquea a 60 operadores). | Disparador de alarmas para escalado y corrección de prioridad con IM-CSO. |
+| `desgloseSedes` | `array` *(opcional)* | Lista de objetos `{ "sede": string, "estado": "OK_CONFIRMADO" \| "FALLO_ACTIVO" }` | Auditoría de cierre efectivo en incidencias complejas distribuidas. |
+
+### 6.3 Adaptación en DTO Java para la Fase Futura
+
+```java
+public record EpsilonResumenResponse(
+    boolean success,
+    String titulo,
+    String estadoActual,
+    String problema,
+    String impacto,
+    String solucion,
+    List<String> sistemas,
+    List<String> hitosTecnicos,
+    List<String> bloqueos,
+    String siguienteAccion,
+    TriajeMetadata triaje           // null en Vía 1; poblado en Vía 2
+) {
+    public record TriajeMetadata(
+        String escenario,
+        boolean workaround,
+        boolean multisede,
+        boolean alertaInfratriaje,
+        List<SedeStatus> desgloseSedes
+    ) {}
+
+    public record SedeStatus(String sede, String estado) {}
 }
 ```
