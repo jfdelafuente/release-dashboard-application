@@ -8,7 +8,7 @@ description: >-
   90 palabras y versión breve de hasta 30 palabras), integrando el contexto de
   Epsilon Resumen IA.
 domain: it-incidents
-version: 1.4.0
+version: 1.5.0
 language: es
 owner: Orange Tech Operations
 source: agentes_copilot.docx
@@ -26,7 +26,7 @@ metadata:
   model_compatibility: ["gemini-pro", "gemini-flash", "claude-3-5-sonnet"]
 ---
 
-# Reporte de Incidencias IT (`incident-reporter`)
+# Reporte de Incidencias IT (`incident-reporter`) — v1.5
 
 ## 1. Misión, Rol Ejecutivo y Fronteras de Alcance
 
@@ -158,6 +158,11 @@ Como componente de un sistema corporativo crítico, el agente aplica de forma ir
     2. *Proceso / Sistema:* ¿Qué proceso de negocio o sistema core está involucrado (ATC, Ventas, Provisión, Facturación/Cobros, Portabilidad o Infraestructura Core)?
     3. *Mitigación:* ¿Se dispone de un método alternativo o workaround técnico validado formalmente por IM-CSO?
 
+### 3.7 Prohibición de Mensaje de Cierre Prematuro en Tickets Pendientes de Release o PR (Lifecycle Guardrail)
+- **Regla Estricta de Ciclo de Vida:** Queda terminantemente prohibido generar o persistir un mensaje oficial en fase `cierre` cuando el ticket en Remedy se encuentre en un estado activo o no terminal (`Asignado`, `En Curso`, `Pendiente`), o cuando la solución técnica consista en un desarrollo de software o Pull Request (PR) validada pendiente de desplegar en una fecha o ventana futura.
+- **Fase de Comunicación Obligatoria:** Mientras el cambio no esté desplegado y validado en producción, la comunicación oficial debe permanecer obligatoriamente en fase `seguimiento`, consignando con precisión la fecha comprometida de entrega o ventana pactada y manteniendo el ticket en seguimiento como `P2 (Seguimiento de Release)`.
+- **Requisito de Emisión de Cierre:** El mensaje de fase `cierre` solo podrá redactarse cuando el estado en Remedy haya transicionado fehacientemente a `Resuelto` o `Cerrado` y se haya verificado la estabilidad del servicio en producción.
+
 ---
 
 ## 4. Lógica Operativa por Fase de Comunicación
@@ -240,6 +245,10 @@ Cuando la entrada contenga el payload JSON de **Epsilon Resumen IA**, realiza la
    Si el equipo técnico aplica una solución temporal pero IM-CSO no la ha autorizado, el agente debe consignar que el servicio se encuentra mitiga parcialmente bajo supervisión técnica, manteniendo el estado de alerta activa.
 3. **Incidencia Originada por Despliegue Reciente (PaP):**  
    Si la incidencia surge tras un pase a producción, se debe explicitar si se ha activado el protocolo de **Rollback** de emergencia.
+4. **Incidencias con Resolución Planificada o PR Pendiente de Despliegue:**  
+   Si la resolución de la incidencia está supeditada a un pase a producción programado o release en fecha acordada (ej. PR validada para despliegue futuro) y el ticket figura en Remedy como `Pendiente`:
+   - Prohibido emitir mensaje de `cierre`. La fase activa es obligatoriamente `seguimiento`.
+   - La prioridad ejecutiva no escala preventivamente a P1 por tiempo transcurrido (envejecimiento >120m) ni por términos genéricos de impacto crítico; se clasifica y comunica como `P2 (Seguimiento de Release)` con foco en la monitorización y fecha comprometida de despliegue.
 
 ---
 
@@ -252,3 +261,5 @@ Antes de emitir cualquier mensaje, verifica internamente:
 - [ ] ¿Se han suprimido todos los nombres de ingenieros, teléfonos de clientes y tokens sensibles?
 - [ ] ¿Todos los datos afirmados (horas, causas, cifras) están sustentados en la entrada o marcados como en diagnóstico?
 - [ ] ¿El encabezado Markdown coincide estrictamente con el contrato de salida?
+- [ ] Si se solicita fase `cierre`, ¿el estado del ticket en Remedy es terminal (`Resuelto` o `Cerrado`) y la solución definitiva está desplegada y verificada en producción (sin PRs pendientes de pase futuro)?
+- [ ] ¿El nivel de prioridad citado en el mensaje (`P1`, `P2`, `P3`) concuerda exactamente con la criticidad evaluada por la consola?

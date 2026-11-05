@@ -111,3 +111,39 @@ def test_run_audit_on_live_inc000004171670():
     assert res["error_count"] == 0
     assert res["warning_count"] == 0
 
+
+
+def test_audit_detects_lifecycle_status_mismatch():
+    stored = {
+        "apertura": {
+            "completo": "Se declara incidencia P2 (INCTEST06).",
+            "breve": "Apertura P2 (INCTEST06)."
+        },
+        "cierre": {
+            "completo": "Cerrada la incidencia P2 (INCTEST06) en Ficha de Cliente. Servicio restablecido.",
+            "breve": "Cierre P2 (INCTEST06): Servicio restablecido."
+        }
+    }
+    # Ticket is 'Pendiente' in Remedy, so cierre phase is illegal
+    issues = audit_incident_messages("INCTEST06", stored, remedy_status="Pendiente")
+    rules = [i.rule for i in issues]
+    assert "LIFECYCLE_STATUS_MISMATCH" in rules
+    err = next(i for i in issues if i.rule == "LIFECYCLE_STATUS_MISMATCH")
+    assert err.level == "ERROR"
+    assert "Pendiente" in err.message
+
+
+def test_audit_detects_priority_alignment_mismatch():
+    stored = {
+        "apertura": {
+            "completo": "Se declara incidencia P2 (INCTEST07) en CRM.",
+            "breve": "Apertura P2 (INCTEST07): Degradación funcional."
+        }
+    }
+    # Evaluated priority in console is P1, but message claims P2
+    issues = audit_incident_messages("INCTEST07", stored, suggested_priority="P1")
+    rules = [i.rule for i in issues]
+    assert "PRIORITY_ALIGNMENT_MISMATCH" in rules
+    warn = next(i for i in issues if i.rule == "PRIORITY_ALIGNMENT_MISMATCH")
+    assert warn.level == "WARNING"
+    assert "P1" in warn.message

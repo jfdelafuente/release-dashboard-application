@@ -9,7 +9,7 @@ description: >-
   (GDU/EVIDIAN/ROBOTFACTORY), la Regla de Oro del triaje N1 y el protocolo oficial de escalados
   de Emergencias (45 min / +1 hora / Alarma >2h) con IM-CSO.
 domain: it-incidents
-version: 2.6.0
+version: 2.7.0
 language: es
 owner: Orange Tech Operations
 metadata:
@@ -114,7 +114,7 @@ Para garantizar la reproducibilidad y erradicar alucinaciones o clasificaciones 
 
 - `Urgencia = Crítica` en Remedy equivale siempre a **Urgencia Alta**.
 - `Urgencia = Medio` (masculino) equivale siempre a **Urgencia Media**.
-- El estatus administrativo `Pendiente` (ej. espera de proveedor, ventana de intervención) **nunca reduce la severidad ni la urgencia** mientras el servicio permanezca afectado.
+- El estatus administrativo `Pendiente` (ej. espera de proveedor, ventana de intervención) **nunca reduce la severidad ni la urgencia** mientras el servicio permanezca afectado. Excepción: tickets con resolución planificada o ventana comprometida de release (§4.4), que se clasifican de forma determinista como `SL2 / P2 (Seguimiento de Release)` exentos de aging escalation.
 
 ### 2.4 Manejo Seguro de Errores y Datos Incompletos (Fail-Safe Default y las 3 Preguntas Clave)
 
@@ -358,6 +358,18 @@ Una incidencia se define operativamente como **Reabierta** cuando transita desde
 3. **Preservación del Aging Acumulado:** El cronómetro de envejecimiento (*aging*) de la incidencia **NO se resetea a cero**. Se calcula desde la `Fecha de apertura` original del ticket, acumulando el tiempo total que el servicio ha estado degradado o vulnerable.
 4. **Trazabilidad en Justificación:** La justificación del criterio se prefija formalmente con `Incidencia Reabierta (Recurrencia Activa) | [Criterio Técnico]`.
 5. **Activación Inmediata de Protocolo de Alarma:** Al no ser una primera ocurrencia, se obvia el margen de cortesía inicial; si el aging acumulado supera los umbrales de escalado (>45 min o >2h), se activa inmediatamente el escalado telefónico a IM-CSO y War Room.
+
+---
+
+### 4.4 Regla de Resolución Planificada y Exención de Aging Escalation (P2 - Seguimiento de Release)
+
+Cuando una incidencia cuenta con una solución técnica acordada, Pull Request (PR) desarrollada o ventana de pase comprometida en fecha fijada con negocio (ej. ticket en estado `Pendiente` en espera de release programada):
+
+1. **Clasificación Determinista como `SL2 / P2 (Seguimiento de Release)`:** Una incidencia con resolución planificada y calendarizada no constituye una emergencia P1 activa en vivo, supeditándose la urgencia operativa a la fecha técnica acordada (salvo que exista caída total o corte de servicio no contenido). Prevalece como Incidencia Mayor P2 de seguimiento de release frente a evaluaciones provisionales de impacto.
+2. **Exención de Aging Escalation:** La regla operativa de escalado por envejecimiento acumulado (>120 minutos en P2 sin workaround hacia P1) queda **explícitamente suspendida** para tickets con resolución planificada. No se permite elevarlos a P1 por el mero transcurso del tiempo de espera de la ventana.
+3. **Prohibición de Cierre Prematuro:** La existencia de una PR o pase comprometido no autoriza el cierre del ticket ni la emisión de mensajes ejecutivos de cierre; la comunicación debe mantenerse en fase `seguimiento` hasta la verificación post-despliegue en producción.
+4. **Trazabilidad en Criterio:** El criterio de clasificación se prefija obligatoriamente como:
+   `Resolución Planificada (Pase comprometido DD/MM/AAAA) | [Criterio Técnico del Proceso]`
 
 ---
 

@@ -690,6 +690,56 @@ Por favor, unirse de inmediato al canal de audio de emergencias IT.
     `;
   }
 
+  
+  function renderOperatorGuidanceBannerHtml(inc) {
+    const guia = inc.guia_operador || inc.evaluacion?.guia_operador;
+    if (!guia || !guia.categoria_operativa) return '';
+
+    const cat = guia.categoria_operativa;
+    const alerta = guia.alerta_consola || 'Instrucción Operativa para el Gestor';
+    const accion = guia.accion_recomendada || '';
+    const canal = guia.canal_escalado || 'SEGUIMIENTO_ORDINARIO_RESOLUTOR';
+    const reqCso = Boolean(guia.requiere_llamada_cso);
+    const reqComms = Boolean(guia.requiere_comunicado_direccion);
+
+    let borderClass = 'is-seguimiento';
+    let icon = '📋';
+    if (cat === 'EMERGENCIA_VIVA') { borderClass = 'is-emergencia'; icon = '🚨'; }
+    else if (cat === 'RESOLUCION_PLANIFICADA') { borderClass = 'is-planificada'; icon = '🗓️'; }
+    else if (cat === 'ESTANCAMIENTO_LOCAL') { borderClass = 'is-estancamiento'; icon = '⚠️'; }
+    else if (cat === 'TICKET_ZOMBI_REMEDY') { borderClass = 'is-zombi'; icon = '🧟'; }
+    else if (cat === 'INFRATRIAJE_REMEDY') { borderClass = 'is-infratriaje'; icon = '⚡'; }
+    else if (cat === 'AFECTACION_MULTISEDE_PARCIAL') { borderClass = 'is-multisede'; icon = '🏢'; }
+    else if (cat === 'WORKAROUND_AUTORIZADO') { borderClass = 'is-workaround'; icon = '🔒'; }
+    else if (cat === 'REAPERTURA_ACTIVA') { borderClass = 'is-reapertura'; icon = '🔄'; }
+
+    return `
+      <div class="im-op-guidance-panel ${borderClass}">
+        <div class="im-op-guidance-header">
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span class="im-op-cat-badge ${borderClass}">${icon} ${escapeHtml(cat.replace(/_/g, ' '))}</span>
+            <strong style="font-size:13px; color:var(--im-text-dark, #0F172A);">${escapeHtml(alerta)}</strong>
+          </div>
+          <div class="im-op-flags">
+            <span class="im-op-flag ${reqCso ? 'cso-yes' : 'cso-no'}">📞 CSO: <strong>${reqCso ? 'OBLIGATORIA' : 'NO REQUERIDA'}</strong></span>
+            <span class="im-op-flag ${reqComms ? 'comms-yes' : 'comms-no'}">📢 Dirección: <strong>${reqComms ? 'OBLIGATORIO' : 'NO REQUERIDO'}</strong></span>
+            <span class="im-op-flag channel">📡 ${escapeHtml(canal.replace(/_/g, ' '))}</span>
+          </div>
+        </div>
+        <div class="im-op-guidance-body">
+          <div class="im-op-action-label">🎯 ACCIÓN OPERATIVA RECOMENDADA:</div>
+          <p class="im-op-action-text">${escapeHtml(accion)}</p>
+          <div class="im-op-doc-bar">
+            <span class="im-op-doc-title">📑 <strong>${escapeHtml(guia.escenario_titulo || 'Procedimiento Oficial IM-CSO')}</strong></span>
+            <a href="${escapeHtml(guia.escenario_url || '../../docs/#/02-gestion-emergencias/protocolo-im-cso-escenarios-triaje')}" target="_blank" rel="noopener noreferrer" class="im-op-doc-link" title="Abrir procedimiento operativo oficial en Docsify">
+              📖 Ver Protocolo Escenario ${escapeHtml(String(guia.escenario_num || ''))} ↗
+            </a>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
   function renderWorkaroundLockBannerHtml(inc) {
     const wa = inc.workaround || {};
     const evaluacion = inc.evaluacion || {};
@@ -1819,6 +1869,7 @@ Por favor, unirse de inmediato al canal de audio de emergencias IT.
     const discrepancyTableHtml = renderDiscrepancyTableHtml(inc);
     const escalationBannerHtml = renderEscalationBannerHtml(inc, minsElapsed);
     const workaroundBannerHtml = renderWorkaroundLockBannerHtml(inc);
+    const operatorGuidanceHtml = renderOperatorGuidanceBannerHtml(inc);
     const isReportVisible = Boolean(state.reportVisibility[incId] === true);
 
     // Contenido HTML de la tarjeta
@@ -1864,6 +1915,7 @@ Por favor, unirse de inmediato al canal de audio de emergencias IT.
       ${discrepancyTableHtml}
       ${escalationBannerHtml}
       ${workaroundBannerHtml}
+      ${operatorGuidanceHtml}
 
       <div class="incident-actions-row">
         <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">

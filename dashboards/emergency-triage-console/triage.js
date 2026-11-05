@@ -2694,7 +2694,12 @@ Generado por Consola de Emergencias IT Orange - Motor de Triaje (Módulo 1)`;
         const procMatch = (i.evaluacion?.proceso || '').toLowerCase().includes(q);
         const critMatch = (i.evaluacion?.criterio || '').toLowerCase().includes(q);
         const impactMatch = (i.evaluacion?.impacto_justificacion || '').toLowerCase().includes(q);
-        return idMatch || titleMatch || sysMatch || procMatch || critMatch || impactMatch;
+        const guia = i.guia_operador || i.evaluacion?.guia_operador || {};
+        const catMatch = (guia.categoria_operativa || '').toLowerCase().includes(q);
+        const alertMatch = (guia.alerta_consola || '').toLowerCase().includes(q);
+        const actionMatch = (guia.accion_recomendada || '').toLowerCase().includes(q);
+        const chanMatch = (guia.canal_escalado || '').toLowerCase().includes(q);
+        return idMatch || titleMatch || sysMatch || procMatch || critMatch || impactMatch || catMatch || alertMatch || actionMatch || chanMatch;
       });
     }
 
@@ -2708,7 +2713,36 @@ Generado por Consola de Emergencias IT Orange - Motor de Triaje (Módulo 1)`;
     return filtered;
   }
 
-  function renderFeed() {
+  
+  // --------------------------------------------------------------------------
+  // Helpers para Guía del Operador de Consola (incident-triage-review)
+  // --------------------------------------------------------------------------
+
+  function formatCanalEscalado(canal) {
+    if (!canal) return 'Ordinario';
+    switch (canal) {
+      case 'TELEFONICO_OBLIGATORIO_CSO': return 'Telefónico IM-CSO';
+      case 'COMUNICACION_EQUIPO_DESPLIEGUES': return 'Equipo Despliegues / Pases';
+      case 'ESCALADO_N1_SUPERVISOR_LOCAL': return 'Supervisor N1 / Soporte Local';
+      case 'CIERRE_ADMINISTRATIVO_REMEDY': return 'Cierre Administrativo Remedy';
+      case 'SEGUIMIENTO_ORDINARIO_RESOLUTOR': return 'Resolutor Ordinario';
+      default: return String(canal).replace(/_/g, ' ');
+    }
+  }
+
+  function buildZombieClosureText(inc) {
+    const incId = inc.id || 'INC000000000000';
+    const evalData = inc.evaluacion || {};
+    const jiraId = evalData.ticket_jira || 'Jira asociado';
+    return `SOLICITUD DE CIERRE ADMINISTRATIVO EN REMEDY\n` +
+      `-----------------------------------------------\n` +
+      `Incidencia: ${incId}\n` +
+      `Referencia de entrega/Jira: ${jiraId}\n\n` +
+      `La resolución técnica del servicio ha finalizado satisfactoriamente según el registro del equipo de desarrollo/despliegues y el ticket asociado está concluido. Al no existir afectación operativa en producción, se solicita a la Mesa de Seguimiento proceder con el cierre administrativo formal del ticket en Remedy para evitar distorsiones en los KPIs de aging y triaje operativo.\n\n` +
+      `Dictamen emitido por la Consola de Triaje y Gestión de Emergencias IT de Orange.`;
+  }
+
+function renderFeed() {
     if (!dom.triageFeed) return;
 
     const filtered = getFilteredIncidents();
@@ -2843,6 +2877,54 @@ Generado por Consola de Emergencias IT Orange - Motor de Triaje (Módulo 1)`;
       )
     );
 
+    // Guía del Operador de Consola (incident-triage-review)
+    const guia = inc.guia_operador || (evaluacion && evaluacion.guia_operador) || {};
+    const catOperativa = guia.categoria_operativa || (isDisc ? 'DISCREPANCIA_TRIAJE' : 'SEGUIMIENTO_ESTANDAR');
+    const alertaConsola = guia.alerta_consola || '';
+    const accionRecomendada = guia.accion_recomendada || '';
+    const canalEscalado = guia.canal_escalado || 'SEGUIMIENTO_ORDINARIO_RESOLUTOR';
+    const prioridadOp = guia.prioridad_operativa_consola || (isP1 ? 'P1_CRITICA' : 'P2_SEGUIMIENTO');
+    const reqLlamadaCso = Boolean(guia.requiere_llamada_cso);
+    const reqComunicadoDir = Boolean(guia.requiere_comunicado_direccion);
+
+    // Pastilla y estilo operativo por categoría
+    let opBadgeClass = 'is-seguimiento-estandar';
+    let opBadgeIcon = '📋';
+    let opBadgeLabel = 'Seguimiento ITIL';
+    if (catOperativa === 'EMERGENCIA_VIVA') {
+      opBadgeClass = 'is-emergencia-viva';
+      opBadgeIcon = '🚨';
+      opBadgeLabel = 'Emergencia Viva P1';
+    } else if (catOperativa === 'RESOLUCION_PLANIFICADA') {
+      opBadgeClass = 'is-resolucion-planificada';
+      opBadgeIcon = '🗓️';
+      opBadgeLabel = 'Resolución Planificada';
+    } else if (catOperativa === 'ESTANCAMIENTO_LOCAL') {
+      opBadgeClass = 'is-estancamiento-local';
+      opBadgeIcon = '⚠️';
+      opBadgeLabel = 'Estancamiento Local';
+    } else if (catOperativa === 'TICKET_ZOMBI_REMEDY') {
+      opBadgeClass = 'is-ticket-zombi';
+      opBadgeIcon = '🧟';
+      opBadgeLabel = 'Zombi Remedy (Jira OK)';
+    } else if (catOperativa === 'INFRATRIAJE_REMEDY') {
+      opBadgeClass = 'is-infratriaje-remedy';
+      opBadgeIcon = '⚡';
+      opBadgeLabel = 'Infratriaje Remedy';
+    } else if (catOperativa === 'AFECTACION_MULTISEDE_PARCIAL') {
+      opBadgeClass = 'is-multisede-parcial';
+      opBadgeIcon = '🏢';
+      opBadgeLabel = 'Afectación Multisede';
+    } else if (catOperativa === 'WORKAROUND_AUTORIZADO') {
+      opBadgeClass = 'is-workaround-autorizado';
+      opBadgeIcon = '🔒';
+      opBadgeLabel = 'Workaround Autorizado';
+    } else if (catOperativa === 'REAPERTURA_ACTIVA') {
+      opBadgeClass = 'is-reapertura-activa';
+      opBadgeIcon = '🔄';
+      opBadgeLabel = 'Reapertura Activa';
+    }
+
     // Mensajes Ejecutivos completados (incident-reporter)
     const msgsEjecutivos = inc.mensajes_ejecutivos || {};
     const hasMensajesEjecutivos = Boolean(
@@ -2862,6 +2944,12 @@ Generado por Consola de Emergencias IT Orange - Motor de Triaje (Módulo 1)`;
             </button>
             <span class="triage-id-link" data-inc="${escapeHtml(incId)}" title="Ver ficha técnica Epsilon IA">${escapeHtml(incId)}</span>
             <span class="triage-status-pill ${statusPillClass}">${escapeHtml(inc.estatus || 'Pendiente')}</span>
+            ${catOperativa === 'TICKET_ZOMBI_REMEDY' ? '<span class="triage-status-pill status-zombi" title="Resolución Jira completada - Cierre administrativo pendiente en Remedy">🧟 Zombi</span>' : ''}
+            ${catOperativa === 'RESOLUCION_PLANIFICADA' ? '<span class="triage-status-pill status-planificada" title="Resolución programada (Batch/Release) - Aging no penalizado">🗓️ Planif</span>' : ''}
+            ${catOperativa === 'INFRATRIAJE_REMEDY' ? '<span class="triage-status-pill status-infratriaje" title="Infratriaje Remedy detectado - Requiere reclasificación">⚡ Infratriaje</span>' : ''}
+            ${catOperativa === 'AFECTACION_MULTISEDE_PARCIAL' ? '<span class="triage-status-pill status-multisede" title="Afectación multisede parcial - Falso cierre prevenido">🏢 Multisede</span>' : ''}
+            ${catOperativa === 'WORKAROUND_AUTORIZADO' ? '<span class="triage-status-pill status-workaround" title="Workaround temporal activo bajo candado IM-CSO">🔒 Workaround</span>' : ''}
+            ${catOperativa === 'REAPERTURA_ACTIVA' ? '<span class="triage-status-pill status-reapertura" title="Reapertura activa - Reactivación urgente requerida">🔄 Reabierta</span>' : ''}
           </div>
           <div class="triage-datetime-row">
             <span class="triage-date-label" title="Fecha oficial de apertura en Remedy">📅 ${escapeHtml(fechaStr)}</span>
@@ -2949,6 +3037,56 @@ Generado por Consola de Emergencias IT Orange - Motor de Triaje (Módulo 1)`;
       <tr class="triage-row-detail ${isOpen ? 'is-open' : ''}" id="detail-row-${escapeHtml(incId)}" data-inc="${escapeHtml(incId)}">
         <td colspan="6">
           <div class="triage-detail-wrapper">
+            
+            <!-- TARJETA DE GUÍA OPERATIVA PARA EL OPERADOR DE CONSOLA (incident-triage-review) -->
+            <div class="triage-operator-guidance-card ${opBadgeClass}">
+              <div class="triage-op-header">
+                <div class="triage-op-title-group">
+                  <span class="triage-op-badge-large ${opBadgeClass}">
+                    <span aria-hidden="true">${opBadgeIcon}</span> ${escapeHtml(catOperativa.replace(/_/g, ' '))}
+                  </span>
+                  <h4 class="triage-op-alert-text">${escapeHtml(alertaConsola || 'INSTRUCCIÓN OPERATIVA PARA EL OPERADOR DE CONSOLA')}</h4>
+                </div>
+                <div class="triage-op-protocol-flags">
+                  <span class="triage-op-protocol-pill ${reqLlamadaCso ? 'pill-cso-yes' : 'pill-cso-no'}" title="${reqLlamadaCso ? 'Protocolo CSO: Requiere llamada telefónica obligatoria antes de 45 min' : 'No requiere llamada a IM-CSO: evitar saturación telefónica de emergencias'}">
+                    <span class="pill-icon" aria-hidden="true">📞</span>
+                    <span>Llamada IM-CSO: <strong>${reqLlamadaCso ? 'OBLIGATORIA' : 'NO REQUERIDA'}</strong></span>
+                  </span>
+                  <span class="triage-op-protocol-pill ${reqComunicadoDir ? 'pill-comms-yes' : 'pill-comms-no'}" title="${reqComunicadoDir ? 'Requiere redacción de mensaje ejecutivo oficial para Dirección' : 'No requiere comunicado ejecutivo para Dirección'}">
+                    <span class="pill-icon" aria-hidden="true">📢</span>
+                    <span>Comms Dirección: <strong>${reqComunicadoDir ? 'OBLIGATORIO' : 'NO REQUERIDO'}</strong></span>
+                  </span>
+                  <span class="triage-op-protocol-pill pill-channel" title="Canal de escalado u operación prescrito">
+                    <span class="pill-icon" aria-hidden="true">📡</span>
+                    <span>Canal: <strong>${escapeHtml(formatCanalEscalado(canalEscalado))}</strong></span>
+                  </span>
+                </div>
+              </div>
+
+              <div class="triage-op-body">
+                <div class="triage-op-action-box">
+                  <span class="triage-op-action-kicker">🎯 INSTRUCCIÓN OPERATIVA Y ACCIÓN RECOMENDADA:</span>
+                  <p class="triage-op-action-desc">${escapeHtml(accionRecomendada || 'Realizar seguimiento estándar según matriz de severidad ITIL.')}</p>
+                </div>
+                <div class="triage-op-scenario-bar">
+                  <span class="triage-op-scenario-title">
+                    <span aria-hidden="true">📑</span>
+                    <strong>${escapeHtml(guia.escenario_titulo || 'Procedimiento Oficial IM-CSO')}</strong>
+                  </span>
+                  <a href="${escapeHtml(guia.escenario_url || '../../docs/#/02-gestion-emergencias/protocolo-im-cso-escenarios-triaje')}" target="_blank" rel="noopener noreferrer" class="triage-btn-scenario-doc" title="Abrir procedimiento operativo oficial en Docsify">
+                    📖 Ver Protocolo Escenario ${escapeHtml(String(guia.escenario_num || ''))} ↗
+                  </a>
+                </div>
+                ${catOperativa === 'TICKET_ZOMBI_REMEDY' ? `
+                  <div class="triage-op-zombi-action" style="margin-top: 8px;">
+                    <button type="button" class="triage-btn-zombi-copy btn-copy-zombi-close" data-inc="${escapeHtml(incId)}" title="Copiar solicitud formal de cierre administrativo para Remedy">
+                      <span aria-hidden="true">📋</span> Copiar Plantilla de Cierre Administrativo Remedy
+                    </button>
+                  </div>
+                ` : ''}
+              </div>
+            </div>
+
             <div class="triage-detail-grid">
               
               <!-- Columna 1: Evaluador de Umbrales Críticos y Comparativa -->
@@ -3219,6 +3357,19 @@ Generado por Consola de Emergencias IT Orange - Motor de Triaje (Módulo 1)`;
         const incId = btn.getAttribute('data-inc');
         if (incId) {
           openExecutiveCommModal(incId, 'inicial');
+        }
+      });
+    });
+
+    // 5c. Botón Copiar Plantilla Cierre Administrativo Zombi Remedy
+    document.querySelectorAll('.btn-copy-zombi-close').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const incId = btn.getAttribute('data-inc');
+        const inc = state.incidents.find(i => i.id === incId);
+        if (inc) {
+          const text = buildZombieClosureText(inc);
+          copyToClipboard(text, `Plantilla de cierre administrativo copiada para ${incId}`);
         }
       });
     });

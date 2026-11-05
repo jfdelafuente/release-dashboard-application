@@ -543,6 +543,306 @@ TECHNICAL_DOMAIN_CATEGORIES = {
 }
 
 
+def detect_planned_resolution(epsilon_data: Optional[dict[str, Any]], ticket: dict[str, Any]) -> tuple[bool, str]:
+    """Detects if an incident has a confirmed planned resolution, PR, deployment date, or batch schedule."""
+    evidence_parts = []
+    if epsilon_data:
+        evidence_parts.append(str(epsilon_data.get("problema") or ""))
+        evidence_parts.append(str(epsilon_data.get("solucion") or ""))
+        evidence_parts.append(str(epsilon_data.get("siguienteAccion") or epsilon_data.get("siguiente_accion") or ""))
+        evidence_parts.append(str(epsilon_data.get("bloqueos") or ""))
+        hitos = epsilon_data.get("hitos_tecnicos") or epsilon_data.get("hitosTecnicos") or []
+        if isinstance(hitos, list):
+            evidence_parts.extend(str(h) for h in hitos)
+    evidence_parts.append(str(ticket.get("Descripción") or ticket.get("descripcion") or ""))
+    evidence_parts.append(str(ticket.get("Notas") or ticket.get("notas") or ""))
+    combined = " ".join(evidence_parts).lower()
+
+    if not combined.strip():
+        return False, ""
+
+    # Detección de patrones de despliegue con fecha numérica (ej. 17/11/2026 o 17-11-2026)
+    date_match = re.search(
+        r"(?:pase|subida|despliegue|implantaci[oó]n|entrega|previst[oa]|planificad[oa]|programad[oa]).*?\b(\d{1,2}[/-]\d{1,2}(?:[/-]\d{2,4})?)\b",
+        combined
+    )
+    if date_match:
+        date_str = date_match.group(1)
+        return True, f"Pase comprometido {date_str}"
+
+    # Detección de ventanas de pase recurrente/batch o día de la semana (ej. lunes 06h, conciliación BSCS)
+    batch_day_match = re.search(
+        r"(?:conciliaci[oó]n|pase|proceso|batch|ejecuci[oó]n).*?\b(lunes|martes|mi[eé]rcoles|jueves|viernes|s[aá]bado|domingo)\s+(?:a\s+las\s+)?(\d{1,2}(?::\d{2}|h))\b",
+        combined
+    )
+    if batch_day_match:
+        day_str = batch_day_match.group(1).capitalize()
+        hour_str = batch_day_match.group(2)
+        return True, f"Proceso batch planificado ({day_str} {hour_str})"
+
+    # Detección de conciliación BSCS programada
+    if re.search(r"\bconciliaci[oó]n\s+bscs\b", combined):
+        day_match = re.search(r"\b(lunes|martes|mi[eé]rcoles|jueves|viernes|s[aá]bado|domingo)(?:\s+\d{1,2}h)?\b", combined)
+        when_str = f" ({day_match.group(0)})" if day_match else ""
+        return True, f"Conciliación BSCS programada{when_str}"
+
+    if re.search(r"\bpr\b.*?(?:desarrollada|lista|desplegar|subida|producci[oó]n)", combined):
+        return True, "PR pendiente de pase a producción"
+
+    if re.search(r"(?:pase|subida|despliegue)\s+a\s+producci[oó]n", combined):
+        return True, "Pase a producción programado"
+
+    return False, ""
+
+
+def detect_zombie_ticket(epsilon_data: Optional[dict[str, Any]], ticket: dict[str, Any]) -> tuple[bool, str]:
+    """Detects if an incident appears resolved or cancelled in Jira/supplier tracker but remains active in BMC Remedy."""
+    status_raw = str(ticket.get("Estatus") or (epsilon_data.get("estadoActual") if epsilon_data else "") or "").lower()
+    is_terminal = any(term in status_raw for term in ["cerrad", "resuelt", "cancelad", "closed", "resolved"])
+    if is_terminal:
+        return False, ""
+
+    evidence_parts = []
+    if epsilon_data:
+        evidence_parts.append(str(epsilon_data.get("solucion") or ""))
+        evidence_parts.append(str(epsilon_data.get("problema") or ""))
+        evidence_parts.append(str(epsilon_data.get("siguienteAccion") or epsilon_data.get("siguiente_accion") or ""))
+        hitos = epsilon_data.get("hitos_tecnicos") or epsilon_data.get("hitosTecnicos") or []
+        if isinstance(hitos, list):
+            evidence_parts.extend(str(h) for h in hitos)
+    evidence_parts.append(str(ticket.get("Notas") or ticket.get("notas") or ""))
+    evidence_parts.append(str(ticket.get("Descripción") or ticket.get("descripcion") or ""))
+    combined = " ".join(evidence_parts).lower()
+
+    if not combined.strip():
+        return False, ""
+
+    zombie_patterns = [
+        (r"ticket\s+cancelado\s+en\s+jira\s+como\s+['\"]?resuelto(?:\s+cancelado)?", "Ticket cancelado en Jira como Resuelto/No Aplica"),
+        (r"ticket\s+cancelado\s+en\s+jira", "Ticket cancelado en Jira"),
+        (r"(?:resuelto|cancelado|cerrado)\s+en\s+jira", "Marcado como Resuelto/Cerrado en Jira"),
+        (r"resuelto\s+cancelado\/no\s+aplica", "Resolución 'No Aplica' en Jira"),
+        (r"incidencia\s+resuelta\s+en\s+jira", "Incidencia resuelta en Jira"),
+    ]
+
+    for pat, label in zombie_patterns:
+        if re.search(pat, combined):
+            return True, label
+
+    return False, ""
+
+
+SCENARIO_METADATA: dict[str, dict[str, Any]] = {
+    "EMERGENCIA_VIVA": {
+        "escenario_id": "escenario-1-emergencia-viva",
+        "escenario_num": 1,
+        "escenario_titulo": "Escenario 1: Emergencia Viva Crítica (SL1/P1)",
+        "escenario_doc": "docs/02-gestion-emergencias/escenarios/escenario-1-emergencia-viva.md",
+        "escenario_url": "../../docs/#/02-gestion-emergencias/escenarios/escenario-1-emergencia-viva",
+    },
+    "RESOLUCION_PLANIFICADA": {
+        "escenario_id": "escenario-2-resolucion-planificada",
+        "escenario_num": 2,
+        "escenario_titulo": "Escenario 2: Incidencia Mayor con Solución o Despliegue Planificado",
+        "escenario_doc": "docs/02-gestion-emergencias/escenarios/escenario-2-resolucion-planificada.md",
+        "escenario_url": "../../docs/#/02-gestion-emergencias/escenarios/escenario-2-resolucion-planificada",
+    },
+    "TICKET_ZOMBI_REMEDY": {
+        "escenario_id": "escenario-3-ticket-zombi-remedy",
+        "escenario_num": 3,
+        "escenario_titulo": "Escenario 3: Ticket Zombi en Remedy (P3 Administrativo)",
+        "escenario_doc": "docs/02-gestion-emergencias/escenarios/escenario-3-ticket-zombi-remedy.md",
+        "escenario_url": "../../docs/#/02-gestion-emergencias/escenarios/escenario-3-ticket-zombi-remedy",
+    },
+    "ESTANCAMIENTO_LOCAL": {
+        "escenario_id": "escenario-4-estancamiento-local",
+        "escenario_num": 4,
+        "escenario_titulo": "Escenario 4: Estancamiento Local en Incidencias Departamentales",
+        "escenario_doc": "docs/02-gestion-emergencias/escenarios/escenario-4-estancamiento-local.md",
+        "escenario_url": "../../docs/#/02-gestion-emergencias/escenarios/escenario-4-estancamiento-local",
+    },
+    "INFRATRIAJE_REMEDY": {
+        "escenario_id": "escenario-5-infratriaje-remedy",
+        "escenario_num": 5,
+        "escenario_titulo": "Escenario 5: Discrepancia por Infratriaje en Remedy",
+        "escenario_doc": "docs/02-gestion-emergencias/escenarios/escenario-5-infratriaje-remedy.md",
+        "escenario_url": "../../docs/#/02-gestion-emergencias/escenarios/escenario-5-infratriaje-remedy",
+    },
+    "AFECTACION_MULTISEDE_PARCIAL": {
+        "escenario_id": "escenario-6-afectacion-multisede-parcial",
+        "escenario_num": 6,
+        "escenario_titulo": "Escenario 6: Afectación Multisede Parcial y Prevención de Falso Cierre",
+        "escenario_doc": "docs/02-gestion-emergencias/escenarios/escenario-6-afectacion-multisede-parcial.md",
+        "escenario_url": "../../docs/#/02-gestion-emergencias/escenarios/escenario-6-afectacion-multisede-parcial",
+    },
+    "WORKAROUND_AUTORIZADO": {
+        "escenario_id": "escenario-7-workaround-autorizado",
+        "escenario_num": 7,
+        "escenario_titulo": "Escenario 7: Soluciones de Contorno y Candado de Severidad Activo",
+        "escenario_doc": "docs/02-gestion-emergencias/escenarios/escenario-7-workaround-autorizado.md",
+        "escenario_url": "../../docs/#/02-gestion-emergencias/escenarios/escenario-7-workaround-autorizado",
+    },
+    "REAPERTURA_ACTIVA": {
+        "escenario_id": "escenario-8-reapertura-activa",
+        "escenario_num": 8,
+        "escenario_titulo": "Escenario 8: Reactivación Exprés por Reapertura / Recurrencia Activa",
+        "escenario_doc": "docs/02-gestion-emergencias/escenarios/escenario-8-reapertura-activa.md",
+        "escenario_url": "../../docs/#/02-gestion-emergencias/escenarios/escenario-8-reapertura-activa",
+    },
+    "INCIDENCIA_MAYOR_P2": {
+        "escenario_id": "protocolo-general-im-cso",
+        "escenario_num": None,
+        "escenario_titulo": "Protocolo IM-CSO y Escenarios Post-Triaje",
+        "escenario_doc": "docs/02-gestion-emergencias/protocolo-im-cso-escenarios-triaje.md",
+        "escenario_url": "../../docs/#/02-gestion-emergencias/protocolo-im-cso-escenarios-triaje",
+    },
+    "SEGUIMIENTO_ESTANDAR": {
+        "escenario_id": "protocolo-general-im-cso",
+        "escenario_num": None,
+        "escenario_titulo": "Protocolo IM-CSO y Escenarios Post-Triaje",
+        "escenario_doc": "docs/02-gestion-emergencias/protocolo-im-cso-escenarios-triaje.md",
+        "escenario_url": "../../docs/#/02-gestion-emergencias/protocolo-im-cso-escenarios-triaje",
+    },
+}
+
+
+def generate_operator_guidance(
+    incident_id: str,
+    priority: str,
+    is_zombie: bool,
+    zombie_detail: str,
+    is_planned: bool,
+    planned_detail: str,
+    is_local_departmental: bool,
+    mins_open: Optional[int],
+    assigned_group: str,
+    has_exec_msg_apertura: bool,
+    quant_metrics: Optional[dict[str, Any]] = None,
+    is_reopened: bool = False,
+    is_discrepancy: bool = False,
+    discrepancy_delta: int = 0,
+    has_workaround: str = "No",
+    is_multisite_partial: bool = False,
+) -> dict[str, Any]:
+    """Generates structured, actionable operational guidance for the console operator."""
+    user_cnt = (quant_metrics or {}).get("usuarios")
+    user_str = f" ({user_cnt} usuarios)" if user_cnt else ""
+
+    if is_zombie:
+        res = {
+            "categoria_operativa": "TICKET_ZOMBI_REMEDY",
+            "alerta_consola": f"⚠️ TICKET ZOMBI: {zombie_detail}",
+            "accion_recomendada": f"Solicitar Cierre Administrativo formal a la Mesa de Incidencias en BMC Remedy ({zombie_detail}). Retirar de la lista de emergencias vivas de Dirección.",
+            "canal_escalado": "Mesa de Seguimiento de Incidencias (Remedy)",
+            "prioridad_operativa_consola": "P3 Administrativa",
+            "requiere_llamada_cso": False,
+            "requiere_comunicado_direccion": False,
+        }
+    elif is_reopened:
+        res = {
+            "categoria_operativa": "REAPERTURA_ACTIVA",
+            "alerta_consola": "🔄 REAPERTURA ACTIVA / RECURRENCIA",
+            "accion_recomendada": "Reactivación exprés inmediata: contactar a IM-CSO (<5 min) sin ventana de cortesía de 45m. Preservar cómputo acumulado desde T0.",
+            "canal_escalado": "Telefónico Directo IM-CSO / Teams War Room",
+            "prioridad_operativa_consola": f"{priority} Reabierta",
+            "requiere_llamada_cso": True,
+            "requiere_comunicado_direccion": True,
+        }
+    elif is_planned:
+        res = {
+            "categoria_operativa": "RESOLUCION_PLANIFICADA",
+            "alerta_consola": f"📅 RESOLUCIÓN PLANIFICADA: {planned_detail}",
+            "accion_recomendada": f"Monitorizar pase programado ({planned_detail}). No convocar War Room ni escalar telefónicamente a Dirección.",
+            "canal_escalado": "Mesa de Cambios (CAB) / Seguimiento de Release",
+            "prioridad_operativa_consola": "P2 Seguimiento Release",
+            "requiere_llamada_cso": False,
+            "requiere_comunicado_direccion": False,
+        }
+    elif is_local_departmental and mins_open is not None and mins_open >= 120:
+        duration_fmt = format_operational_duration(mins_open)
+        res = {
+            "categoria_operativa": "ESTANCAMIENTO_LOCAL",
+            "alerta_consola": f"⏳ ESTANCAMIENTO LOCAL (>2h): {duration_fmt} en {assigned_group or 'grupo resolutor'}",
+            "accion_recomendada": f"Reclamar avance técnico al Grupo Resolutor ({assigned_group or 'N2/N3'}) vía Remedy por estancamiento. No escalar a Dirección ni convocar War Room por ser afectación departamental acotada{user_str}.",
+            "canal_escalado": f"Grupo Resolutor Remedy ({assigned_group or 'N2/N3'})",
+            "prioridad_operativa_consola": "P2 Local / Departamental",
+            "requiere_llamada_cso": False,
+            "requiere_comunicado_direccion": False,
+        }
+    elif priority == "P1":
+        accion = "Aplicar protocolo IM-CSO: Escalar telefónicamente a IM-CSO si >45m y convocar War Room si >1h."
+        if not has_exec_msg_apertura:
+            accion += " ⚠️ Emitir comunicado de Apertura P1 a Dirección inmediatamente."
+        res = {
+            "categoria_operativa": "EMERGENCIA_VIVA",
+            "alerta_consola": "🚨 EMERGENCIA CRÍTICA P1 ACTIVA",
+            "accion_recomendada": accion,
+            "canal_escalado": "Vía Telefónica IM-CSO / Teams War Room",
+            "prioridad_operativa_consola": "P1 Crítico",
+            "requiere_llamada_cso": True,
+            "requiere_comunicado_direccion": True,
+        }
+    elif is_discrepancy and discrepancy_delta > 0:
+        res = {
+            "categoria_operativa": "INFRATRIAJE_REMEDY",
+            "alerta_consola": "⚡ DISCREPANCIA POR INFRATRIAJE EN REMEDY",
+            "accion_recomendada": "Rectificar prioridad operativa a P2 en consola e informar a IM-CSO / Mesa de Incidencias. El impacto de negocio prevalece sobre la etiqueta de Remedy.",
+            "canal_escalado": "Mesa de Incidencias Remedy / Notas Técnicas",
+            "prioridad_operativa_consola": "P2 Reclasificada",
+            "requiere_llamada_cso": False,
+            "requiere_comunicado_direccion": True,
+        }
+    elif is_multisite_partial:
+        res = {
+            "categoria_operativa": "AFECTACION_MULTISEDE_PARCIAL",
+            "alerta_consola": "🏢 AFECTACIÓN MULTISEDE PARCIAL",
+            "accion_recomendada": "Prohibido el cierre prematuro del ticket. Mantener seguimiento activo hasta la confirmación de recuperación total en el 100% de las sedes.",
+            "canal_escalado": "War Room / Coordinación de Sedes",
+            "prioridad_operativa_consola": f"{priority} Multisede",
+            "requiere_llamada_cso": priority == "P1",
+            "requiere_comunicado_direccion": True,
+        }
+    elif has_workaround == "Sí":
+        res = {
+            "categoria_operativa": "WORKAROUND_AUTORIZADO",
+            "alerta_consola": "🔒 WORKAROUND ACTIVO - CANDADO DE SEVERIDAD",
+            "accion_recomendada": "Verificar autorización formal de IM-CSO para el workaround. Mantener candado de severidad activo: prohibido cerrar o desescalar el ticket.",
+            "canal_escalado": "Canal Oficial IM-CSO / Teams",
+            "prioridad_operativa_consola": "P2 Workaround Activo",
+            "requiere_llamada_cso": False,
+            "requiere_comunicado_direccion": False,
+        }
+    elif priority == "P2":
+        res = {
+            "categoria_operativa": "INCIDENCIA_MAYOR_P2",
+            "alerta_consola": "🔶 INCIDENCIA MAYOR P2",
+            "accion_recomendada": f"Seguimiento técnico prioritario con grupo resolutor ({assigned_group or 'N2'}). Controlar vencimiento de SLA.",
+            "canal_escalado": f"Grupo Resolutor ({assigned_group or 'N2'}) / IM de Turno",
+            "prioridad_operativa_consola": "P2 Alta",
+            "requiere_llamada_cso": False,
+            "requiere_comunicado_direccion": True,
+        }
+    else:
+        res = {
+            "categoria_operativa": "SEGUIMIENTO_ESTANDAR",
+            "alerta_consola": "SEGUIMIENTO ESTÁNDAR",
+            "accion_recomendada": "Seguimiento operativo ordinario en Remedy según ciclo de vida estándar.",
+            "canal_escalado": "Remedy N1/N2",
+            "prioridad_operativa_consola": priority,
+            "requiere_llamada_cso": False,
+            "requiere_comunicado_direccion": False,
+        }
+
+    cat_op = res["categoria_operativa"]
+    meta = SCENARIO_METADATA.get(cat_op, SCENARIO_METADATA["SEGUIMIENTO_ESTANDAR"])
+    res["escenario_id"] = meta["escenario_id"]
+    res["escenario_num"] = meta["escenario_num"]
+    res["escenario_titulo"] = meta["escenario_titulo"]
+    res["escenario_doc"] = meta["escenario_doc"]
+    res["escenario_url"] = meta["escenario_url"]
+    return res
+
+
 class SeverityEvaluator:
     """Evaluates ITIL severity based on Impact and Urgency heuristics."""
 
@@ -604,8 +904,34 @@ class SeverityEvaluator:
                 priority = self._calculate_matrix(impact, urgency, has_workaround)
             reopening_criterion_prefix = "Incidencia Reabierta (Recurrencia Activa) | "
 
+        is_planned, planned_label = detect_planned_resolution(epsilon_data, ticket)
+        is_zombie, zombie_label = detect_zombie_ticket(epsilon_data, ticket)
+
+        # Regla de Resolución Planificada (Seguimiento de Release P2 / it-severity-matrix v2.7):
+        # Una incidencia con resolución planificada o pase acordado no constituye una emergencia P1 en vivo.
+        # Se calibra la prioridad sugerida a P2 (Seguimiento de Release) salvo caída total de servicio no mitigada.
+        if is_planned and priority == "P1":
+            desc_text = str(ticket.get("Descripción") or ticket.get("descripcion") or "")
+            prob_text = str(epsilon_data.get("problema") if epsilon_data else "")
+            full_text = f"{desc_text} {prob_text}".lower()
+            has_total_outage = any(kw in full_text for kw in ["caída total", "caida total", "sin servicio", "corte total"])
+            if not has_total_outage:
+                priority = "P2"
+                if urgency == "Alta":
+                    urgency = "Media"
+
+        # Regla de Tickets Zombi (Desincronización Jira / Remedy):
+        # Si un ticket fue cancelado o resuelto en Jira, no constituye una emergencia viva.
+        # Se fija prioridad técnica P3 con requerimiento de cierre administrativo en Remedy.
+        if is_zombie and priority in ("P1", "P2"):
+            priority = "P3"
+            urgency = "Baja"
+            urgency_reason = f"Ticket cancelado/resuelto en Jira ({zombie_label}). Requiere cierre administrativo formal en BMC Remedy."
+
         # Regla Operativa de Aging Escalation:
         # P2 activa por >= 120 minutos sin workaround autorizado escala preventivamente a P1
+        # Excepción 1: Incidencias con resolución planificada o ventana de pase acordada con negocio
+        # Excepción 2: Incidencias de ámbito departamental/local acotado (<= 20 usuarios en sede única sin caída total)
         raw_date = ticket.get("Fecha de envío") or ticket.get("fecha_envio") or ""
         parsed_date = parse_incident_datetime(raw_date)
         sla_info = compute_emergency_sla_status(parsed_date, reference_time=reference_time)
@@ -613,11 +939,34 @@ class SeverityEvaluator:
 
         aging_escalated = False
         aging_criterion_prefix = ""
-        if not is_closed and priority == "P2" and has_workaround != "Sí" and mins_open is not None and mins_open >= 120:
-            priority = "P1"
-            aging_escalated = True
-            aging_criterion_prefix = f"Aging Escalation (>120m en P2 sin workaround - {mins_open}m) | "
-            urgency_reason = f"Escalado operativo a P1 por tiempo transcurrido ({mins_open} min >= 120 min) sin mitigación ni workaround."
+        is_local_departmental = False
+
+        if not is_closed and not is_zombie:
+            user_count = quant_metrics.get("usuarios")
+            site_count = quant_metrics.get("sedes")
+            is_single_site_or_none = site_count is None or site_count <= 1
+            has_few_users = user_count is not None and user_count <= 20
+
+            desc_text = str(ticket.get("Descripción") or ticket.get("descripcion") or "")
+            prob_text = str(epsilon_data.get("problema") if epsilon_data else "")
+            full_text = f"{desc_text} {prob_text}".lower()
+            has_total_outage = any(kw in full_text for kw in ["caída total", "caida total", "sin servicio", "corte total", "afectación global", "afectacion global"])
+
+            if is_single_site_or_none and has_few_users and not has_total_outage:
+                is_local_departmental = True
+
+            if is_planned:
+                aging_criterion_prefix = f"Resolución Planificada ({planned_label}) | "
+                urgency_reason = f"Resolución planificada en ventana acordada ({planned_label}). Exenta de escalado preventivo por envejecimiento a P1."
+            elif priority == "P2" and has_workaround != "Sí" and mins_open is not None and mins_open >= 120:
+                if is_local_departmental:
+                    aging_criterion_prefix = f"Estancamiento Local (>120m en P2 - {mins_open}m) | "
+                    urgency_reason = f"Estancamiento operativo ({mins_open} min >= 120 min) en grupo resolutor. Prioridad acotada a P2 Local por alcance acotado ({user_count} usuarios en sede única)."
+                else:
+                    priority = "P1"
+                    aging_escalated = True
+                    aging_criterion_prefix = f"Aging Escalation (>120m en P2 sin workaround - {mins_open}m) | "
+                    urgency_reason = f"Escalado operativo a P1 por tiempo transcurrido ({mins_open} min >= 120 min) sin mitigación ni workaround."
 
         is_high_priority = priority in ("P1", "P2")
 
@@ -650,6 +999,11 @@ class SeverityEvaluator:
             "discrepancia_gravedad": disc_details["gravedad"],
             "discrepancia_motivo": disc_details["motivo"],
             "aging_escalated": aging_escalated,
+            "es_planificada": is_planned,
+            "detalle_planificacion": planned_label,
+            "es_zombi": is_zombie,
+            "detalle_zombi": zombie_label,
+            "es_local_departamental": is_local_departmental,
             "es_reapertura": is_reopened,
             "evaluacion": {
                 "proceso": proceso,
@@ -669,6 +1023,11 @@ class SeverityEvaluator:
                 "discrepancia_gravedad": disc_details["gravedad"],
                 "discrepancia_motivo": disc_details["motivo"],
                 "aging_escalated": aging_escalated,
+                "es_planificada": is_planned,
+                "detalle_planificacion": planned_label,
+                "es_zombi": is_zombie,
+                "detalle_zombi": zombie_label,
+                "es_local_departamental": is_local_departmental,
                 "es_reapertura": is_reopened,
             }
         }
@@ -945,6 +1304,12 @@ class SeverityEvaluator:
         # Si el ticket ya está cerrado o resuelto
         if "cerrad" in status or "resuelt" in status:
             return "Baja", "Incidencia ya resuelta o estabilizada por el equipo resolutor.", has_workaround
+
+        # Detección de Resolución Planificada / Pase Comprometido
+        is_planned, planned_label = detect_planned_resolution(epsilon, ticket)
+        if is_planned:
+            urgency_level = "Baja" if "pendiente" in status else "Media"
+            return urgency_level, f"Resolución planificada en ventana acordada ({planned_label}). Urgencia operativa acotada a fecha programada.", has_workaround
 
         # Elevación de urgencia por bloqueos reportados por Epsilon IA sin workaround
         if epsilon_bloqueos_str and has_workaround == "No":
@@ -1324,6 +1689,8 @@ class ExecutiveMessageGenerator:
         disc_motivo = evaluation.get("discrepancia_motivo") or eval_data.get("discrepancia_motivo")
         disc_gravedad = evaluation.get("discrepancia_gravedad") or eval_data.get("discrepancia_gravedad")
         aging_esc = evaluation.get("aging_escalated") or eval_data.get("aging_escalated")
+        is_planned = bool(evaluation.get("es_planificada") or eval_data.get("es_planificada"))
+        planned_label = evaluation.get("detalle_planificacion") or eval_data.get("detalle_planificacion") or "Pase a producción programado"
 
         sistemas_list = []
         if resumen_ia and isinstance(resumen_ia.get("sistemas"), list):
@@ -1375,6 +1742,8 @@ class ExecutiveMessageGenerator:
             lines.append(f"• Alerta de Subescalación: {disc_motivo} [{disc_gravedad}]")
         if aging_esc:
             lines.append("• Escalado por Envejecimiento: Elevado a P1 tras >=120 min activo sin workaround")
+        elif is_planned:
+            lines.append(f"• Resolución Planificada: {planned_label} (Exenta de escalado por envejecimiento)")
         lines.extend([
             f"• Umbral de Emergencia: {criterio}",
             f"• Alcance y Sistemas: {sistemas_str}",
@@ -1428,7 +1797,9 @@ class ExecutiveMessageGenerator:
                 "• Regla de Oro 3: Confirmada erradicación total del impacto en servicio y negocio",
             ])
         else:
-            if mins is None:
+            if is_planned:
+                estado_escalado = f"🗓️ RESOLUCIÓN PLANIFICADA ({planned_label}): Seguimiento operativo hasta despliegue ({mins_str})"
+            elif mins is None:
                 estado_escalado = "Ventana operativa inicial (<45 min)"
             elif mins >= 120 and prio == "P1":
                 estado_escalado = f"🚨 ALARMA POR ESTANCAMIENTO (>2h): Escalado a Dirección IM-CSO y reevaluación técnica ({mins_str})"
@@ -1721,12 +2092,21 @@ def evaluate_incidents_batch(
         raw_date = item.get("Fecha de envío") or item.get("fecha_envio") or ""
         parsed_date = parse_incident_datetime(raw_date)
         sla_status = compute_emergency_sla_status(parsed_date, reference_time=reference_time)
-        if not es_alta:
-            # Los SLAs de notificación urgente a dirección y escalado telefónico aplican a emergencias (P1/P2)
+        is_zombie = evaluation.get("es_zombi", False)
+        zombie_label = evaluation.get("detalle_zombi", "")
+        is_planned = evaluation.get("es_planificada", False)
+        planned_label = evaluation.get("detalle_planificacion", "")
+        is_local_dept = evaluation.get("es_local_departamental", False)
+
+        if not es_alta or is_zombie:
+            # Los SLAs de notificación urgente a dirección y escalado telefónico aplican a emergencias vivas
             sla_status["sla_primera_notificacion_vencido"] = False
             sla_status["requiere_escalado_telefonico"] = False
             sla_status["escalado_estamentos_superiores"] = False
             sla_status["proxima_ventana_update_minutos"] = None
+        elif is_planned or is_local_dept:
+            sla_status["requiere_escalado_telefonico"] = False
+            sla_status["escalado_estamentos_superiores"] = False
 
         eval_dict = dict(evaluation["evaluacion"])
         eval_dict["fecha_apertura"] = raw_date
@@ -1738,6 +2118,40 @@ def evaluate_incidents_batch(
         evaluation["evaluacion"] = eval_dict
 
         mensajes = msg_generator.generate(item, evaluation, epsilon_data, auto_draft=auto_draft)
+        has_apertura = bool(mensajes.get("apertura", {}).get("completo"))
+
+        is_reopened_val = bool(evaluation.get("es_reapertura") or item.get("es_reapertura"))
+        workaround_val = str(evaluation.get("evaluacion", {}).get("workaround", "No"))
+        disc_delta = evaluation.get("discrepancia_delta", 0)
+        quant_m = evaluation.get("evaluacion", {}).get("metricas_cuantitativas")
+        sedes_cnt = (quant_m or {}).get("sedes")
+        multisite_partial = False
+        if sedes_cnt and sedes_cnt >= 2:
+            desc_lower = (str(item.get("Descripción") or "") + " " + str(epsilon_data.get("problema") if epsilon_data else "")).lower()
+            if any(k in desc_lower for k in ["parcial", "recuperad", "algunas sedes", "resto de sedes"]):
+                multisite_partial = True
+
+        guia_operador = generate_operator_guidance(
+            incident_id=inc_id,
+            priority=prio_sugerida,
+            is_zombie=is_zombie,
+            zombie_detail=zombie_label,
+            is_planned=is_planned,
+            planned_detail=planned_label,
+            is_local_departmental=is_local_dept,
+            mins_open=sla_status["minutos_desde_apertura"],
+            assigned_group=str(item.get("Grupo asignado") or item.get("Grupo Resolutor") or ""),
+            has_exec_msg_apertura=has_apertura,
+            quant_metrics=quant_m,
+            is_reopened=is_reopened_val,
+            is_discrepancy=es_disc,
+            discrepancy_delta=disc_delta,
+            has_workaround=workaround_val,
+            is_multisite_partial=multisite_partial,
+        )
+        eval_dict["guia_operador"] = guia_operador
+        evaluation["evaluacion"] = eval_dict
+
         reporte_emergencia = msg_generator.generate_emergency_4blocks_report(
             ticket=item,
             evaluation=evaluation,
@@ -1783,6 +2197,12 @@ def evaluate_incidents_batch(
             "discrepancia_gravedad": evaluation.get("discrepancia_gravedad", "Sin discrepancia"),
             "discrepancia_motivo": evaluation.get("discrepancia_motivo", ""),
             "aging_escalated": evaluation.get("aging_escalated", False),
+            "es_planificada": is_planned,
+            "detalle_planificacion": planned_label,
+            "es_zombi": is_zombie,
+            "detalle_zombi": zombie_label,
+            "es_local_departamental": is_local_dept,
+            "guia_operador": guia_operador,
             "estatus": item.get("Estatus") or "Asignado",
             "fecha_envio": raw_date,
             "fecha_apertura": raw_date,
@@ -1816,11 +2236,13 @@ def evaluate_incidents_batch(
             )
 
     # Ordenar: primero P1, luego discrepancias, luego P2, luego resto
-    def sort_key(doc: dict[str, Any]) -> tuple[int, int]:
+    def sort_key(doc: dict[str, Any]) -> tuple[int, int, int]:
+        # Tickets zombi van al final de la cola activa para no ensombrecer emergencias vivas
+        zombi_val = 1 if doc.get("es_zombi") else 0
         prio_map = {"P1": 0, "P2": 1, "P3": 2, "P4": 3}
         prio_val = prio_map.get(doc.get("prioridad_sugerida", "P3"), 2)
         disc_val = 0 if doc.get("es_discrepancia") else 1
-        return (prio_val, disc_val)
+        return (zombi_val, prio_val, disc_val)
 
     high_priority_items.sort(key=sort_key)
 
@@ -1852,12 +2274,12 @@ def evaluate_incidents_batch(
     catalog = {
         "_metadata": {
             "type": "high_priority_notifications",
-            "version": "2.5.0",
+            "version": "2.6.0",
             "skills_version": {
-                "it-severity-matrix": "2.6.0",
-                "orange-it-emergency-management": "2.5.0",
-                "incident-reporter": "1.4.0",
-                "incident-executive-notifications": "1.4.0"
+                "it-severity-matrix": "2.7.0",
+                "orange-it-emergency-management": "2.6.0",
+                "incident-reporter": "1.5.0",
+                "incident-executive-notifications": "1.5.0"
             },
             "generated_at": datetime.now(timezone.utc).isoformat(),
             "source_file": source_file_name,
@@ -1882,6 +2304,9 @@ def evaluate_incidents_batch(
                 "discrepancias_delta2_mayor_count": disc_delta2_count,
                 "discrepancias_delta3_critica_count": disc_delta3_count,
                 "aging_escaladas_p1_count": aging_escaladas_p1_count,
+                "tickets_zombi_count": sum(1 for it in high_priority_items if it.get("es_zombi")),
+                "resoluciones_planificadas_count": sum(1 for it in high_priority_items if it.get("es_planificada")),
+                "estancamientos_locales_count": sum(1 for it in high_priority_items if it.get("es_local_departamental")),
                 "sla_primera_notificacion_vencidos_count": sla_vencidos_count,
                 "requiere_escalado_telefonico_count": escalados_tel_count,
                 "workaround_pendientes_cso_count": workaround_pendientes_count,

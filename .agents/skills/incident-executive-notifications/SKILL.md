@@ -7,7 +7,7 @@ description: >-
   subida de un nuevo fichero de incidencias o detección de tickets pendientes, adoptando el rol del agente
   incident-reporter y actualizando data/agent_executive_messages.json y las notificaciones locales del dashboard.
 domain: it-incidents
-version: 1.4.0
+version: 1.5.0
 language: es
 owner: Orange Tech Operations
 metadata:
@@ -17,7 +17,7 @@ metadata:
   last_updated: 2026-11-04
 ---
 
-# Síntesis y Notificaciones Ejecutivas de Incidencias IT (`incident-executive-notifications`) — v1.4
+# Síntesis y Notificaciones Ejecutivas de Incidencias IT (`incident-executive-notifications`) — v1.5
 
 Esta skill orquesta el ciclo de vida de **detección, redacción ejecutiva estructurada y persistencia local** de comunicaciones oficiales para incidencias IT críticas (P1, P2 y discrepancias de prioridad) en el Release Dashboard.
 

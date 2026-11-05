@@ -27,11 +27,29 @@
     .markdown-section pre>code {
       border-radius: 6px;
     }
+    .markdown-section .mermaid {
+      text-align: center;
+      margin: 1.5rem 0;
+      overflow-x: auto;
+    }
+    .markdown-section .mermaid svg {
+      max-width: 100%;
+      height: auto;
+    }
   </style>
 </head>
 <body>
   <div id="app">Cargando documentación...</div>
   <script>
+    // Intercepción inmediata si la URL hash entra por error a dashboards fuera de docs
+    function checkExternalHash() {
+      if (window.location.hash.indexOf('#/dashboards/') === 0) {
+        window.location.replace(window.location.hash.substring(1));
+      }
+    }
+    checkExternalHash();
+    window.addEventListener('hashchange', checkExternalHash);
+
     window.$docsify = {
       name: 'Orange Tech Ops · Docs',
       repo: '',
@@ -39,6 +57,16 @@
       subMaxLevel: 3,
       auto2top: true,
       homepage: 'README.md',
+      markdown: {
+        renderer: {
+          code: function(code, lang) {
+            if (lang === 'mermaid') {
+              return '<div class="mermaid">' + code + '</div>';
+            }
+            return this.origin.code.apply(this, arguments);
+          }
+        }
+      },
       search: {
         maxAge: 86400000,
         paths: 'auto',
@@ -50,7 +78,32 @@
         buttonText: 'Copiar',
         errorText: 'Error',
         successText: 'Copiado'
-      }
+      },
+      plugins: [
+        function(hook, vm) {
+          hook.doneEach(function() {
+            var links = document.querySelectorAll('a[href*="/dashboards/"]');
+            for (var i = 0; i < links.length; i++) {
+              var a = links[i];
+              var href = a.getAttribute('href');
+              if (href && href.indexOf('#/dashboards/') === 0) {
+                a.setAttribute('href', href.substring(1));
+              }
+              a.setAttribute('target', '_blank');
+              a.setAttribute('rel', 'noopener noreferrer');
+              a.setAttribute('data-ignore', 'true');
+            }
+
+            if (window.mermaid) {
+              window.mermaid.run({
+                querySelector: '.mermaid'
+              }).catch(function(err) {
+                console.warn('Mermaid render error:', err);
+              });
+            }
+          });
+        }
+      ]
     };
   </script>
   <script src="//cdn.jsdelivr.net/npm/docsify@4/lib/docsify.min.js"></script>
@@ -60,6 +113,30 @@
   <script src="//cdn.jsdelivr.net/npm/prismjs@1/components/prism-bash.min.js"></script>
   <script src="//cdn.jsdelivr.net/npm/prismjs@1/components/prism-json.min.js"></script>
   <script src="//cdn.jsdelivr.net/npm/prismjs@1/components/prism-powershell.min.js"></script>
+
+  <!-- Integración de Mermaid para renderizado dinámico de diagramas de flujo y secuencias -->
+  <script type="module">
+    import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs";
+    mermaid.initialize({
+      startOnLoad: false,
+      securityLevel: 'loose',
+      theme: 'neutral',
+      themeVariables: {
+        primaryColor: '#fff5ec',
+        primaryTextColor: '#1a1a1a',
+        primaryBorderColor: '#ff7900',
+        lineColor: '#ff7900',
+        secondaryColor: '#fbfbfb',
+        tertiaryColor: '#ffffff'
+      }
+    });
+    window.mermaid = mermaid;
+    if (document.querySelector('.mermaid')) {
+      mermaid.run({ querySelector: '.mermaid' }).catch(function(e) {
+        console.warn('Mermaid initial run error:', e);
+      });
+    }
+  </script>
 </body>
 </html>
 
