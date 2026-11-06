@@ -422,6 +422,12 @@ if (-not $SkipBuild) {
             Write-Ok "Mensajes ejecutivos de agente empaquetados en el artefacto runtime"
         }
 
+        if (Test-Path "$ProjectRoot\data\scheduled_changes_pap.json") {
+            $DataRootStaging = Join-Path $StagingDir "data"
+            Copy-Item "$ProjectRoot\data\scheduled_changes_pap.json" -Destination $DataRootStaging
+            Write-Ok "Catálogo PaP (scheduled_changes_pap.json) empaquetado en el artefacto runtime"
+        }
+
         # 7. Generar archivo tarball comprimido
         if (Test-Path $TarballFullPath) { Remove-Item $TarballFullPath -Force }
 
@@ -591,6 +597,10 @@ fi
 if [ -f "`$NEW_RELEASE_DIR/data/agent_executive_messages.json" ]; then
     echo "--> [Remoto] Sincronizando mensajes ejecutivos a `$STORAGE_BASE/agent_executive_messages.json..."
     cp -f "`$NEW_RELEASE_DIR/data/agent_executive_messages.json" "`$STORAGE_BASE/agent_executive_messages.json" 2>/dev/null || true
+fi
+if [ -f "`$NEW_RELEASE_DIR/data/scheduled_changes_pap.json" ]; then
+    echo "--> [Remoto] Sincronizando catálogo PaP a `$STORAGE_BASE/scheduled_changes_pap.json..."
+    cp -f "`$NEW_RELEASE_DIR/data/scheduled_changes_pap.json" "`$STORAGE_BASE/scheduled_changes_pap.json" 2>/dev/null || true
 fi
 rm -rf "`$NEW_RELEASE_DIR/data"
 
