@@ -27,6 +27,7 @@
     * [E7: Workarounds y Candado 🔒](02-gestion-emergencias/escenarios/escenario-7-workaround-autorizado.md)
     * [E8: Reapertura Activa](02-gestion-emergencias/escenarios/escenario-8-reapertura-activa.md)
   * [Notificaciones Ejecutivas](02-gestion-emergencias/notificaciones-ejecutivas.md)
+  * [CLI Epsilon Resumen IA](02-gestion-emergencias/epsilon-resumen-ia-cli.md)
   * [Catálogo de Alta Prioridad](02-gestion-emergencias/catalogo-alta-prioridad.md)
 
 * **03. Arquitectura y Datos**

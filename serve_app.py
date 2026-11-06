@@ -83,6 +83,14 @@ if not cso_is_file:
         ExecutiveReportBuilder = None
         ConfluenceParser = None
 
+# Epsilon Resumen IA Service
+try:
+    sys.path.insert(0, str(PROJECT_ROOT / 'converters' / 'src'))
+    from epsilon_service import generate_epsilon_summary, find_incident_in_local_dumps
+except (ImportError, Exception):
+    generate_epsilon_summary = None
+    find_incident_in_local_dumps = None
+
 REPORTS_PATH_PREFIX = '/api/reports/postmortem/'
 EXECUTIVE_REPORT_PREFIX = '/api/reports/executive-incident'
 EXECUTIVE_REPORT_V1_PREFIX = '/api/v1/reports/executive-incident'
@@ -185,9 +193,15 @@ class CustomHTTPHandler(http.server.SimpleHTTPRequestHandler):
     def proxy_to_epsilon_ia(self, codigo):
         import ssl
         import time
+        from datetime import datetime
 
-        no_cache = 'no-cache' in self.headers.get('Cache-Control', '')
+        parsed_url = urllib.parse.urlparse(self.path)
+        q_params = urllib.parse.parse_qs(parsed_url.query)
+        force = 'force' in q_params or 'refresh' in q_params or (q_params.get('force', [''])[0].lower() in ('1', 'true', 'yes'))
+        is_mock = 'mock' in q_params or (q_params.get('mock', [''])[0].lower() in ('1', 'true', 'yes'))
+        no_cache = force or ('no-cache' in self.headers.get('Cache-Control', ''))
         now = time.time()
+
         if not no_cache and codigo in EPSILON_CACHE:
             cached_time, cached_content, cached_status = EPSILON_CACHE[codigo]
             if now - cached_time < 900:  # 15 minutos de caché
@@ -201,60 +215,115 @@ class CustomHTTPHandler(http.server.SimpleHTTPRequestHandler):
                 self.wfile.write(cached_content)
                 return
 
-        target_url = f"https://soptmc.si.orange.es/MonTMC/api/epsilon/resumenIA/{codigo}"
-        print(f"  Proxy Epsilon IA (cache MISS/LIVE): {target_url}")
-        try:
-            ctx = ssl.create_default_context()
-            ctx.check_hostname = False
-            ctx.verify_mode = ssl.CERT_NONE
-            req = urllib.request.Request(
-                target_url,
-                headers={'User-Agent': 'ReleaseDashboard/1.0', 'Accept': 'application/json'}
-            )
-            with urllib.request.urlopen(req, context=ctx, timeout=15) as resp:
-                content = resp.read()
-                if resp.status == 200:
-                    EPSILON_CACHE[codigo] = (now, content, resp.status)
-                self.send_response(resp.status)
-                self.send_header('Content-Type', 'application/json; charset=utf-8')
-                self.send_header('Access-Control-Allow-Origin', '*')
-                self.send_header('Access-Control-Allow-Methods', 'GET, OPTIONS')
-                self.send_header('Access-Control-Allow-Headers', '*')
-                self.send_header('X-Cache-Status', 'MISS')
-                self.send_header('Content-Length', str(len(content)))
-                self.send_header('Cache-Control', 'no-cache')
-                self.end_headers()
-                self.wfile.write(content)
-        except Exception as e:
-            print(f"  Error proxy Epsilon IA: {e}")
-            # Resiliencia offline: Comprobar si existe snapshot en disco en data/.epsilon_cache
-            disk_cache_file = PROJECT_ROOT / "data" / ".epsilon_cache" / f"{codigo}.json"
-            if disk_cache_file.exists():
-                try:
-                    with open(disk_cache_file, "rb") as f:
-                        disk_content = f.read()
-                    print(f"  Fallback exitoso a caché en disco para Epsilon IA: {codigo}")
-                    EPSILON_CACHE[codigo] = (now, disk_content, 200)
-                    self.send_response(200)
+        # 1. Consulta corporativa en vivo (SOPTMC) salvo si se pide mock directo
+        if not is_mock:
+            target_url = f"https://soptmc.si.orange.es/MonTMC/api/epsilon/resumenIA/{codigo}"
+            print(f"  Proxy Epsilon IA (cache MISS/LIVE): {target_url}")
+            try:
+                ctx = ssl.create_default_context()
+                ctx.check_hostname = False
+                ctx.verify_mode = ssl.CERT_NONE
+                req = urllib.request.Request(
+                    target_url,
+                    headers={'User-Agent': 'ReleaseDashboard/1.0', 'Accept': 'application/json'}
+                )
+                with urllib.request.urlopen(req, context=ctx, timeout=15) as resp:
+                    content = resp.read()
+                    if resp.status == 200:
+                        EPSILON_CACHE[codigo] = (now, content, resp.status)
+                        try:
+                            disk_cache_file = PROJECT_ROOT / "data" / ".epsilon_cache" / f"{codigo}.json"
+                            disk_cache_file.parent.mkdir(parents=True, exist_ok=True)
+                            disk_cache_file.write_bytes(content)
+                        except Exception:
+                            pass
+                    self.send_response(resp.status)
                     self.send_header('Content-Type', 'application/json; charset=utf-8')
                     self.send_header('Access-Control-Allow-Origin', '*')
                     self.send_header('Access-Control-Allow-Methods', 'GET, OPTIONS')
                     self.send_header('Access-Control-Allow-Headers', '*')
-                    self.send_header('X-Cache-Status', 'DISK_FALLBACK')
-                    self.send_header('Content-Length', str(len(disk_content)))
+                    self.send_header('X-Cache-Status', 'MISS')
+                    self.send_header('Content-Length', str(len(content)))
+                    self.send_header('Cache-Control', 'no-cache')
                     self.end_headers()
-                    self.wfile.write(disk_content)
+                    self.wfile.write(content)
                     return
-                except Exception as read_err:
-                    print(f"  Error leyendo disk cache para Epsilon IA: {read_err}")
+            except Exception as e:
+                print(f"  Error proxy Epsilon IA (SOPTMC): {e}")
 
-            err_payload = json.dumps({"success": False, "error": str(e)}, ensure_ascii=False).encode('utf-8')
-            self.send_response(502)
-            self.send_header('Content-Type', 'application/json; charset=utf-8')
-            self.send_header('Access-Control-Allow-Origin', '*')
-            self.send_header('Content-Length', str(len(err_payload)))
-            self.end_headers()
-            self.wfile.write(err_payload)
+        # 2. Resiliencia offline: Snapshot en disco si no se fuerza refresh
+        disk_cache_file = PROJECT_ROOT / "data" / ".epsilon_cache" / f"{codigo}.json"
+        if not no_cache and disk_cache_file.exists():
+            try:
+                with open(disk_cache_file, "rb") as f:
+                    disk_content = f.read()
+                print(f"  Fallback exitoso a caché en disco para Epsilon IA: {codigo}")
+                EPSILON_CACHE[codigo] = (now, disk_content, 200)
+                self.send_response(200)
+                self.send_header('Content-Type', 'application/json; charset=utf-8')
+                self.send_header('Access-Control-Allow-Origin', '*')
+                self.send_header('Access-Control-Allow-Methods', 'GET, OPTIONS')
+                self.send_header('Access-Control-Allow-Headers', '*')
+                self.send_header('X-Cache-Status', 'DISK_FALLBACK')
+                self.send_header('Content-Length', str(len(disk_content)))
+                self.end_headers()
+                self.wfile.write(disk_content)
+                return
+            except Exception as read_err:
+                print(f"  Error leyendo disk cache para Epsilon IA: {read_err}")
+
+        # 3. Fallback inteligente: Buscar datos técnicos en volcados locales y auto-generar con LLM / Mock
+        if find_incident_in_local_dumps and generate_epsilon_summary:
+            found = find_incident_in_local_dumps(codigo, PROJECT_ROOT)
+            if found:
+                incident_item, source_filename, file_mtime = found
+                print(f"  Generando resumen Epsilon IA desde volcado local '{source_filename}' para {codigo}...")
+                try:
+                    is_valid, summary_data, meta = generate_epsilon_summary(
+                        incident_data=incident_item,
+                        mock=is_mock,
+                    )
+                    if is_valid:
+                        is_stale = (now - file_mtime) > 7200  # Volcado de más de 2 horas
+                        summary_data["meta"] = {
+                            "source": "local_dump_fallback",
+                            "dump_file": source_filename,
+                            "dump_timestamp": datetime.fromtimestamp(file_mtime).isoformat(),
+                            "is_stale_warning": is_stale,
+                            "llm_meta": meta,
+                        }
+                        out_bytes = json.dumps(summary_data, ensure_ascii=False, indent=2).encode('utf-8')
+                        try:
+                            disk_cache_file.parent.mkdir(parents=True, exist_ok=True)
+                            disk_cache_file.write_bytes(out_bytes)
+                        except Exception as write_err:
+                            print(f"  Aviso: no se pudo escribir en disk cache: {write_err}")
+
+                        EPSILON_CACHE[codigo] = (now, out_bytes, 200)
+                        self.send_response(200)
+                        self.send_header('Content-Type', 'application/json; charset=utf-8')
+                        self.send_header('Access-Control-Allow-Origin', '*')
+                        self.send_header('Access-Control-Allow-Methods', 'GET, OPTIONS')
+                        self.send_header('Access-Control-Allow-Headers', '*')
+                        self.send_header('X-Cache-Status', 'LOCAL_LLM_GENERATED')
+                        self.send_header('Content-Length', str(len(out_bytes)))
+                        self.end_headers()
+                        self.wfile.write(out_bytes)
+                        return
+                    else:
+                        print(f"  Fallo de validación Pydantic para {codigo}: {summary_data.get('error')}")
+                except Exception as gen_err:
+                    print(f"  Error generando resumen LLM local para {codigo}: {gen_err}")
+
+        # Incidencia no encontrada ni en SOPTMC ni en los volcados locales
+        err_msg = f"Incidencia '{codigo}' no disponible en SOPTMC corporativo ni en los volcados locales"
+        err_payload = json.dumps({"success": False, "error": err_msg}, ensure_ascii=False).encode('utf-8')
+        self.send_response(502)
+        self.send_header('Content-Type', 'application/json; charset=utf-8')
+        self.send_header('Access-Control-Allow-Origin', '*')
+        self.send_header('Content-Length', str(len(err_payload)))
+        self.end_headers()
+        self.wfile.write(err_payload)
 
     def do_OPTIONS(self):
         self.send_response(204)
@@ -287,6 +356,8 @@ class CustomHTTPHandler(http.server.SimpleHTTPRequestHandler):
             self.handle_incident_manager_save_message()
         elif self.path in ('/api/ingestion/retry-ia', '/api/epsilon/retry') or self.path.split('?')[0].rstrip('/') in ('/api/ingestion/retry-ia', '/api/epsilon/retry'):
             self.handle_ingestion_retry_ia()
+        elif self.path in ('/api/epsilon/generate', '/api/epsilon/resumen') or self.path.split('?')[0].rstrip('/') in ('/api/epsilon/generate', '/api/epsilon/resumen'):
+            self.handle_epsilon_generate()
         else:
             self.send_error(404, "Not Found")
 
@@ -383,6 +454,8 @@ class CustomHTTPHandler(http.server.SimpleHTTPRequestHandler):
         print(f"  Conversión OK: {filename} ({elapsed:.3f}s)")
         if result.get('background_tasks'):
             print(f"  [Segundo Plano] Tareas lanzadas: {result.get('background_tasks')}")
+        # Invalidar caché en memoria de Epsilon para evitar que tickets modificados queden obsoletos (LIFECYCLE_STATUS_MISMATCH)
+        EPSILON_CACHE.clear()
         self._send_json(200, result)
 
     def handle_report_download(self):
@@ -850,6 +923,100 @@ class CustomHTTPHandler(http.server.SimpleHTTPRequestHandler):
             })
         except Exception as e:
             self._send_json(500, {'success': False, 'error': str(e)})
+
+    def handle_epsilon_generate(self):
+        """Maneja la generación y validación de resúmenes vía POST /api/epsilon/generate y /api/epsilon/resumen."""
+        try:
+            content_length = int(self.headers.get('Content-Length', 0))
+        except ValueError:
+            content_length = 0
+
+        if content_length <= 0:
+            self._send_json(400, {"success": False, "error": "Cuerpo de solicitud vacío o JSON inválido"})
+            return
+
+        try:
+            raw_body = self.rfile.read(content_length).decode('utf-8')
+            payload = json.loads(raw_body)
+        except Exception as e:
+            self._send_json(400, {"success": False, "error": f"Cuerpo de solicitud vacío o JSON inválido: {e}"})
+            return
+
+        parsed_url = urllib.parse.urlparse(self.path)
+        q_params = urllib.parse.parse_qs(parsed_url.query)
+        is_mock_query = q_params.get('mock', [''])[0].lower() in ('1', 'true', 'yes')
+
+        if isinstance(payload, dict) and "incident_data" in payload:
+            incident_data = payload.get("incident_data", {})
+            is_mock = is_mock_query or bool(payload.get("mock", False))
+            model = payload.get("model")
+            provider = payload.get("provider")
+        elif isinstance(payload, dict):
+            incident_data = payload
+            is_mock = is_mock_query
+            model = None
+            provider = None
+        else:
+            self._send_json(400, {"success": False, "error": "Datos de incidencia insuficientes para generar resumen"})
+            return
+
+        if not isinstance(incident_data, dict) or not incident_data:
+            self._send_json(400, {"success": False, "error": "Datos de incidencia insuficientes para generar resumen"})
+            return
+
+        if not generate_epsilon_summary:
+            self._send_json(500, {"success": False, "error": "Módulo epsilon_service no disponible en el servidor"})
+            return
+
+        try:
+            is_valid, data_or_errors, meta = generate_epsilon_summary(
+                incident_data=incident_data,
+                provider=provider,
+                model=model,
+                mock=is_mock,
+            )
+        except Exception as err:
+            self._send_json(502, {"success": False, "error": f"Fallo en el servicio LLM: {err}"})
+            return
+
+        if not is_valid:
+            self._send_json(422, {
+                "success": False,
+                "error": data_or_errors.get("error", "Error de validación de esquema Epsilon"),
+                "validation_errors": data_or_errors.get("validation_errors", []),
+                "raw_output": data_or_errors.get("raw_output", {}),
+                "meta": meta,
+            })
+            return
+
+        # Si se detecta un código de incidencia, guardar en la caché local
+        code = (
+            incident_data.get("codigo")
+            or incident_data.get("id")
+            or incident_data.get("ID de incidencia")
+            or incident_data.get("id_incidencia")
+            or ""
+        )
+        code_str = str(code).strip().upper()
+        if code_str.startswith("INC"):
+            try:
+                cache_dir = PROJECT_ROOT / "data" / ".epsilon_cache"
+                cache_dir.mkdir(parents=True, exist_ok=True)
+                cache_file = cache_dir / f"{code_str}.json"
+                cache_bytes = json.dumps(data_or_errors, ensure_ascii=False, indent=2).encode('utf-8')
+                cache_file.write_bytes(cache_bytes)
+                EPSILON_CACHE[code_str] = (time.time(), cache_bytes, 200)
+            except Exception as write_err:
+                print(f"  Aviso: no se pudo persistir en .epsilon_cache: {write_err}")
+
+        # Responder 200 OK estructurado con data y meta
+        response_payload = {
+            "success": True,
+            "data": data_or_errors,
+            "meta": meta,
+            **data_or_errors,
+        }
+        self._send_json(200, response_payload)
 
 
     def _send_json(self, status, payload):

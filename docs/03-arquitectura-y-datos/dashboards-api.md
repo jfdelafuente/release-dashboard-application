@@ -205,29 +205,88 @@ Invocada por el cliente [`dashboards/reportes-incidencias/api-client.js`](file:/
 
 ### 5. Inteligencia Artificial (Epsilon / Remedy)
 
-#### `GET /api/epsilon/resumenIA/{codigo}`
-* **Invocado por**: [`dashboards/assets/resumen-ia.js`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/dashboards/assets/resumen-ia.js) al hacer clic sobre cualquier identificador de incidencia o botón "Resumen IA" en el Portal y dashboards.
-* **Propósito**: Actúa como proxy hacia el servicio corporativo de IA de Orange:
-  `https://soptmc.si.orange.es/MonTMC/api/epsilon/resumenIA/{codigo}`
-* **Caché y Resiliencia**:
-  * **En Producción (Nginx)**: Zona `my_cache` con TTL de 15 minutos (`proxy_cache_valid 200 15m;`) y directiva `proxy_cache_use_stale` para responder con contenido en caché si el servicio corporativo no responde.
-  * **En Desarrollo (`serve_app.py`)**: Diccionario en memoria `EPSILON_CACHE` con expiración de 15 minutos (900 segundos).
-* **Estructura de respuesta**:
+#### `POST /api/epsilon/generate` (y alias `/api/epsilon/resumen`)
+* **Propósito**: Genera y valida un resumen técnico de incidencia IT ejecutando el motor oficial de Epsilon IA con validación estricta Pydantic (`converters/src/epsilon_service.py`), integrando soporte con Claude Sonnet (Anthropic LiteLLM MasOrange), OpenAI y Mock offline.
+* **Formatos de Entrada Soportados**:
+  * **Formato A (Directo)**: Objeto JSON íntegro con los campos Remedy de la incidencia (`ID de incidencia`, `Descripción`, `Estatus`, `Prioridad`, etc.). Admite parámetro de consulta `?mock=true`.
+  * **Formato B (Wrapper)**:
+    ```json
+    {
+      "incident_data": {
+        "ID de incidencia": "INC000004174655",
+        "Descripción": "Fallo de sincronización en Ficha de Cliente...",
+        "Estatus": "Asignado",
+        "Prioridad": "Crítica"
+      },
+      "mock": false,
+      "provider": "anthropic",
+      "model": "claude-sonnet-4-5"
+    }
+    ```
+* **Códigos de Respuesta HTTP**:
+  * `200 OK`: Resumen generado y validado con éxito. Si incluye código con prefijo `INC`, se persiste automáticamente en `data/.epsilon_cache/{codigo}.json` y en memoria (`EPSILON_CACHE`).
+  * `400 Bad Request`: Cuerpo de solicitud vacío, JSON inválido o datos de incidencia insuficientes.
+  * `422 Unprocessable Entity`: La respuesta del LLM no superó el contrato estricto de Pydantic (ej. `problema` excede 40 palabras o violación de orden cronológico). Devuelve `validation_errors` detallados.
+  * `502 Bad Gateway`: Error de conectividad, autenticación o respuesta 4xx/5xx del proveedor LLM o proxy corporativo.
+* **Estructura de Respuesta (200 OK)**:
   ```json
   {
-    "titulo": "Degradación en pasarela de autenticación",
-    "problema": "Incremento de errores 504 en el servicio de tokens...",
-    "impacto": "Afectación al 12% de los clientes en app móvil...",
-    "solucion": "Reinicio del pool de conexiones y failover a secundario...",
-    "bloqueos": ["Pendiente de parche por parte del proveedor"],
-    "siguienteAccion": "Monitorización reforzada durante las próximas 24h",
-    "sistemas": ["SSO", "BFF", "APIGW"],
-    "hitos": [
-      { "fecha": "02/01/2026 08:15", "descripcion": "Detección de alarmas" },
-      { "fecha": "02/01/2026 08:45", "descripcion": "Servicio restablecido" }
-    ]
+    "success": true,
+    "titulo": "Ficha de Cliente - Error en sincronización de teléfono",
+    "estadoActual": "Asignado",
+    "problema": "El módulo de recogidas de equipamiento fijo no propaga el teléfono de contacto modificado hacia PS y Siebel 8 debido a un fallo en MDG.",
+    "impacto": "Medio. Afecta a la logística inversa de routers en bajas de fibra, con riesgo de envíos fallidos al transportista. Sin método alternativo disponible.",
+    "solucion": "Bug identificado en microservicio MDG. Parche comprometido para despliegue en ventana release del 12/11/2026.",
+    "sistemas": ["Ficha de Cliente", "Siebel 8", "MDG", "PS"],
+    "hitosTecnicos": [
+      "[02/11/2026 09:15:00]: Detección de inconsistencia entre Ficha de Cliente y sistemas downstream.",
+      "[03/11/2026 14:00:00]: N2 aísla el error en el microservicio MDG y traslada requerimiento a desarrollo."
+    ],
+    "bloqueos": [
+      "[Ventana Release]: Dependencia de entrega y despliegue de parche por proveedor planificado para release del 12/11/2026."
+    ],
+    "siguienteAccion": "Despliegue y validación del parche en ventana del 12/11/2026.",
+    "meta": {
+      "provider": "anthropic",
+      "model": "claude-sonnet-4-5",
+      "mock": false,
+      "tokens": 620,
+      "elapsed_seconds": 1.45,
+      "timestamp": "2026-11-06T12:00:00Z"
+    }
   }
   ```
+
+---
+
+#### `GET /api/epsilon/resumenIA/{codigo}`
+* **Invocado por**: [`dashboards/assets/resumen-ia.js`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/dashboards/assets/resumen-ia.js) al hacer clic sobre cualquier identificador de incidencia o botón "Resumen IA" en el Portal y dashboards.
+* **Propósito**: Actúa como proxy inteligente hacia el servicio corporativo de IA de Orange:
+  `https://soptmc.si.orange.es/MonTMC/api/epsilon/resumenIA/{codigo}`
+* **Fallback Inteligente y Detección de Obsolescencia (`LIFECYCLE_STATUS_MISMATCH`)**:
+  1. Si se solicita `?force=true` o se recibe cabecera `Cache-Control: no-cache`, se omite la caché local y se fuerza la consulta en vivo.
+  2. Si está en memoria (`EPSILON_CACHE`) o disco (`data/.epsilon_cache/{codigo}.json`), se sirve inmediatamente con cabecera `X-Cache-Status: MEMORY_HIT` o `DISK_HIT`.
+  3. Se intenta consultar el servicio corporativo SOPTMC. Si responde `200 OK`, se cachea y se devuelve.
+  4. Si SOPTMC falla o no está disponible, el servidor busca automáticamente la incidencia en los volcados locales más recientes (`data/output/*-massive.json` y `*-postmortem.json`).
+  5. Si se localizan los datos, genera el resumen al vuelo con el motor local (`converters/src/epsilon_service.py`), añade advertencia de frescura (`is_stale_warning: true` si el volcado tiene más de 2 horas) y devuelve `200 OK` con metadatos:
+     ```json
+     {
+       "success": true,
+       "meta": {
+         "source": "local_dump_fallback",
+         "dump_file": "2026-10-30-massive.json",
+         "dump_timestamp": "2026-10-30T10:15:00Z",
+         "is_stale_warning": true,
+         "stale_reason": "El resumen se ha generado a partir de un volcado local con 72.5 horas de antigüedad; el estado en Remedy en vivo podría diferir."
+       }
+     }
+     ```
+  6. Si no existe en SOPTMC ni en los volcados locales, responde `502 Bad Gateway`.
+* **Invalidación de Caché**:
+  * Al procesar una subida exitosa de CSV en `POST /api/upload`, se invoca automáticamente `EPSILON_CACHE.clear()` para garantizar que los tickets modificados o reabiertos en el nuevo CSV no sirvan datos cacheados obsoletos.
+* **Topología de Ejecución**:
+  * **Desarrollo**: Servido directamente por `serve_app.py` en el puerto `:8080`.
+  * **Producción (VPS)**: Proxificado por Nginx en `:8081` (`location /api/epsilon/`) hacia el backend FastAPI en `:8000` montando el router oficial [`converters/src/fastapi_epsilon_router.py`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/converters/src/fastapi_epsilon_router.py).
 
 ---
 

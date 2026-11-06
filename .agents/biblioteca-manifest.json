@@ -1,6 +1,6 @@
 {
     "sourceRepository":  "C:\\Users\\jose.delafuente\\Claude\\Projects\\biblioteca-agentes",
-    "updatedAt":  "2026-11-04T16:17:13+01:00",
+    "updatedAt":  "2026-11-06T09:08:03+01:00",
     "installedAgents":  [
                             {
                                 "name":  "incident-analyzer",
@@ -56,6 +56,18 @@
                                                "incident-executive-notifications",
                                                "postmortem-pir-workflow"
                                            ]
+                            },
+                            {
+                                "name":  "spec-build-orchestrator",
+                                "domain":  "software-engineering",
+                                "version":  "1.0.0",
+                                "relPath":  "agents/software-engineering/spec-build-orchestrator.md",
+                                "description":  "Orquesta el ciclo completo de Desarrollo Guiado por Especificación (Spec-Driven Development): entrevista al usuario una pregunta a la vez para definir la especificación formal en specs/ (/spec), construye estrictamente lo especificado sin añadir funciones extra (/build) y audita requisito por requisito contra la especificación emitiendo veredicto APROBADO o NO APROBADO (/spec-review).",
+                                "skills":  [
+                                               "spec-definition-workflow",
+                                               "spec-build-workflow",
+                                               "spec-review-workflow"
+                                           ]
                             }
                         ],
     "installedSkills":  [
@@ -64,6 +76,9 @@
                             "postmortem-pir-workflow",
                             "incident-markdown-workflow",
                             "incident-report-pipeline",
-                            "incident-executive-notifications"
+                            "incident-executive-notifications",
+                            "spec-definition-workflow",
+                            "spec-build-workflow",
+                            "spec-review-workflow"
                         ]
 }

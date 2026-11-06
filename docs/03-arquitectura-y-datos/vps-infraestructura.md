@@ -190,14 +190,15 @@ http {
             autoindex off;
         }
 
-        # Proxy hacia servicio Epsilon IA (con caché compartida resiliente)
+        # Proxy hacia FastAPI backend para endpoints de Epsilon IA (generación LLM + fallback local)
         location /api/epsilon/ {
-            proxy_pass https://soptmc.si.orange.es/MonTMC/api/epsilon/;
-            proxy_ssl_verify off;
-            proxy_ssl_server_name on;
-            proxy_set_header Host soptmc.si.orange.es;
+            proxy_pass http://fastapi_backend/api/epsilon/;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
             proxy_connect_timeout 15s;
-            proxy_read_timeout 30s;
+            proxy_read_timeout 60s;
             proxy_cache my_cache;
             proxy_cache_valid 200 15m;
             proxy_cache_valid 404 1m;
@@ -205,6 +206,7 @@ http {
             proxy_cache_lock on;
             proxy_cache_lock_timeout 5s;
             proxy_ignore_headers Cache-Control Expires Set-Cookie;
+            proxy_cache_bypass $http_cache_control;
             add_header X-Cache-Status $upstream_cache_status always;
         }
 

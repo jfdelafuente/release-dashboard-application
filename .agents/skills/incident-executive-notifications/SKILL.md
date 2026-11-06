@@ -7,7 +7,7 @@ description: >-
   subida de un nuevo fichero de incidencias o detección de tickets pendientes, adoptando el rol del agente
   incident-reporter y actualizando data/agent_executive_messages.json y las notificaciones locales del dashboard.
 domain: it-incidents
-version: 1.5.0
+version: 1.4.0
 language: es
 owner: Orange Tech Operations
 metadata:
@@ -17,11 +17,11 @@ metadata:
   last_updated: 2026-11-04
 ---
 
-# Síntesis y Notificaciones Ejecutivas de Incidencias IT (`incident-executive-notifications`) — v1.5
+# Síntesis y Notificaciones Ejecutivas de Incidencias IT (`incident-executive-notifications`) — v1.4
 
 Esta skill orquesta el ciclo de vida de **detección, redacción ejecutiva estructurada y persistencia local** de comunicaciones oficiales para incidencias IT críticas (P1, P2 y discrepancias de prioridad) en el Release Dashboard.
 
-Garantiza que **ninguna comunicación dependa de plantillas genéricas mecánicas (Vía A descartada)** y que cada ticket cuente con una redacción personalizada elaborada por el agente oficial [`incident-reporter`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/agents/it-incidents/incident-reporter.md).
+Garantiza que **ninguna comunicación dependa de plantillas genéricas mecánicas (Vía A descartada)** y que cada ticket cuente con una redacción personalizada elaborada por el agente oficial [`incident-reporter`](../../../agents/it-incidents/incident-reporter.md).
 
 > [!IMPORTANT]
 > **Aislamiento de Entorno y Límite de Seguridad (Local vs Producción):**  
@@ -126,7 +126,7 @@ python .agents/skills/incident-executive-notifications/scripts/scan_pending_inci
 ---
 
 ### Paso 3: Redacción adoptando el rol `incident-reporter`
-Para cada ticket pendiente, genera los mensajes siguiendo las reglas de [`agents/it-incidents/incident-reporter.md`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/agents/it-incidents/incident-reporter.md):
+Para cada ticket pendiente, genera los mensajes siguiendo las reglas de [`agents/it-incidents/incident-reporter.md`](../../../agents/it-incidents/incident-reporter.md):
 
 #### Reglas Obligatorias:
 1. **Dos niveles estricto:**

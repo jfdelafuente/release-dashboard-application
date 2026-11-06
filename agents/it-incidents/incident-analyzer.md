@@ -139,23 +139,3 @@ Falta confirmar si existe una contingencia diaria para corregir las altas genera
 
 **Nivel de confianza**
 Alto, porque el reporte aporta trazabilidad del ticket, fechas clave, volumetría de cuentas y facturas afectadas, evento desencadenante confirmado y acciones tanto ejecutadas como planificadas.
-
-**Respuesta:**
-
-**Impacto**
-La incidencia INC000004156870 se encuentra en progreso en tercer nivel de soporte (SL3) y afecta al proceso de alta de cuentas y facturación de Jazztel en el sistema Kenan desde el 05/10, habiendo sido detectada el 15/10. El fallo ha provocado que 560 cuentas se crearan con el idioma euskera en lugar de castellano y que unas 570 facturas se emitieran en dicho idioma, generando un alto impacto actual en el Call Center y manteniendo el riesgo de nuevas altas afectadas hasta la subida del parche definitivo.
-
-**Causa**
-Causa no confirmada en su detalle técnico de bajo nivel. La migración a OCI se identifica como el evento desencadenante que alteró el comportamiento del sistema a partir del 05/10. Como inferencia basada en el alcance del parche de Desarrollo, la condición funcional subyacente consiste en que el desplegable de idioma perdió el castellano como opción predeterminada tras la migración, provocando que las nuevas cuentas registraran euskera por defecto.
-
-**Solución aplicada**
-Se ha ejecutado una corrección en el sistema de facturación Kenan para regularizar aproximadamente 570 facturas que ya habían sido emitidas con el idioma incorrecto.
-
-**Solución recomendada**
-Como acción planificada por el equipo de Desarrollo, está previsto desplegar el 22/10/2026 un parche definitivo que fijará el castellano como opción predeterminada en el desplegable. Adicionalmente, se recomienda auditar y corregir en Kenan las nuevas cuentas creadas entre el 15/10 y la fecha efectiva de despliegue del parche, así como verificar si las facturas ya regularizadas requieren regeneración del documento visible para los clientes.
-
-**Datos faltantes**
-Falta confirmar si existe una contingencia diaria para corregir las altas generadas entre el 15/10 y el 22/10/2026, qué aplicación frontal aloja el desplegable afectado, si la corrección en Kenan actualiza el PDF ya emitido al cliente y el volumen concreto de llamadas registradas en el Call Center.
-
-**Nivel de confianza**
-Alto, porque el reporte aporta trazabilidad del ticket, fechas clave, volumetría de cuentas y facturas afectadas, evento desencadenante confirmado y acciones tanto ejecutadas como planificadas.
