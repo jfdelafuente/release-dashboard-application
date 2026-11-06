@@ -56,12 +56,12 @@ def load_project_env() -> None:
             try:
                 with open(env_path, "r", encoding="utf-8") as f:
                     for line in f:
-                        line = line.strip()
+                        line = line.strip().strip("\r\n")
                         if not line or line.startswith("#") or "=" not in line:
                             continue
                         k, v = line.split("=", 1)
-                        k = k.strip()
-                        v = v.strip().strip("'\"")
+                        k = k.strip().strip("\r\n \t")
+                        v = v.strip().strip("'\"").strip("\r\n \t")
                         if k and k not in os.environ:
                             os.environ[k] = v
             except Exception:
@@ -761,7 +761,8 @@ def _call_anthropic_native_http(
     import urllib.error
     import urllib.request
 
-    base = (base_url or os.environ.get("ANTHROPIC_BASE_URL") or "https://api.anthropic.com").rstrip("/")
+    raw_base = base_url or os.environ.get("ANTHROPIC_BASE_URL") or "https://api.anthropic.com"
+    base = raw_base.strip("\r\n \t").rstrip("/")
     if base.endswith("/messages"):
         endpoint = base
     elif base.endswith("/v1"):
@@ -769,9 +770,10 @@ def _call_anthropic_native_http(
     else:
         endpoint = f"{base}/v1/messages"
 
+    clean_token = token.strip("\r\n \t")
     headers = {
-        "x-api-key": token,
-        "Authorization": f"Bearer {token}",
+        "x-api-key": clean_token,
+        "Authorization": f"Bearer {clean_token}",
         "anthropic-version": "2023-06-01",
         "content-type": "application/json",
     }
