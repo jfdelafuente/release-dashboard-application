@@ -92,7 +92,6 @@ check_endpoint "Incidencias Masivas" "http://localhost:8081/dashboards/massive-i
 check_endpoint "Postmortem" "http://localhost:8081/dashboards/postmortem/"
 check_endpoint "Release KPIs" "http://localhost:8081/dashboards/release-kpis/"
 check_endpoint "Reportes Incidencias" "http://localhost:8081/dashboards/reportes-incidencias/"
-check_endpoint "Monitor Incident Manager" "http://localhost:8081/dashboards/incident-manager-monitor/"
 check_endpoint "Consola Triaje Emergencias" "http://localhost:8081/dashboards/emergency-triage-console/"
 check_endpoint "Auditoría de Ingesta" "http://localhost:8081/data/output/ingestion_audit_summary.json"
 check_endpoint "Catálogo de Agentes IA" "http://localhost:8081/dashboards/agents-catalog/"

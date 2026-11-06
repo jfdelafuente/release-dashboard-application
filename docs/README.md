@@ -36,7 +36,7 @@ flowchart TD
 
 ### [02. Gestión de Emergencias IT y Triaje](02-gestion-emergencias/README.md)
 * **[Triaje ITIL Automatizado](02-gestion-emergencias/triaje-itil-automatizado.md)**: Motor algorítmico determinista (`SeverityEvaluator`), 10 procesos críticos, cálculo de severidad SL1-SL4, reglas de oro y detección de discrepancias N1.
-* **[Manual del Operador en Consola Operativa](02-gestion-emergencias/manual-consola-operativa.md)**: Manual táctico para el Incident Manager en `/dashboards/incident-manager-monitor/`: acciones en 1 clic (Remedy/War Room/IA), cronómetros anti-drift y cockpit de crisis.
+* **[Manual del Operador en Consola Operativa](02-gestion-emergencias/manual-consola-operativa.md)**: Manual táctico para el Incident Manager en `/dashboards/emergency-triage-console/`: acciones en 1 clic (Remedy/War Room/IA), cronómetros anti-drift y cockpit de crisis.
 * **[Flujo de Gestión de Incidencias](02-gestion-emergencias/flujo-gestion-incidencias.md)**: Ciclo de vida integral, estados operativos, escalados telefónicos (45m/105m) y gobernanza de workarounds autorizados por IM-CSO.
 * **[Notificaciones Ejecutivas Oficiales](02-gestion-emergencias/notificaciones-ejecutivas.md)**: Protocolo oficial para Dirección mediante el agente `incident-reporter` ($\le 90$ palabras completo, $\le 30$ palabras breve) y actualización segura del catálogo.
 * **[Especificación del Catálogo de Alta Prioridad](02-gestion-emergencias/catalogo-alta-prioridad.md)**: Detalle del contrato JSON `high_priority_notifications.json` (`_metadata` + `data`), campos y reglas de validación.
@@ -72,7 +72,7 @@ flowchart TD
 | Dashboard | Ruta Relativa | Puerto Local / Prod | Propósito Principal |
 | :--- | :--- | :--- | :--- |
 | **Portal General Hub** | `/dashboards/portal/` | `:8080` / `:8081` | Centro neurálgico con buscador global, métricas agregadas y modal de Epsilon IA. |
-| **Consola Emergencias IT (IM)** | `/dashboards/incident-manager-monitor/` | `:8080` / `:8081` | Consola operativa táctica aislada para el Incident Manager: triaje cuantitativo, ciclo de 4 estados, herramientas 1-clic y gobernanza de crisis. |
+| **Consola Emergencias IT (IM)** | `/dashboards/emergency-triage-console/` | `:8080` / `:8081` | Consola operativa táctica aislada para el Incident Manager: triaje cuantitativo, ciclo de 4 estados, herramientas 1-clic y gobernanza de crisis. |
 | **Incidencias Masivas** | `/dashboards/massive-incidents/` | `:8080` / `:8081` | Análisis temporal y evolutivo con gráficos Plotly y filtros avanzados. |
 | **Postmortem / Despliegues** | `/dashboards/postmortem/` | `:8080` / `:8081` | Seguimiento de incidencias por release (PAP/MESA), tiempos de resolución y exportación. |
 | **Release KPIs (Histórico)** | `/dashboards/release-kpis/` | `:8080` / `:8081` | Serie histórica de KPIs por release y análisis de tendencias. |

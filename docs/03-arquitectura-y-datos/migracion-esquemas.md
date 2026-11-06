@@ -205,7 +205,7 @@ Cuando un CSV contiene filas que violan el esquema o tienen fechas corruptas, la
 
 ## 🔗 Documentación Relacionada
 
-- [**`DASHBOARDS-API.md`**](DASHBOARDS-API.md): Especificación de APIs, rutas y persistencia de ficheros.
+- [**`DASHBOARDS-API.md`**](./dashboards-api.md): Especificación de APIs, rutas y persistencia de ficheros.
 - [**`PROJECT-STRUCTURE.md`**](estructura-proyecto.md): Estructura del repositorio y desacoplamiento de `/infocodes/var/storage/`.
 - [**`CI.md`**](../06-operaciones-y-gobernanza/integracion-continua-ci.md): Pipeline de Integración Continua y validación de cobertura.
 - [**`DEVELOPMENT.md`**](../01-primeros-pasos/desarrollo.md): Entorno de desarrollo local y pruebas con pytest.

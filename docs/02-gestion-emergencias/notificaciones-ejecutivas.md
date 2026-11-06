@@ -230,8 +230,8 @@ Verás que las incidencias que antes figuraban en estado `"pendiente"` ahora mue
 Para facilitar la supervisión del estado de las redacciones de agente y la gobernanza en tiempo real de situaciones de crisis según el procedimiento corporativo de **Orange España**, el sistema cuenta con la **Consola Operativa de Emergencias IT del Incident Manager** (*Cockpit IM*).
 
 ### Acceso a la Consola
-* **Entorno de Desarrollo Local:** [http://localhost:8080/dashboards/incident-manager-monitor/](http://localhost:8080/dashboards/incident-manager-monitor/)
-* **Entorno de Producción VPS:** [http://infocodes.si.orange.es:8081/dashboards/incident-manager-monitor/](http://infocodes.si.orange.es:8081/dashboards/incident-manager-monitor/)
+* **Entorno de Desarrollo Local:** [http://localhost:8080/dashboards/emergency-triage-console/](http://localhost:8080/dashboards/emergency-triage-console/)
+* **Entorno de Producción VPS:** [http://infocodes.si.orange.es:8081/dashboards/emergency-triage-console/](http://infocodes.si.orange.es:8081/dashboards/emergency-triage-console/)
 
 > [!NOTE]
 > **Aislamiento Estricto:** Esta herramienta es de uso exclusivo para el Incident Manager y el equipo de guardia operativa. **No aparece enlazada en el portal general público** (`/dashboards/portal/` o `/dashboards/index.html`) para mantener aislada la gestión de crisis IT. Su acceso se realiza mediante URL directa o marcadores de navegador.

@@ -82,9 +82,9 @@ Todo operador al frente de la Consola debe regirse por los cuatro principios inq
 ### Direcciones de Acceso
 
 * **Entorno de Producción (VPS Corporativo):**  
-  [http://infocodes.si.orange.es:8081/dashboards/incident-manager-monitor/](http://infocodes.si.orange.es:8081/dashboards/incident-manager-monitor/)
+  [http://infocodes.si.orange.es:8081/dashboards/emergency-triage-console/](http://infocodes.si.orange.es:8081/dashboards/emergency-triage-console/)
 * **Entorno de Desarrollo y Redacción Local:**  
-  [http://localhost:8080/dashboards/incident-manager-monitor/](http://localhost:8080/dashboards/incident-manager-monitor/)
+  [http://localhost:8080/dashboards/emergency-triage-console/](http://localhost:8080/dashboards/emergency-triage-console/)
 
 ### Política de Aislamiento Estricto
 

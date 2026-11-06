@@ -8,7 +8,7 @@ Guía procedimental de actuación para incidencias que disponen de una solución
 * **Canal Prescrito:** Mesa de Cambios (CAB) / Equipo de Despliegues / Release Manager
 * **SLA de 1ª Acción:** Menos de 30 minutos
 * **Exención de Aging:** **ACTIVA** (El paso del tiempo $> 120\text{ min}$ NO escala el ticket a P1)
-* **Protocolo General:** [Protocolo Operativo IM-CSO Post-Triaje](02-gestion-emergencias/protocolo-im-cso-escenarios-triaje.md)
+* **Protocolo General:** [Protocolo Operativo IM-CSO Post-Triaje](../protocolo-im-cso-escenarios-triaje.md)
 
 ---
 
@@ -103,8 +103,7 @@ Se notifica al Incident Manager para aplicar la exención de aging (RESOLUCION_P
 ## 🔗 6. Enlaces y Recursos Rápidos
 
 * [Consola de Triaje y Emergencias IT ↗](/dashboards/emergency-triage-console/ ':ignore :target=_blank')
-* [Cockpit del Incident Manager ↗](/dashboards/incident-manager-monitor/ ':ignore :target=_blank')
-* [Protocolo Completo de Gobernanza IM-CSO](02-gestion-emergencias/protocolo-im-cso-escenarios-triaje.md)
-* [Escenario 3: Ticket Zombi Remedy](02-gestion-emergencias/escenarios/escenario-3-ticket-zombi-remedy.md)
-* [Escenario 7: Soluciones de Contorno y Workaround 🔒](02-gestion-emergencias/escenarios/escenario-7-workaround-autorizado.md)
+* [Protocolo Completo de Gobernanza IM-CSO](../protocolo-im-cso-escenarios-triaje.md)
+* [Escenario 3: Ticket Zombi Remedy](./escenario-3-ticket-zombi-remedy.md)
+* [Escenario 7: Soluciones de Contorno y Workaround 🔒](./escenario-7-workaround-autorizado.md)
 

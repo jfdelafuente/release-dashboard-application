@@ -987,6 +987,136 @@
         "conteo_palabras_completo": 64,
         "conteo_palabras_breve": 18
       }
+    },
+    "INC000004175558": {
+      "apertura": {
+        "completo": "Se declara incidencia crítica P1 (INC000004175558) por caída de la red de datos de acceso en Jazzplat Guadalajara, afectando al circuito externo LAP00892819. La contingencia interrumpe los servicios de telefonía y datos con pérdida de acceso a los aplicativos Altitude y Avaya, impactando al 100% de los operadores del centro de atención al cliente. Los equipos de soporte de red, DNF y Oceane intervienen para aislar la avería en el enlace de telecomunicaciones. Próxima actualización en 30 minutos.",
+        "breve": "Apertura P1 (INC000004175558): Caída de red y circuito LAP00892819 bloquea 100% de operadores en Jazzplat Guadalajara sin telefonía ni Altitude. DNF y Oceane diagnosticando.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 75,
+        "conteo_palabras_breve": 24
+      },
+      "seguimiento": {
+        "completo": "Seguimiento de la incidencia P1 (INC000004175558) en Jazzplat Guadalajara. Las revisiones técnicas confirman inestabilidad tras registrarse cortes de conectividad adicionales. Los especialistas de red han analizado las tablas de rutas BGP en los equipos de conmutación Juniper, detectando una anomalía en el anillo de transporte de Giganet. Se ha escalado de forma prioritaria al equipo especializado de transmisión y a DNF/Oceane para restablecer la redundancia del circuito externo. Se mantiene monitorización continua de la sede.",
+        "breve": "Seguimiento P1 (INC000004175558): Identificada afectación en anillo Giganet y BGP Juniper; transmisión y DNF intervienen circuito LAP00892819 de Guadalajara.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 73,
+        "conteo_palabras_breve": 18
+      },
+      "cierre": {
+        "completo": "Queda resuelta la incidencia crítica P1 (INC000004175558) en Jazzplat Guadalajara. Restablecida la estabilidad en el anillo de transporte Giganet y normalizado el enrutamiento BGP en la electrónica de red Juniper por parte de los equipos de transmisión y DNF. El circuito LAP00892819 cursa tráfico nominal, recuperándose plenamente los servicios de datos y voz para todos los operadores de atención al cliente en la sede. Las plataformas Altitude y Avaya operan sin cortes.",
+        "breve": "Cierre P1 (INC000004175558): Normalizado circuito LAP00892819 y anillo Giganet. 100% de operadores de Jazzplat Guadalajara recuperan telefonía Altitude y Avaya.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 72,
+        "conteo_palabras_breve": 19
+      }
+    },
+    "INC000004175986": {
+      "apertura": {
+        "completo": "Se declara incidencia de alta prioridad P2 (INC000004175986) por error funcional en la plataforma TEIDE y Siebel 8 en la sede de Teleperformance Medellín. La anomalía impide la ejecución del proceso guiado de Error Cuota VAP cuando surgen incidencias previas en pedidos de clientes, bloqueando la tramitación en Atención Residencial Orange sin alternativa operativa disponible en el frontal. El grupo de soporte resolutor SOP_SMC_TEIDE se encuentra interviniendo las reglas del flujo guiado para subsanar el fallo. Próxima actualización en 60 minutos.",
+        "breve": "Apertura P2 (INC000004175986): Bloqueo en proceso guiado Cuota VAP de TEIDE y Siebel 8 impacta Atención Residencial en Teleperformance Medellín. Soporte SOP_SMC_TEIDE diagnosticando.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 80,
+        "conteo_palabras_breve": 23
+      },
+      "seguimiento": {
+        "completo": "Seguimiento de la incidencia P2 (INC000004175986). El equipo de soporte SOP_SMC_TEIDE ha aislado la inconsistencia en el tratamiento de excepciones de pedidos dentro del módulo de cuotas VAP de Siebel 8. Se ha coordinado la gestión especializada con el soporte de Epsilon para desacoplar el bloqueo de validación y permitir el procesamiento individualizado de los expedientes comerciales afectados. Se monitoriza activamente la liberación del flujo guiado con la supervisión de operaciones de Teleperformance Medellín.",
+        "breve": "Seguimiento P2 (INC000004175986): SOP_SMC_TEIDE y Epsilon coordinan corrección de validaciones de cuotas VAP en Siebel 8 para desbloquear tramitación en Teleperformance Medellín.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 72,
+        "conteo_palabras_breve": 21
+      },
+      "cierre": {
+        "completo": "Queda cerrada la incidencia P2 (INC000004175986) en TEIDE y Siebel 8. Subsanada la lógica de control del proceso guiado de Error Cuota VAP por parte de SOP_SMC_TEIDE, restableciéndose la capacidad de dar de alta cuotas comerciales sobre pedidos con incidencias asociadas. La plataforma opera de forma nominal y los agentes de Atención Residencial en Teleperformance Medellín han tramitado con éxito los casos retenidos sin registrar nuevos fallos funcionales.",
+        "breve": "Cierre P2 (INC000004175986): Corregido proceso guiado de Cuota VAP en TEIDE y Siebel 8; tramitación de Atención Residencial Orange restablecida en Teleperformance Medellín.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 70,
+        "conteo_palabras_breve": 21
+      }
+    },
+    "INC000004176719": {
+      "apertura": {
+        "completo": "Se declara incidencia de alta prioridad P2 (INC000004176719) por cancelaciones automáticas con error 51005 en Siebel IP24 durante la tramitación de pedidos de terminales de alta gama en Foundever Sevilla. La anomalía interrumpe contrataciones de nuevas captaciones VAP y renovaciones tras superar validación inicial, sin procedimiento alternativo para los agentes comerciales. Los equipos resolutores de SOP_SMC_TEIDE y el sistema de Scoring analizan la concurrencia de peticiones crediticias para evitar cancelaciones indebidas. Próxima actualización en 60 minutos.",
+        "breve": "Apertura P2 (INC000004176719): Cancelación automática de pedidos alta gama con error 51005 en Siebel IP24 en Foundever Sevilla. TEIDE y Scoring investigando concurrencia de saldos.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 74,
+        "conteo_palabras_breve": 24
+      },
+      "seguimiento": {
+        "completo": "Seguimiento de la incidencia P2 (INC000004176719). El análisis técnico conjunto entre SOP_SMC_TEIDE y el equipo de Scoring ha confirmado la emisión simultánea de peticiones duplicadas de incremento y disminución de saldo de crédito en pedidos de alta gama. Esta condición genera respuestas inconsistentes y dispara la cancelación preventiva bajo código 51005. Se trabaja en la depuración del conector de Siebel para garantizar la secuencialidad estricta de las llamadas de comprobación crediticia.",
+        "breve": "Seguimiento P2 (INC000004176719): TEIDE y Scoring corrigen peticiones duplicadas de crédito en Siebel IP24 causantes del error 51005 en compras de dispositivos de alta gama.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 71,
+        "conteo_palabras_breve": 24
+      },
+      "cierre": {
+        "completo": "Queda cerrada la incidencia P2 (INC000004176719) en Siebel IP24. Implementado el control de concurrencia en la integración con Scoring, eliminando la duplicidad de transacciones de saldo y resolviendo los falsos rechazos 51005. Los agentes de Foundever Sevilla operan con plena normalidad, completándose satisfactoriamente las contrataciones de dispositivos de alta gama tanto en nuevas captaciones como en renovaciones de clientes. No se registran cancelaciones automáticas anómalas en el canal.",
+        "breve": "Cierre P2 (INC000004176719): Resuelta integración Siebel-Scoring; cancelaciones 51005 subsanadas y venta de dispositivos de alta gama normalizada en Foundever Sevilla.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 68,
+        "conteo_palabras_breve": 20
+      }
+    },
+    "INC000004175934": {
+      "apertura": {
+        "completo": "Se declara incidencia de alta prioridad P2 (INC000004175934) por error funcional en Siebel 8 IP24 reportado desde Teleperformance Jerez. Al cancelar órdenes con servicio fijo, los puntos de instalación asociados permanecen indebidamente en estado verde sin servicio contratado, provocando fallos en el inyector de Ficha de Cliente por retención de identificadores de planta. Los equipos de soporte de Siebel y provisión aplican saneamientos manuales provisionales mientras se prepara el parche definitivo. Próxima actualización en 60 minutos.",
+        "breve": "Apertura P2 (INC000004175934): Puntos de instalación no liberados tras cancelar órdenes de fijo en Siebel 8 IP24, afectando Ficha Cliente en Jerez. Soporte aplicando saneamientos provisionales.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 74,
+        "conteo_palabras_breve": 25
+      },
+      "seguimiento": {
+        "completo": "Seguimiento de la incidencia P2 (INC000004175934). Se confirma que la anomalía en la liberación de puntos de instalación (PI) en Siebel 8 IP24 cuenta con desarrollo correctivo finalizado y empaquetado para su despliegue en la ventana técnica de PAP programada para el 11/11/2026. Conforme al protocolo IM-CSO para resoluciones planificadas, se mantiene exención de escalado por aging y el soporte N1 realiza liberaciones controladas bajo demanda sobre los pedidos afectados en Teleperformance Jerez.",
+        "breve": "Seguimiento P2 (INC000004175934): Corrección técnica de liberación de PI programada para ventana PAP del 11/11/2026; soporte aplica liberaciones manuales bajo demanda en Teleperformance Jerez.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 73,
+        "conteo_palabras_breve": 23
+      },
+      "cierre": {
+        "completo": "Queda cerrada la incidencia P2 (INC000004175934) en Siebel 8 IP24. Tras el despliegue del paquete correctivo en la ventana de producción PAP, la cancelación de órdenes fijas libera automáticamente los puntos de instalación a su estado nominal. El inyector de Ficha de Cliente procesa las peticiones sin registrar excepciones y la operativa en Teleperformance Jerez ha validado el ciclo de ventas y anulaciones sin intervención manual. La plataforma opera de forma íntegra.",
+        "breve": "Cierre P2 (INC000004175934): Desplegado correctivo en PAP; puntos de instalación de fijo se liberan automáticamente tras cancelación y Ficha Cliente opera con normalidad en Jerez.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 73,
+        "conteo_palabras_breve": 23
+      }
+    },
+    "INC000004176828": {
+      "apertura": {
+        "completo": "Se declara incidencia de alta prioridad P2 (INC000004176828) por anomalía funcional en el bot conversacional Djingo integrado con LivePerson en Teleperformance Medellín. El bot de cierre dispara indebidamente encuestas de satisfacción en tipologías no procedentes como reclamaciones, incidencias técnicas, scoring y escalados externos, distorsionando las métricas de servicio de la plataforma. La interacción con clientes se mantiene activa y los equipos resolutores de SOP_DJINGO y DES_DJINGO intervienen sobre las reglas de enrutamiento conversacional. Próxima actualización en 60 minutos.",
+        "breve": "Apertura P2 (INC000004176828): Bot Djingo en LivePerson dispara encuestas indebidas en reclamaciones y averías en Teleperformance Medellín. DES_DJINGO interviene reglas de enrutamiento conversacional.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 77,
+        "conteo_palabras_breve": 22
+      },
+      "seguimiento": {
+        "completo": "Seguimiento de la incidencia P2 (INC000004176828). El equipo de desarrollo DES_DJINGO ha localizado la condición de desvío en el árbol de decisión de LivePerson que gatillaba el formulario de cierre sin discriminar tipologías de atención restringidas. Se ha configurado una regla de exclusión provisional en la capa conversacional y se realizan pruebas sobre las interacciones activas en Teleperformance Medellín para asegurar que las encuestas se limitan a los flujos comerciales autorizados.",
+        "breve": "Seguimiento P2 (INC000004176828): DES_DJINGO aplica regla de exclusión en árbol de decisión de LivePerson; verificando supresión de encuestas improcedentes en Teleperformance Medellín.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 71,
+        "conteo_palabras_breve": 21
+      },
+      "cierre": {
+        "completo": "Queda cerrada la incidencia P2 (INC000004176828) en la plataforma Djingo y LivePerson. Ajustadas satisfactoriamente las políticas de disparo del bot de cierre por DES_DJINGO, garantizando que no se emiten encuestas de resolución en reclamaciones, averías ni escalados técnicos. Los indicadores de satisfacción y métricas de plataforma en Teleperformance Medellín operan bajo calibración nominal y sin anomalías en las conversaciones. El servicio conversacional continúa monitorizado con soporte.",
+        "breve": "Cierre P2 (INC000004176828): Normalizado bot Djingo en LivePerson; encuestas de satisfacción restringidas a flujos procedentes y métricas de plataforma estabilizadas en Medellín.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 68,
+        "conteo_palabras_breve": 20
+      }
     }
   }
 }

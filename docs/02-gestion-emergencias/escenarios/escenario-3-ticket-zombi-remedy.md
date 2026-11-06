@@ -7,7 +7,7 @@ Guía procedimental para la detección y tramitación de tickets zombi: incidenc
 * **Llamada a IM-CSO:** **NO REQUERIDA** (Prohibido sobrecargar canales telefónicos de crisis)
 * **Canal Prescrito:** Mesa de Seguimiento de Incidencias / Administrador de Remedy ITSM
 * **SLA de 1ª Acción:** Menos de 60 minutos
-* **Protocolo General:** [Protocolo Operativo IM-CSO Post-Triaje](02-gestion-emergencias/protocolo-im-cso-escenarios-triaje.md)
+* **Protocolo General:** [Protocolo Operativo IM-CSO Post-Triaje](../protocolo-im-cso-escenarios-triaje.md)
 
 ---
 
@@ -94,8 +94,7 @@ para evitar la persistencia de tickets zombi en la mesa de seguimiento.
 ## 🔗 6. Enlaces y Recursos Rápidos
 
 * [Consola de Triaje y Emergencias IT ↗](/dashboards/emergency-triage-console/ ':ignore :target=_blank')
-* [Cockpit del Incident Manager ↗](/dashboards/incident-manager-monitor/ ':ignore :target=_blank')
-* [Protocolo Completo de Gobernanza IM-CSO](02-gestion-emergencias/protocolo-im-cso-escenarios-triaje.md)
-* [Escenario 2: Solución Planificada y Exención de Aging](02-gestion-emergencias/escenarios/escenario-2-resolucion-planificada.md)
+* [Protocolo Completo de Gobernanza IM-CSO](../protocolo-im-cso-escenarios-triaje.md)
+* [Escenario 2: Solución Planificada y Exención de Aging](./escenario-2-resolucion-planificada.md)
 * Skill `incident-triage-review` (`.agents/skills/incident-triage-review/SKILL.md`)
 
