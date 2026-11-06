@@ -42,7 +42,7 @@ La forma recomendada de generar y consultar los informes ejecutivos es a través
    - **En local**: `http://localhost:8080/problemas` (servido por `serve_app.py` que reenvía a Next.js en `:3001`).
    - **En producción**: `http://10.132.26.96/problemas` (servido por Nginx).
 2. En la tabla de incidencias o problemas, pulsa el botón **`📊 Generar PPT`** de la fila correspondiente.
-3. Se abrirá el modal interactivo [`ExecutiveReportModal.tsx`](../../../gestion-problemas-dashboard/components/ExecutiveReportModal.tsx):
+3. Se abrirá el modal interactivo `ExecutiveReportModal.tsx`:
    - **Comprobación de caché**: El modal consulta automáticamente si ya existe un informe generado para esa referencia (`GET /api/reports/executive-incident/{ref}/status`). Si existe, ofrece descargarlo inmediatamente en 0 ms.
    - **Ingesta desde Confluence**: Puedes proporcionar la URL de la página de Confluence del postmortem (`https://confluence.si.orange.es/...`) o pegar directamente el contenido HTML o texto copiado de la página.
    - **Regeneración forzada**: Si los datos han cambiado, marca la casilla de forzar regeneración (`force=true`).

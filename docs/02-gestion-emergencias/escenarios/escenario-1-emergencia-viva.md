@@ -7,7 +7,7 @@ Guía procedimental de actuación inmediata para incidencias con corte total, de
 * **Llamada a IM-CSO:** **OBLIGATORIA** (Vía Telefónica Directa)
 * **Canal Prescrito:** Vía Telefónica IM-CSO + War Room en Microsoft Teams
 * **SLA de 1ª Acción:** Menos de 10 minutos
-* **Protocolo General:** [Protocolo Operativo IM-CSO Post-Triaje](02-gestion-emergencias/protocolo-im-cso-escenarios-triaje.md)
+* **Protocolo General:** [Protocolo Operativo IM-CSO Post-Triaje](../protocolo-im-cso-escenarios-triaje.md)
 
 ---
 
@@ -120,7 +120,7 @@ RESUMEN DE LA COMUNICACIÓN Y COMPROMISOS:
 ## 🔗 5. Enlaces y Recursos Rápidos
 
 * [Consola de Triaje y Emergencias IT ↗](/dashboards/emergency-triage-console/ ':ignore :target=_blank')
-* [Protocolo Completo de Gobernanza IM-CSO](02-gestion-emergencias/protocolo-im-cso-escenarios-triaje.md)
-* [Escenario 7: Gobernanza de Workaround y Candado Activo 🔒](02-gestion-emergencias/escenarios/escenario-7-workaround-autorizado.md)
-* [Escenario 8: Reactivación Exprés por Reapertura Activa](02-gestion-emergencias/escenarios/escenario-8-reapertura-activa.md)
+* [Protocolo Completo de Gobernanza IM-CSO](../protocolo-im-cso-escenarios-triaje.md)
+* [Escenario 7: Gobernanza de Workaround y Candado Activo 🔒](./escenario-7-workaround-autorizado.md)
+* [Escenario 8: Reactivación Exprés por Reapertura Activa](./escenario-8-reapertura-activa.md)
 

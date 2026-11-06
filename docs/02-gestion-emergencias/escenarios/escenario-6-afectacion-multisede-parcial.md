@@ -7,7 +7,7 @@ Guía procedimental para incidencias con afectación distribuida en múltiples s
 * **Llamada a IM-CSO:** **INFORMATIVA** (Actualización de avance de sedes)
 * **Canal Prescrito:** War Room en Teams / Coordinación de Sedes y Redes
 * **SLA de 1ª Acción:** Menos de 20 minutos
-* **Protocolo General:** [Protocolo Operativo IM-CSO Post-Triaje](02-gestion-emergencias/protocolo-im-cso-escenarios-triaje.md)
+* **Protocolo General:** [Protocolo Operativo IM-CSO Post-Triaje](../protocolo-im-cso-escenarios-triaje.md)
 
 ---
 
@@ -80,7 +80,7 @@ en la normalización de los circuitos residuales. Próxima actualización en 30 
 ## 🔗 6. Enlaces y Recursos Rápidos
 
 * [Consola de Triaje y Emergencias IT ↗](/dashboards/emergency-triage-console/ ':ignore :target=_blank')
-* [Protocolo Completo de Gobernanza IM-CSO](02-gestion-emergencias/protocolo-im-cso-escenarios-triaje.md)
-* [Escenario 1: Emergencia Viva Crítica](02-gestion-emergencias/escenarios/escenario-1-emergencia-viva.md)
+* [Protocolo Completo de Gobernanza IM-CSO](../protocolo-im-cso-escenarios-triaje.md)
+* [Escenario 1: Emergencia Viva Crítica](./escenario-1-emergencia-viva.md)
 * Skill `incident-triage-review` (`.agents/skills/incident-triage-review/SKILL.md`)
 

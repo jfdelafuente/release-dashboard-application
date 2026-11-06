@@ -8,7 +8,7 @@ Guía de referencia para generar presentaciones PowerPoint (`.pptx`) con las mé
 
 En la plataforma conviven dos tipos de presentaciones corporativas PowerPoint:
 
-| Característica | Informe PPT de Postmortem por Release (Este documento) | Informe Ejecutivo de Incidencia ([`INFORME-EJECUTIVO-POSTMORTEM.md`](INFORME-EJECUTIVO-POSTMORTEM.md)) |
+| Característica | Informe PPT de Postmortem por Release (Este documento) | Informe Ejecutivo de Incidencia ([`INFORME-EJECUTIVO-POSTMORTEM.md`](./informe-ejecutivo-postmortem.md)) |
 |---|---|---|
 | **Ámbito** | **Una release completa** (ej: `2026R7`, `2026R8`). | **Una incidencia crítica individual** (ej: `2606S77393`). |
 | **Origen de Datos** | `dashboards/release-kpis/releases-data.js` (histórico de despliegues). | Postmortem en Confluence (URL o HTML) o datos estructurados. |
@@ -172,7 +172,7 @@ Instala las bibliotecas faltantes en el servidor mediante el gestor de paquetes 
 
 ## 🔗 Documentación Relacionada
 
-- [**`INFORME-EJECUTIVO-POSTMORTEM.md`**](INFORME-EJECUTIVO-POSTMORTEM.md): Guía del informe ejecutivo PowerPoint para **incidencias individuales**.
+- [**`INFORME-EJECUTIVO-POSTMORTEM.md`**](./informe-ejecutivo-postmortem.md): Guía del informe ejecutivo PowerPoint para **incidencias individuales**.
 - [**`DASHBOARDS-API.md`**](../03-arquitectura-y-datos/dashboards-api.md): Catálogo de APIs y servicios consumidos por los dashboards.
 - [**`DEPLOYMENT.md`**](../06-operaciones-y-gobernanza/despliegue-vps.md): Procedimiento de despliegue y topología VPS (`/infocodes/`).
 - [**`DEVELOPMENT.md`**](../01-primeros-pasos/desarrollo.md): Entorno de desarrollo local y testing.

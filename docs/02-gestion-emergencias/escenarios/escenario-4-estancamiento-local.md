@@ -7,7 +7,7 @@ Guía procedimental para incidencias acotadas a un puesto individual, departamen
 * **Llamada a IM-CSO:** **NO REQUERIDA** (Prohibido involucrar comités de crisis directivos)
 * **Canal Prescrito:** Supervisor N1 / Grupo Resolutor Local / Soporte de Campo (Field Services)
 * **SLA de 1ª Acción:** Menos de 15 minutos
-* **Protocolo General:** [Protocolo Operativo IM-CSO Post-Triaje](02-gestion-emergencias/protocolo-im-cso-escenarios-triaje.md)
+* **Protocolo General:** [Protocolo Operativo IM-CSO Post-Triaje](../protocolo-im-cso-escenarios-triaje.md)
 
 ---
 
@@ -85,7 +85,7 @@ ACUERDO DE TRATAMIENTO OPERATIVO:
 ## 🔗 6. Enlaces y Recursos Rápidos
 
 * [Consola de Triaje y Emergencias IT ↗](/dashboards/emergency-triage-console/ ':ignore :target=_blank')
-* [Protocolo Completo de Gobernanza IM-CSO](02-gestion-emergencias/protocolo-im-cso-escenarios-triaje.md)
-* [Escenario 1: Emergencia Viva Crítica](02-gestion-emergencias/escenarios/escenario-1-emergencia-viva.md)
+* [Protocolo Completo de Gobernanza IM-CSO](../protocolo-im-cso-escenarios-triaje.md)
+* [Escenario 1: Emergencia Viva Crítica](./escenario-1-emergencia-viva.md)
 * Skill `orange-it-emergency-management` (`.agents/skills/orange-it-emergency-management/SKILL.md`)
 

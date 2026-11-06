@@ -7,7 +7,7 @@ Guía procedimental de máxima urgencia para incidencias que se reabren en BMC R
 * **Llamada a IM-CSO:** **OBLIGATORIA E INMEDIATA** (Sin periodo de cortesía de 45 min)
 * **Canal Prescrito:** Canal Telefónico Directo IM-CSO + War Room Teams Inmediata
 * **SLA de 1ª Acción:** Menos de 5 minutos
-* **Protocolo General:** [Protocolo Operativo IM-CSO Post-Triaje](02-gestion-emergencias/protocolo-im-cso-escenarios-triaje.md)
+* **Protocolo General:** [Protocolo Operativo IM-CSO Post-Triaje](../protocolo-im-cso-escenarios-triaje.md)
 
 ---
 
@@ -84,8 +84,8 @@ ACCIONES INMEDIATAS (PROTOCOLOS SIN CORTESÍA):
 ## 🔗 6. Enlaces y Recursos Rápidos
 
 * [Consola de Triaje y Emergencias IT ↗](/dashboards/emergency-triage-console/ ':ignore :target=_blank')
-* [Protocolo Completo de Gobernanza IM-CSO](02-gestion-emergencias/protocolo-im-cso-escenarios-triaje.md)
-* [Escenario 1: Emergencia Viva Crítica](02-gestion-emergencias/escenarios/escenario-1-emergencia-viva.md)
-* [Escenario 7: Soluciones de Contorno y Candado 🔒](02-gestion-emergencias/escenarios/escenario-7-workaround-autorizado.md)
-* [Notificaciones Ejecutivas Oficiales](02-gestion-emergencias/notificaciones-ejecutivas.md)
+* [Protocolo Completo de Gobernanza IM-CSO](../protocolo-im-cso-escenarios-triaje.md)
+* [Escenario 1: Emergencia Viva Crítica](./escenario-1-emergencia-viva.md)
+* [Escenario 7: Soluciones de Contorno y Candado 🔒](./escenario-7-workaround-autorizado.md)
+* [Notificaciones Ejecutivas Oficiales](../notificaciones-ejecutivas.md)
 
