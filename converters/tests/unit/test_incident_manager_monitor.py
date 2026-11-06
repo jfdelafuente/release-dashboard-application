@@ -334,10 +334,10 @@ def test_should_guarantee_zero_references_to_monitor_in_root_index_html(repo_roo
         )
 
 
-def test_should_guarantee_monitor_files_exist_in_dedicated_directory(repo_root: Path):
-    """The monitor files must reside in dashboards/incident-manager-monitor/."""
+def test_should_guarantee_retired_monitor_directory_does_not_exist(repo_root: Path):
+    """The obsolete monitor files must NOT reside in dashboards/incident-manager-monitor/."""
     monitor_dir = repo_root / "dashboards" / "incident-manager-monitor"
-    assert monitor_dir.is_dir(), f"Expected directory {monitor_dir} does not exist"
+    assert not monitor_dir.exists(), f"Retired directory {monitor_dir} should not exist"
 
 
 # =========================================================================
@@ -506,15 +506,6 @@ def test_should_calculate_correct_kpis_summary_counts(
     assert kpis["p2_count"] == 1
     assert kpis["escalation_alerts_count"] <= kpis["total_active"]
     assert kpis["discrepancies_count"] == 1
-
-
-def test_should_ensure_escalation_alerts_count_is_deduplicated_in_monitor_js(repo_root: Path):
-    monitor_js_path = repo_root / "dashboards" / "incident-manager-monitor" / "monitor.js"
-    content = monitor_js_path.read_text(encoding="utf-8")
-    assert "const escalationAlerts = (state.allIncidents || []).filter" in content
-    assert "state.kpis.escalation_alerts_count = escalationAlerts;" in content
-
-
 
 
 def test_should_detect_discrepancy_badge_when_ticket_nominal_is_lower(mock_notifications_catalog):
@@ -1233,38 +1224,6 @@ def test_should_contain_4_normalized_blocks_in_emergency_report():
     assert "Regla de Oro: Prohibida la desescalada automática" in rep
 
 
-def test_should_provide_remedy_reclassification_and_warroom_tools_in_monitor_js(repo_root):
-    """Verifica que monitor.js incluya las funciones y botones de acción inmediata para el Incident Manager."""
-    monitor_js_path = repo_root / "dashboards" / "incident-manager-monitor" / "monitor.js"
-    content = monitor_js_path.read_text(encoding="utf-8")
-
-    # Funciones de construcción de textos de acción
-    assert "function buildRemedyReclassificationText(" in content
-    assert "[SOLICITUD URGENTE DE RECLASIFICACIÓN REMEDY - CRITERIO PROCESO OPERATIVO GESTIÓN EMERGENCIAS IT ORANGE]" in content
-    assert "PROCESO OPERATIVO GESTIÓN EMERGENCIAS IT ORANGE" in content
-    assert "function buildTeamsWarRoomText(" in content
-    assert "function generateAiDraftForIncident(" in content
-
-    # Botones en vistas y tarjetas
-    assert "btn-copy-remedy-reclass" in content
-    assert "btn-copy-teams-warroom" in content
-    assert "btn-quick-reclass" in content
-    assert "btn-quick-warroom" in content
-    assert "btn-suggest-draft" in content
-
-
-def test_should_provide_action_tools_styling_in_monitor_css(repo_root):
-    """Verifica que monitor.css defina estilos para los botones de acción inmediata."""
-    monitor_css_path = repo_root / "dashboards" / "incident-manager-monitor" / "monitor.css"
-    content = monitor_css_path.read_text(encoding="utf-8")
-
-    assert ".btn-quick-reclass" in content
-    assert ".btn-quick-warroom" in content
-    assert ".btn-suggest-draft" in content
-    assert ".btn-copy-remedy-reclass" in content
-    assert ".btn-copy-teams-warroom" in content
-
-
 def test_should_verify_ai_draft_word_limits_for_all_phases():
     """Verifica que el generador de borradores IA cumpla con los límites de 90 y 30 palabras en un solo párrafo."""
     def count_words(s):
@@ -1469,52 +1428,6 @@ def test_emergency_cockpit_comm_phase_filtering(mock_notifications_catalog, mock
     inc_ids_missing_ap = [i["id"] for i in payload_missing_ap["incidents"]]
     assert "INC000004168775" in inc_ids_missing_ap
     assert "INC000004168617" not in inc_ids_missing_ap
-
-
-def test_should_render_communication_filter_select_in_index_html(repo_root):
-    """Verifica que el dropdown filter-comm-select y el chip de triaje chip-missing-comm existan en index.html."""
-    html_path = repo_root / "dashboards" / "incident-manager-monitor" / "index.html"
-    content = html_path.read_text(encoding="utf-8")
-
-    # Select y opciones
-    assert 'id="filter-comm-select"' in content
-    expected_options = [
-        'value="all"',
-        'value="missing_any"',
-        'value="missing_apertura"',
-        'value="missing_seguimiento"',
-        'value="missing_cierre"',
-        'value="missing_all"',
-        'value="has_apertura"',
-        'value="has_seguimiento"',
-        'value="has_cierre"',
-        'value="all_completed"'
-    ]
-    for opt in expected_options:
-        assert opt in content, f"Opción {opt} debe existir en #filter-comm-select"
-
-    # Chip de triaje de comunicaciones pendientes
-    assert 'id="chip-missing-comm"' in content
-    assert 'id="chip-count-missing-comm"' in content
-
-
-def test_should_verify_monitor_js_handles_communication_filter_and_chips(repo_root):
-    """Verifica que monitor.js incluya el estado, selectores y lógica de filtrado de comunicaciones."""
-    js_path = repo_root / "dashboards" / "incident-manager-monitor" / "monitor.js"
-    content = js_path.read_text(encoding="utf-8")
-
-    assert "commPhase: 'all'" in content
-    assert "filterCommSelect: document.getElementById('filter-comm-select')" in content
-    assert "chipMissingComm: document.getElementById('chip-missing-comm')" in content
-    assert "chipCountMissingComm: document.getElementById('chip-count-missing-comm')" in content
-    assert "function hasOfficialMessage(" in content
-    assert "commPhase === 'missing_any'" in content
-    assert "commPhase === 'all_completed'" in content
-    assert "triage-comm-pills" in content
-    assert "badge-comm-ok" in content
-    assert "badge-comm-missing" in content
-
-
 
 
 

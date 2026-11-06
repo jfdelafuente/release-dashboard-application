@@ -94,7 +94,7 @@ flowchart TD
 | **Reportes de Incidencias** | `/dashboards/reportes-incidencias/` | `GET /api/reports`<br/>`POST /api/reports`<br/>`GET /api/reports/{id}`<br/>`PUT /api/reports/{id}`<br/>`DELETE /api/reports/{id}`<br/>`POST /api/reports/{id}/duplicate?new_week={week}`<br/>`GET /api/reports/{id}/export`<br/>`GET /api/reports/{id}/legacy-pptx`<br/>`GET /api/health` |
 | **Catálogo de Agentes IA** | `/dashboards/agents-catalog/` | `GET /api/agents-catalog`<br/>`GET /data/output/agents_catalog.json` (fallback estático) |
 | **Gestión de Problemas** | `/problemas` | `GET /api/dashboard` (Jira)<br/>`POST /api/reports/executive-incident`<br/>`GET /api/reports/executive-incident/{ref}/status`<br/>`GET /api/reports/executive-incident/{ref}`<br/>`GET /api/healthz` y `GET /api/readyz` |
-| **Consola de Emergencias IT (Cockpit)** | `/dashboards/incident-manager-monitor/` | `GET /api/incident-manager/pending`<br/>`GET /api/logs/ingestion`<br/>`POST /api/ingestion/retry-ia` (alias `/api/epsilon/retry`)<br/>`GET /data/output/high_priority_notifications.json`<br/>`GET /data/output/ingestion_audit_summary.json` |
+| **Consola de Triaje y Emergencias IT (Cockpit)** | `/dashboards/emergency-triage-console/` | `GET /api/incident-manager/pending`<br/>`GET /api/incident-manager/emergency-cockpit`<br/>`GET /api/logs/ingestion`<br/>`POST /api/ingestion/retry-ia` (alias `/api/epsilon/retry`)<br/>`GET /data/output/high_priority_notifications.json`<br/>`GET /data/output/ingestion_audit_summary.json` |
 | **Barra Superior Unificada** | *Compartida en todos* | `GET /api/health` (fallback a `GET /healthz`) |
 
 ---

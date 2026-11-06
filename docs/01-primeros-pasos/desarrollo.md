@@ -310,4 +310,4 @@ pytest tests/ -v
 - [**`DASHBOARDS-API.md`**](../03-arquitectura-y-datos/dashboards-api.md): Catálogo de APIs, rutas y servicios consumidos por los frontends.
 - [**`PROJECT-STRUCTURE.md`**](../03-arquitectura-y-datos/estructura-proyecto.md): Organización física del repositorio y convenciones de estructura.
 - [**`VERSION-MANAGEMENT.md`**](../06-operaciones-y-gobernanza/gestion-versiones.md): Política de versionado semántico y etiquetado git.
-- [**`QUICKSTART.md`**](QUICKSTART.md): Inicio rápido en 5 minutos para visualización local.
+- [**`QUICKSTART.md`**](./quickstart.md): Inicio rápido en 5 minutos para visualización local.

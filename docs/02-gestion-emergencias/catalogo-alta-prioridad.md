@@ -20,7 +20,7 @@ El catálogo `high_priority_notifications.json` constituye la **Fuente Única de
    - **Tickets Zombi de Remedy (`TICKET_ZOMBI_REMEDY`)**: Desincronizaciones donde el problema ya fue cerrado/cancelado en Jira pero sigue como `Asignado` en Remedy, desescalando a P3 administrativo.
 4. **Control de SLAs de Crisis y Cronómetros de Escalado**: Monitoriza los cronómetros de Orange IT Emergency Management: 20 min (1ª Notificación a Dirección), 45 min (Escalado telefónico obligatorio a IM-CSO/N3) y 105 min / >2h (Alarma por estancamiento y escalado a estamentos superiores).
 5. **Consolidación de Comunicaciones Ejecutivas**: Almacena los comunicados oficiales auditados para Dirección (**Apertura**, **Seguimiento** y **Cierre**) cumpliendo los límites normativos ($\le 90$ palabras monopárrafo y $\le 30$ palabras en versión breve).
-6. **Alimentación de Interfaces**: Provee los datos en tiempo real a la **Consola de Triaje y Operaciones** ([`dashboards/emergency-triage-console/`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/dashboards/emergency-triage-console/)), el **Monitor del Incident Manager** ([`dashboards/incident-manager-monitor/`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/dashboards/incident-manager-monitor/)) y los endpoints REST de la aplicación.
+6. **Alimentación de Interfaces**: Provee los datos en tiempo real a la **Consola de Triaje y Operaciones de Emergencias** ([`dashboards/emergency-triage-console/`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/dashboards/emergency-triage-console/)) y los endpoints REST de la aplicación.
 
 ---
 
@@ -53,7 +53,7 @@ flowchart TD
     subgraph Output["3. Salida y Consumidores"]
         CATALOG["data/output/high_priority_notifications.json"]
         CONSOLE["Consola de Triaje de Emergencias<br/>(dashboards/emergency-triage-console/)"]
-        MONITOR["Monitor Incident Manager<br/>(dashboards/incident-manager-monitor/)"]
+        CONSOLE["Consola Triaje Emergencias<br/>(dashboards/emergency-triage-console/)"]
         AUDIT_CLI["Auditor de Triaje CLI<br/>(review_incident_triage.py)"]
     end
 

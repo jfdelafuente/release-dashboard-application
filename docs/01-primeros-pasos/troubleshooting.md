@@ -277,7 +277,7 @@ Si un despliegue produce una anomalía crítica en producción:
 
 ## Documentación Relacionada
 
-- [QUICKSTART.md](QUICKSTART.md) — Guía rápida de configuración en 5 minutos.
+- [QUICKSTART.md](./quickstart.md) — Guía rápida de configuración en 5 minutos.
 - [DEVELOPMENT.md](desarrollo.md) — Flujos de trabajo y directrices de desarrollo local.
 - [DEPLOYMENT.md](../06-operaciones-y-gobernanza/despliegue-vps.md) — Manual integral de despliegue y topología del VPS.
 - [PROJECT-STRUCTURE.md](../03-arquitectura-y-datos/estructura-proyecto.md) — Arquitectura y mapa exhaustivo de directorios.

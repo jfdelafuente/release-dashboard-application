@@ -64,15 +64,28 @@ def test_internal_docs_relative_links_resolve():
         content = md_path.read_text(encoding="utf-8", errors="ignore")
         for match in MARKDOWN_LINK_REGEX.finditer(content):
             raw_url = match.group(2).strip()
-            # Omitir anclas puras, URLs externas, correos y enlaces file:
-            clean_url = raw_url.split("#")[0].split("?")[0].strip()
-            if not clean_url or clean_url.startswith(("http://", "https://", "mailto:", "file:", "#")):
+            # Descartar atributos adicionales (Docsify, títulos markdown) y query/anclas
+            url_token = raw_url.split()[0] if " " in raw_url else raw_url
+            clean_url = url_token.split("#")[0].split("?")[0].strip().strip("'\"")
+
+            # Omitir anclas puras, URLs externas, correos, enlaces file: y rutas web absolutas (/dashboards/, /api/, etc.)
+            if not clean_url or clean_url.startswith(("http://", "https://", "mailto:", "file:", "#", "/")):
                 continue
 
             target_path = (md_path.parent / clean_url).resolve()
             total_links_checked += 1
+
+            # Verificar que el enlace no apunte fuera del repositorio
+            try:
+                target_path.relative_to(PROJECT_ROOT)
+            except ValueError:
+                broken_links.append(f"{md_path.relative_to(PROJECT_ROOT)} -> {raw_url} (apunta fuera del repositorio)")
+                continue
+
             if not target_path.exists():
                 broken_links.append(f"{md_path.relative_to(PROJECT_ROOT)} -> {raw_url} (resuelto: {target_path})")
+            elif target_path.is_file() and Path(clean_url).name != target_path.name:
+                broken_links.append(f"{md_path.relative_to(PROJECT_ROOT)} -> {raw_url} (discrepancia mayúsculas/minúsculas: esperado {target_path.name})")
 
     assert not broken_links, (
         f"Se encontraron {len(broken_links)} enlaces rotos de {total_links_checked} comprobados:\n"
@@ -95,13 +108,16 @@ def test_root_documents_docs_links_resolve(root_doc):
     broken = []
     for match in MARKDOWN_LINK_REGEX.finditer(content):
         raw_url = match.group(2).strip()
-        clean_url = raw_url.split("#")[0].split("?")[0].strip()
-        if "docs/" not in clean_url or clean_url.startswith(("http://", "https://", "mailto:", "file:")):
+        url_token = raw_url.split()[0] if " " in raw_url else raw_url
+        clean_url = url_token.split("#")[0].split("?")[0].strip().strip("'\"")
+        if "docs/" not in clean_url or clean_url.startswith(("http://", "https://", "mailto:", "file:", "#")):
             continue
 
         target_path = (doc_path.parent / clean_url).resolve()
         if not target_path.exists():
             broken.append(f"{root_doc} -> {raw_url} (resuelto: {target_path})")
+        elif target_path.is_file() and Path(clean_url).name != target_path.name:
+            broken.append(f"{root_doc} -> {raw_url} (discrepancia mayúsculas/minúsculas: esperado {target_path.name})")
 
     assert not broken, f"Enlaces rotos hacia docs/ encontrados en {root_doc}:\n" + "\n".join(broken)
 
