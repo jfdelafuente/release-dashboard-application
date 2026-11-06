@@ -266,28 +266,41 @@ try {
     # -------------------------------------------------------------------------
     $NotifScript = Join-Path $ProjectRoot "converters\cli\evaluate_incident_notifications.py"
     if (Test-Path $NotifScript) {
-        Write-Step "Notificaciones" "Evaluando incidencias masivas y actualizando catálogo de alta prioridad..."
-        if ($DryRun) {
-            Write-Ok "[DRY-RUN] Se ejecutaría: python converters/cli/evaluate_incident_notifications.py"
-        } else {
-            if ($PythonCmd) {
-                & $PythonCmd $NotifScript
-                if ($LASTEXITCODE -eq 0) {
-                    Write-Ok "Catálogo de alta prioridad actualizado con éxito en data/output/high_priority_notifications.json"
+        $localIndex = Join-Path $ProjectRoot "data\output\index.json"
+        $isTestData = $false
+        if (Test-Path $localIndex) {
+            $rawIdx = Get-Content $localIndex -Raw | ConvertFrom-Json -ErrorAction SilentlyContinue
+            if ($rawIdx.massive.files -and $rawIdx.massive.files[0].name -match "test") {
+                $isTestData = $true
+            }
+        }
 
-                    # Si el catálogo cambió respecto a git, registrar commit automático específico
-                    $hpDiff = (git status --porcelain "data/output/high_priority_notifications.json" 2>$null)
-                    if ($hpDiff) {
-                        git add "data/output/high_priority_notifications.json"
-                        git commit "data/output/high_priority_notifications.json" -m "data(notifications): regenerar catalogo de notificaciones pre-deploy" | Out-Null
-                        if ($LASTEXITCODE -eq 0) {
-                            Write-Ok "Catálogo de notificaciones actualizado y commiteado automáticamente en git"
+        if ($isTestData) {
+            Write-Step "Notificaciones" "Omitiendo evaluación local de notificaciones (data/output/index.json apunta a datos de test: test-massive.json)."
+        } else {
+            Write-Step "Notificaciones" "Evaluando incidencias masivas y actualizando catálogo de alta prioridad..."
+            if ($DryRun) {
+                Write-Ok "[DRY-RUN] Se ejecutaría: python converters/cli/evaluate_incident_notifications.py"
+            } else {
+                if ($PythonCmd) {
+                    & $PythonCmd $NotifScript
+                    if ($LASTEXITCODE -eq 0) {
+                        Write-Ok "Catálogo de alta prioridad actualizado con éxito en data/output/high_priority_notifications.json"
+
+                        # Si el catálogo cambió respecto a git, registrar commit automático específico
+                        $hpDiff = (git status --porcelain "data/output/high_priority_notifications.json" 2>$null)
+                        if ($hpDiff) {
+                            git add "data/output/high_priority_notifications.json"
+                            git commit "data/output/high_priority_notifications.json" -m "data(notifications): regenerar catalogo de notificaciones pre-deploy" | Out-Null
+                            if ($LASTEXITCODE -eq 0) {
+                                Write-Ok "Catálogo de notificaciones actualizado y commiteado automáticamente en git"
+                            }
+                        } else {
+                            Write-Ok "Catálogo de notificaciones al día (sin cambios)"
                         }
                     } else {
-                        Write-Ok "Catálogo de notificaciones al día (sin cambios)"
+                        Write-WarnMsg "No se pudo actualizar el catálogo de alta prioridad (código de salida: $LASTEXITCODE)."
                     }
-                } else {
-                    Write-WarnMsg "No se pudo actualizar el catálogo de alta prioridad (código de salida: $LASTEXITCODE)."
                 }
             }
         }
@@ -587,12 +600,20 @@ if [ -f "`$NEW_RELEASE_DIR/data/output/agents_catalog.json" ]; then
     cp -f "`$NEW_RELEASE_DIR/data/output/agents_catalog.json" "`$STORAGE_BASE/output/agents_catalog.json" 2>/dev/null || true
 fi
 if [ -f "`$NEW_RELEASE_DIR/data/output/high_priority_notifications.json" ]; then
-    echo "--> [Remoto] Sincronizando notificaciones de alta prioridad a `$STORAGE_BASE/output/high_priority_notifications.json..."
-    cp -f "`$NEW_RELEASE_DIR/data/output/high_priority_notifications.json" "`$STORAGE_BASE/output/high_priority_notifications.json" 2>/dev/null || true
+    if [ ! -s "`$STORAGE_BASE/output/high_priority_notifications.json" ]; then
+        echo "--> [Remoto] Inicializando catálogo de alta prioridad en storage..."
+        cp -f "`$NEW_RELEASE_DIR/data/output/high_priority_notifications.json" "`$STORAGE_BASE/output/high_priority_notifications.json" 2>/dev/null || true
+    else
+        echo "--> [Remoto] Conservando catálogo de alta prioridad en vivo existente en storage."
+    fi
 fi
 if [ -f "`$NEW_RELEASE_DIR/data/output/ingestion_audit_summary.json" ]; then
-    echo "--> [Remoto] Sincronizando resumen de auditoría a `$STORAGE_BASE/output/ingestion_audit_summary.json..."
-    cp -f "`$NEW_RELEASE_DIR/data/output/ingestion_audit_summary.json" "`$STORAGE_BASE/output/ingestion_audit_summary.json" 2>/dev/null || true
+    if [ ! -s "`$STORAGE_BASE/output/ingestion_audit_summary.json" ]; then
+        echo "--> [Remoto] Inicializando resumen de auditoría en storage..."
+        cp -f "`$NEW_RELEASE_DIR/data/output/ingestion_audit_summary.json" "`$STORAGE_BASE/output/ingestion_audit_summary.json" 2>/dev/null || true
+    else
+        echo "--> [Remoto] Conservando resumen de auditoría existente en storage."
+    fi
 fi
 if [ -f "`$NEW_RELEASE_DIR/data/agent_executive_messages.json" ]; then
     echo "--> [Remoto] Sincronizando mensajes ejecutivos a `$STORAGE_BASE/agent_executive_messages.json..."
