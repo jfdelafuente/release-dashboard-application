@@ -184,6 +184,14 @@ http {
             try_files $uri $uri/ /index.html;
         }
 
+        # Documentación técnica y operativa interactiva (Docsify)
+        location /docs {
+            alias /infocodes/project/release-dashboard-application/current/docs;
+            index index.html index.htm;
+            charset utf-8;
+            default_type text/markdown;
+        }
+
         # Datasets JSON desde almacenamiento desacoplado persistente
         location /data {
             alias /infocodes/var/storage/release-dashboard;

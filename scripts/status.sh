@@ -95,6 +95,7 @@ check_endpoint "Reportes Incidencias" "http://localhost:8081/dashboards/reportes
 check_endpoint "Consola Triaje Emergencias" "http://localhost:8081/dashboards/emergency-triage-console/"
 check_endpoint "Auditoría de Ingesta" "http://localhost:8081/data/output/ingestion_audit_summary.json"
 check_endpoint "Catálogo de Agentes IA" "http://localhost:8081/dashboards/agents-catalog/"
+check_endpoint "Documentación Docsify (/docs/)" "http://localhost:8081/docs/"
 check_endpoint "Proxy API Epsilon" "http://localhost:8081/api/epsilon/resumenIA/INC000004141215"
 check_endpoint "Backend CSO Health" "http://localhost:8081/api/health"
 check_endpoint "Gestión de Problemas (/problemas)" "http://localhost:8081/problemas/readyz"

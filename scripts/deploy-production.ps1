@@ -352,6 +352,14 @@ if (-not $SkipBuild) {
         New-Item -ItemType Directory -Path $DashboardsStaging -Force | Out-Null
         robocopy "$ProjectRoot\dashboards" "$DashboardsStaging" /E /XD __pycache__ /XF *.pyc *.log | Out-Null
 
+        # 1b. Copiar documentación Docsify
+        if (Test-Path "$ProjectRoot\docs") {
+            $DocsStaging = Join-Path $StagingDir "docs"
+            New-Item -ItemType Directory -Path $DocsStaging -Force | Out-Null
+            robocopy "$ProjectRoot\docs" "$DocsStaging" /E /XD __pycache__ /XF *.pyc *.log | Out-Null
+            Write-Ok "Documentación técnica y operativa (docs) empaquetada en el artefacto runtime"
+        }
+
         # 2. Copiar converters (excluyendo tests y caches)
         $ConvertersStaging = Join-Path $StagingDir "converters"
         New-Item -ItemType Directory -Path $ConvertersStaging -Force | Out-Null
