@@ -1062,8 +1062,11 @@ class CustomHTTPHandler(http.server.SimpleHTTPRequestHandler):
             self.handle_incident_manager_emergency_cockpit()
             return
 
-        if self.path.startswith('/api/reports') or self.path.startswith('/api/departments') or self.path in ('/healthz', '/readyz'):
+        if self.path.startswith('/api/reports') or self.path.startswith('/api/departments') or self.path in ('/healthz', '/readyz', '/api/health'):
             if self.proxy_to_fastapi_executive():
+                return
+            if self.path in ('/healthz', '/readyz', '/api/health'):
+                self._send_json(200, {'status': 'ok', 'service': 'serve_app', 'timestamp': datetime.now(timezone.utc).isoformat()})
                 return
             self._send_json(502, {'success': False, 'error': f'FastAPI backend ({FASTAPI_BACKEND_URL}) no disponible'})
             return
@@ -1095,8 +1098,12 @@ class CustomHTTPHandler(http.server.SimpleHTTPRequestHandler):
                     self.end_headers()
                     self.wfile.write(content)
                     return
+                except (ConnectionAbortedError, ConnectionResetError, BrokenPipeError):
+                    # El cliente cerró la conexión (recarga rápida en navegador o fetch abortado)
+                    return
                 except Exception as e:
                     print(f"  Error sirviendo {file_on_storage}: {e}")
+                    return
 
         # Si es una petición para index.json, servirlo dinámicamente
         if 'index.json' in self.path:
@@ -1111,16 +1118,20 @@ class CustomHTTPHandler(http.server.SimpleHTTPRequestHandler):
                     with open(actual_path, 'r', encoding='utf-8') as f:
                         content = f.read()
 
+                    raw_bytes = content.encode('utf-8')
                     self.send_response(200)
                     self.send_header('Content-type', 'application/json')
-                    self.send_header('Content-Length', len(content))
+                    self.send_header('Content-Length', str(len(raw_bytes)))
                     self.send_header('Cache-Control', 'no-cache')
                     self.end_headers()
-                    self.wfile.write(content.encode('utf-8'))
-                    print(f"  Servido OK ({len(content)} bytes)")
+                    self.wfile.write(raw_bytes)
+                    print(f"  Servido OK ({len(raw_bytes)} bytes)")
                     return
+            except (ConnectionAbortedError, ConnectionResetError, BrokenPipeError):
+                return
             except Exception as e:
                 print(f"  Error: {e}")
+                return
 
         # Para todo lo demás, usar el comportamiento normal
         print(f"  Sirviendo normalmente desde: {self.directory}")
