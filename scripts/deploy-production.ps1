@@ -606,20 +606,12 @@ if [ -f "`$NEW_RELEASE_DIR/data/output/agents_catalog.json" ]; then
     cp -f "`$NEW_RELEASE_DIR/data/output/agents_catalog.json" "`$STORAGE_BASE/output/agents_catalog.json" 2>/dev/null || true
 fi
 if [ -f "`$NEW_RELEASE_DIR/data/output/high_priority_notifications.json" ]; then
-    if [ ! -s "`$STORAGE_BASE/output/high_priority_notifications.json" ]; then
-        echo "--> [Remoto] Inicializando catálogo de alta prioridad en storage..."
-        cp -f "`$NEW_RELEASE_DIR/data/output/high_priority_notifications.json" "`$STORAGE_BASE/output/high_priority_notifications.json" 2>/dev/null || true
-    else
-        echo "--> [Remoto] Conservando catálogo de alta prioridad en vivo existente en storage."
-    fi
+    echo "--> [Remoto] Sincronizando catálogo de alta prioridad a `$STORAGE_BASE/output/high_priority_notifications.json..."
+    cp -f "`$NEW_RELEASE_DIR/data/output/high_priority_notifications.json" "`$STORAGE_BASE/output/high_priority_notifications.json" 2>/dev/null || true
 fi
 if [ -f "`$NEW_RELEASE_DIR/data/output/ingestion_audit_summary.json" ]; then
-    if [ ! -s "`$STORAGE_BASE/output/ingestion_audit_summary.json" ]; then
-        echo "--> [Remoto] Inicializando resumen de auditoría en storage..."
-        cp -f "`$NEW_RELEASE_DIR/data/output/ingestion_audit_summary.json" "`$STORAGE_BASE/output/ingestion_audit_summary.json" 2>/dev/null || true
-    else
-        echo "--> [Remoto] Conservando resumen de auditoría existente en storage."
-    fi
+    echo "--> [Remoto] Sincronizando resumen de auditoría a `$STORAGE_BASE/output/ingestion_audit_summary.json..."
+    cp -f "`$NEW_RELEASE_DIR/data/output/ingestion_audit_summary.json" "`$STORAGE_BASE/output/ingestion_audit_summary.json" 2>/dev/null || true
 fi
 if [ -f "`$NEW_RELEASE_DIR/data/agent_executive_messages.json" ]; then
     echo "--> [Remoto] Sincronizando mensajes ejecutivos a `$STORAGE_BASE/agent_executive_messages.json..."
