@@ -218,6 +218,34 @@
             </div>
         ` : '';
 
+        // Helper para renderizar bloqueos con chips estandarizados
+        function renderBloqueoItem(b) {
+            const bStr = String(b || '').trim();
+            const match = bStr.match(/^\[(.*?)\]\s*:?\s*(.*)$/);
+            if (match) {
+                const cat = match[1].trim();
+                const desc = match[2].trim();
+                const catLower = cat.toLowerCase();
+                let catClass = 'tag-default';
+                if (catLower.includes('release') || catLower.includes('ventana')) {
+                    catClass = 'tag-release';
+                } else if (catLower.includes('tercero') || catLower.includes('dependencia') || catLower.includes('proveedor')) {
+                    catClass = 'tag-terceros';
+                } else if (catLower.includes('negocio') || catLower.includes('validaci') || catLower.includes('usuario')) {
+                    catClass = 'tag-negocio';
+                } else if (catLower.includes('escalado') || catLower.includes('grupo') || catLower.includes('cso')) {
+                    catClass = 'tag-escalado';
+                }
+                return `
+                    <li class="resumen-ia-bloqueo-item">
+                        <span class="resumen-ia-bloqueo-tag ${catClass}">[${escapeHtml(cat)}]</span>
+                        <span class="resumen-ia-bloqueo-desc">${escapeHtml(desc || cat)}</span>
+                    </li>
+                `;
+            }
+            return `<li>${escapeHtml(bStr)}</li>`;
+        }
+
         // Generar bloque de bloqueos si existen
         const bloqueosHtml = bloqueos.length > 0 ? `
             <div class="resumen-ia-block block-bloqueos">
@@ -226,19 +254,21 @@
                     <h4 class="resumen-ia-block-title">Bloqueos e Impedimentos</h4>
                 </div>
                 <ul class="resumen-ia-list">
-                    ${bloqueos.map(b => `<li>${escapeHtml(b)}</li>`).join('')}
+                    ${bloqueos.map(b => renderBloqueoItem(b)).join('')}
                 </ul>
             </div>
         ` : '';
 
-        // Generar bloque de siguiente acción si existe
-        const siguienteAccionHtml = data.siguienteAccion ? `
+        // Generar bloque de siguiente acción si existe y no es residual
+        const rawSiguiente = String(data.siguienteAccion || data.siguiente_accion || '').trim();
+        const hasValidSiguiente = rawSiguiente && !['[]', '{}', 'None', 'null', 'N/A', '-', 'none'].includes(rawSiguiente);
+        const siguienteAccionHtml = hasValidSiguiente ? `
             <div class="resumen-ia-block block-siguiente">
                 <div class="resumen-ia-block-header">
                     <span class="resumen-ia-icon-circle" aria-hidden="true">➡️</span>
                     <h4 class="resumen-ia-block-title">Siguiente Acción Recomendada</h4>
                 </div>
-                <p class="resumen-ia-block-content">${escapeHtml(data.siguienteAccion)}</p>
+                <p class="resumen-ia-block-content">${escapeHtml(rawSiguiente)}</p>
             </div>
         ` : '';
 

@@ -471,10 +471,11 @@
 /* Listas dentro de bloques (ej. bloqueos) */
 .resumen-ia-list {
     margin: 8px 0 0 0;
-    padding-left: 22px;
+    padding-left: 0;
     font-size: 13.5px;
     line-height: 1.55;
     color: #372A10;
+    list-style: none;
 }
 
 .resumen-ia-list li {
@@ -482,6 +483,61 @@
 }
 .resumen-ia-list li:last-child {
     margin-bottom: 0;
+}
+
+/* Bloqueos con tags de categoría */
+.resumen-ia-bloqueo-item {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    margin-bottom: 8px;
+    list-style: none;
+}
+
+.resumen-ia-bloqueo-tag {
+    font-size: 11px;
+    font-weight: 800;
+    padding: 2px 7px;
+    border-radius: 4px;
+    letter-spacing: 0.03em;
+    white-space: nowrap;
+    text-transform: uppercase;
+    flex-shrink: 0;
+}
+
+.resumen-ia-bloqueo-tag.tag-release {
+    background: #E0F2FE;
+    color: #0369A1;
+    border: 1px solid #BAE6FD;
+}
+
+.resumen-ia-bloqueo-tag.tag-terceros {
+    background: #FFEDD5;
+    color: #C2410C;
+    border: 1px solid #FED7AA;
+}
+
+.resumen-ia-bloqueo-tag.tag-negocio {
+    background: #F3E8FF;
+    color: #7E22CE;
+    border: 1px solid #E9D5FF;
+}
+
+.resumen-ia-bloqueo-tag.tag-escalado {
+    background: #FEE2E2;
+    color: #B91C1C;
+    border: 1px solid #FECACA;
+}
+
+.resumen-ia-bloqueo-tag.tag-default {
+    background: #FEF3C7;
+    color: #B45309;
+    border: 1px solid #FCD34D;
+}
+
+.resumen-ia-bloqueo-desc {
+    flex: 1;
+    color: #372A10;
 }
 
 /* Cronología de hitos técnicos estilizada */

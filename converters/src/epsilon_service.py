@@ -313,6 +313,16 @@ class EpsilonResumenModel(BaseModel):
                 )
         return [b.strip() for b in v]
 
+    @field_validator("siguienteAccion", mode="before")
+    @classmethod
+    def sanitize_siguiente_accion(cls, v: Any) -> Optional[str]:
+        if v is None:
+            return None
+        v_str = str(v).strip()
+        if v_str in ("[]", "{}", "None", "null", "N/A", "-", "none", ""):
+            return None
+        return v_str
+
     @model_validator(mode="after")
     def validate_solucion_on_resolved(self) -> EpsilonResumenModel:
         estado_upper = self.estadoActual.upper()
@@ -541,6 +551,8 @@ def evaluate_contract(data: Dict[str, Any]) -> Tuple[List[EpsilonResumenValidati
 
     # 10. siguienteAccion
     sig = data.get("siguienteAccion")
+    if sig is not None and str(sig).strip() in ("[]", "{}", "None", "null", "N/A", "-", "none", ""):
+        sig = None
     if sig is not None:
         words_sig = count_words(str(sig))
         checks.append(

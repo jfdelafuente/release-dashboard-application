@@ -7,6 +7,7 @@ Proporcionar una herramienta CLI en Python (`scripts/test_epsilon_prompt.py`) qu
 ## Requisitos
 
 ### Requisitos Obligatorios
+
 1. **Entrada de datos flexible:**
    - Debe aceptar la ruta de un archivo JSON con los datos del ticket Remedy mediante el argumento `--file <ruta.json>`.
    - Debe permitir la lectura de datos mediante tubería estándar (`stdin`) si no se proporciona `--file`.
@@ -15,9 +16,9 @@ Proporcionar una herramienta CLI en Python (`scripts/test_epsilon_prompt.py`) qu
 2. **Invocación Multi-Proveedor de LLM:**
    - Soporte configurable mediante el argumento `--provider {openai,gemini,anthropic}` (valor por defecto: `openai`).
    - Autenticación mediante variables de entorno estándar:
-     * OpenAI: `OPENAI_API_KEY` (compatible con proxies o endpoints locales/Azure mediante `OPENAI_BASE_URL`).
-     * Google Gemini: `GEMINI_API_KEY`.
-     * Anthropic: `ANTHROPIC_API_KEY`.
+     - OpenAI: `OPENAI_API_KEY` (compatible con proxies o endpoints locales/Azure mediante `OPENAI_BASE_URL`).
+     - Google Gemini: `GEMINI_API_KEY`.
+     - Anthropic: `ANTHROPIC_API_KEY`.
    - Configuración de llamada determinista: `temperature=0.0` y modo de salida en objeto JSON estructurado.
    - Inyección rigurosa del System Prompt de `data/resumen_incidencia_epsilon.md` y encapsulación del ticket entre etiquetas `<INCIDENCIA_REMEDY>...</INCIDENCIA_REMEDY>`.
 
@@ -29,17 +30,17 @@ Proporcionar una herramienta CLI en Python (`scripts/test_epsilon_prompt.py`) qu
    - `impacto`: texto obligatorio con un máximo de 30 palabras; debe verificarse que mencione explícitamente la presencia o ausencia de método alternativo o contingencia ("método alternativo", "workaround" o "sin alternativa").
    - `solucion`: texto opcional con un máximo de 45 palabras. Debe marcarse como error de validación si está ausente o vacío cuando el `estadoActual` sea `RESUELTO` o `CERRADO`.
    - `sistemas`: lista de textos con al menos un sistema identificado.
-   - `hitosTecnicos`: lista de textos (máximo de 5 a 6 hitos). Cada elemento debe comenzar con una marca temporal adaptativa válida (`[DD/MM/YYYY HH:mm:ss]: `, `[DD/MM/YYYY HH:mm]: `, `[DD/MM/YYYY]: ` o `[S/F]: `). Debe verificarse que los hitos mantengan un orden cronológico ascendente.
+   - `hitosTecnicos`: lista de textos (máximo de 5 a 6 hitos). Cada elemento debe comenzar con una marca temporal adaptativa válida (`[DD/MM/YYYY HH:mm:ss]:`, `[DD/MM/YYYY HH:mm]:`, `[DD/MM/YYYY]:` o `[S/F]:`). Debe verificarse que los hitos mantengan un orden cronológico ascendente.
    - `bloqueos`: lista de textos donde cada elemento comience obligatoriamente con uno de los prefijos de categoría estandarizados (`[Ventana Release]`, `[Dependencia Terceros]`, `[Validación Negocio]`, `[Escalado Grupo]`) o bien una lista vacía `[]`.
    - `siguienteAccion`: texto opcional (debe omitirse si la incidencia está resuelta o no hay compromiso explícito).
 
 4. **Salida y Reporte Visual en Consola:**
    - Mostrar el JSON devuelto con formato estructurado e indentado.
    - Presentar una tabla de diagnóstico campo por campo indicando para cada regla:
-     * Nombre del campo.
-     * Criterio evaluado (conteo de palabras, formato de marcas, prefijos, presencia requerida).
-     * Valor o métrica real obtenida.
-     * Estado de cumplimiento (marcador de éxito o fallo).
+     - Nombre del campo.
+     - Criterio evaluado (conteo de palabras, formato de marcas, prefijos, presencia requerida).
+     - Valor o métrica real obtenida.
+     - Estado de cumplimiento (marcador de éxito o fallo).
    - Indicar métricas de la ejecución: tiempo total transcurrido (en segundos) y conteo de tokens consumidos (cuando la API del proveedor lo reporte).
 
 5. **Comportamiento del Código de Salida (Exit Code):**
@@ -48,6 +49,7 @@ Proporcionar una herramienta CLI en Python (`scripts/test_epsilon_prompt.py`) qu
    - Errores fatales: Finalizar con código de salida `1` ante fallos de conexión de red, credenciales ausentes, JSON malformado o error irrecuperable de entrada.
 
 ### Requisitos Opcionales (Fase 2)
+
 - Modo de evaluación por lotes (`--batch <directorio_jsons>`) para evaluar suites completas de tickets de prueba y calcular tasas porcentuales de cumplimiento global.
 - Exportación del informe de validación a formato JSON o Markdown (`--output-report <ruta>`).
 
@@ -61,7 +63,7 @@ Proporcionar una herramienta CLI en Python (`scripts/test_epsilon_prompt.py`) qu
 ## Casos límite
 
 - **Cuando la entrada esté vacía o no sea un JSON válido:** El sistema debe capturar el error, emitir un mensaje descriptivo por `stderr` y finalizar con código de salida `1` sin intentar llamar al LLM.
-- **Cuando el LLM devuelva la respuesta dentro de un bloque markdown (ej. ````json ... ````):** El sistema debe extraer limpiamente el contenido JSON interno antes de proceder a la validación.
+- **Cuando el LLM devuelva la respuesta dentro de un bloque markdown (ej. ````json ...````):** El sistema debe extraer limpiamente el contenido JSON interno antes de proceder a la validación.
 - **Cuando falte la variable de entorno de la API Key requerida por el proveedor seleccionado:** El sistema debe emitir un mensaje indicando el nombre exacto de la variable de entorno necesaria y salir con código `1`.
 - **Cuando los hitos técnicos contengan fechas con orden cronológico alterado:** El validador debe detectar la discrepancia y marcarla en rojo como violación en el informe de cumplimiento.
 - **Cuando un bloqueo no empiece por un prefijo válido:** El validador debe listar los prefijos admitidos y marcar el elemento como no conforme.

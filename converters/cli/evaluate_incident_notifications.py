@@ -545,11 +545,24 @@ TECHNICAL_DOMAIN_CATEGORIES = {
 
 def detect_planned_resolution(epsilon_data: Optional[dict[str, Any]], ticket: dict[str, Any]) -> tuple[bool, str]:
     """Detects if an incident has a confirmed planned resolution, PR, deployment date, or batch schedule."""
+    # 0. Detección explícita de bloqueo estandarizado por ventana de release en Epsilon IA
+    if epsilon_data:
+        bloqueos = epsilon_data.get("bloqueos") or []
+        if isinstance(bloqueos, str):
+            bloqueos = [bloqueos]
+        for b in bloqueos:
+            b_str = str(b).strip()
+            if b_str.lower().startswith("[ventana release]"):
+                clean_b = re.sub(r"^\[ventana release\]\s*:?\s*", "", b_str, flags=re.IGNORECASE).strip()
+                return True, f"Ventana Release: {clean_b[:40]}" if clean_b else "Ventana de Release comprometida"
+
     evidence_parts = []
     if epsilon_data:
         evidence_parts.append(str(epsilon_data.get("problema") or ""))
         evidence_parts.append(str(epsilon_data.get("solucion") or ""))
-        evidence_parts.append(str(epsilon_data.get("siguienteAccion") or epsilon_data.get("siguiente_accion") or ""))
+        sig_raw = str(epsilon_data.get("siguienteAccion") or epsilon_data.get("siguiente_accion") or "").strip()
+        if sig_raw not in ("[]", "{}", "None", "null", "N/A", "-", "none"):
+            evidence_parts.append(sig_raw)
         evidence_parts.append(str(epsilon_data.get("bloqueos") or ""))
         hitos = epsilon_data.get("hitos_tecnicos") or epsilon_data.get("hitosTecnicos") or []
         if isinstance(hitos, list):
@@ -1281,10 +1294,35 @@ class SeverityEvaluator:
 
         # Detectar Workaround
         has_workaround = "Desconocido"
-        if "workaround" in text_lower or "solución temporal" in text_lower or "solucion alternativa" in text_lower or "export alternativo" in text_lower:
-            has_workaround = "Sí"
-        elif "sin alternativa" in text_lower or "sin workaround" in text_lower or "sin solución temporal" in text_lower:
+        no_wa_patterns = [
+            "sin alternativa",
+            "sin método alternativo",
+            "sin metodo alternativo",
+            "sin método",
+            "sin metodo",
+            "sin workaround",
+            "sin solución temporal",
+            "sin solucion temporal",
+            "no existe método alternativo",
+            "no existe alternativa",
+            "no hay alternativa",
+        ]
+        si_wa_patterns = [
+            "workaround disponible",
+            "contingencia disponible",
+            "contingencia activa",
+            "solución temporal",
+            "solucion temporal",
+            "solución alternativa",
+            "solucion alternativa",
+            "export alternativo",
+            "método alternativo disponible",
+            "metodo alternativo disponible",
+        ]
+        if any(p in text_lower for p in no_wa_patterns):
             has_workaround = "No"
+        elif any(p in text_lower for p in si_wa_patterns) or ("workaround" in text_lower and not any(p in text_lower for p in no_wa_patterns)):
+            has_workaround = "Sí"
 
         # Epsilon bloqueos
         epsilon_bloqueos_str = ""
@@ -2174,7 +2212,11 @@ def evaluate_incidents_batch(
 
             bloqueos_raw = epsilon_data.get("bloqueos", [])
             bloqueos_str = "; ".join(bloqueos_raw) if isinstance(bloqueos_raw, list) else str(bloqueos_raw or "")
-            siguiente_accion_val = epsilon_data.get("siguienteAccion") or epsilon_data.get("siguiente_accion") or bloqueos_str or "Seguimiento técnico en curso."
+            
+            sig_raw = str(epsilon_data.get("siguienteAccion") or epsilon_data.get("siguiente_accion") or "").strip()
+            if sig_raw in ("[]", "{}", "None", "null", "N/A", "-", "none", ""):
+                sig_raw = ""
+            siguiente_accion_val = sig_raw or bloqueos_str or "Seguimiento técnico en curso."
 
             resumen_ia_block = {
                 "problema": epsilon_data.get("problema", ""),

@@ -3177,7 +3177,7 @@ function renderFeed() {
                     </div>
                     <div class="triage-epsilon-item">
                       <span class="triage-epsilon-label">Siguiente Acción / Bloqueos</span>
-                      <span class="triage-epsilon-val">${escapeHtml(resumenIa.siguiente_accion || epsilonBloqueos || 'Coordinación con soporte resolutor.')}</span>
+                      <span class="triage-epsilon-val">${escapeHtml((resumenIa.siguiente_accion && !['[]', '{}', 'None', 'null', 'N/A', '-', 'none'].includes(resumenIa.siguiente_accion.trim())) ? resumenIa.siguiente_accion : (epsilonBloqueos || 'Coordinación con soporte resolutor.'))}</span>
                     </div>
                   </div>
 
