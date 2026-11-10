@@ -9,7 +9,7 @@
       "orange-it-emergency-management": "2.3.0",
       "incident-executive-notifications": "1.3.0"
     },
-    "updated_at": "2026-11-04T12:05:00Z"
+    "updated_at": "2026-11-10T12:50:05Z"
   },
   "incidents": {
     "INC000004065609": {
@@ -1116,6 +1116,46 @@
         "origen": "incident-reporter",
         "conteo_palabras_completo": 68,
         "conteo_palabras_breve": 20
+      }
+    },
+    "INC000004179897": {
+      "apertura": {
+        "completo": "Se registra una incidencia crítica que impide la visualización y descarga de facturas en los frontales de Ficha Cliente y CRM, afectando a 2.200 usuarios en cinco sedes operativas (Oviedo, Sevilla, Valencia y Medellín). El fallo se localiza en la llamada entre el microservicio ms-commercialbills y el gestor documental GED. Los equipos de soporte N3 y GC GED se encuentran analizando la conectividad y validación OpenAPI sin existir método alternativo disponible. Próxima actualización en 30 minutos.",
+        "breve": "P1/INC000004179897: Bloqueo en consulta de facturas para 2.200 usuarios en 5 sedes. Soporte N3 y GED investigan fallo en microservicio. Próxima actualización 30 min.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 76,
+        "conteo_palabras_breve": 24
+      }
+    },
+    "INC000004177929": {
+      "apertura": {
+        "completo": "Se mantiene seguimiento crítico sobre la degradación de conectividad en los circuitos BGP de Coslada, que provoca caídas por timeout en la gestión de TV y aprovisionamiento en Altair a 80 usuarios en más de cinco sedes operativas. Aunque se ha encauzado tráfico transitorio mediante Ulises, la infraestructura principal sigue comprometida. El equipo de Redes y Kyndryl trabaja en la recuperación del enlace Meneses-Coslada y la estabilización de la VLAN 553 para restablecer la redundancia del servicio. Próxima actualización en 60 minutos.",
+        "breve": "P1/INC000004177929: Degradación en Altair TV y aprovisionamiento por corte BGP Coslada afectando a 5 sedes. Redes y Kyndryl recuperando enlaces. Próxima actualización 60 min.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 82,
+        "conteo_palabras_breve": 24
+      }
+    },
+    "INC000004174695": {
+      "apertura": {
+        "completo": "Se gestiona una incidencia en los sistemas de facturación donde abonos web de Jazztel con justificante no actualizan el balance en CRM4T, manteniendo deuda visible incorrectamente. El diagnóstico técnico ha determinado que parte de los pagos se registraron con tipología no contemplada en el filtro batch de expedientes, mientras otros no se inyectaron desde la pasarela PSP. Tras corregirse varias cuentas de forma nocturna, los grupos resolutores continúan auditando con soporte web y pasarela los casos restantes para normalizar el ciclo. Próxima actualización en 60 minutos.",
+        "breve": "P1/INC000004174695: Descuadre de pagos web Jazztel no reflejados en balance de CRM4T. Soporte y pasarela PSP regularizando expedientes y transacciones. Próxima actualización 60 min.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 86,
+        "conteo_palabras_breve": 24
+      }
+    },
+    "INC000004177654": {
+      "apertura": {
+        "completo": "Se realiza seguimiento de la incidencia funcional en Ficha de Cliente Orange que impide visualizar plataformas de entretenimiento a 249 operadores en Foundever Sevilla. El servicio cuenta con método alternativo operativo a través de Siebel 8 para mitigar el impacto en atención. La causa raíz corresponde a una degradación de red en DNF que afecta la conectividad de los servicios web con ORCA, coordinándose las actuaciones de restablecimiento mediante GNOC. Próxima actualización en 120 minutos.",
+        "breve": "P3/INC000004177654: Error de visualización de entretenimiento en Ficha Cliente en Sevilla. Workaround operativo en Siebel 8. GNOC coordinando resolución de red. Próxima actualización 120 min.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 75,
+        "conteo_palabras_breve": 25
       }
     }
   }
