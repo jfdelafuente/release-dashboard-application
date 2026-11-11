@@ -494,27 +494,26 @@ def test_ingestion_audit_console_and_shortcuts():
 
 
 def test_triage_table_6_columns_layout_and_date_sorting():
-    """Valida la reestructuración de la tabla a 6 columnas funcionales y la ordenación cronológica por Fecha de Apertura."""
+    """Valida la reestructuración de la tabla a columnas funcionales (con columna unificada de Evaluación y Urgencia) y la ordenación cronológica por Fecha de Apertura."""
     css = (CONSOLE_DIR / "triage.css").read_text(encoding="utf-8")
     js = (CONSOLE_DIR / "triage.js").read_text(encoding="utf-8")
 
-    # 1. Validación de cabecera de 6 columnas
+    # 1. Validación de cabecera de 5 columnas con Evaluación y Urgencia unificadas
     assert "Incidencia / Apertura" in js, "Columna 1: Incidencia, Fecha Apertura y tiempo activa"
     assert "Título / Resumen IA / Mensajes" in js, "Columna 2: Título e iconos de Resumen IA y Mensajes"
     assert "Proceso Crítico y Sistemas" in js, "Columna 3: Proceso Crítico y Sistemas"
-    assert "Remedy INI" in js, "Columna 4: Remedy INI"
-    assert "Severidad ITIL" in js, "Columna 5: Severidad ITIL"
-    assert "Acciones" in js, "Columna 6: Acciones"
+    assert "Evaluación y Urgencia" in js, "Columna 4: Evaluación ITIL y Urgencia destacada"
+    assert "Acciones" in js, "Columna 5: Acciones"
 
-    # 2. Validación de fila expandible ajustada a 6 columnas
-    assert 'colspan="6"' in js, "La fila de detalle plegable debe tener colspan=6"
+    # 2. Validación de fila expandible ajustada a 5 columnas
+    assert 'colspan="5"' in js, "La fila de detalle plegable debe tener colspan=5"
 
     # 3. Validación de función de parseo y ordenación por fecha de apertura descendente
     assert "parseIncidentEpoch" in js, "Debe existir parseIncidentEpoch para convertir fecha_apertura"
     assert "formatFechaApertura" in js, "Debe existir formatFechaApertura para formatear la fecha mostrada"
     assert "epochB - epochA" in js, "getFilteredIncidents debe ordenar de más reciente a más antigua (descendente)"
 
-    # 4. Validación de clases CSS para la nueva distribución
+    # 4. Validación de clases CSS para la nueva distribución y cromática de Urgencia
     assert ".triage-cell-incident" in css
     assert ".triage-datetime-row" in css
     assert ".triage-date-label" in css
@@ -522,8 +521,13 @@ def test_triage_table_6_columns_layout_and_date_sorting():
     assert ".triage-cell-title-comms" in css
     assert ".triage-title-indicators" in css
     assert ".triage-cell-process-systems" in css
-    assert ".triage-cell-remedy" in css
-    assert ".triage-cell-itil" in css
+    assert ".triage-cell-eval" in css
+    assert ".triage-eval-unified-wrapper" in css
+    assert ".triage-eval-flow" in css
+    assert ".triage-urgency-pill" in css
+    assert ".triage-urgency-pill.urgency-alta" in css
+    assert ".triage-urgency-pill.urgency-media" in css
+    assert ".triage-urgency-pill.urgency-baja" in css
     assert ".triage-itil-delta-sub" in css
 
 

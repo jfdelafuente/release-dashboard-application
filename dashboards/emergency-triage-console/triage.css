@@ -1013,6 +1013,121 @@ body {
   text-align: center;
 }
 
+/* --------------------------------------------------------------------------
+   Columna Unificada: Evaluación ITIL y Urgencia Destacada
+   -------------------------------------------------------------------------- */
+.triage-cell-eval {
+  vertical-align: middle;
+  text-align: center;
+  padding: 10px 8px;
+}
+
+.triage-eval-unified-wrapper {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+}
+
+.triage-eval-flow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+
+.triage-eval-arrow {
+  color: var(--triage-text-subtle);
+  font-size: 11px;
+  font-weight: 700;
+  user-select: none;
+  opacity: 0.85;
+}
+
+.triage-eval-urgency-row {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.triage-urgency-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2.5px 9px;
+  border-radius: var(--radius-pill);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  cursor: help;
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.triage-urgency-pill:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08);
+}
+
+.triage-urgency-pill .urgency-icon {
+  font-size: 11px;
+  line-height: 1;
+}
+
+.triage-urgency-pill .urgency-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+/* Variantes cromáticas de Urgencia */
+.triage-urgency-pill.urgency-critica {
+  background: #FEE2E2;
+  border: 1px solid #DC2626;
+  color: #7F1D1D;
+}
+.triage-urgency-pill.urgency-critica .urgency-dot {
+  background: #DC2626;
+  box-shadow: 0 0 0 2px rgba(220, 38, 38, 0.3);
+  animation: pulse-dot 1.2s infinite ease-in-out;
+}
+
+.triage-urgency-pill.urgency-alta {
+  background: var(--triage-red-bg);
+  border: 1px solid var(--triage-red-border);
+  color: var(--triage-red-text);
+}
+.triage-urgency-pill.urgency-alta .urgency-dot {
+  background: var(--triage-red-p1);
+  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.25);
+  animation: pulse-dot 1.8s infinite ease-in-out;
+}
+
+.triage-urgency-pill.urgency-media {
+  background: var(--triage-amber-bg);
+  border: 1px solid var(--triage-amber-border);
+  color: var(--triage-amber-text);
+}
+.triage-urgency-pill.urgency-media .urgency-dot {
+  background: var(--triage-amber-p2);
+  box-shadow: 0 0 0 1.5px rgba(245, 158, 11, 0.25);
+}
+
+.triage-urgency-pill.urgency-baja {
+  background: #F1F5F9;
+  border: 1px solid #CBD5E1;
+  color: #334155;
+}
+.triage-urgency-pill.urgency-baja .urgency-dot {
+  background: #64748B;
+}
+
 .triage-itil-wrapper {
   display: inline-flex;
   flex-direction: column;

@@ -3126,11 +3126,10 @@ function renderFeed() {
         <table class="triage-table" aria-label="Tabla de Triaje de Incidencias">
           <thead>
             <tr>
-              <th style="min-width: 200px;">Incidencia / Apertura</th>
-              <th style="min-width: 270px;">Título / Resumen IA / Mensajes</th>
-              <th style="min-width: 190px;">Proceso Crítico y Sistemas</th>
-              <th style="width: 110px; text-align: center;">Remedy INI</th>
-              <th style="width: 130px; text-align: center;">Severidad ITIL</th>
+              <th style="min-width: 190px;">Incidencia / Apertura</th>
+              <th style="min-width: 260px;">Título / Resumen IA / Mensajes</th>
+              <th style="min-width: 180px;">Proceso Crítico y Sistemas</th>
+              <th style="min-width: 195px; text-align: center;" title="Comparativa de Severidad (Remedy Inicial ➔ ITIL Evaluada) y Nivel de Urgencia Operativa">Evaluación y Urgencia</th>
               <th style="width: 180px; text-align: right;">Acciones</th>
             </tr>
           </thead>
@@ -3215,6 +3214,26 @@ function renderFeed() {
       itilLabel = 'SL4 / P4';
       itilFullLabel = 'SL4 / P4 (Baja)';
     }
+
+    // Urgencia Operativa destacada en colores
+    const urgencyVal = evaluacion.urgencia || inc.urgencia || 'Media';
+    const urgNorm = String(urgencyVal).trim().toLowerCase();
+    let urgencyBadgeClass = 'urgency-media';
+    let urgencyIcon = '⚠️';
+    if (urgNorm.includes('crít') || urgNorm.includes('crit')) {
+      urgencyBadgeClass = 'urgency-critica';
+      urgencyIcon = '🚨';
+    } else if (urgNorm.includes('alta') || urgNorm.includes('high')) {
+      urgencyBadgeClass = 'urgency-alta';
+      urgencyIcon = '⚡';
+    } else if (urgNorm.includes('baj') || urgNorm.includes('low')) {
+      urgencyBadgeClass = 'urgency-baja';
+      urgencyIcon = '🟢';
+    } else {
+      urgencyBadgeClass = 'urgency-media';
+      urgencyIcon = '⚠️';
+    }
+    const urgencyTooltip = evaluacion.urgencia_justificacion || `Urgencia operativa ${urgencyVal}: factor determinante en la matriz de severidad ITIL.`;
 
     // Epsilon IA resumen
     const resumenIa = inc.resumen_ia || {};
@@ -3347,24 +3366,30 @@ function renderFeed() {
           </div>
         </td>
 
-        <!-- 4 Columna: Remedy INI -->
-        <td class="triage-cell-remedy" style="text-align: center;">
-          <span class="triage-sev-badge ${remedyBadgeClass}">${escapeHtml(sevNominal)}</span>
-        </td>
-
-        <!-- 5 Columna: Severidad Itil -->
-        <td class="triage-cell-itil" style="text-align: center;">
-          <div class="triage-itil-wrapper">
-            <span class="triage-sev-badge ${itilBadgeClass}">${itilLabel}</span>
-            ${isDisc ? `
-              <span class="triage-itil-delta-sub delta-${delta >= 2 ? '2' : '1'}" title="Discrepancia detectada: subescalación N1 de ${delta} nivel(es)">
-                +${delta} Nivel${delta > 1 ? 'es' : ''}
+        <!-- 4 Columna Unificada: Evaluación ITIL y Urgencia -->
+        <td class="triage-cell-eval" style="text-align: center;">
+          <div class="triage-eval-unified-wrapper">
+            <div class="triage-eval-flow" title="Evaluación de severidad: Remedy Inicial (${escapeHtml(sevNominal)}) ➔ Severidad ITIL (${escapeHtml(itilLabel)})">
+              <span class="triage-sev-badge ${remedyBadgeClass}" title="Severidad nominal inicial en Remedy">${escapeHtml(sevNominal)}</span>
+              <span class="triage-eval-arrow" aria-hidden="true">➔</span>
+              <span class="triage-sev-badge ${itilBadgeClass}" title="Severidad auditada según Criterio ITIL Orange">${itilLabel}</span>
+              ${isDisc ? `
+                <span class="triage-itil-delta-sub delta-${delta >= 2 ? '2' : '1'}" title="Discrepancia detectada: subescalación N1 de ${delta} nivel(es)">
+                  +${delta} Nivel${delta > 1 ? 'es' : ''}
+                </span>
+              ` : ''}
+            </div>
+            <div class="triage-eval-urgency-row">
+              <span class="triage-urgency-pill ${urgencyBadgeClass}" title="${escapeHtml(urgencyTooltip)}">
+                <span class="urgency-dot" aria-hidden="true"></span>
+                <span class="urgency-icon" aria-hidden="true">${urgencyIcon}</span>
+                <span class="urgency-text">Urgencia ${escapeHtml(urgencyVal)}</span>
               </span>
-            ` : ''}
+            </div>
           </div>
         </td>
 
-        <!-- 6 Columna: Acciones -->
+        <!-- 5 Columna: Acciones -->
         <td class="triage-cell-actions">
           <div class="triage-actions-cell-group">
             ${isDisc ? `
@@ -3386,7 +3411,7 @@ function renderFeed() {
 
       <!-- Fila Plegable / Desplegable de Detalle Extendido -->
       <tr class="triage-row-detail ${isOpen ? 'is-open' : ''}" id="detail-row-${escapeHtml(incId)}" data-inc="${escapeHtml(incId)}">
-        <td colspan="6">
+        <td colspan="5">
           <div class="triage-detail-wrapper">
             
             <!-- TARJETA DE GUÍA OPERATIVA PARA EL OPERADOR DE CONSOLA (incident-triage-review) -->
