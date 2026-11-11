@@ -1385,7 +1385,16 @@ Proceder con la ejecución inmediata del procedimiento de Rollback. Confirmar in
 
     const minsElapsed = evaluacion.minutos_desde_apertura || 25;
     const totalDurationText = formatAgingMinutes(minsElapsed);
-    const inicioStr = evaluacion.fecha_apertura ? evaluacion.fecha_apertura.slice(11, 16) + 'h' : '14:15h';
+    let inicioStr = '14:15h';
+    if (evaluacion.fecha_apertura) {
+      const formatted = formatFechaApertura(evaluacion.fecha_apertura);
+      if (formatted && formatted.includes(' ')) {
+        const timePart = formatted.split(' ')[1];
+        if (timePart) inicioStr = timePart.slice(0, 5) + 'h';
+      } else if (evaluacion.fecha_apertura.length >= 16) {
+        inicioStr = evaluacion.fecha_apertura.slice(11, 16) + 'h';
+      }
+    }
 
     // Métricas cuantitativas resumidas
     const metrics = evaluacion.metricas_cuantitativas || {};
@@ -3216,6 +3225,9 @@ Generado por Consola de Emergencias IT Orange - Motor de Triaje (Módulo 1)`;
 
   function parseIncidentEpoch(inc) {
     if (!inc) return 0;
+    if (typeof inc.apertura_epoch_ms === 'number' && !isNaN(inc.apertura_epoch_ms) && inc.apertura_epoch_ms > 0) {
+      return inc.apertura_epoch_ms;
+    }
     const raw = inc.fecha_apertura || inc.evaluacion?.fecha_apertura || inc.fecha || inc.fecha_creacion;
     if (raw) {
       if (raw instanceof Date) return raw.getTime();
@@ -3253,6 +3265,23 @@ Generado por Consola de Emergencias IT Orange - Motor de Triaje (Módulo 1)`;
         return `${d}/${m}/${y} ${h}:${min}`;
       }
       const s = String(raw).trim();
+      // Si ya está en formato canónico DD/MM/YYYY
+      const match = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:\s+(\d{1,2}):(\d{2}))?/);
+      if (match) {
+        return s.replace(/\s+[apAP]\.?$/, '');
+      }
+      // Si viene en formato ISO (con T o YYYY-MM-DD), parsear en hora local
+      if (s.includes('T') || /^\d{4}-\d{2}-\d{2}/.test(s)) {
+        const isoDate = new Date(s);
+        if (!isNaN(isoDate.getTime())) {
+          const d = String(isoDate.getDate()).padStart(2, '0');
+          const m = String(isoDate.getMonth() + 1).padStart(2, '0');
+          const y = isoDate.getFullYear();
+          const h = String(isoDate.getHours()).padStart(2, '0');
+          const min = String(isoDate.getMinutes()).padStart(2, '0');
+          return `${d}/${m}/${y} ${h}:${min}`;
+        }
+      }
       return s.replace(/\s+[apAP]\.?$/, '');
     }
     if (mins != null && !isNaN(mins)) {

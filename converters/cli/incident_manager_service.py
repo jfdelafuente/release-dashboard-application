@@ -53,16 +53,26 @@ def get_default_store_path() -> Path:
 
 
 def parse_remedy_datetime_to_epoch_ms(date_str: Optional[str]) -> Optional[int]:
-    """Parsea una cadena de fecha Remedy (DD/MM/YYYY HH:mm o ISO) a timestamp epoch ms UTC."""
+    """Parsea una cadena de fecha Remedy (DD/MM/YYYY HH:mm en horario Madrid o ISO UTC) a timestamp epoch ms UTC."""
     if not date_str or not isinstance(date_str, str):
         return None
     s = date_str.strip()
     if not s:
         return None
+
     try:
-        from datetime import datetime, timezone
+        from zoneinfo import ZoneInfo
+        MADRID_TZ = ZoneInfo("Europe/Madrid")
+    except Exception:
+        from datetime import timezone, timedelta
+        MADRID_TZ = timezone(timedelta(hours=1))
+
+    try:
+        from datetime import datetime
         if "T" in s or (len(s) >= 10 and s[4] == "-" and s[7] == "-"):
             dt = datetime.fromisoformat(s.replace("Z", "+00:00"))
+            if dt.tzinfo is None:
+                dt = dt.replace(tzinfo=MADRID_TZ)
             return int(dt.timestamp() * 1000)
     except Exception:
         pass
@@ -88,8 +98,8 @@ def parse_remedy_datetime_to_epoch_ms(date_str: Optional[str]) -> Optional[int]:
                 elif meridiem == "a" and hours == 12:
                     hours = 0
 
-            from datetime import datetime, timezone
-            dt = datetime(year, month, day, hours, minutes, seconds, tzinfo=timezone.utc)
+            from datetime import datetime
+            dt = datetime(year, month, day, hours, minutes, seconds, tzinfo=MADRID_TZ)
             return int(dt.timestamp() * 1000)
         except Exception:
             pass

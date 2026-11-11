@@ -129,6 +129,7 @@ La interfaz está organizada en cuatro zonas tácticas optimizadas para el contr
 * **Selector de Visualización por Estado Operativo:**
   * **Botón "Solo Pendientes (N)":** Aísla exclusivamente las incidencias que requieren atención (tickets en estado pendiente, con escalados $\ge 45\text{m}$, discrepancias activas o sin redacción aprobada). El contador numérico se actualiza en vivo.
   * **Botón "Todas las Activas (N)":** Despliega el universo completo de tickets en seguimiento (pendientes, comunicadas, en seguimiento y descartadas).
+* **Botón "⚡ Sincronizar Remedy":** Dispara una petición asíncrona a `POST /api/sync-remedy` para consultar en vivo la API corporativa MonTMC (`GET /api/epsilon/masivas`), realizar el *upsert* incremental sobre el dataset de incidencias activas y reevaluar las notificaciones sin recargar la página ni interrumpir la sesión de guardia. Muestra un spinner reactivo y notificación toast con el total de tickets consultados, nuevos y actualizados.
 * **Botón "Protocolo & Contactos":** Despliega el modal emergente accesible con la matriz RACI corporativa y los enlaces directos a las agendas de guardia de GRIAL y Confluence.
 
 ### 2. Cuadro de Mando de KPIs (Tarjetas Superiores Interactivas)
@@ -332,7 +333,7 @@ Gobernanza RACI: Incident Manager (Responsable) | IM-CSO (Aprobador)
 Acción Requerida: Conectarse inmediatamente al canal de audio para triaje técnico coordinado y definir plan de contención.
 ```
 
-### 3. Asistente "✨ Sugerir Borrador IA"
+### 3. Asistente "✨ Sugerir Borrador IA" y Gobernanza de Botones
 
 * **Ubicación:**
   * En la cabecera del panel del agente: botón `✨ Sugerir Borrador IA`.
@@ -343,9 +344,36 @@ Acción Requerida: Conectarse inmediatamente al canal de audio para triaje técn
   * **Versión Breve (SMS / Guardia):** Garantiza $\le 30$ palabras (típicamente entre 17 y 23 palabras reales).
   * **Regla Anti-Alucinación:** El asistente utiliza exclusivamente datos confirmados del ticket (ID, proceso de negocio, criterio cuantitativo de afectación y sistemas involucrados), marcando como "en diagnóstico" cualquier causa aún no establecida.
 
+#### Flujo Coherente y Estados de los Botones de Redacción
+
+Para evitar errores operativos durante situaciones de alta tensión, la consola implementa una máquina de estados estricta en la barra de acciones de redacción:
+
+```
+[Regenerar con Datos]  -->  [Copiar Prompt]  -->  [Pegar Salida Agente]  -->  [Guardar Mensaje Oficial]
+       (Siempre)                (Siempre)             (Tras copiar)            (Con texto válido)
+```
+
+1. **"Regenerar con Datos":** Toma los datos más recientes de la incidencia (estado operativo activo, severidad ITIL, notas de Remedy y telemetría de Epsilon) y recompone tanto el prompt para el LLM como la plantilla del borrador preliminar.
+2. **"Copiar Prompt":** Copia al portapapeles el prompt contextualizado del agente `incident-reporter` para remitirlo al chat con IA o terminal. Al pulsarse, **habilita automáticamente el botón "Pegar Salida Agente"**.
+3. **"Pegar Salida Agente":** Permite al operador transferir directamente la respuesta estructurada del modelo a las cajas de texto oficiales (versión completa y breve). Permanece **deshabilitado** hasta que se haya copiado previamente un prompt.
+4. **"Guardar Mensaje Oficial":** Persiste el mensaje aprobado en `high_priority_notifications.json` y el almacenamiento del dashboard. Permanece **deshabilitado** mientras los campos de texto estén vacíos o sin cambios, impidiendo sobrescribir comunicados con cadenas en blanco.
+
 ---
 
-### 4. Consola de Auditoría de Carga & Telemetría IA (Atajo: Shift + I / Shift + C)
+### 4. Consulta de Notas Técnicas y Worklog Remedy en Tiempo Real
+
+* **Ubicación:** Sección colapsable *"Notas Técnicas / Worklog de Remedy"* dentro de la tarjeta de detalle de cada incidencia.
+* **Propósito:** Permite al Incident Manager inspeccionar al instante los worklogs detallados introducidos por los grupos resolutores N1/N2/N3, las notas de diagnóstico y las soluciones aplicadas en Remedy, sin necesidad de acceder a la consola pesada de Remedy/BMC.
+* **Mecanismo:**
+  * Consulta el endpoint `GET /api/remedy/detail/{idRemedy}` servido por el backend FastAPI.
+  * **Caché en dos niveles:**
+    1. Caché en memoria en el backend (TTL de 300 segundos, `X-Cache-Status: MEMORY_HIT` en ~1ms).
+    2. Fallback resiliente en disco (`data/.remedy_cache/`).
+  * Dispone de botón **"🔄 Refrescar"** (`?refresh=true`) para invalidar la caché y forzar una consulta directa a MonTMC cuando se espera una actualización inmediata del técnico de guardia.
+
+---
+
+### 5. Consola de Auditoría de Carga & Telemetría IA (Atajo: Shift + I / Shift + C)
 
 Para mantener una interfaz despejada para el Incident Manager durante la guardia sin recargar la pantalla con herramientas de diagnóstico técnico, la Consola integra una **ventana técnica de auditoría accesible exclusivamente por atajo de teclado**:
 

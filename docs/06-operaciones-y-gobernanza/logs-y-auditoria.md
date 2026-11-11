@@ -55,12 +55,17 @@ Este documento describe la arquitectura, ubicación y operativa de los registros
   - Estado de regeneración del catálogo central `output/index.json`.
   - Registros de error si algún CSV está corrupto o le faltan columnas obligatorias (redirigido a `errors/`).
 
-### 2. Tarea Programada en Crontab (`dashboards-cron.log`)
-* **Generado por**: Tarea programada en el crontab del usuario `infocodes`:
-  ```bash
-  0 2 * * * /infocodes/project/release-dashboard-application/scripts/generate-dashboards.sh >> /infocodes/var/log/release-dashboard/dashboards-cron.log 2>&1
-  ```
-* **Contenido**: Captura la salida completa de consola (`stdout` y `stderr`) generada por la ejecución desatendida de las 02:00 AM.
+### 2. Tareas Programadas en Crontab y Mantenimiento
+
+* **`dashboards-cron.log`**:
+  * **Generado por**: Tarea programada en el crontab del usuario `infocodes` (`0 * * * * bash .../generate-dashboards.sh`).
+  * **Contenido**: Captura la salida completa de consola (`stdout` y `stderr`) generada por la regeneración horaria de dashboards y catálogos.
+* **`remedy-sync-cron.log`**:
+  * **Generado por**: Tarea programada en crontab (`*/15 * * * * bash .../sync-remedy-cron.sh`).
+  * **Contenido**: Traza las llamadas periódicas a la API de MonTMC (`GET /api/epsilon/masivas`), inserción/actualización de incidencias en el fichero JSON masivo activo y regeneración de `index.json`.
+* **`maintenance.log`**:
+  * **Generado por**: Tarea programada en crontab (`15 2 * * 6 bash .../maintenance.sh rotate-logs`).
+  * **Contenido**: Registro de rotaciones semanales por *copy-truncate*, compresión gzip (>7d) y purga de logs históricos (>30d).
 
 ### 3. Registro de Accesos Nginx (`infocodes.access.log`)
 * **Configurado en**: [`nginx.conf`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/nginx.conf) (`access_log /infocodes/var/log/nginx/infocodes.access.log;`).
@@ -120,16 +125,22 @@ Al ejecutar [`serve_app.py`](file:///c:/Users/jose.delafuente/proyectos/release-
 # 1. Ver en tiempo real la ejecución del cron de dashboards:
 tail -f /infocodes/var/log/release-dashboard/dashboards-cron.log
 
-# 2. Consultar el informe de la última conversión batch diaria:
+# 2. Ver en tiempo real la sincronización periódica de Remedy (cada 15 min):
+tail -f /infocodes/var/log/release-dashboard/remedy-sync-cron.log
+
+# 3. Consultar el estado y rotación de logs de mantenimiento:
+tail -n 50 /infocodes/var/log/release-dashboard/maintenance.log
+
+# 4. Consultar el informe de la última conversión batch diaria:
 ls -lt /infocodes/var/log/release-dashboard/dashboards-generation-*.log | head -n 1 | awk '{print $9}' | xargs tail -n 50
 
-# 3. Monitorear accesos HTTP y tráfico web:
+# 5. Monitorear accesos HTTP y tráfico web:
 tail -f /infocodes/var/log/nginx/infocodes.access.log
 
-# 4. Filtrar errores HTTP (códigos 4xx y 5xx) en Nginx:
+# 6. Filtrar errores HTTP (códigos 4xx y 5xx) en Nginx:
 awk '$9 ~ /^[45]/' /infocodes/var/log/nginx/infocodes.access.log | tail -n 20
 
-# 5. Listar las copias preventivas de despliegue disponibles para rollback:
+# 7. Listar las copias preventivas de despliegue disponibles para rollback:
 ls -lh /infocodes/var/backups/release-dashboard-application/
 ```
 

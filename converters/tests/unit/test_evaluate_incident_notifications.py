@@ -681,6 +681,14 @@ def test_should_parse_remedy_incident_datetime_formats():
     dt4 = parse_incident_datetime("2026-10-14T10:00:00")
     assert dt4 == datetime(2026, 10, 14, 10, 0)
 
+    # Formato ISO con zona horaria UTC (se convierte a Europe/Madrid CEST +2 en octubre)
+    dt5 = parse_incident_datetime("2026-10-14T08:00:00Z")
+    assert dt5 == datetime(2026, 10, 14, 10, 0)
+
+    # Formato ISO con zona horaria UTC (se convierte a Europe/Madrid CET +1 en noviembre)
+    dt6 = parse_incident_datetime("2026-11-11T16:22:43.000+00:00")
+    assert dt6 == datetime(2026, 11, 11, 17, 22, 43)
+
     # Valores inválidos o nulos
     assert parse_incident_datetime(None) is None
     assert parse_incident_datetime("") is None

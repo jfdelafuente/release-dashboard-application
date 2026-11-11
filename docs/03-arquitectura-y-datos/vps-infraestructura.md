@@ -253,17 +253,23 @@ http {
 
 ## 7. Automatización Batch y Cron Jobs
 
-El procesamiento batch de los archivos CSV depositados en `input/` se ejecuta de forma desatendida mediante el crontab del usuario `infocodes`:
+El crontab del usuario `infocodes` orquesta tanto la regeneración periódica de dashboards como la sincronización incremental continua con la API de Remedy (MonTMC) y el mantenimiento preventivo de logs:
 
 ```bash
-# Editar crontab del usuario
-crontab -e
+# Editar o consultar el crontab del usuario
+crontab -l
 ```
 
-**Entrada configurada**:
+**Tareas programadas en producción (`crontab -l`)**:
 ```cron
-# Procesamiento periódico de incidencias cada 15 minutos
-*/15 * * * * /infocodes/project/release-dashboard-application/current/scripts/generate-dashboards.sh >> /infocodes/var/log/release-dashboard/cron-generate.log 2>&1
+# 1. Regeneración horaria de dashboards e index.json (a las horas en punto)
+0 * * * * bash /infocodes/project/release-dashboard-application/current/scripts/generate-dashboards.sh >> /infocodes/var/log/release-dashboard/dashboards-cron.log 2>&1
+
+# 2. Sincronización incremental periódica con API Remedy / MonTMC (cada 15 minutos)
+*/15 * * * * bash /infocodes/project/release-dashboard-application/current/scripts/sync-remedy-cron.sh >> /infocodes/var/log/release-dashboard/remedy-sync-cron.log 2>&1
+
+# 3. Rotación semanal de logs y purga (>30d) de dashboards y sincronización (sábados 02:15)
+15 2 * * 6 bash /infocodes/project/release-dashboard-application/current/scripts/maintenance.sh rotate-logs >> /infocodes/var/log/release-dashboard/maintenance.log 2>&1
 ```
 
 ---

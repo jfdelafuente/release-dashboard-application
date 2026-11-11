@@ -233,4 +233,10 @@ def test_helpers_normalization():
 
     assert _iso_to_dashboard_date("2026-11-09T08:15:23") == "09/11/2026 08:15"
     assert _iso_to_dashboard_date("2026-11-09 14:30:00") == "09/11/2026 14:30"
+    # Conversión horaria UTC -> Europe/Madrid (+1 CET en invierno, +2 CEST en verano)
+    assert _iso_to_dashboard_date("2026-11-11T16:22:43.000+00:00") == "11/11/2026 17:22"
+    assert _iso_to_dashboard_date("2026-11-11T16:22:43Z") == "11/11/2026 17:22"
+    assert _iso_to_dashboard_date("2026-07-11T16:22:43.000+00:00") == "11/07/2026 18:22"
+    assert _iso_to_dashboard_date("2026-07-11T16:22:43Z") == "11/07/2026 18:22"
+    assert _iso_to_dashboard_date("11/11/2026 17:22") == "11/11/2026 17:22"
     assert _iso_to_dashboard_date(None) is None

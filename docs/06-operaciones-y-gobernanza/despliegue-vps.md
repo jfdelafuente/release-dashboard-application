@@ -212,13 +212,19 @@ location /api/epsilon/ {
 
 ---
 
-## 🔄 Conversión Batch de CSV (Cron en el VPS)
+## 🔄 Automatización Batch y Sincronización Cron (VPS)
 
-La generación periódica de los JSONs que consumen los dashboards se realiza con [`scripts/generate-dashboards.sh`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/scripts/generate-dashboards.sh), configurado en el crontab del usuario `infocodes`:
+En el crontab del usuario `infocodes` se ejecutan las siguientes tareas programadas desatendidas:
 
 ```bash
-# Ejecución diaria a las 2 AM:
-0 2 * * * /infocodes/project/release-dashboard-application/scripts/generate-dashboards.sh >> /infocodes/var/log/release-dashboard/dashboards-cron.log 2>&1
+# 1. Regeneración horaria de dashboards e index.json (a las horas en punto):
+0 * * * * bash /infocodes/project/release-dashboard-application/current/scripts/generate-dashboards.sh >> /infocodes/var/log/release-dashboard/dashboards-cron.log 2>&1
+
+# 2. Sincronización automática periódica con la API de Remedy / MonTMC (cada 15 min):
+*/15 * * * * bash /infocodes/project/release-dashboard-application/current/scripts/sync-remedy-cron.sh >> /infocodes/var/log/release-dashboard/remedy-sync-cron.log 2>&1
+
+# 3. Rotación semanal y purga de logs copy-truncate (sábados 02:15):
+15 2 * * 6 bash /infocodes/project/release-dashboard-application/current/scripts/maintenance.sh rotate-logs >> /infocodes/var/log/release-dashboard/maintenance.log 2>&1
 ```
 
 ---

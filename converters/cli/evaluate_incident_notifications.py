@@ -221,12 +221,31 @@ def parse_incident_datetime(raw: Optional[str]) -> Optional[datetime]:
     """Parses incident timestamp from Remedy and various ISO/localized formats.
     
     Supports Remedy exports with Spanish/English indicators (e.g. '14/10/2026 13:26 a').
+    Guarantees returning a naive datetime in Europe/Madrid local time to match datetime.now().
     """
     if not raw or not isinstance(raw, str):
         return None
     s = raw.strip()
     if not s:
         return None
+
+    try:
+        from zoneinfo import ZoneInfo
+        MADRID_TZ = ZoneInfo("Europe/Madrid")
+    except Exception:
+        from datetime import timezone, timedelta
+        MADRID_TZ = timezone(timedelta(hours=1))
+
+    # Caso ISO (con T o con guiones YYYY-MM-DD y posible zona horaria explícita)
+    if "T" in s or (len(s) >= 10 and s[4] == "-" and s[7] == "-"):
+        try:
+            clean_iso = s.replace("Z", "+00:00")
+            dt = datetime.fromisoformat(clean_iso)
+            if dt.tzinfo is not None:
+                return dt.astimezone(MADRID_TZ).replace(tzinfo=None)
+            return dt
+        except Exception:
+            pass
 
     # Clean Remedy trailing indicators like ' a', ' p', ' a. m.', ' p. m.'
     clean_s = re.sub(r"\s+[ap]\.?\s*m?\.?$", "", s, flags=re.IGNORECASE).strip()
@@ -235,9 +254,6 @@ def parse_incident_datetime(raw: Optional[str]) -> Optional[datetime]:
         "%d/%m/%Y %H:%M:%S",
         "%d/%m/%Y %H:%M",
         "%Y-%m-%d %H:%M:%S",
-        "%Y-%m-%dT%H:%M:%S",
-        "%Y-%m-%dT%H:%M:%SZ",
-        "%Y-%m-%dT%H:%M:%S%z",
         "%d/%m/%Y",
         "%Y-%m-%d",
     ]

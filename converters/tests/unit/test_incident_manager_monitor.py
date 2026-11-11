@@ -1430,4 +1430,29 @@ def test_emergency_cockpit_comm_phase_filtering(mock_notifications_catalog, mock
     assert "INC000004168617" not in inc_ids_missing_ap
 
 
+def test_parse_remedy_datetime_to_epoch_ms_europe_madrid():
+    """Verifica que fechas en DD/MM/YYYY se interpreten en Europa/Madrid (CET/CEST) sin decalaje."""
+    from zoneinfo import ZoneInfo
+    from datetime import datetime
+    madrid_tz = ZoneInfo("Europe/Madrid")
+
+    # Fecha de invierno CET (11/11/2026 17:22)
+    epoch_ms = parse_remedy_datetime_to_epoch_ms("11/11/2026 17:22")
+    expected_dt = datetime(2026, 11, 11, 17, 22, tzinfo=madrid_tz)
+    assert epoch_ms == int(expected_dt.timestamp() * 1000)
+
+    # Fecha con indicador 'p' (11/11/2026 05:22 p -> 17:22)
+    epoch_ms_p = parse_remedy_datetime_to_epoch_ms("11/11/2026 05:22 p")
+    assert epoch_ms_p == int(expected_dt.timestamp() * 1000)
+
+    # Formato ISO UTC equivalente
+    epoch_ms_iso = parse_remedy_datetime_to_epoch_ms("2026-11-11T16:22:00Z")
+    assert epoch_ms_iso == int(expected_dt.timestamp() * 1000)
+
+    # Nulo o inválido
+    assert parse_remedy_datetime_to_epoch_ms(None) is None
+    assert parse_remedy_datetime_to_epoch_ms("") is None
+
+
+
 

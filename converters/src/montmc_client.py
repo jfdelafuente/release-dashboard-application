@@ -39,8 +39,9 @@ class RemedyNotFoundError(MonTMCError):
 
 def _iso_to_dashboard_date(iso_str: Optional[str]) -> Optional[str]:
     """
-    Convierte una fecha ISO-8601 (ej. '2026-11-09T08:15:23' o '2026-11-09 08:15:23')
-    al formato canónico del dashboard ('DD/MM/YYYY HH:MM').
+    Convierte una fecha ISO-8601 (ej. '2026-11-11T16:22:43.000+00:00' o '2026-11-09T08:15:23Z')
+    al formato canónico del dashboard ('DD/MM/YYYY HH:MM') en horario local de Madrid (Europe/Madrid).
+    Si la fecha incluye zona horaria (UTC / Z / offset), se convierte automáticamente a CET/CEST.
     """
     if not iso_str or not isinstance(iso_str, str):
         return None
@@ -48,7 +49,25 @@ def _iso_to_dashboard_date(iso_str: Optional[str]) -> Optional[str]:
     if not val:
         return None
 
-    # Limpiar sufijo de zona horaria o microsegundos si existen
+    try:
+        from zoneinfo import ZoneInfo
+        MADRID_TZ = ZoneInfo("Europe/Madrid")
+    except Exception:
+        from datetime import timezone, timedelta
+        MADRID_TZ = timezone(timedelta(hours=1))
+
+    # 1. Si es formato ISO (con T o con guiones YYYY-MM-DD)
+    if "T" in val or (len(val) >= 10 and val[4] == "-" and val[7] == "-"):
+        try:
+            clean_iso = val.replace("Z", "+00:00")
+            dt = datetime.fromisoformat(clean_iso)
+            if dt.tzinfo is not None:
+                dt = dt.astimezone(MADRID_TZ)
+            return dt.strftime("%d/%m/%Y %H:%M")
+        except Exception:
+            pass
+
+    # 2. Si ya es o parece DD/MM/YYYY o formatos sin T
     val_clean = re.sub(r'\.\d+', '', val)
     val_clean = val_clean.replace('Z', '').replace('T', ' ')
 
