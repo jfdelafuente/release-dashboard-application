@@ -608,3 +608,33 @@ def test_topbar_and_portal_navigation_integration():
 
     # 3. Validación de data-active en emergency-triage-console/index.html para sincronía con topbar.js
     assert 'id="mo-topbar-root" data-active="emergency-triage"' in triage_html
+
+
+def test_comms_action_buttons_lifecycle_coherence():
+    """Valida la coherencia de estados y ciclo de vida de los botones de acción del Generador de Comunicaciones."""
+    html = (CONSOLE_DIR / "index.html").read_text(encoding="utf-8")
+    css = (CONSOLE_DIR / "triage.css").read_text(encoding="utf-8")
+    js = (CONSOLE_DIR / "triage.js").read_text(encoding="utf-8")
+
+    # 1. Existencia de los 4 botones en index.html
+    assert 'id="btn-tpl-regenerate"' in html, "Debe existir botón Regenerar con Datos"
+    assert 'id="btn-copy-agent-prompt"' in html, "Debe existir botón Copiar Prompt Agente"
+    assert 'id="btn-paste-agent-output"' in html, "Debe existir botón Pegar Salida Agente"
+    assert 'id="btn-save-agent-official"' in html, "Debe existir botón Guardar Mensaje Oficial"
+
+    # 2. Estilos para estado disabled en triage.css
+    assert "#btn-tpl-regenerate:disabled" in css, "triage.css debe estilizar #btn-tpl-regenerate:disabled"
+    assert "#btn-copy-agent-prompt:disabled" in css or ".triage-btn-agent-prompt:disabled" in css, "triage.css debe estilizar prompt:disabled"
+    assert "#btn-paste-agent-output:disabled" in css or ".triage-btn-agent-paste:disabled" in css, "triage.css debe estilizar paste:disabled"
+    assert "#btn-save-agent-official:disabled" in css or ".triage-btn-agent-save:disabled" in css, "triage.css debe estilizar save:disabled"
+
+    # 3. Función y reglas de coherencia en triage.js
+    assert "updateCommsActionButtonsState" in js, "triage.js debe definir updateCommsActionButtonsState"
+    assert "copiedAgentPrompts" in js, "triage.js debe rastrear copiedAgentPrompts"
+    assert "isPromptCopied" in js, "triage.js debe comprobar si el prompt fue copiado antes de habilitar Pegar"
+    assert "isSameAsRaw" in js, "triage.js debe comprobar si el texto ya es idéntico a la plantilla pura de datos"
+    assert "isSameAsOfficial" in js, "triage.js debe comprobar si el texto ya coincide con el mensaje oficial guardado"
+
+    # 4. Invocación de actualización de estados ante eventos de entrada (reactividad)
+    assert "updateCommsActionButtonsState()" in js, "triage.js debe invocar updateCommsActionButtonsState en render y eventos"
+

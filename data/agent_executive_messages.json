@@ -9,7 +9,7 @@
       "orange-it-emergency-management": "2.3.0",
       "incident-executive-notifications": "1.3.0"
     },
-    "updated_at": "2026-11-10T12:50:05Z"
+    "updated_at": "2026-11-11T15:49:07Z"
   },
   "incidents": {
     "INC000004065609": {
@@ -1156,6 +1156,16 @@
         "origen": "incident-reporter",
         "conteo_palabras_completo": 75,
         "conteo_palabras_breve": 25
+      }
+    },
+    "INC000004181441": {
+      "apertura": {
+        "completo": "P1 - INC000004181441. Detectada incidencia funcional en HPFMS que impide la generación de casos en la partición POSTPAGO desde las 12:23, afectando al proceso de Fraude en ISGF-Madrid. El impacto reportado alcanza a 100 usuarios y no existe método alternativo operativo. El servicio permanece degradado en esta partición, mientras el resto funcionan con normalidad. Equipos técnicos realizan diagnóstico sobre HPFMS para validar el estado de la partición afectada y revisar aplicación, base de datos y conectividad. Estado: en curso.",
+        "breve": "P1/INC000004181441: HPFMS no genera casos en partición POSTPAGO; 100 usuarios afectados sin workaround. Diagnóstico técnico en curso. Pendiente validación de partición, aplicación y BBDD.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 79,
+        "conteo_palabras_breve": 24
       }
     }
   }

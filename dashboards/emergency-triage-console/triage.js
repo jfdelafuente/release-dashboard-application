@@ -55,7 +55,8 @@
     activeCommsPhase: 'inicial',
     activeContactsBrand: 'orange',
     activeContactsDomain: 'ALL',
-    commsDispatchHistory: {} // { [incId]: Array }
+    commsDispatchHistory: {}, // { [incId]: Array }
+    copiedAgentPrompts: {} // { [incId + '_' + phase]: boolean }
   };
 
   // --- Referencias del DOM ---
@@ -1670,6 +1671,114 @@ Proceder con la ejecución inmediata del procedimiento de Rollback. Confirmar in
           }, 600);
         }
       });
+    }
+
+    // Actualizar estados coherentes de los botones de acción del generador
+    updateCommsActionButtonsState();
+  }
+
+  // --------------------------------------------------------------------------
+  // Gestión Coherente de Botones de Acción (Módulo 2: Generador de Plantillas)
+  // --------------------------------------------------------------------------
+  function updateCommsActionButtonsState() {
+    const incId = state.activeCommsIncId || state.activeOrchIncId;
+    const phase = state.activeCommsPhase || 'inicial';
+    let inc = state.incidents.find(i => i.id === incId);
+    if (!inc && state.activeOrchIncId) {
+      inc = state.incidents.find(i => i.id === state.activeOrchIncId);
+    }
+
+    // Si no hay incidencia activa, deshabilitar todos los botones
+    if (!inc) {
+      if (dom.btnTplRegenerate) dom.btnTplRegenerate.disabled = true;
+      if (dom.btnCopyAgentPrompt) dom.btnCopyAgentPrompt.disabled = true;
+      if (dom.btnPasteAgentOutput) dom.btnPasteAgentOutput.disabled = true;
+      if (dom.btnSaveAgentOfficial) dom.btnSaveAgentOfficial.disabled = true;
+      return;
+    }
+
+    const normalizeText = (s) => (s || '').replace(/\r\n/g, '\n').trim();
+
+    const promptKey = `${inc.id}_${phase}`;
+    const isPromptCopied = Boolean(
+      (state.copiedAgentPrompts && state.copiedAgentPrompts[promptKey]) ||
+      (typeof sessionStorage !== 'undefined' && sessionStorage.getItem('triage_agent_prompt_copied_' + promptKey))
+    );
+
+    const textCompleto = dom.tplTextCompleto ? dom.tplTextCompleto.value : '';
+    const textBreve = dom.tplTextBreve ? dom.tplTextBreve.value : '';
+    const normComp = normalizeText(textCompleto);
+    const normBrev = normalizeText(textBreve);
+    const hasText = Boolean(normComp || normBrev);
+
+    // Obtener plantilla algorítmica pura (Canal A) para comparar
+    const rawData = generateDynamicTemplates(inc, phase, true);
+    const rawCompleto = normalizeText(rawData.completo);
+    const rawBreve = normalizeText(rawData.breve);
+    const isSameAsRaw = normComp === rawCompleto && normBrev === rawBreve;
+
+    // Obtener mensaje oficial guardado actualmente
+    const phaseKey = phase === 'inicial' ? 'apertura' : (phase === 'actualizacion' ? 'seguimiento' : 'cierre');
+    let officialMsg = inc.mensajes_ejecutivos && inc.mensajes_ejecutivos[phaseKey];
+    if (!officialMsg) {
+      try {
+        const cached = localStorage.getItem(`triage_official_msg_${inc.id}_${phaseKey}`);
+        if (cached) officialMsg = JSON.parse(cached);
+      } catch (_) {}
+    }
+    const isOfficialPresent = Boolean(
+      officialMsg &&
+      (officialMsg.completo || officialMsg.breve) &&
+      officialMsg.estado !== 'pendiente'
+    );
+    const isSameAsOfficial = isOfficialPresent &&
+      normComp === normalizeText(officialMsg.completo) &&
+      normBrev === normalizeText(officialMsg.breve);
+
+    // 1. Botón "Regenerar con Datos"
+    // Habilitado únicamente si el contenido actual difiere de la plantilla algorítmica pura (Canal A)
+    if (dom.btnTplRegenerate) {
+      if (isSameAsRaw) {
+        dom.btnTplRegenerate.disabled = true;
+        dom.btnTplRegenerate.title = 'El editor ya muestra la plantilla calculada con los datos actuales del ticket (Canal A)';
+      } else {
+        dom.btnTplRegenerate.disabled = false;
+        dom.btnTplRegenerate.title = 'Restaurar el texto a la plantilla algorítmica calculada con los datos del ticket (Canal A)';
+      }
+    }
+
+    // 2. Botón "Copiar Prompt Agente"
+    // Siempre habilitado cuando hay incidencia activa para poder (re)copiar el contexto técnico
+    if (dom.btnCopyAgentPrompt) {
+      dom.btnCopyAgentPrompt.disabled = false;
+      dom.btnCopyAgentPrompt.title = 'Copiar el prompt estructurado con todo el contexto técnico para procesar con el Agente incident-reporter / LLM';
+    }
+
+    // 3. Botón "Pegar Salida Agente"
+    // Habilitado ÚNICAMENTE si antes se ha copiado el prompt de esta incidencia y fase
+    if (dom.btnPasteAgentOutput) {
+      if (!isPromptCopied) {
+        dom.btnPasteAgentOutput.disabled = true;
+        dom.btnPasteAgentOutput.title = 'Copia primero el Prompt del Agente con "Copiar Prompt Agente" antes de pegar su respuesta';
+      } else {
+        dom.btnPasteAgentOutput.disabled = false;
+        dom.btnPasteAgentOutput.title = 'Pegar la respuesta devuelta por el Agente para autocompletar la Versión Completa y Breve';
+      }
+    }
+
+    // 4. Botón "Guardar Mensaje Oficial"
+    // Deshabilitado si no hay contenido para guardar o si ya está idéntico al mensaje oficial confirmado
+    if (dom.btnSaveAgentOfficial) {
+      if (!hasText) {
+        dom.btnSaveAgentOfficial.disabled = true;
+        dom.btnSaveAgentOfficial.title = 'No hay contenido para guardar como mensaje oficial';
+      } else if (isSameAsOfficial) {
+        dom.btnSaveAgentOfficial.disabled = true;
+        dom.btnSaveAgentOfficial.title = 'El mensaje actual ya está guardado como comunicado oficial';
+      } else {
+        dom.btnSaveAgentOfficial.disabled = false;
+        dom.btnSaveAgentOfficial.title = 'Validar y consolidar como Comunicado Oficial en el sistema (guarda en backend y notificaciones)';
+      }
     }
   }
 
@@ -4504,6 +4613,7 @@ Puente Teams: ${teamsUrl}
             localStorage.setItem(key, dom.tplTextCompleto.value);
           } catch (_) {}
         }
+        updateCommsActionButtonsState();
       });
     }
     if (dom.tplTextBreve) {
@@ -4516,6 +4626,7 @@ Puente Teams: ${teamsUrl}
             localStorage.setItem(key, dom.tplTextBreve.value);
           } catch (_) {}
         }
+        updateCommsActionButtonsState();
       });
     }
 
@@ -4536,6 +4647,7 @@ Puente Teams: ${teamsUrl}
             if (dom.tplTextCompleto) dom.tplTextCompleto.value = data.completo;
             if (dom.tplTextBreve) dom.tplTextBreve.value = data.breve;
             updateWordCounters();
+            updateCommsActionButtonsState();
           }
           showToast('Borrador descartado. Plantilla oficial restaurada.', 'info');
         }
@@ -4608,6 +4720,17 @@ Puente Teams: ${teamsUrl}
 
         copyToClipboard(promptText, '¡Prompt estructurado para Agente incident-reporter copiado al portapapeles!');
 
+        // Marcar prompt como copiado para habilitar "Pegar Salida Agente"
+        if (!state.copiedAgentPrompts) state.copiedAgentPrompts = {};
+        const promptKey = `${inc.id}_${phase}`;
+        state.copiedAgentPrompts[promptKey] = true;
+        try {
+          if (typeof sessionStorage !== 'undefined') {
+            sessionStorage.setItem('triage_agent_prompt_copied_' + promptKey, 'true');
+          }
+        } catch (_) {}
+        updateCommsActionButtonsState();
+
         // Feedback visual temporal en el botón
         const origHtml = dom.btnCopyAgentPrompt.innerHTML;
         dom.btnCopyAgentPrompt.innerHTML = '<span aria-hidden="true">✅</span> <span>¡Prompt Copiado!</span>';
@@ -4674,6 +4797,7 @@ Puente Teams: ${teamsUrl}
           agentBadge.style.display = 'inline-flex';
         }
 
+        updateCommsActionButtonsState();
         showToast('Salida del Agente aplicada. Pulsa "Guardar Mensaje Oficial" para consolidarla.', 'success');
       });
     }
@@ -4849,6 +4973,7 @@ Puente Teams: ${teamsUrl}
         } finally {
           dom.btnSaveAgentOfficial.disabled = false;
           dom.btnSaveAgentOfficial.innerHTML = originalBtnHtml;
+          updateCommsActionButtonsState();
         }
       });
     }
