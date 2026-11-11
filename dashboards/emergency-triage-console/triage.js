@@ -1,5 +1,5 @@
 /**
- * Consola de Triaje y Reclasificación Automática (SL1/P1 & SL2/P2)
+ * Consola de Triaje de Incidencias (SL1/P1 & SL2/P2)
  * Módulo 1: Motor de Inspección Continua, Umbrales Críticos y Alertas de Subescalación
  * Orange Tech Operations · Incident Management
  */

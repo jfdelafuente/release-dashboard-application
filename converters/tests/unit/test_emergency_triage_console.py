@@ -1,5 +1,5 @@
 """
-Tests unitarios para la Consola de Triaje y Reclasificación Automática (Módulo 1).
+Tests unitarios para la Consola de Triaje de Incidencias (Módulo 1).
 Valida las 3 funciones esenciales:
  1. Ingesta e Inspección Continua
  2. Evaluador de Umbrales Críticos
@@ -29,7 +29,7 @@ def test_index_html_contains_core_elements():
     html = (CONSOLE_DIR / "index.html").read_text(encoding="utf-8")
 
     # Título y badges
-    assert "Consola de Triaje y Reclasificación Automática" in html
+    assert "Consola de Triaje de Incidencias" in html
     assert "Módulo 1" in html
 
     # Función 1: Ingesta e Inspección Continua
