@@ -3942,6 +3942,47 @@ body {
   color: #C05A00;
 }
 
+.triage-btn-agent-prompt,
+#btn-copy-agent-prompt {
+  background: rgba(99, 102, 241, 0.08);
+  border: 1px solid rgba(99, 102, 241, 0.35);
+  color: #4F46E5;
+  font-weight: 700;
+  transition: all 0.15s ease;
+}
+
+.triage-btn-agent-prompt:hover,
+#btn-copy-agent-prompt:hover {
+  background: #6366F1;
+  color: #FFFFFF;
+  border-color: #6366F1;
+  box-shadow: 0 2px 6px rgba(99, 102, 241, 0.25);
+}
+
+.triage-btn-agent-prompt.is-copied,
+#btn-copy-agent-prompt.is-copied {
+  background: #10B981 !important;
+  border-color: #10B981 !important;
+  color: #FFFFFF !important;
+}
+
+.triage-btn-agent-paste,
+#btn-paste-agent-output {
+  background: rgba(16, 185, 129, 0.08);
+  border: 1px solid rgba(16, 185, 129, 0.35);
+  color: #059669;
+  font-weight: 700;
+  transition: all 0.15s ease;
+}
+
+.triage-btn-agent-paste:hover,
+#btn-paste-agent-output:hover {
+  background: #10B981;
+  color: #FFFFFF;
+  border-color: #10B981;
+  box-shadow: 0 2px 6px rgba(16, 185, 129, 0.25);
+}
+
 #btn-tpl-load-gateway {
   background: #FF7900;
   border: 1px solid #E06A00;

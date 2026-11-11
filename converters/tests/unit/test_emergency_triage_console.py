@@ -274,6 +274,8 @@ def test_module_2_index_html_orchestrator_elements():
     assert 'id="exec-comm-completo"' in html
     assert 'id="exec-comm-breve"' in html
     assert 'id="btn-copy-exec-completo"' in html
+    assert 'id="btn-copy-agent-prompt"' in html
+    assert 'id="btn-paste-agent-output"' in html
 
 
 def test_module_2_triage_css_orchestrator_styles():
@@ -420,6 +422,8 @@ def test_enrichment_indicators_ia_and_executive_comms():
     assert "is-ia" in js, "triage.js debe aplicar clase is-ia en la marca de IA"
     assert "is-comms" in js, "triage.js debe aplicar clase is-comms en la marca de comunicaciones"
     assert "btn-open-exec-comm" in js, "triage.js debe soportar botón interactivo para abrir comunicaciones ejecutivas"
+    assert "btnCopyAgentPrompt" in js, "triage.js debe soportar botón para copiar el prompt estructurado del agente"
+    assert "buildAgentPrompt" in js, "triage.js debe construir el prompt de incident-reporter"
     assert "triage-detail-enrichment-bar" in js, "triage.js debe mostrar el estado de redacción oficial en el detalle expandido"
 
     # 3. Validación contra el dataset real de notificaciones

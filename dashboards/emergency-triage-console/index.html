@@ -950,6 +950,7 @@
             <span class="comms-picker-label">Incidencia Activa:</span>
             <span id="exec-modal-inc-id" class="orch-badge-id">INC000000000000</span>
             <span class="orch-badge-sev" style="background: rgba(239, 68, 68, 0.12); color: var(--triage-red-p1); border-color: rgba(239, 68, 68, 0.25);">SL1 / P1 · Crítica</span>
+            <span id="exec-modal-agent-status" class="triage-mock-badge" style="background: rgba(99, 102, 241, 0.1); color: #4F46E5; border: 1px solid rgba(99, 102, 241, 0.25); display: none;">🤖 Salida Agente Oficial</span>
           </div>
         </div>
         <div class="comms-header-right">
@@ -1052,15 +1053,25 @@
 
         <!-- Barra de Acciones del Generador (Módulo 2) -->
         <div class="comms-panel-actions">
-          <button type="button" class="triage-btn" id="btn-tpl-regenerate" title="Restaurar el texto generado automáticamente con los datos actuales del ticket">
-            <span aria-hidden="true">✨</span> <span>Regenerar con Datos del Ticket</span>
-          </button>
-          <button type="button" class="triage-btn triage-btn-primary" id="btn-copy-exec-completo" title="Copiar versión completa y registrar automáticamente el envío en la bitácora auditable">
-            <span aria-hidden="true">📋</span> <span>Copiar y Registrar en Bitácora</span>
-          </button>
-          <button type="button" class="triage-btn" id="btn-tpl-load-gateway" title="Transferir este mensaje al Gateway Web de Explotación (Módulo 3)">
-            <span aria-hidden="true">🚀</span> <span>Cargar en Gateway Web de Explotación (Módulo 3) ➔</span>
-          </button>
+          <div class="comms-actions-left" style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+            <button type="button" class="triage-btn" id="btn-tpl-regenerate" title="Restaurar el texto generado automáticamente con los datos actuales del ticket">
+              <span aria-hidden="true">✨</span> <span>Regenerar con Datos</span>
+            </button>
+            <button type="button" class="triage-btn triage-btn-agent-prompt" id="btn-copy-agent-prompt" title="Copiar el prompt estructurado con todo el contexto técnico para procesar con el Agente incident-reporter / LLM">
+              <span aria-hidden="true">🤖</span> <span>Copiar Prompt Agente</span>
+            </button>
+            <button type="button" class="triage-btn triage-btn-agent-paste" id="btn-paste-agent-output" title="Pegar la respuesta completa devuelta por el Agente para autocompletar la Versión Completa y Breve">
+              <span aria-hidden="true">📥</span> <span>Pegar Salida Agente</span>
+            </button>
+          </div>
+          <div class="comms-actions-right" style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+            <button type="button" class="triage-btn triage-btn-primary" id="btn-copy-exec-completo" title="Copiar versión completa y registrar automáticamente el envío en la bitácora auditable">
+              <span aria-hidden="true">📋</span> <span>Copiar y Registrar en Bitácora</span>
+            </button>
+            <button type="button" class="triage-btn" id="btn-tpl-load-gateway" title="Transferir este mensaje al Gateway Web de Explotación (Módulo 3)">
+              <span aria-hidden="true">🚀</span> <span>Cargar en Gateway Web de Explotación (Módulo 3) ➔</span>
+            </button>
+          </div>
         </div>
 
       </div>

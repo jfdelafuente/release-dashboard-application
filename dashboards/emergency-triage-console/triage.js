@@ -223,6 +223,8 @@
     btnCopyTplCompleto: document.getElementById('btn-copy-tpl-completo'),
     btnCopyTplBreve: document.getElementById('btn-copy-tpl-breve'),
     btnTplRegenerate: document.getElementById('btn-tpl-regenerate'),
+    btnCopyAgentPrompt: document.getElementById('btn-copy-agent-prompt'),
+    btnPasteAgentOutput: document.getElementById('btn-paste-agent-output'),
     btnTplLoadGateway: document.getElementById('btn-tpl-load-gateway'),
 
     // Gateway Web de Explotación
@@ -1446,6 +1448,92 @@ Proceder con la ejecución inmediata del procedimiento de Rollback. Confirmar in
     };
   }
 
+  function buildAgentPrompt(inc, phase = 'inicial', forceRebuild = false) {
+    if (!inc) return '';
+
+    const phaseKey = phase === 'inicial' ? 'apertura' : (phase === 'actualizacion' ? 'seguimiento' : 'cierre');
+    const msgs = inc.mensajes_ejecutivos || {};
+    if (!forceRebuild && msgs[phaseKey] && msgs[phaseKey].prompt_agente) {
+      return msgs[phaseKey].prompt_agente;
+    }
+
+    const incId = inc.id || 'INC';
+    const prio = inc.prioridad_sugerida || 'P1';
+    const faseLabel = phaseKey.toUpperCase();
+    const sistemas = Array.isArray(inc.sistemas) ? inc.sistemas.join(', ') : (inc.sistemas || 'Sistemas Core');
+    const res = inc.resumen_ia;
+
+    const lines = [
+      'Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).',
+      `Fase solicitada: ${faseLabel}`,
+      `Incidencia: ${incId} - ${inc.titulo || ''}`,
+      `Criticidad sugerida: ${prio}`,
+      `Sistemas involucrados: ${sistemas}`,
+    ];
+
+    const evalData = inc.evaluacion || {};
+    if (evalData.proceso) lines.push(`Proceso de Negocio: ${evalData.proceso}`);
+    if (evalData.criterio) lines.push(`Criterio / Umbral: ${evalData.criterio}`);
+    lines.push('');
+
+    if (res && (res.problema || res.impacto || res.solucion)) {
+      lines.push('--- Contexto extraído de Epsilon Resumen IA ---');
+      if (res.problema) lines.push(`• Problema detectado: ${res.problema}`);
+      if (res.impacto) lines.push(`• Impacto en servicio/negocio: ${res.impacto}`);
+      if (res.solucion) lines.push(`• Causa raíz / Solución: ${res.solucion}`);
+      if (res.siguiente_accion || res.siguienteAccion) lines.push(`• Siguiente acción: ${res.siguiente_accion || res.siguienteAccion}`);
+      if (res.estadoActual) lines.push(`• Estado actual reportado: ${res.estadoActual}`);
+      if (res.bloqueos) lines.push(`• Bloqueos identificados: ${Array.isArray(res.bloqueos) ? res.bloqueos.join('; ') : res.bloqueos}`);
+    } else {
+      lines.push('--- Metadatos del ticket (Epsilon IA pendiente) ---');
+      lines.push(`• Descripción: ${inc.titulo || ''}`);
+      lines.push(`• Impacto ticket: ${evalData.impacto || 'N/D'}`);
+      lines.push(`• Urgencia ticket: ${evalData.urgencia || 'N/D'}`);
+    }
+
+    lines.push('');
+    lines.push('Redacta el mensaje en los dos niveles obligatorios:');
+    lines.push('**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)');
+    lines.push('**Versión aún más breve:** (máx 30 palabras)');
+
+    return lines.join('\n');
+  }
+
+  function parseAgentOutput(raw) {
+    let completo = '';
+    let breve = '';
+    if (!raw || typeof raw !== 'string') return { completo, breve };
+
+    const clean = raw.trim();
+
+    // 1. Buscar versión completa: **Mensaje para Dirección (versión completa):** ...
+    const compRegex = /\*\*(?:Mensaje para Dirección|Versión Completa)[^\*]*\*\*[:\s]*([\s\S]*?)(?=\*\*(?:Versión aún más breve|Versión breve)[^\*]*\*\*|$)/i;
+    const compMatch = clean.match(compRegex);
+    if (compMatch && compMatch[1]) {
+      completo = compMatch[1].trim();
+    }
+
+    // 2. Buscar versión breve: **Versión aún más breve:** ...
+    const brevRegex = /\*\*(?:Versión aún más breve|Versión breve)[^\*]*\*\*[:\s]*([\s\S]*?)$/i;
+    const brevMatch = clean.match(brevRegex);
+    if (brevMatch && brevMatch[1]) {
+      breve = brevMatch[1].trim();
+    }
+
+    // 3. Fallback: Si no se usó markdown con negrita, intentar párrafos separados
+    if (!completo && !breve) {
+      const paras = clean.split(/\n\s*\n/).map(p => p.trim()).filter(Boolean);
+      if (paras.length >= 2) {
+        completo = paras[0];
+        breve = paras[1];
+      } else if (paras.length === 1) {
+        completo = paras[0];
+      }
+    }
+
+    return { completo, breve };
+  }
+
   function renderCommsTemplateTab(inc, phase = 'inicial') {
     state.activeCommsPhase = phase;
 
@@ -1521,6 +1609,26 @@ Proceder con la ejecución inmediata del procedimiento de Rollback. Confirmar in
     // Actualizar textareas
     if (dom.tplTextCompleto) dom.tplTextCompleto.value = textCompleto;
     if (dom.tplTextBreve) dom.tplTextBreve.value = textBreve;
+
+    // Actualizar indicador de estado de redacción del Agente
+    const agentBadge = document.getElementById('exec-modal-agent-status');
+    if (agentBadge) {
+      const phaseKey = phase === 'inicial' ? 'apertura' : (phase === 'actualizacion' ? 'seguimiento' : 'cierre');
+      const msgPre = inc.mensajes_ejecutivos && inc.mensajes_ejecutivos[phaseKey];
+      const isOfficial = Boolean(msgPre && msgPre.completo && msgPre.estado !== 'pendiente');
+      agentBadge.style.display = 'inline-flex';
+      if (isOfficial) {
+        agentBadge.textContent = '🤖 Salida Agente Confirmada';
+        agentBadge.style.background = 'rgba(16, 185, 129, 0.1)';
+        agentBadge.style.color = '#059669';
+        agentBadge.style.borderColor = 'rgba(16, 185, 129, 0.3)';
+      } else {
+        agentBadge.textContent = '⏳ Redacción Agente Pendiente';
+        agentBadge.style.background = 'rgba(99, 102, 241, 0.1)';
+        agentBadge.style.color = '#4F46E5';
+        agentBadge.style.borderColor = 'rgba(99, 102, 241, 0.25)';
+      }
+    }
 
     updateWordCounters();
   }
@@ -4426,6 +4534,87 @@ Puente Teams: ${teamsUrl}
             showToast('Textos oficiales regenerados con datos actuales del ticket', 'info');
           }
         }
+      });
+    }
+
+    // Copiar Prompt Agente (Canal B: incident-reporter LLM)
+    if (dom.btnCopyAgentPrompt) {
+      dom.btnCopyAgentPrompt.addEventListener('click', () => {
+        const incId = state.activeCommsIncId || state.activeOrchIncId;
+        const phase = state.activeCommsPhase || 'inicial';
+        let inc = state.incidents.find(i => i.id === incId);
+        if (!inc && state.activeOrchIncId) {
+          inc = state.incidents.find(i => i.id === state.activeOrchIncId);
+        }
+        if (!inc) {
+          showToast('No se encontró la incidencia activa para generar el prompt', 'warning');
+          return;
+        }
+
+        const promptText = buildAgentPrompt(inc, phase);
+        if (!promptText) {
+          showToast('No se pudo generar el prompt estructurado', 'warning');
+          return;
+        }
+
+        copyToClipboard(promptText, '¡Prompt estructurado para Agente incident-reporter copiado al portapapeles!');
+
+        // Feedback visual temporal en el botón
+        const origHtml = dom.btnCopyAgentPrompt.innerHTML;
+        dom.btnCopyAgentPrompt.innerHTML = '<span aria-hidden="true">✅</span> <span>¡Prompt Copiado!</span>';
+        dom.btnCopyAgentPrompt.classList.add('is-copied');
+        setTimeout(() => {
+          dom.btnCopyAgentPrompt.innerHTML = origHtml;
+          dom.btnCopyAgentPrompt.classList.remove('is-copied');
+        }, 1800);
+      });
+    }
+
+    // Pegar y parsear salida del Agente LLM
+    if (dom.btnPasteAgentOutput) {
+      dom.btnPasteAgentOutput.addEventListener('click', async () => {
+        const incId = state.activeCommsIncId || state.activeOrchIncId;
+        const phase = state.activeCommsPhase || 'inicial';
+        if (!incId) return;
+
+        let pastedText = '';
+        if (navigator.clipboard && navigator.clipboard.readText) {
+          try {
+            pastedText = await navigator.clipboard.readText();
+          } catch (_) {
+            pastedText = '';
+          }
+        }
+        if (!pastedText) {
+          pastedText = window.prompt('Pega aquí la respuesta completa devuelta por el Agente incident-reporter / LLM:');
+        }
+
+        if (!pastedText || !pastedText.trim()) {
+          return;
+        }
+
+        const parsed = parseAgentOutput(pastedText);
+        if (!parsed.completo && !parsed.breve) {
+          showToast('No se identificó el formato normativo en el texto pegado', 'warning');
+          return;
+        }
+
+        if (parsed.completo && dom.tplTextCompleto) {
+          dom.tplTextCompleto.value = parsed.completo;
+          try {
+            localStorage.setItem(`triage_draft_tpl_comp_${incId}_${phase}`, parsed.completo);
+          } catch (_) {}
+        }
+        if (parsed.breve && dom.tplTextBreve) {
+          dom.tplTextBreve.value = parsed.breve;
+          try {
+            localStorage.setItem(`triage_draft_tpl_brev_${incId}_${phase}`, parsed.breve);
+          } catch (_) {}
+        }
+
+        updateWordCounters();
+        if (dom.tplDraftAlert) dom.tplDraftAlert.style.display = 'flex';
+        showToast('Salida del Agente aplicada a versión completa y breve', 'success');
       });
     }
 
