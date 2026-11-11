@@ -3392,11 +3392,6 @@ function renderFeed() {
                 <span aria-hidden="true">⚡</span> Reclasificar
               </button>
             ` : ''}
-            ${isP1 ? `
-              <button type="button" class="triage-btn-table-orchestrator btn-open-orchestrator" data-inc="${escapeHtml(incId)}" title="Abrir Módulo 2: Orquestador Operativo, War Room Teams y Relojes de Escalado">
-                <span aria-hidden="true">🚨</span> Orquestador
-              </button>
-            ` : ''}
             <button type="button" class="triage-btn-table-toggle btn-toggle-row" data-inc="${escapeHtml(incId)}">
               <span>${isOpen ? 'Plegar ▴' : 'Detalle ▾'}</span>
             </button>
