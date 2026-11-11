@@ -2081,11 +2081,13 @@ def evaluate_incidents_batch(
     terminal_skipped_count = 0
     batch_start_time = time.time()
     audit_records: list[dict[str, Any]] = []
+    seen_batch_ids: set[str] = set()
 
     for item in processed_tickets:
-        inc_id = item.get("ID de incidencia") or item.get("id") or ""
-        if not inc_id:
+        inc_id = str(item.get("ID de incidencia") or item.get("id") or "").strip()
+        if not inc_id or inc_id in seen_batch_ids:
             continue
+        seen_batch_ids.add(inc_id)
 
         # Filtrar incidencias en estado terminal (Cerrado, Resuelto, Cancelado)
         status_val = item.get("Estatus") or item.get("estatus") or item.get("Estado") or item.get("estado") or ""

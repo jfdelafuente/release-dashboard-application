@@ -468,6 +468,19 @@
     color: #0B2B46;
 }
 
+.resumen-ia-block.block-remedy-worklog {
+    border-color: #FED7AA;
+    border-left-color: #FF7900;
+    background: #FFFFFF;
+}
+.resumen-ia-block.block-remedy-worklog .resumen-ia-icon-circle {
+    background: #FFEDD5;
+    color: #C2410C;
+}
+.resumen-ia-block.block-remedy-worklog .resumen-ia-block-title {
+    color: #9A3412;
+}
+
 /* Listas dentro de bloques (ej. bloqueos) */
 .resumen-ia-list {
     margin: 8px 0 0 0;
@@ -791,4 +804,200 @@
     .resumen-ia-footer-actions {
         justify-content: flex-end;
     }
+}
+
+/* ============================================================
+   Worklog Remedy (MonTMC) dentro de Resumen IA
+   ============================================================ */
+.resumen-ia-remedy-highlight {
+    background: #FFFBF5;
+    border: 1px solid #FED7AA;
+    border-left: 4px solid #FF7900;
+    border-radius: 8px;
+    padding: 10px 14px;
+    margin-bottom: 12px;
+}
+
+.resumen-ia-remedy-highlight-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 6px;
+    padding-bottom: 4px;
+    border-bottom: 1px dashed #FED7AA;
+}
+
+.resumen-ia-remedy-badge {
+    background: #FF7900;
+    color: #FFFFFF;
+    font-size: 10px;
+    font-weight: 800;
+    padding: 2px 7px;
+    border-radius: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.resumen-ia-remedy-relative {
+    font-size: 11px;
+    color: #C2410C;
+    font-weight: 600;
+}
+
+.resumen-ia-remedy-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    color: #64748B;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+.resumen-ia-remedy-highlight-body {
+    background: #FFFFFF;
+    border: 1px solid #FDE68A;
+    border-radius: 6px;
+    padding: 8px 12px;
+    font-size: 12.5px;
+    font-weight: 500;
+    color: #0F172A;
+    line-height: 1.45;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+.resumen-ia-worklog-controls {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 10px 0;
+}
+
+.resumen-ia-filter-pills {
+    display: flex;
+    gap: 4px;
+    background: #F1F5F9;
+    padding: 2px 3px;
+    border-radius: 6px;
+    border: 1px solid #E2E8F0;
+}
+
+.resumen-ia-filter-pill {
+    border: none;
+    background: transparent;
+    padding: 5px 12px;
+    border-radius: 4px;
+    font-size: 11.5px;
+    font-weight: 600;
+    color: #64748B;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.resumen-ia-filter-pill:hover {
+    color: #0F172A;
+}
+
+.resumen-ia-filter-pill.is-active {
+    background: #FF7900;
+    color: #FFFFFF;
+    box-shadow: 0 1px 2px rgba(255, 121, 0, 0.25);
+}
+
+.resumen-ia-worklog-order-hint {
+    font-size: 10.5px;
+    color: #94A3B8;
+    font-weight: 500;
+}
+
+.resumen-ia-worklog-item {
+    border-radius: 6px;
+    padding: 9px 12px;
+    margin-bottom: 7px;
+    font-size: 12px;
+}
+
+.resumen-ia-worklog-substantive {
+    background: #FFFFFF;
+    border: 1px solid #E2E8F0;
+    border-left: 3px solid #FF7900;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+}
+
+.resumen-ia-worklog-system {
+    background: #F8FAFC;
+    border: 1px dashed #CBD5E1;
+    border-left: 3px solid #94A3B8;
+    opacity: 0.85;
+    padding: 6px 10px;
+    margin-bottom: 5px;
+}
+
+.resumen-ia-worklog-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 11px;
+    color: #64748B;
+    margin-bottom: 4px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.resumen-ia-worklog-meta-left, .resumen-ia-worklog-meta-right {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.resumen-ia-group-pill {
+    background: #EFF6FF;
+    color: #1D4ED8;
+    font-size: 10px;
+    font-weight: 600;
+    padding: 1px 5px;
+    border-radius: 3px;
+    border: 1px solid #DBEAFE;
+}
+
+.resumen-ia-att-pill {
+    background: #FEF3C7;
+    color: #92400E;
+    font-size: 10px;
+    font-weight: 600;
+    padding: 1px 5px;
+    border-radius: 3px;
+}
+
+.resumen-ia-system-tag {
+    background: #E2E8F0;
+    color: #475569;
+    font-size: 9px;
+    font-weight: 700;
+    padding: 1px 4px;
+    border-radius: 2px;
+    text-transform: uppercase;
+}
+
+.resumen-ia-worklog-text {
+    white-space: pre-wrap;
+    word-break: break-word;
+    color: #1E293B;
+    line-height: 1.45;
+    font-size: 12.5px;
+}
+
+.resumen-ia-worklog-text-muted {
+    white-space: pre-wrap;
+    word-break: break-word;
+    color: #64748B;
+    font-size: 11.5px;
+    font-style: italic;
+    line-height: 1.4;
+    margin-top: 2px;
 }

@@ -15,10 +15,11 @@ from pathlib import Path
 from datetime import datetime
 import sys
 
-# Fix Unicode encoding for Windows
-if sys.platform == 'win32':
+# Fix Unicode encoding for Windows when run directly
+if __name__ == '__main__' and sys.platform == 'win32':
     import io
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
+    if hasattr(sys.stdout, 'buffer'):
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
 
 
 def build_index(output_dir='data/output'):

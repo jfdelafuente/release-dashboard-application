@@ -1,5 +1,5 @@
 /**
- * Consola de Triaje y Reclasificación Automática (SL1/P1 & SL2/P2)
+ * Consola de Triaje de Incidencias (SL1/P1 & SL2/P2)
  * Módulo 1: Motor de Inspección Continua, Umbrales Críticos y Alertas de Subescalación
  * Orange Tech Operations · Incident Management
  */
@@ -47,6 +47,7 @@
     clockTimeBase: 'crisis', // 'crisis' (T0 Activación SL1) | 'remedy' (T0 Apertura Remedy)
     clocksTicker: null, // Timer de actualización de relojes
     defaultIncidentManager: 'Carlos Morales · Incident Manager de Guardia (Turno Activo CSO)',
+    remedyWorklogData: {}, // Datos de worklog de Remedy con filtro y estado { [incId]: Object }
 
     // --- Estado Módulo 3: Centro de Comunicaciones y Matrices ---
     activeCommsIncId: null,
@@ -54,7 +55,8 @@
     activeCommsPhase: 'inicial',
     activeContactsBrand: 'orange',
     activeContactsDomain: 'ALL',
-    commsDispatchHistory: {} // { [incId]: Array }
+    commsDispatchHistory: {}, // { [incId]: Array }
+    copiedAgentPrompts: {} // { [incId + '_' + phase]: boolean }
   };
 
   // --- Referencias del DOM ---
@@ -64,9 +66,13 @@
     liveStatusText: document.getElementById('live-status-text'),
     autoRefreshSelect: document.getElementById('auto-refresh-select'),
     btnRefreshNow: document.getElementById('btn-refresh-now'),
+    btnSyncRemedy: document.getElementById('btn-sync-remedy'),
     btnHelpCriteria: document.getElementById('btn-help-criteria'),
 
-    // Metadatos de Inspección
+    // Metadatos de Canal de Datos y Vigilancia
+    sourceChannelBadge: document.getElementById('source-channel-badge'),
+    sourceChannelText: document.getElementById('source-channel-text'),
+    sourceChannelIcon: document.getElementById('source-channel-icon'),
     sourceFileName: document.getElementById('source-file-name'),
     lastScanLabel: document.getElementById('last-scan-label'),
     kpiScanned: document.getElementById('kpi-scanned'),
@@ -165,6 +171,12 @@
     orchLogSection: document.getElementById('orch-log-section'),
     orchLogHeader: document.getElementById('orch-log-header'),
     btnToggleLog: document.getElementById('btn-toggle-log'),
+    orchRemedySection: document.getElementById('orch-remedy-section'),
+    orchRemedyHeader: document.getElementById('orch-remedy-header'),
+    btnToggleRemedyWorklog: document.getElementById('btn-toggle-remedy-worklog'),
+    btnRefreshRemedyWorklog: document.getElementById('btn-refresh-remedy-worklog'),
+    orchRemedyBody: document.getElementById('orch-remedy-body'),
+    orchRemedyWorklogContent: document.getElementById('orch-remedy-worklog-content'),
 
     // Modales Secundarios
     modalRollback: document.getElementById('modal-rollback-order'),
@@ -212,6 +224,9 @@
     btnCopyTplCompleto: document.getElementById('btn-copy-tpl-completo'),
     btnCopyTplBreve: document.getElementById('btn-copy-tpl-breve'),
     btnTplRegenerate: document.getElementById('btn-tpl-regenerate'),
+    btnCopyAgentPrompt: document.getElementById('btn-copy-agent-prompt'),
+    btnPasteAgentOutput: document.getElementById('btn-paste-agent-output'),
+    btnSaveAgentOfficial: document.getElementById('btn-save-agent-official'),
     btnTplLoadGateway: document.getElementById('btn-tpl-load-gateway'),
 
     // Gateway Web de Explotación
@@ -381,17 +396,17 @@
   }
 
   // --------------------------------------------------------------------------
-  // Función 1: Ingesta e Inspección Continua
+  // Función 1: Canal de Datos y Vigilancia Continua
   // --------------------------------------------------------------------------
 
   async function performInspection(isManual = false) {
     if (isManual) {
       if (dom.btnRefreshNow) {
         dom.btnRefreshNow.disabled = true;
-        dom.btnRefreshNow.innerHTML = `<span aria-hidden="true" style="display:inline-block; animation: spin 1s infinite linear;">🔄</span> Inspeccionando...`;
+        dom.btnRefreshNow.innerHTML = `<span aria-hidden="true" style="display:inline-block; animation: spin 1s infinite linear;">🔄</span> Auditando...`;
       }
     }
-    setConnectionStatus('syncing', 'Inspeccionando...');
+    setConnectionStatus('syncing', 'Auditando SLAs...');
 
     const timestamp = Date.now();
     const candidateUrls = [
@@ -409,15 +424,20 @@
         const data = await res.json();
         if (data && (data.data || data.incidents || data.all_active_incidents || data.pending_incidents)) {
           processInspectionData(data);
-          setConnectionStatus('', 'Inspección Activa');
+          const isPaused = dom.autoRefreshSelect && parseInt(dom.autoRefreshSelect.value, 10) === 0;
+          if (isPaused) {
+            setConnectionStatus('paused', 'Vigilancia Pausada');
+          } else {
+            setConnectionStatus('', 'Vigilancia SLA Activa');
+          }
           state.lastInspectionEpoch = Date.now();
           updateRelativeTimeDisplay();
           if (isManual) {
-            showToast('Inspección de catálogo completada exitosamente', 'success');
+            showToast('Auditoría de alarmas y SLAs completada exitosamente', 'success');
           }
           if (dom.btnRefreshNow) {
             dom.btnRefreshNow.disabled = false;
-            dom.btnRefreshNow.innerHTML = `<span aria-hidden="true">🔄</span> Inspeccionar Ahora`;
+            dom.btnRefreshNow.innerHTML = `<span aria-hidden="true">🔄</span> Auditar Ahora`;
           }
           return;
         }
@@ -427,10 +447,43 @@
     }
 
     setConnectionStatus('error', 'Error de conexión');
-    showToast('Error al inspeccionar catálogo de incidencias: ' + (lastError ? lastError.message : 'No se encontraron datos'), 'error');
+    showToast('Error al auditar catálogo de incidencias: ' + (lastError ? lastError.message : 'No se encontraron datos'), 'error');
     if (dom.btnRefreshNow) {
       dom.btnRefreshNow.disabled = false;
-      dom.btnRefreshNow.innerHTML = `<span aria-hidden="true">🔄</span> Inspeccionar Ahora`;
+      dom.btnRefreshNow.innerHTML = `<span aria-hidden="true">🔄</span> Auditar Ahora`;
+    }
+  }
+
+  async function triggerRemedySync() {
+    if (!dom.btnSyncRemedy) return;
+    const origHtml = dom.btnSyncRemedy.innerHTML;
+    dom.btnSyncRemedy.disabled = true;
+    dom.btnSyncRemedy.innerHTML = `<span aria-hidden="true" style="display:inline-block; animation: spin 1s infinite linear;">⚡</span> Sincronizando...`;
+
+    try {
+      const res = await fetch('/api/sync-remedy', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ dias: 3 }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        state.metadata.last_sync_source = 'montmc_api';
+        const total = data.total_consultadas ?? data.count ?? 0;
+        const nuevas = data.nuevas ?? data.stats?.inserted ?? 0;
+        const actualizadas = data.actualizadas ?? data.stats?.updated ?? 0;
+        const msg = `Sincronización Remedy OK: ${total} incidencias procesadas (+${nuevas} nuevas, ${actualizadas} actualizadas).`;
+        showToast(msg, 'success');
+        await performInspection(true);
+      } else {
+        const err = data.error || (data.details ? JSON.stringify(data.details) : 'Error desconocido');
+        showToast(`Error al sincronizar con MonTMC Remedy: ${err}`, 'error');
+      }
+    } catch (e) {
+      showToast(`Fallo de red al invocar /api/sync-remedy: ${e.message}`, 'error');
+    } finally {
+      dom.btnSyncRemedy.disabled = false;
+      dom.btnSyncRemedy.innerHTML = origHtml;
     }
   }
 
@@ -457,13 +510,36 @@
 
     const rawList = payload.data || payload.incidents || payload.all_active_incidents || payload.pending_incidents || [];
     const list = Array.isArray(rawList) ? rawList : Object.values(rawList);
-    // Filtrado estricto: las incidencias en estado Cerrado, Resuelto o Canceladas no entran al triaje
-    state.incidents = list.filter(inc => !isTerminalStatus(inc.estatus || inc.estado || inc.status));
+    // Filtrado estricto y deduplicación defensiva por ID de incidencia
+    const seenIds = new Set();
+    state.incidents = list.filter(inc => {
+      const id = String(inc.id || inc['ID de incidencia'] || '').trim();
+      if (id) {
+        if (seenIds.has(id)) return false;
+        seenIds.add(id);
+      }
+      return !isTerminalStatus(inc.estatus || inc.estado || inc.status);
+    });
 
-    // Actualizar KPIs superiores de Ingesta (Foco 100% en Incidencias Activas)
+    // Actualizar KPIs superiores y Canal de Datos (Foco 100% en Incidencias Activas)
     const kpis = state.metadata.kpis || {};
     if (dom.sourceFileName) {
       dom.sourceFileName.textContent = state.metadata.source_file || 'high_priority_notifications.json';
+    }
+
+    // Actualizar Canal / Origen de Datos (API MonTMC vs Snapshot Local)
+    if (dom.sourceChannelBadge && dom.sourceChannelText) {
+      const isApi = state.metadata.last_sync_source === 'montmc_api' ||
+                    (state.metadata.source_file && /montmc|remedy/i.test(state.metadata.source_file));
+      if (isApi) {
+        dom.sourceChannelBadge.className = 'triage-source-badge triage-source-badge-api';
+        if (dom.sourceChannelIcon) dom.sourceChannelIcon.textContent = '⚡';
+        dom.sourceChannelText.textContent = 'Canal MonTMC Remedy (Online)';
+      } else {
+        dom.sourceChannelBadge.className = 'triage-source-badge triage-source-badge-snapshot';
+        if (dom.sourceChannelIcon) dom.sourceChannelIcon.textContent = '📄';
+        dom.sourceChannelText.textContent = 'Snapshot Local';
+      }
     }
 
     const activeCount = (kpis.active_evaluated_count != null) ? kpis.active_evaluated_count : state.incidents.length;
@@ -1291,7 +1367,7 @@ Proceder con la ejecución inmediata del procedimiento de Rollback. Confirmar in
     }
   }
 
-  function generateDynamicTemplates(inc, phase = 'inicial') {
+  function generateDynamicTemplates(inc, phase = 'inicial', forceRawTemplate = false) {
     if (!inc) {
       return {
         completo: '',
@@ -1352,12 +1428,20 @@ Proceder con la ejecución inmediata del procedimiento de Rollback. Confirmar in
       breve = `[SL1 RESUELTO] Normalizado el servicio en ${sistemas} (${proceso}) tras ${totalDurationText}. Validación satisfactoria. Post-Mortem (PIR) programado en 48h con IM-CSO.`;
     }
 
-    // Si la incidencia ya cuenta con mensaje oficial pre-redactado por el agente incident-reporter, priorizarlo
-    const phaseKey = phase === 'inicial' ? 'apertura' : (phase === 'actualizacion' ? 'seguimiento' : 'cierre');
-    const msgPre = inc.mensajes_ejecutivos && inc.mensajes_ejecutivos[phaseKey];
-    if (msgPre && msgPre.completo && msgPre.estado !== 'pendiente') {
-      completo = msgPre.completo;
-      if (msgPre.breve) breve = msgPre.breve;
+    // Si la incidencia ya cuenta con mensaje oficial pre-redactado por el agente incident-reporter y no se fuerza regeneración, priorizarlo
+    if (!forceRawTemplate) {
+      const phaseKey = phase === 'inicial' ? 'apertura' : (phase === 'actualizacion' ? 'seguimiento' : 'cierre');
+      let msgPre = inc.mensajes_ejecutivos && inc.mensajes_ejecutivos[phaseKey];
+      if (!msgPre && inc.id) {
+        try {
+          const cached = localStorage.getItem(`triage_official_msg_${inc.id}_${phaseKey}`);
+          if (cached) msgPre = JSON.parse(cached);
+        } catch (_) {}
+      }
+      if (msgPre && msgPre.completo && msgPre.estado !== 'pendiente') {
+        completo = msgPre.completo;
+        if (msgPre.breve) breve = msgPre.breve;
+      }
     }
 
     return {
@@ -1374,7 +1458,93 @@ Proceder con la ejecución inmediata del procedimiento de Rollback. Confirmar in
     };
   }
 
-  function renderCommsTemplateTab(inc, phase = 'inicial') {
+  function buildAgentPrompt(inc, phase = 'inicial', forceRebuild = false) {
+    if (!inc) return '';
+
+    const phaseKey = phase === 'inicial' ? 'apertura' : (phase === 'actualizacion' ? 'seguimiento' : 'cierre');
+    const msgs = inc.mensajes_ejecutivos || {};
+    if (!forceRebuild && msgs[phaseKey] && msgs[phaseKey].prompt_agente) {
+      return msgs[phaseKey].prompt_agente;
+    }
+
+    const incId = inc.id || 'INC';
+    const prio = inc.prioridad_sugerida || 'P1';
+    const faseLabel = phaseKey.toUpperCase();
+    const sistemas = Array.isArray(inc.sistemas) ? inc.sistemas.join(', ') : (inc.sistemas || 'Sistemas Core');
+    const res = inc.resumen_ia;
+
+    const lines = [
+      'Actúa como el agente incident-reporter (comunicación ejecutiva para Dirección, versión completa de hasta 90 palabras y versión breve de hasta 30 palabras).',
+      `Fase solicitada: ${faseLabel}`,
+      `Incidencia: ${incId} - ${inc.titulo || ''}`,
+      `Criticidad sugerida: ${prio}`,
+      `Sistemas involucrados: ${sistemas}`,
+    ];
+
+    const evalData = inc.evaluacion || {};
+    if (evalData.proceso) lines.push(`Proceso de Negocio: ${evalData.proceso}`);
+    if (evalData.criterio) lines.push(`Criterio / Umbral: ${evalData.criterio}`);
+    lines.push('');
+
+    if (res && (res.problema || res.impacto || res.solucion)) {
+      lines.push('--- Contexto extraído de Epsilon Resumen IA ---');
+      if (res.problema) lines.push(`• Problema detectado: ${res.problema}`);
+      if (res.impacto) lines.push(`• Impacto en servicio/negocio: ${res.impacto}`);
+      if (res.solucion) lines.push(`• Causa raíz / Solución: ${res.solucion}`);
+      if (res.siguiente_accion || res.siguienteAccion) lines.push(`• Siguiente acción: ${res.siguiente_accion || res.siguienteAccion}`);
+      if (res.estadoActual) lines.push(`• Estado actual reportado: ${res.estadoActual}`);
+      if (res.bloqueos) lines.push(`• Bloqueos identificados: ${Array.isArray(res.bloqueos) ? res.bloqueos.join('; ') : res.bloqueos}`);
+    } else {
+      lines.push('--- Metadatos del ticket (Epsilon IA pendiente) ---');
+      lines.push(`• Descripción: ${inc.titulo || ''}`);
+      lines.push(`• Impacto ticket: ${evalData.impacto || 'N/D'}`);
+      lines.push(`• Urgencia ticket: ${evalData.urgencia || 'N/D'}`);
+    }
+
+    lines.push('');
+    lines.push('Redacta el mensaje en los dos niveles obligatorios:');
+    lines.push('**Mensaje para Dirección (versión completa):** (único párrafo, máx 90 palabras)');
+    lines.push('**Versión aún más breve:** (máx 30 palabras)');
+
+    return lines.join('\n');
+  }
+
+  function parseAgentOutput(raw) {
+    let completo = '';
+    let breve = '';
+    if (!raw || typeof raw !== 'string') return { completo, breve };
+
+    const clean = raw.trim();
+
+    // 1. Buscar versión completa: **Mensaje para Dirección (versión completa):** ...
+    const compRegex = /\*\*(?:Mensaje para Dirección|Versión Completa)[^\*]*\*\*[:\s]*([\s\S]*?)(?=\*\*(?:Versión aún más breve|Versión breve)[^\*]*\*\*|$)/i;
+    const compMatch = clean.match(compRegex);
+    if (compMatch && compMatch[1]) {
+      completo = compMatch[1].trim();
+    }
+
+    // 2. Buscar versión breve: **Versión aún más breve:** ...
+    const brevRegex = /\*\*(?:Versión aún más breve|Versión breve)[^\*]*\*\*[:\s]*([\s\S]*?)$/i;
+    const brevMatch = clean.match(brevRegex);
+    if (brevMatch && brevMatch[1]) {
+      breve = brevMatch[1].trim();
+    }
+
+    // 3. Fallback: Si no se usó markdown con negrita, intentar párrafos separados
+    if (!completo && !breve) {
+      const paras = clean.split(/\n\s*\n/).map(p => p.trim()).filter(Boolean);
+      if (paras.length >= 2) {
+        completo = paras[0];
+        breve = paras[1];
+      } else if (paras.length === 1) {
+        completo = paras[0];
+      }
+    }
+
+    return { completo, breve };
+  }
+
+  function renderCommsTemplateTab(inc, phase = 'inicial', forceRawTemplate = false) {
     state.activeCommsPhase = phase;
 
     // Actualizar botones de fase
@@ -1400,7 +1570,7 @@ Proceder con la ejecución inmediata del procedimiento de Rollback. Confirmar in
 
     if (!inc) return;
 
-    const data = generateDynamicTemplates(inc, phase);
+    const data = generateDynamicTemplates(inc, phase, forceRawTemplate);
 
     // Actualizar grid de metadatos (con tooltips accesibles)
     if (dom.tplMetaSistemas) {
@@ -1429,18 +1599,20 @@ Proceder con la ejecución inmediata del procedimiento de Rollback. Confirmar in
     let textCompleto = data.completo;
     let textBreve = data.breve;
 
-    try {
-      const draftComp = localStorage.getItem(`triage_draft_tpl_comp_${inc.id}_${phase}`);
-      const draftBrev = localStorage.getItem(`triage_draft_tpl_brev_${inc.id}_${phase}`);
-      if (draftComp !== null && draftComp.trim() !== '' && draftComp !== data.completo) {
-        textCompleto = draftComp;
-        hasDraft = true;
-      }
-      if (draftBrev !== null && draftBrev.trim() !== '' && draftBrev !== data.breve) {
-        textBreve = draftBrev;
-        hasDraft = true;
-      }
-    } catch (_) {}
+    if (!forceRawTemplate) {
+      try {
+        const draftComp = localStorage.getItem(`triage_draft_tpl_comp_${inc.id}_${phase}`);
+        const draftBrev = localStorage.getItem(`triage_draft_tpl_brev_${inc.id}_${phase}`);
+        if (draftComp !== null && draftComp.trim() !== '' && draftComp !== data.completo) {
+          textCompleto = draftComp;
+          hasDraft = true;
+        }
+        if (draftBrev !== null && draftBrev.trim() !== '' && draftBrev !== data.breve) {
+          textBreve = draftBrev;
+          hasDraft = true;
+        }
+      } catch (_) {}
+    }
 
     if (dom.tplDraftAlert) {
       dom.tplDraftAlert.style.display = hasDraft ? 'flex' : 'none';
@@ -1450,7 +1622,164 @@ Proceder con la ejecución inmediata del procedimiento de Rollback. Confirmar in
     if (dom.tplTextCompleto) dom.tplTextCompleto.value = textCompleto;
     if (dom.tplTextBreve) dom.tplTextBreve.value = textBreve;
 
+    // Actualizar indicador de estado de redacción del Agente
+    const agentBadge = document.getElementById('exec-modal-agent-status');
+    if (agentBadge) {
+      if (forceRawTemplate) {
+        agentBadge.textContent = '✨ Plantilla Dinámica (Datos Ticket)';
+        agentBadge.style.background = 'rgba(255, 121, 0, 0.12)';
+        agentBadge.style.color = '#c05a00';
+        agentBadge.style.borderColor = 'rgba(255, 121, 0, 0.35)';
+        agentBadge.style.display = 'inline-flex';
+      } else {
+        const phaseKey = phase === 'inicial' ? 'apertura' : (phase === 'actualizacion' ? 'seguimiento' : 'cierre');
+        let msgPre = inc.mensajes_ejecutivos && inc.mensajes_ejecutivos[phaseKey];
+        if (!msgPre && inc.id) {
+          try {
+            const cached = localStorage.getItem(`triage_official_msg_${inc.id}_${phaseKey}`);
+            if (cached) msgPre = JSON.parse(cached);
+          } catch (_) {}
+        }
+        const isOfficial = Boolean(msgPre && msgPre.completo && msgPre.estado !== 'pendiente');
+        agentBadge.style.display = 'inline-flex';
+        if (isOfficial) {
+          agentBadge.textContent = '🤖 Salida Agente Confirmada';
+          agentBadge.style.background = 'rgba(16, 185, 129, 0.1)';
+          agentBadge.style.color = '#059669';
+          agentBadge.style.borderColor = 'rgba(16, 185, 129, 0.3)';
+        } else {
+          agentBadge.textContent = '⏳ Redacción Agente Pendiente';
+          agentBadge.style.background = 'rgba(99, 102, 241, 0.1)';
+          agentBadge.style.color = '#4F46E5';
+          agentBadge.style.borderColor = 'rgba(99, 102, 241, 0.25)';
+        }
+      }
+    }
+
     updateWordCounters();
+
+    // Efecto visual de recarga / regeneración (glow naranja momentáneo)
+    if (forceRawTemplate) {
+      [dom.tplTextCompleto, dom.tplTextBreve].forEach(el => {
+        if (el) {
+          el.style.transition = 'box-shadow 0.25s ease, border-color 0.25s ease';
+          el.style.borderColor = '#ff7900';
+          el.style.boxShadow = '0 0 0 3px rgba(255, 121, 0, 0.25)';
+          setTimeout(() => {
+            el.style.borderColor = '';
+            el.style.boxShadow = '';
+          }, 600);
+        }
+      });
+    }
+
+    // Actualizar estados coherentes de los botones de acción del generador
+    updateCommsActionButtonsState();
+  }
+
+  // --------------------------------------------------------------------------
+  // Gestión Coherente de Botones de Acción (Módulo 2: Generador de Plantillas)
+  // --------------------------------------------------------------------------
+  function updateCommsActionButtonsState() {
+    const incId = state.activeCommsIncId || state.activeOrchIncId;
+    const phase = state.activeCommsPhase || 'inicial';
+    let inc = state.incidents.find(i => i.id === incId);
+    if (!inc && state.activeOrchIncId) {
+      inc = state.incidents.find(i => i.id === state.activeOrchIncId);
+    }
+
+    // Si no hay incidencia activa, deshabilitar todos los botones
+    if (!inc) {
+      if (dom.btnTplRegenerate) dom.btnTplRegenerate.disabled = true;
+      if (dom.btnCopyAgentPrompt) dom.btnCopyAgentPrompt.disabled = true;
+      if (dom.btnPasteAgentOutput) dom.btnPasteAgentOutput.disabled = true;
+      if (dom.btnSaveAgentOfficial) dom.btnSaveAgentOfficial.disabled = true;
+      return;
+    }
+
+    const normalizeText = (s) => (s || '').replace(/\r\n/g, '\n').trim();
+
+    const promptKey = `${inc.id}_${phase}`;
+    const isPromptCopied = Boolean(
+      (state.copiedAgentPrompts && state.copiedAgentPrompts[promptKey]) ||
+      (typeof sessionStorage !== 'undefined' && sessionStorage.getItem('triage_agent_prompt_copied_' + promptKey))
+    );
+
+    const textCompleto = dom.tplTextCompleto ? dom.tplTextCompleto.value : '';
+    const textBreve = dom.tplTextBreve ? dom.tplTextBreve.value : '';
+    const normComp = normalizeText(textCompleto);
+    const normBrev = normalizeText(textBreve);
+    const hasText = Boolean(normComp || normBrev);
+
+    // Obtener plantilla algorítmica pura (Canal A) para comparar
+    const rawData = generateDynamicTemplates(inc, phase, true);
+    const rawCompleto = normalizeText(rawData.completo);
+    const rawBreve = normalizeText(rawData.breve);
+    const isSameAsRaw = normComp === rawCompleto && normBrev === rawBreve;
+
+    // Obtener mensaje oficial guardado actualmente
+    const phaseKey = phase === 'inicial' ? 'apertura' : (phase === 'actualizacion' ? 'seguimiento' : 'cierre');
+    let officialMsg = inc.mensajes_ejecutivos && inc.mensajes_ejecutivos[phaseKey];
+    if (!officialMsg) {
+      try {
+        const cached = localStorage.getItem(`triage_official_msg_${inc.id}_${phaseKey}`);
+        if (cached) officialMsg = JSON.parse(cached);
+      } catch (_) {}
+    }
+    const isOfficialPresent = Boolean(
+      officialMsg &&
+      (officialMsg.completo || officialMsg.breve) &&
+      officialMsg.estado !== 'pendiente'
+    );
+    const isSameAsOfficial = isOfficialPresent &&
+      normComp === normalizeText(officialMsg.completo) &&
+      normBrev === normalizeText(officialMsg.breve);
+
+    // 1. Botón "Regenerar con Datos"
+    // Habilitado únicamente si el contenido actual difiere de la plantilla algorítmica pura (Canal A)
+    if (dom.btnTplRegenerate) {
+      if (isSameAsRaw) {
+        dom.btnTplRegenerate.disabled = true;
+        dom.btnTplRegenerate.title = 'El editor ya muestra la plantilla calculada con los datos actuales del ticket (Canal A)';
+      } else {
+        dom.btnTplRegenerate.disabled = false;
+        dom.btnTplRegenerate.title = 'Restaurar el texto a la plantilla algorítmica calculada con los datos del ticket (Canal A)';
+      }
+    }
+
+    // 2. Botón "Copiar Prompt Agente"
+    // Siempre habilitado cuando hay incidencia activa para poder (re)copiar el contexto técnico
+    if (dom.btnCopyAgentPrompt) {
+      dom.btnCopyAgentPrompt.disabled = false;
+      dom.btnCopyAgentPrompt.title = 'Copiar el prompt estructurado con todo el contexto técnico para procesar con el Agente incident-reporter / LLM';
+    }
+
+    // 3. Botón "Pegar Salida Agente"
+    // Habilitado ÚNICAMENTE si antes se ha copiado el prompt de esta incidencia y fase
+    if (dom.btnPasteAgentOutput) {
+      if (!isPromptCopied) {
+        dom.btnPasteAgentOutput.disabled = true;
+        dom.btnPasteAgentOutput.title = 'Copia primero el Prompt del Agente con "Copiar Prompt Agente" antes de pegar su respuesta';
+      } else {
+        dom.btnPasteAgentOutput.disabled = false;
+        dom.btnPasteAgentOutput.title = 'Pegar la respuesta devuelta por el Agente para autocompletar la Versión Completa y Breve';
+      }
+    }
+
+    // 4. Botón "Guardar Mensaje Oficial"
+    // Deshabilitado si no hay contenido para guardar o si ya está idéntico al mensaje oficial confirmado
+    if (dom.btnSaveAgentOfficial) {
+      if (!hasText) {
+        dom.btnSaveAgentOfficial.disabled = true;
+        dom.btnSaveAgentOfficial.title = 'No hay contenido para guardar como mensaje oficial';
+      } else if (isSameAsOfficial) {
+        dom.btnSaveAgentOfficial.disabled = true;
+        dom.btnSaveAgentOfficial.title = 'El mensaje actual ya está guardado como comunicado oficial';
+      } else {
+        dom.btnSaveAgentOfficial.disabled = false;
+        dom.btnSaveAgentOfficial.title = 'Validar y consolidar como Comunicado Oficial en el sistema (guarda en backend y notificaciones)';
+      }
+    }
   }
 
   function transferTemplateToGateway() {
@@ -2127,6 +2456,11 @@ Proceder con la ejecución inmediata del procedimiento de Rollback. Confirmar in
     setOrchSectionCollapsed('warroom', true);
     setOrchSectionCollapsed('pap', true);
     setOrchSectionCollapsed('log', true);
+    setOrchSectionCollapsed('remedy', true);
+    if (dom.orchRemedyWorklogContent) {
+      dom.orchRemedyWorklogContent.innerHTML = '<p style="color: var(--triage-text-muted); font-size: 13px;">Haz clic en desplegar o actualizar para consultar las notas técnicas de Remedy.</p>';
+      dom.orchRemedyWorklogContent.dataset.loadedInc = '';
+    }
 
     // 6. Abrir Modal
     dom.modalOrchestrator.classList.add('open');
@@ -2159,6 +2493,10 @@ Proceder con la ejecución inmediata del procedimiento de Rollback. Confirmar in
       sectionEl = dom.orchLogSection || document.getElementById('orch-log-section');
       btnEl = dom.btnToggleLog || document.getElementById('btn-toggle-log');
       headerEl = dom.orchLogHeader || document.getElementById('orch-log-header');
+    } else if (sectionName === 'remedy') {
+      sectionEl = dom.orchRemedySection || document.getElementById('orch-remedy-section');
+      btnEl = dom.btnToggleRemedyWorklog || document.getElementById('btn-toggle-remedy-worklog');
+      headerEl = dom.orchRemedyHeader || document.getElementById('orch-remedy-header');
     }
     if (!sectionEl) return;
 
@@ -2178,16 +2516,25 @@ Proceder con la ejecución inmediata del procedimiento de Rollback. Confirmar in
     if (sectionName === 'warroom') sectionEl = dom.orchWarRoomSection || document.getElementById('orch-war-room-section');
     else if (sectionName === 'pap') sectionEl = dom.orchPapSection || document.getElementById('orch-pap-section');
     else if (sectionName === 'log') sectionEl = dom.orchLogSection || document.getElementById('orch-log-section');
+    else if (sectionName === 'remedy') sectionEl = dom.orchRemedySection || document.getElementById('orch-remedy-section');
     if (!sectionEl) return;
     const isCurrentlyCollapsed = sectionEl.classList.contains('is-collapsed');
     setOrchSectionCollapsed(sectionName, !isCurrentlyCollapsed);
+    if (isCurrentlyCollapsed && sectionName === 'remedy') {
+      if (state.activeOrchIncId) {
+        if (!dom.orchRemedyWorklogContent || dom.orchRemedyWorklogContent.dataset.loadedInc !== state.activeOrchIncId) {
+          loadRemedyWorklog(state.activeOrchIncId);
+        }
+      }
+    }
   }
 
   function initOrchestratorCollapsibleSections() {
     const sections = [
       { key: 'warroom', headerId: 'orch-war-room-header', btnId: 'btn-toggle-war-room' },
       { key: 'pap', headerId: 'orch-pap-header', btnId: 'btn-toggle-pap' },
-      { key: 'log', headerId: 'orch-log-header', btnId: 'btn-toggle-log' }
+      { key: 'log', headerId: 'orch-log-header', btnId: 'btn-toggle-log' },
+      { key: 'remedy', headerId: 'orch-remedy-header', btnId: 'btn-toggle-remedy-worklog' }
     ];
 
     sections.forEach(({ key, headerId, btnId }) => {
@@ -2220,6 +2567,267 @@ Proceder con la ejecución inmediata del procedimiento de Rollback. Confirmar in
       setOrchSectionCollapsed(key, true);
     });
   }
+
+  // --- Módulo 2: Worklog Remedy & Inteligencia Operativa MonTMC ---
+  function isSystemNoiseWorklog(text) {
+    if (!text) return true;
+    const t = text.trim();
+    if (t === '' || t === '.' || t === '-' || t === '..' || t === '...') return true;
+    if (/^(revisando|en curso)\.?$/i.test(t)) return true;
+    if (/^(el estado ha sido cambiado a|la asignaci[oó]n ha sido cambiada a|la prioridad ha sido cambiada a|la urgencia ha sido cambiada a)\b/i.test(t)) return true;
+    if (/^\[SCA360-OTRS.*\]\s*Adjunto\(s\)\s*\(\d+\):/i.test(t) && !t.includes('\n\n') && t.length < 100) return true;
+    if (/\(Sin cambios de datos en el ticket OTRS desde el ultimo envio a EPSILON\.\)/i.test(t)) return true;
+    return false;
+  }
+
+  function formatRemedyDate(dateStr) {
+    if (!dateStr) return 'Fecha no informada';
+    try {
+      const d = new Date(dateStr);
+      if (isNaN(d.getTime())) return dateStr;
+      const pad = n => String(n).padStart(2, '0');
+      return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    } catch (_) {
+      return dateStr;
+    }
+  }
+
+  function getRelativeTimeSpan(dateStr) {
+    if (!dateStr) return '';
+    try {
+      const d = new Date(dateStr);
+      if (isNaN(d.getTime())) return '';
+      const diffMs = Date.now() - d.getTime();
+      if (diffMs < 0) return '';
+      const diffMins = Math.floor(diffMs / 60000);
+      if (diffMins < 1) return 'hace unos instantes';
+      if (diffMins < 60) return `hace ${diffMins} min`;
+      const diffHours = Math.floor(diffMins / 60);
+      if (diffHours < 24) return `hace ${diffHours} h`;
+      const diffDays = Math.floor(diffHours / 24);
+      return `hace ${diffDays} día${diffDays > 1 ? 's' : ''}`;
+    } catch (_) {
+      return '';
+    }
+  }
+
+  function renderRemedyWorklogView(cleanId) {
+    if (!dom.orchRemedyWorklogContent) return;
+    const item = state.remedyWorklogData && state.remedyWorklogData[cleanId];
+    if (!item) return;
+
+    const { solucion, isCached, isDisk, substantiveList, allList, filterMode } = item;
+    const currentList = filterMode === 'all' ? allList : substantiveList;
+    const lastSubstantive = (substantiveList && substantiveList.length > 0) ? substantiveList[0] : (allList[0] || null);
+
+    let html = '';
+
+    if (isCached) {
+      html += `
+        <div style="font-size: 11px; color: var(--triage-text-muted); margin-bottom: 8px; font-style: italic;">
+          ⚡ Datos servidos desde caché ${isDisk ? 'en disco (contingencia)' : 'en memoria'}.
+        </div>
+      `;
+    }
+
+    // 1. Tarjeta destacada: Última Acción Técnica / Estado de Gestión
+    if (lastSubstantive) {
+      const relTime = getRelativeTimeSpan(lastSubstantive.fecha);
+      html += `
+        <div class="remedy-highlight-card">
+          <div class="remedy-highlight-header">
+            <div class="remedy-highlight-title-wrap">
+              <span class="remedy-highlight-badge">⚡ Última Acción Técnica</span>
+              ${relTime ? `<span class="remedy-highlight-relative">(${escapeHtml(relTime)})</span>` : ''}
+            </div>
+            <div class="remedy-highlight-meta">
+              <span class="remedy-worklog-author">👤 ${escapeHtml(lastSubstantive.autor)}</span>
+              ${lastSubstantive.grupo ? `<span class="remedy-worklog-group-pill">${escapeHtml(lastSubstantive.grupo)}</span>` : ''}
+              <span class="remedy-worklog-date">🕒 ${formatRemedyDate(lastSubstantive.fecha)}</span>
+            </div>
+          </div>
+          <div class="remedy-highlight-body">${escapeHtml(lastSubstantive.texto)}</div>
+        </div>
+      `;
+    }
+
+    // 2. Banner de Solución Oficial Remedy SOLO si el ticket está en estado terminal (Resuelto, Cerrado o Cancelado)
+    const isTerminalStatus = (st) => {
+      if (!st) return false;
+      const s = String(st).toLowerCase().trim();
+      return s.includes('resuelt') || s.includes('resolv') || s.includes('cerrad') || s.includes('clos') || s.includes('cancel');
+    };
+    if (solucion && isTerminalStatus(item.estado)) {
+      html += `
+        <div class="remedy-detail-banner">
+          <strong>💡 Detalle de Solución / Cierre en Remedy:</strong>
+          <div style="margin-top: 4px; white-space: pre-wrap;">${escapeHtml(solucion)}</div>
+        </div>
+      `;
+    }
+
+    // 3. Controles de Filtro (Pills)
+    html += `
+      <div class="remedy-worklog-controls">
+        <div class="remedy-filter-pills" role="tablist" aria-label="Filtro de notas de Remedy">
+          <button type="button" class="remedy-filter-pill ${filterMode === 'substantive' ? 'is-active' : ''}" onclick="window.__setRemedyWorklogFilter('${escapeHtml(cleanId)}', 'substantive')">
+            📝 Notas Técnicas Clave (${substantiveList.length})
+          </button>
+          <button type="button" class="remedy-filter-pill ${filterMode === 'all' ? 'is-active' : ''}" onclick="window.__setRemedyWorklogFilter('${escapeHtml(cleanId)}', 'all')">
+            📋 Auditoría Completa (${allList.length})
+          </button>
+        </div>
+        <div class="remedy-worklog-order-hint">
+          <span>⬇️ Más recientes primero</span>
+        </div>
+      </div>
+    `;
+
+    // 4. Lista de notas cronológica inversa
+    if (currentList.length === 0) {
+      html += `
+        <p style="color: var(--triage-text-muted); font-size: 13px; font-style: italic; margin: 12px 0; padding: 12px; background: #F8FAFC; border-radius: 6px; border: 1px dashed #CBD5E1;">
+          ${filterMode === 'substantive' 
+            ? 'No se detectaron notas técnicas manuales en este ticket. Consulta la pestaña "Auditoría Completa" para revisar los cambios de estado y asignación.' 
+            : 'No constan anotaciones en el worklog de esta incidencia en Remedy.'}
+        </p>
+      `;
+    } else {
+      html += `<div class="remedy-worklog-list">`;
+      currentList.forEach(entry => {
+        if (entry.isSystem) {
+          html += `
+            <div class="remedy-worklog-item remedy-worklog-system">
+              <div class="remedy-worklog-meta">
+                <div class="remedy-worklog-meta-left">
+                  <span class="remedy-worklog-author-muted">⚙️ ${escapeHtml(entry.autor)}</span>
+                  <span class="remedy-worklog-system-tag">Sistema / Auditoría</span>
+                </div>
+                <div class="remedy-worklog-meta-right">
+                  <span class="remedy-worklog-date">🕒 ${formatRemedyDate(entry.fecha)}</span>
+                </div>
+              </div>
+              <div class="remedy-worklog-text-muted">${escapeHtml(entry.texto)}</div>
+            </div>
+          `;
+        } else {
+          html += `
+            <div class="remedy-worklog-item remedy-worklog-substantive">
+              <div class="remedy-worklog-meta">
+                <div class="remedy-worklog-meta-left">
+                  <span class="remedy-worklog-author">👤 ${escapeHtml(entry.autor)}</span>
+                  ${entry.grupo ? `<span class="remedy-worklog-group-pill">${escapeHtml(entry.grupo)}</span>` : ''}
+                </div>
+                <div class="remedy-worklog-meta-right">
+                  ${entry.adjuntos > 0 ? `<span class="remedy-worklog-att-pill">📎 ${entry.adjuntos} adjunto${entry.adjuntos > 1 ? 's' : ''}</span>` : ''}
+                  <span class="remedy-worklog-date">🕒 ${formatRemedyDate(entry.fecha)}</span>
+                </div>
+              </div>
+              <div class="remedy-worklog-text">${escapeHtml(entry.texto)}</div>
+            </div>
+          `;
+        }
+      });
+      html += `</div>`;
+    }
+
+    dom.orchRemedyWorklogContent.innerHTML = html;
+  }
+
+  function setRemedyWorklogFilter(cleanId, mode) {
+    if (state.remedyWorklogData && state.remedyWorklogData[cleanId]) {
+      state.remedyWorklogData[cleanId].filterMode = mode;
+      renderRemedyWorklogView(cleanId);
+    }
+  }
+  window.__setRemedyWorklogFilter = setRemedyWorklogFilter;
+
+  async function loadRemedyWorklog(incId, forceRefresh = false) {
+    if (!dom.orchRemedyWorklogContent) return;
+    const cleanId = (incId || '').trim();
+    if (!cleanId) return;
+
+    if (!forceRefresh && state.remedyWorklogData && state.remedyWorklogData[cleanId]) {
+      dom.orchRemedyWorklogContent.dataset.loadedInc = cleanId;
+      renderRemedyWorklogView(cleanId);
+      return;
+    }
+
+    dom.orchRemedyWorklogContent.innerHTML = `
+      <div style="display: flex; align-items: center; gap: 8px; padding: 12px; color: var(--triage-text-muted); font-size: 13px;">
+        <span aria-hidden="true" style="display: inline-block; animation: spin 1s infinite linear;">🔄</span>
+        <span>Consultando notas técnicas de ${escapeHtml(cleanId)} en API MonTMC Remedy...</span>
+      </div>
+    `;
+
+    try {
+      const url = `/api/remedy/detail/${encodeURIComponent(cleanId)}${forceRefresh ? '?force=1' : ''}`;
+      const res = await fetch(url);
+      const data = await res.json();
+
+      if (!res.ok || !data.success) {
+        const errorMsg = data.error || `HTTP ${res.status}`;
+        dom.orchRemedyWorklogContent.innerHTML = `
+          <div style="background: #FEF2F2; border: 1px solid #FCA5A5; border-radius: 6px; padding: 12px; font-size: 13px; color: #991B1B;">
+            <p style="margin: 0 0 6px 0; font-weight: 600;">⚠️ No se pudo recuperar el worklog de Remedy:</p>
+            <p style="margin: 0 0 8px 0; font-family: var(--font-mono); font-size: 12px;">${escapeHtml(errorMsg)}</p>
+            <button type="button" class="triage-btn triage-btn-sm" onclick="window.__loadRemedyWorklog('${escapeHtml(cleanId)}', true)">
+              🔄 Reintentar consulta
+            </button>
+          </div>
+        `;
+        return;
+      }
+
+      dom.orchRemedyWorklogContent.dataset.loadedInc = cleanId;
+      const rawWorklogs = data.worklogs || [];
+      const normalized = rawWorklogs.map(entry => {
+        const fecha = entry.fecha || entry.submit_date || entry.date || entry.timestamp || '';
+        const autor = entry.autor || entry.submitter || entry.usuario || entry.user || 'Sistema';
+        const texto = (entry.detalle || entry.texto || entry.notes || entry.description || entry.log || '').trim();
+        const grupo = entry.grupoAsignado || entry.grupoResolutor || entry.grupo || '';
+        const adjuntos = entry.numeroAdjuntos || (Array.isArray(entry.adjuntos) ? entry.adjuntos.length : 0) || 0;
+        const isSystem = isSystemNoiseWorklog(texto);
+        return { fecha, autor, texto, grupo, adjuntos, isSystem };
+      });
+
+      // Orden cronológico inverso (más recientes arriba)
+      normalized.sort((a, b) => {
+        const tA = a.fecha ? new Date(a.fecha).getTime() : 0;
+        const tB = b.fecha ? new Date(b.fecha).getTime() : 0;
+        return tB - tA;
+      });
+
+      const substantiveList = normalized.filter(e => !e.isSystem);
+      const allList = normalized;
+
+      const inc = state.incidents && state.incidents.find(i => (i.id || i['ID de incidencia']) === cleanId);
+      const ticketEstado = (data.estado || (data.remedy && data.remedy.estadoDesc) || (inc && (inc.estatus || inc.estado || inc.Estatus)) || '').trim();
+
+      if (!state.remedyWorklogData) state.remedyWorklogData = {};
+      state.remedyWorklogData[cleanId] = {
+        cleanId,
+        solucion: (data.solucion || '').trim(),
+        detalle: (data.detalle || '').trim(),
+        estado: ticketEstado,
+        isCached: Boolean(data._cached),
+        isDisk: data._source === 'disk_fallback',
+        substantiveList,
+        allList,
+        filterMode: (state.remedyWorklogData[cleanId] && state.remedyWorklogData[cleanId].filterMode) || 'substantive'
+      };
+
+      renderRemedyWorklogView(cleanId);
+    } catch (err) {
+      dom.orchRemedyWorklogContent.innerHTML = `
+        <div style="background: #FEF2F2; border: 1px solid #FCA5A5; border-radius: 6px; padding: 12px; font-size: 13px; color: #991B1B;">
+          <p style="margin: 0 0 6px 0; font-weight: 600;">⚠️ Error de red consultando Remedy:</p>
+          <p style="margin: 0; font-size: 12px;">${escapeHtml(err.message)}</p>
+        </div>
+      `;
+    }
+  }
+  window.__loadRemedyWorklog = loadRemedyWorklog;
 
   function formatFullLogForClipboard(incId) {
     const inc = state.incidents.find(i => i.id === incId);
@@ -2775,11 +3383,10 @@ function renderFeed() {
         <table class="triage-table" aria-label="Tabla de Triaje de Incidencias">
           <thead>
             <tr>
-              <th style="min-width: 200px;">Incidencia / Apertura</th>
-              <th style="min-width: 270px;">Título / Resumen IA / Mensajes</th>
-              <th style="min-width: 190px;">Proceso Crítico y Sistemas</th>
-              <th style="width: 110px; text-align: center;">Remedy INI</th>
-              <th style="width: 130px; text-align: center;">Severidad ITIL</th>
+              <th style="min-width: 190px;">Incidencia / Apertura</th>
+              <th style="min-width: 260px;">Título / Resumen IA / Mensajes</th>
+              <th style="min-width: 180px;">Proceso Crítico y Sistemas</th>
+              <th style="min-width: 195px; text-align: center;" title="Comparativa de Severidad (Remedy Inicial ➔ ITIL Evaluada) y Nivel de Urgencia Operativa">Evaluación y Urgencia</th>
               <th style="width: 180px; text-align: right;">Acciones</th>
             </tr>
           </thead>
@@ -2865,6 +3472,26 @@ function renderFeed() {
       itilFullLabel = 'SL4 / P4 (Baja)';
     }
 
+    // Urgencia Operativa destacada en colores
+    const urgencyVal = evaluacion.urgencia || inc.urgencia || 'Media';
+    const urgNorm = String(urgencyVal).trim().toLowerCase();
+    let urgencyBadgeClass = 'urgency-media';
+    let urgencyIcon = '⚠️';
+    if (urgNorm.includes('crít') || urgNorm.includes('crit')) {
+      urgencyBadgeClass = 'urgency-critica';
+      urgencyIcon = '🚨';
+    } else if (urgNorm.includes('alta') || urgNorm.includes('high')) {
+      urgencyBadgeClass = 'urgency-alta';
+      urgencyIcon = '⚡';
+    } else if (urgNorm.includes('baj') || urgNorm.includes('low')) {
+      urgencyBadgeClass = 'urgency-baja';
+      urgencyIcon = '🟢';
+    } else {
+      urgencyBadgeClass = 'urgency-media';
+      urgencyIcon = '⚠️';
+    }
+    const urgencyTooltip = evaluacion.urgencia_justificacion || `Urgencia operativa ${urgencyVal}: factor determinante en la matriz de severidad ITIL.`;
+
     // Epsilon IA resumen
     const resumenIa = inc.resumen_ia || {};
     const epsilonBloqueos = Array.isArray(resumenIa.bloqueos) ? resumenIa.bloqueos.join('; ') : (resumenIa.bloqueos || '');
@@ -2927,11 +3554,20 @@ function renderFeed() {
 
     // Mensajes Ejecutivos completados (incident-reporter)
     const msgsEjecutivos = inc.mensajes_ejecutivos || {};
-    const hasMensajesEjecutivos = Boolean(
+    let hasMensajesEjecutivos = Boolean(
       (msgsEjecutivos.apertura && (msgsEjecutivos.apertura.completo || msgsEjecutivos.apertura.generado_por_agente) && msgsEjecutivos.apertura.estado !== 'pendiente') ||
       (msgsEjecutivos.seguimiento && (msgsEjecutivos.seguimiento.completo || msgsEjecutivos.seguimiento.generado_por_agente) && msgsEjecutivos.seguimiento.estado !== 'pendiente') ||
       (msgsEjecutivos.cierre && (msgsEjecutivos.cierre.completo || msgsEjecutivos.cierre.generado_por_agente) && msgsEjecutivos.cierre.estado !== 'pendiente')
     );
+    if (!hasMensajesEjecutivos && incId) {
+      try {
+        hasMensajesEjecutivos = Boolean(
+          localStorage.getItem(`triage_official_msg_${incId}_apertura`) ||
+          localStorage.getItem(`triage_official_msg_${incId}_seguimiento`) ||
+          localStorage.getItem(`triage_official_msg_${incId}_cierre`)
+        );
+      } catch (_) {}
+    }
 
     return `
       <!-- Fila Resumen Principal (Modo Tabular - 6 Columnas) -->
@@ -2996,34 +3632,30 @@ function renderFeed() {
           </div>
         </td>
 
-        <!-- 4 Columna: Remedy INI -->
-        <td class="triage-cell-remedy" style="text-align: center;">
-          <span class="triage-sev-badge ${remedyBadgeClass}">${escapeHtml(sevNominal)}</span>
-        </td>
-
-        <!-- 5 Columna: Severidad Itil -->
-        <td class="triage-cell-itil" style="text-align: center;">
-          <div class="triage-itil-wrapper">
-            <span class="triage-sev-badge ${itilBadgeClass}">${itilLabel}</span>
-            ${isDisc ? `
-              <span class="triage-itil-delta-sub delta-${delta >= 2 ? '2' : '1'}" title="Discrepancia detectada: subescalación N1 de ${delta} nivel(es)">
-                +${delta} Nivel${delta > 1 ? 'es' : ''}
+        <!-- 4 Columna Unificada: Evaluación ITIL y Urgencia -->
+        <td class="triage-cell-eval" style="text-align: center;">
+          <div class="triage-eval-unified-wrapper">
+            <div class="triage-eval-flow" title="Evaluación de severidad: Remedy Inicial (${escapeHtml(sevNominal)}) ➔ Severidad ITIL (${escapeHtml(itilLabel)})">
+              <span class="triage-sev-badge ${remedyBadgeClass}" title="Severidad nominal inicial en Remedy">${escapeHtml(sevNominal)}</span>
+              <span class="triage-eval-arrow" aria-hidden="true">➔</span>
+              <span class="triage-sev-badge ${itilBadgeClass}" title="Severidad auditada según Criterio ITIL Orange">${itilLabel}</span>
+            </div>
+            <div class="triage-eval-urgency-row">
+              <span class="triage-urgency-pill ${urgencyBadgeClass}" title="${escapeHtml(urgencyTooltip)}">
+                <span class="urgency-dot" aria-hidden="true"></span>
+                <span class="urgency-icon" aria-hidden="true">${urgencyIcon}</span>
+                <span class="urgency-text">Urgencia ${escapeHtml(urgencyVal)}</span>
               </span>
-            ` : ''}
+            </div>
           </div>
         </td>
 
-        <!-- 6 Columna: Acciones -->
+        <!-- 5 Columna: Acciones -->
         <td class="triage-cell-actions">
           <div class="triage-actions-cell-group">
             ${isDisc ? `
               <button type="button" class="triage-btn-table-reclass btn-copy-reclass" data-inc="${escapeHtml(incId)}" title="Copiar solicitud formal al portapapeles para pegar en el worklog de Remedy">
                 <span aria-hidden="true">⚡</span> Reclasificar
-              </button>
-            ` : ''}
-            ${isP1 ? `
-              <button type="button" class="triage-btn-table-orchestrator btn-open-orchestrator" data-inc="${escapeHtml(incId)}" title="Abrir Módulo 2: Orquestador Operativo, War Room Teams y Relojes de Escalado">
-                <span aria-hidden="true">🚨</span> Orquestador
               </button>
             ` : ''}
             <button type="button" class="triage-btn-table-toggle btn-toggle-row" data-inc="${escapeHtml(incId)}">
@@ -3035,7 +3667,7 @@ function renderFeed() {
 
       <!-- Fila Plegable / Desplegable de Detalle Extendido -->
       <tr class="triage-row-detail ${isOpen ? 'is-open' : ''}" id="detail-row-${escapeHtml(incId)}" data-inc="${escapeHtml(incId)}">
-        <td colspan="6">
+        <td colspan="5">
           <div class="triage-detail-wrapper">
             
             <!-- TARJETA DE GUÍA OPERATIVA PARA EL OPERADOR DE CONSOLA (incident-triage-review) -->
@@ -3465,16 +4097,32 @@ function renderFeed() {
       dom.btnRefreshNow.addEventListener('click', () => performInspection(true));
     }
 
-    // Selector de intervalo de refresco automático
+    // Botón Sincronizar Remedy (MonTMC API)
+    if (dom.btnSyncRemedy) {
+      dom.btnSyncRemedy.addEventListener('click', triggerRemedySync);
+    }
+
+    // Botón Refrescar Worklog Remedy en Orquestador
+    if (dom.btnRefreshRemedyWorklog) {
+      dom.btnRefreshRemedyWorklog.addEventListener('click', () => {
+        if (state.activeOrchIncId) {
+          loadRemedyWorklog(state.activeOrchIncId, true);
+        }
+      });
+    }
+
+    // Selector de intervalo de vigilancia automática
     if (dom.autoRefreshSelect) {
       dom.autoRefreshSelect.addEventListener('change', (e) => {
         const val = parseInt(e.target.value, 10);
         state.refreshIntervalMs = val;
         resetAutoRefreshTimer();
         if (val > 0) {
-          showToast(`Inspección continua programada cada ${val / 1000}s`, 'info');
+          setConnectionStatus('', 'Vigilancia SLA Activa');
+          showToast(`Vigilancia continua programada cada ${val / 1000}s`, 'info');
         } else {
-          showToast('Inspección automática pausada', 'info');
+          setConnectionStatus('paused', 'Vigilancia Pausada');
+          showToast('Vigilancia continua de SLAs pausada', 'info');
         }
       });
     }
@@ -3965,6 +4613,7 @@ Puente Teams: ${teamsUrl}
             localStorage.setItem(key, dom.tplTextCompleto.value);
           } catch (_) {}
         }
+        updateCommsActionButtonsState();
       });
     }
     if (dom.tplTextBreve) {
@@ -3977,6 +4626,7 @@ Puente Teams: ${teamsUrl}
             localStorage.setItem(key, dom.tplTextBreve.value);
           } catch (_) {}
         }
+        updateCommsActionButtonsState();
       });
     }
 
@@ -3997,6 +4647,7 @@ Puente Teams: ${teamsUrl}
             if (dom.tplTextCompleto) dom.tplTextCompleto.value = data.completo;
             if (dom.tplTextBreve) dom.tplTextBreve.value = data.breve;
             updateWordCounters();
+            updateCommsActionButtonsState();
           }
           showToast('Borrador descartado. Plantilla oficial restaurada.', 'info');
         }
@@ -4027,7 +4678,7 @@ Puente Teams: ${teamsUrl}
       });
     }
 
-    // Regenerar texto con datos del ticket (limpia borradores)
+    // Regenerar texto con datos del ticket (limpia borradores y fuerza plantilla Canal A)
     if (dom.btnTplRegenerate) {
       dom.btnTplRegenerate.addEventListener('click', () => {
         const incId = state.activeCommsIncId || state.activeOrchIncId;
@@ -4040,9 +4691,289 @@ Puente Teams: ${teamsUrl}
           if (dom.tplDraftAlert) dom.tplDraftAlert.style.display = 'none';
           const inc = state.incidents.find(i => i.id === incId);
           if (inc) {
-            renderCommsTemplateTab(inc, phase);
-            showToast('Textos oficiales regenerados con datos actuales del ticket', 'info');
+            renderCommsTemplateTab(inc, phase, true);
+            showToast('✨ Textos regenerados con datos actuales del ticket (Canal A)', 'info');
           }
+        }
+      });
+    }
+
+    // Copiar Prompt Agente (Canal B: incident-reporter LLM)
+    if (dom.btnCopyAgentPrompt) {
+      dom.btnCopyAgentPrompt.addEventListener('click', () => {
+        const incId = state.activeCommsIncId || state.activeOrchIncId;
+        const phase = state.activeCommsPhase || 'inicial';
+        let inc = state.incidents.find(i => i.id === incId);
+        if (!inc && state.activeOrchIncId) {
+          inc = state.incidents.find(i => i.id === state.activeOrchIncId);
+        }
+        if (!inc) {
+          showToast('No se encontró la incidencia activa para generar el prompt', 'warning');
+          return;
+        }
+
+        const promptText = buildAgentPrompt(inc, phase);
+        if (!promptText) {
+          showToast('No se pudo generar el prompt estructurado', 'warning');
+          return;
+        }
+
+        copyToClipboard(promptText, '¡Prompt estructurado para Agente incident-reporter copiado al portapapeles!');
+
+        // Marcar prompt como copiado para habilitar "Pegar Salida Agente"
+        if (!state.copiedAgentPrompts) state.copiedAgentPrompts = {};
+        const promptKey = `${inc.id}_${phase}`;
+        state.copiedAgentPrompts[promptKey] = true;
+        try {
+          if (typeof sessionStorage !== 'undefined') {
+            sessionStorage.setItem('triage_agent_prompt_copied_' + promptKey, 'true');
+          }
+        } catch (_) {}
+        updateCommsActionButtonsState();
+
+        // Feedback visual temporal en el botón
+        const origHtml = dom.btnCopyAgentPrompt.innerHTML;
+        dom.btnCopyAgentPrompt.innerHTML = '<span aria-hidden="true">✅</span> <span>¡Prompt Copiado!</span>';
+        dom.btnCopyAgentPrompt.classList.add('is-copied');
+        setTimeout(() => {
+          dom.btnCopyAgentPrompt.innerHTML = origHtml;
+          dom.btnCopyAgentPrompt.classList.remove('is-copied');
+        }, 1800);
+      });
+    }
+
+    // Pegar y parsear salida del Agente LLM
+    if (dom.btnPasteAgentOutput) {
+      dom.btnPasteAgentOutput.addEventListener('click', async () => {
+        const incId = state.activeCommsIncId || state.activeOrchIncId;
+        const phase = state.activeCommsPhase || 'inicial';
+        if (!incId) return;
+
+        let pastedText = '';
+        if (navigator.clipboard && navigator.clipboard.readText) {
+          try {
+            pastedText = await navigator.clipboard.readText();
+          } catch (_) {
+            pastedText = '';
+          }
+        }
+        if (!pastedText) {
+          pastedText = window.prompt('Pega aquí la respuesta completa devuelta por el Agente incident-reporter / LLM:');
+        }
+
+        if (!pastedText || !pastedText.trim()) {
+          return;
+        }
+
+        const parsed = parseAgentOutput(pastedText);
+        if (!parsed.completo && !parsed.breve) {
+          showToast('No se identificó el formato normativo en el texto pegado', 'warning');
+          return;
+        }
+
+        if (parsed.completo && dom.tplTextCompleto) {
+          dom.tplTextCompleto.value = parsed.completo;
+          try {
+            localStorage.setItem(`triage_draft_tpl_comp_${incId}_${phase}`, parsed.completo);
+          } catch (_) {}
+        }
+        if (parsed.breve && dom.tplTextBreve) {
+          dom.tplTextBreve.value = parsed.breve;
+          try {
+            localStorage.setItem(`triage_draft_tpl_brev_${incId}_${phase}`, parsed.breve);
+          } catch (_) {}
+        }
+
+        updateWordCounters();
+        if (dom.tplDraftAlert) dom.tplDraftAlert.style.display = 'flex';
+
+        // Actualizar indicador de cabecera a estado de salida pegada pendiente de consolidar
+        const agentBadge = document.getElementById('exec-modal-agent-status');
+        if (agentBadge) {
+          agentBadge.textContent = '🤖 Salida Pegada (Sin Guardar)';
+          agentBadge.style.background = 'rgba(245, 158, 11, 0.12)';
+          agentBadge.style.color = '#d97706';
+          agentBadge.style.borderColor = 'rgba(245, 158, 11, 0.35)';
+          agentBadge.style.display = 'inline-flex';
+        }
+
+        updateCommsActionButtonsState();
+        showToast('Salida del Agente aplicada. Pulsa "Guardar Mensaje Oficial" para consolidarla.', 'success');
+      });
+    }
+
+    // Guardar como Mensaje Oficial en Almacén Central (/api/incident-manager/save-message)
+    if (dom.btnSaveAgentOfficial) {
+      dom.btnSaveAgentOfficial.addEventListener('click', async () => {
+        const incId = state.activeCommsIncId || state.activeOrchIncId;
+        const phase = state.activeCommsPhase || 'inicial';
+        if (!incId) {
+          showToast('No hay una incidencia activa seleccionada', 'warning');
+          return;
+        }
+
+        const phaseKey = phase === 'inicial' ? 'apertura' : (phase === 'actualizacion' ? 'seguimiento' : 'cierre');
+        const textCompleto = dom.tplTextCompleto ? dom.tplTextCompleto.value.trim() : '';
+        const textBreve = dom.tplTextBreve ? dom.tplTextBreve.value.trim() : '';
+
+        if (!textCompleto && !textBreve) {
+          showToast('Introduce o pega al menos una versión (completa o breve) antes de guardar', 'warning');
+          return;
+        }
+
+        // Validación estricta de límites de palabras (<= 90 completo, <= 30 breve)
+        const countWords = (str) => (str || '').trim().split(/\s+/).filter(Boolean).length;
+        const wordsComp = countWords(textCompleto);
+        const wordsBrev = countWords(textBreve);
+
+        if (wordsComp > 90) {
+          showToast(`La Versión Completa excede el límite de 90 palabras (${wordsComp} palabras)`, 'warning');
+          return;
+        }
+        if (wordsBrev > 30) {
+          showToast(`La Versión Breve excede el límite de 30 palabras (${wordsBrev} palabras)`, 'warning');
+          return;
+        }
+
+        const originalBtnHtml = dom.btnSaveAgentOfficial.innerHTML;
+        dom.btnSaveAgentOfficial.disabled = true;
+        dom.btnSaveAgentOfficial.innerHTML = '<span aria-hidden="true">⏳</span> <span>Guardando...</span>';
+
+        try {
+          let savedRemotely = false;
+
+          // 1. Enviar al backend con timeout protector de 5 segundos para evitar bloqueos indefinidos
+          let timeoutId = null;
+          let fetchSignal = undefined;
+          if (typeof AbortController !== 'undefined') {
+            const controller = new AbortController();
+            timeoutId = setTimeout(() => controller.abort(), 5000);
+            fetchSignal = controller.signal;
+          }
+
+          try {
+            const resp = await fetch('/api/incident-manager/save-message', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              signal: fetchSignal,
+              body: JSON.stringify({
+                incident_id: incId,
+                phase: phaseKey,
+                completo: textCompleto,
+                breve: textBreve,
+                origen: 'incident-reporter'
+              })
+            });
+            if (timeoutId) clearTimeout(timeoutId);
+
+            if (resp.ok) {
+              const data = await resp.json().catch(() => ({}));
+              if (data && data.success !== false) {
+                savedRemotely = true;
+              } else if (data && data.error) {
+                throw new Error(data.error);
+              }
+            } else if (resp.status === 400) {
+              const data = await resp.json().catch(() => ({}));
+              throw new Error(data.error || `Error de validación (${resp.status})`);
+            } else {
+              throw new Error(`Error en servidor (${resp.status})`);
+            }
+          } catch (fetchErr) {
+            if (timeoutId) clearTimeout(timeoutId);
+            if (fetchErr.message && (fetchErr.message.includes('palabras') || fetchErr.message.includes('Fase'))) {
+              showToast(`Error de validación: ${fetchErr.message}`, 'error');
+              return;
+            }
+            console.warn('[Consola Triaje] Persistiendo con fallback local (backend no disponible o demorado):', fetchErr);
+          }
+
+          // 2. Actualizar estado en memoria de la incidencia
+          const inc = state.incidents.find(i => i.id === incId);
+          if (inc) {
+            if (!inc.mensajes_ejecutivos) inc.mensajes_ejecutivos = {};
+            inc.mensajes_ejecutivos[phaseKey] = {
+              completo: textCompleto,
+              breve: textBreve,
+              estado: 'oficial',
+              generado_por_agente: true,
+              fecha_generacion: new Date().toISOString(),
+              origen: 'incident-reporter',
+              conteo_palabras_completo: wordsComp,
+              conteo_palabras_breve: wordsBrev
+            };
+          }
+
+          // 3. Persistir copia oficial en localStorage para resiliencia offline/cliente
+          try {
+            localStorage.setItem(`triage_official_msg_${incId}_${phaseKey}`, JSON.stringify({
+              completo: textCompleto,
+              breve: textBreve,
+              estado: 'oficial',
+              timestamp: new Date().toISOString()
+            }));
+          } catch (_) {}
+
+          // 4. Sincronizar con StateManager global si está presente
+          if (window.StateManager && typeof window.StateManager.setCustomMessage === 'function') {
+            try {
+              window.StateManager.setCustomMessage(incId, phaseKey, textCompleto, textBreve);
+            } catch (_) {}
+          }
+
+          // 5. Limpiar borrador temporal en localStorage
+          try {
+            localStorage.removeItem(`triage_draft_tpl_comp_${incId}_${phase}`);
+            localStorage.removeItem(`triage_draft_tpl_brev_${incId}_${phase}`);
+          } catch (_) {}
+          if (dom.tplDraftAlert) dom.tplDraftAlert.style.display = 'none';
+
+          // 6. Conmutar badge del modal a Confirmado (verde)
+          const agentBadge = document.getElementById('exec-modal-agent-status');
+          if (agentBadge) {
+            agentBadge.textContent = '🤖 Salida Agente Confirmada';
+            agentBadge.style.background = 'rgba(16, 185, 129, 0.1)';
+            agentBadge.style.color = '#059669';
+            agentBadge.style.borderColor = 'rgba(16, 185, 129, 0.3)';
+            agentBadge.style.display = 'inline-flex';
+          }
+
+          // 7. Registrar en bitácora auditable de la incidencia
+          const phaseName = phase === 'inicial' ? 'Inicial' : (phase === 'actualizacion' ? 'Actualización' : 'Cierre');
+          addLogEntry(
+            incId,
+            'NOTIFICACION',
+            `🤖 Mensaje Oficial Confirmado (${phaseName})`,
+            `Comunicado ejecutivo oficial (${wordsComp} pal. comp. / ${wordsBrev} pal. breve) consolidado por Incident Manager.`,
+            'role-notificacion'
+          );
+
+          // 8. Si es fase inicial, completar reloj 20m de orquestación
+          if (phase === 'inicial') {
+            const escState = state.orchestratorEscalations[incId] || {};
+            escState.commDone = true;
+            state.orchestratorEscalations[incId] = escState;
+            try {
+              localStorage.setItem('emergency_esc_' + incId, JSON.stringify(escState));
+            } catch (_) {}
+            updateOrchestratorClocks();
+          }
+
+          // 9. Refrescar tabla para que la micro-marca pase a verde '📢 Mensajes'
+          renderTable();
+
+          const successMsg = savedRemotely
+            ? '✅ Mensaje oficial guardado en almacén central y notificaciones actualizadas'
+            : '✅ Mensaje oficial consolidado y guardado con éxito';
+          showToast(successMsg, 'success');
+
+        } catch (globalErr) {
+          console.error('[Consola Triaje] Error inesperado guardando mensaje oficial:', globalErr);
+          showToast(`Error: ${globalErr.message || globalErr}`, 'error');
+        } finally {
+          dom.btnSaveAgentOfficial.disabled = false;
+          dom.btnSaveAgentOfficial.innerHTML = originalBtnHtml;
+          updateCommsActionButtonsState();
         }
       });
     }
@@ -4270,7 +5201,7 @@ Puente Teams: ${teamsUrl}
     if (dom.autoRefreshSelect && footerScanFreq) {
       const updateFooterFreq = () => {
         const val = parseInt(dom.autoRefreshSelect.value, 10);
-        footerScanFreq.textContent = val === 0 ? 'Inspección: Pausada' : `Ciclo: ${val / 1000}s`;
+        footerScanFreq.textContent = val === 0 ? 'Vigilancia: Pausada' : `Ciclo: ${val / 1000}s`;
       };
       dom.autoRefreshSelect.addEventListener('change', updateFooterFreq);
       updateFooterFreq();

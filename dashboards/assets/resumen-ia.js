@@ -175,6 +175,14 @@
         `;
     }
 
+    let currentIncidentStatus = '';
+
+    function isTerminalStatus(st) {
+        if (!st) return false;
+        const s = String(st).toLowerCase().trim();
+        return s.includes('resuelt') || s.includes('resolv') || s.includes('cerrad') || s.includes('clos') || s.includes('cancel');
+    }
+
     function getStatusClass(status) {
         if (!status) return '';
         const s = status.toLowerCase();
@@ -186,6 +194,7 @@
 
     function renderContent(code, data) {
         const estado = data.estadoActual || 'DESCONOCIDO';
+        currentIncidentStatus = estado;
         const statusClass = getStatusClass(estado);
         const sistemas = Array.isArray(data.sistemas) ? data.sistemas : [];
         const hitos = Array.isArray(data.hitosTecnicos) ? data.hitosTecnicos : [];
@@ -383,6 +392,18 @@
                 ${bloqueosHtml}
                 ${siguienteAccionHtml}
                 ${hitosHtml}
+
+                <!-- Bloque: Worklog y Notas Técnicas Remedy (MonTMC) -->
+                <div class="resumen-ia-block block-remedy-worklog">
+                    <div class="resumen-ia-block-header" style="cursor: pointer;" onclick="window.ResumenIAModal.toggleWorklog('${escapeHtml(code)}')">
+                        <span class="resumen-ia-icon-circle" aria-hidden="true">📋</span>
+                        <h4 class="resumen-ia-block-title">Notas Técnicas &amp; Worklog Remedy (MonTMC)</h4>
+                        <span id="resumen-ia-worklog-badge" style="margin-left: auto; font-size: 11px; background: rgba(0,0,0,0.06); padding: 2px 8px; border-radius: 10px; cursor: pointer;">Ver notas ▼</span>
+                    </div>
+                    <div id="resumen-ia-worklog-body" style="display: none; margin-top: 10px; border-top: 1px dashed #E2E8F0; padding-top: 8px;">
+                        <p style="color: #64748B; font-size: 12px; margin: 4px 0;">Cargando notas...</p>
+                    </div>
+                </div>
             </div>
             <div class="resumen-ia-footer">
                 <span class="resumen-ia-footer-note">Sintetizado por el motor de IA de Epsilon (soptmc.si.orange.es)${data._cached ? ' · Servido desde caché local' : ' · En tiempo real'}</span>
@@ -518,6 +539,235 @@
         }
     }
 
+    const remedyWorklogCache = new Map();
+
+    function isSystemNoiseWorklog(text) {
+        if (!text) return true;
+        const t = text.trim();
+        if (t === '' || t === '.' || t === '-' || t === '..' || t === '...') return true;
+        if (/^(revisando|en curso)\.?$/i.test(t)) return true;
+        if (/^(el estado ha sido cambiado a|la asignaci[oó]n ha sido cambiada a|la prioridad ha sido cambiada a|la urgencia ha sido cambiada a)\b/i.test(t)) return true;
+        if (/^\[SCA360-OTRS.*\]\s*Adjunto\(s\)\s*\(\d+\):/i.test(t) && !t.includes('\n\n') && t.length < 100) return true;
+        if (/\(Sin cambios de datos en el ticket OTRS desde el ultimo envio a EPSILON\.\)/i.test(t)) return true;
+        return false;
+    }
+
+    function formatRemedyDate(dateStr) {
+        if (!dateStr) return 'Fecha no informada';
+        try {
+            const d = new Date(dateStr);
+            if (isNaN(d.getTime())) return dateStr;
+            const pad = n => String(n).padStart(2, '0');
+            return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+        } catch (_) {
+            return dateStr;
+        }
+    }
+
+    function getRelativeTimeSpan(dateStr) {
+        if (!dateStr) return '';
+        try {
+            const d = new Date(dateStr);
+            if (isNaN(d.getTime())) return '';
+            const diffMs = Date.now() - d.getTime();
+            if (diffMs < 0) return '';
+            const diffMins = Math.floor(diffMs / 60000);
+            if (diffMins < 1) return 'hace unos instantes';
+            if (diffMins < 60) return `hace ${diffMins} min`;
+            const diffHours = Math.floor(diffMins / 60);
+            if (diffHours < 24) return `hace ${diffHours} h`;
+            const diffDays = Math.floor(diffHours / 24);
+            return `hace ${diffDays} día${diffDays > 1 ? 's' : ''}`;
+        } catch (_) {
+            return '';
+        }
+    }
+
+    function renderRemedyWorklogInModal(code) {
+        const body = document.getElementById('resumen-ia-worklog-body');
+        if (!body) return;
+        const entry = remedyWorklogCache.get(code);
+        if (!entry) return;
+
+        const { solucion, detalle, substantiveList, allList, filterMode } = entry;
+        const currentList = filterMode === 'all' ? allList : substantiveList;
+        const lastSubstantive = (substantiveList && substantiveList.length > 0) ? substantiveList[0] : (allList[0] || null);
+
+        let html = '';
+
+        // 1. Tarjeta destacada: Última Acción Técnica
+        if (lastSubstantive) {
+            const relTime = getRelativeTimeSpan(lastSubstantive.fecha);
+            html += `
+                <div class="resumen-ia-remedy-highlight">
+                    <div class="resumen-ia-remedy-highlight-header">
+                        <div style="display:flex;align-items:center;gap:6px;">
+                            <span class="resumen-ia-remedy-badge">⚡ Última Acción Técnica</span>
+                            ${relTime ? `<span class="resumen-ia-remedy-relative">(${escapeHtml(relTime)})</span>` : ''}
+                        </div>
+                        <div class="resumen-ia-remedy-meta">
+                            <span><strong>👤 ${escapeHtml(lastSubstantive.autor)}</strong></span>
+                            ${lastSubstantive.grupo ? `<span class="resumen-ia-group-pill">${escapeHtml(lastSubstantive.grupo)}</span>` : ''}
+                            <span>🕒 ${formatRemedyDate(lastSubstantive.fecha)}</span>
+                        </div>
+                    </div>
+                    <div class="resumen-ia-remedy-highlight-body">${escapeHtml(lastSubstantive.texto)}</div>
+                </div>
+            `;
+        }
+
+        // 2. Banner de Solución Oficial Remedy SOLO si el ticket está en estado terminal (Resuelto, Cerrado o Cancelado).
+        // Si el ticket está En Curso o Asignado, se ignora para erradicar alucinaciones de cierre prematuro
+        // por textos obsoletos o revocados que Remedy conserva en base de datos tras reaperturas (LIFECYCLE_STATUS_MISMATCH).
+        if (solucion && isTerminalStatus(entry.estado)) {
+            html += `
+                <div style="background:#FFF7ED;border:1px solid #FED7AA;border-left:3px solid #FF7900;border-radius:6px;padding:8px 12px;margin-bottom:10px;font-size:12px;color:#9A3412;">
+                    <strong>💡 Solución / Cierre Remedy:</strong>
+                    <div style="margin-top:3px;white-space:pre-wrap;">${escapeHtml(solucion)}</div>
+                </div>
+            `;
+        }
+
+        // 3. Controles de Filtro
+        html += `
+            <div class="resumen-ia-worklog-controls">
+                <div class="resumen-ia-filter-pills" role="tablist">
+                    <button type="button" class="resumen-ia-filter-pill ${filterMode === 'substantive' ? 'is-active' : ''}" onclick="window.ResumenIAModal.setWorklogFilter('${escapeHtml(code)}', 'substantive')">
+                        📝 Notas Clave (${substantiveList.length})
+                    </button>
+                    <button type="button" class="resumen-ia-filter-pill ${filterMode === 'all' ? 'is-active' : ''}" onclick="window.ResumenIAModal.setWorklogFilter('${escapeHtml(code)}', 'all')">
+                        📋 Auditoría Completa (${allList.length})
+                    </button>
+                </div>
+                <div class="resumen-ia-worklog-order-hint">
+                    <span>⬇️ Más recientes primero</span>
+                </div>
+            </div>
+        `;
+
+        // 4. Lista de notas cronológica inversa
+        if (currentList.length === 0) {
+            html += `
+                <p style="color:#64748B;font-size:12px;font-style:italic;margin:10px 0;padding:10px;background:#F8FAFC;border-radius:6px;border:1px dashed #CBD5E1;">
+                    ${filterMode === 'substantive' 
+                        ? 'No se detectaron notas técnicas manuales en este ticket. Consulta la pestaña "Auditoría Completa" para revisar los cambios automáticos de estado y asignación.' 
+                        : 'No constan anotaciones en el worklog de esta incidencia en MonTMC Remedy.'}
+                </p>
+            `;
+        } else {
+            html += `<div class="resumen-ia-worklog-list">`;
+            currentList.forEach(item => {
+                if (item.isSystem) {
+                    html += `
+                        <div class="resumen-ia-worklog-item resumen-ia-worklog-system">
+                            <div class="resumen-ia-worklog-meta">
+                                <div class="resumen-ia-worklog-meta-left">
+                                    <span style="color:#64748B;font-weight:500;">⚙️ ${escapeHtml(item.autor)}</span>
+                                    <span class="resumen-ia-system-tag">Sistema / Auditoría</span>
+                                </div>
+                                <div class="resumen-ia-worklog-meta-right">
+                                    <span>🕒 ${formatRemedyDate(item.fecha)}</span>
+                                </div>
+                            </div>
+                            <div class="resumen-ia-worklog-text-muted">${escapeHtml(item.texto)}</div>
+                        </div>
+                    `;
+                } else {
+                    html += `
+                        <div class="resumen-ia-worklog-item resumen-ia-worklog-substantive">
+                            <div class="resumen-ia-worklog-meta">
+                                <div class="resumen-ia-worklog-meta-left">
+                                    <span><strong>👤 ${escapeHtml(item.autor)}</strong></span>
+                                    ${item.grupo ? `<span class="resumen-ia-group-pill">${escapeHtml(item.grupo)}</span>` : ''}
+                                </div>
+                                <div class="resumen-ia-worklog-meta-right">
+                                    ${item.adjuntos > 0 ? `<span class="resumen-ia-att-pill">📎 ${item.adjuntos} adjunto${item.adjuntos > 1 ? 's' : ''}</span>` : ''}
+                                    <span>🕒 ${formatRemedyDate(item.fecha)}</span>
+                                </div>
+                            </div>
+                            <div class="resumen-ia-worklog-text">${escapeHtml(item.texto)}</div>
+                        </div>
+                    `;
+                }
+            });
+            html += `</div>`;
+        }
+
+        body.innerHTML = html;
+    }
+
+    function setRemedyWorklogFilter(code, filterMode) {
+        const cached = remedyWorklogCache.get(code);
+        if (cached) {
+            cached.filterMode = filterMode;
+            renderRemedyWorklogInModal(code);
+        }
+    }
+
+    async function toggleRemedyWorklog(code) {
+        const body = document.getElementById('resumen-ia-worklog-body');
+        const badge = document.getElementById('resumen-ia-worklog-badge');
+        if (!body) return;
+        if (body.style.display === 'block') {
+            body.style.display = 'none';
+            if (badge) badge.textContent = 'Ver notas ▼';
+        } else {
+            body.style.display = 'block';
+            if (badge) badge.textContent = 'Ocultar ▲';
+
+            if (remedyWorklogCache.has(code)) {
+                renderRemedyWorklogInModal(code);
+                return;
+            }
+
+            body.innerHTML = '<p style="color: #64748B; font-size: 12px; margin: 4px 0;">Consultando API MonTMC Remedy...</p>';
+            try {
+                const res = await fetch(`/api/remedy/detail/${encodeURIComponent(code)}`);
+                const data = await res.json();
+                if (res.ok && data.success) {
+                    const rawWorklogs = data.worklogs || [];
+                    const normalized = rawWorklogs.map(w => {
+                        const fecha = w.fecha || w.date || w.submit_date || w.timestamp || '';
+                        const autor = w.usuario || w.autor || w.user || w.submitter || 'Sistema';
+                        const texto = (w.detalle || w.texto || w.notes || w.description || w.log || '').trim();
+                        const grupo = w.grupoAsignado || w.grupoResolutor || w.grupo || '';
+                        const adjuntos = w.numeroAdjuntos || (Array.isArray(w.adjuntos) ? w.adjuntos.length : 0) || 0;
+                        const isSystem = isSystemNoiseWorklog(texto);
+                        return { fecha, autor, texto, grupo, adjuntos, isSystem };
+                    });
+
+                    // Orden cronológico inverso (más recientes arriba)
+                    normalized.sort((a, b) => {
+                        const tA = a.fecha ? new Date(a.fecha).getTime() : 0;
+                        const tB = b.fecha ? new Date(b.fecha).getTime() : 0;
+                        return tB - tA;
+                    });
+
+                    const substantiveList = normalized.filter(e => !e.isSystem);
+                    const allList = normalized;
+
+                    const ticketEstado = (data.estado || (data.remedy && data.remedy.estadoDesc) || currentIncidentStatus || '').trim();
+
+                    remedyWorklogCache.set(code, {
+                        code,
+                        solucion: (data.solucion || '').trim(),
+                        detalle: (data.detalle || '').trim(),
+                        estado: ticketEstado,
+                        substantiveList,
+                        allList,
+                        filterMode: 'substantive'
+                    });
+
+                    renderRemedyWorklogInModal(code);
+                } else {
+                    body.innerHTML = `<p style="color:#DC2626;font-size:12px;margin:4px 0;">No se pudo consultar Remedy: ${escapeHtml(data.error || 'Error')}</p>`;
+                }
+            } catch (e) {
+                body.innerHTML = `<p style="color:#DC2626;font-size:12px;margin:4px 0;">Error de red: ${escapeHtml(e.message)}</p>`;
+            }
+        }
+    }
+
     function escapeHtml(str) {
         if (str == null) return '';
         return String(str)
@@ -532,6 +782,8 @@
     window.ResumenIAModal = {
         open: openModal,
         close: closeModal,
+        toggleWorklog: toggleRemedyWorklog,
+        setWorklogFilter: setRemedyWorklogFilter,
         refresh: () => {
             if (currentIncidentCode) {
                 openModal(currentIncidentCode, true);

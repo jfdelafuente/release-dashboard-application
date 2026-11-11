@@ -174,12 +174,19 @@ def run_re_evaluation(eval_script: Path) -> bool:
 
     import subprocess
     logger.info("Regenerando catálogo de notificaciones de alta prioridad...")
-    res = subprocess.run([sys.executable, str(eval_script)], capture_output=True, text=True)
-    if res.returncode == 0:
-        logger.info("Notificaciones actualizadas con éxito.")
-        return True
-    else:
-        logger.error("Error al actualizar notificaciones:\n%s", res.stderr or res.stdout)
+    try:
+        res = subprocess.run([sys.executable, str(eval_script)], capture_output=True, text=True, timeout=20)
+        if res.returncode == 0:
+            logger.info("Notificaciones actualizadas con éxito.")
+            return True
+        else:
+            logger.error("Error al actualizar notificaciones:\n%s", res.stderr or res.stdout)
+            return False
+    except subprocess.TimeoutExpired:
+        logger.warning("Tiempo de espera agotado al reevaluar notificaciones (timeout=20s).")
+        return False
+    except Exception as e:
+        logger.warning("Error al actualizar notificaciones: %s", e)
         return False
 
 

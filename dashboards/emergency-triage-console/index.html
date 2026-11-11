@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Consola de Triaje y Reclasificación Automática · Orange Tech Operations</title>
+  <title>Consola de Triaje de Incidencias · Orange Tech Operations</title>
 
   <!-- Google Fonts: Inter y IBM Plex Mono -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -43,31 +43,37 @@
           <div class="triage-title-group">
             <span class="triage-eyebrow">Orange Tech Operations · Incident Management</span>
             <div class="triage-title-row">
-              <h1 class="triage-title">Consola de Triaje y Reclasificación Automática</h1>
+              <h1 class="triage-title">Consola de Triaje de Incidencias</h1>
             </div>
           </div>
         </div>
 
         <div class="triage-header-actions">
-          <!-- Indicador de conexión / inspección activa en vivo -->
-          <div id="live-pill" class="triage-live-pill" aria-label="Estado de la inspección continua">
+          <!-- Indicador de conexión / vigilancia activa en vivo -->
+          <div id="live-pill" class="triage-live-pill" aria-label="Estado de la vigilancia continua de SLAs">
             <span class="triage-pulse-dot" aria-hidden="true"></span>
-            <span id="live-status-text">Inspección Activa</span>
+            <span id="live-status-text">Vigilancia SLA Activa</span>
           </div>
 
-          <!-- Selector de frecuencia de inspección -->
-          <label for="auto-refresh-select" class="sr-only">Frecuencia de inspección automática</label>
-          <select id="auto-refresh-select" class="triage-select" title="Frecuencia de actualización continua">
-            <option value="15000">Inspección: cada 15s</option>
-            <option value="30000" selected>Inspección: cada 30s</option>
-            <option value="60000">Inspección: cada 60s</option>
-            <option value="0">Inspección: Pausada</option>
+          <!-- Selector de frecuencia de vigilancia -->
+          <label for="auto-refresh-select" class="sr-only">Frecuencia de auditoría automática de SLAs</label>
+          <select id="auto-refresh-select" class="triage-select" title="Frecuencia de auditoría continua de SLAs">
+            <option value="15000">Vigilancia: cada 15s</option>
+            <option value="30000" selected>Vigilancia: cada 30s</option>
+            <option value="60000">Vigilancia: cada 60s</option>
+            <option value="0">Vigilancia: Pausada</option>
           </select>
 
-          <!-- Botón de inspección manual inmediata -->
-          <button id="btn-refresh-now" class="triage-btn" title="Escanear catálogo ahora">
+          <!-- Botón de auditoría manual inmediata -->
+          <button id="btn-refresh-now" class="triage-btn" title="Auditar alarmas y SLAs ahora">
             <span aria-hidden="true">🔄</span>
-            <span>Inspeccionar Ahora</span>
+            <span>Auditar Ahora</span>
+          </button>
+
+          <!-- Botón de sincronización con API MonTMC / Remedy -->
+          <button id="btn-sync-remedy" class="triage-btn triage-btn-remedy-sync" title="Sincronizar incidencias masivas desde MonTMC Remedy">
+            <span aria-hidden="true">⚡</span>
+            <span>Sincronizar Remedy</span>
           </button>
 
           <!-- Botón de apertura de Módulo 3: Centro de Comunicaciones y Matrices de Contacto -->
@@ -90,28 +96,28 @@
         </div>
       </div>
 
-      <!-- Barra de Metadatos de Origen de Datos e Inspección integrada en cabecera -->
+      <!-- Barra de Metadatos de Canal de Datos y Vigilancia integrada en cabecera -->
       <div class="triage-source-meta-bar">
         <div class="triage-source-info">
-          <span class="triage-source-badge">
-            <span aria-hidden="true">📥</span> Ingesta Activa
+          <span id="source-channel-badge" class="triage-source-badge">
+            <span id="source-channel-icon" aria-hidden="true">📡</span> <span id="source-channel-text">Canal de Datos</span>
           </span>
-          <span>Origen de Datos: <strong id="source-file-name" class="triage-source-file-name">Cargando...</strong></span>
+          <span>Origen: <strong id="source-file-name" class="triage-source-file-name">Cargando...</strong></span>
         </div>
         <div class="triage-last-scan">
-          <span>Última Inspección:</span>
+          <span>Última Vigilancia:</span>
           <strong id="last-scan-label">Sincronizando...</strong>
         </div>
       </div>
     </header>
 
-    <!-- 2. Función 1: Panel de Ingesta e Inspección Continua -->
-    <section class="triage-inspection-panel" aria-label="Función 1: Ingesta e Inspección Continua">
+    <!-- 2. Función 1: Canal de Datos y Vigilancia Continua -->
+    <section class="triage-inspection-panel" aria-label="Función 1: Canal de Datos y Vigilancia Continua">
       <!-- Métricas de Ingesta Global (Solo Incidencias Activas) -->
       <div class="triage-kpi-grid">
         <div class="triage-kpi-card kpi-scanned">
           <div class="triage-kpi-header">
-            <span>Activas Ingestadas</span>
+            <span>Activas en Vigilancia</span>
             <span aria-hidden="true">📥</span>
           </div>
           <div class="triage-kpi-value-row">
@@ -215,7 +221,7 @@
       <div class="triage-empty-state">
         <div class="triage-empty-icon" aria-hidden="true">🔄</div>
         <div class="triage-empty-title">Cargando datos del motor de triaje...</div>
-        <p>Inspeccionando el catálogo de alta prioridad y evaluando umbrales.</p>
+        <p>Auditando el catálogo de alta prioridad y evaluando umbrales SLA.</p>
       </div>
     </main>
 
@@ -243,7 +249,7 @@
         <div class="triage-footer-top-actions">
           <div class="triage-footer-status-pill" aria-label="Estado del sistema">
             <span class="triage-pulse-dot" aria-hidden="true"></span>
-            <span id="footer-live-status-text">Inspección Continua Activa</span>
+            <span id="footer-live-status-text">Vigilancia SLA Activa</span>
           </div>
           <button type="button" id="footer-btn-scroll-top" class="triage-footer-btn-top" title="Desplazarse a la cabecera de la consola">
             <span aria-hidden="true">▲</span>
@@ -859,6 +865,32 @@
           </div>
         </section>
 
+        <!-- SECCIÓN 5: NOTAS TÉCNICAS Y WORKLOG REMEDY (MON-TMC) -->
+        <section class="orch-card-box orch-remedy-section is-collapsed" id="orch-remedy-section" aria-label="Notas Técnicas y Worklog Remedy">
+          <div class="orch-box-header orch-box-collapsible-header" id="orch-remedy-header" role="button" tabindex="0" aria-expanded="false" aria-controls="orch-remedy-body" title="Plegar / desplegar Worklog Remedy">
+            <div class="orch-box-title-wrap">
+              <span class="orch-box-icon" aria-hidden="true">📑</span>
+              <div>
+                <h3 class="orch-box-title">Worklog &amp; Notas Técnicas Remedy (MonTMC)</h3>
+                <p class="orch-box-desc" style="margin: 0;">Historial cronológico de notas técnicas, resolutores y detalle de Remedy consultados vía API MonTMC</p>
+              </div>
+            </div>
+            <div class="orch-log-header-actions">
+              <button type="button" class="triage-btn triage-btn-sm" id="btn-refresh-remedy-worklog" title="Consultar notas actualizadas de Remedy">
+                <span aria-hidden="true">🔄</span> <span>Actualizar</span>
+              </button>
+              <button type="button" class="orch-box-toggle-btn" id="btn-toggle-remedy-worklog" aria-label="Plegar o desplegar sección Worklog Remedy" aria-expanded="false" title="Plegar o desplegar Worklog Remedy">
+                <span class="orch-box-chevron" aria-hidden="true">▼</span>
+              </button>
+            </div>
+          </div>
+          <div class="orch-remedy-body" id="orch-remedy-body">
+            <div id="orch-remedy-worklog-content" style="padding: 12px 4px;">
+              <p style="color: var(--triage-text-muted); font-size: 13px;">Haz clic en desplegar o actualizar para consultar las notas técnicas de Remedy.</p>
+            </div>
+          </div>
+        </section>
+
       </div>
     </div>
   </div>
@@ -918,6 +950,7 @@
             <span class="comms-picker-label">Incidencia Activa:</span>
             <span id="exec-modal-inc-id" class="orch-badge-id">INC000000000000</span>
             <span class="orch-badge-sev" style="background: rgba(239, 68, 68, 0.12); color: var(--triage-red-p1); border-color: rgba(239, 68, 68, 0.25);">SL1 / P1 · Crítica</span>
+            <span id="exec-modal-agent-status" class="triage-mock-badge" style="background: rgba(99, 102, 241, 0.1); color: #4F46E5; border: 1px solid rgba(99, 102, 241, 0.25); display: none;">🤖 Salida Agente Oficial</span>
           </div>
         </div>
         <div class="comms-header-right">
@@ -1020,15 +1053,28 @@
 
         <!-- Barra de Acciones del Generador (Módulo 2) -->
         <div class="comms-panel-actions">
-          <button type="button" class="triage-btn" id="btn-tpl-regenerate" title="Restaurar el texto generado automáticamente con los datos actuales del ticket">
-            <span aria-hidden="true">✨</span> <span>Regenerar con Datos del Ticket</span>
-          </button>
-          <button type="button" class="triage-btn triage-btn-primary" id="btn-copy-exec-completo" title="Copiar versión completa y registrar automáticamente el envío en la bitácora auditable">
-            <span aria-hidden="true">📋</span> <span>Copiar y Registrar en Bitácora</span>
-          </button>
-          <button type="button" class="triage-btn" id="btn-tpl-load-gateway" title="Transferir este mensaje al Gateway Web de Explotación (Módulo 3)">
-            <span aria-hidden="true">🚀</span> <span>Cargar en Gateway Web de Explotación (Módulo 3) ➔</span>
-          </button>
+          <div class="comms-actions-left" style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+            <button type="button" class="triage-btn" id="btn-tpl-regenerate" title="Restaurar el texto generado automáticamente con los datos actuales del ticket">
+              <span aria-hidden="true">✨</span> <span>Regenerar con Datos</span>
+            </button>
+            <button type="button" class="triage-btn triage-btn-agent-prompt" id="btn-copy-agent-prompt" title="Copiar el prompt estructurado con todo el contexto técnico para procesar con el Agente incident-reporter / LLM">
+              <span aria-hidden="true">🤖</span> <span>Copiar Prompt Agente</span>
+            </button>
+            <button type="button" class="triage-btn triage-btn-agent-paste" id="btn-paste-agent-output" title="Pegar la respuesta completa devuelta por el Agente para autocompletar la Versión Completa y Breve">
+              <span aria-hidden="true">📥</span> <span>Pegar Salida Agente</span>
+            </button>
+            <button type="button" class="triage-btn triage-btn-agent-save" id="btn-save-agent-official" title="Validar y consolidar como Comunicado Oficial en el sistema (guarda en backend y notificaciones)">
+              <span aria-hidden="true">💾</span> <span>Guardar Mensaje Oficial</span>
+            </button>
+          </div>
+          <div class="comms-actions-right" style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+            <button type="button" class="triage-btn triage-btn-primary" id="btn-copy-exec-completo" title="Copiar versión completa y registrar automáticamente el envío en la bitácora auditable">
+              <span aria-hidden="true">📋</span> <span>Copiar y Registrar en Bitácora</span>
+            </button>
+            <button type="button" class="triage-btn" id="btn-tpl-load-gateway" title="Transferir este mensaje al Gateway Web de Explotación (Módulo 3)">
+              <span aria-hidden="true">🚀</span> <span>Cargar en Gateway Web de Explotación (Módulo 3) ➔</span>
+            </button>
+          </div>
         </div>
 
       </div>

@@ -1,5 +1,5 @@
 """
-Tests unitarios para la Consola de Triaje y Reclasificación Automática (Módulo 1).
+Tests unitarios para la Consola de Triaje de Incidencias (Módulo 1).
 Valida las 3 funciones esenciales:
  1. Ingesta e Inspección Continua
  2. Evaluador de Umbrales Críticos
@@ -29,7 +29,7 @@ def test_index_html_contains_core_elements():
     html = (CONSOLE_DIR / "index.html").read_text(encoding="utf-8")
 
     # Título y badges
-    assert "Consola de Triaje y Reclasificación Automática" in html
+    assert "Consola de Triaje de Incidencias" in html
     assert "Módulo 1" in html
 
     # Función 1: Ingesta e Inspección Continua
@@ -274,6 +274,8 @@ def test_module_2_index_html_orchestrator_elements():
     assert 'id="exec-comm-completo"' in html
     assert 'id="exec-comm-breve"' in html
     assert 'id="btn-copy-exec-completo"' in html
+    assert 'id="btn-copy-agent-prompt"' in html
+    assert 'id="btn-paste-agent-output"' in html
 
 
 def test_module_2_triage_css_orchestrator_styles():
@@ -420,7 +422,16 @@ def test_enrichment_indicators_ia_and_executive_comms():
     assert "is-ia" in js, "triage.js debe aplicar clase is-ia en la marca de IA"
     assert "is-comms" in js, "triage.js debe aplicar clase is-comms en la marca de comunicaciones"
     assert "btn-open-exec-comm" in js, "triage.js debe soportar botón interactivo para abrir comunicaciones ejecutivas"
+    assert "btnCopyAgentPrompt" in js, "triage.js debe soportar botón para copiar el prompt estructurado del agente"
+    assert "btnPasteAgentOutput" in js, "triage.js debe soportar botón para pegar y parsear la salida del agente"
+    assert "btnSaveAgentOfficial" in js, "triage.js debe soportar botón para consolidar y guardar el mensaje oficial"
+    assert "buildAgentPrompt" in js, "triage.js debe construir el prompt de incident-reporter"
     assert "triage-detail-enrichment-bar" in js, "triage.js debe mostrar el estado de redacción oficial en el detalle expandido"
+
+    html = (CONSOLE_DIR / "index.html").read_text(encoding="utf-8")
+    assert 'id="btn-copy-agent-prompt"' in html, "index.html debe contener el botón #btn-copy-agent-prompt"
+    assert 'id="btn-paste-agent-output"' in html, "index.html debe contener el botón #btn-paste-agent-output"
+    assert 'id="btn-save-agent-official"' in html, "index.html debe contener el botón #btn-save-agent-official"
 
     # 3. Validación contra el dataset real de notificaciones
     with open(NOTIFICATIONS_JSON_PATH, "r", encoding="utf-8") as f:
@@ -494,27 +505,26 @@ def test_ingestion_audit_console_and_shortcuts():
 
 
 def test_triage_table_6_columns_layout_and_date_sorting():
-    """Valida la reestructuración de la tabla a 6 columnas funcionales y la ordenación cronológica por Fecha de Apertura."""
+    """Valida la reestructuración de la tabla a columnas funcionales (con columna unificada de Evaluación y Urgencia) y la ordenación cronológica por Fecha de Apertura."""
     css = (CONSOLE_DIR / "triage.css").read_text(encoding="utf-8")
     js = (CONSOLE_DIR / "triage.js").read_text(encoding="utf-8")
 
-    # 1. Validación de cabecera de 6 columnas
+    # 1. Validación de cabecera de 5 columnas con Evaluación y Urgencia unificadas
     assert "Incidencia / Apertura" in js, "Columna 1: Incidencia, Fecha Apertura y tiempo activa"
     assert "Título / Resumen IA / Mensajes" in js, "Columna 2: Título e iconos de Resumen IA y Mensajes"
     assert "Proceso Crítico y Sistemas" in js, "Columna 3: Proceso Crítico y Sistemas"
-    assert "Remedy INI" in js, "Columna 4: Remedy INI"
-    assert "Severidad ITIL" in js, "Columna 5: Severidad ITIL"
-    assert "Acciones" in js, "Columna 6: Acciones"
+    assert "Evaluación y Urgencia" in js, "Columna 4: Evaluación ITIL y Urgencia destacada"
+    assert "Acciones" in js, "Columna 5: Acciones"
 
-    # 2. Validación de fila expandible ajustada a 6 columnas
-    assert 'colspan="6"' in js, "La fila de detalle plegable debe tener colspan=6"
+    # 2. Validación de fila expandible ajustada a 5 columnas
+    assert 'colspan="5"' in js, "La fila de detalle plegable debe tener colspan=5"
 
     # 3. Validación de función de parseo y ordenación por fecha de apertura descendente
     assert "parseIncidentEpoch" in js, "Debe existir parseIncidentEpoch para convertir fecha_apertura"
     assert "formatFechaApertura" in js, "Debe existir formatFechaApertura para formatear la fecha mostrada"
     assert "epochB - epochA" in js, "getFilteredIncidents debe ordenar de más reciente a más antigua (descendente)"
 
-    # 4. Validación de clases CSS para la nueva distribución
+    # 4. Validación de clases CSS para la nueva distribución y cromática de Urgencia
     assert ".triage-cell-incident" in css
     assert ".triage-datetime-row" in css
     assert ".triage-date-label" in css
@@ -522,8 +532,13 @@ def test_triage_table_6_columns_layout_and_date_sorting():
     assert ".triage-cell-title-comms" in css
     assert ".triage-title-indicators" in css
     assert ".triage-cell-process-systems" in css
-    assert ".triage-cell-remedy" in css
-    assert ".triage-cell-itil" in css
+    assert ".triage-cell-eval" in css
+    assert ".triage-eval-unified-wrapper" in css
+    assert ".triage-eval-flow" in css
+    assert ".triage-urgency-pill" in css
+    assert ".triage-urgency-pill.urgency-alta" in css
+    assert ".triage-urgency-pill.urgency-media" in css
+    assert ".triage-urgency-pill.urgency-baja" in css
     assert ".triage-itil-delta-sub" in css
 
 
@@ -593,3 +608,33 @@ def test_topbar_and_portal_navigation_integration():
 
     # 3. Validación de data-active en emergency-triage-console/index.html para sincronía con topbar.js
     assert 'id="mo-topbar-root" data-active="emergency-triage"' in triage_html
+
+
+def test_comms_action_buttons_lifecycle_coherence():
+    """Valida la coherencia de estados y ciclo de vida de los botones de acción del Generador de Comunicaciones."""
+    html = (CONSOLE_DIR / "index.html").read_text(encoding="utf-8")
+    css = (CONSOLE_DIR / "triage.css").read_text(encoding="utf-8")
+    js = (CONSOLE_DIR / "triage.js").read_text(encoding="utf-8")
+
+    # 1. Existencia de los 4 botones en index.html
+    assert 'id="btn-tpl-regenerate"' in html, "Debe existir botón Regenerar con Datos"
+    assert 'id="btn-copy-agent-prompt"' in html, "Debe existir botón Copiar Prompt Agente"
+    assert 'id="btn-paste-agent-output"' in html, "Debe existir botón Pegar Salida Agente"
+    assert 'id="btn-save-agent-official"' in html, "Debe existir botón Guardar Mensaje Oficial"
+
+    # 2. Estilos para estado disabled en triage.css
+    assert "#btn-tpl-regenerate:disabled" in css, "triage.css debe estilizar #btn-tpl-regenerate:disabled"
+    assert "#btn-copy-agent-prompt:disabled" in css or ".triage-btn-agent-prompt:disabled" in css, "triage.css debe estilizar prompt:disabled"
+    assert "#btn-paste-agent-output:disabled" in css or ".triage-btn-agent-paste:disabled" in css, "triage.css debe estilizar paste:disabled"
+    assert "#btn-save-agent-official:disabled" in css or ".triage-btn-agent-save:disabled" in css, "triage.css debe estilizar save:disabled"
+
+    # 3. Función y reglas de coherencia en triage.js
+    assert "updateCommsActionButtonsState" in js, "triage.js debe definir updateCommsActionButtonsState"
+    assert "copiedAgentPrompts" in js, "triage.js debe rastrear copiedAgentPrompts"
+    assert "isPromptCopied" in js, "triage.js debe comprobar si el prompt fue copiado antes de habilitar Pegar"
+    assert "isSameAsRaw" in js, "triage.js debe comprobar si el texto ya es idéntico a la plantilla pura de datos"
+    assert "isSameAsOfficial" in js, "triage.js debe comprobar si el texto ya coincide con el mensaje oficial guardado"
+
+    # 4. Invocación de actualización de estados ante eventos de entrada (reactividad)
+    assert "updateCommsActionButtonsState()" in js, "triage.js debe invocar updateCommsActionButtonsState en render y eventos"
+
