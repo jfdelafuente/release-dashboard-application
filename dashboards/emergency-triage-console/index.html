@@ -70,6 +70,12 @@
             <span>Inspeccionar Ahora</span>
           </button>
 
+          <!-- Botón de sincronización con API MonTMC / Remedy -->
+          <button id="btn-sync-remedy" class="triage-btn triage-btn-remedy-sync" title="Sincronizar incidencias masivas desde MonTMC Remedy">
+            <span aria-hidden="true">⚡</span>
+            <span>Sincronizar Remedy</span>
+          </button>
+
           <!-- Botón de apertura de Módulo 3: Centro de Comunicaciones y Matrices de Contacto -->
           <button id="btn-open-comms-center" class="triage-btn triage-btn-comms-header" title="Abrir Módulo 3: Centro de Comunicaciones, Gateway Web de Explotación y Matrices de Contacto GRIAL/Confluence">
             <span aria-hidden="true">📡</span>
@@ -856,6 +862,32 @@
                 </div>
               </div>
             </form>
+          </div>
+        </section>
+
+        <!-- SECCIÓN 5: NOTAS TÉCNICAS Y WORKLOG REMEDY (MON-TMC) -->
+        <section class="orch-card-box orch-remedy-section is-collapsed" id="orch-remedy-section" aria-label="Notas Técnicas y Worklog Remedy">
+          <div class="orch-box-header orch-box-collapsible-header" id="orch-remedy-header" role="button" tabindex="0" aria-expanded="false" aria-controls="orch-remedy-body" title="Plegar / desplegar Worklog Remedy">
+            <div class="orch-box-title-wrap">
+              <span class="orch-box-icon" aria-hidden="true">📑</span>
+              <div>
+                <h3 class="orch-box-title">Worklog &amp; Notas Técnicas Remedy (MonTMC)</h3>
+                <p class="orch-box-desc" style="margin: 0;">Historial cronológico de notas técnicas, resolutores y detalle de Remedy consultados vía API MonTMC</p>
+              </div>
+            </div>
+            <div class="orch-log-header-actions">
+              <button type="button" class="triage-btn triage-btn-sm" id="btn-refresh-remedy-worklog" title="Consultar notas actualizadas de Remedy">
+                <span aria-hidden="true">🔄</span> <span>Actualizar</span>
+              </button>
+              <button type="button" class="orch-box-toggle-btn" id="btn-toggle-remedy-worklog" aria-label="Plegar o desplegar sección Worklog Remedy" aria-expanded="false" title="Plegar o desplegar Worklog Remedy">
+                <span class="orch-box-chevron" aria-hidden="true">▼</span>
+              </button>
+            </div>
+          </div>
+          <div class="orch-remedy-body" id="orch-remedy-body">
+            <div id="orch-remedy-worklog-content" style="padding: 12px 4px;">
+              <p style="color: var(--triage-text-muted); font-size: 13px;">Haz clic en desplegar o actualizar para consultar las notas técnicas de Remedy.</p>
+            </div>
           </div>
         </section>
 

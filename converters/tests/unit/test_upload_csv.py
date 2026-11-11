@@ -99,7 +99,7 @@ def test_run_upload_not_found_returns_error(tmp_path):
     csv_file.write_text("a,b,c", encoding="utf-8")
 
     # Si dashboard_type no existe y se busca algo que no está en disco
-    with patch.dict(CONVERTER_SCRIPTS, {"invalid": "nonexistent_script.py"}):
+    with patch.dict("upload_csv.CONVERTER_SCRIPTS", {"invalid": "nonexistent_script.py"}):
         res = run_upload(csv_file, "invalid", project_root=tmp_path)
         assert res["success"] is False
         assert "Converter no encontrado" in res["error"]

@@ -25,6 +25,7 @@ flowchart TD
         RK["KPIs de Release<br/>(dashboards/release-kpis)"]
         RI["Reportes de Incidencias<br/>(dashboards/reportes-incidencias)"]
         AC["Catálogo de Agentes IA<br/>(dashboards/agents-catalog)"]
+        ETC["Consola de Triaje IT<br/>(emergency-triage-console)"]
         GP["Gestión de Problemas<br/>(Next.js /problemas)"]
         TB["Barra Superior Unificada<br/>(topbar.js)"]
     end
@@ -35,6 +36,8 @@ flowchart TD
         EXEC["API Informe Ejecutivo<br/>/api/reports/executive-incident/*"]
         REP_CRUD["API CRUD Reportes<br/>/api/reports/*"]
         EPS["GET /api/epsilon/resumenIA/{cod}"]
+        SYNC["POST /api/sync-remedy"]
+        REMD["GET /api/remedy/detail/{id}"]
         HLTH["GET /api/health y /healthz"]
         JIRA["GET /api/dashboard"]
         DATA["GET /data/output/*"]
@@ -47,6 +50,7 @@ flowchart TD
         PPT_ENG["Motor PPTX Postmortem<br/>(converters/src/report_generator)"]
         EXEC_ENG["Motor Informe Ejecutivo PPTX<br/>(cso-incident-masivas-report / backend)"]
         EPS_SVC["Epsilon IA Corporativo<br/>(soptmc.si.orange.es)"]
+        TMC_SVC["MonTMC API Corporativa<br/>(soptmc.si.orange.es)"]
         JIRA_SVC["Jira API Corporativa"]
     end
 
@@ -65,6 +69,10 @@ flowchart TD
     RI --> HLTH
     AC --> AGCAT
     AC --> DATA
+    ETC --> DATA
+    ETC --> EPS
+    ETC --> SYNC
+    ETC --> REMD
     GP --> JIRA
     GP --> EXEC
     TB --> HLTH
@@ -78,6 +86,10 @@ flowchart TD
     EXEC --> EXEC_ENG
     EXEC_ENG --> STORAGE
     EPS --> EPS_SVC
+    SYNC --> TMC_SVC
+    SYNC --> STORAGE
+    REMD --> TMC_SVC
+    REMD --> STORAGE
     JIRA --> JIRA_SVC
 ```
 
@@ -94,8 +106,9 @@ flowchart TD
 | **Reportes de Incidencias** | `/dashboards/reportes-incidencias/` | `GET /api/reports`<br/>`POST /api/reports`<br/>`GET /api/reports/{id}`<br/>`PUT /api/reports/{id}`<br/>`DELETE /api/reports/{id}`<br/>`POST /api/reports/{id}/duplicate?new_week={week}`<br/>`GET /api/reports/{id}/export`<br/>`GET /api/reports/{id}/legacy-pptx`<br/>`GET /api/health` |
 | **Catálogo de Agentes IA** | `/dashboards/agents-catalog/` | `GET /api/agents-catalog`<br/>`GET /data/output/agents_catalog.json` (fallback estático) |
 | **Gestión de Problemas** | `/problemas` | `GET /api/dashboard` (Jira)<br/>`POST /api/reports/executive-incident`<br/>`GET /api/reports/executive-incident/{ref}/status`<br/>`GET /api/reports/executive-incident/{ref}`<br/>`GET /api/healthz` y `GET /api/readyz` |
-| **Consola de Triaje y Emergencias IT (Cockpit)** | `/dashboards/emergency-triage-console/` | `GET /api/incident-manager/pending`<br/>`GET /api/incident-manager/emergency-cockpit`<br/>`GET /api/logs/ingestion`<br/>`POST /api/ingestion/retry-ia` (alias `/api/epsilon/retry`)<br/>`GET /data/output/high_priority_notifications.json`<br/>`GET /data/output/ingestion_audit_summary.json` |
-| **Barra Superior Unificada** | *Compartida en todos* | `GET /api/health` (fallback a `GET /healthz`) |
+| **Consola de Triaje y Emergencias IT (Cockpit)** | `/dashboards/emergency-triage-console/` | `GET /api/incident-manager/pending`<br/>`GET /api/incident-manager/emergency-cockpit`<br/>`GET /api/logs/ingestion`<br/>`POST /api/ingestion/retry-ia` (alias `/api/epsilon/retry`)<br/>`POST /api/sync-remedy`<br/>`GET /api/remedy/detail/{idRemedy}`<br/>`GET /data/output/high_priority_notifications.json`<br/>`GET /data/output/ingestion_audit_summary.json` |
+| **Componentes Compartidos (Epsilon Modal)** | *Compartido en todos (`resumen-ia.js`)* | `GET /api/epsilon/resumenIA/{codigo}`<br/>`GET /api/remedy/detail/{idRemedy}` |
+| **Barra Superior Unificada** | *Compartida en todos (`topbar.js`)* | `GET /api/health` (fallback a `GET /healthz`) |
 
 ---
 
@@ -403,6 +416,85 @@ Invocada por el cliente [`dashboards/reportes-incidencias/api-client.js`](file:/
     "failed_count": 0
   }
   ```
+
+---
+
+### 11. Ingesta y Detalle Remedy MonTMC API
+
+#### `POST /api/sync-remedy`
+* **Invocado por**: Botón *"⚡ Sincronizar Remedy"* en la cabecera de la Consola de Triaje (`dashboards/emergency-triage-console/`).
+* **Parámetros Query / Body JSON (opcionales)**:
+  ```json
+  {
+    "dias": 3,
+    "usuario": "jdelat"
+  }
+  ```
+  *(Por defecto `dias=3` y `usuario="jdelat"`, configurables mediante variables de entorno).*
+* **Propósito**: Ejecuta la sincronización incremental de incidencias masivas consultando la API corporativa MonTMC (`GET https://soptmc.si.orange.es/MonTMC/api/epsilon/masivas?usuario={user}&dias={dias}`), realiza upsert sobre el histórico semestral (`data/output/historical_incidents.json` y `data/output/historical_kpis.json`), y reevalúa automáticamente las notificaciones ejecutivas de alta prioridad (`evaluate_incident_notifications.py`).
+* **Códigos de Estado**:
+  - `200 OK`: Sincronización finalizada correctamente. Devuelve métricas de inserción/actualización.
+  - `500 Internal Server Error`: Fallo interno durante la persistencia o reevaluación.
+  - `502 Bad Gateway`: Error de conectividad o HTTP en la llamada a MonTMC.
+* **Respuesta (`200 OK`)**:
+  ```json
+  {
+    "success": true,
+    "source": "api_montmc",
+    "total_remote": 14,
+    "inserted": 2,
+    "updated": 12,
+    "historical_total": 612,
+    "message": "Sincronización completada con éxito. Insertadas 2, actualizadas 12 incidencias."
+  }
+  ```
+
+#### `GET /api/remedy/detail/{idRemedy}`
+* **Invocado por**: Sección colapsable *"Notas Técnicas y Worklog Remedy"* en el Modal Orquestador de la Consola de Triaje (`triage.js`) y en el modal compartido de Epsilon IA (`resumen-ia.js`).
+* **Parámetros**:
+  - `{idRemedy}` en el path (ej: `INC000004179897`).
+  - `?refresh=true` (opcional): Invalida la caché y fuerza una nueva llamada a la API corporativa MonTMC.
+* **Propósito**: Recupera el detalle enriquecido de una incidencia desde MonTMC (`GET https://soptmc.si.orange.es/MonTMC//api/eps/remedyG/{idRemedy}`), incluyendo notas de trabajo (worklogs), asignaciones y estados técnicos.
+* **Estrategia de Caché**:
+  1. Caché en memoria `REMEDY_DETAIL_CACHE` con TTL de 10 minutos.
+  2. Caché persistente en disco en `data/.remedy_cache/{idRemedy}.json` con TTL de 1 hora.
+  3. Soporte para parámetro `?refresh=true` para forzar invalidación inmediata.
+* **Códigos de Estado**:
+  - `200 OK`: Detalle recuperado (desde caché o API remota).
+  - `400 Bad Request`: Formato de identificador inválido (debe coincidir con `^INC\d+$`).
+  - `404 Not Found`: Incidencia no encontrada en Remedy / MonTMC.
+  - `502 Bad Gateway`: Error de comunicación con la API corporativa MonTMC.
+* **Respuesta (`200 OK`)**:
+  ```json
+  {
+    "idRemedy": "INC000004179897",
+    "resumen": "CORTE FIBRA OPTICA SEVILLA",
+    "estado": "En curso",
+    "prioridad": "P1",
+    "urgencia": "1-Crítica",
+    "impacto": "1-Extenso / Generalizado",
+    "grupoAsignado": "SOPORTE RED FIBRA",
+    "personaAsignada": "Juan Pérez",
+    "fechaApertura": "2026-10-24 08:30:00",
+    "fechaResolucion": null,
+    "worklogs": [
+      {
+        "fecha": "2026-10-24 09:15:00",
+        "autor": "Juan Pérez",
+        "texto": "Localizado corte físico en tramo troncal. Técnico de campo desplazado a arqueta."
+      }
+    ],
+    "_cached": true,
+    "_cache_source": "memory"
+  }
+  ```
+
+#### Variables de Entorno MonTMC
+* `MON_TMC_BASE_URL`: URL base de la API corporativa (por defecto `https://soptmc.si.orange.es/MonTMC`).
+* `MON_TMC_USER`: Usuario corporativo para las consultas (por defecto `jdelat`).
+* `MON_TMC_DEFAULT_DAYS`: Días de histórico hacia atrás para la consulta masiva (por defecto `3`).
+* `MON_TMC_TIMEOUT`: Timeout en segundos para las peticiones HTTP (por defecto `10`).
+* `MON_TMC_RETRIES`: Número de reintentos con backoff exponencial (por defecto `2`).
 
 ---
 

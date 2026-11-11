@@ -91,6 +91,24 @@ except (ImportError, Exception):
     generate_epsilon_summary = None
     find_incident_in_local_dumps = None
 
+# MonTMC / Remedy Services & Cache
+try:
+    from converters.src.montmc_client import MonTMCClient, RemedyNotFoundError, MonTMCError
+    from converters.cli.sync_montmc_incidents import sync_remedy_incidents
+except (ImportError, Exception):
+    try:
+        sys.path.insert(0, str(PROJECT_ROOT / 'converters' / 'src'))
+        sys.path.insert(0, str(PROJECT_ROOT / 'converters' / 'cli'))
+        from montmc_client import MonTMCClient, RemedyNotFoundError, MonTMCError
+        from sync_montmc_incidents import sync_remedy_incidents
+    except (ImportError, Exception):
+        MonTMCClient = None
+        RemedyNotFoundError = None
+        MonTMCError = None
+        sync_remedy_incidents = None
+
+REMEDY_DETAIL_CACHE = {}  # { idRemedy: (timestamp, data_dict, status) }
+
 REPORTS_PATH_PREFIX = '/api/reports/postmortem/'
 EXECUTIVE_REPORT_PREFIX = '/api/reports/executive-incident'
 EXECUTIVE_REPORT_V1_PREFIX = '/api/v1/reports/executive-incident'
@@ -358,6 +376,8 @@ class CustomHTTPHandler(http.server.SimpleHTTPRequestHandler):
             self.handle_ingestion_retry_ia()
         elif self.path in ('/api/epsilon/generate', '/api/epsilon/resumen') or self.path.split('?')[0].rstrip('/') in ('/api/epsilon/generate', '/api/epsilon/resumen'):
             self.handle_epsilon_generate()
+        elif self.path in ('/api/sync-remedy', '/api/sync-remedy/') or self.path.split('?')[0].rstrip('/') == '/api/sync-remedy':
+            self.handle_sync_remedy()
         else:
             self.send_error(404, "Not Found")
 
@@ -1018,6 +1038,128 @@ class CustomHTTPHandler(http.server.SimpleHTTPRequestHandler):
         }
         self._send_json(200, response_payload)
 
+    def handle_sync_remedy(self):
+        """Maneja POST /api/sync-remedy disparando la sincronización incremental de Remedy."""
+        if not sync_remedy_incidents:
+            self._send_json(500, {"success": False, "error": "Módulo de sincronización MonTMC no disponible"})
+            return
+
+        dias = 3
+        usuario = None
+
+        try:
+            content_length = int(self.headers.get('Content-Length', 0))
+            if content_length > 0:
+                raw_body = self.rfile.read(content_length)
+                body_json = json.loads(raw_body.decode('utf-8'))
+                if isinstance(body_json, dict):
+                    if "dias" in body_json:
+                        dias = int(body_json["dias"])
+                    if "usuario" in body_json:
+                        usuario = str(body_json["usuario"]).strip()
+        except Exception:
+            pass
+
+        if '?' in self.path:
+            q_str = self.path.split('?', 1)[1]
+            q_params = urllib.parse.parse_qs(q_str)
+            if 'dias' in q_params:
+                try:
+                    dias = int(q_params['dias'][0])
+                except ValueError:
+                    pass
+            if 'usuario' in q_params:
+                usuario = q_params['usuario'][0].strip()
+
+        try:
+            result = sync_remedy_incidents(
+                dias=dias,
+                usuario=usuario,
+                project_root=PROJECT_ROOT,
+            )
+            status_code = 200 if result.get("success") else 502
+            self._send_json(status_code, result)
+        except Exception as e:
+            self._send_json(500, {"success": False, "error": f"Error interno en sincronización: {e}"})
+
+    def handle_remedy_detail(self, id_remedy):
+        """Maneja GET /api/remedy/detail/{idRemedy} con soporte de caché en memoria y disco."""
+        clean_id = (id_remedy or "").strip().upper()
+        if not clean_id:
+            self._send_json(400, {"success": False, "error": "Falta idRemedy"})
+            return
+
+        q_params = urllib.parse.parse_qs(self.path.split('?', 1)[1]) if '?' in self.path else {}
+        force = 'force' in q_params or 'refresh' in q_params or (q_params.get('force', [''])[0].lower() in ('1', 'true', 'yes'))
+        no_cache = force or ('no-cache' in self.headers.get('Cache-Control', ''))
+        now = time.time()
+
+        # 1. Caché en memoria (TTL 300s)
+        if not no_cache and clean_id in REMEDY_DETAIL_CACHE:
+            cached_time, cached_payload, cached_status = REMEDY_DETAIL_CACHE[clean_id]
+            if now - cached_time < 300:
+                print(f"  Proxy Remedy Detail (cache HIT memoria): {clean_id}")
+                resp_copy = dict(cached_payload)
+                resp_copy["_cached"] = True
+                self._send_json(cached_status, resp_copy)
+                return
+
+        # 2. Consulta en vivo a MonTMC
+        client = MonTMCClient() if MonTMCClient else None
+        if client:
+            try:
+                data = client.fetch_remedy_detail(clean_id)
+                remedy_node = data.get("remedy") or {}
+                worklogs = remedy_node.get("worklog") or []
+                payload = {
+                    "success": True,
+                    "idRemedy": clean_id,
+                    "remedy": remedy_node,
+                    "worklogs": worklogs,
+                    "detalle": remedy_node.get("detalle") or "",
+                    "solucion": remedy_node.get("detalleSolucion") or "",
+                    "paps": remedy_node.get("paps") or [],
+                    "_cached": False,
+                }
+                REMEDY_DETAIL_CACHE[clean_id] = (now, payload, 200)
+
+                # Persistencia en disco
+                try:
+                    cache_dir = PROJECT_ROOT / "data" / ".remedy_cache"
+                    cache_dir.mkdir(parents=True, exist_ok=True)
+                    disk_file = cache_dir / f"{clean_id}.json"
+                    with open(disk_file, "w", encoding="utf-8") as f:
+                        json.dump(payload, f, ensure_ascii=False)
+                except Exception:
+                    pass
+
+                self._send_json(200, payload)
+                return
+            except RemedyNotFoundError as e:
+                self._send_json(404, {"success": False, "error": str(e), "idRemedy": clean_id})
+                return
+            except Exception as e:
+                print(f"  Aviso: Error consultando Remedy en MonTMC ({e}). Verificando caché en disco...")
+
+        # 3. Fallback a caché en disco
+        disk_file = PROJECT_ROOT / "data" / ".remedy_cache" / f"{clean_id}.json"
+        if not no_cache and disk_file.exists():
+            try:
+                with open(disk_file, "r", encoding="utf-8") as f:
+                    disk_payload = json.load(f)
+                disk_payload["_cached"] = True
+                disk_payload["_source"] = "disk_fallback"
+                print(f"  Fallback exitoso a caché en disco para Remedy: {clean_id}")
+                self._send_json(200, disk_payload)
+                return
+            except Exception as e:
+                print(f"  Error leyendo caché en disco para Remedy: {e}")
+
+        self._send_json(502, {
+            "success": False,
+            "error": f"No se pudo obtener detalle de Remedy para {clean_id} ni existe copia en caché local",
+            "idRemedy": clean_id,
+        })
 
     def _send_json(self, status, payload):
         body = json.dumps(payload, ensure_ascii=False).encode('utf-8')
@@ -1074,6 +1216,11 @@ class CustomHTTPHandler(http.server.SimpleHTTPRequestHandler):
         if self.path.startswith('/api/epsilon/resumenIA/'):
             codigo = self.path[len('/api/epsilon/resumenIA/'):].split('?')[0].strip()
             self.proxy_to_epsilon_ia(codigo)
+            return
+
+        if self.path.startswith('/api/remedy/detail/'):
+            id_remedy = self.path[len('/api/remedy/detail/'):].split('?')[0].strip()
+            self.handle_remedy_detail(id_remedy)
             return
 
         if self.path.startswith('/problemas'):

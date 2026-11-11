@@ -383,6 +383,18 @@
                 ${bloqueosHtml}
                 ${siguienteAccionHtml}
                 ${hitosHtml}
+
+                <!-- Bloque: Worklog y Notas Técnicas Remedy (MonTMC) -->
+                <div class="resumen-ia-block block-remedy-worklog">
+                    <div class="resumen-ia-block-header" style="cursor: pointer;" onclick="window.ResumenIAModal.toggleWorklog('${escapeHtml(code)}')">
+                        <span class="resumen-ia-icon-circle" aria-hidden="true">📋</span>
+                        <h4 class="resumen-ia-block-title">Notas Técnicas &amp; Worklog Remedy (MonTMC)</h4>
+                        <span id="resumen-ia-worklog-badge" style="margin-left: auto; font-size: 11px; background: rgba(0,0,0,0.06); padding: 2px 8px; border-radius: 10px; cursor: pointer;">Ver notas ▼</span>
+                    </div>
+                    <div id="resumen-ia-worklog-body" style="display: none; margin-top: 10px; border-top: 1px dashed #E2E8F0; padding-top: 8px;">
+                        <p style="color: #64748B; font-size: 12px; margin: 4px 0;">Cargando notas...</p>
+                    </div>
+                </div>
             </div>
             <div class="resumen-ia-footer">
                 <span class="resumen-ia-footer-note">Sintetizado por el motor de IA de Epsilon (soptmc.si.orange.es)${data._cached ? ' · Servido desde caché local' : ' · En tiempo real'}</span>
@@ -518,6 +530,51 @@
         }
     }
 
+    async function toggleRemedyWorklog(code) {
+        const body = document.getElementById('resumen-ia-worklog-body');
+        const badge = document.getElementById('resumen-ia-worklog-badge');
+        if (!body) return;
+        if (body.style.display === 'block') {
+            body.style.display = 'none';
+            if (badge) badge.textContent = 'Ver notas ▼';
+        } else {
+            body.style.display = 'block';
+            if (badge) badge.textContent = 'Ocultar ▲';
+            if (body.dataset.loadedFor !== code) {
+                body.innerHTML = '<p style="color: #64748B; font-size: 12px; margin: 4px 0;">Consultando API MonTMC Remedy...</p>';
+                try {
+                    const res = await fetch(`/api/remedy/detail/${encodeURIComponent(code)}`);
+                    const data = await res.json();
+                    if (res.ok && data.success) {
+                        body.dataset.loadedFor = code;
+                        const worklogs = data.worklogs || [];
+                        let html = '';
+                        if (data.solucion) {
+                            html += `<div style="background:#FFF7ED;border-left:3px solid #FF7900;padding:6px 10px;margin-bottom:8px;font-size:12px;color:#9A3412;"><strong>Solución Remedy:</strong> ${escapeHtml(data.solucion)}</div>`;
+                        } else if (data.detalle) {
+                            html += `<div style="background:#F1F5F9;border-left:3px solid #64748B;padding:6px 10px;margin-bottom:8px;font-size:12px;color:#334155;"><strong>Detalle Remedy:</strong> ${escapeHtml(data.detalle)}</div>`;
+                        }
+                        if (worklogs.length === 0) {
+                            html += '<p style="color:#64748B;font-size:12px;font-style:italic;margin:6px 0;">Sin anotaciones en el worklog de esta incidencia en MonTMC Remedy.</p>';
+                        } else {
+                            worklogs.forEach(w => {
+                                const f = w.fecha || w.date || w.submit_date || '';
+                                const a = w.autor || w.user || w.submitter || 'Sistema';
+                                const t = w.texto || w.notes || '';
+                                html += `<div style="background:#F8FAFC;border:1px solid #E2E8F0;border-left:3px solid #FF7900;border-radius:4px;padding:8px 10px;margin-bottom:6px;font-size:12px;"><div style="display:flex;justify-content:space-between;color:#64748B;font-size:11px;margin-bottom:3px;"><span><strong>👤 ${escapeHtml(a)}</strong></span><span>🕒 ${escapeHtml(f)}</span></div><div style="white-space:pre-wrap;color:#1E293B;line-height:1.4;">${escapeHtml(t)}</div></div>`;
+                            });
+                        }
+                        body.innerHTML = html;
+                    } else {
+                        body.innerHTML = `<p style="color:#DC2626;font-size:12px;margin:4px 0;">No se pudo consultar Remedy: ${escapeHtml(data.error || 'Error')}</p>`;
+                    }
+                } catch (e) {
+                    body.innerHTML = `<p style="color:#DC2626;font-size:12px;margin:4px 0;">Error de red: ${escapeHtml(e.message)}</p>`;
+                }
+            }
+        }
+    }
+
     function escapeHtml(str) {
         if (str == null) return '';
         return String(str)
@@ -532,6 +589,7 @@
     window.ResumenIAModal = {
         open: openModal,
         close: closeModal,
+        toggleWorklog: toggleRemedyWorklog,
         refresh: () => {
             if (currentIncidentCode) {
                 openModal(currentIncidentCode, true);

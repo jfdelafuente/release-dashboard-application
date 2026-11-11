@@ -64,6 +64,7 @@
     liveStatusText: document.getElementById('live-status-text'),
     autoRefreshSelect: document.getElementById('auto-refresh-select'),
     btnRefreshNow: document.getElementById('btn-refresh-now'),
+    btnSyncRemedy: document.getElementById('btn-sync-remedy'),
     btnHelpCriteria: document.getElementById('btn-help-criteria'),
 
     // Metadatos de Inspección
@@ -165,6 +166,12 @@
     orchLogSection: document.getElementById('orch-log-section'),
     orchLogHeader: document.getElementById('orch-log-header'),
     btnToggleLog: document.getElementById('btn-toggle-log'),
+    orchRemedySection: document.getElementById('orch-remedy-section'),
+    orchRemedyHeader: document.getElementById('orch-remedy-header'),
+    btnToggleRemedyWorklog: document.getElementById('btn-toggle-remedy-worklog'),
+    btnRefreshRemedyWorklog: document.getElementById('btn-refresh-remedy-worklog'),
+    orchRemedyBody: document.getElementById('orch-remedy-body'),
+    orchRemedyWorklogContent: document.getElementById('orch-remedy-worklog-content'),
 
     // Modales Secundarios
     modalRollback: document.getElementById('modal-rollback-order'),
@@ -431,6 +438,38 @@
     if (dom.btnRefreshNow) {
       dom.btnRefreshNow.disabled = false;
       dom.btnRefreshNow.innerHTML = `<span aria-hidden="true">🔄</span> Inspeccionar Ahora`;
+    }
+  }
+
+  async function triggerRemedySync() {
+    if (!dom.btnSyncRemedy) return;
+    const origHtml = dom.btnSyncRemedy.innerHTML;
+    dom.btnSyncRemedy.disabled = true;
+    dom.btnSyncRemedy.innerHTML = `<span aria-hidden="true" style="display:inline-block; animation: spin 1s infinite linear;">⚡</span> Sincronizando...`;
+
+    try {
+      const res = await fetch('/api/sync-remedy', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ dias: 3 }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        const total = data.total_consultadas ?? data.count ?? 0;
+        const nuevas = data.nuevas ?? data.stats?.inserted ?? 0;
+        const actualizadas = data.actualizadas ?? data.stats?.updated ?? 0;
+        const msg = `Sincronización Remedy OK: ${total} incidencias procesadas (+${nuevas} nuevas, ${actualizadas} actualizadas).`;
+        showToast(msg, 'success');
+        await performInspection(true);
+      } else {
+        const err = data.error || (data.details ? JSON.stringify(data.details) : 'Error desconocido');
+        showToast(`Error al sincronizar con MonTMC Remedy: ${err}`, 'error');
+      }
+    } catch (e) {
+      showToast(`Fallo de red al invocar /api/sync-remedy: ${e.message}`, 'error');
+    } finally {
+      dom.btnSyncRemedy.disabled = false;
+      dom.btnSyncRemedy.innerHTML = origHtml;
     }
   }
 
@@ -2127,6 +2166,11 @@ Proceder con la ejecución inmediata del procedimiento de Rollback. Confirmar in
     setOrchSectionCollapsed('warroom', true);
     setOrchSectionCollapsed('pap', true);
     setOrchSectionCollapsed('log', true);
+    setOrchSectionCollapsed('remedy', true);
+    if (dom.orchRemedyWorklogContent) {
+      dom.orchRemedyWorklogContent.innerHTML = '<p style="color: var(--triage-text-muted); font-size: 13px;">Haz clic en desplegar o actualizar para consultar las notas técnicas de Remedy.</p>';
+      dom.orchRemedyWorklogContent.dataset.loadedInc = '';
+    }
 
     // 6. Abrir Modal
     dom.modalOrchestrator.classList.add('open');
@@ -2159,6 +2203,10 @@ Proceder con la ejecución inmediata del procedimiento de Rollback. Confirmar in
       sectionEl = dom.orchLogSection || document.getElementById('orch-log-section');
       btnEl = dom.btnToggleLog || document.getElementById('btn-toggle-log');
       headerEl = dom.orchLogHeader || document.getElementById('orch-log-header');
+    } else if (sectionName === 'remedy') {
+      sectionEl = dom.orchRemedySection || document.getElementById('orch-remedy-section');
+      btnEl = dom.btnToggleRemedyWorklog || document.getElementById('btn-toggle-remedy-worklog');
+      headerEl = dom.orchRemedyHeader || document.getElementById('orch-remedy-header');
     }
     if (!sectionEl) return;
 
@@ -2178,16 +2226,25 @@ Proceder con la ejecución inmediata del procedimiento de Rollback. Confirmar in
     if (sectionName === 'warroom') sectionEl = dom.orchWarRoomSection || document.getElementById('orch-war-room-section');
     else if (sectionName === 'pap') sectionEl = dom.orchPapSection || document.getElementById('orch-pap-section');
     else if (sectionName === 'log') sectionEl = dom.orchLogSection || document.getElementById('orch-log-section');
+    else if (sectionName === 'remedy') sectionEl = dom.orchRemedySection || document.getElementById('orch-remedy-section');
     if (!sectionEl) return;
     const isCurrentlyCollapsed = sectionEl.classList.contains('is-collapsed');
     setOrchSectionCollapsed(sectionName, !isCurrentlyCollapsed);
+    if (isCurrentlyCollapsed && sectionName === 'remedy') {
+      if (state.activeOrchIncId) {
+        if (!dom.orchRemedyWorklogContent || dom.orchRemedyWorklogContent.dataset.loadedInc !== state.activeOrchIncId) {
+          loadRemedyWorklog(state.activeOrchIncId);
+        }
+      }
+    }
   }
 
   function initOrchestratorCollapsibleSections() {
     const sections = [
       { key: 'warroom', headerId: 'orch-war-room-header', btnId: 'btn-toggle-war-room' },
       { key: 'pap', headerId: 'orch-pap-header', btnId: 'btn-toggle-pap' },
-      { key: 'log', headerId: 'orch-log-header', btnId: 'btn-toggle-log' }
+      { key: 'log', headerId: 'orch-log-header', btnId: 'btn-toggle-log' },
+      { key: 'remedy', headerId: 'orch-remedy-header', btnId: 'btn-toggle-remedy-worklog' }
     ];
 
     sections.forEach(({ key, headerId, btnId }) => {
@@ -2220,6 +2277,107 @@ Proceder con la ejecución inmediata del procedimiento de Rollback. Confirmar in
       setOrchSectionCollapsed(key, true);
     });
   }
+
+  async function loadRemedyWorklog(incId, forceRefresh = false) {
+    if (!dom.orchRemedyWorklogContent) return;
+    const cleanId = (incId || '').trim();
+    if (!cleanId) return;
+
+    dom.orchRemedyWorklogContent.innerHTML = `
+      <div style="display: flex; align-items: center; gap: 8px; padding: 12px; color: var(--triage-text-muted); font-size: 13px;">
+        <span aria-hidden="true" style="display: inline-block; animation: spin 1s infinite linear;">🔄</span>
+        <span>Consultando notas técnicas de ${escapeHtml(cleanId)} en API MonTMC Remedy...</span>
+      </div>
+    `;
+
+    try {
+      const url = `/api/remedy/detail/${encodeURIComponent(cleanId)}${forceRefresh ? '?force=1' : ''}`;
+      const res = await fetch(url);
+      const data = await res.json();
+
+      if (!res.ok || !data.success) {
+        const errorMsg = data.error || `HTTP ${res.status}`;
+        dom.orchRemedyWorklogContent.innerHTML = `
+          <div style="background: #FEF2F2; border: 1px solid #FCA5A5; border-radius: 6px; padding: 12px; font-size: 13px; color: #991B1B;">
+            <p style="margin: 0 0 6px 0; font-weight: 600;">⚠️ No se pudo recuperar el worklog de Remedy:</p>
+            <p style="margin: 0 0 8px 0; font-family: var(--font-mono); font-size: 12px;">${escapeHtml(errorMsg)}</p>
+            <button type="button" class="triage-btn triage-btn-sm" onclick="window.__loadRemedyWorklog('${escapeHtml(cleanId)}', true)">
+              🔄 Reintentar consulta
+            </button>
+          </div>
+        `;
+        return;
+      }
+
+      dom.orchRemedyWorklogContent.dataset.loadedInc = cleanId;
+      const worklogs = data.worklogs || [];
+      const solucion = (data.solucion || '').trim();
+      const detalle = (data.detalle || '').trim();
+      const isCached = Boolean(data._cached);
+      const isDisk = data._source === 'disk_fallback';
+
+      let html = '';
+
+      if (isCached) {
+        html += `
+          <div style="font-size: 11px; color: var(--triage-text-muted); margin-bottom: 8px; font-style: italic;">
+            ⚡ Datos servidos desde caché ${isDisk ? 'en disco (contingencia)' : 'en memoria'}.
+          </div>
+        `;
+      }
+
+      if (solucion) {
+        html += `
+          <div class="remedy-detail-banner">
+            <strong>💡 Detalle de Solución Remedy:</strong>
+            <div style="margin-top: 4px; white-space: pre-wrap;">${escapeHtml(solucion)}</div>
+          </div>
+        `;
+      } else if (detalle) {
+        html += `
+          <div class="remedy-detail-banner">
+            <strong>📋 Detalle Registrado en Remedy:</strong>
+            <div style="margin-top: 4px; white-space: pre-wrap;">${escapeHtml(detalle)}</div>
+          </div>
+        `;
+      }
+
+      if (worklogs.length === 0) {
+        html += `
+          <p style="color: var(--triage-text-muted); font-size: 13px; font-style: italic; margin: 8px 0;">
+            No constan anotaciones en el worklog de esta incidencia en MonTMC Remedy.
+          </p>
+        `;
+      } else {
+        html += `<div class="remedy-worklog-list">`;
+        worklogs.forEach(entry => {
+          const fecha = entry.fecha || entry.submit_date || entry.date || entry.timestamp || 'Fecha no informada';
+          const autor = entry.autor || entry.submitter || entry.usuario || entry.user || 'Sistema';
+          const texto = entry.texto || entry.notes || entry.description || entry.log || '';
+          html += `
+            <div class="remedy-worklog-item">
+              <div class="remedy-worklog-meta">
+                <span class="remedy-worklog-author">👤 ${escapeHtml(autor)}</span>
+                <span class="remedy-worklog-date">🕒 ${escapeHtml(fecha)}</span>
+              </div>
+              <div class="remedy-worklog-text">${escapeHtml(texto)}</div>
+            </div>
+          `;
+        });
+        html += `</div>`;
+      }
+
+      dom.orchRemedyWorklogContent.innerHTML = html;
+    } catch (err) {
+      dom.orchRemedyWorklogContent.innerHTML = `
+        <div style="background: #FEF2F2; border: 1px solid #FCA5A5; border-radius: 6px; padding: 12px; font-size: 13px; color: #991B1B;">
+          <p style="margin: 0 0 6px 0; font-weight: 600;">⚠️ Error de red consultando Remedy:</p>
+          <p style="margin: 0; font-size: 12px;">${escapeHtml(err.message)}</p>
+        </div>
+      `;
+    }
+  }
+  window.__loadRemedyWorklog = loadRemedyWorklog;
 
   function formatFullLogForClipboard(incId) {
     const inc = state.incidents.find(i => i.id === incId);
@@ -3463,6 +3621,20 @@ function renderFeed() {
     // Botón Inspeccionar Ahora
     if (dom.btnRefreshNow) {
       dom.btnRefreshNow.addEventListener('click', () => performInspection(true));
+    }
+
+    // Botón Sincronizar Remedy (MonTMC API)
+    if (dom.btnSyncRemedy) {
+      dom.btnSyncRemedy.addEventListener('click', triggerRemedySync);
+    }
+
+    // Botón Refrescar Worklog Remedy en Orquestador
+    if (dom.btnRefreshRemedyWorklog) {
+      dom.btnRefreshRemedyWorklog.addEventListener('click', () => {
+        if (state.activeOrchIncId) {
+          loadRemedyWorklog(state.activeOrchIncId, true);
+        }
+      });
     }
 
     // Selector de intervalo de refresco automático

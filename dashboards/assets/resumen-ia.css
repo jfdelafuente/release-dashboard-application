@@ -468,6 +468,19 @@
     color: #0B2B46;
 }
 
+.resumen-ia-block.block-remedy-worklog {
+    border-color: #FED7AA;
+    border-left-color: #FF7900;
+    background: #FFFFFF;
+}
+.resumen-ia-block.block-remedy-worklog .resumen-ia-icon-circle {
+    background: #FFEDD5;
+    color: #C2410C;
+}
+.resumen-ia-block.block-remedy-worklog .resumen-ia-block-title {
+    color: #9A3412;
+}
+
 /* Listas dentro de bloques (ej. bloqueos) */
 .resumen-ia-list {
     margin: 8px 0 0 0;
