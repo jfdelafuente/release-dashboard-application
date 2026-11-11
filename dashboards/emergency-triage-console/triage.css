@@ -2565,14 +2565,131 @@ body {
 .orch-remedy-section {
   border-left: 4px solid var(--triage-orange, #FF7900);
 }
-.remedy-worklog-item {
-  background: #F8FAFC;
+
+/* Tarjeta destacada: Última acción técnica / Estado de gestión */
+.remedy-highlight-card {
+  background: #FFFBF5;
+  border: 1px solid #FED7AA;
+  border-left: 4px solid var(--triage-orange, #FF7900);
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin-bottom: 14px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+}
+.remedy-highlight-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px dashed #FED7AA;
+}
+.remedy-highlight-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.remedy-highlight-badge {
+  background: var(--triage-orange, #FF7900);
+  color: #FFFFFF;
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  text-transform: uppercase;
+}
+.remedy-highlight-relative {
+  font-size: 11.5px;
+  color: #C2410C;
+  font-weight: 600;
+}
+.remedy-highlight-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11.5px;
+  color: #64748B;
+  font-family: var(--font-mono, monospace);
+}
+.remedy-highlight-body {
+  background: #FFFFFF;
+  border: 1px solid #FDE68A;
+  border-radius: 6px;
+  padding: 10px 14px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #0F172A;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* Controles de filtro y orden */
+.remedy-worklog-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.remedy-filter-pills {
+  display: flex;
+  gap: 4px;
+  background: #F1F5F9;
+  padding: 3px;
+  border-radius: 8px;
   border: 1px solid #E2E8F0;
-  border-left: 3px solid #FF7900;
+}
+.remedy-filter-pill {
+  border: none;
+  background: transparent;
+  padding: 6px 14px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #64748B;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.remedy-filter-pill:hover {
+  color: #0F172A;
+}
+.remedy-filter-pill.is-active {
+  background: var(--triage-orange, #FF7900);
+  color: #FFFFFF;
+  box-shadow: 0 1px 3px rgba(255, 121, 0, 0.3);
+}
+.remedy-worklog-order-hint {
+  font-size: 11px;
+  color: #94A3B8;
+  font-weight: 500;
+}
+
+/* Tarjetas de notas individuales */
+.remedy-worklog-item {
   border-radius: 6px;
   padding: 10px 14px;
   margin-bottom: 8px;
   font-size: 13px;
+  transition: border-color 0.15s ease;
+}
+.remedy-worklog-item.remedy-worklog-substantive {
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-left: 3px solid var(--triage-orange, #FF7900);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+}
+.remedy-worklog-item.remedy-worklog-system {
+  background: #F8FAFC;
+  border: 1px dashed #CBD5E1;
+  border-left: 3px solid #94A3B8;
+  opacity: 0.82;
+  padding: 7px 12px;
+  margin-bottom: 6px;
 }
 .remedy-worklog-meta {
   display: flex;
@@ -2582,16 +2699,62 @@ body {
   color: #64748B;
   margin-bottom: 5px;
   font-family: var(--font-mono, monospace);
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.remedy-worklog-meta-left, .remedy-worklog-meta-right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 .remedy-worklog-author {
   font-weight: 600;
   color: #0F172A;
+}
+.remedy-worklog-author-muted {
+  font-weight: 500;
+  color: #64748B;
+}
+.remedy-worklog-group-pill {
+  background: #EFF6FF;
+  color: #1D4ED8;
+  font-size: 10.5px;
+  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: 4px;
+  border: 1px solid #DBEAFE;
+}
+.remedy-worklog-att-pill {
+  background: #FEF3C7;
+  color: #92400E;
+  font-size: 10.5px;
+  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+.remedy-worklog-system-tag {
+  background: #E2E8F0;
+  color: #475569;
+  font-size: 9.5px;
+  font-weight: 700;
+  padding: 1px 5px;
+  border-radius: 3px;
+  text-transform: uppercase;
 }
 .remedy-worklog-text {
   white-space: pre-wrap;
   word-break: break-word;
   color: #1E293B;
   line-height: 1.5;
+}
+.remedy-worklog-text-muted {
+  white-space: pre-wrap;
+  word-break: break-word;
+  color: #64748B;
+  font-size: 12px;
+  font-style: italic;
+  line-height: 1.4;
+  margin-top: 3px;
 }
 .remedy-detail-banner {
   background: #FFF7ED;
