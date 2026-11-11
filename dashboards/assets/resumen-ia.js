@@ -530,6 +530,169 @@
         }
     }
 
+    const remedyWorklogCache = new Map();
+
+    function isSystemNoiseWorklog(text) {
+        if (!text) return true;
+        const t = text.trim();
+        if (t === '' || t === '.' || t === '-' || t === '..' || t === '...') return true;
+        if (/^(revisando|en curso)\.?$/i.test(t)) return true;
+        if (/^(el estado ha sido cambiado a|la asignaci[oó]n ha sido cambiada a|la prioridad ha sido cambiada a|la urgencia ha sido cambiada a)\b/i.test(t)) return true;
+        if (/^\[SCA360-OTRS.*\]\s*Adjunto\(s\)\s*\(\d+\):/i.test(t) && !t.includes('\n\n') && t.length < 100) return true;
+        if (/\(Sin cambios de datos en el ticket OTRS desde el ultimo envio a EPSILON\.\)/i.test(t)) return true;
+        return false;
+    }
+
+    function formatRemedyDate(dateStr) {
+        if (!dateStr) return 'Fecha no informada';
+        try {
+            const d = new Date(dateStr);
+            if (isNaN(d.getTime())) return dateStr;
+            const pad = n => String(n).padStart(2, '0');
+            return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+        } catch (_) {
+            return dateStr;
+        }
+    }
+
+    function getRelativeTimeSpan(dateStr) {
+        if (!dateStr) return '';
+        try {
+            const d = new Date(dateStr);
+            if (isNaN(d.getTime())) return '';
+            const diffMs = Date.now() - d.getTime();
+            if (diffMs < 0) return '';
+            const diffMins = Math.floor(diffMs / 60000);
+            if (diffMins < 1) return 'hace unos instantes';
+            if (diffMins < 60) return `hace ${diffMins} min`;
+            const diffHours = Math.floor(diffMins / 60);
+            if (diffHours < 24) return `hace ${diffHours} h`;
+            const diffDays = Math.floor(diffHours / 24);
+            return `hace ${diffDays} día${diffDays > 1 ? 's' : ''}`;
+        } catch (_) {
+            return '';
+        }
+    }
+
+    function renderRemedyWorklogInModal(code) {
+        const body = document.getElementById('resumen-ia-worklog-body');
+        if (!body) return;
+        const entry = remedyWorklogCache.get(code);
+        if (!entry) return;
+
+        const { solucion, detalle, substantiveList, allList, filterMode } = entry;
+        const currentList = filterMode === 'all' ? allList : substantiveList;
+        const lastSubstantive = (substantiveList && substantiveList.length > 0) ? substantiveList[0] : (allList[0] || null);
+
+        let html = '';
+
+        // 1. Tarjeta destacada: Última Acción Técnica
+        if (lastSubstantive) {
+            const relTime = getRelativeTimeSpan(lastSubstantive.fecha);
+            html += `
+                <div class="resumen-ia-remedy-highlight">
+                    <div class="resumen-ia-remedy-highlight-header">
+                        <div style="display:flex;align-items:center;gap:6px;">
+                            <span class="resumen-ia-remedy-badge">⚡ Última Acción Técnica</span>
+                            ${relTime ? `<span class="resumen-ia-remedy-relative">(${escapeHtml(relTime)})</span>` : ''}
+                        </div>
+                        <div class="resumen-ia-remedy-meta">
+                            <span><strong>👤 ${escapeHtml(lastSubstantive.autor)}</strong></span>
+                            ${lastSubstantive.grupo ? `<span class="resumen-ia-group-pill">${escapeHtml(lastSubstantive.grupo)}</span>` : ''}
+                            <span>🕒 ${formatRemedyDate(lastSubstantive.fecha)}</span>
+                        </div>
+                    </div>
+                    <div class="resumen-ia-remedy-highlight-body">${escapeHtml(lastSubstantive.texto)}</div>
+                </div>
+            `;
+        }
+
+        // 2. Banner de Solución Oficial Remedy si existe
+        if (solucion) {
+            html += `
+                <div style="background:#FFF7ED;border:1px solid #FED7AA;border-left:3px solid #FF7900;border-radius:6px;padding:8px 12px;margin-bottom:10px;font-size:12px;color:#9A3412;">
+                    <strong>💡 Solución / Cierre Remedy:</strong>
+                    <div style="margin-top:3px;white-space:pre-wrap;">${escapeHtml(solucion)}</div>
+                </div>
+            `;
+        }
+
+        // 3. Controles de Filtro
+        html += `
+            <div class="resumen-ia-worklog-controls">
+                <div class="resumen-ia-filter-pills" role="tablist">
+                    <button type="button" class="resumen-ia-filter-pill ${filterMode === 'substantive' ? 'is-active' : ''}" onclick="window.ResumenIAModal.setWorklogFilter('${escapeHtml(code)}', 'substantive')">
+                        📝 Notas Clave (${substantiveList.length})
+                    </button>
+                    <button type="button" class="resumen-ia-filter-pill ${filterMode === 'all' ? 'is-active' : ''}" onclick="window.ResumenIAModal.setWorklogFilter('${escapeHtml(code)}', 'all')">
+                        📋 Auditoría Completa (${allList.length})
+                    </button>
+                </div>
+                <div class="resumen-ia-worklog-order-hint">
+                    <span>⬇️ Más recientes primero</span>
+                </div>
+            </div>
+        `;
+
+        // 4. Lista de notas cronológica inversa
+        if (currentList.length === 0) {
+            html += `
+                <p style="color:#64748B;font-size:12px;font-style:italic;margin:10px 0;padding:10px;background:#F8FAFC;border-radius:6px;border:1px dashed #CBD5E1;">
+                    ${filterMode === 'substantive' 
+                        ? 'No se detectaron notas técnicas manuales en este ticket. Consulta la pestaña "Auditoría Completa" para revisar los cambios automáticos de estado y asignación.' 
+                        : 'No constan anotaciones en el worklog de esta incidencia en MonTMC Remedy.'}
+                </p>
+            `;
+        } else {
+            html += `<div class="resumen-ia-worklog-list">`;
+            currentList.forEach(item => {
+                if (item.isSystem) {
+                    html += `
+                        <div class="resumen-ia-worklog-item resumen-ia-worklog-system">
+                            <div class="resumen-ia-worklog-meta">
+                                <div class="resumen-ia-worklog-meta-left">
+                                    <span style="color:#64748B;font-weight:500;">⚙️ ${escapeHtml(item.autor)}</span>
+                                    <span class="resumen-ia-system-tag">Sistema / Auditoría</span>
+                                </div>
+                                <div class="resumen-ia-worklog-meta-right">
+                                    <span>🕒 ${formatRemedyDate(item.fecha)}</span>
+                                </div>
+                            </div>
+                            <div class="resumen-ia-worklog-text-muted">${escapeHtml(item.texto)}</div>
+                        </div>
+                    `;
+                } else {
+                    html += `
+                        <div class="resumen-ia-worklog-item resumen-ia-worklog-substantive">
+                            <div class="resumen-ia-worklog-meta">
+                                <div class="resumen-ia-worklog-meta-left">
+                                    <span><strong>👤 ${escapeHtml(item.autor)}</strong></span>
+                                    ${item.grupo ? `<span class="resumen-ia-group-pill">${escapeHtml(item.grupo)}</span>` : ''}
+                                </div>
+                                <div class="resumen-ia-worklog-meta-right">
+                                    ${item.adjuntos > 0 ? `<span class="resumen-ia-att-pill">📎 ${item.adjuntos} adjunto${item.adjuntos > 1 ? 's' : ''}</span>` : ''}
+                                    <span>🕒 ${formatRemedyDate(item.fecha)}</span>
+                                </div>
+                            </div>
+                            <div class="resumen-ia-worklog-text">${escapeHtml(item.texto)}</div>
+                        </div>
+                    `;
+                }
+            });
+            html += `</div>`;
+        }
+
+        body.innerHTML = html;
+    }
+
+    function setRemedyWorklogFilter(code, filterMode) {
+        const cached = remedyWorklogCache.get(code);
+        if (cached) {
+            cached.filterMode = filterMode;
+            renderRemedyWorklogInModal(code);
+        }
+    }
+
     async function toggleRemedyWorklog(code) {
         const body = document.getElementById('resumen-ia-worklog-body');
         const badge = document.getElementById('resumen-ia-worklog-badge');
@@ -540,37 +703,53 @@
         } else {
             body.style.display = 'block';
             if (badge) badge.textContent = 'Ocultar ▲';
-            if (body.dataset.loadedFor !== code) {
-                body.innerHTML = '<p style="color: #64748B; font-size: 12px; margin: 4px 0;">Consultando API MonTMC Remedy...</p>';
-                try {
-                    const res = await fetch(`/api/remedy/detail/${encodeURIComponent(code)}`);
-                    const data = await res.json();
-                    if (res.ok && data.success) {
-                        body.dataset.loadedFor = code;
-                        const worklogs = data.worklogs || [];
-                        let html = '';
-                        if (data.solucion) {
-                            html += `<div style="background:#FFF7ED;border-left:3px solid #FF7900;padding:6px 10px;margin-bottom:8px;font-size:12px;color:#9A3412;"><strong>Solución Remedy:</strong> ${escapeHtml(data.solucion)}</div>`;
-                        } else if (data.detalle) {
-                            html += `<div style="background:#F1F5F9;border-left:3px solid #64748B;padding:6px 10px;margin-bottom:8px;font-size:12px;color:#334155;"><strong>Detalle Remedy:</strong> ${escapeHtml(data.detalle)}</div>`;
-                        }
-                        if (worklogs.length === 0) {
-                            html += '<p style="color:#64748B;font-size:12px;font-style:italic;margin:6px 0;">Sin anotaciones en el worklog de esta incidencia en MonTMC Remedy.</p>';
-                        } else {
-                            worklogs.forEach(w => {
-                                const f = w.fecha || w.date || w.submit_date || '';
-                                const a = w.autor || w.user || w.submitter || 'Sistema';
-                                const t = w.texto || w.notes || '';
-                                html += `<div style="background:#F8FAFC;border:1px solid #E2E8F0;border-left:3px solid #FF7900;border-radius:4px;padding:8px 10px;margin-bottom:6px;font-size:12px;"><div style="display:flex;justify-content:space-between;color:#64748B;font-size:11px;margin-bottom:3px;"><span><strong>👤 ${escapeHtml(a)}</strong></span><span>🕒 ${escapeHtml(f)}</span></div><div style="white-space:pre-wrap;color:#1E293B;line-height:1.4;">${escapeHtml(t)}</div></div>`;
-                            });
-                        }
-                        body.innerHTML = html;
-                    } else {
-                        body.innerHTML = `<p style="color:#DC2626;font-size:12px;margin:4px 0;">No se pudo consultar Remedy: ${escapeHtml(data.error || 'Error')}</p>`;
-                    }
-                } catch (e) {
-                    body.innerHTML = `<p style="color:#DC2626;font-size:12px;margin:4px 0;">Error de red: ${escapeHtml(e.message)}</p>`;
+
+            if (remedyWorklogCache.has(code)) {
+                renderRemedyWorklogInModal(code);
+                return;
+            }
+
+            body.innerHTML = '<p style="color: #64748B; font-size: 12px; margin: 4px 0;">Consultando API MonTMC Remedy...</p>';
+            try {
+                const res = await fetch(`/api/remedy/detail/${encodeURIComponent(code)}`);
+                const data = await res.json();
+                if (res.ok && data.success) {
+                    const rawWorklogs = data.worklogs || [];
+                    const normalized = rawWorklogs.map(w => {
+                        const fecha = w.fecha || w.date || w.submit_date || w.timestamp || '';
+                        const autor = w.usuario || w.autor || w.user || w.submitter || 'Sistema';
+                        const texto = (w.detalle || w.texto || w.notes || w.description || w.log || '').trim();
+                        const grupo = w.grupoAsignado || w.grupoResolutor || w.grupo || '';
+                        const adjuntos = w.numeroAdjuntos || (Array.isArray(w.adjuntos) ? w.adjuntos.length : 0) || 0;
+                        const isSystem = isSystemNoiseWorklog(texto);
+                        return { fecha, autor, texto, grupo, adjuntos, isSystem };
+                    });
+
+                    // Orden cronológico inverso (más recientes arriba)
+                    normalized.sort((a, b) => {
+                        const tA = a.fecha ? new Date(a.fecha).getTime() : 0;
+                        const tB = b.fecha ? new Date(b.fecha).getTime() : 0;
+                        return tB - tA;
+                    });
+
+                    const substantiveList = normalized.filter(e => !e.isSystem);
+                    const allList = normalized;
+
+                    remedyWorklogCache.set(code, {
+                        code,
+                        solucion: (data.solucion || '').trim(),
+                        detalle: (data.detalle || '').trim(),
+                        substantiveList,
+                        allList,
+                        filterMode: 'substantive'
+                    });
+
+                    renderRemedyWorklogInModal(code);
+                } else {
+                    body.innerHTML = `<p style="color:#DC2626;font-size:12px;margin:4px 0;">No se pudo consultar Remedy: ${escapeHtml(data.error || 'Error')}</p>`;
                 }
+            } catch (e) {
+                body.innerHTML = `<p style="color:#DC2626;font-size:12px;margin:4px 0;">Error de red: ${escapeHtml(e.message)}</p>`;
             }
         }
     }
@@ -590,6 +769,7 @@
         open: openModal,
         close: closeModal,
         toggleWorklog: toggleRemedyWorklog,
+        setWorklogFilter: setRemedyWorklogFilter,
         refresh: () => {
             if (currentIncidentCode) {
                 openModal(currentIncidentCode, true);
