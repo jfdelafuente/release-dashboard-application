@@ -139,6 +139,51 @@ class CustomHTTPHandler(http.server.SimpleHTTPRequestHandler):
     # Asegurar que sirve desde el PROJECT_ROOT
     directory = str(PROJECT_ROOT)
 
+    def handle(self):
+        try:
+            super().handle()
+        except (ConnectionAbortedError, ConnectionResetError, BrokenPipeError):
+            pass
+
+    def _send_raw_response(self, status, content, content_type='application/json; charset=utf-8', extra_headers=None):
+        try:
+            self.send_response(status)
+            self.send_header('Content-Type', content_type)
+            self.send_header('Access-Control-Allow-Origin', '*')
+            self.send_header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
+            self.send_header('Access-Control-Allow-Headers', '*')
+            self.send_header('Content-Length', str(len(content)))
+            if extra_headers:
+                for k, v in extra_headers.items():
+                    self.send_header(k, v)
+            self.end_headers()
+            self.wfile.write(content)
+            return True
+        except (ConnectionAbortedError, ConnectionResetError, BrokenPipeError):
+            return False
+        except Exception as e:
+            print(f"  Error enviando respuesta HTTP: {e}")
+            return False
+
+    def _send_json(self, status, payload, extra_headers=None):
+        try:
+            body = json.dumps(payload, ensure_ascii=False).encode('utf-8')
+            self.send_response(status)
+            self.send_header('Content-Type', 'application/json; charset=utf-8')
+            self.send_header('Access-Control-Allow-Origin', '*')
+            self.send_header('Content-Length', str(len(body)))
+            if extra_headers:
+                for k, v in extra_headers.items():
+                    self.send_header(k, v)
+            self.end_headers()
+            self.wfile.write(body)
+            return True
+        except (ConnectionAbortedError, ConnectionResetError, BrokenPipeError):
+            return False
+        except Exception as e:
+            print(f"  Error enviando respuesta JSON: {e}")
+            return False
+
     def proxy_to_nextjs(self):
         candidate_ports = [3001, 3000]
         excluded = {'host', 'connection', 'keep-alive', 'accept-encoding', 'content-length'}
@@ -185,6 +230,8 @@ class CustomHTTPHandler(http.server.SimpleHTTPRequestHandler):
                 self.end_headers()
                 self.wfile.write(body)
                 return
+            except (ConnectionAbortedError, ConnectionResetError, BrokenPipeError):
+                return
             except Exception as e:
                 last_error = e
                 continue
@@ -201,12 +248,12 @@ class CustomHTTPHandler(http.server.SimpleHTTPRequestHandler):
             "<p><i>(Este comando arranca automáticamente en el puerto 3001 con la ruta base /problemas)</i></p>"
             "</body></html>"
         ).encode('utf-8')
-        self.send_response(502)
-        self.send_header('Content-Type', 'text/html; charset=utf-8')
-        self.send_header('Content-Length', str(len(msg)))
-        self.send_header('Connection', 'close')
-        self.end_headers()
-        self.wfile.write(msg)
+        self._send_raw_response(
+            502,
+            msg,
+            content_type='text/html; charset=utf-8',
+            extra_headers={'Connection': 'close'}
+        )
 
     def proxy_to_epsilon_ia(self, codigo):
         import ssl
@@ -224,19 +271,24 @@ class CustomHTTPHandler(http.server.SimpleHTTPRequestHandler):
             cached_time, cached_content, cached_status = EPSILON_CACHE[codigo]
             if now - cached_time < 900:  # 15 minutos de caché
                 print(f"  Proxy Epsilon IA (cache HIT): {codigo}")
-                self.send_response(cached_status)
-                self.send_header('Content-Type', 'application/json; charset=utf-8')
-                self.send_header('Access-Control-Allow-Origin', '*')
-                self.send_header('X-Cache-Status', 'HIT')
-                self.send_header('Content-Length', str(len(cached_content)))
-                self.end_headers()
-                self.wfile.write(cached_content)
+                try:
+                    self.send_response(cached_status)
+                    self.send_header('Content-Type', 'application/json; charset=utf-8')
+                    self.send_header('Access-Control-Allow-Origin', '*')
+                    self.send_header('X-Cache-Status', 'HIT')
+                    self.send_header('Content-Length', str(len(cached_content)))
+                    self.end_headers()
+                    self.wfile.write(cached_content)
+                except (ConnectionAbortedError, ConnectionResetError, BrokenPipeError):
+                    pass
                 return
 
         # 1. Consulta corporativa en vivo (SOPTMC) salvo si se pide mock directo
         if not is_mock:
             target_url = f"https://soptmc.si.orange.es/MonTMC/api/epsilon/resumenIA/{codigo}"
             print(f"  Proxy Epsilon IA (cache MISS/LIVE): {target_url}")
+            soptmc_content = None
+            soptmc_status = None
             try:
                 ctx = ssl.create_default_context()
                 ctx.check_hostname = False
@@ -246,49 +298,62 @@ class CustomHTTPHandler(http.server.SimpleHTTPRequestHandler):
                     headers={'User-Agent': 'ReleaseDashboard/1.0', 'Accept': 'application/json'}
                 )
                 with urllib.request.urlopen(req, context=ctx, timeout=15) as resp:
-                    content = resp.read()
-                    if resp.status == 200:
-                        EPSILON_CACHE[codigo] = (now, content, resp.status)
-                        try:
-                            disk_cache_file = PROJECT_ROOT / "data" / ".epsilon_cache" / f"{codigo}.json"
-                            disk_cache_file.parent.mkdir(parents=True, exist_ok=True)
-                            disk_cache_file.write_bytes(content)
-                        except Exception:
-                            pass
-                    self.send_response(resp.status)
+                    soptmc_content = resp.read()
+                    soptmc_status = resp.status
+            except (ConnectionAbortedError, ConnectionResetError, BrokenPipeError):
+                return
+            except Exception as e:
+                print(f"  Error proxy Epsilon IA (SOPTMC): {e}")
+
+            if soptmc_content is not None and soptmc_status == 200:
+                EPSILON_CACHE[codigo] = (now, soptmc_content, soptmc_status)
+                try:
+                    disk_cache_file = PROJECT_ROOT / "data" / ".epsilon_cache" / f"{codigo}.json"
+                    disk_cache_file.parent.mkdir(parents=True, exist_ok=True)
+                    disk_cache_file.write_bytes(soptmc_content)
+                except Exception:
+                    pass
+                try:
+                    self.send_response(soptmc_status)
                     self.send_header('Content-Type', 'application/json; charset=utf-8')
                     self.send_header('Access-Control-Allow-Origin', '*')
                     self.send_header('Access-Control-Allow-Methods', 'GET, OPTIONS')
                     self.send_header('Access-Control-Allow-Headers', '*')
                     self.send_header('X-Cache-Status', 'MISS')
-                    self.send_header('Content-Length', str(len(content)))
+                    self.send_header('Content-Length', str(len(soptmc_content)))
                     self.send_header('Cache-Control', 'no-cache')
                     self.end_headers()
-                    self.wfile.write(content)
-                    return
-            except Exception as e:
-                print(f"  Error proxy Epsilon IA (SOPTMC): {e}")
+                    self.wfile.write(soptmc_content)
+                except (ConnectionAbortedError, ConnectionResetError, BrokenPipeError):
+                    pass
+                return
 
         # 2. Resiliencia offline: Snapshot en disco si no se fuerza refresh
         disk_cache_file = PROJECT_ROOT / "data" / ".epsilon_cache" / f"{codigo}.json"
         if not no_cache and disk_cache_file.exists():
+            disk_content = None
             try:
                 with open(disk_cache_file, "rb") as f:
                     disk_content = f.read()
-                print(f"  Fallback exitoso a caché en disco para Epsilon IA: {codigo}")
-                EPSILON_CACHE[codigo] = (now, disk_content, 200)
-                self.send_response(200)
-                self.send_header('Content-Type', 'application/json; charset=utf-8')
-                self.send_header('Access-Control-Allow-Origin', '*')
-                self.send_header('Access-Control-Allow-Methods', 'GET, OPTIONS')
-                self.send_header('Access-Control-Allow-Headers', '*')
-                self.send_header('X-Cache-Status', 'DISK_FALLBACK')
-                self.send_header('Content-Length', str(len(disk_content)))
-                self.end_headers()
-                self.wfile.write(disk_content)
-                return
             except Exception as read_err:
                 print(f"  Error leyendo disk cache para Epsilon IA: {read_err}")
+
+            if disk_content:
+                print(f"  Fallback exitoso a caché en disco para Epsilon IA: {codigo}")
+                EPSILON_CACHE[codigo] = (now, disk_content, 200)
+                try:
+                    self.send_response(200)
+                    self.send_header('Content-Type', 'application/json; charset=utf-8')
+                    self.send_header('Access-Control-Allow-Origin', '*')
+                    self.send_header('Access-Control-Allow-Methods', 'GET, OPTIONS')
+                    self.send_header('Access-Control-Allow-Headers', '*')
+                    self.send_header('X-Cache-Status', 'DISK_FALLBACK')
+                    self.send_header('Content-Length', str(len(disk_content)))
+                    self.end_headers()
+                    self.wfile.write(disk_content)
+                except (ConnectionAbortedError, ConnectionResetError, BrokenPipeError):
+                    pass
+                return
 
         # 3. Fallback inteligente: Buscar datos técnicos en volcados locales y auto-generar con LLM / Mock
         if find_incident_in_local_dumps and generate_epsilon_summary:
@@ -296,6 +361,7 @@ class CustomHTTPHandler(http.server.SimpleHTTPRequestHandler):
             if found:
                 incident_item, source_filename, file_mtime = found
                 print(f"  Generando resumen Epsilon IA desde volcado local '{source_filename}' para {codigo}...")
+                out_bytes = None
                 try:
                     is_valid, summary_data, meta = generate_epsilon_summary(
                         incident_data=incident_item,
@@ -318,6 +384,13 @@ class CustomHTTPHandler(http.server.SimpleHTTPRequestHandler):
                             print(f"  Aviso: no se pudo escribir en disk cache: {write_err}")
 
                         EPSILON_CACHE[codigo] = (now, out_bytes, 200)
+                    else:
+                        print(f"  Fallo de validación Pydantic para {codigo}: {summary_data.get('error')}")
+                except Exception as gen_err:
+                    print(f"  Error generando resumen LLM local para {codigo}: {gen_err}")
+
+                if out_bytes:
+                    try:
                         self.send_response(200)
                         self.send_header('Content-Type', 'application/json; charset=utf-8')
                         self.send_header('Access-Control-Allow-Origin', '*')
@@ -327,21 +400,22 @@ class CustomHTTPHandler(http.server.SimpleHTTPRequestHandler):
                         self.send_header('Content-Length', str(len(out_bytes)))
                         self.end_headers()
                         self.wfile.write(out_bytes)
-                        return
-                    else:
-                        print(f"  Fallo de validación Pydantic para {codigo}: {summary_data.get('error')}")
-                except Exception as gen_err:
-                    print(f"  Error generando resumen LLM local para {codigo}: {gen_err}")
+                    except (ConnectionAbortedError, ConnectionResetError, BrokenPipeError):
+                        pass
+                    return
 
         # Incidencia no encontrada ni en SOPTMC ni en los volcados locales
         err_msg = f"Incidencia '{codigo}' no disponible en SOPTMC corporativo ni en los volcados locales"
         err_payload = json.dumps({"success": False, "error": err_msg}, ensure_ascii=False).encode('utf-8')
-        self.send_response(502)
-        self.send_header('Content-Type', 'application/json; charset=utf-8')
-        self.send_header('Access-Control-Allow-Origin', '*')
-        self.send_header('Content-Length', str(len(err_payload)))
-        self.end_headers()
-        self.wfile.write(err_payload)
+        try:
+            self.send_response(502)
+            self.send_header('Content-Type', 'application/json; charset=utf-8')
+            self.send_header('Access-Control-Allow-Origin', '*')
+            self.send_header('Content-Length', str(len(err_payload)))
+            self.end_headers()
+            self.wfile.write(err_payload)
+        except (ConnectionAbortedError, ConnectionResetError, BrokenPipeError):
+            pass
 
     def do_OPTIONS(self):
         self.send_response(204)
@@ -497,12 +571,12 @@ class CustomHTTPHandler(http.server.SimpleHTTPRequestHandler):
 
         pptx_path = Path(result['path'])
         body = pptx_path.read_bytes()
-        self.send_response(200)
-        self.send_header('Content-Type', 'application/vnd.openxmlformats-officedocument.presentationml.presentation')
-        self.send_header('Content-Disposition', f'attachment; filename="{pptx_path.name}"')
-        self.send_header('Content-Length', str(len(body)))
-        self.end_headers()
-        self.wfile.write(body)
+        self._send_raw_response(
+            200,
+            body,
+            content_type='application/vnd.openxmlformats-officedocument.presentationml.presentation',
+            extra_headers={'Content-Disposition': f'attachment; filename="{pptx_path.name}"'}
+        )
 
     def proxy_to_fastapi_executive(self, body_data: bytes = None) -> bool:
         """
@@ -548,6 +622,8 @@ class CustomHTTPHandler(http.server.SimpleHTTPRequestHandler):
             self.send_header('Content-Length', str(len(body)))
             self.end_headers()
             self.wfile.write(body)
+            return True
+        except (ConnectionAbortedError, ConnectionResetError, BrokenPipeError):
             return True
         except Exception as e:
             print(f"  [FastAPI Proxy] FastAPI ({FASTAPI_BACKEND_URL}) no alcanzable ({e}); ejecutando fallback local sobre Single Source of Truth.")
@@ -723,13 +799,12 @@ class CustomHTTPHandler(http.server.SimpleHTTPRequestHandler):
 
         try:
             body = report_path.read_bytes()
-            self.send_response(200)
-            self.send_header('Content-Type', 'application/vnd.openxmlformats-officedocument.presentationml.presentation')
-            self.send_header('Content-Disposition', f'attachment; filename="{report_path.name}"')
-            self.send_header('Access-Control-Allow-Origin', '*')
-            self.send_header('Content-Length', str(len(body)))
-            self.end_headers()
-            self.wfile.write(body)
+            self._send_raw_response(
+                200,
+                body,
+                content_type='application/vnd.openxmlformats-officedocument.presentationml.presentation',
+                extra_headers={'Content-Disposition': f'attachment; filename="{report_path.name}"'}
+            )
         except Exception as e:
             self._send_json(500, {'success': False, 'error': f'Error al leer archivo: {str(e)}'})
 
@@ -1160,15 +1235,6 @@ class CustomHTTPHandler(http.server.SimpleHTTPRequestHandler):
             "error": f"No se pudo obtener detalle de Remedy para {clean_id} ni existe copia en caché local",
             "idRemedy": clean_id,
         })
-
-    def _send_json(self, status, payload):
-        body = json.dumps(payload, ensure_ascii=False).encode('utf-8')
-        self.send_response(status)
-        self.send_header('Content-Type', 'application/json; charset=utf-8')
-        self.send_header('Access-Control-Allow-Origin', '*')
-        self.send_header('Content-Length', str(len(body)))
-        self.end_headers()
-        self.wfile.write(body)
 
     def do_GET(self):
         # Debug

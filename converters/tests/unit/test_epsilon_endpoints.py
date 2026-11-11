@@ -292,3 +292,39 @@ def test_cache_invalidation_on_upload():
     assert status == 200
     # La caché en memoria debió haber sido limpiada
     assert len(serve_app.EPSILON_CACHE) == 0
+
+
+def test_proxy_to_epsilon_ia_client_connection_aborted_handled_cleanly():
+    """Verifica que si el cliente cancela la conexión (WinError 10053), proxy_to_epsilon_ia no lanza excepción ni genera cascada."""
+    handler = MagicMock()
+    handler.path = "/api/epsilon/resumenIA/INC000004122710"
+    handler.headers = {}
+    handler.wfile = MagicMock()
+    handler.wfile.write.side_effect = ConnectionAbortedError(10053, "Se ha anulado una conexión establecida")
+
+    fake_resp = MagicMock()
+    fake_resp.status = 200
+    fake_resp.read.return_value = json.dumps({"problema": "OK"}).encode("utf-8")
+    fake_resp.__enter__.return_value = fake_resp
+    fake_resp.__exit__.return_value = None
+
+    with patch("urllib.request.urlopen", return_value=fake_resp):
+        # No debe lanzar excepción
+        serve_app.CustomHTTPHandler.proxy_to_epsilon_ia(handler, "INC000004122710")
+
+    # Debe haber intentado escribir una vez y capturado la desconexión sin lanzar error
+    assert handler.send_response.called
+    assert handler.send_response.call_args[0][0] == 200
+
+
+def test_send_json_client_connection_aborted_handled_cleanly():
+    """Verifica que _send_json y _send_raw_response absorben desconexiones abruptas del cliente."""
+    handler = MagicMock()
+    handler.wfile = MagicMock()
+    handler.wfile.write.side_effect = ConnectionAbortedError(10053, "Aborted")
+
+    # Ejecutar real _send_json llamándolo sobre handler mockeado
+    serve_app.CustomHTTPHandler._send_json(handler, 200, {"data": "test"})
+    assert handler.send_response.called
+    assert handler.send_response.call_args[0][0] == 200
+
