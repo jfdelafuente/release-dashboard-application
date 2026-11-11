@@ -49,25 +49,25 @@
         </div>
 
         <div class="triage-header-actions">
-          <!-- Indicador de conexión / inspección activa en vivo -->
-          <div id="live-pill" class="triage-live-pill" aria-label="Estado de la inspección continua">
+          <!-- Indicador de conexión / vigilancia activa en vivo -->
+          <div id="live-pill" class="triage-live-pill" aria-label="Estado de la vigilancia continua de SLAs">
             <span class="triage-pulse-dot" aria-hidden="true"></span>
-            <span id="live-status-text">Inspección Activa</span>
+            <span id="live-status-text">Vigilancia SLA Activa</span>
           </div>
 
-          <!-- Selector de frecuencia de inspección -->
-          <label for="auto-refresh-select" class="sr-only">Frecuencia de inspección automática</label>
-          <select id="auto-refresh-select" class="triage-select" title="Frecuencia de actualización continua">
-            <option value="15000">Inspección: cada 15s</option>
-            <option value="30000" selected>Inspección: cada 30s</option>
-            <option value="60000">Inspección: cada 60s</option>
-            <option value="0">Inspección: Pausada</option>
+          <!-- Selector de frecuencia de vigilancia -->
+          <label for="auto-refresh-select" class="sr-only">Frecuencia de auditoría automática de SLAs</label>
+          <select id="auto-refresh-select" class="triage-select" title="Frecuencia de auditoría continua de SLAs">
+            <option value="15000">Vigilancia: cada 15s</option>
+            <option value="30000" selected>Vigilancia: cada 30s</option>
+            <option value="60000">Vigilancia: cada 60s</option>
+            <option value="0">Vigilancia: Pausada</option>
           </select>
 
-          <!-- Botón de inspección manual inmediata -->
-          <button id="btn-refresh-now" class="triage-btn" title="Escanear catálogo ahora">
+          <!-- Botón de auditoría manual inmediata -->
+          <button id="btn-refresh-now" class="triage-btn" title="Auditar alarmas y SLAs ahora">
             <span aria-hidden="true">🔄</span>
-            <span>Inspeccionar Ahora</span>
+            <span>Auditar Ahora</span>
           </button>
 
           <!-- Botón de sincronización con API MonTMC / Remedy -->
@@ -96,28 +96,28 @@
         </div>
       </div>
 
-      <!-- Barra de Metadatos de Origen de Datos e Inspección integrada en cabecera -->
+      <!-- Barra de Metadatos de Canal de Datos y Vigilancia integrada en cabecera -->
       <div class="triage-source-meta-bar">
         <div class="triage-source-info">
-          <span class="triage-source-badge">
-            <span aria-hidden="true">📥</span> Ingesta Activa
+          <span id="source-channel-badge" class="triage-source-badge">
+            <span id="source-channel-icon" aria-hidden="true">📡</span> <span id="source-channel-text">Canal de Datos</span>
           </span>
-          <span>Origen de Datos: <strong id="source-file-name" class="triage-source-file-name">Cargando...</strong></span>
+          <span>Origen: <strong id="source-file-name" class="triage-source-file-name">Cargando...</strong></span>
         </div>
         <div class="triage-last-scan">
-          <span>Última Inspección:</span>
+          <span>Última Vigilancia:</span>
           <strong id="last-scan-label">Sincronizando...</strong>
         </div>
       </div>
     </header>
 
-    <!-- 2. Función 1: Panel de Ingesta e Inspección Continua -->
-    <section class="triage-inspection-panel" aria-label="Función 1: Ingesta e Inspección Continua">
+    <!-- 2. Función 1: Canal de Datos y Vigilancia Continua -->
+    <section class="triage-inspection-panel" aria-label="Función 1: Canal de Datos y Vigilancia Continua">
       <!-- Métricas de Ingesta Global (Solo Incidencias Activas) -->
       <div class="triage-kpi-grid">
         <div class="triage-kpi-card kpi-scanned">
           <div class="triage-kpi-header">
-            <span>Activas Ingestadas</span>
+            <span>Activas en Vigilancia</span>
             <span aria-hidden="true">📥</span>
           </div>
           <div class="triage-kpi-value-row">
@@ -221,7 +221,7 @@
       <div class="triage-empty-state">
         <div class="triage-empty-icon" aria-hidden="true">🔄</div>
         <div class="triage-empty-title">Cargando datos del motor de triaje...</div>
-        <p>Inspeccionando el catálogo de alta prioridad y evaluando umbrales.</p>
+        <p>Auditando el catálogo de alta prioridad y evaluando umbrales SLA.</p>
       </div>
     </main>
 
@@ -249,7 +249,7 @@
         <div class="triage-footer-top-actions">
           <div class="triage-footer-status-pill" aria-label="Estado del sistema">
             <span class="triage-pulse-dot" aria-hidden="true"></span>
-            <span id="footer-live-status-text">Inspección Continua Activa</span>
+            <span id="footer-live-status-text">Vigilancia SLA Activa</span>
           </div>
           <button type="button" id="footer-btn-scroll-top" class="triage-footer-btn-top" title="Desplazarse a la cabecera de la consola">
             <span aria-hidden="true">▲</span>

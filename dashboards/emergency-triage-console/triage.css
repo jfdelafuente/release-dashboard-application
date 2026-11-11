@@ -225,6 +225,17 @@ body {
   color: var(--triage-red-text);
 }
 
+.triage-live-pill.paused {
+  background: var(--triage-surface-subtle);
+  border-color: var(--triage-border-light);
+  color: var(--triage-text-muted);
+}
+
+.triage-live-pill.paused .triage-pulse-dot {
+  animation: none;
+  opacity: 0.5;
+}
+
 .triage-pulse-dot {
   width: 8px;
   height: 8px;
@@ -360,6 +371,19 @@ body {
   display: inline-flex;
   align-items: center;
   gap: 4px;
+  transition: all 0.2s ease;
+}
+
+.triage-source-badge.triage-source-badge-api {
+  background: rgba(16, 185, 129, 0.12);
+  color: #065F46;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.triage-source-badge.triage-source-badge-snapshot {
+  background: var(--triage-orange-tint);
+  color: #C2410C;
+  border: 1px solid rgba(255, 121, 0, 0.25);
 }
 
 .triage-source-file-name {

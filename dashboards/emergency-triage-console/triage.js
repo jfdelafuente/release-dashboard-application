@@ -68,7 +68,10 @@
     btnSyncRemedy: document.getElementById('btn-sync-remedy'),
     btnHelpCriteria: document.getElementById('btn-help-criteria'),
 
-    // Metadatos de Inspección
+    // Metadatos de Canal de Datos y Vigilancia
+    sourceChannelBadge: document.getElementById('source-channel-badge'),
+    sourceChannelText: document.getElementById('source-channel-text'),
+    sourceChannelIcon: document.getElementById('source-channel-icon'),
     sourceFileName: document.getElementById('source-file-name'),
     lastScanLabel: document.getElementById('last-scan-label'),
     kpiScanned: document.getElementById('kpi-scanned'),
@@ -389,17 +392,17 @@
   }
 
   // --------------------------------------------------------------------------
-  // Función 1: Ingesta e Inspección Continua
+  // Función 1: Canal de Datos y Vigilancia Continua
   // --------------------------------------------------------------------------
 
   async function performInspection(isManual = false) {
     if (isManual) {
       if (dom.btnRefreshNow) {
         dom.btnRefreshNow.disabled = true;
-        dom.btnRefreshNow.innerHTML = `<span aria-hidden="true" style="display:inline-block; animation: spin 1s infinite linear;">🔄</span> Inspeccionando...`;
+        dom.btnRefreshNow.innerHTML = `<span aria-hidden="true" style="display:inline-block; animation: spin 1s infinite linear;">🔄</span> Auditando...`;
       }
     }
-    setConnectionStatus('syncing', 'Inspeccionando...');
+    setConnectionStatus('syncing', 'Auditando SLAs...');
 
     const timestamp = Date.now();
     const candidateUrls = [
@@ -417,15 +420,20 @@
         const data = await res.json();
         if (data && (data.data || data.incidents || data.all_active_incidents || data.pending_incidents)) {
           processInspectionData(data);
-          setConnectionStatus('', 'Inspección Activa');
+          const isPaused = dom.autoRefreshSelect && parseInt(dom.autoRefreshSelect.value, 10) === 0;
+          if (isPaused) {
+            setConnectionStatus('paused', 'Vigilancia Pausada');
+          } else {
+            setConnectionStatus('', 'Vigilancia SLA Activa');
+          }
           state.lastInspectionEpoch = Date.now();
           updateRelativeTimeDisplay();
           if (isManual) {
-            showToast('Inspección de catálogo completada exitosamente', 'success');
+            showToast('Auditoría de alarmas y SLAs completada exitosamente', 'success');
           }
           if (dom.btnRefreshNow) {
             dom.btnRefreshNow.disabled = false;
-            dom.btnRefreshNow.innerHTML = `<span aria-hidden="true">🔄</span> Inspeccionar Ahora`;
+            dom.btnRefreshNow.innerHTML = `<span aria-hidden="true">🔄</span> Auditar Ahora`;
           }
           return;
         }
@@ -435,10 +443,10 @@
     }
 
     setConnectionStatus('error', 'Error de conexión');
-    showToast('Error al inspeccionar catálogo de incidencias: ' + (lastError ? lastError.message : 'No se encontraron datos'), 'error');
+    showToast('Error al auditar catálogo de incidencias: ' + (lastError ? lastError.message : 'No se encontraron datos'), 'error');
     if (dom.btnRefreshNow) {
       dom.btnRefreshNow.disabled = false;
-      dom.btnRefreshNow.innerHTML = `<span aria-hidden="true">🔄</span> Inspeccionar Ahora`;
+      dom.btnRefreshNow.innerHTML = `<span aria-hidden="true">🔄</span> Auditar Ahora`;
     }
   }
 
@@ -456,6 +464,7 @@
       });
       const data = await res.json();
       if (res.ok && data.success) {
+        state.metadata.last_sync_source = 'montmc_api';
         const total = data.total_consultadas ?? data.count ?? 0;
         const nuevas = data.nuevas ?? data.stats?.inserted ?? 0;
         const actualizadas = data.actualizadas ?? data.stats?.updated ?? 0;
@@ -508,10 +517,25 @@
       return !isTerminalStatus(inc.estatus || inc.estado || inc.status);
     });
 
-    // Actualizar KPIs superiores de Ingesta (Foco 100% en Incidencias Activas)
+    // Actualizar KPIs superiores y Canal de Datos (Foco 100% en Incidencias Activas)
     const kpis = state.metadata.kpis || {};
     if (dom.sourceFileName) {
       dom.sourceFileName.textContent = state.metadata.source_file || 'high_priority_notifications.json';
+    }
+
+    // Actualizar Canal / Origen de Datos (API MonTMC vs Snapshot Local)
+    if (dom.sourceChannelBadge && dom.sourceChannelText) {
+      const isApi = state.metadata.last_sync_source === 'montmc_api' ||
+                    (state.metadata.source_file && /montmc|remedy/i.test(state.metadata.source_file));
+      if (isApi) {
+        dom.sourceChannelBadge.className = 'triage-source-badge triage-source-badge-api';
+        if (dom.sourceChannelIcon) dom.sourceChannelIcon.textContent = '⚡';
+        dom.sourceChannelText.textContent = 'Canal MonTMC Remedy (Online)';
+      } else {
+        dom.sourceChannelBadge.className = 'triage-source-badge triage-source-badge-snapshot';
+        if (dom.sourceChannelIcon) dom.sourceChannelIcon.textContent = '📄';
+        dom.sourceChannelText.textContent = 'Snapshot Local';
+      }
     }
 
     const activeCount = (kpis.active_evaluated_count != null) ? kpis.active_evaluated_count : state.incidents.length;
@@ -3806,16 +3830,18 @@ function renderFeed() {
       });
     }
 
-    // Selector de intervalo de refresco automático
+    // Selector de intervalo de vigilancia automática
     if (dom.autoRefreshSelect) {
       dom.autoRefreshSelect.addEventListener('change', (e) => {
         const val = parseInt(e.target.value, 10);
         state.refreshIntervalMs = val;
         resetAutoRefreshTimer();
         if (val > 0) {
-          showToast(`Inspección continua programada cada ${val / 1000}s`, 'info');
+          setConnectionStatus('', 'Vigilancia SLA Activa');
+          showToast(`Vigilancia continua programada cada ${val / 1000}s`, 'info');
         } else {
-          showToast('Inspección automática pausada', 'info');
+          setConnectionStatus('paused', 'Vigilancia Pausada');
+          showToast('Vigilancia continua de SLAs pausada', 'info');
         }
       });
     }
@@ -4611,7 +4637,7 @@ Puente Teams: ${teamsUrl}
     if (dom.autoRefreshSelect && footerScanFreq) {
       const updateFooterFreq = () => {
         const val = parseInt(dom.autoRefreshSelect.value, 10);
-        footerScanFreq.textContent = val === 0 ? 'Inspección: Pausada' : `Ciclo: ${val / 1000}s`;
+        footerScanFreq.textContent = val === 0 ? 'Vigilancia: Pausada' : `Ciclo: ${val / 1000}s`;
       };
       dom.autoRefreshSelect.addEventListener('change', updateFooterFreq);
       updateFooterFreq();
