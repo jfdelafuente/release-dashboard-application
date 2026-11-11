@@ -1147,7 +1147,16 @@ class CustomHTTPHandler(http.server.SimpleHTTPRequestHandler):
                 usuario = q_params['usuario'][0].strip()
 
         try:
-            result = sync_remedy_incidents(
+            import importlib
+            import sys
+            mod_name = 'converters.cli.sync_montmc_incidents'
+            if mod_name in sys.modules:
+                importlib.reload(sys.modules[mod_name])
+                from converters.cli.sync_montmc_incidents import sync_remedy_incidents as run_sync
+            else:
+                run_sync = sync_remedy_incidents
+
+            result = run_sync(
                 dias=dias,
                 usuario=usuario,
                 project_root=PROJECT_ROOT,

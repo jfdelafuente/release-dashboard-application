@@ -1,6 +1,7 @@
 # Catálogo de APIs e Integraciones de Dashboards
 
 Este documento describe todas las APIs, rutas y servicios backend que consumen los distintos dashboards de la plataforma:
+
 - Los dashboards estáticos bajo [`dashboards/`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/dashboards/):
   - **Portal Hub** (`dashboards/portal/`)
   - **Incidencias Masivas** (`dashboards/massive-incidents/`)
@@ -117,12 +118,14 @@ flowchart TD
 ### 1. Ingesta y Subida de Archivos CSV
 
 #### `POST /api/upload`
+
 * **Invocado por**: Modales de subida de CSV en `massive-incidents` y `postmortem`.
-* **Formato petición**: `multipart/form-data`
-  * `file`: Archivo `.csv` con la exportación de incidencias de Remedy.
-  * `type`: `"massive"` o `"postmortem"`.
-  * `release_name`: Obligatorio si el tipo es `"postmortem"` (ej: `"2026R7"`).
-* **Respuesta exitosa (`200 OK`)**:
+- **Formato petición**: `multipart/form-data`
+  - `file`: Archivo `.csv` con la exportación de incidencias de Remedy.
+  - `type`: `"massive"` o `"postmortem"`.
+  - `release_name`: Obligatorio si el tipo es `"postmortem"` (ej: `"2026R7"`).
+- **Respuesta exitosa (`200 OK`)**:
+
   ```json
   {
     "success": true,
@@ -130,33 +133,37 @@ flowchart TD
     "output_file": "2026R7-postmortem.json"
   }
   ```
+
 * **Procesamiento y almacenamiento**:
-  * El archivo se deposita en el directorio de almacenamiento desacoplado:
-    * **Producción**: `/infocodes/var/storage/release-dashboard/input/`
-    * **Desarrollo**: `data/input/` (o ruta indicada por `RELEASE_DASHBOARD_STORAGE_DIR`).
-  * Se invoca la función `run_upload()` de [`converters/cli/upload_csv.py`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/converters/cli/upload_csv.py).
-  * El conversor genera el JSON estructurado en `output/` y actualiza automáticamente `output/index.json`.
+  - El archivo se deposita en el directorio de almacenamiento desacoplado:
+    - **Producción**: `/infocodes/var/storage/release-dashboard/input/`
+    - **Desarrollo**: `data/input/` (o ruta indicada por `RELEASE_DASHBOARD_STORAGE_DIR`).
+  - Se invoca la función `run_upload()` de [`converters/cli/upload_csv.py`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/converters/cli/upload_csv.py).
+  - El conversor genera el JSON estructurado en `output/` y actualiza automáticamente `output/index.json`.
 
 ---
 
 ### 2. Generación y Descarga de Informes Postmortem (.pptx)
 
 #### `GET /api/reports/postmortem/{release_name}`
+
 * **Invocado por**: Botón *"Descargar informe PPT"* en `dashboards/postmortem/index.html` y botones de descarga directa en la tabla de `dashboards/release-kpis/app.js`.
-* **Respuesta**: Stream binario con cabecera `Content-Type: application/vnd.openxmlformats-officedocument.presentationml.presentation` y descarga del fichero:
+- **Respuesta**: Stream binario con cabecera `Content-Type: application/vnd.openxmlformats-officedocument.presentationml.presentation` y descarga del fichero:
   `{release_name}-postmortem-report.pptx` (ej: `2026R7-postmortem-report.pptx`).
-* **Ubicación de almacenamiento**:
-  * **Producción**: `/infocodes/var/storage/release-dashboard/reports/{release_name}-postmortem-report.pptx`
-  * **Desarrollo**: `data/reports/{release_name}-postmortem-report.pptx`
-* **Optimización de Caché**: Si el informe ya existe y su fecha de modificación es igual o posterior a la de `releases-data.js`, se sirve inmediatamente desde disco sin regenerar las gráficas con Plotly/Kaleido.
+- **Ubicación de almacenamiento**:
+  - **Producción**: `/infocodes/var/storage/release-dashboard/reports/{release_name}-postmortem-report.pptx`
+  - **Desarrollo**: `data/reports/{release_name}-postmortem-report.pptx`
+- **Optimización de Caché**: Si el informe ya existe y su fecha de modificación es igual o posterior a la de `releases-data.js`, se sirve inmediatamente desde disco sin regenerar las gráficas con Plotly/Kaleido.
 
 ---
 
 ### 3. Informes Ejecutivos de Incidencias (PowerPoint Corporativo Orange)
 
 #### `POST /api/reports/executive-incident` (o `/api/v1/reports/executive-incident`)
+
 * **Invocado por**: Modal de informe ejecutivo (`ExecutiveReportModal.tsx`) en el dashboard de Gestión de Problemas.
-* **Formato petición**: `application/json`
+- **Formato petición**: `application/json`
+
   ```json
   {
     "incidentRef": "2606S77393",
@@ -166,7 +173,9 @@ flowchart TD
     "mode": "confluence"
   }
   ```
+
 * **Respuesta (`200 OK`)**:
+
   ```json
   {
     "success": true,
@@ -180,8 +189,10 @@ flowchart TD
   ```
 
 #### `GET /api/reports/executive-incident/{incident_ref}/status`
+
 * **Invocado por**: `ExecutiveReportModal.tsx` al abrir el modal para comprobar si ya existe un informe generado.
-* **Respuesta**:
+- **Respuesta**:
+
   ```json
   {
     "exists": true,
@@ -193,9 +204,10 @@ flowchart TD
   ```
 
 #### `GET /api/reports/executive-incident/{incident_ref}`
+
 * **Invocado por**: Navegador o cliente para descargar directamente el binario PowerPoint generado.
-* **Respuesta**: `200 OK` con cabeceras `Content-Type: application/vnd.openxmlformats-officedocument.presentationml.presentation` y `Content-Disposition: attachment; filename="RESUMEN_EJECUTIVO_{incident_ref}.pptx"`.
-* **Almacenamiento**: Los ficheros se generan en `/infocodes/var/storage/executive_pptx/` (enlazado simbólicamente con `/infocodes/var/storage/release-dashboard/reports/executive/`).
+- **Respuesta**: `200 OK` con cabeceras `Content-Type: application/vnd.openxmlformats-officedocument.presentationml.presentation` y `Content-Disposition: attachment; filename="RESUMEN_EJECUTIVO_{incident_ref}.pptx"`.
+- **Almacenamiento**: Los ficheros se generan en `/infocodes/var/storage/executive_pptx/` (enlazado simbólicamente con `/infocodes/var/storage/release-dashboard/reports/executive/`).
 
 ---
 
@@ -204,7 +216,7 @@ flowchart TD
 Invocada por el cliente [`dashboards/reportes-incidencias/api-client.js`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/dashboards/reportes-incidencias/api-client.js):
 
 | Método | Endpoint | Propósito |
-|---|---|---|
+| --- | --- | --- |
 | `GET` | `/api/reports` | Listar todos los reportes operativos registrados |
 | `POST` | `/api/reports` | Crear un nuevo reporte semanal o mensual |
 | `GET` | `/api/reports/{id}` | Obtener el detalle estructurado de un reporte por identificador |
@@ -219,10 +231,12 @@ Invocada por el cliente [`dashboards/reportes-incidencias/api-client.js`](file:/
 ### 5. Inteligencia Artificial (Epsilon / Remedy)
 
 #### `POST /api/epsilon/generate` (y alias `/api/epsilon/resumen`)
+
 * **Propósito**: Genera y valida un resumen técnico de incidencia IT ejecutando el motor oficial de Epsilon IA con validación estricta Pydantic (`converters/src/epsilon_service.py`), integrando soporte con Claude Sonnet (Anthropic LiteLLM MasOrange), OpenAI y Mock offline.
-* **Formatos de Entrada Soportados**:
-  * **Formato A (Directo)**: Objeto JSON íntegro con los campos Remedy de la incidencia (`ID de incidencia`, `Descripción`, `Estatus`, `Prioridad`, etc.). Admite parámetro de consulta `?mock=true`.
-  * **Formato B (Wrapper)**:
+- **Formatos de Entrada Soportados**:
+  - **Formato A (Directo)**: Objeto JSON íntegro con los campos Remedy de la incidencia (`ID de incidencia`, `Descripción`, `Estatus`, `Prioridad`, etc.). Admite parámetro de consulta `?mock=true`.
+  - **Formato B (Wrapper)**:
+
     ```json
     {
       "incident_data": {
@@ -236,12 +250,14 @@ Invocada por el cliente [`dashboards/reportes-incidencias/api-client.js`](file:/
       "model": "claude-sonnet-4-5"
     }
     ```
+
 * **Códigos de Respuesta HTTP**:
-  * `200 OK`: Resumen generado y validado con éxito. Si incluye código con prefijo `INC`, se persiste automáticamente en `data/.epsilon_cache/{codigo}.json` y en memoria (`EPSILON_CACHE`).
-  * `400 Bad Request`: Cuerpo de solicitud vacío, JSON inválido o datos de incidencia insuficientes.
-  * `422 Unprocessable Entity`: La respuesta del LLM no superó el contrato estricto de Pydantic (ej. `problema` excede 40 palabras o violación de orden cronológico). Devuelve `validation_errors` detallados.
-  * `502 Bad Gateway`: Error de conectividad, autenticación o respuesta 4xx/5xx del proveedor LLM o proxy corporativo.
-* **Estructura de Respuesta (200 OK)**:
+  - `200 OK`: Resumen generado y validado con éxito. Si incluye código con prefijo `INC`, se persiste automáticamente en `data/.epsilon_cache/{codigo}.json` y en memoria (`EPSILON_CACHE`).
+  - `400 Bad Request`: Cuerpo de solicitud vacío, JSON inválido o datos de incidencia insuficientes.
+  - `422 Unprocessable Entity`: La respuesta del LLM no superó el contrato estricto de Pydantic (ej. `problema` excede 40 palabras o violación de orden cronológico). Devuelve `validation_errors` detallados.
+  - `502 Bad Gateway`: Error de conectividad, autenticación o respuesta 4xx/5xx del proveedor LLM o proxy corporativo.
+- **Estructura de Respuesta (200 OK)**:
+
   ```json
   {
     "success": true,
@@ -273,15 +289,17 @@ Invocada por el cliente [`dashboards/reportes-incidencias/api-client.js`](file:/
 ---
 
 #### `GET /api/epsilon/resumenIA/{codigo}`
+
 * **Invocado por**: [`dashboards/assets/resumen-ia.js`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/dashboards/assets/resumen-ia.js) al hacer clic sobre cualquier identificador de incidencia o botón "Resumen IA" en el Portal y dashboards.
-* **Propósito**: Actúa como proxy inteligente hacia el servicio corporativo de IA de Orange:
+- **Propósito**: Actúa como proxy inteligente hacia el servicio corporativo de IA de Orange:
   `https://soptmc.si.orange.es/MonTMC/api/epsilon/resumenIA/{codigo}`
-* **Fallback Inteligente y Detección de Obsolescencia (`LIFECYCLE_STATUS_MISMATCH`)**:
+- **Fallback Inteligente y Detección de Obsolescencia (`LIFECYCLE_STATUS_MISMATCH`)**:
   1. Si se solicita `?force=true` o se recibe cabecera `Cache-Control: no-cache`, se omite la caché local y se fuerza la consulta en vivo.
   2. Si está en memoria (`EPSILON_CACHE`) o disco (`data/.epsilon_cache/{codigo}.json`), se sirve inmediatamente con cabecera `X-Cache-Status: MEMORY_HIT` o `DISK_HIT`.
   3. Se intenta consultar el servicio corporativo SOPTMC. Si responde `200 OK`, se cachea y se devuelve.
   4. Si SOPTMC falla o no está disponible, el servidor busca automáticamente la incidencia en los volcados locales más recientes (`data/output/*-massive.json` y `*-postmortem.json`).
   5. Si se localizan los datos, genera el resumen al vuelo con el motor local (`converters/src/epsilon_service.py`), añade advertencia de frescura (`is_stale_warning: true` si el volcado tiene más de 2 horas) y devuelve `200 OK` con metadatos:
+
      ```json
      {
        "success": true,
@@ -294,20 +312,23 @@ Invocada por el cliente [`dashboards/reportes-incidencias/api-client.js`](file:/
        }
      }
      ```
+
   6. Si no existe en SOPTMC ni en los volcados locales, responde `502 Bad Gateway`.
-* **Invalidación de Caché**:
-  * Al procesar una subida exitosa de CSV en `POST /api/upload`, se invoca automáticamente `EPSILON_CACHE.clear()` para garantizar que los tickets modificados o reabiertos en el nuevo CSV no sirvan datos cacheados obsoletos.
-* **Topología de Ejecución**:
-  * **Desarrollo**: Servido directamente por `serve_app.py` en el puerto `:8080`.
-  * **Producción (VPS)**: Proxificado por Nginx en `:8081` (`location /api/epsilon/`) hacia el backend FastAPI en `:8000` montando el router oficial [`converters/src/fastapi_epsilon_router.py`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/converters/src/fastapi_epsilon_router.py).
+- **Invalidación de Caché**:
+  - Al procesar una subida exitosa de CSV en `POST /api/upload`, se invoca automáticamente `EPSILON_CACHE.clear()` para garantizar que los tickets modificados o reabiertos en el nuevo CSV no sirvan datos cacheados obsoletos.
+- **Topología de Ejecución**:
+  - **Desarrollo**: Servido directamente por `serve_app.py` en el puerto `:8080`.
+  - **Producción (VPS)**: Proxificado por Nginx en `:8081` (`location /api/epsilon/`) hacia el backend FastAPI en `:8000` montando el router oficial [`converters/src/fastapi_epsilon_router.py`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/converters/src/fastapi_epsilon_router.py).
 
 ---
 
 ### 6. Datasets y Catálogo JSON
 
 #### `GET /data/output/index.json`
+
 * **Invocado por**: `dashboards/portal/index.html` y selectores de versión en los dashboards de Incidencias Masivas y Postmortem.
-* **Propósito**: Devuelve el índice completo de datasets disponibles, ordenados cronológicamente:
+- **Propósito**: Devuelve el índice completo de datasets disponibles, ordenados cronológicamente:
+
   ```json
   {
     "massive": [
@@ -321,29 +342,33 @@ Invocada por el cliente [`dashboards/reportes-incidencias/api-client.js`](file:/
   ```
 
 #### `GET /data/output/{filename}.json`
+
 * **Invocado por**: Lógica de cliente en cada dashboard para descargar el dataset completo.
-* **Ruta de almacenamiento**:
-  * En producción, Nginx mapea `/data` como un alias a `/infocodes/var/storage/release-dashboard`.
-  * En local, `serve_app.py` intercepta `/data/` y lo sirve desde `STORAGE_DIR` (`data/` o variable de entorno `RELEASE_DASHBOARD_STORAGE_DIR`).
+- **Ruta de almacenamiento**:
+  - En producción, Nginx mapea `/data` como un alias a `/infocodes/var/storage/release-dashboard`.
+  - En local, `serve_app.py` intercepta `/data/` y lo sirve desde `STORAGE_DIR` (`data/` o variable de entorno `RELEASE_DASHBOARD_STORAGE_DIR`).
 
 ---
 
 ### 7. Integración con Jira (Gestión de Problemas)
 
 #### `GET /api/dashboard` (o `/problemas/api/dashboard`)
+
 * **Invocado por**: Vista principal de Next.js (`page.tsx`) en el panel de Gestión de Problemas.
-* **Parámetros**: `?refresh=true` (fuerza la recarga omitiendo la caché de Jira).
-* **Propósito**: Conecta con la API REST de Jira para recuperar problemas, incidencias vinculadas, KPIs de resolución y tiempos de ciclo.
+- **Parámetros**: `?refresh=true` (fuerza la recarga omitiendo la caché de Jira).
+- **Propósito**: Conecta con la API REST de Jira para recuperar problemas, incidencias vinculadas, KPIs de resolución y tiempos de ciclo.
 
 ---
 
 ### 8. Monitorización y Salud del Sistema
 
 #### `GET /api/health`
+
 * **Invocado por**: [`dashboards/assets/topbar.js`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/dashboards/assets/topbar.js) y [`api-client.js`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/dashboards/reportes-incidencias/api-client.js).
-* **Propósito**: Valida que la API REST (FastAPI) está viva. Actualiza el indicador visual circular de la barra superior a verde (`API OK`) o rojo (`API Offline`).
+- **Propósito**: Valida que la API REST (FastAPI) está viva. Actualiza el indicador visual circular de la barra superior a verde (`API OK`) o rojo (`API Offline`).
 
 #### `GET /healthz` y `GET /readyz`
+
 * **Invocado por**: Topbar (como fallback de salud) y sondas de infraestructura de servidor o balanceador.
 
 ---
@@ -351,10 +376,12 @@ Invocada por el cliente [`dashboards/reportes-incidencias/api-client.js`](file:/
 ### 9. Catálogo de Agentes IA y Skills
 
 #### `GET /api/agents-catalog`
+
 * **Invocado por**: [`dashboards/agents-catalog/agents-catalog.js`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/dashboards/agents-catalog/agents-catalog.js).
-* **Propósito**: Proporciona el catálogo interactivo de agentes de IA y habilidades técnicas (*skills*) de la biblioteca corporativa (`biblioteca-agentes`), correlacionando qué agentes emplean cada skill, métricas de reusabilidad y comando de despliegue.
-* **Respuesta (`200 OK`)**: Estructura Envelope (`success`, `data`, `metadata`). Si la biblioteca externa no está presente localmente (entorno VPS), sirve de forma transparente el dataset estático generado en `data/output/agents_catalog.json`.
-* **Esquema**:
+- **Propósito**: Proporciona el catálogo interactivo de agentes de IA y habilidades técnicas (*skills*) de la biblioteca corporativa (`biblioteca-agentes`), correlacionando qué agentes emplean cada skill, métricas de reusabilidad y comando de despliegue.
+- **Respuesta (`200 OK`)**: Estructura Envelope (`success`, `data`, `metadata`). Si la biblioteca externa no está presente localmente (entorno VPS), sirve de forma transparente el dataset estático generado en `data/output/agents_catalog.json`.
+- **Esquema**:
+
   ```json
   {
     "success": true,
@@ -386,27 +413,32 @@ Invocada por el cliente [`dashboards/reportes-incidencias/api-client.js`](file:/
 ### 10. Auditoría de Ingesta y Telemetría Semántica
 
 #### `GET /api/logs/ingestion`
+
 * **Invocado por**: Consola de Auditoría y Telemetría IA en el Cockpit del Incident Manager (<kbd>Shift</kbd> + <kbd>I</kbd>).
-* **Parámetros**: `?lines=N` (número de líneas a leer desde el final del log; por defecto `100`, máximo `1000`).
-* **Propósito**: Devuelve en tiempo real las últimas líneas de [`data/logs/ingestion_audit.log`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/data/logs/ingestion_audit.log) para diagnóstico de la carga de ficheros CSV, tiempos de conversión, llamadas a Epsilon y estado de enriquecimiento.
-* **Respuesta (`200 OK`)**: Texto plano estructurado (`text/plain; charset=utf-8`) o JSON envelope conteniendo las trazas.
+- **Parámetros**: `?lines=N` (número de líneas a leer desde el final del log; por defecto `100`, máximo `1000`).
+- **Propósito**: Devuelve en tiempo real las últimas líneas de [`data/logs/ingestion_audit.log`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/data/logs/ingestion_audit.log) para diagnóstico de la carga de ficheros CSV, tiempos de conversión, llamadas a Epsilon y estado de enriquecimiento.
+- **Respuesta (`200 OK`)**: Texto plano estructurado (`text/plain; charset=utf-8`) o JSON envelope conteniendo las trazas.
 
 #### `POST /api/ingestion/retry-ia` (alias: `POST /api/epsilon/retry`)
+
 * **Invocado por**: Botón *"Forzar Refresco / Reintentar Resumen IA"* en la Consola de Auditoría.
-* **Payload JSON (opcional)**:
+- **Payload JSON (opcional)**:
+
   ```json
   {
     "incident_ids": ["INC000004167733", "INC000004152079"],
     "force": true
   }
   ```
+
 * **Propósito**: Relanza de forma controlada el enriquecimiento semántico mediante Epsilon IA para aquellas incidencias activas que hayan quedado en estado `PARCIAL` o `INCOMPLETA` (por errores transitorios de red o timeouts).
-* **Comportamiento**:
+- **Comportamiento**:
   1. Filtra automáticamente las incidencias en estado terminal (evitando peticiones redundantes).
   2. Consulta Epsilon IA actualizando la caché local en `.epsilon_cache/`.
   3. Regenera [`data/output/high_priority_notifications.json`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/data/output/high_priority_notifications.json) y [`data/output/ingestion_audit_summary.json`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/data/output/ingestion_audit_summary.json).
   4. Registra el detalle del reintento en `data/logs/ingestion_audit.log`.
-* **Respuesta (`200 OK`)**:
+- **Respuesta (`200 OK`)**:
+
   ```json
   {
     "success": true,
@@ -422,21 +454,25 @@ Invocada por el cliente [`dashboards/reportes-incidencias/api-client.js`](file:/
 ### 11. Ingesta y Detalle Remedy MonTMC API
 
 #### `POST /api/sync-remedy`
+
 * **Invocado por**: Botón *"⚡ Sincronizar Remedy"* en la cabecera de la Consola de Triaje (`dashboards/emergency-triage-console/`).
-* **Parámetros Query / Body JSON (opcionales)**:
+- **Parámetros Query / Body JSON (opcionales)**:
+
   ```json
   {
     "dias": 3,
     "usuario": "jdelat"
   }
   ```
+
   *(Por defecto `dias=3` y `usuario="jdelat"`, configurables mediante variables de entorno).*
-* **Propósito**: Ejecuta la sincronización incremental de incidencias masivas consultando la API corporativa MonTMC (`GET https://soptmc.si.orange.es/MonTMC/api/epsilon/masivas?usuario={user}&dias={dias}`), realiza upsert sobre el histórico semestral (`data/output/historical_incidents.json` y `data/output/historical_kpis.json`), y reevalúa automáticamente las notificaciones ejecutivas de alta prioridad (`evaluate_incident_notifications.py`).
-* **Códigos de Estado**:
+- **Propósito**: Ejecuta la sincronización incremental de incidencias masivas consultando la API corporativa MonTMC (`GET https://soptmc.si.orange.es/MonTMC/api/epsilon/masivas?usuario={user}&dias={dias}`), realiza upsert sobre el histórico semestral (`data/output/historical_incidents.json` y `data/output/historical_kpis.json`), y reevalúa automáticamente las notificaciones ejecutivas de alta prioridad (`evaluate_incident_notifications.py`).
+- **Códigos de Estado**:
   - `200 OK`: Sincronización finalizada correctamente. Devuelve métricas de inserción/actualización.
   - `500 Internal Server Error`: Fallo interno durante la persistencia o reevaluación.
   - `502 Bad Gateway`: Error de conectividad o HTTP en la llamada a MonTMC.
-* **Respuesta (`200 OK`)**:
+- **Respuesta (`200 OK`)**:
+
   ```json
   {
     "success": true,
@@ -450,21 +486,23 @@ Invocada por el cliente [`dashboards/reportes-incidencias/api-client.js`](file:/
   ```
 
 #### `GET /api/remedy/detail/{idRemedy}`
+
 * **Invocado por**: Sección colapsable *"Notas Técnicas y Worklog Remedy"* en el Modal Orquestador de la Consola de Triaje (`triage.js`) y en el modal compartido de Epsilon IA (`resumen-ia.js`).
-* **Parámetros**:
+- **Parámetros**:
   - `{idRemedy}` en el path (ej: `INC000004179897`).
   - `?refresh=true` (opcional): Invalida la caché y fuerza una nueva llamada a la API corporativa MonTMC.
-* **Propósito**: Recupera el detalle enriquecido de una incidencia desde MonTMC (`GET https://soptmc.si.orange.es/MonTMC//api/eps/remedyG/{idRemedy}`), incluyendo notas de trabajo (worklogs), asignaciones y estados técnicos.
-* **Estrategia de Caché**:
+- **Propósito**: Recupera el detalle enriquecido de una incidencia desde MonTMC (`GET https://soptmc.si.orange.es/MonTMC//api/eps/remedyG/{idRemedy}`), incluyendo notas de trabajo (worklogs), asignaciones y estados técnicos.
+- **Estrategia de Caché**:
   1. Caché en memoria `REMEDY_DETAIL_CACHE` con TTL de 10 minutos.
   2. Caché persistente en disco en `data/.remedy_cache/{idRemedy}.json` con TTL de 1 hora.
   3. Soporte para parámetro `?refresh=true` para forzar invalidación inmediata.
-* **Códigos de Estado**:
+- **Códigos de Estado**:
   - `200 OK`: Detalle recuperado (desde caché o API remota).
   - `400 Bad Request`: Formato de identificador inválido (debe coincidir con `^INC\d+$`).
   - `404 Not Found`: Incidencia no encontrada en Remedy / MonTMC.
   - `502 Bad Gateway`: Error de comunicación con la API corporativa MonTMC.
-* **Respuesta (`200 OK`)**:
+- **Respuesta (`200 OK`)**:
+
   ```json
   {
     "idRemedy": "INC000004179897",
@@ -490,11 +528,12 @@ Invocada por el cliente [`dashboards/reportes-incidencias/api-client.js`](file:/
   ```
 
 #### Variables de Entorno MonTMC
+
 * `MON_TMC_BASE_URL`: URL base de la API corporativa (por defecto `https://soptmc.si.orange.es/MonTMC`).
-* `MON_TMC_USER`: Usuario corporativo para las consultas (por defecto `jdelat`).
-* `MON_TMC_DEFAULT_DAYS`: Días de histórico hacia atrás para la consulta masiva (por defecto `3`).
-* `MON_TMC_TIMEOUT`: Timeout en segundos para las peticiones HTTP (por defecto `10`).
-* `MON_TMC_RETRIES`: Número de reintentos con backoff exponencial (por defecto `2`).
+- `MON_TMC_USER`: Usuario corporativo para las consultas (por defecto `jdelat`).
+- `MON_TMC_DEFAULT_DAYS`: Días de histórico hacia atrás para la consulta masiva (por defecto `3`).
+- `MON_TMC_TIMEOUT`: Timeout en segundos para las peticiones HTTP (por defecto `10`).
+- `MON_TMC_RETRIES`: Número de reintentos con backoff exponencial (por defecto `2`).
 
 ---
 

@@ -1,6 +1,7 @@
 # Especificación: Ingesta Automatizada de Incidencias Remedy vía API MonTMC y Enriquecimiento On-Demand de Worklogs
 
 ## Objetivo
+
 Actualmente, la actualización del dataset de incidencias masivas y de la Consola de Triaje de Emergencias requiere que los operadores descarguen manualmente un archivo CSV/Excel desde las herramientas corporativas y lo suban a la plataforma. Este proceso manual introduce fricción operativa, desfase temporal de los datos durante guardias críticas y dependencia de acciones humanas repetitivas.
 
 Esta función resuelve el problema integrando directamente la plataforma con las APIs corporativas de MonTMC / Epsilon (`https://soptmc.si.orange.es`), permitiendo sincronizar incidencias masivas de forma automática o mediante un solo clic, y enriquecer el detalle de las incidencias con las anotaciones técnicas de los resolutores (worklogs de Remedy) bajo demanda. El impacto es una reducción a cero del tiempo de espera para disponer de datos actualizados en el triaje de emergencias y una visibilidad inmediata de las acciones técnicas en curso.
@@ -8,6 +9,7 @@ Esta función resuelve el problema integrando directamente la plataforma con las
 ## Requisitos
 
 ### Requisitos Obligatorios
+
 1. **Modo Híbrido de Sincronización:**
    - La sincronización debe poder dispararse bajo demanda desde un botón interactivo en la cabecera de la Consola de Triaje ("Sincronizar Remedy").
    - La sincronización debe poder ejecutarse de forma programada y desatendida mediante una tarea periódica en el servidor (cron) o comando CLI.
@@ -46,6 +48,7 @@ Esta función resuelve el problema integrando directamente la plataforma con las
 ---
 
 ## Restricciones
+
 1. **Librería estándar de Python:** El cliente MonTMC y los scripts de sincronización deben desarrollarse utilizando exclusivamente librerías estándar de Python 3 (`urllib.request`, `json`, `pathlib`, `datetime`, `dataclasses`, `os`), sin incorporar paquetes externos adicionales en `requirements.txt`.
 2. **Prohibición de escaneos masivos a `remedyG`:** Está terminantemente prohibido invocar el endpoint `remedyG/{idRemedy}` en bucles indiscriminados o para el conjunto completo de incidencias históricas. Su consumo debe ser estrictamente individual y bajo demanda.
 3. **Compatibilidad total de tests:** Todos los tests preexistentes del repositorio (`converters/tests/`) deben continuar ejecutándose y aprobándose sin regresiones.
@@ -54,6 +57,7 @@ Esta función resuelve el problema integrando directamente la plataforma con las
 ---
 
 ## Casos límite
+
 1. **Cuando la API MonTMC no responde, produce timeout o devuelve un error HTTP 5xx:** El sistema no debe modificar ni corromper el dataset masivo existente en disco, debe registrar una advertencia en la auditoría de ingesta, retornar una respuesta JSON de error controlada (HTTP 502/504) y mostrar un aviso no bloqueante al usuario en la interfaz indicando la falta de conectividad temporal.
 2. **Cuando la API MonTMC devuelve una lista de incidencias vacía (`incidencias: []`):** El sistema debe interpretar la respuesta como una anomalía de la ventana o del servicio, abortar la escritura para no vaciar el dataset local y generar una alerta en el log.
 3. **Cuando se consulta el detalle técnico de una incidencia inexistente en Remedy (`codigoResp != 0`):** El endpoint backend debe responder con HTTP 404 estructurado y la interfaz debe informar amigablemente que no existen notas registradas en Remedy para ese identificador, sin bloquear el resto del modal.
@@ -63,6 +67,7 @@ Esta función resuelve el problema integrando directamente la plataforma con las
 ---
 
 ## Definición de terminado
+
 1. **Cliente MonTMC implementado y probado:** Existe el módulo `converters/src/montmc_client.py` con métodos para consultar `fetch_masivas` y `fetch_remedy_detail`, junto con la suite `converters/tests/unit/test_montmc_client.py` alcanzando 100% de éxito con mocks.
 2. **CLI de Sincronización Funcional:** Existe `converters/cli/sync_montmc_incidents.py` ejecutable por terminal con parámetros `--dias`, `--usuario`, `--dry-run` y `--output`, validado con tests en `converters/tests/unit/test_sync_montmc.py` que verifiquen el algoritmo de upsert no destructivo.
 3. **Endpoints Backend en Funcionamiento:** El servidor `serve_app.py` expone `POST /api/sync-remedy` (disparo de sincronización) y `GET /api/remedy/detail/{idRemedy}` (consulta con caché local temporal), respondiendo con esquemas válidos y códigos HTTP esperados.
