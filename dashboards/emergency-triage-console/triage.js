@@ -3373,11 +3373,6 @@ function renderFeed() {
               <span class="triage-sev-badge ${remedyBadgeClass}" title="Severidad nominal inicial en Remedy">${escapeHtml(sevNominal)}</span>
               <span class="triage-eval-arrow" aria-hidden="true">➔</span>
               <span class="triage-sev-badge ${itilBadgeClass}" title="Severidad auditada según Criterio ITIL Orange">${itilLabel}</span>
-              ${isDisc ? `
-                <span class="triage-itil-delta-sub delta-${delta >= 2 ? '2' : '1'}" title="Discrepancia detectada: subescalación N1 de ${delta} nivel(es)">
-                  +${delta} Nivel${delta > 1 ? 'es' : ''}
-                </span>
-              ` : ''}
             </div>
             <div class="triage-eval-urgency-row">
               <span class="triage-urgency-pill ${urgencyBadgeClass}" title="${escapeHtml(urgencyTooltip)}">
