@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Despliegue automatizado y modernizado de Release Dashboard Application en infocodes@10.132.26.96.
 
@@ -396,6 +396,9 @@ if (-not $SkipBuild) {
         if (Test-Path "$ProjectRoot\scripts\deploy.sh") {
             Copy-Item "$ProjectRoot\scripts\deploy.sh" -Destination $StagingDir
         }
+        if (Test-Path "$ProjectRoot\scripts\sync-remedy-cron.sh") {
+            Copy-Item "$ProjectRoot\scripts\sync-remedy-cron.sh" -Destination $StagingDir
+        }
 
         # 5. Copiar configuración de Nginx y metadatos
         Copy-Item "$ProjectRoot\nginx.conf" -Destination $StagingDir
@@ -646,17 +649,21 @@ if [ -f "`$NEW_RELEASE_DIR/maintenance.sh" ]; then
     cp -f "`$NEW_RELEASE_DIR/maintenance.sh" "`$REMOTE_DIR/maintenance.sh"
     chmod +x "`$REMOTE_DIR/maintenance.sh"
 fi
+if [ -f "`$NEW_RELEASE_DIR/sync-remedy-cron.sh" ]; then
+    cp -f "`$NEW_RELEASE_DIR/sync-remedy-cron.sh" "`$REMOTE_DIR/sync-remedy-cron.sh"
+    chmod +x "`$REMOTE_DIR/sync-remedy-cron.sh"
+fi
 if [ -f "`$NEW_RELEASE_DIR/VERSION" ]; then
     cp -f "`$NEW_RELEASE_DIR/VERSION" "`$REMOTE_DIR/VERSION"
 fi
 chmod +x "`$REMOTE_DIR/status.sh" "`$REMOTE_DIR/rollback.sh"
 
 # 8. Limpiar elementos residuales en la raíz de `$REMOTE_DIR
-#    Solo deben quedar: current, releases, shared, data, logs, status.sh, rollback.sh, maintenance.sh, VERSION
+#    Solo deben quedar: current, releases, shared, data, logs, status.sh, rollback.sh, maintenance.sh, sync-remedy-cron.sh, VERSION
 echo "--> [Remoto] Limpiando elementos residuales en la raíz de `$REMOTE_DIR..."
 for entry in `$(ls -A "`$REMOTE_DIR"); do
     case "`$entry" in
-        current|releases|shared|data|logs|status.sh|rollback.sh|maintenance.sh|VERSION)
+        current|releases|shared|data|logs|status.sh|rollback.sh|maintenance.sh|sync-remedy-cron.sh|VERSION)
             ;;
         *)
             rm -rf "`$REMOTE_DIR/`$entry" 2>/dev/null || true

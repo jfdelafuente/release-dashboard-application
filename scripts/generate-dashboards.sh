@@ -177,6 +177,19 @@ else
     exit 1
 fi
 
+# Sincronizar Remedy MonTMC API (últimos 3 días) para incorporar las últimas modificaciones
+log "Sincronizando incidencias recientes desde API MonTMC..."
+sync_script="${CONVERTERS_DIR}/cli/sync_montmc_incidents.py"
+if [ -f "${sync_script}" ]; then
+    if "${PYTHON_CMD}" "${sync_script}" --dias 3 2>>"${LOG_FILE}"; then
+        log "✓ Sincronización MonTMC completada"
+    else
+        log "⚠ Advertencia: Error o timeout en sincronización MonTMC (se conservan datos locales)"
+    fi
+else
+    log "ℹ Sincronizador MonTMC no presente en ${CONVERTERS_DIR}/cli/"
+fi
+
 # Generar notificaciones de alta prioridad (P1/P2)
 log "Evaluando notificaciones de alta prioridad..."
 eval_script="${CONVERTERS_DIR}/cli/evaluate_incident_notifications.py"

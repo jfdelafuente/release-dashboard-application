@@ -88,56 +88,63 @@ ensure_dir() {
 }
 
 # ------------------------------------------------------------------------------
-# 1. Rotación segura de dashboards-cron.log (Copy-Truncate)
+# 1. Rotación segura de logs de cron (Copy-Truncate)
 # ------------------------------------------------------------------------------
-rotate_cron_log() {
-    ensure_dir
+rotate_single_cron_file() {
+    local target_file="$1"
+    local target_name="$(basename "$target_file")"
 
-    if [ ! -f "$CRON_LOG_FILE" ]; then
-        log_info "No existe ${CRON_LOG_FILE}, nada que rotar para cron"
+    if [ ! -f "$target_file" ]; then
+        log_info "No existe ${target_file}, nada que rotar"
         return 0
     fi
 
     local size
-    size="$(file_size "$CRON_LOG_FILE")"
+    size="$(file_size "$target_file")"
     if [ "$FORCE" -eq 0 ] && [ "$size" -lt "$CRON_LOG_MIN_BYTES" ]; then
-        log_info "dashboards-cron.log tiene $(du -h "$CRON_LOG_FILE" 2>/dev/null | cut -f1) (por debajo del umbral de ${CRON_LOG_MIN_BYTES} bytes). No se rota."
+        log_info "${target_name} tiene $(du -h "$target_file" 2>/dev/null | cut -f1) (por debajo del umbral de ${CRON_LOG_MIN_BYTES} bytes). No se rota."
         return 0
     fi
 
-    log_info "Rotando ${CRON_LOG_FILE} ($(du -h "$CRON_LOG_FILE" 2>/dev/null | cut -f1)) con copy-truncate..."
+    log_info "Rotando ${target_file} ($(du -h "$target_file" 2>/dev/null | cut -f1)) con copy-truncate..."
 
     # Desplazar rotaciones existentes: .3 -> .4, .2 -> .3, .1 -> .2
     local max_rot=$((CRON_LOG_RETENTION - 1))
     local i
     for ((i = max_rot; i >= 1; i--)); do
         local next=$((i + 1))
-        if [ -f "${CRON_LOG_FILE}.${i}.gz" ]; then
-            mv -f "${CRON_LOG_FILE}.${i}.gz" "${CRON_LOG_FILE}.${next}.gz"
-        elif [ -f "${CRON_LOG_FILE}.${i}" ]; then
-            mv -f "${CRON_LOG_FILE}.${i}" "${CRON_LOG_FILE}.${next}"
+        if [ -f "${target_file}.${i}.gz" ]; then
+            mv -f "${target_file}.${i}.gz" "${target_file}.${next}.gz"
+        elif [ -f "${target_file}.${i}" ]; then
+            mv -f "${target_file}.${i}" "${target_file}.${next}"
         fi
     done
 
     # Copy-truncate del archivo activo
-    cp -p "$CRON_LOG_FILE" "${CRON_LOG_FILE}.1"
-    : > "$CRON_LOG_FILE"
+    cp -p "$target_file" "${target_file}.1"
+    : > "$target_file"
 
     # Comprimir la rotación reciente si gzip está disponible
     if command -v gzip >/dev/null 2>&1; then
-        gzip -f "${CRON_LOG_FILE}.1"
-        log_success "dashboards-cron.log rotado y comprimido a dashboards-cron.log.1.gz"
+        gzip -f "${target_file}.1"
+        log_success "${target_name} rotado y comprimido a ${target_name}.1.gz"
     else
-        log_success "dashboards-cron.log rotado a dashboards-cron.log.1"
+        log_success "${target_name} rotado a ${target_name}.1"
     fi
 
     # Eliminar rotaciones que excedan la retención configurada
     local excess_files
-    excess_files=$(ls -1t "${CRON_LOG_FILE}".[0-9]* 2>/dev/null | tail -n +"$((CRON_LOG_RETENTION + 1))" || true)
+    excess_files=$(ls -1t "${target_file}".[0-9]* 2>/dev/null | tail -n +"$((CRON_LOG_RETENTION + 1))" || true)
     if [ -n "$excess_files" ]; then
         echo "$excess_files" | xargs -r rm -f --
-        log_info "Eliminadas rotaciones antiguas de cron que superaban el límite de ${CRON_LOG_RETENTION}"
+        log_info "Eliminadas rotaciones antiguas de ${target_name} que superaban el límite de ${CRON_LOG_RETENTION}"
     fi
+}
+
+rotate_cron_log() {
+    ensure_dir
+    rotate_single_cron_file "$CRON_LOG_FILE"
+    rotate_single_cron_file "${LOG_DIR}/remedy-sync-cron.log"
 }
 
 # ------------------------------------------------------------------------------
