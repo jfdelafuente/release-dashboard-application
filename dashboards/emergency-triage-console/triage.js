@@ -496,8 +496,16 @@
 
     const rawList = payload.data || payload.incidents || payload.all_active_incidents || payload.pending_incidents || [];
     const list = Array.isArray(rawList) ? rawList : Object.values(rawList);
-    // Filtrado estricto: las incidencias en estado Cerrado, Resuelto o Canceladas no entran al triaje
-    state.incidents = list.filter(inc => !isTerminalStatus(inc.estatus || inc.estado || inc.status));
+    // Filtrado estricto y deduplicación defensiva por ID de incidencia
+    const seenIds = new Set();
+    state.incidents = list.filter(inc => {
+      const id = String(inc.id || inc['ID de incidencia'] || '').trim();
+      if (id) {
+        if (seenIds.has(id)) return false;
+        seenIds.add(id);
+      }
+      return !isTerminalStatus(inc.estatus || inc.estado || inc.status);
+    });
 
     // Actualizar KPIs superiores de Ingesta (Foco 100% en Incidencias Activas)
     const kpis = state.metadata.kpis || {};

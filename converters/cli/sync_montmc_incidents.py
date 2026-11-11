@@ -213,29 +213,32 @@ def sync_remedy_incidents(
 
     data_list: List[Dict[str, Any]] = existing_dataset.get("data", [])
 
-    # Indexar registros existentes por 'ID de incidencia'
-    existing_index: Dict[str, Tuple[int, Dict[str, Any]]] = {}
-    for idx, item in enumerate(data_list):
+    # Indexar registros existentes preservando el orden original y deduplicando si existieran
+    records_by_id: Dict[str, Dict[str, Any]] = {}
+    ordered_ids: List[str] = []
+    for item in data_list:
         inc_id = str(item.get("ID de incidencia") or "").strip()
-        if inc_id:
-            existing_index[inc_id] = (idx, item)
+        if inc_id and inc_id not in records_by_id:
+            records_by_id[inc_id] = item
+            ordered_ids.append(inc_id)
 
     # 3. Aplicar Upsert Incremental
     nuevas = 0
     actualizadas = 0
     sin_cambios = 0
+    new_ids: List[str] = []
 
     incoming_normalized: List[Dict[str, Any]] = []
     for raw_rec in raw_incidencias:
         norm_rec = api_client.normalize_mon_tmc_record(raw_rec)
-        inc_id = norm_rec.get("ID de incidencia")
+        inc_id = str(norm_rec.get("ID de incidencia") or "").strip()
         if not inc_id:
             continue
 
         incoming_normalized.append(norm_rec)
 
-        if inc_id in existing_index:
-            idx, old_rec = existing_index[inc_id]
+        if inc_id in records_by_id:
+            old_rec = records_by_id[inc_id]
             # Evaluar si ha cambiado algún campo clave
             has_changes = False
             for k in ("Estatus", "Grupo asignado", "Grupo Resolutor", "Fecha de última resolución",
@@ -248,17 +251,20 @@ def sync_remedy_incidents(
                 # Actualizar campos conservando atributos locales previos
                 updated_rec = dict(old_rec)
                 updated_rec.update(norm_rec)
-                data_list[idx] = updated_rec
-                existing_index[inc_id] = (idx, updated_rec)
+                records_by_id[inc_id] = updated_rec
                 actualizadas += 1
             else:
                 sin_cambios += 1
         else:
-            # Nuevo registro: insertar al inicio del listado
-            data_list.insert(0, norm_rec)
-            existing_index[inc_id] = (0, norm_rec)
-            # Reindexar posiciones si fuera necesario (no crítico para los siguientes inserts)
+            # Nuevo registro: registrar en mapa y al frente de la cola de nuevos IDs
+            records_by_id[inc_id] = norm_rec
+            new_ids.append(inc_id)
             nuevas += 1
+
+    # Reconstruir listado ordenado: nuevos al inicio (más recientes), seguidos de los existentes
+    final_data_list = [records_by_id[i] for i in new_ids] + [records_by_id[i] for i in ordered_ids if i not in set(new_ids)]
+    existing_dataset["data"] = final_data_list
+    data_list = final_data_list
 
     # 4. Recalcular KPIs y Metadatos
     total_records = len(data_list)

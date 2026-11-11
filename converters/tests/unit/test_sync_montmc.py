@@ -155,6 +155,84 @@ def test_sync_updates_modified_existing_incident(mock_dataset, tmp_path):
     assert updated["_metadata"]["kpis"]["pending"] == 0
 
 
+def test_sync_mixed_insert_and_update_never_duplicates_or_overwrites_shifted_indices(mock_dataset, tmp_path):
+    """
+    Regresión crítica: verifica que al insertar tickets nuevos (que van al inicio)
+    y actualizar tickets existentes en la misma llamada, NO se generen IDs duplicados
+    ni se sobreescriban registros adyacentes por desplazamiento de índices de lista.
+    """
+    mock_client = MagicMock(spec=MonTMCClient)
+    mock_client.default_user = "testuser"
+    mock_client.fetch_masivas.return_value = {
+        "success": True,
+        "incidencias": [
+            {"idRemedy": "INC_BRAND_NEW_1"},
+            {"idRemedy": "INC000000000001"},  # Existente en mock_dataset
+            {"idRemedy": "INC_BRAND_NEW_2"},
+        ],
+    }
+
+    def mock_normalize(raw):
+        id_val = raw["idRemedy"]
+        if id_val == "INC000000000001":
+            return {
+                "ID de incidencia": "INC000000000001",
+                "Prioridad": "P1",
+                "Descripción": "Actualizado desde Remedy",
+                "Estatus": "Resuelto",
+                "Fecha de envío": "01/10/2026 10:00",
+                "Grupo asignado": "N1 SOPORTE",
+                "Urgencia": "Alta",
+                "Impacto": "Masiva",
+            }
+        return {
+            "ID de incidencia": id_val,
+            "Prioridad": "P2",
+            "Descripción": f"Nuevo ticket {id_val}",
+            "Estatus": "Asignado",
+            "Fecha de envío": "11/11/2026 11:00",
+            "Grupo asignado": "N2",
+            "Urgencia": "Media",
+            "Impacto": "Masiva",
+        }
+
+    mock_client.normalize_mon_tmc_record.side_effect = mock_normalize
+
+    res = sync_remedy_incidents(
+        dias=3,
+        output_path=mock_dataset,
+        skip_notifications=True,
+        project_root=tmp_path,
+        client=mock_client,
+    )
+
+    assert res["success"] is True
+    assert res["nuevas"] == 2
+    assert res["actualizadas"] == 1
+    # Había 2 originales + 2 nuevos = 4 en total
+    assert res["total_dataset"] == 4
+
+    with open(mock_dataset, "r", encoding="utf-8") as f:
+        updated = json.load(f)
+
+    data = updated["data"]
+    ids = [r["ID de incidencia"] for r in data]
+    assert len(ids) == 4
+    # Comprobar unicidad absoluta: ningún ID duplicado
+    assert len(set(ids)) == 4
+    assert set(ids) == {"INC_BRAND_NEW_1", "INC_BRAND_NEW_2", "INC000000000001", "INC000004064075" if "INC000004064075" in ids else "INC000000000002"}
+
+    # Comprobar que INC1 tiene la descripción actualizada
+    inc1 = next(r for r in data if r["ID de incidencia"] == "INC000000000001")
+    assert inc1["Descripción"] == "Actualizado desde Remedy"
+    assert inc1["Estatus"] == "Resuelto"
+
+    # Comprobar que el otro ticket original INC2 no fue sobreescrito ni destruido
+    inc2 = next(r for r in data if r["ID de incidencia"] == "INC000000000002")
+    assert inc2["Descripción"] == "Ticket cerrado hace 2 meses"
+    assert inc2["Estatus"] == "Cerrado"
+
+
 def test_sync_dry_run_does_not_modify_file(mock_dataset, tmp_path):
     mtime_before = mock_dataset.stat().st_mtime
 
