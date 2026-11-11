@@ -1202,6 +1202,7 @@ class CustomHTTPHandler(http.server.SimpleHTTPRequestHandler):
                     "worklogs": worklogs,
                     "detalle": remedy_node.get("detalle") or "",
                     "solucion": remedy_node.get("detalleSolucion") or "",
+                    "estado": remedy_node.get("estadoDesc") or "",
                     "paps": remedy_node.get("paps") or [],
                     "_cached": False,
                 }

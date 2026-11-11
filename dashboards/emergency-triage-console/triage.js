@@ -2370,8 +2370,13 @@ Proceder con la ejecución inmediata del procedimiento de Rollback. Confirmar in
       `;
     }
 
-    // 2. Banner de Solución Oficial Remedy si existe
-    if (solucion) {
+    // 2. Banner de Solución Oficial Remedy SOLO si el ticket está en estado terminal (Resuelto, Cerrado o Cancelado)
+    const isTerminalStatus = (st) => {
+      if (!st) return false;
+      const s = String(st).toLowerCase().trim();
+      return s.includes('resuelt') || s.includes('resolv') || s.includes('cerrad') || s.includes('clos') || s.includes('cancel');
+    };
+    if (solucion && isTerminalStatus(item.estado)) {
       html += `
         <div class="remedy-detail-banner">
           <strong>💡 Detalle de Solución / Cierre en Remedy:</strong>
@@ -2515,11 +2520,15 @@ Proceder con la ejecución inmediata del procedimiento de Rollback. Confirmar in
       const substantiveList = normalized.filter(e => !e.isSystem);
       const allList = normalized;
 
+      const inc = state.incidents && state.incidents.find(i => (i.id || i['ID de incidencia']) === cleanId);
+      const ticketEstado = (data.estado || (data.remedy && data.remedy.estadoDesc) || (inc && (inc.estatus || inc.estado || inc.Estatus)) || '').trim();
+
       if (!state.remedyWorklogData) state.remedyWorklogData = {};
       state.remedyWorklogData[cleanId] = {
         cleanId,
         solucion: (data.solucion || '').trim(),
         detalle: (data.detalle || '').trim(),
+        estado: ticketEstado,
         isCached: Boolean(data._cached),
         isDisk: data._source === 'disk_fallback',
         substantiveList,

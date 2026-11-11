@@ -175,6 +175,14 @@
         `;
     }
 
+    let currentIncidentStatus = '';
+
+    function isTerminalStatus(st) {
+        if (!st) return false;
+        const s = String(st).toLowerCase().trim();
+        return s.includes('resuelt') || s.includes('resolv') || s.includes('cerrad') || s.includes('clos') || s.includes('cancel');
+    }
+
     function getStatusClass(status) {
         if (!status) return '';
         const s = status.toLowerCase();
@@ -186,6 +194,7 @@
 
     function renderContent(code, data) {
         const estado = data.estadoActual || 'DESCONOCIDO';
+        currentIncidentStatus = estado;
         const statusClass = getStatusClass(estado);
         const sistemas = Array.isArray(data.sistemas) ? data.sistemas : [];
         const hitos = Array.isArray(data.hitosTecnicos) ? data.hitosTecnicos : [];
@@ -607,8 +616,10 @@
             `;
         }
 
-        // 2. Banner de Solución Oficial Remedy si existe
-        if (solucion) {
+        // 2. Banner de Solución Oficial Remedy SOLO si el ticket está en estado terminal (Resuelto, Cerrado o Cancelado).
+        // Si el ticket está En Curso o Asignado, se ignora para erradicar alucinaciones de cierre prematuro
+        // por textos obsoletos o revocados que Remedy conserva en base de datos tras reaperturas (LIFECYCLE_STATUS_MISMATCH).
+        if (solucion && isTerminalStatus(entry.estado)) {
             html += `
                 <div style="background:#FFF7ED;border:1px solid #FED7AA;border-left:3px solid #FF7900;border-radius:6px;padding:8px 12px;margin-bottom:10px;font-size:12px;color:#9A3412;">
                     <strong>💡 Solución / Cierre Remedy:</strong>
@@ -735,10 +746,13 @@
                     const substantiveList = normalized.filter(e => !e.isSystem);
                     const allList = normalized;
 
+                    const ticketEstado = (data.estado || (data.remedy && data.remedy.estadoDesc) || currentIncidentStatus || '').trim();
+
                     remedyWorklogCache.set(code, {
                         code,
                         solucion: (data.solucion || '').trim(),
                         detalle: (data.detalle || '').trim(),
+                        estado: ticketEstado,
                         substantiveList,
                         allList,
                         filterMode: 'substantive'
