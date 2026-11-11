@@ -1366,7 +1366,7 @@ Proceder con la ejecución inmediata del procedimiento de Rollback. Confirmar in
     }
   }
 
-  function generateDynamicTemplates(inc, phase = 'inicial') {
+  function generateDynamicTemplates(inc, phase = 'inicial', forceRawTemplate = false) {
     if (!inc) {
       return {
         completo: '',
@@ -1427,18 +1427,20 @@ Proceder con la ejecución inmediata del procedimiento de Rollback. Confirmar in
       breve = `[SL1 RESUELTO] Normalizado el servicio en ${sistemas} (${proceso}) tras ${totalDurationText}. Validación satisfactoria. Post-Mortem (PIR) programado en 48h con IM-CSO.`;
     }
 
-    // Si la incidencia ya cuenta con mensaje oficial pre-redactado por el agente incident-reporter, priorizarlo
-    const phaseKey = phase === 'inicial' ? 'apertura' : (phase === 'actualizacion' ? 'seguimiento' : 'cierre');
-    let msgPre = inc.mensajes_ejecutivos && inc.mensajes_ejecutivos[phaseKey];
-    if (!msgPre && inc.id) {
-      try {
-        const cached = localStorage.getItem(`triage_official_msg_${inc.id}_${phaseKey}`);
-        if (cached) msgPre = JSON.parse(cached);
-      } catch (_) {}
-    }
-    if (msgPre && msgPre.completo && msgPre.estado !== 'pendiente') {
-      completo = msgPre.completo;
-      if (msgPre.breve) breve = msgPre.breve;
+    // Si la incidencia ya cuenta con mensaje oficial pre-redactado por el agente incident-reporter y no se fuerza regeneración, priorizarlo
+    if (!forceRawTemplate) {
+      const phaseKey = phase === 'inicial' ? 'apertura' : (phase === 'actualizacion' ? 'seguimiento' : 'cierre');
+      let msgPre = inc.mensajes_ejecutivos && inc.mensajes_ejecutivos[phaseKey];
+      if (!msgPre && inc.id) {
+        try {
+          const cached = localStorage.getItem(`triage_official_msg_${inc.id}_${phaseKey}`);
+          if (cached) msgPre = JSON.parse(cached);
+        } catch (_) {}
+      }
+      if (msgPre && msgPre.completo && msgPre.estado !== 'pendiente') {
+        completo = msgPre.completo;
+        if (msgPre.breve) breve = msgPre.breve;
+      }
     }
 
     return {
@@ -1541,7 +1543,7 @@ Proceder con la ejecución inmediata del procedimiento de Rollback. Confirmar in
     return { completo, breve };
   }
 
-  function renderCommsTemplateTab(inc, phase = 'inicial') {
+  function renderCommsTemplateTab(inc, phase = 'inicial', forceRawTemplate = false) {
     state.activeCommsPhase = phase;
 
     // Actualizar botones de fase
@@ -1567,7 +1569,7 @@ Proceder con la ejecución inmediata del procedimiento de Rollback. Confirmar in
 
     if (!inc) return;
 
-    const data = generateDynamicTemplates(inc, phase);
+    const data = generateDynamicTemplates(inc, phase, forceRawTemplate);
 
     // Actualizar grid de metadatos (con tooltips accesibles)
     if (dom.tplMetaSistemas) {
@@ -1596,18 +1598,20 @@ Proceder con la ejecución inmediata del procedimiento de Rollback. Confirmar in
     let textCompleto = data.completo;
     let textBreve = data.breve;
 
-    try {
-      const draftComp = localStorage.getItem(`triage_draft_tpl_comp_${inc.id}_${phase}`);
-      const draftBrev = localStorage.getItem(`triage_draft_tpl_brev_${inc.id}_${phase}`);
-      if (draftComp !== null && draftComp.trim() !== '' && draftComp !== data.completo) {
-        textCompleto = draftComp;
-        hasDraft = true;
-      }
-      if (draftBrev !== null && draftBrev.trim() !== '' && draftBrev !== data.breve) {
-        textBreve = draftBrev;
-        hasDraft = true;
-      }
-    } catch (_) {}
+    if (!forceRawTemplate) {
+      try {
+        const draftComp = localStorage.getItem(`triage_draft_tpl_comp_${inc.id}_${phase}`);
+        const draftBrev = localStorage.getItem(`triage_draft_tpl_brev_${inc.id}_${phase}`);
+        if (draftComp !== null && draftComp.trim() !== '' && draftComp !== data.completo) {
+          textCompleto = draftComp;
+          hasDraft = true;
+        }
+        if (draftBrev !== null && draftBrev.trim() !== '' && draftBrev !== data.breve) {
+          textBreve = draftBrev;
+          hasDraft = true;
+        }
+      } catch (_) {}
+    }
 
     if (dom.tplDraftAlert) {
       dom.tplDraftAlert.style.display = hasDraft ? 'flex' : 'none';
@@ -1620,30 +1624,53 @@ Proceder con la ejecución inmediata del procedimiento de Rollback. Confirmar in
     // Actualizar indicador de estado de redacción del Agente
     const agentBadge = document.getElementById('exec-modal-agent-status');
     if (agentBadge) {
-      const phaseKey = phase === 'inicial' ? 'apertura' : (phase === 'actualizacion' ? 'seguimiento' : 'cierre');
-      let msgPre = inc.mensajes_ejecutivos && inc.mensajes_ejecutivos[phaseKey];
-      if (!msgPre && inc.id) {
-        try {
-          const cached = localStorage.getItem(`triage_official_msg_${inc.id}_${phaseKey}`);
-          if (cached) msgPre = JSON.parse(cached);
-        } catch (_) {}
-      }
-      const isOfficial = Boolean(msgPre && msgPre.completo && msgPre.estado !== 'pendiente');
-      agentBadge.style.display = 'inline-flex';
-      if (isOfficial) {
-        agentBadge.textContent = '🤖 Salida Agente Confirmada';
-        agentBadge.style.background = 'rgba(16, 185, 129, 0.1)';
-        agentBadge.style.color = '#059669';
-        agentBadge.style.borderColor = 'rgba(16, 185, 129, 0.3)';
+      if (forceRawTemplate) {
+        agentBadge.textContent = '✨ Plantilla Dinámica (Datos Ticket)';
+        agentBadge.style.background = 'rgba(255, 121, 0, 0.12)';
+        agentBadge.style.color = '#c05a00';
+        agentBadge.style.borderColor = 'rgba(255, 121, 0, 0.35)';
+        agentBadge.style.display = 'inline-flex';
       } else {
-        agentBadge.textContent = '⏳ Redacción Agente Pendiente';
-        agentBadge.style.background = 'rgba(99, 102, 241, 0.1)';
-        agentBadge.style.color = '#4F46E5';
-        agentBadge.style.borderColor = 'rgba(99, 102, 241, 0.25)';
+        const phaseKey = phase === 'inicial' ? 'apertura' : (phase === 'actualizacion' ? 'seguimiento' : 'cierre');
+        let msgPre = inc.mensajes_ejecutivos && inc.mensajes_ejecutivos[phaseKey];
+        if (!msgPre && inc.id) {
+          try {
+            const cached = localStorage.getItem(`triage_official_msg_${inc.id}_${phaseKey}`);
+            if (cached) msgPre = JSON.parse(cached);
+          } catch (_) {}
+        }
+        const isOfficial = Boolean(msgPre && msgPre.completo && msgPre.estado !== 'pendiente');
+        agentBadge.style.display = 'inline-flex';
+        if (isOfficial) {
+          agentBadge.textContent = '🤖 Salida Agente Confirmada';
+          agentBadge.style.background = 'rgba(16, 185, 129, 0.1)';
+          agentBadge.style.color = '#059669';
+          agentBadge.style.borderColor = 'rgba(16, 185, 129, 0.3)';
+        } else {
+          agentBadge.textContent = '⏳ Redacción Agente Pendiente';
+          agentBadge.style.background = 'rgba(99, 102, 241, 0.1)';
+          agentBadge.style.color = '#4F46E5';
+          agentBadge.style.borderColor = 'rgba(99, 102, 241, 0.25)';
+        }
       }
     }
 
     updateWordCounters();
+
+    // Efecto visual de recarga / regeneración (glow naranja momentáneo)
+    if (forceRawTemplate) {
+      [dom.tplTextCompleto, dom.tplTextBreve].forEach(el => {
+        if (el) {
+          el.style.transition = 'box-shadow 0.25s ease, border-color 0.25s ease';
+          el.style.borderColor = '#ff7900';
+          el.style.boxShadow = '0 0 0 3px rgba(255, 121, 0, 0.25)';
+          setTimeout(() => {
+            el.style.borderColor = '';
+            el.style.boxShadow = '';
+          }, 600);
+        }
+      });
+    }
   }
 
   function transferTemplateToGateway() {
@@ -4539,7 +4566,7 @@ Puente Teams: ${teamsUrl}
       });
     }
 
-    // Regenerar texto con datos del ticket (limpia borradores)
+    // Regenerar texto con datos del ticket (limpia borradores y fuerza plantilla Canal A)
     if (dom.btnTplRegenerate) {
       dom.btnTplRegenerate.addEventListener('click', () => {
         const incId = state.activeCommsIncId || state.activeOrchIncId;
@@ -4552,8 +4579,8 @@ Puente Teams: ${teamsUrl}
           if (dom.tplDraftAlert) dom.tplDraftAlert.style.display = 'none';
           const inc = state.incidents.find(i => i.id === incId);
           if (inc) {
-            renderCommsTemplateTab(inc, phase);
-            showToast('Textos oficiales regenerados con datos actuales del ticket', 'info');
+            renderCommsTemplateTab(inc, phase, true);
+            showToast('✨ Textos regenerados con datos actuales del ticket (Canal A)', 'info');
           }
         }
       });
