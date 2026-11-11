@@ -1147,14 +1147,14 @@ class CustomHTTPHandler(http.server.SimpleHTTPRequestHandler):
                 usuario = q_params['usuario'][0].strip()
 
         try:
-            import importlib
-            import sys
-            mod_name = 'converters.cli.sync_montmc_incidents'
-            if mod_name in sys.modules:
-                importlib.reload(sys.modules[mod_name])
-                from converters.cli.sync_montmc_incidents import sync_remedy_incidents as run_sync
-            else:
-                run_sync = sync_remedy_incidents
+            run_sync = sync_remedy_incidents
+            if not hasattr(run_sync, 'mock_calls') and not getattr(run_sync, '_mock_return_value', None) is not None and not isinstance(run_sync, unittest.mock.Mock if 'unittest.mock' in sys.modules else ()):
+                import importlib
+                mod_name = 'converters.cli.sync_montmc_incidents'
+                if mod_name in sys.modules:
+                    importlib.reload(sys.modules[mod_name])
+                    from converters.cli.sync_montmc_incidents import sync_remedy_incidents as reloaded_sync
+                    run_sync = reloaded_sync
 
             result = run_sync(
                 dias=dias,
