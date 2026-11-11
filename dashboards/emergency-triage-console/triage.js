@@ -225,6 +225,7 @@
     btnTplRegenerate: document.getElementById('btn-tpl-regenerate'),
     btnCopyAgentPrompt: document.getElementById('btn-copy-agent-prompt'),
     btnPasteAgentOutput: document.getElementById('btn-paste-agent-output'),
+    btnSaveAgentOfficial: document.getElementById('btn-save-agent-official'),
     btnTplLoadGateway: document.getElementById('btn-tpl-load-gateway'),
 
     // Gateway Web de Explotación
@@ -1428,7 +1429,13 @@ Proceder con la ejecución inmediata del procedimiento de Rollback. Confirmar in
 
     // Si la incidencia ya cuenta con mensaje oficial pre-redactado por el agente incident-reporter, priorizarlo
     const phaseKey = phase === 'inicial' ? 'apertura' : (phase === 'actualizacion' ? 'seguimiento' : 'cierre');
-    const msgPre = inc.mensajes_ejecutivos && inc.mensajes_ejecutivos[phaseKey];
+    let msgPre = inc.mensajes_ejecutivos && inc.mensajes_ejecutivos[phaseKey];
+    if (!msgPre && inc.id) {
+      try {
+        const cached = localStorage.getItem(`triage_official_msg_${inc.id}_${phaseKey}`);
+        if (cached) msgPre = JSON.parse(cached);
+      } catch (_) {}
+    }
     if (msgPre && msgPre.completo && msgPre.estado !== 'pendiente') {
       completo = msgPre.completo;
       if (msgPre.breve) breve = msgPre.breve;
@@ -1614,7 +1621,13 @@ Proceder con la ejecución inmediata del procedimiento de Rollback. Confirmar in
     const agentBadge = document.getElementById('exec-modal-agent-status');
     if (agentBadge) {
       const phaseKey = phase === 'inicial' ? 'apertura' : (phase === 'actualizacion' ? 'seguimiento' : 'cierre');
-      const msgPre = inc.mensajes_ejecutivos && inc.mensajes_ejecutivos[phaseKey];
+      let msgPre = inc.mensajes_ejecutivos && inc.mensajes_ejecutivos[phaseKey];
+      if (!msgPre && inc.id) {
+        try {
+          const cached = localStorage.getItem(`triage_official_msg_${inc.id}_${phaseKey}`);
+          if (cached) msgPre = JSON.parse(cached);
+        } catch (_) {}
+      }
       const isOfficial = Boolean(msgPre && msgPre.completo && msgPre.estado !== 'pendiente');
       agentBadge.style.display = 'inline-flex';
       if (isOfficial) {
@@ -3405,11 +3418,20 @@ function renderFeed() {
 
     // Mensajes Ejecutivos completados (incident-reporter)
     const msgsEjecutivos = inc.mensajes_ejecutivos || {};
-    const hasMensajesEjecutivos = Boolean(
+    let hasMensajesEjecutivos = Boolean(
       (msgsEjecutivos.apertura && (msgsEjecutivos.apertura.completo || msgsEjecutivos.apertura.generado_por_agente) && msgsEjecutivos.apertura.estado !== 'pendiente') ||
       (msgsEjecutivos.seguimiento && (msgsEjecutivos.seguimiento.completo || msgsEjecutivos.seguimiento.generado_por_agente) && msgsEjecutivos.seguimiento.estado !== 'pendiente') ||
       (msgsEjecutivos.cierre && (msgsEjecutivos.cierre.completo || msgsEjecutivos.cierre.generado_por_agente) && msgsEjecutivos.cierre.estado !== 'pendiente')
     );
+    if (!hasMensajesEjecutivos && incId) {
+      try {
+        hasMensajesEjecutivos = Boolean(
+          localStorage.getItem(`triage_official_msg_${incId}_apertura`) ||
+          localStorage.getItem(`triage_official_msg_${incId}_seguimiento`) ||
+          localStorage.getItem(`triage_official_msg_${incId}_cierre`)
+        );
+      } catch (_) {}
+    }
 
     return `
       <!-- Fila Resumen Principal (Modo Tabular - 6 Columnas) -->
@@ -4614,7 +4636,163 @@ Puente Teams: ${teamsUrl}
 
         updateWordCounters();
         if (dom.tplDraftAlert) dom.tplDraftAlert.style.display = 'flex';
-        showToast('Salida del Agente aplicada a versión completa y breve', 'success');
+        showToast('Salida del Agente aplicada. Pulsa "Guardar Mensaje Oficial" para consolidarla.', 'success');
+      });
+    }
+
+    // Guardar como Mensaje Oficial en Almacén Central (/api/incident-manager/save-message)
+    if (dom.btnSaveAgentOfficial) {
+      dom.btnSaveAgentOfficial.addEventListener('click', async () => {
+        const incId = state.activeCommsIncId || state.activeOrchIncId;
+        const phase = state.activeCommsPhase || 'inicial';
+        if (!incId) {
+          showToast('No hay una incidencia activa seleccionada', 'warning');
+          return;
+        }
+
+        const phaseKey = phase === 'inicial' ? 'apertura' : (phase === 'actualizacion' ? 'seguimiento' : 'cierre');
+        const textCompleto = dom.tplTextCompleto ? dom.tplTextCompleto.value.trim() : '';
+        const textBreve = dom.tplTextBreve ? dom.tplTextBreve.value.trim() : '';
+
+        if (!textCompleto && !textBreve) {
+          showToast('Introduce o pega al menos una versión (completa o breve) antes de guardar', 'warning');
+          return;
+        }
+
+        // Validación estricta de límites de palabras (<= 90 completo, <= 30 breve)
+        const countWords = (str) => (str || '').trim().split(/\s+/).filter(Boolean).length;
+        const wordsComp = countWords(textCompleto);
+        const wordsBrev = countWords(textBreve);
+
+        if (wordsComp > 90) {
+          showToast(`La Versión Completa excede el límite de 90 palabras (${wordsComp} palabras)`, 'warning');
+          return;
+        }
+        if (wordsBrev > 30) {
+          showToast(`La Versión Breve excede el límite de 30 palabras (${wordsBrev} palabras)`, 'warning');
+          return;
+        }
+
+        const originalBtnHtml = dom.btnSaveAgentOfficial.innerHTML;
+        dom.btnSaveAgentOfficial.disabled = true;
+        dom.btnSaveAgentOfficial.innerHTML = '<span aria-hidden="true">⏳</span> <span>Guardando...</span>';
+
+        let savedRemotely = false;
+        try {
+          const resp = await fetch('/api/incident-manager/save-message', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              incident_id: incId,
+              phase: phaseKey,
+              completo: textCompleto,
+              breve: textBreve,
+              origen: 'incident-reporter'
+            })
+          });
+
+          if (resp.ok) {
+            const data = await resp.json().catch(() => ({}));
+            if (data && data.success !== false) {
+              savedRemotely = true;
+            } else if (data && data.error) {
+              throw new Error(data.error);
+            }
+          } else if (resp.status === 400) {
+            const data = await resp.json().catch(() => ({}));
+            throw new Error(data.error || `Error de validación (${resp.status})`);
+          }
+        } catch (err) {
+          if (err.message && (err.message.includes('palabras') || err.message.includes('Fase'))) {
+            showToast(`Error de validación: ${err.message}`, 'error');
+            dom.btnSaveAgentOfficial.disabled = false;
+            dom.btnSaveAgentOfficial.innerHTML = originalBtnHtml;
+            return;
+          }
+          console.warn('[Consola Triaje] Guardando con fallback local:', err);
+        }
+
+        // 1. Actualizar estado en memoria de la incidencia
+        const inc = state.incidents.find(i => i.id === incId);
+        if (inc) {
+          if (!inc.mensajes_ejecutivos) inc.mensajes_ejecutivos = {};
+          inc.mensajes_ejecutivos[phaseKey] = {
+            completo: textCompleto,
+            breve: textBreve,
+            estado: 'oficial',
+            generado_por_agente: true,
+            fecha_generacion: new Date().toISOString(),
+            origen: 'incident-reporter',
+            conteo_palabras_completo: wordsComp,
+            conteo_palabras_breve: wordsBrev
+          };
+        }
+
+        // 2. Persistir copia oficial en localStorage para resiliencia offline/cliente
+        try {
+          localStorage.setItem(`triage_official_msg_${incId}_${phaseKey}`, JSON.stringify({
+            completo: textCompleto,
+            breve: textBreve,
+            estado: 'oficial',
+            timestamp: new Date().toISOString()
+          }));
+        } catch (_) {}
+
+        // 3. Sincronizar con StateManager global si está presente
+        if (window.StateManager && typeof window.StateManager.setCustomMessage === 'function') {
+          try {
+            window.StateManager.setCustomMessage(incId, phaseKey, textCompleto, textBreve);
+          } catch (_) {}
+        }
+
+        // 4. Limpiar borrador temporal en localStorage
+        try {
+          localStorage.removeItem(`triage_draft_tpl_comp_${incId}_${phase}`);
+          localStorage.removeItem(`triage_draft_tpl_brev_${incId}_${phase}`);
+        } catch (_) {}
+        if (dom.tplDraftAlert) dom.tplDraftAlert.style.display = 'none';
+
+        // 5. Conmutar badge del modal a Confirmado (verde)
+        const agentBadge = document.getElementById('exec-modal-agent-status');
+        if (agentBadge) {
+          agentBadge.textContent = '🤖 Salida Agente Confirmada';
+          agentBadge.style.background = 'rgba(16, 185, 129, 0.1)';
+          agentBadge.style.color = '#059669';
+          agentBadge.style.borderColor = 'rgba(16, 185, 129, 0.3)';
+          agentBadge.style.display = 'inline-flex';
+        }
+
+        // 6. Registrar en bitácora auditable de la incidencia
+        const phaseName = phase === 'inicial' ? 'Inicial' : (phase === 'actualizacion' ? 'Actualización' : 'Cierre');
+        addLogEntry(
+          incId,
+          'NOTIFICACION',
+          `🤖 Mensaje Oficial Confirmado (${phaseName})`,
+          `Comunicado ejecutivo oficial (${wordsComp} pal. comp. / ${wordsBrev} pal. breve) consolidado por Incident Manager.`,
+          'role-notificacion'
+        );
+
+        // 7. Si es fase inicial, completar reloj 20m de orquestación
+        if (phase === 'inicial') {
+          const escState = state.orchestratorEscalations[incId] || {};
+          escState.commDone = true;
+          state.orchestratorEscalations[incId] = escState;
+          try {
+            localStorage.setItem('emergency_esc_' + incId, JSON.stringify(escState));
+          } catch (_) {}
+          updateOrchestratorClocks();
+        }
+
+        // 8. Refrescar tabla para que la micro-marca pase a verde '📢 Mensajes'
+        renderTable();
+
+        const successMsg = savedRemotely
+          ? '✅ Mensaje oficial guardado en almacén central y notificaciones actualizadas'
+          : '✅ Mensaje oficial consolidado y validado con éxito';
+        showToast(successMsg, 'success');
+
+        dom.btnSaveAgentOfficial.disabled = false;
+        dom.btnSaveAgentOfficial.innerHTML = originalBtnHtml;
       });
     }
 

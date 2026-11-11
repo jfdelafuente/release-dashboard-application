@@ -423,8 +423,15 @@ def test_enrichment_indicators_ia_and_executive_comms():
     assert "is-comms" in js, "triage.js debe aplicar clase is-comms en la marca de comunicaciones"
     assert "btn-open-exec-comm" in js, "triage.js debe soportar botón interactivo para abrir comunicaciones ejecutivas"
     assert "btnCopyAgentPrompt" in js, "triage.js debe soportar botón para copiar el prompt estructurado del agente"
+    assert "btnPasteAgentOutput" in js, "triage.js debe soportar botón para pegar y parsear la salida del agente"
+    assert "btnSaveAgentOfficial" in js, "triage.js debe soportar botón para consolidar y guardar el mensaje oficial"
     assert "buildAgentPrompt" in js, "triage.js debe construir el prompt de incident-reporter"
     assert "triage-detail-enrichment-bar" in js, "triage.js debe mostrar el estado de redacción oficial en el detalle expandido"
+
+    html = (CONSOLE_DIR / "index.html").read_text(encoding="utf-8")
+    assert 'id="btn-copy-agent-prompt"' in html, "index.html debe contener el botón #btn-copy-agent-prompt"
+    assert 'id="btn-paste-agent-output"' in html, "index.html debe contener el botón #btn-paste-agent-output"
+    assert 'id="btn-save-agent-official"' in html, "index.html debe contener el botón #btn-save-agent-official"
 
     # 3. Validación contra el dataset real de notificaciones
     with open(NOTIFICATIONS_JSON_PATH, "r", encoding="utf-8") as f:
