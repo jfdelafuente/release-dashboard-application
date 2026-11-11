@@ -1387,8 +1387,8 @@ if __name__ == '__main__':
     print("==================================================\n")
     print("Presiona Ctrl+C para detener el servidor\n")
 
-    socketserver.TCPServer.allow_reuse_address = True
-    with socketserver.TCPServer(("", PORT), CustomHTTPHandler) as httpd:
+    socketserver.ThreadingTCPServer.allow_reuse_address = True
+    with socketserver.ThreadingTCPServer(("", PORT), CustomHTTPHandler) as httpd:
         try:
             httpd.serve_forever()
         except KeyboardInterrupt:

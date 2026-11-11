@@ -4636,6 +4636,17 @@ Puente Teams: ${teamsUrl}
 
         updateWordCounters();
         if (dom.tplDraftAlert) dom.tplDraftAlert.style.display = 'flex';
+
+        // Actualizar indicador de cabecera a estado de salida pegada pendiente de consolidar
+        const agentBadge = document.getElementById('exec-modal-agent-status');
+        if (agentBadge) {
+          agentBadge.textContent = '🤖 Salida Pegada (Sin Guardar)';
+          agentBadge.style.background = 'rgba(245, 158, 11, 0.12)';
+          agentBadge.style.color = '#d97706';
+          agentBadge.style.borderColor = 'rgba(245, 158, 11, 0.35)';
+          agentBadge.style.display = 'inline-flex';
+        }
+
         showToast('Salida del Agente aplicada. Pulsa "Guardar Mensaje Oficial" para consolidarla.', 'success');
       });
     }
@@ -4677,122 +4688,141 @@ Puente Teams: ${teamsUrl}
         dom.btnSaveAgentOfficial.disabled = true;
         dom.btnSaveAgentOfficial.innerHTML = '<span aria-hidden="true">⏳</span> <span>Guardando...</span>';
 
-        let savedRemotely = false;
         try {
-          const resp = await fetch('/api/incident-manager/save-message', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              incident_id: incId,
-              phase: phaseKey,
+          let savedRemotely = false;
+
+          // 1. Enviar al backend con timeout protector de 5 segundos para evitar bloqueos indefinidos
+          let timeoutId = null;
+          let fetchSignal = undefined;
+          if (typeof AbortController !== 'undefined') {
+            const controller = new AbortController();
+            timeoutId = setTimeout(() => controller.abort(), 5000);
+            fetchSignal = controller.signal;
+          }
+
+          try {
+            const resp = await fetch('/api/incident-manager/save-message', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              signal: fetchSignal,
+              body: JSON.stringify({
+                incident_id: incId,
+                phase: phaseKey,
+                completo: textCompleto,
+                breve: textBreve,
+                origen: 'incident-reporter'
+              })
+            });
+            if (timeoutId) clearTimeout(timeoutId);
+
+            if (resp.ok) {
+              const data = await resp.json().catch(() => ({}));
+              if (data && data.success !== false) {
+                savedRemotely = true;
+              } else if (data && data.error) {
+                throw new Error(data.error);
+              }
+            } else if (resp.status === 400) {
+              const data = await resp.json().catch(() => ({}));
+              throw new Error(data.error || `Error de validación (${resp.status})`);
+            } else {
+              throw new Error(`Error en servidor (${resp.status})`);
+            }
+          } catch (fetchErr) {
+            if (timeoutId) clearTimeout(timeoutId);
+            if (fetchErr.message && (fetchErr.message.includes('palabras') || fetchErr.message.includes('Fase'))) {
+              showToast(`Error de validación: ${fetchErr.message}`, 'error');
+              return;
+            }
+            console.warn('[Consola Triaje] Persistiendo con fallback local (backend no disponible o demorado):', fetchErr);
+          }
+
+          // 2. Actualizar estado en memoria de la incidencia
+          const inc = state.incidents.find(i => i.id === incId);
+          if (inc) {
+            if (!inc.mensajes_ejecutivos) inc.mensajes_ejecutivos = {};
+            inc.mensajes_ejecutivos[phaseKey] = {
               completo: textCompleto,
               breve: textBreve,
-              origen: 'incident-reporter'
-            })
-          });
-
-          if (resp.ok) {
-            const data = await resp.json().catch(() => ({}));
-            if (data && data.success !== false) {
-              savedRemotely = true;
-            } else if (data && data.error) {
-              throw new Error(data.error);
-            }
-          } else if (resp.status === 400) {
-            const data = await resp.json().catch(() => ({}));
-            throw new Error(data.error || `Error de validación (${resp.status})`);
+              estado: 'oficial',
+              generado_por_agente: true,
+              fecha_generacion: new Date().toISOString(),
+              origen: 'incident-reporter',
+              conteo_palabras_completo: wordsComp,
+              conteo_palabras_breve: wordsBrev
+            };
           }
-        } catch (err) {
-          if (err.message && (err.message.includes('palabras') || err.message.includes('Fase'))) {
-            showToast(`Error de validación: ${err.message}`, 'error');
-            dom.btnSaveAgentOfficial.disabled = false;
-            dom.btnSaveAgentOfficial.innerHTML = originalBtnHtml;
-            return;
+
+          // 3. Persistir copia oficial en localStorage para resiliencia offline/cliente
+          try {
+            localStorage.setItem(`triage_official_msg_${incId}_${phaseKey}`, JSON.stringify({
+              completo: textCompleto,
+              breve: textBreve,
+              estado: 'oficial',
+              timestamp: new Date().toISOString()
+            }));
+          } catch (_) {}
+
+          // 4. Sincronizar con StateManager global si está presente
+          if (window.StateManager && typeof window.StateManager.setCustomMessage === 'function') {
+            try {
+              window.StateManager.setCustomMessage(incId, phaseKey, textCompleto, textBreve);
+            } catch (_) {}
           }
-          console.warn('[Consola Triaje] Guardando con fallback local:', err);
-        }
 
-        // 1. Actualizar estado en memoria de la incidencia
-        const inc = state.incidents.find(i => i.id === incId);
-        if (inc) {
-          if (!inc.mensajes_ejecutivos) inc.mensajes_ejecutivos = {};
-          inc.mensajes_ejecutivos[phaseKey] = {
-            completo: textCompleto,
-            breve: textBreve,
-            estado: 'oficial',
-            generado_por_agente: true,
-            fecha_generacion: new Date().toISOString(),
-            origen: 'incident-reporter',
-            conteo_palabras_completo: wordsComp,
-            conteo_palabras_breve: wordsBrev
-          };
-        }
-
-        // 2. Persistir copia oficial en localStorage para resiliencia offline/cliente
-        try {
-          localStorage.setItem(`triage_official_msg_${incId}_${phaseKey}`, JSON.stringify({
-            completo: textCompleto,
-            breve: textBreve,
-            estado: 'oficial',
-            timestamp: new Date().toISOString()
-          }));
-        } catch (_) {}
-
-        // 3. Sincronizar con StateManager global si está presente
-        if (window.StateManager && typeof window.StateManager.setCustomMessage === 'function') {
+          // 5. Limpiar borrador temporal en localStorage
           try {
-            window.StateManager.setCustomMessage(incId, phaseKey, textCompleto, textBreve);
+            localStorage.removeItem(`triage_draft_tpl_comp_${incId}_${phase}`);
+            localStorage.removeItem(`triage_draft_tpl_brev_${incId}_${phase}`);
           } catch (_) {}
+          if (dom.tplDraftAlert) dom.tplDraftAlert.style.display = 'none';
+
+          // 6. Conmutar badge del modal a Confirmado (verde)
+          const agentBadge = document.getElementById('exec-modal-agent-status');
+          if (agentBadge) {
+            agentBadge.textContent = '🤖 Salida Agente Confirmada';
+            agentBadge.style.background = 'rgba(16, 185, 129, 0.1)';
+            agentBadge.style.color = '#059669';
+            agentBadge.style.borderColor = 'rgba(16, 185, 129, 0.3)';
+            agentBadge.style.display = 'inline-flex';
+          }
+
+          // 7. Registrar en bitácora auditable de la incidencia
+          const phaseName = phase === 'inicial' ? 'Inicial' : (phase === 'actualizacion' ? 'Actualización' : 'Cierre');
+          addLogEntry(
+            incId,
+            'NOTIFICACION',
+            `🤖 Mensaje Oficial Confirmado (${phaseName})`,
+            `Comunicado ejecutivo oficial (${wordsComp} pal. comp. / ${wordsBrev} pal. breve) consolidado por Incident Manager.`,
+            'role-notificacion'
+          );
+
+          // 8. Si es fase inicial, completar reloj 20m de orquestación
+          if (phase === 'inicial') {
+            const escState = state.orchestratorEscalations[incId] || {};
+            escState.commDone = true;
+            state.orchestratorEscalations[incId] = escState;
+            try {
+              localStorage.setItem('emergency_esc_' + incId, JSON.stringify(escState));
+            } catch (_) {}
+            updateOrchestratorClocks();
+          }
+
+          // 9. Refrescar tabla para que la micro-marca pase a verde '📢 Mensajes'
+          renderTable();
+
+          const successMsg = savedRemotely
+            ? '✅ Mensaje oficial guardado en almacén central y notificaciones actualizadas'
+            : '✅ Mensaje oficial consolidado y guardado con éxito';
+          showToast(successMsg, 'success');
+
+        } catch (globalErr) {
+          console.error('[Consola Triaje] Error inesperado guardando mensaje oficial:', globalErr);
+          showToast(`Error: ${globalErr.message || globalErr}`, 'error');
+        } finally {
+          dom.btnSaveAgentOfficial.disabled = false;
+          dom.btnSaveAgentOfficial.innerHTML = originalBtnHtml;
         }
-
-        // 4. Limpiar borrador temporal en localStorage
-        try {
-          localStorage.removeItem(`triage_draft_tpl_comp_${incId}_${phase}`);
-          localStorage.removeItem(`triage_draft_tpl_brev_${incId}_${phase}`);
-        } catch (_) {}
-        if (dom.tplDraftAlert) dom.tplDraftAlert.style.display = 'none';
-
-        // 5. Conmutar badge del modal a Confirmado (verde)
-        const agentBadge = document.getElementById('exec-modal-agent-status');
-        if (agentBadge) {
-          agentBadge.textContent = '🤖 Salida Agente Confirmada';
-          agentBadge.style.background = 'rgba(16, 185, 129, 0.1)';
-          agentBadge.style.color = '#059669';
-          agentBadge.style.borderColor = 'rgba(16, 185, 129, 0.3)';
-          agentBadge.style.display = 'inline-flex';
-        }
-
-        // 6. Registrar en bitácora auditable de la incidencia
-        const phaseName = phase === 'inicial' ? 'Inicial' : (phase === 'actualizacion' ? 'Actualización' : 'Cierre');
-        addLogEntry(
-          incId,
-          'NOTIFICACION',
-          `🤖 Mensaje Oficial Confirmado (${phaseName})`,
-          `Comunicado ejecutivo oficial (${wordsComp} pal. comp. / ${wordsBrev} pal. breve) consolidado por Incident Manager.`,
-          'role-notificacion'
-        );
-
-        // 7. Si es fase inicial, completar reloj 20m de orquestación
-        if (phase === 'inicial') {
-          const escState = state.orchestratorEscalations[incId] || {};
-          escState.commDone = true;
-          state.orchestratorEscalations[incId] = escState;
-          try {
-            localStorage.setItem('emergency_esc_' + incId, JSON.stringify(escState));
-          } catch (_) {}
-          updateOrchestratorClocks();
-        }
-
-        // 8. Refrescar tabla para que la micro-marca pase a verde '📢 Mensajes'
-        renderTable();
-
-        const successMsg = savedRemotely
-          ? '✅ Mensaje oficial guardado en almacén central y notificaciones actualizadas'
-          : '✅ Mensaje oficial consolidado y validado con éxito';
-        showToast(successMsg, 'success');
-
-        dom.btnSaveAgentOfficial.disabled = false;
-        dom.btnSaveAgentOfficial.innerHTML = originalBtnHtml;
       });
     }
 
