@@ -83,7 +83,7 @@
           </button>
 
           <!-- Botón de configuración de Canales Microsoft Teams -->
-          <button id="btn-teams-channels-config" class="triage-btn triage-btn-teams-header" title="Configurar Canales y Enrutamiento de Microsoft Teams">
+          <button id="btn-teams-channels-config" class="triage-btn triage-btn-teams-header" title="Configurar Canales y Enrutamiento de Microsoft Teams" onclick="window.openTeamsConfigModal ? window.openTeamsConfigModal() : (function(){ var m = document.getElementById('modal-teams-config'); if(m) { m.classList.add('open'); m.setAttribute('aria-hidden', 'false'); } })()">
             <span aria-hidden="true">💬</span>
             <span>Canales Teams</span>
           </button>
@@ -1721,7 +1721,7 @@
   <script src="/dashboards/assets/ui-feedback.js"></script>
   <script src="/dashboards/assets/topbar.js"></script>
   <script src="/dashboards/assets/resumen-ia.js"></script>
-  <script src="./triage.js?v=20261111_1826"></script>
+  <script src="./triage.js?v=20261112_1425"></script>
 </body>
 </html>
 

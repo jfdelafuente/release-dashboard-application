@@ -4505,7 +4505,8 @@ function renderFeed() {
         if (dom.modalIngestionAudit && dom.modalIngestionAudit.classList.contains('open')) {
           closeIngestionAuditModal();
         }
-        if (dom.modalTeamsConfig && dom.modalTeamsConfig.classList.contains('open')) {
+        const modalTeams = dom.modalTeamsConfig || document.getElementById('modal-teams-config');
+        if (modalTeams && modalTeams.classList.contains('open')) {
           closeTeamsConfigModal();
         }
         return;
@@ -6518,29 +6519,67 @@ Puente Teams: ${teamsUrl}
   }
 
   async function openTeamsConfigModal() {
-    if (!dom.modalTeamsConfig) return;
-    await loadTeamsConfig();
-    renderTeamsModalContent();
-    dom.modalTeamsConfig.classList.add('open');
-    dom.modalTeamsConfig.setAttribute('aria-hidden', 'false');
+    const modal = dom.modalTeamsConfig || document.getElementById('modal-teams-config');
+    if (!modal) {
+      console.error('[Teams] Modal #modal-teams-config no encontrado en el DOM.');
+      return;
+    }
+    modal.classList.add('open');
+    modal.setAttribute('aria-hidden', 'false');
+
+    try {
+      await loadTeamsConfig();
+    } catch (err) {
+      console.warn('[Teams] Advertencia al refrescar configuración:', err);
+    }
+
+    try {
+      renderTeamsModalContent();
+    } catch (err) {
+      console.error('[Teams] Error renderizando contenido del modal Teams:', err);
+    }
   }
 
   function closeTeamsConfigModal() {
-    if (!dom.modalTeamsConfig) return;
-    dom.modalTeamsConfig.classList.remove('open');
-    dom.modalTeamsConfig.setAttribute('aria-hidden', 'true');
+    const modal = dom.modalTeamsConfig || document.getElementById('modal-teams-config');
+    if (!modal) return;
+    modal.classList.remove('open');
+    modal.setAttribute('aria-hidden', 'true');
     closeChannelForm();
   }
 
+  // Exponer a ámbito global window para invocaciones inline y compatibilidad
+  window.openTeamsConfigModal = openTeamsConfigModal;
+  window.closeTeamsConfigModal = closeTeamsConfigModal;
+
   function setupTeamsListeners() {
-    if (dom.btnTeamsConfig) {
-      dom.btnTeamsConfig.addEventListener('click', openTeamsConfigModal);
+    const btnOpen = dom.btnTeamsConfig || document.getElementById('btn-teams-channels-config');
+    if (btnOpen) {
+      btnOpen.onclick = (e) => {
+        if (e && e.preventDefault) e.preventDefault();
+        openTeamsConfigModal();
+      };
     }
-    if (dom.btnModalTeamsClose) {
-      dom.btnModalTeamsClose.addEventListener('click', closeTeamsConfigModal);
+    const btnClose = dom.btnModalTeamsClose || document.getElementById('btn-modal-teams-close');
+    if (btnClose) {
+      btnClose.onclick = (e) => {
+        if (e && e.preventDefault) e.preventDefault();
+        closeTeamsConfigModal();
+      };
     }
-    if (dom.btnModalTeamsCloseBottom) {
-      dom.btnModalTeamsCloseBottom.addEventListener('click', closeTeamsConfigModal);
+    const btnCloseBottom = dom.btnModalTeamsCloseBottom || document.getElementById('btn-modal-teams-close-bottom');
+    if (btnCloseBottom) {
+      btnCloseBottom.onclick = (e) => {
+        if (e && e.preventDefault) e.preventDefault();
+        closeTeamsConfigModal();
+      };
+    }
+
+    const modal = dom.modalTeamsConfig || document.getElementById('modal-teams-config');
+    if (modal) {
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) closeTeamsConfigModal();
+      });
     }
 
     // Pestañas internas
@@ -6589,16 +6628,19 @@ Puente Teams: ${teamsUrl}
     }
 
     // Botón Nuevo Canal
-    if (dom.btnTeamsAddChannel) {
-      dom.btnTeamsAddChannel.addEventListener('click', () => openChannelForm());
+    const btnAddChannel = dom.btnTeamsAddChannel || document.getElementById('btn-teams-add-channel');
+    if (btnAddChannel) {
+      btnAddChannel.addEventListener('click', () => openChannelForm());
     }
-    if (dom.btnTeamsFormCancel) {
-      dom.btnTeamsFormCancel.addEventListener('click', closeChannelForm);
+    const btnCancelForm = dom.btnTeamsFormCancel || document.getElementById('btn-teams-form-cancel');
+    if (btnCancelForm) {
+      btnCancelForm.addEventListener('click', closeChannelForm);
     }
 
     // Guardar Canal desde formulario
-    if (dom.teamsChannelForm) {
-      dom.teamsChannelForm.addEventListener('submit', async (e) => {
+    const channelForm = dom.teamsChannelForm || document.getElementById('teams-channel-form');
+    if (channelForm) {
+      channelForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         const inputId = document.getElementById('teams-form-id');
         const inputName = document.getElementById('teams-form-name');
@@ -6639,8 +6681,9 @@ Puente Teams: ${teamsUrl}
     }
 
     // Añadir sobrescritura de grupo
-    if (dom.btnTeamsAddGroupRoute) {
-      dom.btnTeamsAddGroupRoute.addEventListener('click', async () => {
+    const btnAddGroupRoute = dom.btnTeamsAddGroupRoute || document.getElementById('btn-teams-add-group-route');
+    if (btnAddGroupRoute) {
+      btnAddGroupRoute.addEventListener('click', async () => {
         const inputName = document.getElementById('teams-new-group-name');
         const selectAction = document.getElementById('teams-new-group-action');
         const selectChannel = document.getElementById('teams-new-group-channel');
@@ -6681,15 +6724,16 @@ Puente Teams: ${teamsUrl}
     }
 
     // Guardar toda la configuración
-    if (dom.btnTeamsSaveAll) {
-      dom.btnTeamsSaveAll.addEventListener('click', async () => {
-        const origHtml = dom.btnTeamsSaveAll.innerHTML;
-        dom.btnTeamsSaveAll.disabled = true;
-        dom.btnTeamsSaveAll.innerHTML = `<span>⏳ Guardando...</span>`;
+    const btnSaveAll = dom.btnTeamsSaveAll || document.getElementById('btn-teams-save-all');
+    if (btnSaveAll) {
+      btnSaveAll.addEventListener('click', async () => {
+        const origHtml = btnSaveAll.innerHTML;
+        btnSaveAll.disabled = true;
+        btnSaveAll.innerHTML = `<span>⏳ Guardando...</span>`;
 
         const saved = await saveTeamsConfigToServer();
-        dom.btnTeamsSaveAll.disabled = false;
-        dom.btnTeamsSaveAll.innerHTML = origHtml;
+        btnSaveAll.disabled = false;
+        btnSaveAll.innerHTML = origHtml;
 
         if (saved) {
           showToast('✅ Configuración de Canales Microsoft Teams guardada con éxito', 'success');
@@ -6703,15 +6747,20 @@ Puente Teams: ${teamsUrl}
   }
 
   async function init() {
-    await loadScheduledChangesPaP();
-    await loadTeamsConfig();
+    // 1. Inicialización inmediata de listeners para garantizar interactividad instantánea
     setupGlobalListeners();
     setupIngestionAuditListeners();
     setupTeamsListeners();
     updateTabStyles();
-    setupGlobalListeners();
-    setupIngestionAuditListeners();
-    updateTabStyles();
+
+    // 2. Carga asíncrona de datos en paralelo sin bloquear los botones de la interfaz
+    try {
+      await Promise.allSettled([
+        loadScheduledChangesPaP(),
+        loadTeamsConfig()
+      ]);
+    } catch (_) {}
+
     performInspection(false);
     resetAutoRefreshTimer();
 
