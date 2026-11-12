@@ -1669,6 +1669,29 @@ def test_should_prioritize_detailed_remedy_worklogs_over_header_dates():
     assert "Avance técnico" in st["ultimo_extracto"]
 
 
+def test_should_consider_epsilon_hitos_and_recent_modifications_for_worklog_stagnation():
+    """Valida que si Epsilon IA contiene hitos técnicos o modificaciones más recientes que el volcado, se usen para el Work Log."""
+    from converters.cli.evaluate_incident_notifications import compute_worklog_stagnation
+
+    ref_time = datetime(2026, 11, 12, 12, 0, 0)
+    ticket = {
+        "id": "INC0007",
+        "fechaUltimaModificacion": "2026-11-11T16:00:00.000+00:00"  # 17:00 Madrid ayer (~19h de inactividad)
+    }
+    epsilon_data = {
+        "hitosTecnicos": [
+            "[11/11/2026 18:00]: Inicio de análisis",
+            "[12/11/2026 10:30]: Escalado a grupo especialista con evidencias actualizadas"  # Hace 1.5h respecto a las 12:00
+        ]
+    }
+    st = compute_worklog_stagnation(ticket, reference_time=ref_time, epsilon_data=epsilon_data)
+    assert st["horas_sin_worklog"] == 1.5
+    assert st["nivel_inactividad"] == "WL_OK"
+    assert st["es_inactivo_6h"] is False
+    assert st["ultimo_autor"] == "Epsilon IA"
+    assert "Escalado a grupo especialista" in st["ultimo_extracto"]
+
+
 def test_should_include_worklog_status_and_kpis_in_batch_catalog():
     """Valida que evaluate_incidents_batch incluya worklog_status y los KPIs en metadata."""
     from converters.cli.evaluate_incident_notifications import evaluate_incidents_batch

@@ -339,12 +339,18 @@ def compute_worklog_stagnation(
     ticket: dict[str, Any],
     reference_time: Optional[datetime] = None,
     remedy_detail: Optional[dict[str, Any]] = None,
+    epsilon_data: Optional[dict[str, Any]] = None,
     is_planned: bool = False,
     is_zombie: bool = False,
     cache_dir: Optional[Path] = None,
 ) -> dict[str, Any]:
     """Computes operational elapsed time since the last Work Log update or modification,
     and classifies stagnation according to Orange Tech Operations guidelines.
+
+    Evaluates across all available telemetry sources and picks the most recent timestamp:
+    1. Remedy Work Log entries and remedy.fechaUltimaModificacion (.remedy_cache / live)
+    2. Epsilon Resumen IA hitosTecnicos and ultimaModificacion (.epsilon_cache / live)
+    3. Ticket header fechaUltimaModificacion and Fecha de envío
 
     Levels:
     - WL_OK: < 6h (al día)
@@ -377,56 +383,120 @@ def compute_worklog_stagnation(
                 except Exception:
                     remedy_detail = None
 
-    raw_last_date: Optional[str] = None
-    last_user = ""
-    last_group = ""
-    last_text = ""
+    # Intentar resolver síntesis Epsilon desde caché si no se proporciona directamente
+    if not epsilon_data and inc_id:
+        try:
+            eps_candidate = Path(__file__).resolve().parents[2] / "data" / ".epsilon_cache" / f"{inc_id}.json"
+            if eps_candidate.is_file():
+                with open(eps_candidate, "r", encoding="utf-8") as f:
+                    eps_raw = json.load(f)
+                    epsilon_data = eps_raw.get("data") if isinstance(eps_raw, dict) and "data" in eps_raw else eps_raw
+        except Exception:
+            pass
 
-    # 1. Probar worklogs detallados de Remedy
+    # Recolectar candidatos cronológicos: (parsed_dt, raw_date_str, autor, grupo, extracto)
+    candidates: list[tuple[datetime, str, str, str, str]] = []
+
+    # 1. Worklogs detallados y fechaUltimaModificacion de Remedy
     if remedy_detail and isinstance(remedy_detail, dict):
         worklogs = remedy_detail.get("worklogs") or remedy_detail.get("remedy", {}).get("worklog") or []
-        if isinstance(worklogs, list) and len(worklogs) > 0:
-            def wl_sort_key(w: dict[str, Any]) -> float:
-                parsed = parse_incident_datetime(w.get("fecha") or "")
-                return parsed.timestamp() if parsed else 0.0
+        if isinstance(worklogs, list):
+            for wl in worklogs:
+                raw_d = wl.get("fecha")
+                dt = parse_incident_datetime(raw_d)
+                if dt:
+                    u = str(wl.get("usuario") or wl.get("autor") or "").strip()
+                    g = str(wl.get("grupoAsignado") or wl.get("grupo") or "").strip()
+                    t = str(wl.get("detalle") or wl.get("texto") or "").strip()
+                    candidates.append((dt, str(raw_d), u, g, t))
 
-            sorted_wls = sorted(worklogs, key=wl_sort_key)
-            latest = sorted_wls[-1]
-            raw_last_date = latest.get("fecha")
-            last_user = str(latest.get("usuario") or latest.get("autor") or "").strip()
-            last_group = str(latest.get("grupoAsignado") or latest.get("grupo") or "").strip()
-            detail_val = str(latest.get("detalle") or latest.get("texto") or "").strip()
-            if len(detail_val) > 180:
-                detail_val = detail_val[:177] + "..."
-            last_text = detail_val
-
-    # 2. Si no hay worklogs detallados, consultar fechaUltimaModificacion de Remedy/MonTMC
-    if not raw_last_date:
-        raw_last_date = (
-            ticket.get("fechaUltimaModificacion")
-            or ticket.get("fecha_ultima_modificacion")
-            or ticket.get("Fecha de última modificación")
+        rem_mod = (
+            remedy_detail.get("fechaUltimaModificacion")
+            or remedy_detail.get("remedy", {}).get("fechaUltimaModificacion")
         )
-        last_user = str(ticket.get("Modificado por") or ticket.get("usuario_modificacion") or "").strip()
-        last_group = str(ticket.get("Grupo asignado") or ticket.get("Grupo Resolutor") or "").strip()
+        if rem_mod:
+            dt_rem = parse_incident_datetime(rem_mod)
+            if dt_rem:
+                candidates.append((
+                    dt_rem,
+                    str(rem_mod),
+                    str(remedy_detail.get("remedy", {}).get("usuarioAsignado") or "").strip(),
+                    str(remedy_detail.get("remedy", {}).get("grupoAsignado") or "").strip(),
+                    "Modificación registrada en Remedy",
+                ))
 
-    # 3. Fallback a fecha de apertura
-    if not raw_last_date:
-        raw_last_date = (
-            ticket.get("Fecha de envío")
-            or ticket.get("fecha_envio")
-            or ticket.get("fecha_apertura")
+    # 2. Hitos técnicos y fecha de modificación de Epsilon Resumen IA
+    if epsilon_data and isinstance(epsilon_data, dict):
+        eps_mod = (
+            epsilon_data.get("ultima_modificacion")
+            or epsilon_data.get("ultimaModificacion")
+            or epsilon_data.get("fechaUltimaModificacion")
         )
+        if eps_mod:
+            dt_eps = parse_incident_datetime(eps_mod)
+            if dt_eps:
+                candidates.append((dt_eps, str(eps_mod), "Epsilon", "", "Modificación registrada en Epsilon"))
 
-    parsed_dt = parse_incident_datetime(raw_last_date)
+        hitos = epsilon_data.get("hitosTecnicos") or epsilon_data.get("hitos_tecnicos") or []
+        if isinstance(hitos, list):
+            for hito in hitos:
+                m = re.search(r"\[(\d{2}/\d{2}/\d{4}(?:\s+\d{2}:\d{2}(?::\d{2})?)?)\]", str(hito))
+                if m:
+                    dt_hito = parse_incident_datetime(m.group(1))
+                    if dt_hito:
+                        candidates.append((dt_hito, m.group(1), "Epsilon IA", "", str(hito)))
+
+    # 3. Datos de cabecera del ticket (volcado masivo)
+    raw_header_mod = (
+        ticket.get("fechaUltimaModificacion")
+        or ticket.get("fecha_ultima_modificacion")
+        or ticket.get("Fecha de última modificación")
+    )
+    if raw_header_mod:
+        dt_hdr = parse_incident_datetime(raw_header_mod)
+        if dt_hdr:
+            u_hdr = str(ticket.get("Modificado por") or ticket.get("usuario_modificacion") or "").strip()
+            g_hdr = str(ticket.get("Grupo asignado") or ticket.get("Grupo Resolutor") or "").strip()
+            candidates.append((dt_hdr, str(raw_header_mod), u_hdr, g_hdr, ""))
+
+    raw_send_date = (
+        ticket.get("Fecha de envío")
+        or ticket.get("fecha_envio")
+        or ticket.get("fecha_apertura")
+    )
+    if raw_send_date:
+        dt_send = parse_incident_datetime(raw_send_date)
+        if dt_send:
+            candidates.append((dt_send, str(raw_send_date), "", str(ticket.get("Grupo Remitente") or "").strip(), "Apertura del ticket"))
+
+    # Seleccionar la fecha más reciente (máxima)
+    if candidates:
+        candidates.sort(key=lambda x: x[0])
+        parsed_dt, raw_last_date, last_user, last_group, last_text = candidates[-1]
+        if len(last_text) > 180:
+            last_text = last_text[:177] + "..."
+    else:
+        parsed_dt = None
+        raw_last_date = None
+        last_user = ""
+        last_group = ""
+        last_text = ""
+
     ref = reference_time or datetime.now()
     if parsed_dt:
         if ref.tzinfo is not None and parsed_dt.tzinfo is None:
-            parsed_dt = parsed_dt.replace(tzinfo=ref.tzinfo)
+            try:
+                from zoneinfo import ZoneInfo
+                ref_madrid = ref.astimezone(ZoneInfo("Europe/Madrid")).replace(tzinfo=None)
+            except Exception:
+                ref_madrid = ref.replace(tzinfo=None)
+            delta = ref_madrid - parsed_dt
         elif ref.tzinfo is None and parsed_dt.tzinfo is not None:
-            ref = ref.replace(tzinfo=parsed_dt.tzinfo)
+            parsed_dt = parsed_dt.replace(tzinfo=None)
+            delta = ref - parsed_dt
+        else:
+            delta = ref - parsed_dt
 
-        delta = ref - parsed_dt
         delta_seconds = max(0, int(delta.total_seconds()))
         minutos = delta_seconds // 60
         horas = round(delta_seconds / 3600.0, 1)
@@ -2371,6 +2441,7 @@ def evaluate_incidents_batch(
         worklog_status = compute_worklog_stagnation(
             ticket=item,
             reference_time=reference_time,
+            epsilon_data=epsilon_data,
             is_planned=is_planned,
             is_zombie=is_zombie,
             cache_dir=(project_root / "data" / ".remedy_cache") if project_root else None,
