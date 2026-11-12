@@ -335,6 +335,162 @@ def compute_emergency_sla_status(
     }
 
 
+def compute_worklog_stagnation(
+    ticket: dict[str, Any],
+    reference_time: Optional[datetime] = None,
+    remedy_detail: Optional[dict[str, Any]] = None,
+    is_planned: bool = False,
+    is_zombie: bool = False,
+    cache_dir: Optional[Path] = None,
+) -> dict[str, Any]:
+    """Computes operational elapsed time since the last Work Log update or modification,
+    and classifies stagnation according to Orange Tech Operations guidelines.
+
+    Levels:
+    - WL_OK: < 6h (al día)
+    - WL_ALERTA_6H: >= 6h and < 12h (alerta temprana de seguimiento)
+    - WL_ESTANCAMIENTO_12H: >= 12h and < 24h (estancamiento severo de jornada)
+    - WL_BLOQUEO_24H: >= 24h (bloqueo crítico / abandono)
+
+    Exemptions:
+    - is_planned (resolución programada en ventana futura)
+    - is_zombie (ticket resuelto en Jira, pendiente cierre administrativo en Remedy)
+    """
+    inc_id = str(ticket.get("ID de incidencia") or ticket.get("id") or "").strip()
+    
+    # Intentar resolver detalle de Remedy desde caché en disco si no se proporciona directamente
+    if not remedy_detail and inc_id:
+        target_dir = cache_dir
+        if not target_dir:
+            try:
+                candidate = Path(__file__).resolve().parents[2] / "data" / ".remedy_cache"
+                if candidate.is_dir():
+                    target_dir = candidate
+            except Exception:
+                target_dir = None
+        if target_dir and target_dir.is_dir():
+            cache_file = target_dir / f"{inc_id}.json"
+            if cache_file.is_file():
+                try:
+                    with open(cache_file, "r", encoding="utf-8") as f:
+                        remedy_detail = json.load(f)
+                except Exception:
+                    remedy_detail = None
+
+    raw_last_date: Optional[str] = None
+    last_user = ""
+    last_group = ""
+    last_text = ""
+
+    # 1. Probar worklogs detallados de Remedy
+    if remedy_detail and isinstance(remedy_detail, dict):
+        worklogs = remedy_detail.get("worklogs") or remedy_detail.get("remedy", {}).get("worklog") or []
+        if isinstance(worklogs, list) and len(worklogs) > 0:
+            def wl_sort_key(w: dict[str, Any]) -> float:
+                parsed = parse_incident_datetime(w.get("fecha") or "")
+                return parsed.timestamp() if parsed else 0.0
+
+            sorted_wls = sorted(worklogs, key=wl_sort_key)
+            latest = sorted_wls[-1]
+            raw_last_date = latest.get("fecha")
+            last_user = str(latest.get("usuario") or latest.get("autor") or "").strip()
+            last_group = str(latest.get("grupoAsignado") or latest.get("grupo") or "").strip()
+            detail_val = str(latest.get("detalle") or latest.get("texto") or "").strip()
+            if len(detail_val) > 180:
+                detail_val = detail_val[:177] + "..."
+            last_text = detail_val
+
+    # 2. Si no hay worklogs detallados, consultar fechaUltimaModificacion de Remedy/MonTMC
+    if not raw_last_date:
+        raw_last_date = (
+            ticket.get("fechaUltimaModificacion")
+            or ticket.get("fecha_ultima_modificacion")
+            or ticket.get("Fecha de última modificación")
+        )
+        last_user = str(ticket.get("Modificado por") or ticket.get("usuario_modificacion") or "").strip()
+        last_group = str(ticket.get("Grupo asignado") or ticket.get("Grupo Resolutor") or "").strip()
+
+    # 3. Fallback a fecha de apertura
+    if not raw_last_date:
+        raw_last_date = (
+            ticket.get("Fecha de envío")
+            or ticket.get("fecha_envio")
+            or ticket.get("fecha_apertura")
+        )
+
+    parsed_dt = parse_incident_datetime(raw_last_date)
+    ref = reference_time or datetime.now()
+    if parsed_dt:
+        if ref.tzinfo is not None and parsed_dt.tzinfo is None:
+            parsed_dt = parsed_dt.replace(tzinfo=ref.tzinfo)
+        elif ref.tzinfo is None and parsed_dt.tzinfo is not None:
+            ref = ref.replace(tzinfo=parsed_dt.tzinfo)
+
+        delta = ref - parsed_dt
+        delta_seconds = max(0, int(delta.total_seconds()))
+        minutos = delta_seconds // 60
+        horas = round(delta_seconds / 3600.0, 1)
+    else:
+        minutos = None
+        horas = None
+
+    exento = bool(is_planned or is_zombie)
+
+    if horas is None:
+        nivel = "WL_DESCONOCIDO"
+        inactivo_6h = False
+        inactivo_12h = False
+        inactivo_24h = False
+    else:
+        inactivo_6h = horas >= 6.0
+        inactivo_12h = horas >= 12.0
+        inactivo_24h = horas >= 24.0
+
+        if horas >= 24.0:
+            nivel = "WL_BLOQUEO_24H"
+        elif horas >= 12.0:
+            nivel = "WL_ESTANCAMIENTO_12H"
+        elif horas >= 6.0:
+            nivel = "WL_ALERTA_6H"
+        else:
+            nivel = "WL_OK"
+
+    return {
+        "fecha_ultimo_worklog": raw_last_date or "",
+        "horas_sin_worklog": horas,
+        "minutos_sin_worklog": minutos,
+        "nivel_inactividad": nivel,
+        "es_inactivo_6h": inactivo_6h,
+        "es_inactivo_12h": inactivo_12h,
+        "es_inactivo_24h": inactivo_24h,
+        "ultimo_autor": last_user,
+        "ultimo_grupo": last_group,
+        "ultimo_extracto": last_text,
+        "exento_inactividad": exento,
+    }
+
+
+def build_worklog_claim_text(
+    incident_id: str,
+    assigned_group: str = "",
+    horas: Optional[float] = None,
+) -> str:
+    """Builds a formal ITIL worklog update request message for Remedy."""
+    horas_str = f"{horas}h" if horas is not None else ">6h"
+    grp = assigned_group or "Grupo Resolutor"
+    return (
+        f"[SEGUIMIENTO DE INCIDENCIA - RECLAMACIÓN DE WORK LOG]\n"
+        f"INCIDENCIA: {incident_id}\n"
+        f"GRUPO ASIGNADO: {grp}\n\n"
+        f"Estimado equipo,\n"
+        f"Se constata que la incidencia no registra actualizaciones técnicas en el Work Log desde hace {horas_str}. "
+        f"Conforme al protocolo de seguimiento operativo de Orange Tech Operations, se solicita incorporar de inmediato "
+        f"un apunte técnico con el estado actual del diagnóstico, avances y siguientes acciones planificadas.\n\n"
+        f"Atentamente,\n"
+        f"Mesa de Seguimiento y Triaje IT"
+    )
+
+
 PROCESS_PATTERNS: dict[str, list[re.Pattern]] = {
     "Conectividad de Sedes, Call Centers y Tiendas": [
         re.compile(r"\brtv-tecse\b", re.I),
@@ -752,6 +908,7 @@ def generate_operator_guidance(
     discrepancy_delta: int = 0,
     has_workaround: str = "No",
     is_multisite_partial: bool = False,
+    worklog_status: Optional[dict[str, Any]] = None,
 ) -> dict[str, Any]:
     """Generates structured, actionable operational guidance for the console operator."""
     user_cnt = (quant_metrics or {}).get("usuarios")
@@ -861,6 +1018,29 @@ def generate_operator_guidance(
             "requiere_llamada_cso": False,
             "requiere_comunicado_direccion": False,
         }
+
+    if worklog_status and not worklog_status.get("exento_inactividad"):
+        horas_wl = worklog_status.get("horas_sin_worklog")
+        es_24h = worklog_status.get("es_inactivo_24h", False)
+        es_12h = worklog_status.get("es_inactivo_12h", False)
+        es_6h = worklog_status.get("es_inactivo_6h", False)
+
+        if es_24h:
+            res["alerta_worklog"] = f"🚨 BLOQUEO CRÍTICO: Superadas 24h sin notas en Work Log ({horas_wl}h)."
+            res["reclamar_worklog"] = True
+            res["plantilla_reclamacion_wl"] = build_worklog_claim_text(incident_id, assigned_group, horas_wl)
+            if "Reclamar" not in res.get("accion_recomendada", ""):
+                res["accion_recomendada"] += f" 🚨 Reclamar actualización inmediata de Work Log a {assigned_group or 'grupo resolutor'} por superar 24h de inactividad."
+        elif es_12h:
+            res["alerta_worklog"] = f"⏳ ESTANCAMIENTO: Más de 12h sin notas en Work Log ({horas_wl}h)."
+            res["reclamar_worklog"] = True
+            res["plantilla_reclamacion_wl"] = build_worklog_claim_text(incident_id, assigned_group, horas_wl)
+            if "Reclamar" not in res.get("accion_recomendada", ""):
+                res["accion_recomendada"] += f" ⚠️ Reclamar actualización de Work Log a {assigned_group or 'grupo resolutor'} por superar 12h de inactividad."
+        elif es_6h:
+            res["alerta_worklog"] = f"⚠️ ALERTA: Más de 6h sin notas en Work Log ({horas_wl}h)."
+            res["reclamar_worklog"] = True
+            res["plantilla_reclamacion_wl"] = build_worklog_claim_text(incident_id, assigned_group, horas_wl)
 
     cat_op = res["categoria_operativa"]
     meta = SCENARIO_METADATA.get(cat_op, SCENARIO_METADATA["SEGUIMIENTO_ESTANDAR"])
@@ -2187,6 +2367,15 @@ def evaluate_incidents_batch(
             if any(k in desc_lower for k in ["parcial", "recuperad", "algunas sedes", "resto de sedes"]):
                 multisite_partial = True
 
+        # Calcular estancamiento de Work Log
+        worklog_status = compute_worklog_stagnation(
+            ticket=item,
+            reference_time=reference_time,
+            is_planned=is_planned,
+            is_zombie=is_zombie,
+            cache_dir=(project_root / "data" / ".remedy_cache") if project_root else None,
+        )
+
         guia_operador = generate_operator_guidance(
             incident_id=inc_id,
             priority=prio_sugerida,
@@ -2204,6 +2393,7 @@ def evaluate_incidents_batch(
             discrepancy_delta=disc_delta,
             has_workaround=workaround_val,
             is_multisite_partial=multisite_partial,
+            worklog_status=worklog_status,
         )
         eval_dict["guia_operador"] = guia_operador
         evaluation["evaluacion"] = eval_dict
@@ -2261,6 +2451,7 @@ def evaluate_incidents_batch(
             "es_local_departamental",
             "guia_operador",
             "fecha_apertura",
+            "worklog_status",
         ):
             eval_clean.pop(dup_key, None)
 
@@ -2285,6 +2476,8 @@ def evaluate_incidents_batch(
             "estatus": item.get("Estatus") or "Asignado",
             "fecha_envio": raw_date,
             "fecha_apertura": raw_date,
+            "fecha_ultima_modificacion": item.get("fechaUltimaModificacion") or item.get("fecha_ultima_modificacion") or "",
+            "worklog_status": worklog_status,
             "evaluacion": eval_clean,
             "resumen_ia": resumen_ia_block,
             "mensajes_ejecutivos": mensajes,
@@ -2353,7 +2546,7 @@ def evaluate_incidents_batch(
     catalog = {
         "_metadata": {
             "type": "high_priority_notifications",
-            "version": "2.6.0",
+            "version": "2.7.0",
             "skills_version": {
                 "it-severity-matrix": "2.7.0",
                 "orange-it-emergency-management": "2.6.0",
@@ -2389,6 +2582,9 @@ def evaluate_incidents_batch(
                 "sla_primera_notificacion_vencidos_count": sla_vencidos_count,
                 "requiere_escalado_telefonico_count": escalados_tel_count,
                 "workaround_pendientes_cso_count": workaround_pendientes_count,
+                "tickets_sin_worklog_6h": sum(1 for it in high_priority_items if it.get("worklog_status", {}).get("es_inactivo_6h") and not it.get("worklog_status", {}).get("exento_inactividad")),
+                "tickets_sin_worklog_12h": sum(1 for it in high_priority_items if it.get("worklog_status", {}).get("es_inactivo_12h") and not it.get("worklog_status", {}).get("exento_inactividad")),
+                "tickets_sin_worklog_24h": sum(1 for it in high_priority_items if it.get("worklog_status", {}).get("es_inactivo_24h") and not it.get("worklog_status", {}).get("exento_inactividad")),
             }
         },
         "data": high_priority_items

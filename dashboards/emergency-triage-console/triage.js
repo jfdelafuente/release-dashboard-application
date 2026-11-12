@@ -29,6 +29,8 @@
     activeFilter: 'reclass_only', // 'all' | 'reclass_only' | 'correct_only' | 'orchestrator_only'
     processFilter: 'all',
     severityFilter: 'all',
+    worklogFilter: 'all', // 'all' | 'inactivos' | '6h' | '12h' | '24h' | 'ok' | 'exento'
+    sortOrder: 'date-desc', // 'date-desc' | 'worklog-desc' | 'severity-desc' | 'discrepancy-desc'
     searchQuery: '',
     expandedRows: {}, // { [incId]: boolean }
     allExpanded: false,
@@ -79,6 +81,7 @@
     kpiSkipped: document.getElementById('kpi-skipped'),
     kpiActive: document.getElementById('kpi-active'),
     kpiEmergencies: document.getElementById('kpi-emergencies'),
+    kpiWorklogStale: document.getElementById('kpi-worklog-stale'),
 
     // Controles de Filtrado
     tabAll: document.getElementById('tab-all'),
@@ -91,6 +94,8 @@
     countOrchestrator: document.getElementById('count-orchestrator'),
     filterProcessSelect: document.getElementById('filter-process'),
     filterSeveritySelect: document.getElementById('filter-severity'),
+    filterWorklogSelect: document.getElementById('filter-worklog'),
+    sortFeedSelect: document.getElementById('sort-feed'),
     searchInput: document.getElementById('search-input'),
 
     // Feed de Incidentes
@@ -546,11 +551,18 @@
     const discCount = (kpis.discrepancies_count != null) ? kpis.discrepancies_count : state.incidents.filter(i => i.es_discrepancia).length;
     const p1Count = (kpis.p1_critical_count != null) ? kpis.p1_critical_count : state.incidents.filter(i => i.prioridad_sugerida === 'P1').length;
     const p2Count = (kpis.p2_high_count != null) ? kpis.p2_high_count : state.incidents.filter(i => i.prioridad_sugerida === 'P2').length;
+    const staleWlCount = (kpis.tickets_sin_worklog_6h != null)
+      ? kpis.tickets_sin_worklog_6h
+      : state.incidents.filter(i => {
+          const wl = i.worklog_status || i.evaluacion?.worklog_status || {};
+          return wl.es_inactivo_6h && !wl.exento_inactividad;
+        }).length;
 
     if (dom.kpiScanned) dom.kpiScanned.textContent = activeCount;
     if (dom.kpiSkipped) dom.kpiSkipped.textContent = discCount;
     if (dom.kpiActive) dom.kpiActive.textContent = p1Count;
     if (dom.kpiEmergencies) dom.kpiEmergencies.textContent = p2Count;
+    if (dom.kpiWorklogStale) dom.kpiWorklogStale.textContent = staleWlCount;
 
     // Contadores de pestañas de filtrado
     const totalCount = state.incidents.length;
@@ -3341,11 +3353,55 @@ Generado por Consola de Emergencias IT Orange - Motor de Triaje (Módulo 1)`;
       });
     }
 
-    // 5. Ordenación por Fecha de Apertura (más recientes primero)
+    // 4b. Filtro de Inactividad de Work Log
+    if (state.worklogFilter && state.worklogFilter !== 'all') {
+      filtered = filtered.filter(i => {
+        const wl = i.worklog_status || i.evaluacion?.worklog_status || {};
+        if (state.worklogFilter === 'inactivos') {
+          return Boolean(wl.es_inactivo_6h && !wl.exento_inactividad);
+        } else if (state.worklogFilter === '6h') {
+          return wl.nivel_inactividad === 'WL_ALERTA_6H' && !wl.exento_inactividad;
+        } else if (state.worklogFilter === '12h') {
+          return wl.nivel_inactividad === 'WL_ESTANCAMIENTO_12H' && !wl.exento_inactividad;
+        } else if (state.worklogFilter === '24h') {
+          return wl.nivel_inactividad === 'WL_BLOQUEO_24H' && !wl.exento_inactividad;
+        } else if (state.worklogFilter === 'ok') {
+          return wl.nivel_inactividad === 'WL_OK';
+        } else if (state.worklogFilter === 'exento') {
+          return Boolean(wl.exento_inactividad);
+        }
+        return true;
+      });
+    }
+
+    // 5. Ordenación dinámica
     filtered.sort((a, b) => {
-      const epochA = parseIncidentEpoch(a);
-      const epochB = parseIncidentEpoch(b);
-      return epochB - epochA;
+      if (state.sortOrder === 'worklog-desc') {
+        const wlA = a.worklog_status || a.evaluacion?.worklog_status || {};
+        const wlB = b.worklog_status || b.evaluacion?.worklog_status || {};
+        const hoursA = wlA.exento_inactividad ? -1 : (wlA.horas_sin_worklog ?? -1);
+        const hoursB = wlB.exento_inactividad ? -1 : (wlB.horas_sin_worklog ?? -1);
+        if (hoursB !== hoursA) {
+          return hoursB - hoursA;
+        }
+        return parseIncidentEpoch(b) - parseIncidentEpoch(a);
+      } else if (state.sortOrder === 'severity-desc') {
+        const sevOrder = { 'P1': 4, 'P2': 3, 'P3': 2, 'P4': 1 };
+        const sevA = sevOrder[a.prioridad_sugerida] || 0;
+        const sevB = sevOrder[b.prioridad_sugerida] || 0;
+        if (sevB !== sevA) return sevB - sevA;
+        return parseIncidentEpoch(b) - parseIncidentEpoch(a);
+      } else if (state.sortOrder === 'discrepancy-desc') {
+        const deltaA = a.discrepancia_delta || 0;
+        const deltaB = b.discrepancia_delta || 0;
+        if (deltaB !== deltaA) return deltaB - deltaA;
+        return parseIncidentEpoch(b) - parseIncidentEpoch(a);
+      } else {
+        // Por defecto: 'date-desc' (más recientes primero)
+        const epochA = parseIncidentEpoch(a);
+        const epochB = parseIncidentEpoch(b);
+        return epochB - epochA;
+      }
     });
 
     return filtered;
@@ -3378,6 +3434,31 @@ Generado por Consola de Emergencias IT Orange - Motor de Triaje (Módulo 1)`;
       `Referencia de entrega/Jira: ${jiraId}\n\n` +
       `La resolución técnica del servicio ha finalizado satisfactoriamente según el registro del equipo de desarrollo/despliegues y el ticket asociado está concluido. Al no existir afectación operativa en producción, se solicita a la Mesa de Seguimiento proceder con el cierre administrativo formal del ticket en Remedy para evitar distorsiones en los KPIs de aging y triaje operativo.\n\n` +
       `Dictamen emitido por la Consola de Triaje y Gestión de Emergencias IT de Orange.`;
+  }
+
+  function renderWorklogBadge(wlStatus) {
+    if (!wlStatus) {
+      return `<span class="triage-worklog-badge is-wl-ok" title="Sin datos de inactividad de work log">📝 WL: n/d</span>`;
+    }
+    if (wlStatus.exento_inactividad) {
+      const reason = wlStatus.motivo_exencion || 'Planificado / Zombi';
+      return `<span class="triage-worklog-badge is-wl-exempt" title="Exento de control de inactividad de work log: ${escapeHtml(reason)}">📝 WL: Exento</span>`;
+    }
+
+    const nivel = wlStatus.nivel_inactividad || 'WL_OK';
+    const h = wlStatus.horas_sin_worklog != null ? wlStatus.horas_sin_worklog : 0;
+    const lastDate = wlStatus.fecha_ultimo_worklog ? `Última nota: ${escapeHtml(wlStatus.fecha_ultimo_worklog)}` : '';
+    const author = wlStatus.ultimo_autor ? ` por ${escapeHtml(wlStatus.ultimo_autor)}` : '';
+
+    if (nivel === 'WL_BLOQUEO_24H') {
+      return `<span class="triage-worklog-badge is-wl-critical" title="BLOQUEO CRÍTICO: ${h}h sin actualizar Work Log. ${lastDate}${author}">🚨 WL: +${h}h sin notas</span>`;
+    } else if (nivel === 'WL_ESTANCAMIENTO_12H') {
+      return `<span class="triage-worklog-badge is-wl-stale-12h" title="ESTANCAMIENTO: ${h}h sin actualizar Work Log. ${lastDate}${author}">⚠️ WL: +${h}h sin notas</span>`;
+    } else if (nivel === 'WL_ALERTA_6H') {
+      return `<span class="triage-worklog-badge is-wl-warning-6h" title="ALERTA: ${h}h sin actualizar Work Log. ${lastDate}${author}">⏱️ WL: +${h}h sin notas</span>`;
+    } else {
+      return `<span class="triage-worklog-badge is-wl-ok" title="Work Log al día (${h}h sin notas). ${lastDate}${author}">✅ WL: al día</span>`;
+    }
   }
 
 function renderFeed() {
@@ -3599,6 +3680,8 @@ function renderFeed() {
       } catch (_) {}
     }
 
+    const wlStatus = inc.worklog_status || evaluacion.worklog_status || {};
+
     return `
       <!-- Fila Resumen Principal (Modo Tabular - 6 Columnas) -->
       <tr class="triage-row-main ${rowModifier} ${isOpen ? 'is-expanded' : ''}" data-inc="${escapeHtml(incId)}" role="button" tabindex="0" aria-expanded="${isOpen}">
@@ -3620,6 +3703,9 @@ function renderFeed() {
           <div class="triage-datetime-row">
             <span class="triage-date-label" title="Fecha oficial de apertura en Remedy">📅 ${escapeHtml(fechaStr)}</span>
             <span class="triage-aging-badge ${minsElapsed > 120 ? 'is-aging-warning' : ''}" title="Tiempo transcurrido desde apertura">⏱️ ${formatAgingMinutes(minsElapsed)}</span>
+          </div>
+          <div class="triage-worklog-row">
+            ${renderWorklogBadge(wlStatus)}
           </div>
         </td>
 
@@ -3744,6 +3830,19 @@ function renderFeed() {
                     <button type="button" class="triage-btn-zombi-copy btn-copy-zombi-close" data-inc="${escapeHtml(incId)}" title="Copiar solicitud formal de cierre administrativo para Remedy">
                       <span aria-hidden="true">📋</span> Copiar Plantilla de Cierre Administrativo Remedy
                     </button>
+                  </div>
+                ` : ''}
+                ${guia.alerta_worklog ? `
+                  <div class="triage-op-worklog-box ${wlStatus.nivel_inactividad === 'WL_BLOQUEO_24H' ? 'is-critical' : 'is-warning'}">
+                    <div class="triage-op-wl-header">
+                      <span class="triage-op-wl-icon" aria-hidden="true">${wlStatus.nivel_inactividad === 'WL_BLOQUEO_24H' ? '🚨' : '⏱️'}</span>
+                      <span><strong>Alerta Work Log:</strong> ${escapeHtml(guia.alerta_worklog)}</span>
+                    </div>
+                    ${guia.plantilla_reclamacion_wl ? `
+                      <button type="button" class="triage-btn-wl-claim btn-copy-worklog-claim" data-inc="${escapeHtml(incId)}" title="Copiar plantilla de reclamación formal para Remedy">
+                        <span aria-hidden="true">📋</span> Copiar Reclamación Work Log
+                      </button>
+                    ` : ''}
                   </div>
                 ` : ''}
               </div>
@@ -4036,6 +4135,22 @@ function renderFeed() {
       });
     });
 
+    // 5d. Botón Copiar Plantilla Reclamación Work Log
+    document.querySelectorAll('.btn-copy-worklog-claim').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const incId = btn.getAttribute('data-inc');
+        const inc = state.incidents.find(i => i.id === incId);
+        if (inc) {
+          const guia = inc.guia_operador || inc.evaluacion?.guia_operador || {};
+          const text = guia.plantilla_reclamacion_wl || '';
+          if (text) {
+            copyToClipboard(text, `Plantilla de reclamación de Work Log copiada para ${incId}. Pégala en Remedy.`);
+          }
+        }
+      });
+    });
+
 // 6. Chevron y Botón Toggle fila
     document.querySelectorAll('.triage-chevron-btn, .btn-toggle-row').forEach(btn => {
       btn.addEventListener('click', (e) => {
@@ -4110,6 +4225,20 @@ function renderFeed() {
     if (dom.filterSeveritySelect) {
       dom.filterSeveritySelect.addEventListener('change', (e) => {
         state.severityFilter = e.target.value;
+        renderFeed();
+      });
+    }
+
+    if (dom.filterWorklogSelect) {
+      dom.filterWorklogSelect.addEventListener('change', (e) => {
+        state.worklogFilter = e.target.value;
+        renderFeed();
+      });
+    }
+
+    if (dom.sortFeedSelect) {
+      dom.sortFeedSelect.addEventListener('change', (e) => {
+        state.sortOrder = e.target.value;
         renderFeed();
       });
     }

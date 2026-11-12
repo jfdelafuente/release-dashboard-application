@@ -158,6 +158,17 @@
           </div>
           <div class="triage-kpi-desc">Mayores confirmadas ITIL</div>
         </div>
+
+        <div class="triage-kpi-card kpi-worklog-stale" id="card-kpi-worklog" title="Tickets activos con más de 6 horas sin actualización en su Work Log">
+          <div class="triage-kpi-header">
+            <span>Work Log Inactivo</span>
+            <span aria-hidden="true">⏱️</span>
+          </div>
+          <div class="triage-kpi-value-row">
+            <span id="kpi-worklog-stale" class="triage-kpi-value">0</span>
+          </div>
+          <div class="triage-kpi-desc">Tickets &ge;6h sin notas</div>
+        </div>
       </div>
     </section>
 
@@ -205,6 +216,25 @@
           <option value="P2">Solo SL2 / P2 (Mayor)</option>
           <option value="P3">Solo SL3 / P3 (Media)</option>
           <option value="P4">Solo SL4 / P4 (Baja)</option>
+        </select>
+
+        <label for="filter-worklog" class="sr-only">Filtrar por Inactividad de Work Log</label>
+        <select id="filter-worklog" class="triage-select" title="Filtrar por Inactividad de Work Log">
+          <option value="all">Todo el Estado Work Log</option>
+          <option value="inactivos">Todos Inactivos (≥6h)</option>
+          <option value="6h">Alerta WL (6h - 12h)</option>
+          <option value="12h">Estancamiento WL (12h - 24h)</option>
+          <option value="24h">Bloqueo Crítico WL (≥24h)</option>
+          <option value="ok">Al día (&lt;6h)</option>
+          <option value="exento">Exento (Planificado/Zombie)</option>
+        </select>
+
+        <label for="sort-feed" class="sr-only">Ordenar Listado</label>
+        <select id="sort-feed" class="triage-select" title="Ordenar Listado de Incidencias">
+          <option value="date-desc">Orden: Más recientes primero</option>
+          <option value="worklog-desc">Orden: Mayor inactividad WL (Urgen actualización)</option>
+          <option value="severity-desc">Orden: Mayor criticidad ITIL</option>
+          <option value="discrepancy-desc">Orden: Mayor discrepancia</option>
         </select>
 
         <div class="triage-search-box">

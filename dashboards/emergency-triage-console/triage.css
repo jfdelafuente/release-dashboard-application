@@ -404,7 +404,7 @@ body {
 /* Grid de KPIs de Ingesta Compacto */
 .triage-kpi-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(5, 1fr);
   gap: 10px;
 }
 
@@ -440,6 +440,10 @@ body {
 
 .triage-kpi-card.kpi-emergencies {
   border-left-color: #2563EB;
+}
+
+.triage-kpi-card.kpi-worklog-stale {
+  border-left-color: #EA580C;
 }
 
 .triage-kpi-header {
@@ -482,6 +486,10 @@ body {
 
 .triage-kpi-card.kpi-emergencies .triage-kpi-value {
   color: #2563EB;
+}
+
+.triage-kpi-card.kpi-worklog-stale .triage-kpi-value {
+  color: #EA580C;
 }
 
 .triage-kpi-desc {
@@ -866,6 +874,70 @@ body {
   background: rgba(239, 68, 68, 0.08);
   color: #DC2626;
   border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+/* Indicador de Inactividad de Work Log */
+.triage-worklog-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 3px;
+}
+
+.triage-worklog-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-family: var(--font-mono, monospace);
+  font-size: 11px;
+  padding: 1.5px 6px;
+  border-radius: var(--radius-xs, 4px);
+  white-space: nowrap;
+  font-weight: 600;
+  transition: all 0.15s ease;
+}
+
+.triage-worklog-badge.is-wl-ok {
+  background: rgba(16, 185, 129, 0.08);
+  color: #059669;
+  border: 1px solid rgba(16, 185, 129, 0.25);
+}
+
+.triage-worklog-badge.is-wl-warning-6h {
+  background: rgba(245, 158, 11, 0.1);
+  color: #D97706;
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  font-weight: 700;
+}
+
+.triage-worklog-badge.is-wl-stale-12h {
+  background: rgba(249, 115, 22, 0.12);
+  color: #EA580C;
+  border: 1px solid rgba(249, 115, 22, 0.4);
+  font-weight: 700;
+}
+
+.triage-worklog-badge.is-wl-critical {
+  background: rgba(239, 68, 68, 0.14);
+  color: #DC2626;
+  border: 1px solid rgba(239, 68, 68, 0.45);
+  font-weight: 800;
+  animation: pulse-wl-critical 2s infinite ease-in-out;
+}
+
+.triage-worklog-badge.is-wl-exempt {
+  background: rgba(100, 116, 139, 0.08);
+  color: #64748B;
+  border: 1px solid rgba(100, 116, 139, 0.2);
+}
+
+@keyframes pulse-wl-critical {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.08);
+  }
 }
 
 .triage-id-row {
@@ -5829,4 +5901,55 @@ body {
   text-decoration: none;
   box-shadow: 0 2px 4px rgba(224, 105, 0, 0.35);
   transform: translateY(-1px);
+}
+
+/* Alerta de Inactividad de Work Log en Guía del Operador */
+.triage-op-worklog-box {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  border-radius: 6px;
+  padding: 8px 12px;
+  margin-top: 8px;
+}
+
+.triage-op-worklog-box.is-warning {
+  background: #FFFBEB;
+  border: 1px solid #FDE68A;
+  border-left: 3px solid #F59E0B;
+}
+
+.triage-op-worklog-box.is-critical {
+  background: #FEF2F2;
+  border: 1px solid #FECACA;
+  border-left: 3px solid #EF4444;
+}
+
+.triage-op-wl-header {
+  font-size: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #1E293B;
+}
+
+.triage-btn-wl-claim {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: #0284C7;
+  color: #FFFFFF;
+  border: none;
+  border-radius: 5px;
+  padding: 5px 11px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.triage-btn-wl-claim:hover {
+  background: #0369A1;
 }
