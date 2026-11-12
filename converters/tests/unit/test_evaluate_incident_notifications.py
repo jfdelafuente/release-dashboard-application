@@ -23,6 +23,9 @@ from converters.cli.evaluate_incident_notifications import (
     parse_incident_datetime,
     compute_emergency_sla_status,
     format_operational_duration,
+    detect_planned_resolution,
+    compute_worklog_stagnation,
+    generate_operator_guidance,
 )
 
 
@@ -1744,3 +1747,84 @@ def test_should_include_worklog_status_and_kpis_in_batch_catalog():
     assert item1["guia_operador"].get("reclamar_worklog") is True
     assert "plantilla_reclamacion_wl" in item1["guia_operador"]
     assert "PAGOS CORE" in item1["guia_operador"]["plantilla_reclamacion_wl"]
+
+
+def test_should_detect_planned_resolution_from_remedy_worklogs_and_exempt_from_stagnation():
+    """Validates that planned resolution committed in Remedy worklog (e.g. 'WI. Previsión 12/11.')
+    is detected, prevents aging escalation, sets Scenario 2 (RESOLUCION_PLANIFICADA),
+    and marks worklog status as exempt (WL_PLANIFICADA)."""
+    ticket = {
+        "ID de incidencia": "INC000004156790",
+        "Descripción": "Ficha Cliente Orange | Error funcional | Madison - Valladolid",
+        "Prioridad": "P3",
+        "Impacto": "Masiva",
+        "Urgencia": "Alta",
+        "Estatus": "Asignado",
+        "Fecha de envío": "14/10/2026 13:26",  # ~41,000 mins open
+        "Grupo asignado": "DES_SOE_FICHA",
+        "es_reapertura": True,
+    }
+    remedy_detail = {
+        "idRemedy": "INC000004156790",
+        "fechaUltimaModificacion": "2026-11-05T07:46:24.000+00:00",
+        "worklogs": [
+            {
+                "fecha": "2026-11-05T07:46:24",
+                "autor": "dlopezga",
+                "grupo": "DES_SOE_FICHA",
+                "detalle": "WI. Previsión 12/11.\n"
+            }
+        ]
+    }
+    ref_time = datetime(2026, 11, 12, 10, 0, 0)
+
+    # 1. detect_planned_resolution
+    is_planned, planned_label = detect_planned_resolution(None, ticket, remedy_detail=remedy_detail)
+    assert is_planned is True
+    assert "12/11" in planned_label
+
+    # 2. SeverityEvaluator
+    evaluator = SeverityEvaluator()
+    res = evaluator.evaluate(ticket, None, reference_time=ref_time, remedy_detail=remedy_detail)
+    assert res["es_planificada"] is True
+    assert res["aging_escalated"] is False
+    assert res["prioridad_sugerida"] == "P2"
+
+    # 3. compute_worklog_stagnation
+    wl_status = compute_worklog_stagnation(
+        ticket=ticket,
+        reference_time=ref_time,
+        remedy_detail=remedy_detail,
+        is_planned=res["es_planificada"],
+        is_zombie=res["es_zombi"]
+    )
+    assert wl_status["nivel_inactividad"] == "WL_PLANIFICADA"
+    assert wl_status["exento_inactividad"] is True
+    assert wl_status["es_inactivo_6h"] is False
+    assert wl_status["es_inactivo_24h"] is False
+
+    # 4. generate_operator_guidance
+    guia = generate_operator_guidance(
+        incident_id="INC000004156790",
+        priority=res["prioridad_sugerida"],
+        is_zombie=res["es_zombi"],
+        zombie_detail=res["detalle_zombi"],
+        is_planned=res["es_planificada"],
+        planned_detail=res["detalle_planificacion"],
+        is_local_departmental=res["es_local_departamental"],
+        mins_open=40000,
+        assigned_group="DES_SOE_FICHA",
+        has_exec_msg_apertura=True,
+        quant_metrics=None,
+        is_reopened=ticket["es_reapertura"],
+        is_discrepancy=res["es_discrepancia"],
+        discrepancy_delta=res["discrepancia_delta"],
+        has_workaround=res["evaluacion"]["workaround"],
+        is_multisite_partial=False,
+        worklog_status=wl_status
+    )
+    assert guia["categoria_operativa"] == "RESOLUCION_PLANIFICADA"
+    assert guia["escenario_num"] == 2
+    assert guia.get("reclamar_worklog") is not True
+    assert guia["requiere_llamada_cso"] is False
+

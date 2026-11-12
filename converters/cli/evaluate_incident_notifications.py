@@ -506,7 +506,12 @@ def compute_worklog_stagnation(
 
     exento = bool(is_planned or is_zombie)
 
-    if horas is None:
+    if exento:
+        nivel = "WL_PLANIFICADA" if is_planned else "WL_ZOMBI"
+        inactivo_6h = False
+        inactivo_12h = False
+        inactivo_24h = False
+    elif horas is None:
         nivel = "WL_DESCONOCIDO"
         inactivo_6h = False
         inactivo_12h = False
@@ -785,7 +790,11 @@ TECHNICAL_DOMAIN_CATEGORIES = {
 }
 
 
-def detect_planned_resolution(epsilon_data: Optional[dict[str, Any]], ticket: dict[str, Any]) -> tuple[bool, str]:
+def detect_planned_resolution(
+    epsilon_data: Optional[dict[str, Any]],
+    ticket: dict[str, Any],
+    remedy_detail: Optional[dict[str, Any]] = None,
+) -> tuple[bool, str]:
     """Detects if an incident has a confirmed planned resolution, PR, deployment date, or batch schedule."""
     # 0. Detección explícita de bloqueo estandarizado por ventana de release en Epsilon IA
     if epsilon_data:
@@ -798,6 +807,24 @@ def detect_planned_resolution(epsilon_data: Optional[dict[str, Any]], ticket: di
                 clean_b = re.sub(r"^\[ventana release\]\s*:?\s*", "", b_str, flags=re.IGNORECASE).strip()
                 return True, f"Ventana Release: {clean_b[:40]}" if clean_b else "Ventana de Release comprometida"
 
+    # Intentar resolver remedy_detail desde caché local si no se suministra
+    if not remedy_detail:
+        inc_id = (
+            ticket.get("id")
+            or ticket.get("ID")
+            or ticket.get("idRemedy")
+            or ticket.get("ID de incidencia")
+            or ticket.get("Incidencia")
+        )
+        if inc_id:
+            try:
+                candidate = Path(__file__).resolve().parents[2] / "data" / ".remedy_cache" / f"{inc_id}.json"
+                if candidate.is_file():
+                    with open(candidate, "r", encoding="utf-8") as f:
+                        remedy_detail = json.load(f)
+            except Exception:
+                pass
+
     evidence_parts = []
     if epsilon_data:
         evidence_parts.append(str(epsilon_data.get("problema") or ""))
@@ -809,6 +836,13 @@ def detect_planned_resolution(epsilon_data: Optional[dict[str, Any]], ticket: di
         hitos = epsilon_data.get("hitos_tecnicos") or epsilon_data.get("hitosTecnicos") or []
         if isinstance(hitos, list):
             evidence_parts.extend(str(h) for h in hitos)
+
+    if remedy_detail and isinstance(remedy_detail, dict):
+        worklogs = remedy_detail.get("worklogs") or remedy_detail.get("remedy", {}).get("worklog") or []
+        if isinstance(worklogs, list):
+            for w in worklogs:
+                evidence_parts.append(str(w.get("detalle") or w.get("texto") or ""))
+
     evidence_parts.append(str(ticket.get("Descripción") or ticket.get("descripcion") or ""))
     evidence_parts.append(str(ticket.get("Notas") or ticket.get("notas") or ""))
     combined = " ".join(evidence_parts).lower()
@@ -816,9 +850,9 @@ def detect_planned_resolution(epsilon_data: Optional[dict[str, Any]], ticket: di
     if not combined.strip():
         return False, ""
 
-    # Detección de patrones de despliegue con fecha numérica (ej. 17/11/2026 o 17-11-2026)
+    # Detección de patrones de despliegue con fecha numérica (ej. 17/11/2026, 12/11, Previsión 12/11)
     date_match = re.search(
-        r"(?:pase|subida|despliegue|implantaci[oó]n|entrega|previst[oa]|planificad[oa]|programad[oa]).*?\b(\d{1,2}[/-]\d{1,2}(?:[/-]\d{2,4})?)\b",
+        r"(?:pase|subida|despliegue|implantaci[oó]n|entrega|previst[oa]|previsi[oó]n|planificad[oa]|programad[oa]|wi\.?\s*previsi[oó]n).*?\b(\d{1,2}[/-]\d{1,2}(?:[/-]\d{2,4})?)\b",
         combined
     )
     if date_match:
@@ -994,16 +1028,6 @@ def generate_operator_guidance(
             "requiere_llamada_cso": False,
             "requiere_comunicado_direccion": False,
         }
-    elif is_reopened:
-        res = {
-            "categoria_operativa": "REAPERTURA_ACTIVA",
-            "alerta_consola": "🔄 REAPERTURA ACTIVA / RECURRENCIA",
-            "accion_recomendada": "Reactivación exprés inmediata: contactar a IM-CSO (<5 min) sin ventana de cortesía de 45m. Preservar cómputo acumulado desde T0.",
-            "canal_escalado": "Telefónico Directo IM-CSO / Teams War Room",
-            "prioridad_operativa_consola": f"{priority} Reabierta",
-            "requiere_llamada_cso": True,
-            "requiere_comunicado_direccion": True,
-        }
     elif is_planned:
         res = {
             "categoria_operativa": "RESOLUCION_PLANIFICADA",
@@ -1013,6 +1037,16 @@ def generate_operator_guidance(
             "prioridad_operativa_consola": "P2 Seguimiento Release",
             "requiere_llamada_cso": False,
             "requiere_comunicado_direccion": False,
+        }
+    elif is_reopened:
+        res = {
+            "categoria_operativa": "REAPERTURA_ACTIVA",
+            "alerta_consola": "🔄 REAPERTURA ACTIVA / RECURRENCIA",
+            "accion_recomendada": "Reactivación exprés inmediata: contactar a IM-CSO (<5 min) sin ventana de cortesía de 45m. Preservar cómputo acumulado desde T0.",
+            "canal_escalado": "Telefónico Directo IM-CSO / Teams War Room",
+            "prioridad_operativa_consola": f"{priority} Reabierta",
+            "requiere_llamada_cso": True,
+            "requiere_comunicado_direccion": True,
         }
     elif is_local_departmental and mins_open is not None and mins_open >= 120:
         duration_fmt = format_operational_duration(mins_open)
@@ -1145,11 +1179,12 @@ class SeverityEvaluator:
         self,
         ticket: dict[str, Any],
         epsilon_data: Optional[dict[str, Any]],
-        reference_time: Optional[datetime] = None
+        reference_time: Optional[datetime] = None,
+        remedy_detail: Optional[dict[str, Any]] = None,
     ) -> dict[str, Any]:
         """Calculates suggested priority (P1-P4) and structured ITIL justification."""
         impact, impact_reason, quant_metrics = self._evaluate_impact(ticket, epsilon_data)
-        urgency, urgency_reason, has_workaround = self._evaluate_urgency(ticket, epsilon_data)
+        urgency, urgency_reason, has_workaround = self._evaluate_urgency(ticket, epsilon_data, remedy_detail=remedy_detail)
 
         priority = self._calculate_matrix(impact, urgency, has_workaround)
 
@@ -1183,7 +1218,7 @@ class SeverityEvaluator:
                 priority = self._calculate_matrix(impact, urgency, has_workaround)
             reopening_criterion_prefix = "Incidencia Reabierta (Recurrencia Activa) | "
 
-        is_planned, planned_label = detect_planned_resolution(epsilon_data, ticket)
+        is_planned, planned_label = detect_planned_resolution(epsilon_data, ticket, remedy_detail=remedy_detail)
         is_zombie, zombie_label = detect_zombie_ticket(epsilon_data, ticket)
 
         # Regla de Resolución Planificada (Seguimiento de Release P2 / it-severity-matrix v2.7):
@@ -1547,7 +1582,12 @@ class SeverityEvaluator:
         # 5. Regla Menor (Impacto Bajo)
         return "Bajo", "Afectación acotada a componentes secundarios o usuarios aislados.", quant_metrics
 
-    def _evaluate_urgency(self, ticket: dict[str, Any], epsilon: Optional[dict[str, Any]]) -> Tuple[str, str, str]:
+    def _evaluate_urgency(
+        self,
+        ticket: dict[str, Any],
+        epsilon: Optional[dict[str, Any]],
+        remedy_detail: Optional[dict[str, Any]] = None,
+    ) -> Tuple[str, str, str]:
         text_corpus = ""
         if epsilon:
             text_corpus += f" {epsilon.get('problema', '')} {epsilon.get('impacto', '')} {epsilon.get('solucion', '')}"
@@ -1610,7 +1650,7 @@ class SeverityEvaluator:
             return "Baja", "Incidencia ya resuelta o estabilizada por el equipo resolutor.", has_workaround
 
         # Detección de Resolución Planificada / Pase Comprometido
-        is_planned, planned_label = detect_planned_resolution(epsilon, ticket)
+        is_planned, planned_label = detect_planned_resolution(epsilon, ticket, remedy_detail=remedy_detail)
         if is_planned:
             urgency_level = "Baja" if "pendiente" in status else "Media"
             return urgency_level, f"Resolución planificada en ventana acordada ({planned_label}). Urgencia operativa acotada a fecha programada.", has_workaround
@@ -2379,8 +2419,19 @@ def evaluate_incidents_batch(
                 )
             continue
 
+        # Cargar detalle de Remedy desde caché local si existe
+        remedy_detail = None
+        if project_root and inc_id:
+            rem_cache_file = project_root / "data" / ".remedy_cache" / f"{inc_id}.json"
+            if rem_cache_file.is_file():
+                try:
+                    with open(rem_cache_file, "r", encoding="utf-8") as f:
+                        remedy_detail = json.load(f)
+                except Exception:
+                    remedy_detail = None
+
         epsilon_data = epsilon_client.get_resumen_ia(inc_id) if epsilon_client else None
-        evaluation = evaluator.evaluate(item, epsilon_data, reference_time=reference_time)
+        evaluation = evaluator.evaluate(item, epsilon_data, reference_time=reference_time, remedy_detail=remedy_detail)
 
         prio_sugerida = evaluation["prioridad_sugerida"]
         es_alta = evaluation["es_alta_prioridad"]
@@ -2441,6 +2492,7 @@ def evaluate_incidents_batch(
         worklog_status = compute_worklog_stagnation(
             ticket=item,
             reference_time=reference_time,
+            remedy_detail=remedy_detail,
             epsilon_data=epsilon_data,
             is_planned=is_planned,
             is_zombie=is_zombie,
