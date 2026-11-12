@@ -1386,13 +1386,14 @@ Proceder con la ejecución inmediata del procedimiento de Rollback. Confirmar in
     const minsElapsed = evaluacion.minutos_desde_apertura || 25;
     const totalDurationText = formatAgingMinutes(minsElapsed);
     let inicioStr = '14:15h';
-    if (evaluacion.fecha_apertura) {
-      const formatted = formatFechaApertura(evaluacion.fecha_apertura);
+    const rawFecha = inc.fecha_apertura || evaluacion.fecha_apertura || inc.fecha_envio;
+    if (rawFecha) {
+      const formatted = formatFechaApertura(rawFecha);
       if (formatted && formatted.includes(' ')) {
         const timePart = formatted.split(' ')[1];
         if (timePart) inicioStr = timePart.slice(0, 5) + 'h';
-      } else if (evaluacion.fecha_apertura.length >= 16) {
-        inicioStr = evaluacion.fecha_apertura.slice(11, 16) + 'h';
+      } else if (typeof rawFecha === 'string' && rawFecha.length >= 16) {
+        inicioStr = rawFecha.slice(11, 16) + 'h';
       }
     }
 

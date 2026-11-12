@@ -2245,6 +2245,25 @@ def evaluate_incidents_batch(
                 "hitos_tecnicos": hitos if isinstance(hitos, list) else []
             }
 
+        # Deduplicación: Las propiedades operativas y guía residen exclusivamente en la raíz del ticket.
+        # En el bloque evaluacion se preservan los metadatos analíticos/algorítmicos ITIL y SLAs técnicos.
+        eval_clean = dict(eval_dict)
+        for dup_key in (
+            "es_discrepancia",
+            "discrepancia_delta",
+            "discrepancia_gravedad",
+            "discrepancia_motivo",
+            "aging_escalated",
+            "es_planificada",
+            "detalle_planificacion",
+            "es_zombi",
+            "detalle_zombi",
+            "es_local_departamental",
+            "guia_operador",
+            "fecha_apertura",
+        ):
+            eval_clean.pop(dup_key, None)
+
         high_priority_items.append({
             "id": inc_id,
             "titulo": item.get("Descripción") or item.get("descripcion") or (epsilon_data.get("titulo") if epsilon_data else ""),
@@ -2266,7 +2285,7 @@ def evaluate_incidents_batch(
             "estatus": item.get("Estatus") or "Asignado",
             "fecha_envio": raw_date,
             "fecha_apertura": raw_date,
-            "evaluacion": eval_dict,
+            "evaluacion": eval_clean,
             "resumen_ia": resumen_ia_block,
             "mensajes_ejecutivos": mensajes,
             "reporte_emergencia": reporte_emergencia,

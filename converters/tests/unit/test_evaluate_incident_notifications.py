@@ -1059,6 +1059,58 @@ def test_should_include_new_discrepancy_and_aging_kpis_in_batch_catalog():
     assert "+2 niveles" in item["discrepancia_motivo"]
 
 
+def test_should_not_duplicate_root_fields_inside_evaluacion_in_batch_catalog():
+    ticket = {
+        "ID de incidencia": "INC000004999951",
+        "Prioridad": "Media",
+        "Descripción": "Corte de fibra afectando a 5 tiendas",
+        "Estatus": "Asignado",
+        "Fecha de envío": "14/10/2026 10:00",
+        "Urgencia": "Alta",
+        "Impacto": "Alto"
+    }
+    ref_time = datetime(2026, 10, 14, 10, 15)
+    catalog = evaluate_incidents_batch([ticket], epsilon_client=None, reference_time=ref_time)
+    assert len(catalog["data"]) == 1
+    item = catalog["data"][0]
+
+    # 1. Operational and guidance fields must reside at root
+    assert "es_discrepancia" in item
+    assert "guia_operador" in item
+    assert "fecha_apertura" in item
+    assert "aging_escalated" in item
+    assert "es_planificada" in item
+    assert "es_zombi" in item
+    assert "es_local_departamental" in item
+
+    # 2. The 12 duplicate keys must NOT be present inside evaluacion
+    eval_block = item["evaluacion"]
+    duplicated_keys = [
+        "es_discrepancia",
+        "discrepancia_delta",
+        "discrepancia_gravedad",
+        "discrepancia_motivo",
+        "aging_escalated",
+        "es_planificada",
+        "detalle_planificacion",
+        "es_zombi",
+        "detalle_zombi",
+        "es_local_departamental",
+        "guia_operador",
+        "fecha_apertura",
+    ]
+    for key in duplicated_keys:
+        assert key not in eval_block, f"Field '{key}' should not be duplicated inside evaluacion"
+
+    # 3. Technical ITIL metadata and SLAs must remain in evaluacion
+    assert "proceso" in eval_block or "proceso_negocio" in eval_block
+    assert "criterio" in eval_block
+    assert "impacto" in eval_block
+    assert "urgencia" in eval_block
+    assert "minutos_desde_apertura" in eval_block
+    assert "requiere_escalado_telefonico" in eval_block
+
+
 def test_should_discriminate_impact_when_remedy_impacto_is_masiva_without_total_outage():
     """Remedy exports every row with 'Impacto': 'Masiva'. The engine must discriminate real impact."""
     evaluator = SeverityEvaluator()
