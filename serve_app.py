@@ -107,6 +107,21 @@ except (ImportError, Exception):
         MonTMCError = None
         sync_remedy_incidents = None
 
+# Microsoft Teams Notifier Service
+try:
+    sys.path.insert(0, str(PROJECT_ROOT / 'converters' / 'src'))
+    from teams_notifier import (
+        load_teams_config,
+        save_teams_config,
+        resolve_channel,
+        dispatch_teams_notification
+    )
+except (ImportError, Exception):
+    load_teams_config = None
+    save_teams_config = None
+    resolve_channel = None
+    dispatch_teams_notification = None
+
 REMEDY_DETAIL_CACHE = {}  # { idRemedy: (timestamp, data_dict, status) }
 
 REPORTS_PATH_PREFIX = '/api/reports/postmortem/'
@@ -452,6 +467,10 @@ class CustomHTTPHandler(http.server.SimpleHTTPRequestHandler):
             self.handle_epsilon_generate()
         elif self.path in ('/api/sync-remedy', '/api/sync-remedy/') or self.path.split('?')[0].rstrip('/') == '/api/sync-remedy':
             self.handle_sync_remedy()
+        elif self.path.split('?')[0].rstrip('/') == '/api/teams/channels':
+            self.handle_teams_channels_post()
+        elif self.path.split('?')[0].rstrip('/') == '/api/teams/send':
+            self.handle_teams_send()
         else:
             self.send_error(404, "Not Found")
 
@@ -1246,9 +1265,84 @@ class CustomHTTPHandler(http.server.SimpleHTTPRequestHandler):
             "idRemedy": clean_id,
         })
 
+    def handle_teams_channels_get(self):
+        """Maneja GET /api/teams/channels retornando la configuración de canales."""
+        if not load_teams_config:
+            self._send_json(500, {"success": False, "error": "Módulo teams_notifier no disponible"})
+            return
+        cfg = load_teams_config()
+        self._send_json(200, {"success": True, "config": cfg})
+
+    def handle_teams_channels_post(self):
+        """Maneja POST /api/teams/channels actualizando la configuración de canales."""
+        if not save_teams_config:
+            self._send_json(500, {"success": False, "error": "Módulo teams_notifier no disponible"})
+            return
+        try:
+            content_length = int(self.headers.get('Content-Length', 0))
+            raw_body = self.rfile.read(content_length)
+            body = json.loads(raw_body.decode('utf-8'))
+            cfg = body.get("config", body)
+            if not isinstance(cfg, dict) or "canales" not in cfg:
+                self._send_json(400, {"success": False, "error": "Formato de configuración inválido"})
+                return
+            saved = save_teams_config(cfg)
+            if saved:
+                self._send_json(200, {"success": True, "message": "Configuración de canales guardada con éxito", "config": cfg})
+            else:
+                self._send_json(500, {"success": False, "error": "Error al persistir configuración"})
+        except Exception as err:
+            self._send_json(400, {"success": False, "error": f"Error procesando petición: {str(err)}"})
+
+    def handle_teams_send(self):
+        """Maneja POST /api/teams/send despachando una tarjeta adaptativa a Microsoft Teams."""
+        if not dispatch_teams_notification:
+            self._send_json(500, {"success": False, "error": "Módulo teams_notifier no disponible"})
+            return
+        try:
+            content_length = int(self.headers.get('Content-Length', 0))
+            raw_body = self.rfile.read(content_length)
+            body = json.loads(raw_body.decode('utf-8'))
+
+            action = body.get("action", "reclamacion_worklog")
+            incident = body.get("incident")
+            incident_id = body.get("incident_id")
+            channel_id = body.get("channel_id")
+            group = body.get("group")
+
+            if not incident and incident_id:
+                cat_path = PROJECT_ROOT / "data" / "output" / "high_priority_notifications.json"
+                if cat_path.is_file():
+                    with open(cat_path, "r", encoding="utf-8") as f:
+                        cat = json.load(f)
+                    for item in cat.get("data", []):
+                        if item.get("id") == incident_id:
+                            incident = item
+                            break
+
+            if not incident:
+                self._send_json(400, {"success": False, "error": "Se requiere objeto 'incident' o 'incident_id' válido"})
+                return
+
+            result = dispatch_teams_notification(
+                action=action,
+                incident=incident,
+                group=group,
+                channel_id=channel_id
+            )
+
+            status_http = 200 if result.get("success") else 502
+            self._send_json(status_http, result)
+        except Exception as err:
+            self._send_json(500, {"success": False, "error": f"Fallo al despachar a Teams: {str(err)}"})
+
     def do_GET(self):
         # Debug
         print(f"GET {self.path}")
+
+        if self.path.split('?')[0].rstrip('/') == '/api/teams/channels':
+            self.handle_teams_channels_get()
+            return
 
         if (
             self.path.startswith(f"{EXECUTIVE_REPORT_PREFIX}/")

@@ -58,7 +58,11 @@
     activeContactsBrand: 'orange',
     activeContactsDomain: 'ALL',
     commsDispatchHistory: {}, // { [incId]: Array }
-    copiedAgentPrompts: {} // { [incId + '_' + phase]: boolean }
+    copiedAgentPrompts: {}, // { [incId + '_' + phase]: boolean }
+
+    // --- Estado Módulo Integración Microsoft Teams ---
+    teamsConfig: null,
+    editingChannelId: null
   };
 
   // --- Referencias del DOM ---
@@ -300,7 +304,23 @@
     triageFooter: document.getElementById('triage-footer'),
     triageFooterHeader: document.getElementById('triage-footer-header'),
     footerBtnToggle: document.getElementById('footer-btn-toggle'),
-    footerExpandable: document.getElementById('triage-footer-expandable')
+    footerExpandable: document.getElementById('triage-footer-expandable'),
+
+    // --- Referencias DOM Módulo Teams ---
+    btnTeamsConfig: document.getElementById('btn-teams-channels-config'),
+    modalTeamsConfig: document.getElementById('modal-teams-config'),
+    btnModalTeamsClose: document.getElementById('btn-modal-teams-close'),
+    btnModalTeamsCloseBottom: document.getElementById('btn-modal-teams-close-bottom'),
+    btnTeamsAddChannel: document.getElementById('btn-teams-add-channel'),
+    teamsChannelFormBox: document.getElementById('teams-channel-form-box'),
+    teamsChannelForm: document.getElementById('teams-channel-form'),
+    btnTeamsFormCancel: document.getElementById('btn-teams-form-cancel'),
+    btnTeamsSaveAll: document.getElementById('btn-teams-save-all'),
+    teamsModalStatus: document.getElementById('teams-modal-status'),
+    teamsChannelsList: document.getElementById('teams-channels-list'),
+    teamsRoutingTbody: document.getElementById('teams-routing-tbody'),
+    teamsGroupRoutesList: document.getElementById('teams-group-routes-list'),
+    btnTeamsAddGroupRoute: document.getElementById('btn-teams-add-group-route')
   };
 
   // --- Utilidades ---
@@ -3842,6 +3862,9 @@ function renderFeed() {
                       <button type="button" class="triage-btn-wl-claim btn-copy-worklog-claim" data-inc="${escapeHtml(incId)}" title="Copiar plantilla de reclamación formal para Remedy">
                         <span aria-hidden="true">📋</span> Copiar Reclamación Work Log
                       </button>
+                      <button type="button" class="triage-btn-wl-teams btn-send-worklog-teams" data-inc="${escapeHtml(incId)}" title="Enviar alerta y reclamación formal al canal de Teams configurado">
+                        <span aria-hidden="true">📢</span> Enviar a Teams
+                      </button>
                     ` : ''}
                   </div>
                 ` : ''}
@@ -4148,6 +4171,18 @@ function renderFeed() {
             copyToClipboard(text, `Plantilla de reclamación de Work Log copiada para ${incId}. Pégala en Remedy.`);
           }
         }
+      });
+    });
+
+    // 5e. Botón Enviar Reclamación Work Log a Microsoft Teams
+    document.querySelectorAll('.btn-send-worklog-teams').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        const incId = btn.getAttribute('data-inc');
+        const inc = state.incidents.find(i => i.id === incId);
+        if (!inc) return;
+
+        await sendWorklogClaimToTeams(inc, btn);
       });
     });
 
@@ -4469,6 +4504,9 @@ function renderFeed() {
         }
         if (dom.modalIngestionAudit && dom.modalIngestionAudit.classList.contains('open')) {
           closeIngestionAuditModal();
+        }
+        if (dom.modalTeamsConfig && dom.modalTeamsConfig.classList.contains('open')) {
+          closeTeamsConfigModal();
         }
         return;
       }
@@ -5828,8 +5866,849 @@ Puente Teams: ${teamsUrl}
     }
   }
 
+  // ============================================================
+  // MÓDULO INTEGRACIÓN MICROSOFT TEAMS & ENRUTAMIENTO CONFIGURABLE
+  // ============================================================
+
+  const DEFAULT_TEAMS_CONFIG = {
+    _version: '1.0',
+    descripcion: 'Configuración de canales y enrutamiento a Microsoft Teams',
+    remedy_base_url: 'https://epsilon-itsm.si.orange.es/arsys/forms/ars_front_f5.si.orange.es/SHR:LandingConsole/Default+Administrator+View/?cacheid=e870b03e',
+    canales: {
+      masivas_it: {
+        id: 'masivas_it',
+        nombre: 'Masivas IT',
+        descripcion: 'Chat/Canal oficial de Masivas IT para seguimiento operativo y alertas',
+        tipo: 'power_automate_workflow',
+        webhook_url: 'https://defaultc10a36d829814b7b9b892ef5936549.3a.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/05/workflows/251b155948b445fb872eeb5ed34d1fa9/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=SsB01Uv2lgQf4-cucTfHGW_ciVlZD9f09M7VNM2_4gY',
+        activo: true
+      },
+      warroom_sl1: {
+        id: 'warroom_sl1',
+        nombre: 'War Room ITIL SL1/P1',
+        descripcion: 'Canal de crisis y coordinación de emergencias de criticidad máxima (SL1)',
+        tipo: 'power_automate_workflow',
+        webhook_url: '',
+        activo: false
+      },
+      notificaciones_direccion: {
+        id: 'notificaciones_direccion',
+        nombre: 'Notificaciones Dirección IT',
+        descripcion: 'Canal de avisos ejecutivos a Dirección de Operaciones',
+        tipo: 'power_automate_workflow',
+        webhook_url: '',
+        activo: false
+      }
+    },
+    rutas_acciones: {
+      reclamacion_worklog: {
+        descripcion: 'Reclamación formal de apunte técnico en Work Log de BMC Remedy',
+        canal_predeterminado: 'masivas_it',
+        mapeo_por_grupo: {
+          'DES_DJINGO': 'masivas_it',
+          'RED FIBRA': 'masivas_it'
+        }
+      },
+      notificacion_direccion: {
+        descripcion: 'Comunicaciones ejecutivas de incidentes para Dirección',
+        canal_predeterminado: 'masivas_it',
+        mapeo_por_grupo: {}
+      },
+      convocatoria_warroom: {
+        descripcion: 'Apertura y convocatoria de War Room para incidencias SL1 / P1',
+        canal_predeterminado: 'masivas_it',
+        mapeo_por_grupo: {}
+      },
+      cierre_zombi: {
+        descripcion: 'Solicitud formal de cierre administrativo para tickets zombi',
+        canal_predeterminado: 'masivas_it',
+        mapeo_por_grupo: {}
+      }
+    }
+  };
+
+  async function loadTeamsConfig(forceRefresh = false) {
+    const timestamp = Date.now();
+    const candidateUrls = [
+      '/api/teams/channels?t=' + timestamp,
+      '../../data/teams_channels_config.json?t=' + timestamp,
+      '/data/teams_channels_config.json?t=' + timestamp
+    ];
+
+    for (const url of candidateUrls) {
+      try {
+        const res = await fetch(url);
+        if (res.ok) {
+          const data = await res.json();
+          const cfg = data.config || data;
+          if (cfg && cfg.canales && cfg.rutas_acciones) {
+            state.teamsConfig = cfg;
+            try {
+              localStorage.setItem('orange_teams_channels_config', JSON.stringify(cfg));
+            } catch (_) {}
+            return cfg;
+          }
+        }
+      } catch (_) {}
+    }
+
+    // Fallback a localStorage
+    try {
+      const cached = localStorage.getItem('orange_teams_channels_config');
+      if (cached) {
+        state.teamsConfig = JSON.parse(cached);
+        return state.teamsConfig;
+      }
+    } catch (_) {}
+
+    state.teamsConfig = JSON.parse(JSON.stringify(DEFAULT_TEAMS_CONFIG));
+    return state.teamsConfig;
+  }
+
+  async function saveTeamsConfigToServer() {
+    if (!state.teamsConfig) return false;
+    try {
+      localStorage.setItem('orange_teams_channels_config', JSON.stringify(state.teamsConfig));
+    } catch (_) {}
+
+    try {
+      const res = await fetch('/api/teams/channels', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ config: state.teamsConfig })
+      });
+      return res.ok;
+    } catch (err) {
+      console.warn('No se pudo persistir en backend /api/teams/channels, guardado localmente:', err);
+      return false;
+    }
+  }
+
+  function resolveLocalTeamsChannel(action, group) {
+    const cfg = state.teamsConfig || DEFAULT_TEAMS_CONFIG;
+    const channels = cfg.canales || {};
+    const route = cfg.rutas_acciones?.[action];
+    if (route) {
+      if (group && route.mapeo_por_grupo) {
+        const normGroup = String(group).trim().toLowerCase();
+        for (const [gKey, cId] of Object.entries(route.mapeo_por_grupo)) {
+          if (gKey.toLowerCase() === normGroup || normGroup.includes(gKey.toLowerCase())) {
+            if (channels[cId] && channels[cId].activo && channels[cId].webhook_url) {
+              return channels[cId];
+            }
+          }
+        }
+      }
+      const defId = route.canal_predeterminado;
+      if (defId && channels[defId] && channels[defId].activo && channels[defId].webhook_url) {
+        return channels[defId];
+      }
+    }
+    for (const c of Object.values(channels)) {
+      if (c.activo && c.webhook_url) return c;
+    }
+    return null;
+  }
+
+  function buildClientAdaptiveCard(incident, remedyBaseUrl) {
+    const incId = incident.id || 'INC000000000000';
+    const prio = incident.prioridad_sugerida || incident.prioridad_nominal || 'P2';
+    const wlStatus = incident.worklog_status || {};
+    const guia = incident.guia_operador || {};
+    const horasWl = wlStatus.horas_sin_worklog || 0;
+    const nivel = wlStatus.nivel_inactividad || 'WL_ALERTA_6H';
+    const grupo = incident.grupo_asignado || wlStatus.ultimo_grupo || 'Grupo Resolutor';
+    const titulo = incident.titulo || 'Incidencia de Servicio';
+
+    let headerColor = 'Accent';
+    let containerStyle = 'emphasis';
+    let badgeIcon = '⚠️';
+    let nivelLabel = `ALERTA SEGUIMIENTO (>6h sin notas: ${horasWl}h)`;
+
+    if (nivel === 'WL_BLOQUEO_24H') {
+      headerColor = 'Attention';
+      containerStyle = 'attention';
+      badgeIcon = '🚨';
+      nivelLabel = `BLOQUEO CRÍTICO (>24h sin notas: ${horasWl}h)`;
+    } else if (nivel === 'WL_ESTANCAMIENTO_12H') {
+      headerColor = 'Warning';
+      containerStyle = 'warning';
+      badgeIcon = '⏳';
+      nivelLabel = `ESTANCAMIENTO (>12h sin notas: ${horasWl}h)`;
+    }
+
+    const claimBody = guia.plantilla_reclamacion_wl || (
+      `Se constata que la incidencia ${incId} asignada a ${grupo} no registra notas técnicas desde hace ${horasWl}h. Se requiere actualización inmediata en BMC Remedy.`
+    );
+    const remedyUrl = remedyBaseUrl || 'https://epsilon-itsm.si.orange.es/arsys/forms/ars_front_f5.si.orange.es/SHR:LandingConsole/Default+Administrator+View/?cacheid=e870b03e';
+
+    return {
+      type: 'message',
+      attachments: [{
+        contentType: 'application/vnd.microsoft.card.adaptive',
+        contentUrl: null,
+        content: {
+          $schema: 'http://adaptivecards.io/schemas/adaptive-card.json',
+          type: 'AdaptiveCard',
+          version: '1.4',
+          msteams: { width: 'Full' },
+          body: [
+            {
+              type: 'Container',
+              style: containerStyle,
+              bleed: true,
+              items: [
+                {
+                  type: 'TextBlock',
+                  text: `${badgeIcon} RECLAMACIÓN DE WORK LOG · ORANGE TECH OPERATIONS`,
+                  weight: 'Bolder',
+                  size: 'Medium',
+                  color: headerColor,
+                  wrap: true
+                },
+                {
+                  type: 'TextBlock',
+                  text: `**${incId}** (${prio}) · ${grupo}`,
+                  size: 'Small',
+                  isSubtle: true,
+                  spacing: 'None'
+                }
+              ]
+            },
+            {
+              type: 'TextBlock',
+              text: `**Título:** ${titulo}`,
+              wrap: true,
+              spacing: 'Medium'
+            },
+            {
+              type: 'FactSet',
+              spacing: 'Medium',
+              facts: [
+                { title: 'Incidencia:', value: incId },
+                { title: 'Prioridad ITIL:', value: prio },
+                { title: 'Grupo Asignado:', value: grupo },
+                { title: 'Estado Work Log:', value: nivelLabel },
+                { title: 'Horas sin Notas:', value: `${horasWl}h` }
+              ]
+            },
+            {
+              type: 'Container',
+              style: 'emphasis',
+              items: [
+                {
+                  type: 'TextBlock',
+                  text: '📝 **Requerimiento Operativo Formal:**',
+                  weight: 'Bolder',
+                  size: 'Small'
+                },
+                {
+                  type: 'TextBlock',
+                  text: claimBody,
+                  wrap: true,
+                  size: 'Small'
+                }
+              ]
+            }
+          ],
+          actions: [
+            {
+              type: 'Action.OpenUrl',
+              title: '🔗 Abrir Incidencia en BMC Remedy',
+              url: remedyUrl
+            }
+          ]
+        }
+      }]
+    };
+  }
+
+  async function sendWorklogClaimToTeams(inc, btnElement = null) {
+    const incId = inc.id;
+    const group = inc.grupo_asignado || inc.worklog_status?.ultimo_grupo || '';
+    const origHtml = btnElement ? btnElement.innerHTML : '';
+
+    if (btnElement) {
+      btnElement.disabled = true;
+      btnElement.classList.add('is-sending');
+      btnElement.innerHTML = `<span aria-hidden="true" style="display:inline-block; animation: spin 1s infinite linear;">🔄</span> Enviando a Teams...`;
+    }
+
+    try {
+      if (!state.teamsConfig) {
+        await loadTeamsConfig();
+      }
+
+      const targetChannel = resolveLocalTeamsChannel('reclamacion_worklog', group);
+      const channelName = targetChannel ? targetChannel.nombre : 'Masivas IT';
+
+      let sendSuccess = false;
+      let errorDetail = '';
+
+      try {
+        const backendRes = await fetch('/api/teams/send', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'reclamacion_worklog',
+            incident_id: incId,
+            incident: inc,
+            group: group
+          })
+        });
+
+        if (backendRes.ok) {
+          const resData = await backendRes.json();
+          if (resData.success) {
+            sendSuccess = true;
+          } else {
+            errorDetail = resData.error || 'Respuesta no exitosa del servidor';
+          }
+        } else {
+          errorDetail = `HTTP ${backendRes.status}`;
+        }
+      } catch (backendErr) {
+        console.warn('Backend /api/teams/send no disponible, probando envío directo desde navegador:', backendErr);
+        if (targetChannel && targetChannel.webhook_url) {
+          try {
+            const cardPayload = buildClientAdaptiveCard(inc, state.teamsConfig?.remedy_base_url);
+            const directRes = await fetch(targetChannel.webhook_url, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(cardPayload)
+            });
+            if (directRes.ok || directRes.status === 202 || directRes.status === 200) {
+              sendSuccess = true;
+            } else {
+              errorDetail = `Webhook Teams HTTP ${directRes.status}`;
+            }
+          } catch (directErr) {
+            errorDetail = `Fallo de red al conectar con webhook de Teams: ${directErr.message}`;
+          }
+        } else {
+          errorDetail = 'Canal de Teams no tiene URL configurada';
+        }
+      }
+
+      if (sendSuccess) {
+        if (btnElement) {
+          btnElement.classList.remove('is-sending');
+          btnElement.classList.add('is-success');
+          btnElement.innerHTML = `<span aria-hidden="true">✅</span> ¡Enviado a ${escapeHtml(channelName)}!`;
+        }
+        showToast(`📢 Reclamación de Work Log enviada con éxito a Teams: ${channelName} (${incId})`, 'success');
+      } else {
+        throw new Error(errorDetail || 'Error desconocido al despachar a Teams');
+      }
+    } catch (err) {
+      console.error('Error al enviar reclamación de Work Log a Teams:', err);
+      showToast(`❌ Error al enviar a Teams: ${err.message}. Puedes copiar la plantilla manualmente.`, 'error');
+      if (btnElement) {
+        btnElement.classList.remove('is-sending');
+        btnElement.classList.remove('is-success');
+        btnElement.disabled = false;
+        btnElement.innerHTML = origHtml;
+      }
+    }
+  }
+
+  function maskWebhookUrl(url) {
+    if (!url) return '(no configurada)';
+    if (url.includes('sig=')) {
+      const parts = url.split('?');
+      if (parts.length > 1) {
+        const qParts = parts[1].split('&').map(p => {
+          if (p.startsWith('sig=')) {
+            const val = p.substring(4);
+            return 'sig=' + val.substring(0, 4) + '...' + val.substring(val.length - 4);
+          }
+          return p;
+        });
+        return parts[0] + '?' + qParts.join('&');
+      }
+    }
+    if (url.length > 55) {
+      return url.substring(0, 25) + '...' + url.substring(url.length - 15);
+    }
+    return url;
+  }
+
+  function renderTeamsChannelsTab() {
+    if (!dom.teamsChannelsList) return;
+    const channels = state.teamsConfig?.canales || {};
+    const channelKeys = Object.keys(channels);
+
+    if (channelKeys.length === 0) {
+      dom.teamsChannelsList.innerHTML = `<div class="teams-empty-state">No hay canales configurados. Haz clic en "Nuevo Canal".</div>`;
+      return;
+    }
+
+    let html = '';
+    for (const [cId, cData] of Object.entries(channels)) {
+      const isActive = Boolean(cData.activo && cData.webhook_url);
+      const isConfigured = Boolean(cData.webhook_url);
+      html += `
+        <div class="teams-channel-card ${isActive ? 'is-active' : 'is-inactive'}" data-channel-id="${escapeHtml(cId)}">
+          <div class="teams-channel-card-header">
+            <div class="teams-channel-title-group">
+              <span class="teams-channel-name">${escapeHtml(cData.nombre || cId)}</span>
+              <span class="teams-channel-id-badge">[${escapeHtml(cId)}]</span>
+              <span class="teams-channel-status-badge ${isActive ? 'is-ok' : 'is-off'}">
+                ${isActive ? '🟢 Activo' : (isConfigured ? '⚪ Desactivado' : '⚠️ Sin URL')}
+              </span>
+            </div>
+            <div class="teams-channel-actions">
+              <button type="button" class="teams-btn-sm btn-test btn-channel-test" data-cid="${escapeHtml(cId)}" title="Enviar mensaje de prueba a este canal">
+                <span>🧪 Probar Envío</span>
+              </button>
+              <button type="button" class="teams-btn-sm btn-channel-edit" data-cid="${escapeHtml(cId)}" title="Modificar datos o Webhook URL">
+                <span>✏️ Editar</span>
+              </button>
+              <button type="button" class="teams-btn-sm btn-delete btn-channel-delete" data-cid="${escapeHtml(cId)}" title="Eliminar este canal">
+                <span>🗑️ Eliminar</span>
+              </button>
+            </div>
+          </div>
+          <div class="teams-channel-meta">
+            ${escapeHtml(cData.descripcion || 'Sin descripción')} · Conector: <code>${escapeHtml(cData.tipo || 'power_automate_workflow')}</code>
+          </div>
+          <div class="teams-channel-url-preview" title="${escapeHtml(cData.webhook_url || '')}">
+            ${escapeHtml(maskWebhookUrl(cData.webhook_url))}
+          </div>
+        </div>
+      `;
+    }
+    dom.teamsChannelsList.innerHTML = html;
+
+    // Listeners de tarjetas
+    dom.teamsChannelsList.querySelectorAll('.btn-channel-edit').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const cid = btn.getAttribute('data-cid');
+        openChannelForm(cid);
+      });
+    });
+
+    dom.teamsChannelsList.querySelectorAll('.btn-channel-delete').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const cid = btn.getAttribute('data-cid');
+        if (confirm(`¿Estás seguro de eliminar el canal [${cid}]? Las rutas que apunten a él volverán al predeterminado.`)) {
+          delete state.teamsConfig.canales[cid];
+          // Limpiar referencias
+          const routes = state.teamsConfig.rutas_acciones || {};
+          for (const r of Object.values(routes)) {
+            if (r.canal_predeterminado === cid) r.canal_predeterminado = 'masivas_it';
+            if (r.mapeo_por_grupo) {
+              for (const [grp, mappedId] of Object.entries(r.mapeo_por_grupo)) {
+                if (mappedId === cid) delete r.mapeo_por_grupo[grp];
+              }
+            }
+          }
+          await saveTeamsConfigToServer();
+          renderTeamsModalContent();
+          showToast(`Canal [${cid}] eliminado con éxito.`, 'info');
+        }
+      });
+    });
+
+    dom.teamsChannelsList.querySelectorAll('.btn-channel-test').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const cid = btn.getAttribute('data-cid');
+        const channel = state.teamsConfig?.canales?.[cid];
+        if (!channel || !channel.webhook_url) {
+          showToast(`El canal [${cid}] no tiene una Webhook URL configurada.`, 'warning');
+          return;
+        }
+
+        const origText = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = `<span>⏳ Probando...</span>`;
+
+        try {
+          const sampleInc = state.incidents?.[0] || {
+            id: 'INC000004100002',
+            prioridad_sugerida: 'P2',
+            titulo: 'PRUEBA CONECTIVIDAD TEAMS WORKFLOW',
+            grupo_asignado: 'MESA TECNICA',
+            worklog_status: { horas_sin_worklog: 12.5, nivel_inactividad: 'WL_ESTANCAMIENTO_12H' },
+            guia_operador: { plantilla_reclamacion_wl: 'Mensaje de prueba de conectividad emitido desde la Consola de Triaje IT.' }
+          };
+
+          const res = await fetch('/api/teams/send', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              action: 'reclamacion_worklog',
+              incident_id: sampleInc.id,
+              incident: sampleInc,
+              channel_id: cid
+            })
+          });
+
+          if (res.ok) {
+            showToast(`✅ ¡Prueba exitosa! Mensaje entregado a ${channel.nombre || cid}`, 'success');
+          } else {
+            const err = await res.json().catch(() => ({}));
+            showToast(`❌ Error en prueba: ${err.error || ('HTTP ' + res.status)}`, 'error');
+          }
+        } catch (err) {
+          showToast(`❌ Error de red en prueba: ${err.message}`, 'error');
+        } finally {
+          btn.disabled = false;
+          btn.innerHTML = origText;
+        }
+      });
+    });
+  }
+
+  function renderTeamsRoutingTab() {
+    if (!dom.teamsRoutingTbody) return;
+    const routes = state.teamsConfig?.rutas_acciones || {};
+    const channels = state.teamsConfig?.canales || {};
+
+    let html = '';
+    for (const [actionKey, routeData] of Object.entries(routes)) {
+      const defChannelId = routeData.canal_predeterminado || 'masivas_it';
+      
+      let optionsHtml = '';
+      for (const [cid, cData] of Object.entries(channels)) {
+        const isSel = cid === defChannelId;
+        optionsHtml += `<option value="${escapeHtml(cid)}" ${isSel ? 'selected' : ''}>${escapeHtml(cData.nombre || cid)} [${escapeHtml(cid)}]</option>`;
+      }
+
+      html += `
+        <tr>
+          <td><strong>${escapeHtml(actionKey.toUpperCase())}</strong></td>
+          <td>${escapeHtml(routeData.descripcion || '-')}</td>
+          <td>
+            <select class="select-route-action" data-action="${escapeHtml(actionKey)}">
+              ${optionsHtml}
+            </select>
+          </td>
+        </tr>
+      `;
+    }
+    dom.teamsRoutingTbody.innerHTML = html;
+
+    dom.teamsRoutingTbody.querySelectorAll('.select-route-action').forEach(sel => {
+      sel.addEventListener('change', (e) => {
+        const action = sel.getAttribute('data-action');
+        const chosenCid = e.target.value;
+        if (state.teamsConfig?.rutas_acciones?.[action]) {
+          state.teamsConfig.rutas_acciones[action].canal_predeterminado = chosenCid;
+        }
+      });
+    });
+  }
+
+  function renderTeamsGroupsTab() {
+    if (!dom.teamsGroupRoutesList) return;
+    const routes = state.teamsConfig?.rutas_acciones || {};
+    const channels = state.teamsConfig?.canales || {};
+
+    // Rellenar select de canal para nuevo mapeo
+    const selChannel = document.getElementById('teams-new-group-channel');
+    if (selChannel) {
+      let opts = '';
+      for (const [cid, cData] of Object.entries(channels)) {
+        opts += `<option value="${escapeHtml(cid)}">${escapeHtml(cData.nombre || cid)}</option>`;
+      }
+      selChannel.innerHTML = opts;
+    }
+
+    let itemsHtml = '';
+    let hasAny = false;
+
+    for (const [actionKey, routeData] of Object.entries(routes)) {
+      const groupMap = routeData.mapeo_por_grupo || {};
+      for (const [groupName, targetCid] of Object.entries(groupMap)) {
+        hasAny = true;
+        const channelData = channels[targetCid] || {};
+        const chName = channelData.nombre || targetCid;
+        itemsHtml += `
+          <div class="teams-group-route-item" data-action="${escapeHtml(actionKey)}" data-group="${escapeHtml(groupName)}">
+            <div class="teams-group-route-info">
+              <span class="teams-group-badge">${escapeHtml(groupName)}</span>
+              <span style="font-size: 11px; color: var(--triage-text-muted);">(${escapeHtml(actionKey)})</span>
+              <span class="teams-arrow">➔</span>
+              <span class="teams-target-channel">📡 [${escapeHtml(targetCid)}] ${escapeHtml(chName)}</span>
+            </div>
+            <button type="button" class="teams-btn-sm btn-delete btn-remove-group-route" data-action="${escapeHtml(actionKey)}" data-group="${escapeHtml(groupName)}" title="Eliminar enlace de este grupo">
+              ✕ Quitar
+            </button>
+          </div>
+        `;
+      }
+    }
+
+    if (!hasAny) {
+      itemsHtml = `<div class="teams-empty-state" style="padding: 12px; font-size: 13px; color: var(--triage-text-muted);">No hay sobrescrituras por grupo configuradas. Las acciones seguirán el canal predeterminado.</div>`;
+    }
+
+    dom.teamsGroupRoutesList.innerHTML = itemsHtml;
+
+    dom.teamsGroupRoutesList.querySelectorAll('.btn-remove-group-route').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const action = btn.getAttribute('data-action');
+        const grp = btn.getAttribute('data-group');
+        if (state.teamsConfig?.rutas_acciones?.[action]?.mapeo_por_grupo?.[grp]) {
+          delete state.teamsConfig.rutas_acciones[action].mapeo_por_grupo[grp];
+          await saveTeamsConfigToServer();
+          renderTeamsGroupsTab();
+          showToast(`Sobrescritura para "${grp}" eliminada.`, 'info');
+        }
+      });
+    });
+  }
+
+  function openChannelForm(channelId = null) {
+    if (!dom.teamsChannelFormBox) return;
+    state.editingChannelId = channelId;
+    const isEdit = Boolean(channelId);
+
+    const titleEl = document.getElementById('teams-form-title');
+    if (titleEl) {
+      titleEl.textContent = isEdit ? `Editar Canal Teams [${channelId}]` : 'Añadir Nuevo Canal Teams';
+    }
+
+    const inputId = document.getElementById('teams-form-id');
+    const inputName = document.getElementById('teams-form-name');
+    const inputUrl = document.getElementById('teams-form-url');
+    const inputDesc = document.getElementById('teams-form-desc');
+    const selectType = document.getElementById('teams-form-type');
+    const checkActive = document.getElementById('teams-form-active');
+
+    if (isEdit && state.teamsConfig?.canales?.[channelId]) {
+      const ch = state.teamsConfig.canales[channelId];
+      if (inputId) {
+        inputId.value = ch.id || channelId;
+        inputId.disabled = true;
+      }
+      if (inputName) inputName.value = ch.nombre || '';
+      if (inputUrl) inputUrl.value = ch.webhook_url || '';
+      if (inputDesc) inputDesc.value = ch.descripcion || '';
+      if (selectType) selectType.value = ch.tipo || 'power_automate_workflow';
+      if (checkActive) checkActive.checked = Boolean(ch.activo);
+    } else {
+      if (inputId) {
+        inputId.value = '';
+        inputId.disabled = false;
+      }
+      if (inputName) inputName.value = '';
+      if (inputUrl) inputUrl.value = '';
+      if (inputDesc) inputDesc.value = '';
+      if (selectType) selectType.value = 'power_automate_workflow';
+      if (checkActive) checkActive.checked = true;
+    }
+
+    dom.teamsChannelFormBox.style.display = 'block';
+    if (inputName) inputName.focus();
+  }
+
+  function closeChannelForm() {
+    if (dom.teamsChannelFormBox) {
+      dom.teamsChannelFormBox.style.display = 'none';
+    }
+    state.editingChannelId = null;
+  }
+
+  function renderTeamsModalContent() {
+    renderTeamsChannelsTab();
+    renderTeamsRoutingTab();
+    renderTeamsGroupsTab();
+  }
+
+  async function openTeamsConfigModal() {
+    if (!dom.modalTeamsConfig) return;
+    await loadTeamsConfig();
+    renderTeamsModalContent();
+    dom.modalTeamsConfig.classList.add('open');
+    dom.modalTeamsConfig.setAttribute('aria-hidden', 'false');
+  }
+
+  function closeTeamsConfigModal() {
+    if (!dom.modalTeamsConfig) return;
+    dom.modalTeamsConfig.classList.remove('open');
+    dom.modalTeamsConfig.setAttribute('aria-hidden', 'true');
+    closeChannelForm();
+  }
+
+  function setupTeamsListeners() {
+    if (dom.btnTeamsConfig) {
+      dom.btnTeamsConfig.addEventListener('click', openTeamsConfigModal);
+    }
+    if (dom.btnModalTeamsClose) {
+      dom.btnModalTeamsClose.addEventListener('click', closeTeamsConfigModal);
+    }
+    if (dom.btnModalTeamsCloseBottom) {
+      dom.btnModalTeamsCloseBottom.addEventListener('click', closeTeamsConfigModal);
+    }
+
+    // Pestañas internas
+    const tabChannels = document.getElementById('tab-teams-channels');
+    const tabRouting = document.getElementById('tab-teams-routing');
+    const tabGroups = document.getElementById('tab-teams-groups');
+
+    const panelChannels = document.getElementById('teams-panel-channels');
+    const panelRouting = document.getElementById('teams-panel-routing');
+    const panelGroups = document.getElementById('teams-panel-groups');
+
+    function selectTab(selectedTab, activePanel) {
+      [tabChannels, tabRouting, tabGroups].forEach(t => {
+        if (t) {
+          t.classList.remove('active');
+          t.setAttribute('aria-selected', 'false');
+        }
+      });
+      [panelChannels, panelRouting, panelGroups].forEach(p => {
+        if (p) p.style.display = 'none';
+      });
+
+      if (selectedTab) {
+        selectedTab.classList.add('active');
+        selectedTab.setAttribute('aria-selected', 'true');
+      }
+      if (activePanel) {
+        activePanel.style.display = 'block';
+      }
+    }
+
+    if (tabChannels) {
+      tabChannels.addEventListener('click', () => selectTab(tabChannels, panelChannels));
+    }
+    if (tabRouting) {
+      tabRouting.addEventListener('click', () => {
+        selectTab(tabRouting, panelRouting);
+        renderTeamsRoutingTab();
+      });
+    }
+    if (tabGroups) {
+      tabGroups.addEventListener('click', () => {
+        selectTab(tabGroups, panelGroups);
+        renderTeamsGroupsTab();
+      });
+    }
+
+    // Botón Nuevo Canal
+    if (dom.btnTeamsAddChannel) {
+      dom.btnTeamsAddChannel.addEventListener('click', () => openChannelForm());
+    }
+    if (dom.btnTeamsFormCancel) {
+      dom.btnTeamsFormCancel.addEventListener('click', closeChannelForm);
+    }
+
+    // Guardar Canal desde formulario
+    if (dom.teamsChannelForm) {
+      dom.teamsChannelForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const inputId = document.getElementById('teams-form-id');
+        const inputName = document.getElementById('teams-form-name');
+        const inputUrl = document.getElementById('teams-form-url');
+        const inputDesc = document.getElementById('teams-form-desc');
+        const selectType = document.getElementById('teams-form-type');
+        const checkActive = document.getElementById('teams-form-active');
+
+        const cid = (inputId?.value || '').trim().toLowerCase().replace(/\s+/g, '_');
+        if (!cid) {
+          alert('Por favor indica un ID / clave único para el canal.');
+          return;
+        }
+
+        if (!state.teamsConfig.canales) {
+          state.teamsConfig.canales = {};
+        }
+
+        const now = new Date().toISOString();
+        const existing = state.teamsConfig.canales[cid] || {};
+
+        state.teamsConfig.canales[cid] = {
+          id: cid,
+          nombre: (inputName?.value || '').trim() || cid,
+          descripcion: (inputDesc?.value || '').trim(),
+          tipo: selectType?.value || 'power_automate_workflow',
+          webhook_url: (inputUrl?.value || '').trim(),
+          activo: Boolean(checkActive?.checked),
+          creado_el: existing.creado_el || now,
+          actualizado_el: now
+        };
+
+        await saveTeamsConfigToServer();
+        closeChannelForm();
+        renderTeamsModalContent();
+        showToast(`Canal [${cid}] guardado con éxito.`, 'success');
+      });
+    }
+
+    // Añadir sobrescritura de grupo
+    if (dom.btnTeamsAddGroupRoute) {
+      dom.btnTeamsAddGroupRoute.addEventListener('click', async () => {
+        const inputName = document.getElementById('teams-new-group-name');
+        const selectAction = document.getElementById('teams-new-group-action');
+        const selectChannel = document.getElementById('teams-new-group-channel');
+
+        const group = (inputName?.value || '').trim();
+        const action = selectAction?.value || 'reclamacion_worklog';
+        const channelId = selectChannel?.value;
+
+        if (!group) {
+          alert('Por favor introduce el nombre exacto del Grupo Resolutor de Remedy (ej: RED FIBRA).');
+          return;
+        }
+        if (!channelId) {
+          alert('Por favor selecciona un canal de destino.');
+          return;
+        }
+
+        if (!state.teamsConfig.rutas_acciones) {
+          state.teamsConfig.rutas_acciones = {};
+        }
+        if (!state.teamsConfig.rutas_acciones[action]) {
+          state.teamsConfig.rutas_acciones[action] = {
+            descripcion: action,
+            canal_predeterminado: 'masivas_it',
+            mapeo_por_grupo: {}
+          };
+        }
+        if (!state.teamsConfig.rutas_acciones[action].mapeo_por_grupo) {
+          state.teamsConfig.rutas_acciones[action].mapeo_por_grupo = {};
+        }
+
+        state.teamsConfig.rutas_acciones[action].mapeo_por_grupo[group] = channelId;
+        await saveTeamsConfigToServer();
+        if (inputName) inputName.value = '';
+        renderTeamsGroupsTab();
+        showToast(`Enlace configurado: ${group} ➔ [${channelId}]`, 'success');
+      });
+    }
+
+    // Guardar toda la configuración
+    if (dom.btnTeamsSaveAll) {
+      dom.btnTeamsSaveAll.addEventListener('click', async () => {
+        const origHtml = dom.btnTeamsSaveAll.innerHTML;
+        dom.btnTeamsSaveAll.disabled = true;
+        dom.btnTeamsSaveAll.innerHTML = `<span>⏳ Guardando...</span>`;
+
+        const saved = await saveTeamsConfigToServer();
+        dom.btnTeamsSaveAll.disabled = false;
+        dom.btnTeamsSaveAll.innerHTML = origHtml;
+
+        if (saved) {
+          showToast('✅ Configuración de Canales Microsoft Teams guardada con éxito', 'success');
+          closeTeamsConfigModal();
+        } else {
+          showToast('⚠️ Configuración guardada en caché local del navegador (backend no respondió).', 'info');
+          closeTeamsConfigModal();
+        }
+      });
+    }
+  }
+
   async function init() {
     await loadScheduledChangesPaP();
+    await loadTeamsConfig();
+    setupGlobalListeners();
+    setupIngestionAuditListeners();
+    setupTeamsListeners();
+    updateTabStyles();
     setupGlobalListeners();
     setupIngestionAuditListeners();
     updateTabStyles();

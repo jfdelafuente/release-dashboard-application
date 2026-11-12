@@ -82,6 +82,12 @@
             <span>Comunicaciones &amp; Contactos</span>
           </button>
 
+          <!-- Botón de configuración de Canales Microsoft Teams -->
+          <button id="btn-teams-channels-config" class="triage-btn triage-btn-teams-header" title="Configurar Canales y Enrutamiento de Microsoft Teams">
+            <span aria-hidden="true">💬</span>
+            <span>Canales Teams</span>
+          </button>
+
           <!-- Botón de consulta de criterios oficiales de umbrales -->
           <button id="btn-help-criteria" class="triage-btn triage-btn-primary btn-open-criteria" title="Consultar Umbrales de los 6 Procesos Críticos y Reglas de Oro">
             <span aria-hidden="true">📘</span>
@@ -1561,6 +1567,149 @@
           <span>💡 Puedes abrir y cerrar esta consola en cualquier momento con el atajo <kbd>Shift+I</kbd> o <kbd>Shift+C</kbd> (o <kbd>Esc</kbd> para salir).</span>
         </div>
         <button id="btn-modal-audit-close-bottom" class="triage-btn">Cerrar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de Configuración de Canales y Enrutamiento Microsoft Teams -->
+  <div id="modal-teams-config" class="triage-modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="modal-teams-title" aria-hidden="true">
+    <div class="triage-modal-dialog teams-modal-dialog">
+      <div class="triage-modal-header teams-modal-header">
+        <div class="teams-header-title-block">
+          <h2 id="modal-teams-title" class="triage-modal-title">
+            <span class="teams-title-icon" aria-hidden="true">💬</span>
+            <span>Canales y Enrutamiento Microsoft Teams</span>
+          </h2>
+          <p class="teams-modal-subtitle">Configura los webhooks de Power Automate y personaliza qué canal recibe cada acción o grupo resolutor</p>
+        </div>
+        <button id="btn-modal-teams-close" class="triage-btn" aria-label="Cerrar configuración Teams">✖</button>
+      </div>
+
+      <div class="triage-modal-body teams-modal-body">
+        <!-- Pestañas internas de la configuración de Teams -->
+        <div class="teams-tabs-nav" role="tablist">
+          <button type="button" id="tab-teams-channels" class="teams-tab-btn active" role="tab" aria-selected="true">
+            <span>📡 Canales y Webhooks</span>
+          </button>
+          <button type="button" id="tab-teams-routing" class="teams-tab-btn" role="tab" aria-selected="false">
+            <span>🔀 Enrutamiento de Acciones</span>
+          </button>
+          <button type="button" id="tab-teams-groups" class="teams-tab-btn" role="tab" aria-selected="false">
+            <span>👥 Sobrescrituras por Grupo Resolutor</span>
+          </button>
+        </div>
+
+        <!-- Panel 1: Lista y Edición de Canales -->
+        <div id="teams-panel-channels" class="teams-tab-panel active">
+          <div class="teams-panel-header-actions">
+            <span class="teams-section-hint">Canales y Webhooks de Microsoft Teams (Power Automate Workflows o Incoming Webhooks):</span>
+            <button type="button" id="btn-teams-add-channel" class="triage-btn triage-btn-primary">
+              <span aria-hidden="true">➕</span> Nuevo Canal
+            </button>
+          </div>
+
+          <!-- Formulario colapsable para crear/editar canal -->
+          <div id="teams-channel-form-box" class="teams-channel-form-box" style="display: none;">
+            <h3 id="teams-form-title">Añadir Nuevo Canal Teams</h3>
+            <form id="teams-channel-form" onsubmit="return false;">
+              <div class="teams-form-grid">
+                <div class="teams-form-group">
+                  <label for="teams-form-id">ID / Clave Única (slug):</label>
+                  <input type="text" id="teams-form-id" placeholder="ej. masivas_it, warroom_sl1" required />
+                </div>
+                <div class="teams-form-group">
+                  <label for="teams-form-name">Nombre Visible en Teams:</label>
+                  <input type="text" id="teams-form-name" placeholder="ej. Masivas IT / War Room" required />
+                </div>
+                <div class="teams-form-group teams-form-full">
+                  <label for="teams-form-url">URL del Webhook (Power Automate Workflow con SAS):</label>
+                  <input type="url" id="teams-form-url" placeholder="https://default...environment.api.powerplatform.com/.../invoke?..." required />
+                  <small class="teams-input-help">Nota: El flujo de Power Automate debe estar configurado como desencadenable por "Cualquier persona" (para incluir la firma SAS <code>&amp;sig=...</code>).</small>
+                </div>
+                <div class="teams-form-group teams-form-full">
+                  <label for="teams-form-desc">Descripción del Propósito:</label>
+                  <input type="text" id="teams-form-desc" placeholder="Canal para reclamaciones y seguimiento..." />
+                </div>
+                <div class="teams-form-group">
+                  <label for="teams-form-type">Tipo de Conector:</label>
+                  <select id="teams-form-type">
+                    <option value="power_automate_workflow" selected>Power Automate Workflow (Adaptive Card v1.4)</option>
+                    <option value="incoming_webhook">Incoming Webhook Office 365 (MessageCard)</option>
+                  </select>
+                </div>
+                <div class="teams-form-group teams-form-checkbox-group">
+                  <label>
+                    <input type="checkbox" id="teams-form-active" checked />
+                    <span>Canal Activo</span>
+                  </label>
+                </div>
+              </div>
+              <div class="teams-form-actions">
+                <button type="button" id="btn-teams-form-cancel" class="triage-btn">Cancelar</button>
+                <button type="submit" id="btn-teams-form-save" class="triage-btn triage-btn-primary">Guardar Canal</button>
+              </div>
+            </form>
+          </div>
+
+          <!-- Contenedor dinámico de tarjetas de canales -->
+          <div id="teams-channels-list" class="teams-channels-list">
+            <!-- Rellenado por triage.js -->
+          </div>
+        </div>
+
+        <!-- Panel 2: Enrutamiento por Acción Operativa -->
+        <div id="teams-panel-routing" class="teams-tab-panel" style="display: none;">
+          <p class="teams-section-hint">Define qué canal recibe por defecto cada tipo de notificación operativa generada desde la consola:</p>
+          <div class="teams-routing-table-container">
+            <table class="teams-table">
+              <thead>
+                <tr>
+                  <th style="width: 25%;">Acción Operativa</th>
+                  <th style="width: 45%;">Descripción del Requerimiento</th>
+                  <th style="width: 30%;">Canal Predeterminado</th>
+                </tr>
+              </thead>
+              <tbody id="teams-routing-tbody">
+                <!-- Rellenado por triage.js -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Panel 3: Sobrescritura por Grupo Resolutor -->
+        <div id="teams-panel-groups" class="teams-tab-panel" style="display: none;">
+          <p class="teams-section-hint">Sobrescribe el canal de destino cuando una incidencia pertenece a un grupo resolutor específico (ej: dirigir tickets de RED FIBRA a un canal dedicado de fibra):</p>
+          
+          <div class="teams-add-group-bar">
+            <input type="text" id="teams-new-group-name" placeholder="Nombre Grupo Remedy (ej. RED FIBRA)" />
+            <select id="teams-new-group-action">
+              <option value="reclamacion_worklog" selected>Reclamación Work Log</option>
+              <option value="notificacion_direccion">Notificación Dirección</option>
+              <option value="convocatoria_warroom">Convocatoria War Room</option>
+              <option value="cierre_zombi">Cierre Zombi</option>
+            </select>
+            <select id="teams-new-group-channel">
+              <!-- Opciones de canales activos cargadas dinámicamente -->
+            </select>
+            <button type="button" id="btn-teams-add-group-route" class="triage-btn triage-btn-primary">
+              <span aria-hidden="true">➕</span> Asignar Enlace
+            </button>
+          </div>
+
+          <div class="teams-group-routes-list" id="teams-group-routes-list">
+            <!-- Rellenado por triage.js -->
+          </div>
+        </div>
+      </div>
+
+      <div class="triage-modal-footer teams-modal-footer">
+        <div class="teams-footer-status" id="teams-modal-status"></div>
+        <div class="teams-footer-buttons">
+          <button type="button" id="btn-modal-teams-close-bottom" class="triage-btn">Cerrar</button>
+          <button type="button" id="btn-teams-save-all" class="triage-btn triage-btn-primary">
+            <span>💾</span> Guardar Configuración
+          </button>
+        </div>
       </div>
     </div>
   </div>
