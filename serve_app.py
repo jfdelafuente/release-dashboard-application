@@ -1273,6 +1273,20 @@ class CustomHTTPHandler(http.server.SimpleHTTPRequestHandler):
         cfg = load_teams_config()
         self._send_json(200, {"success": True, "config": cfg})
 
+    def handle_teams_audit_get(self):
+        """Maneja GET /api/teams/audit retornando el historial de despachos a Teams."""
+        audit_file = PROJECT_ROOT / "data" / "output" / "teams_delivery_audit.json"
+        if audit_file.is_file():
+            try:
+                with open(audit_file, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                self._send_json(200, {"success": True, "audit": data if isinstance(data, list) else []})
+                return
+            except Exception as e:
+                self._send_json(500, {"success": False, "error": str(e)})
+                return
+        self._send_json(200, {"success": True, "audit": []})
+
     def handle_teams_channels_post(self):
         """Maneja POST /api/teams/channels actualizando la configuración de canales."""
         if not save_teams_config:
@@ -1309,6 +1323,8 @@ class CustomHTTPHandler(http.server.SimpleHTTPRequestHandler):
             incident_id = body.get("incident_id")
             channel_id = body.get("channel_id")
             group = body.get("group")
+            teams_meeting_url = body.get("teams_meeting_url")
+            executive_text = body.get("executive_text")
 
             if not incident and incident_id:
                 cat_path = PROJECT_ROOT / "data" / "output" / "high_priority_notifications.json"
@@ -1321,14 +1337,23 @@ class CustomHTTPHandler(http.server.SimpleHTTPRequestHandler):
                             break
 
             if not incident:
-                self._send_json(400, {"success": False, "error": "Se requiere objeto 'incident' o 'incident_id' válido"})
-                return
+                if action == "traspaso_guardia":
+                    incident = {
+                        "id": "RELEVO-GUARDIA",
+                        "report_text": body.get("report_text") or executive_text or "",
+                        "meta_summary": body.get("meta_summary", "")
+                    }
+                else:
+                    self._send_json(400, {"success": False, "error": "Se requiere objeto 'incident' o 'incident_id' válido"})
+                    return
 
             result = dispatch_teams_notification(
                 action=action,
                 incident=incident,
                 group=group,
-                channel_id=channel_id
+                channel_id=channel_id,
+                teams_meeting_url=teams_meeting_url,
+                executive_text=executive_text
             )
 
             status_http = 200 if result.get("success") else 502
@@ -1342,6 +1367,10 @@ class CustomHTTPHandler(http.server.SimpleHTTPRequestHandler):
 
         if self.path.split('?')[0].rstrip('/') == '/api/teams/channels':
             self.handle_teams_channels_get()
+            return
+
+        if self.path.split('?')[0].rstrip('/') == '/api/teams/audit':
+            self.handle_teams_audit_get()
             return
 
         if (

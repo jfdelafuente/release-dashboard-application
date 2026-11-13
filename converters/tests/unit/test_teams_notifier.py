@@ -18,6 +18,11 @@ from converters.src.teams_notifier import (
     save_teams_config,
     resolve_channel,
     build_worklog_claim_card,
+    build_executive_notification_card,
+    build_warroom_card,
+    build_zombie_closure_card,
+    build_shift_handover_card,
+    generate_default_warroom_url,
     send_to_teams,
     record_audit_entry,
     dispatch_teams_notification,
@@ -215,3 +220,160 @@ def test_dispatch_teams_notification_end_to_end(mock_urlopen, sample_config, tmp
         assert len(audit_entries) == 1
         assert audit_entries[0]["incident_id"] == "INC000004181839"
         assert audit_entries[0]["channel_id"] == "canal_fibra"
+
+
+def test_build_executive_notification_card():
+    incident = {
+        "id": "INC000004181999",
+        "prioridad_sugerida": "P2",
+        "prioridad_nominal": "P3",
+        "estatus": "En Gestión",
+        "grupo_asignado": "SOPORTE B2B",
+        "titulo": "Degradación en pasarela de pagos B2B",
+        "evaluacion": {
+            "proceso_negocio": "Facturación y Cobros",
+            "minutos_desde_apertura": 90,
+            "impacto_justificacion": "Afectación en cobros recurrentes de empresas.",
+        },
+        "resumen_ia": {
+            "problema": "Timeouts intermitentes en la pasarela de pagos B2B.",
+            "impacto": "450 empresas con reintentos pendientes.",
+            "solucion_recomendada": "Reinicio preventivo del clúster de workers.",
+        },
+        "guia_operador": {
+            "accion_recomendada": "Ejecutar balanceo de tráfico hacia el nodo pasivo.",
+        },
+    }
+    remedy_url = "https://remedy.corp/view/INC000004181999"
+    card = build_executive_notification_card(
+        incident,
+        remedy_url=remedy_url,
+        executive_text="Texto ejecutivo customizado para Dirección."
+    )
+
+    assert card["type"] == "message"
+    content = card["attachments"][0]["content"]
+    assert content["type"] == "AdaptiveCard"
+    assert content["version"] == "1.4"
+
+    # Verificar encabezado y texto ejecutivo
+    body = content["body"]
+    header = body[0]["items"][0]["text"]
+    assert "COMUNICACIÓN EJECUTIVA" in header
+
+    # Verificar botón de Remedy
+    actions = content.get("actions", [])
+    assert len(actions) == 1
+    assert actions[0]["url"] == remedy_url
+
+    # Verificar que el texto ejecutivo personalizado se incluye en el cuerpo
+    body_str = json.dumps(body, ensure_ascii=False)
+    assert "Texto ejecutivo customizado para Dirección." in body_str
+
+
+def test_build_warroom_card():
+    incident = {
+        "id": "INC000004199999",
+        "prioridad_sugerida": "P1",
+        "titulo": "Caída total nodo core Madrid",
+        "grupo_asignado": "OPERACIONES RED IP",
+        "sistemas": ["ROUTER-MAD-01", "FIREWALL-CORE"],
+        "evaluacion": {
+            "proceso_negocio": "Core Routing",
+        },
+        "resumen_ia": {
+            "problema": "BGP flapping continuo en nodo perimetral.",
+        },
+    }
+    remedy_url = "https://remedy.corp/view"
+    teams_meet_url = "https://teams.microsoft.com/l/meetup-join/test-warroom"
+    card = build_warroom_card(incident, remedy_url=remedy_url, teams_meeting_url=teams_meet_url)
+
+    assert card["type"] == "message"
+    content = card["attachments"][0]["content"]
+    assert content["type"] == "AdaptiveCard"
+
+    # Verificar que hay 2 botones: Unirse a War Room y Remedy
+    actions = content.get("actions", [])
+    assert len(actions) == 2
+    assert actions[0]["title"] == "📞 Unirse a Sesión War Room (Teams)"
+    assert actions[0]["url"] == teams_meet_url
+    assert actions[1]["title"] == "🔗 Abrir Incidencia en BMC Remedy"
+    assert actions[1]["url"] == remedy_url
+
+
+def test_build_zombie_closure_card():
+    incident = {
+        "id": "INC000004189003",
+        "prioridad_sugerida": "P3",
+        "prioridad_nominal": "P2",
+        "titulo": "Ticket residual sin impacto",
+        "grupo_asignado": "SOPORTE LOCAL",
+        "estatus": "Asignado",
+        "horas_sin_notas": 360,
+        "detalle_zombi": "Sin actividad durante más de 15 días tras resolución técnica.",
+    }
+    remedy_url = "https://remedy.corp/view"
+    card = build_zombie_closure_card(incident, remedy_url=remedy_url)
+
+    assert card["type"] == "message"
+    content = card["attachments"][0]["content"]
+    assert content["type"] == "AdaptiveCard"
+
+    body_str = json.dumps(content["body"], ensure_ascii=False)
+    assert "SOLICITUD DE CIERRE ADMINISTRATIVO" in body_str
+    assert "INC000004189003" in body_str
+
+
+@patch("urllib.request.urlopen")
+def test_dispatch_teams_notification_action_routing(mock_urlopen, sample_config, tmp_path):
+    mock_resp = MagicMock()
+    mock_resp.status = 202
+    mock_resp.read.return_value = b""
+    mock_urlopen.return_value.__enter__.return_value = mock_resp
+
+    cfg, cfg_file = sample_config
+    audit_file = tmp_path / "teams_audit2.json"
+
+    with patch("converters.src.teams_notifier.CONFIG_FILE_PATH", cfg_file), \
+         patch("converters.src.teams_notifier.AUDIT_LOG_PATH", audit_file):
+
+        inc = {
+            "id": "INC000004199999",
+            "prioridad_sugerida": "P1",
+            "titulo": "Crisis crítica",
+            "grupo_asignado": "RED FIBRA",
+        }
+
+        # Despacho acción convocatoria_warroom
+        res_warroom = dispatch_teams_notification(
+            action="convocatoria_warroom",
+            incident=inc,
+            teams_meeting_url="https://teams.microsoft.com/meet/test"
+        )
+        assert res_warroom["success"] is True
+
+        # Despacho acción notificacion_direccion
+        res_exec = dispatch_teams_notification(
+            action="notificacion_direccion",
+            incident=inc,
+            executive_text="Aviso dirección"
+        )
+        assert res_exec["success"] is True
+
+
+def test_build_shift_handover_card():
+    card = build_shift_handover_card(
+        report_text="Informe de relevo del turno de tarde: sin incidencias graves abiertas.",
+        meta_summary="10 incidencias activas · 0 SL1",
+        remedy_url="https://test.remedy.corp"
+    )
+    assert card["type"] == "message"
+    att = card["attachments"][0]["content"]
+    assert att["type"] == "AdaptiveCard"
+    body_str = json.dumps(att["body"], ensure_ascii=False)
+    assert "RELEVO / TRASPASO DE GUARDIA ITIL" in body_str
+    assert "Informe de relevo del turno de tarde" in body_str
+    assert "10 incidencias activas" in body_str
+
+

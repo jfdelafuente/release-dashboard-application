@@ -87,6 +87,11 @@ def get_default_config() -> Dict[str, Any]:
                 "descripcion": "Solicitud formal de cierre administrativo para tickets zombi",
                 "canal_predeterminado": "masivas_it",
                 "mapeo_por_grupo": {}
+            },
+            "traspaso_guardia": {
+                "descripcion": "Informe ejecutivo de relevo / traspaso de guardia ITIL",
+                "canal_predeterminado": "masivas_it",
+                "mapeo_por_grupo": {}
             }
         }
     }
@@ -280,6 +285,501 @@ def build_worklog_claim_card(incident: Dict[str, Any], remedy_url: Optional[str]
     }
 
 
+def generate_default_warroom_url(inc_id: str) -> str:
+    """Generates standard Microsoft Teams War Room meeting URL for the incident."""
+    clean_id = "".join(c.lower() for c in str(inc_id) if c.isalnum())
+    return (
+        f"https://teams.microsoft.com/l/meetup-join/19%3ameeting_{clean_id}_orange_warroom%40thread.v2/0"
+        f"?context=%7b%22Tid%22%3a%22orange-spain-tenant%22%2c%22Oid%22%3a%22im-cso-coordinator%22%7d"
+    )
+
+
+def build_executive_notification_card(
+    incident: Dict[str, Any],
+    remedy_url: Optional[str] = None,
+    executive_text: Optional[str] = None
+) -> Dict[str, Any]:
+    """Builds Adaptive Card v1.4 for Executive Communications to Management (Dirección IT)."""
+    inc_id = incident.get("id", "INC000000000000")
+    prio_sug = incident.get("prioridad_sugerida") or "P2"
+    prio_nom = incident.get("prioridad_original") or incident.get("prioridad_nominal") or prio_sug
+    estatus = incident.get("estatus") or "En Gestión"
+    grupo = incident.get("grupo_asignado") or "Grupo Resolutor"
+    titulo = incident.get("titulo") or "Incidencia de Servicio"
+    evaluacion = incident.get("evaluacion") or {}
+    proceso = evaluacion.get("proceso_negocio") or evaluacion.get("proceso") or "Servicios IT Core"
+    minutos = evaluacion.get("minutos_desde_apertura")
+    horas_str = f"{round(minutos / 60, 1)}h" if minutos is not None else "En seguimiento"
+
+    resumen_ia = incident.get("resumen_ia") or {}
+    guia = incident.get("guia_operador") or {}
+
+    mensajes_ej = incident.get("mensajes_ejecutivos") or {}
+    oficial_txt = None
+    for ph in ("apertura", "seguimiento", "cierre"):
+        fase_obj = mensajes_ej.get(ph)
+        if isinstance(fase_obj, dict) and fase_obj.get("completo"):
+            oficial_txt = fase_obj.get("completo")
+            break
+
+    resumen_txt = (
+        executive_text
+        or oficial_txt
+        or incident.get("mensaje_ejecutivo")
+        or resumen_ia.get("problema")
+        or guia.get("accion_recomendada")
+        or titulo
+    )
+
+    impacto_txt = (
+        resumen_ia.get("impacto")
+        or evaluacion.get("impacto_justificacion")
+        or "Impacto en evaluación técnica por parte del grupo especialista."
+    )
+
+    plan_txt = (
+        guia.get("accion_recomendada")
+        or resumen_ia.get("solucion_recomendada")
+        or "Diagnóstico en curso con escalado al grupo resolutor designado."
+    )
+
+    prio_label = prio_sug if prio_sug == prio_nom else f"{prio_sug} (Nominal: {prio_nom})"
+    url = remedy_url or DEFAULT_REMEDY_URL
+
+    facts = [
+        {"title": "Incidencia:", "value": inc_id},
+        {"title": "Prioridad:", "value": prio_label},
+        {"title": "Estado:", "value": estatus},
+        {"title": "Proceso Crítico:", "value": proceso},
+        {"title": "Grupo Asignado:", "value": grupo},
+        {"title": "Tiempo Activo:", "value": horas_str}
+    ]
+
+    return {
+        "type": "message",
+        "attachments": [
+            {
+                "contentType": "application/vnd.microsoft.card.adaptive",
+                "contentUrl": None,
+                "content": {
+                    "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+                    "type": "AdaptiveCard",
+                    "version": "1.4",
+                    "msteams": {"width": "Full"},
+                    "body": [
+                        {
+                            "type": "Container",
+                            "style": "emphasis",
+                            "bleed": True,
+                            "items": [
+                                {
+                                    "type": "TextBlock",
+                                    "text": "📢 COMUNICACIÓN EJECUTIVA · DIRECCIÓN IT",
+                                    "weight": "Bolder",
+                                    "size": "Medium",
+                                    "color": "Accent",
+                                    "wrap": True
+                                },
+                                {
+                                    "type": "TextBlock",
+                                    "text": f"**{inc_id}** · Prioridad {prio_sug} · {proceso}",
+                                    "size": "Small",
+                                    "isSubtle": True,
+                                    "spacing": "None"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "TextBlock",
+                            "text": f"**Título:** {titulo}",
+                            "wrap": True,
+                            "spacing": "Medium"
+                        },
+                        {
+                            "type": "FactSet",
+                            "spacing": "Medium",
+                            "facts": facts
+                        },
+                        {
+                            "type": "Container",
+                            "style": "default",
+                            "items": [
+                                {
+                                    "type": "TextBlock",
+                                    "text": "📢 **Comunicado Oficial Dirección IT (≤ 90 palabras):**",
+                                    "weight": "Bolder",
+                                    "size": "Small",
+                                    "color": "Accent"
+                                },
+                                {
+                                    "type": "TextBlock",
+                                    "text": resumen_txt,
+                                    "wrap": True,
+                                    "size": "Small"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "Container",
+                            "style": "emphasis",
+                            "items": [
+                                {
+                                    "type": "TextBlock",
+                                    "text": "🎯 **Afectación y Riesgo Operativo:**",
+                                    "weight": "Bolder",
+                                    "size": "Small"
+                                },
+                                {
+                                    "type": "TextBlock",
+                                    "text": impacto_txt,
+                                    "wrap": True,
+                                    "size": "Small"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "Container",
+                            "style": "default",
+                            "items": [
+                                {
+                                    "type": "TextBlock",
+                                    "text": "⚡ **Plan de Acción Inmediato:**",
+                                    "weight": "Bolder",
+                                    "size": "Small"
+                                },
+                                {
+                                    "type": "TextBlock",
+                                    "text": plan_txt,
+                                    "wrap": True,
+                                    "size": "Small"
+                                }
+                            ]
+                        }
+                    ],
+                    "actions": [
+                        {
+                            "type": "Action.OpenUrl",
+                            "title": "🔗 Abrir Incidencia en BMC Remedy",
+                            "url": url
+                        }
+                    ]
+                }
+            }
+        ]
+    }
+
+
+def build_warroom_card(
+    incident: Dict[str, Any],
+    remedy_url: Optional[str] = None,
+    teams_meeting_url: Optional[str] = None
+) -> Dict[str, Any]:
+    """Builds Adaptive Card v1.4 for Urgent War Room Session Call (SL1/P1 Emergencies)."""
+    inc_id = incident.get("id", "INC000000000000")
+    titulo = incident.get("titulo") or "Incidencia Crítica de Negocio"
+    grupo = incident.get("grupo_asignado") or "Grupo Especialista"
+    evaluacion = incident.get("evaluacion") or {}
+    proceso = evaluacion.get("proceso_negocio") or evaluacion.get("proceso") or "Procesos Críticos de Negocio"
+    sistemas = incident.get("sistemas")
+    sistemas_str = ", ".join(sistemas) if isinstance(sistemas, list) else (str(sistemas) if sistemas else "Core IT")
+    minutos = evaluacion.get("minutos_desde_apertura")
+    horas_str = f"{round(minutos / 60, 1)}h ({minutos} min)" if minutos is not None else "En curso"
+
+    resumen_ia = incident.get("resumen_ia") or {}
+    sintoma = resumen_ia.get("problema") or evaluacion.get("urgencia_justificacion") or titulo
+
+    remedy = remedy_url or DEFAULT_REMEDY_URL
+    meet_url = teams_meeting_url or generate_default_warroom_url(inc_id)
+
+    return {
+        "type": "message",
+        "attachments": [
+            {
+                "contentType": "application/vnd.microsoft.card.adaptive",
+                "contentUrl": None,
+                "content": {
+                    "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+                    "type": "AdaptiveCard",
+                    "version": "1.4",
+                    "msteams": {"width": "Full"},
+                    "body": [
+                        {
+                            "type": "Container",
+                            "style": "attention",
+                            "bleed": True,
+                            "items": [
+                                {
+                                    "type": "TextBlock",
+                                    "text": "🔥 CONVOCATORIA WAR ROOM ITIL · CRITICIDAD SL1 / P1",
+                                    "weight": "Bolder",
+                                    "size": "Medium",
+                                    "color": "Attention",
+                                    "wrap": True
+                                },
+                                {
+                                    "type": "TextBlock",
+                                    "text": f"**EMERGENCIA EN CURSO** · {inc_id} · {grupo}",
+                                    "size": "Small",
+                                    "isSubtle": True,
+                                    "spacing": "None"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "TextBlock",
+                            "text": f"**Título:** {titulo}",
+                            "wrap": True,
+                            "spacing": "Medium"
+                        },
+                        {
+                            "type": "Container",
+                            "style": "warning",
+                            "items": [
+                                {
+                                    "type": "TextBlock",
+                                    "text": "🚨 **CONVOCATORIA OBLIGATORIA:** Se requiere la incorporación inmediata a la sesión del grupo resolutor N2/N3, líder técnico y coordinador IM-CSO.",
+                                    "wrap": True,
+                                    "size": "Small"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "FactSet",
+                            "spacing": "Medium",
+                            "facts": [
+                                {"title": "Incidencia:", "value": inc_id},
+                                {"title": "Severidad ITIL:", "value": "SL1 / P1 (Máxima Criticidad)"},
+                                {"title": "Proceso Afectado:", "value": proceso},
+                                {"title": "Sistemas Impactados:", "value": sistemas_str},
+                                {"title": "Grupo Asignado:", "value": grupo},
+                                {"title": "Tiempo Activo:", "value": horas_str},
+                                {"title": "Coordinación:", "value": "IM-CSO / Puente Operativo"}
+                            ]
+                        },
+                        {
+                            "type": "Container",
+                            "style": "emphasis",
+                            "items": [
+                                {
+                                    "type": "TextBlock",
+                                    "text": "💥 **Afectación y Síntoma Crítico:**",
+                                    "weight": "Bolder",
+                                    "size": "Small"
+                                },
+                                {
+                                    "type": "TextBlock",
+                                    "text": sintoma,
+                                    "wrap": True,
+                                    "size": "Small"
+                                }
+                            ]
+                        }
+                    ],
+                    "actions": [
+                        {
+                            "type": "Action.OpenUrl",
+                            "title": "📞 Unirse a Sesión War Room (Teams)",
+                            "url": meet_url
+                        },
+                        {
+                            "type": "Action.OpenUrl",
+                            "title": "🔗 Abrir Incidencia en BMC Remedy",
+                            "url": remedy
+                        }
+                    ]
+                }
+            }
+        ]
+    }
+
+
+def build_zombie_closure_card(
+    incident: Dict[str, Any],
+    remedy_url: Optional[str] = None
+) -> Dict[str, Any]:
+    """Builds Adaptive Card v1.4 for Zombie Ticket Administrative Closure Claim."""
+    inc_id = incident.get("id", "INC000000000000")
+    titulo = incident.get("titulo") or "Ticket Estancado sin Actividad"
+    estatus = incident.get("estatus") or "Asignado"
+    grupo = incident.get("grupo_asignado") or "Grupo Resolutor"
+    detalle_zombi = incident.get("detalle_zombi") or (
+        "El ticket no presenta impacto operativo activo o las actuaciones técnicas concluyeron "
+        "sin que se formalizara el cambio de estado administrativo a 'Resuelto' en BMC Remedy."
+    )
+    guia = incident.get("guia_operador") or {}
+    accion = guia.get("accion_recomendada") or (
+        "Se solicita formalmente al grupo resolutor proceder con la resolución o cierre administrativo "
+        "en BMC Remedy para regularizar el ciclo de vida del ticket."
+    )
+
+    url = remedy_url or DEFAULT_REMEDY_URL
+
+    return {
+        "type": "message",
+        "attachments": [
+            {
+                "contentType": "application/vnd.microsoft.card.adaptive",
+                "contentUrl": None,
+                "content": {
+                    "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+                    "type": "AdaptiveCard",
+                    "version": "1.4",
+                    "msteams": {"width": "Full"},
+                    "body": [
+                        {
+                            "type": "Container",
+                            "style": "warning",
+                            "bleed": True,
+                            "items": [
+                                {
+                                    "type": "TextBlock",
+                                    "text": "🧟 SOLICITUD DE CIERRE ADMINISTRATIVO · TICKET ZOMBI",
+                                    "weight": "Bolder",
+                                    "size": "Medium",
+                                    "color": "Warning",
+                                    "wrap": True
+                                },
+                                {
+                                    "type": "TextBlock",
+                                    "text": f"**{inc_id}** · {grupo} · Auditoría de Ciclo de Vida ITIL",
+                                    "size": "Small",
+                                    "isSubtle": True,
+                                    "spacing": "None"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "TextBlock",
+                            "text": f"**Título:** {titulo}",
+                            "wrap": True,
+                            "spacing": "Medium"
+                        },
+                        {
+                            "type": "FactSet",
+                            "spacing": "Medium",
+                            "facts": [
+                                {"title": "Incidencia:", "value": inc_id},
+                                {"title": "Estado Actual:", "value": estatus},
+                                {"title": "Grupo Asignado:", "value": grupo},
+                                {"title": "Diagnóstico:", "value": "Ticket sin impacto activo / Cierre pendiente"}
+                            ]
+                        },
+                        {
+                            "type": "Container",
+                            "style": "emphasis",
+                            "items": [
+                                {
+                                    "type": "TextBlock",
+                                    "text": "📋 **Dictamen de Auditoría de Mesa:**",
+                                    "weight": "Bolder",
+                                    "size": "Small"
+                                },
+                                {
+                                    "type": "TextBlock",
+                                    "text": detalle_zombi,
+                                    "wrap": True,
+                                    "size": "Small"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "Container",
+                            "style": "default",
+                            "items": [
+                                {
+                                    "type": "TextBlock",
+                                    "text": "📝 **Requerimiento Operativo Formal:**",
+                                    "weight": "Bolder",
+                                    "size": "Small"
+                                },
+                                {
+                                    "type": "TextBlock",
+                                    "text": accion,
+                                    "wrap": True,
+                                    "size": "Small"
+                                }
+                            ]
+                        }
+                    ],
+                    "actions": [
+                        {
+                            "type": "Action.OpenUrl",
+                            "title": "🔗 Regularizar en BMC Remedy",
+                            "url": url
+                        }
+                    ]
+                }
+            }
+        ]
+    }
+
+
+def build_shift_handover_card(
+    report_text: str,
+    meta_summary: Optional[str] = None,
+    remedy_url: Optional[str] = None
+) -> Dict[str, Any]:
+    """Builds Adaptive Card v1.4 for Shift Handover (Relevo de Guardia) Report."""
+    url = remedy_url or DEFAULT_REMEDY_URL
+    summary = meta_summary or "Compilación de estado en tiempo real para relevo de turno"
+    raw_text = (report_text or "").strip()
+    # Microsoft Teams adaptive card text blocks have practical limits
+    clean_text = raw_text[:3800] + "\n\n*(Informe truncado para Teams; consultar consola web para versión completa)*" if len(raw_text) > 3800 else raw_text
+
+    return {
+        "type": "message",
+        "attachments": [
+            {
+                "contentType": "application/vnd.microsoft.card.adaptive",
+                "contentUrl": None,
+                "content": {
+                    "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+                    "type": "AdaptiveCard",
+                    "version": "1.4",
+                    "msteams": {"width": "Full"},
+                    "body": [
+                        {
+                            "type": "Container",
+                            "style": "accent",
+                            "bleed": True,
+                            "items": [
+                                {
+                                    "type": "TextBlock",
+                                    "text": "📋 RELEVO / TRASPASO DE GUARDIA ITIL",
+                                    "weight": "Bolder",
+                                    "size": "Medium",
+                                    "color": "Accent",
+                                    "wrap": True
+                                },
+                                {
+                                    "type": "TextBlock",
+                                    "text": f"Orange Tech Operations · {summary}",
+                                    "size": "Small",
+                                    "isSubtle": True,
+                                    "spacing": "None"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "TextBlock",
+                            "text": clean_text or "No se incluyeron notas adicionales en el informe de relevo.",
+                            "wrap": True,
+                            "spacing": "Medium"
+                        }
+                    ],
+                    "actions": [
+                        {
+                            "type": "Action.OpenUrl",
+                            "title": "🖥️ Abrir Consola de Triaje IT",
+                            "url": url
+                        }
+                    ]
+                }
+            }
+        ]
+    }
+
+
 def send_to_teams(webhook_url: str, payload: Dict[str, Any], timeout: int = 15) -> Tuple[bool, int, str]:
     """Posts payload to Microsoft Teams webhook."""
     if not webhook_url:
@@ -337,7 +837,9 @@ def dispatch_teams_notification(
     incident: Dict[str, Any],
     group: Optional[str] = None,
     channel_id: Optional[str] = None,
-    config: Optional[Dict[str, Any]] = None
+    config: Optional[Dict[str, Any]] = None,
+    teams_meeting_url: Optional[str] = None,
+    executive_text: Optional[str] = None
 ) -> Dict[str, Any]:
     """Resolves channel, creates card payload, dispatches to Teams, and records audit."""
     cfg = config or load_teams_config()
@@ -369,8 +871,19 @@ def dispatch_teams_notification(
 
     if action == "reclamacion_worklog":
         payload = build_worklog_claim_card(incident, remedy_url=remedy_url)
+    elif action == "notificacion_direccion":
+        payload = build_executive_notification_card(incident, remedy_url=remedy_url, executive_text=executive_text)
+    elif action == "convocatoria_warroom":
+        payload = build_warroom_card(incident, remedy_url=remedy_url, teams_meeting_url=teams_meeting_url)
+    elif action == "cierre_zombi":
+        payload = build_zombie_closure_card(incident, remedy_url=remedy_url)
+    elif action == "traspaso_guardia":
+        payload = build_shift_handover_card(
+            report_text=incident.get("report_text") or executive_text or "",
+            meta_summary=incident.get("meta_summary") or "",
+            remedy_url=remedy_url
+        )
     else:
-        # Fallback genérico para otras acciones
         payload = build_worklog_claim_card(incident, remedy_url=remedy_url)
 
     success, code, body = send_to_teams(url, payload)

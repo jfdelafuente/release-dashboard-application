@@ -286,16 +286,24 @@ sequenceDiagram
 
 ## 7. Herramientas de Acción Inmediata del Cockpit
 
-Para eliminar la fricción entre la detección de anomalías y la ejecución operativa en caliente, la Consola incorpora **tres herramientas de acción inmediata** que permiten al Incident Manager actuar en cuestión de segundos:
+Para eliminar la fricción entre la detección de anomalías y la ejecución operativa en caliente, la Consola incorpora **herramientas de acción inmediata** que permiten al Incident Manager actuar en cuestión de segundos, coordinando escalados técnicos y emitiendo notificaciones ejecutivas sin abandonar la pantalla:
 
 ```mermaid
-flowchart LR
+flowchart TD
     A["Incidencia en Consola"] --> B["1. 📋 Solicitud Reclasif. Remedy"]
     A --> C["2. 📞 Convocatoria War Room Teams"]
-    A --> D["3. ✨ Sugerir Borrador IA"]
-    B -->|"1 Clic Portapapeles"| E["Worklog N1 / BMC Remedy"]
-    C -->|"1 Clic Portapapeles"| F["Canal Voz Obligatorio Teams"]
-    D -->|"1 Clic Autocompletar"| G["Almacén Oficial (<=90w / <=30w)"]
+    A --> D["3. 📢 Difusión Dirección Teams (Apertura/Seg/Cierre)"]
+    A --> E["4. ⏱️ Reclamación Work Log Teams (Resolutores)"]
+    A --> F["5. 🧟 Solicitud Cierre Zombi Teams"]
+    G["Consola Global (Shift+H)"] --> H["6. 📋 Publicar Traspaso Guardia Teams"]
+    A --> I["7. ✨ Sugerir Borrador IA"]
+    B -->|"1 Clic Portapapeles"| J["Worklog N1 / BMC Remedy"]
+    C -->|"1 Clic / Webhook"| K["Canal Voz Obligatorio Teams SL1"]
+    D -->|"1 Clic / Webhook"| L["Canal Dirección IT (Adaptive Card)"]
+    E -->|"1 Clic / Webhook"| M["Canal Grupo Resolutor Asignado"]
+    F -->|"1 Clic / Webhook"| N["Canal Grupo Resolutor / Cierre Zombi"]
+    H -->|"1 Clic / Webhook"| O["Canal Seguimiento Operativo Teams"]
+    I -->|"1 Clic Autocompletar"| P["Almacén Oficial (<=90w / <=30w)"]
 ```
 
 ### 1. Botón "Copiar Solicitud de Reclasificación Remedy"
@@ -316,24 +324,212 @@ Sistemas Afectados: SOP_TMC_EXCALIBUR
 Justificación ITIL: El impacto cuantitativo supera el umbral crítico establecido en el catálogo de servicios de Orange. Se solicita al grupo resolutor N1/N2 la actualización inmediata de la prioridad en Remedy y el seguimiento en war room.
 ```
 
-### 2. Botón "Convocatoria War Room Teams"
+### 2. Botón "Convocatoria War Room Teams" (Escenario 1)
+
+* **Ubicación Estratégica:**
+  * En la **barra de escenario de la tarjeta** (`.triage-op-scenario-bar`): situado junto al botón del manual Docsify, visible **exclusivamente cuando la incidencia está clasificada en Escenario 1 (Emergencia Viva)**.
+  * En el **banner de escalado obligatorio** de la tarjeta de detalle (al superar los 45 min).
+* **Comportamiento y Acciones:**
+  1. **Generación Dinámica de Sala Teams:** Construye un enlace normativo directo a la reunión corporativa (`https://teams.microsoft.com/l/meetup-join/...`).
+  2. **Despacho Automático a Teams:** Emite una Adaptive Card corporativa de alta criticidad al canal configurado (`convocatoria_warroom` en `config/teams_channels.json`) a través de `/api/teams/send` (con fallback directo a webhook en caso de indisponibilidad del backend).
+  3. **Seguridad y Control de Reconvocatorias:**
+     * Tras el primer envío, el botón commuta a estado persistente: `✅ War Room Convocada (HH:MM) · Reconvocar`.
+     * Si se pulsa de nuevo, el sistema abre la ventana de confirmación corporativa (`#modal-confirm-dialog`) desglosando el canal, la hora de la convocatoria inicial y solicitando confirmación explícita para evitar duplicidades accidentales en el canal.
+  4. **Auditoría Local:** Registra el despacho en el log operativo (`addLogEntry`) y en el historial persistente de Teams (`state.teamsAudit`).
+
+### 3. Botón "Comunicado Oficial Dirección IT en Teams" (Apertura · Seguimiento · Cierre)
 
 * **Ubicación:**
-  * En la **tabla de Triaje Rápido**: botón directo `📞 War Room` cuando el ticket alcanza o supera los 45 minutos.
-  * En la **tarjeta de detalle**: botón `📞 Convocatoria War Room Teams` dentro del banner dinámico de escalado telefónico obligatorio.
-* **Función:** Redacta y copia al portapapeles el mensaje normativo para Teams, convocando a los grupos resolutores técnicos a canal de audio obligatorio, adaptándose dinámicamente según la ventana temporal (45m o 105m) e integrando la matriz RACI corporativa:
+  * En la **barra de acciones operativas de la tarjeta de detalle** (`.triage-op-action-buttons`).
+  * Para mantener la tabla compacta ágil y despejada, la fila solo contiene `⚡ Reclasificar` (si existe discrepancia) y `Detalle ▾`, concentrando la botonera ejecutiva completa en la tarjeta expandida.
+* **Trío Operativo de Controles:**
+  1. `btn-send-direccion-teams`: Botón interactivo de despacho a Microsoft Teams con detección automática de fase.
+  2. `btn-copy-direccion-comm`: Copia al portapapeles el texto oficial exacto (≤ 90 palabras) de la fase activa.
+  3. `btn-open-exec-comm` (`✏️ Ver`): Abre el editor modal oficial (`#modal-executive-comm`) con las 3 pestañas de redacción.
 
-```text
-🚨 [CONVOCATORIA WAR ROOM IT - ESCALADO OBLIGATORIO]
-Incidencia: INC000004152079 (P1)
-Tiempo transcurrido: 65 min (Umbral 45 min superado)
-Canal: Voz/Audio Obligatorio Teams
-Grupos convocados: N2 / N3 Resolutores, Especialistas de Sistemas SOP_TMC_EXCALIBUR
-Gobernanza RACI: Incident Manager (Responsable) | IM-CSO (Aprobador)
-Acción Requerida: Conectarse inmediatamente al canal de audio para triaje técnico coordinado y definir plan de contención.
+```mermaid
+flowchart TD
+    A["Incidencia Seleccionada"] --> B{"¿Estado Remedy = 'Resuelto' / 'Cerrado'?"}
+    B -- Sí --> C["Fase: CIERRE 🏁"]
+    B -- No --> D{"¿Se envió comunicado previo?"}
+    D -- No --> E["Fase: APERTURA 📢"]
+    D -- Sí --> F["Fase: SEGUIMIENTO 🔄"]
 ```
 
-### 3. Asistente "✨ Sugerir Borrador IA" y Gobernanza de Botones
+#### A. Control Automático del Ciclo de Vida (1-Click)
+La consola determina la fase del comunicado de forma reactiva (`determineExecutivePhase`):
+* **Fase Apertura (`apertura`):**
+  * **Condición:** Ticket en gestión activa sin ningún comunicado previo registrado en la consola (`!dirStatus.sent`).
+  * **Aspecto del botón:** `📢 Enviar Apertura a Teams`.
+  * **Contenido transmitido:** Texto oficial de apertura (`mensajes_ejecutivos.apertura.completo` o redacción oficial guardada).
+* **Fase Seguimiento (`seguimiento`):**
+  * **Condición:** Ticket en gestión activa habiéndose transmitido previamente la apertura (`dirStatus.sent === true`).
+  * **Aspecto del botón:** `✅ Apertura Enviada (HH:MM) · Enviar Seguimiento`.
+  * **Contenido transmitido:** Actualización operativa de diagnóstico y plan de mitigación (`mensajes_ejecutivos.seguimiento.completo`).
+* **Fase Cierre (`cierre`):**
+  * **Condición:** El estatus de Remedy transiciona a *Resuelto*, *Solucionado*, *Cerrado* o *Cancelado*.
+  * **Aspecto del botón:** `🏁 Enviar Cierre a Teams`.
+  * **Contenido transmitido:** Comunicado oficial de cierre con confirmación de restauración del servicio (`mensajes_ejecutivos.cierre.completo`).
+
+#### B. Confirmación de Seguridad Corporativa (`#modal-confirm-dialog`)
+Al pulsar el botón para cualquier reenvío o avance de fase (ej. transmitir el Seguimiento o el Cierre), el cockpit despliega un diálogo de seguridad acorde al estilo de la aplicación:
+* **Badge de Fase:** Muestra claramente la fase a transmitir (`FASE: SEGUIMIENTO · REENVÍO` o `FASE: CIERRE`).
+* **Desglose de Auditoría:**
+  * Identificador del ticket y proceso de negocio impactado.
+  * Canal de destino en Teams (ej. *Notificaciones Dirección*).
+  * Envío anterior (hora y fase previa despachada, ej. `10:35 [APERTURA]`).
+* **Confirmación Explícita:** Requiere pulsar `📢 Enviar Seguimiento a Teams` o `Cancelar`, previniendo envíos por error o spam en canales directivos.
+
+#### C. Control Manual Supervisado (Modal `✏️ Ver Comunicado`)
+Cuando el Incident Manager necesita revisar, personalizar o forzar una fase antes de la difusión:
+1. Pulsa `✏️ Ver` en la barra de acciones.
+2. El modal `#modal-executive-comm` se abre automáticamente posicionado en la pestaña correspondiente a la fase del ticket.
+3. El operador puede conmutar libremente entre las 3 pestañas (`Apertura`, `Seguimiento`, `Cierre`), retocar el redactado con validadores en tiempo real ($\le 90$ palabras y monopárrafo) y pulsar `📢 Enviar a Teams` desde el propio modal.
+
+#### D. Formato de la Adaptive Card en Teams
+La tarjeta generada para el canal de Dirección IT incluye:
+* Cabecera visual corporativa acorde a la severidad y fase (`📢 COMUNICACIÓN EJECUTIVA · DIRECCIÓN IT · (APERTURA / SEGUIMIENTO / CIERRE)`).
+* Resumen estructurado: Incidencia, Prioridad, Estado Remedy, Proceso Crítico y Grupo Asignado.
+* **Bloque Destacado:** `📢 Comunicado Oficial Dirección IT (≤ 90 palabras)` conteniendo el texto oficial validado.
+* Afectación y riesgo operativo justificado.
+* Enlace directo para abrir la incidencia en BMC Remedy.
+
+### 4. Botón "Reclamación de Work Log en Teams" (Déficit de Bitácora a Grupos Resolutores)
+
+* **Ubicación Estratégica:**
+  * Dentro del cuadro **Alerta Work Log** (`.triage-op-worklog-box`), situado en la tarjeta de detalle justo debajo de la botonera ejecutiva de Dirección y la barra de escenario.
+  * Para mantener la tabla principal ágil y compacta, el botón no invade las filas de la tabla y se presenta en el detalle operativo de la incidencia.
+* **Criterio de Activación y Estados Visuales:**
+  * **Con Déficit de Work Log:** Se activa cuando la incidencia supera el umbral de inactividad técnica ($\ge 2$ horas en P1/P2 o $\ge 4$ horas en P3), cuando el motor asigna el nivel `WL_ALERTA_6H`, `WL_ESTANCAMIENTO_12H` o `WL_BLOQUEO_24H`, o bajo categoría de estancamiento local (`ESTANCAMIENTO_LOCAL`).
+    * **Caja de Alerta:** Muestra un borde ámbar (`is-warning`) o rojo (`is-critical`) con el detalle de horas transcurridas.
+    * **Dúo de Controles:**
+      1. `📋 Copiar Reclamación`: Copia al portapapeles una plantilla formal estructurada para Remedy con desglose de diagnóstico, hitos y ETR.
+      2. `📢 Enviar a Teams` / `btn-send-worklog-teams`: Despacha automáticamente una reclamación de bitácora al canal del grupo resolutor en Teams.
+  * **Sin Déficit / Bitácora al Día:** Si el ticket no supera el umbral o está marcado como exento (ej. resolución planificada en ventana nocturna o ticket zombi), se presenta un panel neutro discreto en verde (`.triage-op-worklog-box.is-ok` con `✅ Work Log al día: Última nota hace Xh`) sin emitir alertas estridentes ni saturar al operador con botones innecesarios.
+
+```mermaid
+flowchart TD
+    A["Incidencia en Detalle"] --> B{"¿Déficit de Work Log?<br>(>=2h en P1/P2 o >=4h en P3)"}
+    B -- No / Al Día --> C["Panel Verde Neutro: ✅ Work Log al día"]
+    B -- Sí --> D["Panel de Alerta (Ámbar / Rojo)"]
+    D --> E["📋 Copiar Reclamación Remedy"]
+    D --> F{"¿Ya se envió reclamación previa?"}
+    F -- No --> G["Botón: 📢 Enviar a Teams"]
+    F -- Sí --> H["Botón: ✅ Reclamación Enviada (HH:MM) · Volver a Reclamar"]
+    H --> I["Diálogo Seguridad: #modal-confirm-dialog (Reenviar)"]
+    G --> J["Despacho Automático a Canal Resolutor (Teams)"]
+    I -- Confirmado --> J
+```
+
+#### A. Enrutamiento Dinámico por Grupo Resolutor
+La consola no envía todas las reclamaciones a un canal genérico, sino que consulta dinámicamente la configuración corporativa (`resolveLocalTeamsChannel('reclamacion_worklog', grupo)`):
+* Si el grupo resolutor asignado (o el último grupo que intervino en Remedy) tiene canal propio asignado en `config/teams_channels.json` (ej. *Sistemas Core*, *Infraestructura Cloud*, *Facturación*), la alerta se canaliza directamente a dicho equipo.
+* Si no hay mapeo específico para el grupo, se remite al canal general de seguimiento operativo (*Masivas IT*).
+
+#### B. Prevención de Spam y Confirmación de Seguridad (`#modal-confirm-dialog`)
+Para evitar sobrecargar los canales de trabajo de los equipos resolutores:
+* Tras el primer envío, el botón commuta a estado confirmado: `✅ Reclamación Enviada (HH:MM) · Volver a Reclamar`.
+* Si el Incident Manager necesita insistir con una segunda reclamación o recordatorio, al pulsar el botón se despliega la ventana modal corporativa (`#modal-confirm-dialog`):
+  * Muestra el badge `RECLAMACIÓN YA ENVIADA`.
+  * Detalla la incidencia, el grupo resolutor notificado, el canal de destino y la hora exacta del envío anterior.
+  * Requiere confirmación explícita con el botón `📢 Reenviar Reclamación a Teams`.
+
+#### C. Formato de la Adaptive Card para Resolutores
+La tarjeta entregada en Teams destaca:
+* Cabecera visual con nivel de urgencia (`⚠️ ALERTA SEGUIMIENTO`, `⏳ ESTANCAMIENTO` o `🚨 BLOQUEO CRÍTICO`).
+* Horas transcurridas sin actualización de notas técnicas en Remedy.
+* Requerimiento formal de registrar: diagnóstico técnico, siguiente hito y estimación de tiempo de recuperación (ETR).
+* Botón de acción directa: `🔗 Regularizar Bitácora en BMC Remedy`.
+
+### 5. Botón "Solicitud de Cierre Administrativo en Teams" (Tickets Zombi / Auditoría de Ciclo de Vida)
+
+* **Ubicación Estratégica:**
+  * Dentro del bloque de acciones para tickets zombi (`.triage-op-zombi-action`) en la tarjeta de detalle de la incidencia.
+  * **Visibilidad Condicional Estricta:** Aparece **únicamente** cuando la categoría operativa del ticket es `TICKET_ZOMBI_REMEDY` (ticket sin impacto activo o resuelto funcionalmente pero abandonado en Remedy en estado abierto sin cerrar).
+  * No invade la tabla principal de incidencias, preservando la compacidad de la cuadrícula.
+* **Dúo Operativo de Acciones:**
+  1. `📋 Copiar Plantilla de Cierre Administrativo Remedy`: Copia al portapapeles el texto formal estandarizado para registrar en el worklog de Remedy requiriendo al grupo resolutor la transición a *Resuelto* / *Cerrado*.
+  2. `📢 Enviar Cierre a Teams` (`btn-send-zombi-teams`): Despacha de forma automatizada una Adaptive Card formal directamente al canal Teams del grupo resolutor o al canal corporativo de *Cierre Zombi*.
+
+```mermaid
+flowchart TD
+    A["Incidencia clasificada como TICKET_ZOMBI_REMEDY"] --> B["Bloque .triage-op-zombi-action (Tarjeta de Detalle)"]
+    B --> C["📋 Copiar Plantilla Remedy"]
+    B --> D{"¿Ya se despachó solicitud previa?"}
+    D -- No --> E["Botón: 📢 Enviar Cierre a Teams"]
+    D -- Sí --> F["Botón: ✅ Cierre Solicitado (HH:MM) · Volver a Reclamar"]
+    F --> G["Diálogo de Seguridad: #modal-confirm-dialog"]
+    E --> H["Despacho Automático a Teams (Adaptive Card)"]
+    G -- Confirmar Reenvío --> H
+```
+
+#### A. Enrutamiento por Grupo Resolutor (`resolveLocalTeamsChannel('cierre_zombi', grupo)`)
+La Consola enruta la solicitud utilizando la acción `cierre_zombi` de la configuración corporativa (`config/teams_channels.json`):
+* Si el grupo asignado al ticket zombi tiene un canal Teams específico asociado en `mapeo_por_grupo`, la tarjeta se despacha directamente al equipo responsable del abandono administrativo.
+* En su defecto, se canaliza al canal predeterminado de saneamiento (`cierre_zombi` / *Masivas IT*).
+
+#### B. Prevención de Spam y Diálogo de Seguridad (`#modal-confirm-dialog`)
+* **Estado Confirmado Persistente:** Tras el primer despacho, el botón commuta a color verde corporativo (`.is-sent` / `.is-success`):
+  `✅ Cierre Solicitado (HH:MM) · Volver a Reclamar`.
+* **Auditoría Local y Persistencia:** El estado se conserva tanto en la memoria activa (`state.teamsAudit`) como en `localStorage` (`triage_zombi_requested_{id}`), evitando falsos reinicios al recargar la página.
+* **Ventana de Confirmación de Recordatorio:** Si el operador pulsa nuevamente el botón para insistir con el requerimiento de cierre:
+  * El sistema despliega el diálogo modal corporativo `#modal-confirm-dialog` con el badge ámbar `SOLICITUD YA ENVIADA`.
+  * Detalla el identificador del ticket, el grupo resolutor, el canal notificado y la hora exacta del envío previo.
+  * Requiere confirmación explícita mediante el botón `📢 Reenviar Solicitud a Teams`.
+
+#### C. Formato de la Adaptive Card Corporativa (`cierre_zombi`)
+La tarjeta entregada en Microsoft Teams contiene:
+* **Cabecera de Alerta Normativa:** `🧟 SOLICITUD DE CIERRE ADMINISTRATIVO · TICKET ZOMBI` con estilo de advertencia.
+* **Bloque de Auditoría ITIL:** Desglose con el identificador del ticket, estado nominal en Remedy, grupo asignado y diagnóstico de ciclo de vida (*"Ticket sin impacto activo / Cierre pendiente"*).
+* **Instrucción Operativa:** Requerimiento formal para que el grupo proceda con la resolución o cierre administrativo inmediato en BMC Remedy para sanear el backlog.
+* **Acceso Directo:** Enlace directo para abrir el ticket en la consola de BMC Remedy.
+
+### 6. Botón "Publicar Traspaso de Guardia en Teams" (Shift Handover / Relevo ITIL)
+
+* **Ubicación Estratégica:**
+  * Situado en la cabecera del modal oficial de Traspaso de Guardia (`#modal-shift-handover`), accesible en todo momento mediante el botón `📋 Traspaso de Guardia` en la cabecera superior (`.triage-header`), el pie de página o el atajo de teclado global <kbd>Shift</kbd> + <kbd>H</kbd>.
+  * Al tratarse de una acción global de fin de turno y no de un ticket individual, se centraliza junto al visor del informe consolidado y el botón `📋 Copiar Informe Markdown`, evitando sobrecargar las filas de la tabla de triaje.
+* **Dúo de Acciones de Relevo:**
+  1. `📋 Copiar Informe Markdown`: Copia al portapapeles el informe técnico completo en Markdown estructurado en 5 secciones (Emergencias SL1 activas, Discrepancias detectadas, Workarounds en vigor, Trabajos PaP concurrentes y Métricas consolidadas).
+  2. `📢 Publicar en Teams` (`btn-handover-send-teams`): Emite de forma automatizada la Adaptive Card corporativa al canal de seguimiento operativo y relevo de turno.
+
+```mermaid
+flowchart TD
+    A["Operador activa Traspaso de Guardia (Shift+H)"] --> B["Modal Consolidado: #modal-shift-handover"]
+    B --> C["📋 Copiar Informe Markdown"]
+    B --> D{"¿Se publicó traspaso previo en la guardia?"}
+    D -- No --> E["Botón: 📢 Publicar en Teams"]
+    D -- Sí --> F["Botón: ✅ Traspaso Publicado (HH:MM) · Volver a Publicar"]
+    E --> G["Diálogo de Confirmación: #modal-confirm-dialog"]
+    F --> H["Diálogo de Seguridad Reenvío: #modal-confirm-dialog (Ámbar)"]
+    G -- Confirmado --> I["Despacho Automático a Teams (Adaptive Card)"]
+    H -- Confirmado --> I
+    I --> J["Persistencia en localStorage y state.teamsAudit"]
+```
+
+#### A. Enrutamiento Centralizado (`resolveLocalTeamsChannel('traspaso_guardia')`)
+La Consola enruta la publicación utilizando la acción `traspaso_guardia` definida en la configuración corporativa (`config/teams_channels.json`):
+* Despacha la tarjeta al canal designado para el relevo operativo (predeterminado: *Seguimiento Operativo* / *Masivas IT*).
+* El canal recibe la compilación automática de incidencias vivas, contingencias y cronómetros de guardia.
+
+#### B. Flujo de Confirmación de Seguridad y Prevención de Spam (`#modal-confirm-dialog`)
+Para garantizar que el informe consolidado solo se emita cuando el Incident Manager haya revisado los datos:
+* **Confirmación Previa Obligatoria:** Al pulsar `📢 Publicar en Teams`, la consola despliega la ventana modal corporativa `#modal-confirm-dialog` desglosando:
+  * Resumen cuantitativo de la guardia (conteo de SL1, discrepancias y workarounds activos).
+  * Canal de destino en Microsoft Teams.
+  * Solicitud de confirmación explícita mediante el botón `📢 Publicar Traspaso en Teams`.
+* **Estado Confirmado Persistente:** Tras el envío exitoso, el botón conmuta a verde corporativo (`.is-sent` / `.is-success`):
+  `✅ Traspaso Publicado (HH:MM) · Volver a Publicar`.
+* **Persistencia y Memoria de Turno:** El estado se conserva tanto en el almacenamiento local (`localStorage.triage_handover_published`) como en la auditoría en memoria (`state.teamsAudit`). Al abrir nuevamente el modal con <kbd>Shift</kbd> + <kbd>H</kbd>, el botón recuerda la hora del envío anterior.
+* **Reenvío / Actualización de Turno:** Si sobreviene una nueva emergencia crítica antes del relevo efectivo y se requiere actualizar el informe, al pulsar nuevamente el botón el diálogo muestra el badge ámbar `REENVÍO DE TRASPASO` con la hora del envío previo y requiere confirmación explícita.
+
+#### C. Formato de la Adaptive Card Corporativa (`traspaso_guardia`)
+La tarjeta entregada en Microsoft Teams contiene:
+* **Cabecera Azul Corporativa:** `📋 RELEVO / TRASPASO DE GUARDIA ITIL` con estilo *Accent* y subtítulo con las métricas clave de la guardia.
+* **Cuerpo del Informe:** Resumen ejecutivo de las emergencias SL1 activas, discrepancias detectadas, contingencias/workarounds autorizados y trabajos PaP programados.
+* **Acceso Directo:** Botón `🖥️ Abrir Consola de Triaje IT` con enlace directo a la consola para los técnicos del turno entrante.
+
+### 7. Asistente "✨ Sugerir Borrador IA" y Gobernanza de Botones
 
 * **Ubicación:**
   * En la cabecera del panel del agente: botón `✨ Sugerir Borrador IA`.
@@ -360,7 +556,7 @@ Para evitar errores operativos durante situaciones de alta tensión, la consola 
 
 ---
 
-### 4. Consulta de Notas Técnicas y Worklog Remedy en Tiempo Real
+### 8. Consulta de Notas Técnicas y Worklog Remedy en Tiempo Real
 
 * **Ubicación:** Sección colapsable *"Notas Técnicas / Worklog de Remedy"* dentro de la tarjeta de detalle de cada incidencia.
 * **Propósito:** Permite al Incident Manager inspeccionar al instante los worklogs detallados introducidos por los grupos resolutores N1/N2/N3, las notas de diagnóstico y las soluciones aplicadas en Remedy, sin necesidad de acceder a la consola pesada de Remedy/BMC.
@@ -373,7 +569,7 @@ Para evitar errores operativos durante situaciones de alta tensión, la consola 
 
 ---
 
-### 5. Consola de Auditoría de Carga & Telemetría IA (Atajo: Shift + I / Shift + C)
+### 9. Consola de Auditoría de Carga & Telemetría IA (Atajo: Shift + I / Shift + C)
 
 Para mantener una interfaz despejada para el Incident Manager durante la guardia sin recargar la pantalla con herramientas de diagnóstico técnico, la Consola integra una **ventana técnica de auditoría accesible exclusivamente por atajo de teclado**:
 
@@ -574,6 +770,15 @@ Texto del mensaje aquí...
 **Versión aún más breve:**
 SL1: Alerta breve aquí."
 ```
+
+### Difusión Directa y Despacho a Microsoft Teams
+
+Una vez validados o redactados los textos oficiales en el almacén persistente o en el editor modal, la Consola permite su difusión directa hacia el canal oficial de Dirección IT en Microsoft Teams:
+
+* **Enrutamiento Centralizado:** El despacho utiliza la acción `notificacion_direccion` configurada en `config/teams_channels.json`, resolviendo automáticamente el canal general de Dirección IT o el canal específico asignado al grupo resolutor.
+* **Priorización de la Fuente de la Verdad:** El despachador consulta prioritariamente el texto aprobado en `mensajes_ejecutivos[phase].completo` (y en el almacenamiento local del operador), garantizando que la Dirección reciba exactamente el redactado oficial de hasta 90 palabras en un único párrafo, sin plantillas dinámicas genéricas ni datos no contrastados.
+* **Transición de Fases:** El sistema acompaña el ciclo de vida del incidente, transmitiendo la **Apertura** en el primer aviso, el **Seguimiento** mientras el ticket continúa en diagnóstico, y el **Cierre** una vez restablecido el servicio.
+* **Seguridad y Trazabilidad:** Cada retransmisión o avance de fase exige confirmación explícita mediante el diálogo `#modal-confirm-dialog`, desglosando la fase a emitir y la hora del despacho anterior. La acción queda registrada en la auditoría persistente de la sesión (`state.teamsAudit`) y en el log operativo de la guardia.
 
 ---
 

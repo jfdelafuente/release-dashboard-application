@@ -17,7 +17,7 @@
   <link rel="stylesheet" href="/dashboards/assets/incident-notifications.css">
 
   <!-- Estilos del Módulo 1 (Adaptado al Sistema de Diseño del Portal) -->
-  <link rel="stylesheet" href="./triage.css?v=20261111_1826">
+  <link rel="stylesheet" href="./triage.css?v=20261113_1330">
 </head>
 <body>
 
@@ -794,6 +794,9 @@
                   <button type="button" id="orch-btn-copy-teams" class="orch-btn-teams-copy">
                     <span aria-hidden="true">📋</span> <span>Copiar Convocatoria Oficial</span>
                   </button>
+                  <button type="button" id="orch-btn-notify-teams" class="orch-btn-teams-copy" style="background:#5b5fc7; color:#fff; border-color:#5b5fc7;" title="Despachar tarjeta adaptativa interactiva al canal de War Room en Teams">
+                    <span aria-hidden="true">📢</span> <span>Notificar War Room en Teams</span>
+                  </button>
                 </div>
               </div>
 
@@ -1275,6 +1278,9 @@
               <button type="button" class="triage-btn" id="btn-gw-copy-payload" title="Copiar carga útil JSON para consumo de API REST">
                 <span aria-hidden="true">📋</span> <span>Copiar Payload JSON (API)</span>
               </button>
+              <button type="button" class="triage-btn" id="btn-gw-send-teams" style="background:#5b5fc7; color:#fff; border-color:#5b5fc7; font-weight:700;" title="Enviar comunicado ejecutivo directamente al canal de Dirección en Microsoft Teams">
+                <span aria-hidden="true">📢</span> <span>Notificar a Dirección por Teams</span>
+              </button>
               <button type="button" class="triage-btn triage-btn-primary" id="btn-gw-dispatch" style="background: #FF7900; border-color: #FF7900; font-weight: 700;" title="Emitir notificación formal a través de la Web de Explotación Orange">
                 <span aria-hidden="true">🚀</span> <span>Despachar Notificación a Web de Explotación</span>
               </button>
@@ -1363,6 +1369,9 @@
           <div style="display: flex; gap: 8px;">
             <button id="btn-handover-copy" class="triage-btn triage-btn-primary" style="display: inline-flex; align-items: center; gap: 6px; background: #0284C7; border-color: #0284C7;">
               <span>📋</span> Copiar Informe Markdown
+            </button>
+            <button id="btn-handover-send-teams" class="triage-btn" style="display: inline-flex; align-items: center; gap: 6px; background: #5B5FC7; color: #FFF; border-color: #5B5FC7; font-weight: 700;" title="Publicar el informe de traspaso de guardia al canal de Teams de seguimiento operativo">
+              <span>📢</span> Publicar en Teams
             </button>
           </div>
         </div>
@@ -1714,6 +1723,46 @@
     </div>
   </div>
 
+  <!-- ===================================================================== -->
+  <!-- MODAL DE CONFIRMACIÓN DE SEGURIDAD OPERATIVA (ESTILO CORPORATIVO)      -->
+  <!-- ===================================================================== -->
+  <div id="modal-confirm-dialog" class="triage-modal-backdrop triage-confirm-backdrop" role="alertdialog" aria-modal="true" aria-labelledby="confirm-modal-title" aria-describedby="confirm-modal-desc" aria-hidden="true">
+    <div class="triage-modal-dialog triage-confirm-dialog">
+      <div class="triage-modal-header triage-confirm-header">
+        <div class="triage-confirm-header-left">
+          <div class="triage-confirm-icon-wrap" id="confirm-modal-icon-wrap">
+            <span id="confirm-modal-icon" aria-hidden="true">⚠️</span>
+          </div>
+          <div>
+            <div class="triage-confirm-badge-row">
+              <span class="triage-confirm-badge" id="confirm-modal-badge">ADVERTENCIA OPERATIVA</span>
+            </div>
+            <h3 class="triage-confirm-title" id="confirm-modal-title">Confirmación de Seguridad</h3>
+          </div>
+        </div>
+        <button type="button" class="triage-btn triage-confirm-close-btn" id="btn-modal-confirm-close" aria-label="Cerrar confirmación">✖</button>
+      </div>
+
+      <div class="triage-modal-body triage-confirm-body">
+        <p class="triage-confirm-main-msg" id="confirm-modal-desc"></p>
+        
+        <div class="triage-confirm-details" id="confirm-modal-details" style="display: none;">
+          <!-- Detalles clave inyectados dinámicamente -->
+        </div>
+
+        <div class="triage-confirm-callout" id="confirm-modal-callout" style="display: none;">
+          <span class="triage-confirm-callout-icon" id="confirm-modal-callout-icon" aria-hidden="true">🔔</span>
+          <div class="triage-confirm-callout-text" id="confirm-modal-callout-text"></div>
+        </div>
+      </div>
+
+      <div class="triage-modal-footer triage-confirm-footer">
+        <button type="button" class="triage-btn" id="btn-modal-confirm-cancel">Cancelar</button>
+        <button type="button" class="triage-btn triage-confirm-action-btn" id="btn-modal-confirm-ok">Confirmar Acción</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Contenedor de Toasts de Notificación -->
   <div id="toast-container" class="triage-toast-container" aria-live="polite"></div>
 
@@ -1721,7 +1770,7 @@
   <script src="/dashboards/assets/ui-feedback.js"></script>
   <script src="/dashboards/assets/topbar.js"></script>
   <script src="/dashboards/assets/resumen-ia.js"></script>
-  <script src="./triage.js?v=20261112_1425"></script>
+  <script src="./triage.js?v=20261113_1330"></script>
 </body>
 </html>
 
