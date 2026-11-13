@@ -138,3 +138,73 @@ def test_fastapi_get_resumen_ia_not_found_returns_502():
         assert resp.status_code == 502
         data = json.loads(resp.body.decode("utf-8"))
         assert data["success"] is False
+
+
+def test_fastapi_get_resumen_ia_live_soptmc_hit(tmp_path):
+    mock_payload = {
+        "success": True,
+        "titulo": "SOPTMC Live",
+        "problema": "Corte de fibra",
+        "estadoActual": "Asignado",
+    }
+
+    class DummyResponse:
+        def __init__(self):
+            self.status = 200
+
+        def read(self):
+            return json.dumps(mock_payload).encode("utf-8")
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc_val, exc_tb):
+            pass
+
+    cache_dir = tmp_path / "epsilon_cache"
+    cache_dir.mkdir(parents=True, exist_ok=True)
+
+    with patch("urllib.request.urlopen", return_value=DummyResponse()), \
+         patch("converters.src.fastapi_epsilon_router._get_cache_dir", return_value=cache_dir):
+        resp = get_resumen_ia("INC000004183530", force=True, mock=False)
+        assert resp.status_code == 200
+        assert resp.headers.get("X-Cache-Status") == "LIVE_SOPTMC_HIT"
+        data = json.loads(resp.body.decode("utf-8"))
+        assert data["titulo"] == "SOPTMC Live"
+        assert (cache_dir / "INC000004183530.json").exists()
+
+
+def test_fastapi_get_resumen_ia_disk_hit(tmp_path):
+    cache_dir = tmp_path / "epsilon_cache"
+    cache_dir.mkdir(parents=True, exist_ok=True)
+    disk_file = cache_dir / "INC000004183530.json"
+    disk_file.write_text(json.dumps({
+        "success": True,
+        "titulo": "From Disk Cache",
+        "problema": "Problema guardado",
+    }), encoding="utf-8")
+
+    with patch("converters.src.fastapi_epsilon_router._get_cache_dir", return_value=cache_dir):
+        resp = get_resumen_ia("INC000004183530", force=False, mock=True)
+        assert resp.status_code == 200
+        assert resp.headers.get("X-Cache-Status") == "DISK_HIT"
+        data = json.loads(resp.body.decode("utf-8"))
+        assert data["titulo"] == "From Disk Cache"
+
+
+def test_fastapi_get_resumen_ia_fallback_local_dumps_fresh():
+    incident_mock = {
+        "ID de incidencia": "INC000004174998",
+        "Descripción": "Fallo reciente",
+        "Estatus": "Asignado",
+        "Prioridad": "Alta"
+    }
+    import time
+    with patch("converters.src.fastapi_epsilon_router.find_incident_in_local_dumps") as mock_find:
+        mock_find.return_value = (incident_mock, "2026-11-13-massive.json", time.time())
+        resp = get_resumen_ia("INC000004174998", force=True, mock=True)
+        assert resp.status_code == 200
+        assert resp.headers.get("X-Cache-Status") == "LOCAL_DUMP_FALLBACK"
+        data = json.loads(resp.body.decode("utf-8"))
+        assert data["success"] is True
+        assert data["meta"]["is_stale_warning"] is False

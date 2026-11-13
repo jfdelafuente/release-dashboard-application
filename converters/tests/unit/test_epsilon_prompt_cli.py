@@ -170,6 +170,7 @@ def test_cli_execution_mock_mode():
         [sys.executable, script_path, "--mock"],
         capture_output=True,
         text=True,
+        stdin=subprocess.DEVNULL,
     )
     assert res.returncode == 0
     assert "RESPUESTA JSON DEVUELTA POR EL MODELO" in res.stdout
@@ -183,6 +184,7 @@ def test_cli_execution_mock_strict_mode():
         [sys.executable, script_path, "--mock", "--strict"],
         capture_output=True,
         text=True,
+        stdin=subprocess.DEVNULL,
     )
     assert res.returncode == 0
 
@@ -205,6 +207,7 @@ def test_cli_execution_mock_strict_with_invalid_response_fails(valid_payload):
             [sys.executable, script_path, "--mock", "--mock-response", temp_name, "--strict"],
             capture_output=True,
             text=True,
+            stdin=subprocess.DEVNULL,
         )
         assert res.returncode == 1
 
@@ -213,6 +216,7 @@ def test_cli_execution_mock_strict_with_invalid_response_fails(valid_payload):
             [sys.executable, script_path, "--mock", "--mock-response", temp_name],
             capture_output=True,
             text=True,
+            stdin=subprocess.DEVNULL,
         )
         assert res_normal.returncode == 0
         assert "REGLAS INCUMPLIDAS DETECTADAS" in res_normal.stdout

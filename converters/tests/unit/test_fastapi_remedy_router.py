@@ -180,3 +180,13 @@ def test_fastapi_remedy_detail_no_disk_returns_502(tmp_path):
         assert resp.status_code == 502
         data = json.loads(resp.body.decode("utf-8"))
         assert data["success"] is False
+
+
+def test_get_project_root_env_and_cache_dir(tmp_path, monkeypatch):
+    from converters.src.fastapi_remedy_router import _get_project_root, _get_cache_dir
+    fake_root = tmp_path / "fake_repo"
+    fake_root.mkdir()
+    monkeypatch.setenv("RELEASE_DASHBOARD_ROOT", str(fake_root))
+    assert _get_project_root() == fake_root
+    cache_dir = _get_cache_dir()
+    assert cache_dir.exists()
