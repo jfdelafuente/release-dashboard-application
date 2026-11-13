@@ -264,29 +264,37 @@ def main() -> int:
         except Exception as e:
             sys.stderr.write(f"Error al leer el archivo '{args.file_path}': {e}\n")
             return 1
-    elif not sys.stdin.isatty():
-        remedy_raw_str = sys.stdin.read()
-    elif args.mock:
-        default_sample = os.path.join(
-            os.path.dirname(__file__), "..", "data", "samples", "remedy_incident_sample.json"
-        )
-        if os.path.isfile(default_sample):
-            with open(default_sample, "r", encoding="utf-8") as f:
-                remedy_raw_str = f.read()
-        else:
-            remedy_raw_str = json.dumps(
-                {
-                    "id": "INC000004122710",
-                    "resumen": "Error en propagación de teléfono de contacto en recogidas de fijo",
-                    "estado": "Pendiente",
-                    "notas": "02/11/2026 09:15:00 - N1: Fallo detectado. 03/11/2026 14:00:00 - N2: Solución planificada.",
-                }
-            )
     else:
-        sys.stderr.write(
-            "Error: Debe proporcionar un archivo con '--file <ruta.json>', datos por stdin o activar '--mock'.\n"
-        )
-        return 1
+        # Intentar leer desde stdin si está redirigido/tubería y contiene datos
+        if not sys.stdin.isatty():
+            try:
+                stdin_data = sys.stdin.read()
+                if stdin_data.strip():
+                    remedy_raw_str = stdin_data
+            except Exception:
+                pass
+
+        if not remedy_raw_str and args.mock:
+            default_sample = os.path.join(
+                os.path.dirname(__file__), "..", "data", "samples", "remedy_incident_sample.json"
+            )
+            if os.path.isfile(default_sample):
+                with open(default_sample, "r", encoding="utf-8") as f:
+                    remedy_raw_str = f.read()
+            else:
+                remedy_raw_str = json.dumps(
+                    {
+                        "id": "INC000004122710",
+                        "resumen": "Error en propagación de teléfono de contacto en recogidas de fijo",
+                        "estado": "Pendiente",
+                        "notas": "02/11/2026 09:15:00 - N1: Fallo detectado. 03/11/2026 14:00:00 - N2: Solución planificada.",
+                    }
+                )
+        elif not remedy_raw_str:
+            sys.stderr.write(
+                "Error: Debe proporcionar un archivo con '--file <ruta.json>', datos por stdin o activar '--mock'.\n"
+            )
+            return 1
 
     if not remedy_raw_str.strip():
         sys.stderr.write("Error: El volcado de entrada de la incidencia está vacío.\n")

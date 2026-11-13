@@ -155,6 +155,8 @@ powershell -ExecutionPolicy Bypass -File scripts/deploy-production.ps1 -AgentsLi
 Accede al portal y comprueba que la campana de notificaciones y los modales ejecutivos muestran los textos redactados:
 * **Portal Principal:** [http://infocodes.si.orange.es:8081/dashboards/portal/](http://infocodes.si.orange.es:8081/dashboards/portal/)
 * **Incidencias Masivas:** [http://infocodes.si.orange.es:8081/dashboards/massive-incidents/](http://infocodes.si.orange.es:8081/dashboards/massive-incidents/)
+* **Consola de Emergencias IT:** [http://infocodes.si.orange.es:8081/dashboards/emergency-triage-console/](http://infocodes.si.orange.es:8081/dashboards/emergency-triage-console/)
+  * En la tarjeta de detalle de cada incidencia, el Incident Manager puede utilizar el botón **`📢 Enviar [Apertura/Seguimiento/Cierre] a Teams`** para difundir directamente el comunicado oficial validado hacia el canal de Dirección IT.
 
 ---
 

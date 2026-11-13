@@ -17,7 +17,7 @@
   <link rel="stylesheet" href="/dashboards/assets/incident-notifications.css">
 
   <!-- Estilos del Módulo 1 (Adaptado al Sistema de Diseño del Portal) -->
-  <link rel="stylesheet" href="./triage.css?v=20261111_1826">
+  <link rel="stylesheet" href="./triage.css?v=20261113_1330">
 </head>
 <body>
 
@@ -80,6 +80,12 @@
           <button id="btn-open-comms-center" class="triage-btn triage-btn-comms-header" title="Abrir Módulo 3: Centro de Comunicaciones, Gateway Web de Explotación y Matrices de Contacto GRIAL/Confluence">
             <span aria-hidden="true">📡</span>
             <span>Comunicaciones &amp; Contactos</span>
+          </button>
+
+          <!-- Botón de configuración de Canales Microsoft Teams -->
+          <button id="btn-teams-channels-config" class="triage-btn triage-btn-teams-header" title="Configurar Canales y Enrutamiento de Microsoft Teams" onclick="window.openTeamsConfigModal ? window.openTeamsConfigModal() : (function(){ var m = document.getElementById('modal-teams-config'); if(m) { m.classList.add('open'); m.setAttribute('aria-hidden', 'false'); } })()">
+            <span aria-hidden="true">💬</span>
+            <span>Canales Teams</span>
           </button>
 
           <!-- Botón de consulta de criterios oficiales de umbrales -->
@@ -158,6 +164,17 @@
           </div>
           <div class="triage-kpi-desc">Mayores confirmadas ITIL</div>
         </div>
+
+        <div class="triage-kpi-card kpi-worklog-stale" id="card-kpi-worklog" title="Tickets activos con más de 6 horas sin actualización en su Work Log">
+          <div class="triage-kpi-header">
+            <span>Work Log Inactivo</span>
+            <span aria-hidden="true">⏱️</span>
+          </div>
+          <div class="triage-kpi-value-row">
+            <span id="kpi-worklog-stale" class="triage-kpi-value">0</span>
+          </div>
+          <div class="triage-kpi-desc">Tickets &ge;6h sin notas</div>
+        </div>
       </div>
     </section>
 
@@ -205,6 +222,25 @@
           <option value="P2">Solo SL2 / P2 (Mayor)</option>
           <option value="P3">Solo SL3 / P3 (Media)</option>
           <option value="P4">Solo SL4 / P4 (Baja)</option>
+        </select>
+
+        <label for="filter-worklog" class="sr-only">Filtrar por Inactividad de Work Log</label>
+        <select id="filter-worklog" class="triage-select" title="Filtrar por Inactividad de Work Log">
+          <option value="all">Todo el Estado Work Log</option>
+          <option value="inactivos">Todos Inactivos (≥6h)</option>
+          <option value="6h">Alerta WL (6h - 12h)</option>
+          <option value="12h">Estancamiento WL (12h - 24h)</option>
+          <option value="24h">Bloqueo Crítico WL (≥24h)</option>
+          <option value="ok">Al día (&lt;6h)</option>
+          <option value="exento">Exento (Planificado/Zombie)</option>
+        </select>
+
+        <label for="sort-feed" class="sr-only">Ordenar Listado</label>
+        <select id="sort-feed" class="triage-select" title="Ordenar Listado de Incidencias">
+          <option value="date-desc">Orden: Más recientes primero</option>
+          <option value="worklog-desc">Orden: Mayor inactividad WL (Urgen actualización)</option>
+          <option value="severity-desc">Orden: Mayor criticidad ITIL</option>
+          <option value="discrepancy-desc">Orden: Mayor discrepancia</option>
         </select>
 
         <div class="triage-search-box">
@@ -758,6 +794,9 @@
                   <button type="button" id="orch-btn-copy-teams" class="orch-btn-teams-copy">
                     <span aria-hidden="true">📋</span> <span>Copiar Convocatoria Oficial</span>
                   </button>
+                  <button type="button" id="orch-btn-notify-teams" class="orch-btn-teams-copy" style="background:#5b5fc7; color:#fff; border-color:#5b5fc7;" title="Despachar tarjeta adaptativa interactiva al canal de War Room en Teams">
+                    <span aria-hidden="true">📢</span> <span>Notificar War Room en Teams</span>
+                  </button>
                 </div>
               </div>
 
@@ -1239,6 +1278,9 @@
               <button type="button" class="triage-btn" id="btn-gw-copy-payload" title="Copiar carga útil JSON para consumo de API REST">
                 <span aria-hidden="true">📋</span> <span>Copiar Payload JSON (API)</span>
               </button>
+              <button type="button" class="triage-btn" id="btn-gw-send-teams" style="background:#5b5fc7; color:#fff; border-color:#5b5fc7; font-weight:700;" title="Enviar comunicado ejecutivo directamente al canal de Dirección en Microsoft Teams">
+                <span aria-hidden="true">📢</span> <span>Notificar a Dirección por Teams</span>
+              </button>
               <button type="button" class="triage-btn triage-btn-primary" id="btn-gw-dispatch" style="background: #FF7900; border-color: #FF7900; font-weight: 700;" title="Emitir notificación formal a través de la Web de Explotación Orange">
                 <span aria-hidden="true">🚀</span> <span>Despachar Notificación a Web de Explotación</span>
               </button>
@@ -1327,6 +1369,9 @@
           <div style="display: flex; gap: 8px;">
             <button id="btn-handover-copy" class="triage-btn triage-btn-primary" style="display: inline-flex; align-items: center; gap: 6px; background: #0284C7; border-color: #0284C7;">
               <span>📋</span> Copiar Informe Markdown
+            </button>
+            <button id="btn-handover-send-teams" class="triage-btn" style="display: inline-flex; align-items: center; gap: 6px; background: #5B5FC7; color: #FFF; border-color: #5B5FC7; font-weight: 700;" title="Publicar el informe de traspaso de guardia al canal de Teams de seguimiento operativo">
+              <span>📢</span> Publicar en Teams
             </button>
           </div>
         </div>
@@ -1535,6 +1580,189 @@
     </div>
   </div>
 
+  <!-- Modal de Configuración de Canales y Enrutamiento Microsoft Teams -->
+  <div id="modal-teams-config" class="triage-modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="modal-teams-title" aria-hidden="true">
+    <div class="triage-modal-dialog teams-modal-dialog">
+      <div class="triage-modal-header teams-modal-header">
+        <div class="teams-header-title-block">
+          <h2 id="modal-teams-title" class="triage-modal-title">
+            <span class="teams-title-icon" aria-hidden="true">💬</span>
+            <span>Canales y Enrutamiento Microsoft Teams</span>
+          </h2>
+          <p class="teams-modal-subtitle">Configura los webhooks de Power Automate y personaliza qué canal recibe cada acción o grupo resolutor</p>
+        </div>
+        <button id="btn-modal-teams-close" class="triage-btn" aria-label="Cerrar configuración Teams">✖</button>
+      </div>
+
+      <div class="triage-modal-body teams-modal-body">
+        <!-- Pestañas internas de la configuración de Teams -->
+        <div class="teams-tabs-nav" role="tablist">
+          <button type="button" id="tab-teams-channels" class="teams-tab-btn active" role="tab" aria-selected="true">
+            <span>📡 Canales y Webhooks</span>
+          </button>
+          <button type="button" id="tab-teams-routing" class="teams-tab-btn" role="tab" aria-selected="false">
+            <span>🔀 Enrutamiento de Acciones</span>
+          </button>
+          <button type="button" id="tab-teams-groups" class="teams-tab-btn" role="tab" aria-selected="false">
+            <span>👥 Sobrescrituras por Grupo Resolutor</span>
+          </button>
+        </div>
+
+        <!-- Panel 1: Lista y Edición de Canales -->
+        <div id="teams-panel-channels" class="teams-tab-panel active">
+          <div class="teams-panel-header-actions">
+            <span class="teams-section-hint">Canales y Webhooks de Microsoft Teams (Power Automate Workflows o Incoming Webhooks):</span>
+            <button type="button" id="btn-teams-add-channel" class="triage-btn triage-btn-primary">
+              <span aria-hidden="true">➕</span> Nuevo Canal
+            </button>
+          </div>
+
+          <!-- Formulario colapsable para crear/editar canal -->
+          <div id="teams-channel-form-box" class="teams-channel-form-box" style="display: none;">
+            <h3 id="teams-form-title">Añadir Nuevo Canal Teams</h3>
+            <form id="teams-channel-form" onsubmit="return false;">
+              <div class="teams-form-grid">
+                <div class="teams-form-group">
+                  <label for="teams-form-id">ID / Clave Única (slug):</label>
+                  <input type="text" id="teams-form-id" placeholder="ej. masivas_it, warroom_sl1" required />
+                </div>
+                <div class="teams-form-group">
+                  <label for="teams-form-name">Nombre Visible en Teams:</label>
+                  <input type="text" id="teams-form-name" placeholder="ej. Masivas IT / War Room" required />
+                </div>
+                <div class="teams-form-group teams-form-full">
+                  <label for="teams-form-url">URL del Webhook (Power Automate Workflow con SAS):</label>
+                  <input type="url" id="teams-form-url" placeholder="https://default...environment.api.powerplatform.com/.../invoke?..." required />
+                  <small class="teams-input-help">Nota: El flujo de Power Automate debe estar configurado como desencadenable por "Cualquier persona" (para incluir la firma SAS <code>&amp;sig=...</code>).</small>
+                </div>
+                <div class="teams-form-group teams-form-full">
+                  <label for="teams-form-desc">Descripción del Propósito:</label>
+                  <input type="text" id="teams-form-desc" placeholder="Canal para reclamaciones y seguimiento..." />
+                </div>
+                <div class="teams-form-group">
+                  <label for="teams-form-type">Tipo de Conector:</label>
+                  <select id="teams-form-type">
+                    <option value="power_automate_workflow" selected>Power Automate Workflow (Adaptive Card v1.4)</option>
+                    <option value="incoming_webhook">Incoming Webhook Office 365 (MessageCard)</option>
+                  </select>
+                </div>
+                <div class="teams-form-group teams-form-checkbox-group">
+                  <label>
+                    <input type="checkbox" id="teams-form-active" checked />
+                    <span>Canal Activo</span>
+                  </label>
+                </div>
+              </div>
+              <div class="teams-form-actions">
+                <button type="button" id="btn-teams-form-cancel" class="triage-btn">Cancelar</button>
+                <button type="submit" id="btn-teams-form-save" class="triage-btn triage-btn-primary">Guardar Canal</button>
+              </div>
+            </form>
+          </div>
+
+          <!-- Contenedor dinámico de tarjetas de canales -->
+          <div id="teams-channels-list" class="teams-channels-list">
+            <!-- Rellenado por triage.js -->
+          </div>
+        </div>
+
+        <!-- Panel 2: Enrutamiento por Acción Operativa -->
+        <div id="teams-panel-routing" class="teams-tab-panel" style="display: none;">
+          <p class="teams-section-hint">Define qué canal recibe por defecto cada tipo de notificación operativa generada desde la consola:</p>
+          <div class="teams-routing-table-container">
+            <table class="teams-table">
+              <thead>
+                <tr>
+                  <th style="width: 25%;">Acción Operativa</th>
+                  <th style="width: 45%;">Descripción del Requerimiento</th>
+                  <th style="width: 30%;">Canal Predeterminado</th>
+                </tr>
+              </thead>
+              <tbody id="teams-routing-tbody">
+                <!-- Rellenado por triage.js -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Panel 3: Sobrescritura por Grupo Resolutor -->
+        <div id="teams-panel-groups" class="teams-tab-panel" style="display: none;">
+          <p class="teams-section-hint">Sobrescribe el canal de destino cuando una incidencia pertenece a un grupo resolutor específico (ej: dirigir tickets de RED FIBRA a un canal dedicado de fibra):</p>
+          
+          <div class="teams-add-group-bar">
+            <input type="text" id="teams-new-group-name" placeholder="Nombre Grupo Remedy (ej. RED FIBRA)" />
+            <select id="teams-new-group-action">
+              <option value="reclamacion_worklog" selected>Reclamación Work Log</option>
+              <option value="notificacion_direccion">Notificación Dirección</option>
+              <option value="convocatoria_warroom">Convocatoria War Room</option>
+              <option value="cierre_zombi">Cierre Zombi</option>
+            </select>
+            <select id="teams-new-group-channel">
+              <!-- Opciones de canales activos cargadas dinámicamente -->
+            </select>
+            <button type="button" id="btn-teams-add-group-route" class="triage-btn triage-btn-primary">
+              <span aria-hidden="true">➕</span> Asignar Enlace
+            </button>
+          </div>
+
+          <div class="teams-group-routes-list" id="teams-group-routes-list">
+            <!-- Rellenado por triage.js -->
+          </div>
+        </div>
+      </div>
+
+      <div class="triage-modal-footer teams-modal-footer">
+        <div class="teams-footer-status" id="teams-modal-status"></div>
+        <div class="teams-footer-buttons">
+          <button type="button" id="btn-modal-teams-close-bottom" class="triage-btn">Cerrar</button>
+          <button type="button" id="btn-teams-save-all" class="triage-btn triage-btn-primary">
+            <span>💾</span> Guardar Configuración
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- MODAL DE CONFIRMACIÓN DE SEGURIDAD OPERATIVA (ESTILO CORPORATIVO)      -->
+  <!-- ===================================================================== -->
+  <div id="modal-confirm-dialog" class="triage-modal-backdrop triage-confirm-backdrop" role="alertdialog" aria-modal="true" aria-labelledby="confirm-modal-title" aria-describedby="confirm-modal-desc" aria-hidden="true">
+    <div class="triage-modal-dialog triage-confirm-dialog">
+      <div class="triage-modal-header triage-confirm-header">
+        <div class="triage-confirm-header-left">
+          <div class="triage-confirm-icon-wrap" id="confirm-modal-icon-wrap">
+            <span id="confirm-modal-icon" aria-hidden="true">⚠️</span>
+          </div>
+          <div>
+            <div class="triage-confirm-badge-row">
+              <span class="triage-confirm-badge" id="confirm-modal-badge">ADVERTENCIA OPERATIVA</span>
+            </div>
+            <h3 class="triage-confirm-title" id="confirm-modal-title">Confirmación de Seguridad</h3>
+          </div>
+        </div>
+        <button type="button" class="triage-btn triage-confirm-close-btn" id="btn-modal-confirm-close" aria-label="Cerrar confirmación">✖</button>
+      </div>
+
+      <div class="triage-modal-body triage-confirm-body">
+        <p class="triage-confirm-main-msg" id="confirm-modal-desc"></p>
+        
+        <div class="triage-confirm-details" id="confirm-modal-details" style="display: none;">
+          <!-- Detalles clave inyectados dinámicamente -->
+        </div>
+
+        <div class="triage-confirm-callout" id="confirm-modal-callout" style="display: none;">
+          <span class="triage-confirm-callout-icon" id="confirm-modal-callout-icon" aria-hidden="true">🔔</span>
+          <div class="triage-confirm-callout-text" id="confirm-modal-callout-text"></div>
+        </div>
+      </div>
+
+      <div class="triage-modal-footer triage-confirm-footer">
+        <button type="button" class="triage-btn" id="btn-modal-confirm-cancel">Cancelar</button>
+        <button type="button" class="triage-btn triage-confirm-action-btn" id="btn-modal-confirm-ok">Confirmar Acción</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Contenedor de Toasts de Notificación -->
   <div id="toast-container" class="triage-toast-container" aria-live="polite"></div>
 
@@ -1542,7 +1770,7 @@
   <script src="/dashboards/assets/ui-feedback.js"></script>
   <script src="/dashboards/assets/topbar.js"></script>
   <script src="/dashboards/assets/resumen-ia.js"></script>
-  <script src="./triage.js?v=20261111_1826"></script>
+  <script src="./triage.js?v=20261113_1330"></script>
 </body>
 </html>
 

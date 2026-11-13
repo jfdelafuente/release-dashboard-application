@@ -1,0 +1,78 @@
+{
+  "_version": "1.0",
+  "descripcion": "Configuración de canales y enrutamiento de notificaciones operativas a Microsoft Teams (Orange Tech Operations)",
+  "remedy_base_url": "https://epsilon-itsm.si.orange.es/arsys/forms/ars_front_f5.si.orange.es/SHR:LandingConsole/Default+Administrator+View/?cacheid=e870b03e",
+  "canales": {
+    "masivas_it": {
+      "id": "masivas_it",
+      "nombre": "Masivas IT",
+      "descripcion": "Chat/Canal oficial de Masivas IT para seguimiento operativo y alertas",
+      "tipo": "power_automate_workflow",
+      "webhook_url": "https://defaultc10a36d829814b7b9b892ef5936549.3a.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/05/workflows/251b155948b445fb872eeb5ed34d1fa9/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=SsB01Uv2lgQf4-cucTfHGW_ciVlZD9f09M7VNM2_4gY",
+      "activo": true,
+      "creado_el": "2026-11-12T12:50:00Z",
+      "actualizado_el": "2026-11-12T13:00:00Z"
+    },
+    "warroom_sl1": {
+      "id": "warroom_sl1",
+      "nombre": "War Room ITIL SL1/P1",
+      "descripcion": "Canal de crisis y coordinación de emergencias de criticidad máxima (SL1)",
+      "tipo": "power_automate_workflow",
+      "webhook_url": "https://defaultc10a36d829814b7b9b892ef5936549.3a.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/05/workflows/251b155948b445fb872eeb5ed34d1fa9/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=SsB01Uv2lgQf4-cucTfHGW_ciVlZD9f09M7VNM2_4gY",
+      "activo": true,
+      "creado_el": "2026-11-12T13:00:00Z",
+      "actualizado_el": "2026-11-12T13:39:47.444Z"
+    },
+    "notificaciones_direccion": {
+      "id": "notificaciones_direccion",
+      "nombre": "Notificaciones Dirección IT",
+      "descripcion": "Canal de avisos ejecutivos a Dirección de Operaciones",
+      "tipo": "power_automate_workflow",
+      "webhook_url": "https://defaultc10a36d829814b7b9b892ef5936549.3a.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/05/workflows/251b155948b445fb872eeb5ed34d1fa9/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=SsB01Uv2lgQf4-cucTfHGW_ciVlZD9f09M7VNM2_4gY",
+      "activo": true,
+      "creado_el": "2026-11-12T13:00:00Z",
+      "actualizado_el": "2026-11-12T13:39:53.364Z"
+    },
+    "incident_manager": {
+      "id": "incident_manager",
+      "nombre": "Incident Manager General",
+      "descripcion": "Chat/Canal de avisos a los Incident Manager",
+      "tipo": "power_automate_workflow",
+      "webhook_url": "https://defaultc10a36d829814b7b9b892ef5936549.3a.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/03/workflows/919aacad294a407f918e9dd58ff7def2/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=nr0HO88uwdWXDXI1sMy1zSwrx1dEiOAa58RUTRd4o_4",
+      "activo": true,
+      "creado_el": "2026-11-13T12:53:01.722Z",
+      "actualizado_el": "2026-11-13T12:53:01.722Z"
+    }
+  },
+  "rutas_acciones": {
+    "reclamacion_worklog": {
+      "descripcion": "Reclamación formal de apunte técnico en Work Log de BMC Remedy",
+      "canal_predeterminado": "masivas_it",
+      "mapeo_por_grupo": {
+        "DES_DJINGO": "masivas_it",
+        "RED FIBRA": "masivas_it",
+        "SOPORTE N1 CSO": "masivas_it"
+      }
+    },
+    "notificacion_direccion": {
+      "descripcion": "Comunicaciones ejecutivas de incidentes para Dirección",
+      "canal_predeterminado": "notificaciones_direccion",
+      "mapeo_por_grupo": {}
+    },
+    "convocatoria_warroom": {
+      "descripcion": "Apertura y convocatoria de War Room para incidencias SL1 / P1",
+      "canal_predeterminado": "warroom_sl1",
+      "mapeo_por_grupo": {}
+    },
+    "cierre_zombi": {
+      "descripcion": "Solicitud formal de cierre administrativo para tickets zombi",
+      "canal_predeterminado": "masivas_it",
+      "mapeo_por_grupo": {}
+    },
+    "traspaso_guardia": {
+      "descripcion": "Informe ejecutivo de relevo / traspaso de guardia ITIL",
+      "canal_predeterminado": "incident_manager",
+      "mapeo_por_grupo": {}
+    }
+  }
+}

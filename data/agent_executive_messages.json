@@ -80,14 +80,6 @@
         "origen": "incident-reporter",
         "conteo_palabras_completo": 77,
         "conteo_palabras_breve": 22
-      },
-      "cierre": {
-        "completo": "Cerrada la incidencia crítica P1 (INC000004156790) en Ficha Cliente Orange. Subsanado el error de direccionamiento en el endpoint xpldocumentlist, confirmándose la correcta apertura y descarga de comprobantes de venta desde el inyector en todas las sedes operativas, incluidas Valladolid y Vigo. Los 60 puestos afectados operan sin bloqueos y el proceso de formalización de ventas se encuentra totalmente estabilizado bajo supervisión preventiva de soporte.",
-        "breve": "Cierre P1 (INC000004156790): Restablecida apertura de comprobantes de venta en Ficha Cliente Orange tras corregir endpoint. Operativa comercial normalizada en todas las sedes.",
-        "generado_por_agente": true,
-        "origen": "incident-reporter",
-        "conteo_palabras_completo": 64,
-        "conteo_palabras_breve": 23
       }
     },
     "INC000004159463": {

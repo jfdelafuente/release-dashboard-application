@@ -29,6 +29,8 @@
     activeFilter: 'reclass_only', // 'all' | 'reclass_only' | 'correct_only' | 'orchestrator_only'
     processFilter: 'all',
     severityFilter: 'all',
+    worklogFilter: 'all', // 'all' | 'inactivos' | '6h' | '12h' | '24h' | 'ok' | 'exento'
+    sortOrder: 'date-desc', // 'date-desc' | 'worklog-desc' | 'severity-desc' | 'discrepancy-desc'
     searchQuery: '',
     expandedRows: {}, // { [incId]: boolean }
     allExpanded: false,
@@ -56,7 +58,12 @@
     activeContactsBrand: 'orange',
     activeContactsDomain: 'ALL',
     commsDispatchHistory: {}, // { [incId]: Array }
-    copiedAgentPrompts: {} // { [incId + '_' + phase]: boolean }
+    copiedAgentPrompts: {}, // { [incId + '_' + phase]: boolean }
+
+    // --- Estado Módulo Integración Microsoft Teams ---
+    teamsConfig: null,
+    teamsAudit: null,
+    editingChannelId: null
   };
 
   // --- Referencias del DOM ---
@@ -79,6 +86,7 @@
     kpiSkipped: document.getElementById('kpi-skipped'),
     kpiActive: document.getElementById('kpi-active'),
     kpiEmergencies: document.getElementById('kpi-emergencies'),
+    kpiWorklogStale: document.getElementById('kpi-worklog-stale'),
 
     // Controles de Filtrado
     tabAll: document.getElementById('tab-all'),
@@ -91,6 +99,8 @@
     countOrchestrator: document.getElementById('count-orchestrator'),
     filterProcessSelect: document.getElementById('filter-process'),
     filterSeveritySelect: document.getElementById('filter-severity'),
+    filterWorklogSelect: document.getElementById('filter-worklog'),
+    sortFeedSelect: document.getElementById('sort-feed'),
     searchInput: document.getElementById('search-input'),
 
     // Feed de Incidentes
@@ -148,6 +158,7 @@
     orchTeamsUrlPreview: document.getElementById('orch-teams-url-preview'),
     orchBtnJoinTeams: document.getElementById('orch-btn-join-teams'),
     orchBtnCopyTeams: document.getElementById('orch-btn-copy-teams'),
+    orchBtnNotifyTeams: document.getElementById('orch-btn-notify-teams'),
 
     // Monitor PaP
     orchPapBadge: document.getElementById('orch-pap-status-badge'),
@@ -227,12 +238,14 @@
     btnCopyAgentPrompt: document.getElementById('btn-copy-agent-prompt'),
     btnPasteAgentOutput: document.getElementById('btn-paste-agent-output'),
     btnSaveAgentOfficial: document.getElementById('btn-save-agent-official'),
+    btnTplSendTeams: document.getElementById('btn-tpl-send-teams'),
     btnTplLoadGateway: document.getElementById('btn-tpl-load-gateway'),
 
     // Gateway Web de Explotación
     gwSubject: document.getElementById('gw-subject'),
     gwBody: document.getElementById('gw-body'),
     btnGwCopyPayload: document.getElementById('btn-gw-copy-payload'),
+    btnGwSendTeams: document.getElementById('btn-gw-send-teams'),
     btnGwDispatch: document.getElementById('btn-gw-dispatch'),
     gwHistoryList: document.getElementById('gw-history-list'),
 
@@ -252,6 +265,7 @@
     btnModalHandoverCloseBottom: document.getElementById('btn-modal-handover-close-bottom'),
     btnHandoverCopy: document.getElementById('btn-handover-copy'),
     btnHandoverCopyBottom: document.getElementById('btn-handover-copy-bottom'),
+    btnHandoverSendTeams: document.getElementById('btn-handover-send-teams'),
     handoverReportText: document.getElementById('handover-report-text'),
     handoverMetaSummary: document.getElementById('handover-meta-summary'),
 
@@ -295,7 +309,37 @@
     triageFooter: document.getElementById('triage-footer'),
     triageFooterHeader: document.getElementById('triage-footer-header'),
     footerBtnToggle: document.getElementById('footer-btn-toggle'),
-    footerExpandable: document.getElementById('triage-footer-expandable')
+    footerExpandable: document.getElementById('triage-footer-expandable'),
+
+    // --- Referencias DOM Módulo Teams ---
+    btnTeamsConfig: document.getElementById('btn-teams-channels-config'),
+    modalTeamsConfig: document.getElementById('modal-teams-config'),
+    btnModalTeamsClose: document.getElementById('btn-modal-teams-close'),
+    btnModalTeamsCloseBottom: document.getElementById('btn-modal-teams-close-bottom'),
+    btnTeamsAddChannel: document.getElementById('btn-teams-add-channel'),
+    teamsChannelFormBox: document.getElementById('teams-channel-form-box'),
+    teamsChannelForm: document.getElementById('teams-channel-form'),
+    btnTeamsFormCancel: document.getElementById('btn-teams-form-cancel'),
+    btnTeamsSaveAll: document.getElementById('btn-teams-save-all'),
+    teamsModalStatus: document.getElementById('teams-modal-status'),
+    teamsChannelsList: document.getElementById('teams-channels-list'),
+    teamsRoutingTbody: document.getElementById('teams-routing-tbody'),
+    teamsGroupRoutesList: document.getElementById('teams-group-routes-list'),
+    btnTeamsAddGroupRoute: document.getElementById('btn-teams-add-group-route'),
+
+    // --- Referencias DOM Modal Confirmación de Seguridad ---
+    modalConfirmDialog: document.getElementById('modal-confirm-dialog'),
+    btnModalConfirmClose: document.getElementById('btn-modal-confirm-close'),
+    btnModalConfirmCancel: document.getElementById('btn-modal-confirm-cancel'),
+    btnModalConfirmOk: document.getElementById('btn-modal-confirm-ok'),
+    confirmModalIconWrap: document.getElementById('confirm-modal-icon-wrap'),
+    confirmModalIcon: document.getElementById('confirm-modal-icon'),
+    confirmModalBadge: document.getElementById('confirm-modal-badge'),
+    confirmModalTitle: document.getElementById('confirm-modal-title'),
+    confirmModalDesc: document.getElementById('confirm-modal-desc'),
+    confirmModalDetails: document.getElementById('confirm-modal-details'),
+    confirmModalCallout: document.getElementById('confirm-modal-callout'),
+    confirmModalCalloutText: document.getElementById('confirm-modal-callout-text')
   };
 
   // --- Utilidades ---
@@ -360,6 +404,111 @@
       showToast('No se pudo copiar automáticamente. Por favor, selecciona y copia el texto manualmente.', 'error');
     }
     document.body.removeChild(textarea);
+  }
+
+  // --- Modal de Confirmación de Seguridad Operativa (Framework Visual Orange) ---
+
+  let confirmDialogResolve = null;
+
+  function showSecurityConfirm({
+    title = 'Confirmación de Seguridad',
+    badge = 'ADVERTENCIA OPERATIVA',
+    badgeType = 'warning', // 'warning', 'danger', 'info', 'success'
+    icon = '⚠️',
+    message = '',
+    details = [], // [ { label: 'Canal', value: 'War Room' }, ... ]
+    warningText = '',
+    confirmText = 'Confirmar Acción',
+    cancelText = 'Cancelar',
+    confirmType = 'warning' // 'warning', 'danger', 'primary'
+  } = {}) {
+    return new Promise((resolve) => {
+      confirmDialogResolve = resolve;
+
+      const modal = dom.modalConfirmDialog || document.getElementById('modal-confirm-dialog');
+      if (!modal) {
+        // Fallback básico si el modal no estuviera en el DOM
+        resolve(window.confirm(message ? message.replace(/<[^>]*>/g, '') : title));
+        return;
+      }
+
+      const iconWrap = dom.confirmModalIconWrap || document.getElementById('confirm-modal-icon-wrap');
+      const iconEl = dom.confirmModalIcon || document.getElementById('confirm-modal-icon');
+      const badgeEl = dom.confirmModalBadge || document.getElementById('confirm-modal-badge');
+      const titleEl = dom.confirmModalTitle || document.getElementById('confirm-modal-title');
+      const descEl = dom.confirmModalDesc || document.getElementById('confirm-modal-desc');
+      const detailsEl = dom.confirmModalDetails || document.getElementById('confirm-modal-details');
+      const calloutEl = dom.confirmModalCallout || document.getElementById('confirm-modal-callout');
+      const calloutTextEl = dom.confirmModalCalloutText || document.getElementById('confirm-modal-callout-text');
+      const btnCancel = dom.btnModalConfirmCancel || document.getElementById('btn-modal-confirm-cancel');
+      const btnOk = dom.btnModalConfirmOk || document.getElementById('btn-modal-confirm-ok');
+
+      if (iconEl) iconEl.textContent = icon;
+      if (iconWrap) {
+        iconWrap.className = 'triage-confirm-icon-wrap' + (badgeType ? ' is-' + badgeType : '');
+      }
+
+      if (badgeEl) {
+        badgeEl.textContent = badge;
+        badgeEl.className = 'triage-confirm-badge' + (badgeType ? ' is-' + badgeType : '');
+      }
+
+      if (titleEl) titleEl.textContent = title;
+      if (descEl) descEl.innerHTML = message;
+
+      if (detailsEl) {
+        if (Array.isArray(details) && details.length > 0) {
+          detailsEl.style.display = 'flex';
+          detailsEl.innerHTML = details.map(d => `
+            <div class="triage-confirm-detail-row">
+              <span class="triage-confirm-detail-label">${escapeHtml(d.label)}</span>
+              <span class="triage-confirm-detail-val">${escapeHtml(d.value)}</span>
+            </div>
+          `).join('');
+        } else {
+          detailsEl.style.display = 'none';
+          detailsEl.innerHTML = '';
+        }
+      }
+
+      if (calloutEl && calloutTextEl) {
+        if (warningText) {
+          calloutEl.style.display = 'flex';
+          calloutEl.className = 'triage-confirm-callout' + (badgeType ? ' is-' + badgeType : '');
+          calloutTextEl.innerHTML = warningText;
+        } else {
+          calloutEl.style.display = 'none';
+        }
+      }
+
+      if (btnCancel) btnCancel.textContent = cancelText;
+
+      if (btnOk) {
+        btnOk.textContent = confirmText;
+        btnOk.className = `triage-btn triage-confirm-action-btn btn-${confirmType}`;
+      }
+
+      modal.classList.add('open');
+      modal.setAttribute('aria-hidden', 'false');
+
+      // Autofocus seguro en Cancelar para prevenir pulsaciones accidentales de Enter
+      setTimeout(() => {
+        if (btnCancel) btnCancel.focus();
+      }, 50);
+    });
+  }
+
+  function closeSecurityConfirm(result = false) {
+    const modal = dom.modalConfirmDialog || document.getElementById('modal-confirm-dialog');
+    if (modal) {
+      modal.classList.remove('open');
+      modal.setAttribute('aria-hidden', 'true');
+    }
+    if (confirmDialogResolve) {
+      const fn = confirmDialogResolve;
+      confirmDialogResolve = null;
+      fn(result);
+    }
   }
 
   function formatRelativeTime(epochMs) {
@@ -546,11 +695,18 @@
     const discCount = (kpis.discrepancies_count != null) ? kpis.discrepancies_count : state.incidents.filter(i => i.es_discrepancia).length;
     const p1Count = (kpis.p1_critical_count != null) ? kpis.p1_critical_count : state.incidents.filter(i => i.prioridad_sugerida === 'P1').length;
     const p2Count = (kpis.p2_high_count != null) ? kpis.p2_high_count : state.incidents.filter(i => i.prioridad_sugerida === 'P2').length;
+    const staleWlCount = (kpis.tickets_sin_worklog_6h != null)
+      ? kpis.tickets_sin_worklog_6h
+      : state.incidents.filter(i => {
+          const wl = i.worklog_status || i.evaluacion?.worklog_status || {};
+          return wl.es_inactivo_6h && !wl.exento_inactividad;
+        }).length;
 
     if (dom.kpiScanned) dom.kpiScanned.textContent = activeCount;
     if (dom.kpiSkipped) dom.kpiSkipped.textContent = discCount;
     if (dom.kpiActive) dom.kpiActive.textContent = p1Count;
     if (dom.kpiEmergencies) dom.kpiEmergencies.textContent = p2Count;
+    if (dom.kpiWorklogStale) dom.kpiWorklogStale.textContent = staleWlCount;
 
     // Contadores de pestañas de filtrado
     const totalCount = state.incidents.length;
@@ -1386,13 +1542,14 @@ Proceder con la ejecución inmediata del procedimiento de Rollback. Confirmar in
     const minsElapsed = evaluacion.minutos_desde_apertura || 25;
     const totalDurationText = formatAgingMinutes(minsElapsed);
     let inicioStr = '14:15h';
-    if (evaluacion.fecha_apertura) {
-      const formatted = formatFechaApertura(evaluacion.fecha_apertura);
+    const rawFecha = inc.fecha_apertura || evaluacion.fecha_apertura || inc.fecha_envio;
+    if (rawFecha) {
+      const formatted = formatFechaApertura(rawFecha);
       if (formatted && formatted.includes(' ')) {
         const timePart = formatted.split(' ')[1];
         if (timePart) inicioStr = timePart.slice(0, 5) + 'h';
-      } else if (evaluacion.fecha_apertura.length >= 16) {
-        inicioStr = evaluacion.fecha_apertura.slice(11, 16) + 'h';
+      } else if (typeof rawFecha === 'string' && rawFecha.length >= 16) {
+        inicioStr = rawFecha.slice(11, 16) + 'h';
       }
     }
 
@@ -2436,6 +2593,22 @@ Proceder con la ejecución inmediata del procedimiento de Rollback. Confirmar in
       };
     }
 
+    if (dom.orchBtnNotifyTeams) {
+      const wrStatus = getWarRoomStatus(incId);
+      if (wrStatus.summoned) {
+        dom.orchBtnNotifyTeams.innerHTML = `<span>✅ War Room Convocada (${escapeHtml(wrStatus.timeAgoText || wrStatus.timeStr)}) · Reconvocar</span>`;
+        dom.orchBtnNotifyTeams.classList.add('is-summoned');
+        dom.orchBtnNotifyTeams.title = `War Room convocada a las ${escapeHtml(wrStatus.timeStr)} en ${escapeHtml(wrStatus.channelName)}. Haz clic si necesitas reconvocar o enviar un recordatorio.`;
+      } else {
+        dom.orchBtnNotifyTeams.innerHTML = `<span>📢 Notificar Convocatoria a Teams</span>`;
+        dom.orchBtnNotifyTeams.classList.remove('is-summoned');
+        dom.orchBtnNotifyTeams.title = 'Convocar War Room y notificar a Teams';
+      }
+      dom.orchBtnNotifyTeams.onclick = async () => {
+        await sendWarRoomInvitationToTeams(inc, dom.orchBtnNotifyTeams);
+      };
+    }
+
     // 3. Monitor PaP
     renderPapSection(inc);
 
@@ -3115,6 +3288,21 @@ Generado por Consola de Emergencias IT Orange - Motor de Triaje (Módulo 1)`;
       dom.handoverMetaSummary.textContent = summaryText;
     }
 
+    const hStatus = getShiftHandoverStatus();
+    if (dom.btnHandoverSendTeams) {
+      dom.btnHandoverSendTeams.disabled = false;
+      dom.btnHandoverSendTeams.classList.remove('is-sending');
+      if (hStatus.published) {
+        dom.btnHandoverSendTeams.classList.add('is-sent');
+        dom.btnHandoverSendTeams.innerHTML = `<span aria-hidden="true">✅</span> Traspaso Publicado (${escapeHtml(hStatus.timeAgoText || hStatus.timeStr)}) · Volver a Publicar`;
+        dom.btnHandoverSendTeams.title = `Informe publicado a las ${escapeHtml(hStatus.timeStr)} en ${escapeHtml(hStatus.channelName)}. Haz clic si deseas emitir una actualización consolidada.`;
+      } else {
+        dom.btnHandoverSendTeams.classList.remove('is-sent', 'is-success');
+        dom.btnHandoverSendTeams.innerHTML = `<span aria-hidden="true">📢</span> Publicar en Teams`;
+        dom.btnHandoverSendTeams.title = 'Publicar el informe de traspaso de guardia al canal de Teams de seguimiento operativo';
+      }
+    }
+
     copyToClipboard(reportMarkdown, '📋 Informe de Traspaso de Guardia generado y copiado al portapapeles');
     dom.modalShiftHandover.classList.add('open');
   }
@@ -3340,11 +3528,55 @@ Generado por Consola de Emergencias IT Orange - Motor de Triaje (Módulo 1)`;
       });
     }
 
-    // 5. Ordenación por Fecha de Apertura (más recientes primero)
+    // 4b. Filtro de Inactividad de Work Log
+    if (state.worklogFilter && state.worklogFilter !== 'all') {
+      filtered = filtered.filter(i => {
+        const wl = i.worklog_status || i.evaluacion?.worklog_status || {};
+        if (state.worklogFilter === 'inactivos') {
+          return Boolean(wl.es_inactivo_6h && !wl.exento_inactividad);
+        } else if (state.worklogFilter === '6h') {
+          return wl.nivel_inactividad === 'WL_ALERTA_6H' && !wl.exento_inactividad;
+        } else if (state.worklogFilter === '12h') {
+          return wl.nivel_inactividad === 'WL_ESTANCAMIENTO_12H' && !wl.exento_inactividad;
+        } else if (state.worklogFilter === '24h') {
+          return wl.nivel_inactividad === 'WL_BLOQUEO_24H' && !wl.exento_inactividad;
+        } else if (state.worklogFilter === 'ok') {
+          return wl.nivel_inactividad === 'WL_OK';
+        } else if (state.worklogFilter === 'exento') {
+          return Boolean(wl.exento_inactividad);
+        }
+        return true;
+      });
+    }
+
+    // 5. Ordenación dinámica
     filtered.sort((a, b) => {
-      const epochA = parseIncidentEpoch(a);
-      const epochB = parseIncidentEpoch(b);
-      return epochB - epochA;
+      if (state.sortOrder === 'worklog-desc') {
+        const wlA = a.worklog_status || a.evaluacion?.worklog_status || {};
+        const wlB = b.worklog_status || b.evaluacion?.worklog_status || {};
+        const hoursA = wlA.exento_inactividad ? -1 : (wlA.horas_sin_worklog ?? -1);
+        const hoursB = wlB.exento_inactividad ? -1 : (wlB.horas_sin_worklog ?? -1);
+        if (hoursB !== hoursA) {
+          return hoursB - hoursA;
+        }
+        return parseIncidentEpoch(b) - parseIncidentEpoch(a);
+      } else if (state.sortOrder === 'severity-desc') {
+        const sevOrder = { 'P1': 4, 'P2': 3, 'P3': 2, 'P4': 1 };
+        const sevA = sevOrder[a.prioridad_sugerida] || 0;
+        const sevB = sevOrder[b.prioridad_sugerida] || 0;
+        if (sevB !== sevA) return sevB - sevA;
+        return parseIncidentEpoch(b) - parseIncidentEpoch(a);
+      } else if (state.sortOrder === 'discrepancy-desc') {
+        const deltaA = a.discrepancia_delta || 0;
+        const deltaB = b.discrepancia_delta || 0;
+        if (deltaB !== deltaA) return deltaB - deltaA;
+        return parseIncidentEpoch(b) - parseIncidentEpoch(a);
+      } else {
+        // Por defecto: 'date-desc' (más recientes primero)
+        const epochA = parseIncidentEpoch(a);
+        const epochB = parseIncidentEpoch(b);
+        return epochB - epochA;
+      }
     });
 
     return filtered;
@@ -3377,6 +3609,57 @@ Generado por Consola de Emergencias IT Orange - Motor de Triaje (Módulo 1)`;
       `Referencia de entrega/Jira: ${jiraId}\n\n` +
       `La resolución técnica del servicio ha finalizado satisfactoriamente según el registro del equipo de desarrollo/despliegues y el ticket asociado está concluido. Al no existir afectación operativa en producción, se solicita a la Mesa de Seguimiento proceder con el cierre administrativo formal del ticket en Remedy para evitar distorsiones en los KPIs de aging y triaje operativo.\n\n` +
       `Dictamen emitido por la Consola de Triaje y Gestión de Emergencias IT de Orange.`;
+  }
+
+  function buildWorklogClaimText(inc) {
+    const guia = inc.guia_operador || inc.evaluacion?.guia_operador || {};
+    if (guia.plantilla_reclamacion_wl) return guia.plantilla_reclamacion_wl;
+
+    const incId = inc.id || 'INC000000000000';
+    const evalData = inc.evaluacion || {};
+    const wlStatus = inc.worklog_status || evalData.worklog_status || {};
+    const horasWl = wlStatus.horas_sin_worklog != null ? `${wlStatus.horas_sin_worklog}h` : 'inactividad prolongada';
+    const grupo = inc.grupo_asignado || wlStatus.ultimo_grupo || 'Grupo Resolutor Asignado';
+    const prio = inc.prioridad_sugerida || inc.prioridad_nominal || 'P2';
+    const titulo = inc.titulo || 'Incidencia de Servicio';
+
+    return `RECLAMACIÓN OPERATIVA DE WORK LOG (MESA IM-CSO / CONTROL OPERATIVO)\n` +
+      `----------------------------------------------------------------------\n` +
+      `Incidencia: ${incId} (Severidad ITIL / Prioridad: ${prio})\n` +
+      `Título: ${titulo}\n` +
+      `Grupo Asignado: ${grupo}\n` +
+      `Estado Remedy: ${inc.estatus || 'En Gestión'}\n\n` +
+      `Se constata ausencia de actualización técnica en la bitácora (Work Log) desde hace ${horasWl} (último registro: ${wlStatus.fecha_ultimo_worklog || 'sin constancia reciente'}).\n\n` +
+      `Conforme al protocolo operativo de Orange Tech Operations, se requiere que el grupo resolutor registre de inmediato:\n` +
+      `1. Diagnóstico técnico actualizado y acciones realizadas.\n` +
+      `2. Siguiente hito planificado o bloqueo detectado.\n` +
+      `3. Estimación actualizada de tiempo de recuperación (ETR).\n\n` +
+      `Por favor, actualicen el ticket en BMC Remedy a la mayor brevedad.`;
+  }
+
+  function renderWorklogBadge(wlStatus) {
+    if (!wlStatus) {
+      return `<span class="triage-worklog-badge is-wl-ok" title="Sin datos de inactividad de work log">📝 WL: n/d</span>`;
+    }
+    if (wlStatus.exento_inactividad) {
+      const reason = wlStatus.motivo_exencion || 'Planificado / Zombi';
+      return `<span class="triage-worklog-badge is-wl-exempt" title="Exento de control de inactividad de work log: ${escapeHtml(reason)}">📝 WL: Exento</span>`;
+    }
+
+    const nivel = wlStatus.nivel_inactividad || 'WL_OK';
+    const h = wlStatus.horas_sin_worklog != null ? wlStatus.horas_sin_worklog : 0;
+    const lastDate = wlStatus.fecha_ultimo_worklog ? `Última nota: ${escapeHtml(wlStatus.fecha_ultimo_worklog)}` : '';
+    const author = wlStatus.ultimo_autor ? ` por ${escapeHtml(wlStatus.ultimo_autor)}` : '';
+
+    if (nivel === 'WL_BLOQUEO_24H') {
+      return `<span class="triage-worklog-badge is-wl-critical" title="BLOQUEO CRÍTICO: ${h}h sin actualizar Work Log. ${lastDate}${author}">🚨 WL: +${h}h sin notas</span>`;
+    } else if (nivel === 'WL_ESTANCAMIENTO_12H') {
+      return `<span class="triage-worklog-badge is-wl-stale-12h" title="ESTANCAMIENTO: ${h}h sin actualizar Work Log. ${lastDate}${author}">⚠️ WL: +${h}h sin notas</span>`;
+    } else if (nivel === 'WL_ALERTA_6H') {
+      return `<span class="triage-worklog-badge is-wl-warning-6h" title="ALERTA: ${h}h sin actualizar Work Log. ${lastDate}${author}">⏱️ WL: +${h}h sin notas</span>`;
+    } else {
+      return `<span class="triage-worklog-badge is-wl-ok" title="Work Log al día (${h}h sin notas). ${lastDate}${author}">✅ WL: al día</span>`;
+    }
   }
 
 function renderFeed() {
@@ -3412,11 +3695,11 @@ function renderFeed() {
         <table class="triage-table" aria-label="Tabla de Triaje de Incidencias">
           <thead>
             <tr>
-              <th style="min-width: 190px;">Incidencia / Apertura</th>
-              <th style="min-width: 260px;">Título / Resumen IA / Mensajes</th>
-              <th style="min-width: 180px;">Proceso Crítico y Sistemas</th>
-              <th style="min-width: 195px; text-align: center;" title="Comparativa de Severidad (Remedy Inicial ➔ ITIL Evaluada) y Nivel de Urgencia Operativa">Evaluación y Urgencia</th>
-              <th style="width: 180px; text-align: right;">Acciones</th>
+              <th style="min-width: 180px;">Incidencia / Apertura</th>
+              <th style="min-width: 240px;">Título / Resumen IA / Mensajes</th>
+              <th style="min-width: 170px;">Proceso Crítico y Sistemas</th>
+              <th style="min-width: 180px; text-align: center;" title="Comparativa de Severidad (Remedy Inicial ➔ ITIL Evaluada) y Nivel de Urgencia Operativa">Evaluación y Urgencia</th>
+              <th style="min-width: 220px; text-align: right;">Acciones</th>
             </tr>
           </thead>
           <tbody>
@@ -3542,6 +3825,13 @@ function renderFeed() {
     const prioridadOp = guia.prioridad_operativa_consola || (isP1 ? 'P1_CRITICA' : 'P2_SEGUIMIENTO');
     const reqLlamadaCso = Boolean(guia.requiere_llamada_cso);
     const reqComunicadoDir = Boolean(guia.requiere_comunicado_direccion);
+    const isEscenario1 = Boolean(
+      guia.escenario_num === 1 ||
+      String(guia.escenario_num) === '1' ||
+      catOperativa === 'EMERGENCIA_VIVA' ||
+      guia.escenario_id === 'escenario-1-emergencia-viva' ||
+      (guia.escenario_titulo && guia.escenario_titulo.includes('Escenario 1'))
+    );
 
     // Pastilla y estilo operativo por categoría
     let opBadgeClass = 'is-seguimiento-estandar';
@@ -3598,6 +3888,8 @@ function renderFeed() {
       } catch (_) {}
     }
 
+    const wlStatus = inc.worklog_status || evaluacion.worklog_status || {};
+
     return `
       <!-- Fila Resumen Principal (Modo Tabular - 6 Columnas) -->
       <tr class="triage-row-main ${rowModifier} ${isOpen ? 'is-expanded' : ''}" data-inc="${escapeHtml(incId)}" role="button" tabindex="0" aria-expanded="${isOpen}">
@@ -3619,6 +3911,9 @@ function renderFeed() {
           <div class="triage-datetime-row">
             <span class="triage-date-label" title="Fecha oficial de apertura en Remedy">📅 ${escapeHtml(fechaStr)}</span>
             <span class="triage-aging-badge ${minsElapsed > 120 ? 'is-aging-warning' : ''}" title="Tiempo transcurrido desde apertura">⏱️ ${formatAgingMinutes(minsElapsed)}</span>
+          </div>
+          <div class="triage-worklog-row">
+            ${renderWorklogBadge(wlStatus)}
           </div>
         </td>
 
@@ -3687,7 +3982,7 @@ function renderFeed() {
                 <span aria-hidden="true">⚡</span> Reclasificar
               </button>
             ` : ''}
-            <button type="button" class="triage-btn-table-toggle btn-toggle-row" data-inc="${escapeHtml(incId)}">
+            <button type="button" class="triage-btn-table-toggle btn-toggle-row ${isOpen ? 'is-open' : ''}" data-inc="${escapeHtml(incId)}" title="${isOpen ? 'Plegar fila de detalle' : 'Desplegar fila de detalle y opciones'}">
               <span>${isOpen ? 'Plegar ▴' : 'Detalle ▾'}</span>
             </button>
           </div>
@@ -3725,26 +4020,134 @@ function renderFeed() {
               </div>
 
               <div class="triage-op-body">
-                <div class="triage-op-action-box">
-                  <span class="triage-op-action-kicker">🎯 INSTRUCCIÓN OPERATIVA Y ACCIÓN RECOMENDADA:</span>
-                  <p class="triage-op-action-desc">${escapeHtml(accionRecomendada || 'Realizar seguimiento estándar según matriz de severidad ITIL.')}</p>
+                <div class="triage-op-action-box ${reqComunicadoDir ? 'has-comms-action' : ''}">
+                  <div class="triage-op-action-main">
+                    <span class="triage-op-action-kicker">🎯 INSTRUCCIÓN OPERATIVA Y ACCIÓN RECOMENDADA:</span>
+                    <p class="triage-op-action-desc">${escapeHtml(accionRecomendada || 'Realizar seguimiento estándar según matriz de severidad ITIL.')}</p>
+                  </div>
+                  ${(reqComunicadoDir || isP1 || hasMensajesEjecutivos) ? (() => {
+                    const dirStatus = getExecutiveStatus(incId);
+                    const currentPhase = determineExecutivePhase(inc);
+                    const phaseLabel = currentPhase === 'apertura' ? 'Apertura' : (currentPhase === 'seguimiento' ? 'Seguimiento' : 'Cierre');
+                    const lastPhaseLabel = dirStatus.lastPhase ? (dirStatus.lastPhase === 'apertura' ? 'Apertura' : (dirStatus.lastPhase === 'seguimiento' ? 'Seguimiento' : 'Cierre')) : '';
+                    let sendBtnText = `Enviar ${phaseLabel} a Teams`;
+                    if (currentPhase === 'cierre') {
+                      sendBtnText = dirStatus.sent ? `Cierre Enviado (${dirStatus.timeAgoText || dirStatus.timeStr}) · Reenviar` : 'Enviar Cierre a Teams';
+                    } else if (dirStatus.sent) {
+                      sendBtnText = `${lastPhaseLabel || 'Apertura'} Enviada · Enviar Seguimiento`;
+                    }
+                    return `
+                      <div class="triage-op-action-buttons">
+                        <button type="button" class="triage-btn-dir-copy btn-copy-direccion-comm" data-inc="${escapeHtml(incId)}" data-phase="${currentPhase}" title="Copiar comunicado ejecutivo oficial (${phaseLabel}) para Dirección IT al portapapeles">
+                          <span aria-hidden="true">📋</span> Copiar Comunicado (${phaseLabel})
+                        </button>
+                        <button type="button" class="triage-btn-direccion-teams btn-send-direccion-teams ${dirStatus.sent ? 'is-sent' : ''}" data-inc="${escapeHtml(incId)}" data-phase="${currentPhase}" title="${dirStatus.sent ? `Comunicado enviado a las ${escapeHtml(dirStatus.timeStr)} en ${escapeHtml(dirStatus.channelName)}. Haz clic para transmitir la fase de ${phaseLabel}.` : `Notificar comunicado oficial (${phaseLabel}) para Dirección IT por Teams`}">
+                          <span aria-hidden="true">${dirStatus.sent ? '✅' : '📢'}</span> ${escapeHtml(sendBtnText)}
+                        </button>
+                        ${hasMensajesEjecutivos ? `
+                          <button type="button" class="triage-btn-dir-view btn-open-exec-comm" data-inc="${escapeHtml(incId)}" data-phase="${currentPhase}" title="Abrir y verificar comunicado ejecutivo oficial en el editor (Fase ${phaseLabel})">
+                            <span aria-hidden="true">✏️</span> Ver
+                          </button>
+                        ` : ''}
+                      </div>
+                    `;
+                  })() : ''}
                 </div>
                 <div class="triage-op-scenario-bar">
                   <span class="triage-op-scenario-title">
                     <span aria-hidden="true">📑</span>
-                    <strong>${escapeHtml(guia.escenario_titulo || 'Procedimiento Oficial IM-CSO')}</strong>
+                    <strong>${escapeHtml(guia.escenario_titulo || (isEscenario1 ? 'Escenario 1: Emergencia Viva Crítica (SL1/P1)' : 'Procedimiento Oficial IM-CSO'))}</strong>
                   </span>
-                  <a href="${escapeHtml(guia.escenario_url || '../../docs/#/02-gestion-emergencias/protocolo-im-cso-escenarios-triaje')}" target="_blank" rel="noopener noreferrer" class="triage-btn-scenario-doc" title="Abrir procedimiento operativo oficial en Docsify">
-                    📖 Ver Protocolo Escenario ${escapeHtml(String(guia.escenario_num || ''))} ↗
-                  </a>
-                </div>
-                ${catOperativa === 'TICKET_ZOMBI_REMEDY' ? `
-                  <div class="triage-op-zombi-action" style="margin-top: 8px;">
-                    <button type="button" class="triage-btn-zombi-copy btn-copy-zombi-close" data-inc="${escapeHtml(incId)}" title="Copiar solicitud formal de cierre administrativo para Remedy">
-                      <span aria-hidden="true">📋</span> Copiar Plantilla de Cierre Administrativo Remedy
-                    </button>
+                  <div class="triage-op-scenario-actions" style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                    <a href="${escapeHtml(guia.escenario_url || (isEscenario1 ? '../../docs/#/02-gestion-emergencias/escenarios/escenario-1-emergencia-viva' : '../../docs/#/02-gestion-emergencias/protocolo-im-cso-escenarios-triaje'))}" target="_blank" rel="noopener noreferrer" class="triage-btn-scenario-doc" title="Abrir procedimiento operativo oficial en Docsify">
+                      📖 Ver Protocolo Escenario ${escapeHtml(String(guia.escenario_num || (isEscenario1 ? '1' : '')))} ↗
+                    </a>
+                    ${isEscenario1 ? (() => {
+                      const wrStatus = getWarRoomStatus(incId);
+                      return `
+                        <button type="button" class="triage-btn-warroom-teams ${wrStatus.summoned ? 'is-summoned' : ''} btn-send-warroom-teams" data-inc="${escapeHtml(incId)}" title="${wrStatus.summoned ? `War Room convocada a las ${escapeHtml(wrStatus.timeStr)} (${escapeHtml(wrStatus.timeAgoText)}) en ${escapeHtml(wrStatus.channelName)}. Haz clic si necesitas reconvocar o enviar un recordatorio.` : 'Convocar War Room y notificar a Teams'}">
+                          <span aria-hidden="true">${wrStatus.summoned ? '✅' : '🚨'}</span> ${wrStatus.summoned ? `War Room Convocada (${escapeHtml(wrStatus.timeAgoText || wrStatus.timeStr)}) · Reconvocar` : 'Notificar Convocatoria War Room a Teams'}
+                        </button>
+                      `;
+                    })() : ''}
                   </div>
-                ` : ''}
+                </div>
+                ${catOperativa === 'TICKET_ZOMBI_REMEDY' ? (() => {
+                  const zStatus = getZombieClosureStatus(incId);
+                  const zBtnText = zStatus.requested
+                    ? `Cierre Solicitado (${zStatus.timeAgoText || zStatus.timeStr}) · Volver a Reclamar`
+                    : 'Enviar Cierre a Teams';
+                  const zBtnTitle = zStatus.requested
+                    ? `Solicitud de cierre enviada a las ${zStatus.timeStr} en ${zStatus.channelName}. Haz clic para reenviar recordatorio.`
+                    : 'Notificar requerimiento formal de cierre administrativo al canal Teams del grupo resolutor';
+
+                  return `
+                    <div class="triage-op-zombi-action" style="margin-top: 8px; display: flex; gap: 8px; flex-wrap: wrap;">
+                      <button type="button" class="triage-btn-zombi-copy btn-copy-zombi-close" data-inc="${escapeHtml(incId)}" title="Copiar solicitud formal de cierre administrativo para Remedy">
+                        <span aria-hidden="true">📋</span> Copiar Plantilla de Cierre Administrativo Remedy
+                      </button>
+                      <button type="button" class="triage-btn-zombi-teams ${zStatus.requested ? 'is-sent' : ''} btn-send-zombi-teams" data-inc="${escapeHtml(incId)}" title="${escapeHtml(zBtnTitle)}">
+                        <span aria-hidden="true">${zStatus.requested ? '✅' : '📢'}</span> ${escapeHtml(zBtnText)}
+                      </button>
+                    </div>
+                  `;
+                })() : ''}
+                ${(() => {
+                  const isP1orP2 = isP1 || inc.prioridad_sugerida === 'P2' || inc.prioridad_nominal === 'P1' || inc.prioridad_nominal === 'P2' || sevNominal.toLowerCase().includes('alta') || sevNominal.toLowerCase().includes('crít');
+                  const wlThreshold = isP1orP2 ? 2 : 4;
+                  const hasWorklogDeficit = Boolean(
+                    guia.alerta_worklog ||
+                    (wlStatus.horas_sin_worklog != null && wlStatus.horas_sin_worklog >= wlThreshold && !wlStatus.exento_inactividad) ||
+                    catOperativa === 'ESTANCAMIENTO_LOCAL'
+                  );
+
+                  if (hasWorklogDeficit) {
+                    const wlClaimStatus = getWorklogClaimStatus(incId);
+                    const wlIsCrit = wlStatus.nivel_inactividad === 'WL_BLOQUEO_24H' || (wlStatus.horas_sin_worklog != null && wlStatus.horas_sin_worklog >= 24);
+                    const wlAlertMsg = guia.alerta_worklog || (
+                      wlStatus.horas_sin_worklog != null
+                        ? `${wlStatus.horas_sin_worklog}h sin notas técnicas en Remedy (umbral: ${wlThreshold}h).`
+                        : 'Inactividad prolongada sin actualización de bitácora en Remedy.'
+                    );
+                    const groupName = inc.grupo_asignado || wlStatus.ultimo_grupo || 'Grupo Resolutor';
+                    const sendBtnText = wlClaimStatus.claimed
+                      ? `Reclamación Enviada (${wlClaimStatus.timeAgoText || wlClaimStatus.timeStr}) · Volver a Reclamar`
+                      : 'Enviar a Teams';
+                    const sendBtnTitle = wlClaimStatus.claimed
+                      ? `Reclamación enviada a las ${wlClaimStatus.timeStr} en ${wlClaimStatus.channelName}. Haz clic para reenviar recordatorio.`
+                      : `Enviar reclamación formal de actualización de bitácora al canal Teams de ${escapeHtml(groupName)}`;
+
+                    return `
+                      <div class="triage-op-worklog-box ${wlIsCrit ? 'is-critical' : 'is-warning'}">
+                        <div class="triage-op-wl-header">
+                          <span class="triage-op-wl-icon" aria-hidden="true">${wlIsCrit ? '🚨' : '⏱️'}</span>
+                          <span><strong>Alerta Work Log:</strong> ${escapeHtml(wlAlertMsg)}</span>
+                        </div>
+                        <div class="triage-op-wl-actions" style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+                          <button type="button" class="triage-btn-wl-claim btn-copy-worklog-claim" data-inc="${escapeHtml(incId)}" title="Copiar plantilla de reclamación formal para Remedy al portapapeles">
+                            <span aria-hidden="true">📋</span> Copiar Reclamación
+                          </button>
+                          <button type="button" class="triage-btn-wl-teams ${wlClaimStatus.claimed ? 'is-sent' : ''} btn-send-worklog-teams" data-inc="${escapeHtml(incId)}" title="${escapeHtml(sendBtnTitle)}">
+                            <span aria-hidden="true">${wlClaimStatus.claimed ? '✅' : '📢'}</span> ${escapeHtml(sendBtnText)}
+                          </button>
+                        </div>
+                      </div>
+                    `;
+                  }
+
+                  if (wlStatus.horas_sin_worklog != null) {
+                    return `
+                      <div class="triage-op-worklog-box is-ok">
+                        <div class="triage-op-wl-header">
+                          <span class="triage-op-wl-icon" aria-hidden="true">✅</span>
+                          <span><strong>Work Log al día:</strong> Última nota hace ${escapeHtml(String(wlStatus.horas_sin_worklog))}h${wlStatus.fecha_ultimo_worklog ? ` (${escapeHtml(wlStatus.fecha_ultimo_worklog)})` : ''}${wlStatus.exento_inactividad ? ` · <em>Exento: ${escapeHtml(wlStatus.motivo_exencion || 'Resolución planificada')}</em>` : ''}</span>
+                        </div>
+                      </div>
+                    `;
+                  }
+
+                  return '';
+                })()}
               </div>
             </div>
 
@@ -3842,16 +4245,18 @@ function renderFeed() {
                     </div>
                   </div>
 
-                  <div class="triage-detail-enrichment-bar" style="margin-top: 10px; padding-top: 8px; border-top: 1px dashed var(--triage-border-light); display: flex; align-items: center; justify-content: space-between; font-size: 11.5px;">
+                  <div class="triage-detail-enrichment-bar" style="margin-top: 10px; padding-top: 8px; border-top: 1px dashed var(--triage-border-light); display: flex; align-items: center; justify-content: space-between; font-size: 11.5px; flex-wrap: wrap; gap: 8px;">
                     <span style="color: var(--triage-text-muted);">
                       <strong>Comunicación Oficial Dirección:</strong>
                       ${hasMensajesEjecutivos ? `<span style="color: var(--triage-green-text); font-weight: 600;">✅ Redactada (incident-reporter)</span>` : `<span style="color: var(--triage-text-subtle); font-style: italic;">⏳ Pendiente de redacción oficial</span>`}
                     </span>
-                    ${hasMensajesEjecutivos ? `
-                      <button type="button" class="btn-open-exec-comm" data-inc="${escapeHtml(incId)}" style="background: none; border: none; color: var(--triage-blue-text); font-weight: 600; cursor: pointer; text-decoration: underline; padding: 0;">
-                        Ver Mensaje Oficial ↗
-                      </button>
-                    ` : ''}
+                    <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                      ${hasMensajesEjecutivos ? `
+                        <button type="button" class="btn-open-exec-comm" data-inc="${escapeHtml(incId)}" style="background: none; border: none; color: var(--triage-blue-text); font-weight: 600; cursor: pointer; text-decoration: underline; padding: 0;">
+                          Ver Mensaje Oficial ↗
+                        </button>
+                      ` : ''}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -3916,7 +4321,9 @@ function renderFeed() {
       chevronBtn.setAttribute('aria-label', nextState ? 'Plegar detalle' : 'Desplegar detalle');
     }
     if (toggleBtn) {
+      toggleBtn.classList.toggle('is-open', nextState);
       toggleBtn.innerHTML = `<span>${nextState ? 'Plegar ▴' : 'Detalle ▾'}</span>`;
+      toggleBtn.setAttribute('title', nextState ? 'Plegar fila de detalle' : 'Desplegar fila de detalle y opciones');
     }
   }
 
@@ -4011,13 +4418,17 @@ function renderFeed() {
       });
     });
 
-        // 5b. Botón Ver Mensaje Ejecutivo Oficial (abre modal de comunicaciones de incident-reporter)
+    // 5b. Botón Ver Mensaje Ejecutivo Oficial (abre modal de comunicaciones de incident-reporter)
     document.querySelectorAll('.btn-open-exec-comm').forEach(btn => {
       btn.addEventListener('click', (e) => {
         e.stopPropagation();
         const incId = btn.getAttribute('data-inc');
+        const phaseAttr = btn.getAttribute('data-phase');
+        const inc = state.incidents.find(i => i.id === incId);
+        const resolvedPhase = phaseAttr || (inc ? determineExecutivePhase(inc) : 'apertura');
+        const modalPhase = resolvedPhase === 'apertura' ? 'inicial' : (resolvedPhase === 'seguimiento' ? 'actualizacion' : 'cierre');
         if (incId) {
-          openExecutiveCommModal(incId, 'inicial');
+          openExecutiveCommModal(incId, modalPhase);
         }
       });
     });
@@ -4032,6 +4443,84 @@ function renderFeed() {
           const text = buildZombieClosureText(inc);
           copyToClipboard(text, `Plantilla de cierre administrativo copiada para ${incId}`);
         }
+      });
+    });
+
+    // 5d. Botón Copiar Plantilla Reclamación Work Log
+    document.querySelectorAll('.btn-copy-worklog-claim').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const incId = btn.getAttribute('data-inc');
+        const inc = state.incidents.find(i => i.id === incId);
+        if (inc) {
+          const text = buildWorklogClaimText(inc);
+          if (text) {
+            copyToClipboard(text, `Plantilla de reclamación de Work Log copiada para ${incId}. Pégala en Remedy.`);
+          }
+        }
+      });
+    });
+
+    // 5e. Botón Enviar Reclamación Work Log a Microsoft Teams (Detalle y Quick Action)
+    document.querySelectorAll('.btn-send-worklog-teams, .btn-quick-wl-teams').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        const incId = btn.getAttribute('data-inc');
+        const inc = state.incidents.find(i => i.id === incId);
+        if (!inc) return;
+
+        await sendWorklogClaimToTeams(inc, btn);
+      });
+    });
+
+    // 5f. Botón Enviar Solicitud Cierre Zombi a Microsoft Teams (Detalle y Quick Action)
+    document.querySelectorAll('.btn-send-zombi-teams, .btn-quick-zombi-teams').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        const incId = btn.getAttribute('data-inc');
+        const inc = state.incidents.find(i => i.id === incId);
+        if (!inc) return;
+
+        await sendZombieClosureToTeams(inc, btn);
+      });
+    });
+
+    // 5g. Botón Notificar Convocatoria War Room a Teams (Detalle y Quick Action)
+    document.querySelectorAll('.btn-send-warroom-teams, .btn-quick-warroom-teams').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        const incId = btn.getAttribute('data-inc');
+        const inc = state.incidents.find(i => i.id === incId);
+        if (!inc) return;
+
+        await sendWarRoomInvitationToTeams(inc, btn);
+      });
+    });
+
+    // 5h. Botón Notificar Comunicación Ejecutiva Dirección IT a Microsoft Teams
+    document.querySelectorAll('.btn-send-direccion-teams').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        const incId = btn.getAttribute('data-inc');
+        const inc = state.incidents.find(i => i.id === incId);
+        if (!inc) return;
+
+        await sendExecutiveNotificationToTeams(inc, btn);
+      });
+    });
+
+    // 5i. Botón Copiar Comunicado Dirección IT al Portapapeles
+    document.querySelectorAll('.btn-copy-direccion-comm').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const incId = btn.getAttribute('data-inc');
+        const inc = state.incidents.find(i => i.id === incId);
+        if (!inc) return;
+        const phaseAttr = btn.getAttribute('data-phase');
+        const phase = phaseAttr || determineExecutivePhase(inc);
+        const text = getExecutiveTextForIncident(inc, phase);
+        const phaseLabel = phase === 'apertura' ? 'Apertura' : (phase === 'seguimiento' ? 'Seguimiento' : 'Cierre');
+        copyToClipboard(text, `📋 Comunicado de Dirección (${phaseLabel}) copiado al portapapeles`);
       });
     });
 
@@ -4113,6 +4602,20 @@ function renderFeed() {
       });
     }
 
+    if (dom.filterWorklogSelect) {
+      dom.filterWorklogSelect.addEventListener('change', (e) => {
+        state.worklogFilter = e.target.value;
+        renderFeed();
+      });
+    }
+
+    if (dom.sortFeedSelect) {
+      dom.sortFeedSelect.addEventListener('change', (e) => {
+        state.sortOrder = e.target.value;
+        renderFeed();
+      });
+    }
+
     // Buscador
     if (dom.searchInput) {
       dom.searchInput.addEventListener('input', (e) => {
@@ -4153,6 +4656,27 @@ function renderFeed() {
           setConnectionStatus('paused', 'Vigilancia Pausada');
           showToast('Vigilancia continua de SLAs pausada', 'info');
         }
+      });
+    }
+
+    // Modal de Confirmación de Seguridad Operativa (Framework Orange)
+    const btnConfirmCancel = dom.btnModalConfirmCancel || document.getElementById('btn-modal-confirm-cancel');
+    const btnConfirmClose = dom.btnModalConfirmClose || document.getElementById('btn-modal-confirm-close');
+    const btnConfirmOk = dom.btnModalConfirmOk || document.getElementById('btn-modal-confirm-ok');
+    const modalConfirm = dom.modalConfirmDialog || document.getElementById('modal-confirm-dialog');
+
+    if (btnConfirmCancel) {
+      btnConfirmCancel.addEventListener('click', () => closeSecurityConfirm(false));
+    }
+    if (btnConfirmClose) {
+      btnConfirmClose.addEventListener('click', () => closeSecurityConfirm(false));
+    }
+    if (btnConfirmOk) {
+      btnConfirmOk.addEventListener('click', () => closeSecurityConfirm(true));
+    }
+    if (modalConfirm) {
+      modalConfirm.addEventListener('click', (e) => {
+        if (e.target === modalConfirm) closeSecurityConfirm(false);
       });
     }
 
@@ -4228,6 +4752,17 @@ function renderFeed() {
       dom.btnHandoverCopy.addEventListener('click', () => {
         const txt = dom.handoverReportText ? dom.handoverReportText.value : '';
         if (txt) copyToClipboard(txt, '📋 Informe de traspaso copiado al portapapeles');
+      });
+    }
+    if (dom.btnHandoverSendTeams) {
+      dom.btnHandoverSendTeams.addEventListener('click', async () => {
+        const txt = dom.handoverReportText ? dom.handoverReportText.value : '';
+        const summary = dom.handoverMetaSummary ? dom.handoverMetaSummary.textContent : '';
+        if (!txt) {
+          showToast('No hay contenido en el informe de relevo para publicar', 'warning');
+          return;
+        }
+        await sendShiftHandoverToTeams(txt, summary, dom.btnHandoverSendTeams);
       });
     }
     if (dom.btnHandoverCopyBottom) {
@@ -4314,6 +4849,12 @@ function renderFeed() {
     window.addEventListener('keydown', (e) => {
       // 1. Escape: cerrar cualquier modal o pop-up abierto
       if (e.key === 'Escape') {
+        const modalConfirm = dom.modalConfirmDialog || document.getElementById('modal-confirm-dialog');
+        if (modalConfirm && modalConfirm.classList.contains('open')) {
+          closeSecurityConfirm(false);
+          return;
+        }
+
         const openPopups = document.querySelectorAll('.orch-clock-info-wrap.is-open');
         if (openPopups.length > 0) {
           closeAllClockPopups();
@@ -4339,6 +4880,10 @@ function renderFeed() {
         }
         if (dom.modalIngestionAudit && dom.modalIngestionAudit.classList.contains('open')) {
           closeIngestionAuditModal();
+        }
+        const modalTeams = dom.modalTeamsConfig || document.getElementById('modal-teams-config');
+        if (modalTeams && modalTeams.classList.contains('open')) {
+          closeTeamsConfigModal();
         }
         return;
       }
@@ -4490,23 +5035,38 @@ function renderFeed() {
     }
 
     if (dom.btnClearLog) {
-      dom.btnClearLog.addEventListener('click', () => {
+      dom.btnClearLog.addEventListener('click', async () => {
         if (!state.activeOrchIncId) return;
-        if (confirm(`¿Deseas reiniciar la bitácora operativa de ${state.activeOrchIncId}? Se restaurarán los hitos iniciales de activación.`)) {
-          const inc = state.incidents.find(i => i.id === state.activeOrchIncId);
-          localStorage.removeItem('emergency_log_' + state.activeOrchIncId);
-          localStorage.removeItem('emergency_activation_' + state.activeOrchIncId);
-          delete state.orchestratorLogs[state.activeOrchIncId];
-          delete state.orchestratorActivations[state.activeOrchIncId];
-          state.orchestratorActivations[state.activeOrchIncId] = Date.now();
-          try {
-            localStorage.setItem('emergency_activation_' + state.activeOrchIncId, String(state.orchestratorActivations[state.activeOrchIncId]));
-          } catch (_) {}
-          getOrInitLog(state.activeOrchIncId, inc);
-          renderTimelineEntries(state.activeOrchIncId);
-          updateOrchestratorClocks();
-          showToast('Bitácora y temporizador de crisis reiniciados con éxito', 'info');
-        }
+        const ok = await showSecurityConfirm({
+          title: 'Reiniciar Bitácora Operativa',
+          badge: 'ACCIÓN DESTRUCTIVA',
+          badgeType: 'danger',
+          icon: '🔄',
+          message: `¿Deseas reiniciar la bitácora operativa y los cronómetros de crisis para <strong>${escapeHtml(state.activeOrchIncId)}</strong>?`,
+          details: [
+            { label: 'Incidencia', value: state.activeOrchIncId },
+            { label: 'Impacto', value: 'Se restaurarán los hitos iniciales y se reiniciará el temporizador' }
+          ],
+          warningText: 'Esta acción borrará las entradas manuales no guardadas de la sesión local actual.',
+          confirmText: 'Reiniciar Bitácora',
+          cancelText: 'Cancelar',
+          confirmType: 'danger'
+        });
+        if (!ok) return;
+
+        const inc = state.incidents.find(i => i.id === state.activeOrchIncId);
+        localStorage.removeItem('emergency_log_' + state.activeOrchIncId);
+        localStorage.removeItem('emergency_activation_' + state.activeOrchIncId);
+        delete state.orchestratorLogs[state.activeOrchIncId];
+        delete state.orchestratorActivations[state.activeOrchIncId];
+        state.orchestratorActivations[state.activeOrchIncId] = Date.now();
+        try {
+          localStorage.setItem('emergency_activation_' + state.activeOrchIncId, String(state.orchestratorActivations[state.activeOrchIncId]));
+        } catch (_) {}
+        getOrInitLog(state.activeOrchIncId, inc);
+        renderTimelineEntries(state.activeOrchIncId);
+        updateOrchestratorClocks();
+        showToast('Bitácora y temporizador de crisis reiniciados con éxito', 'info');
       });
     }
 
@@ -5047,6 +5607,131 @@ Puente Teams: ${teamsUrl}
       });
     }
 
+    // Enviar Notificación Ejecutiva para Dirección a Teams (Plantilla Verificada)
+    if (dom.btnTplSendTeams) {
+      dom.btnTplSendTeams.addEventListener('click', async () => {
+        const text = dom.tplTextCompleto ? dom.tplTextCompleto.value.trim() : '';
+        const textBreve = dom.tplTextBreve ? dom.tplTextBreve.value.trim() : '';
+        if (!text && !textBreve) {
+          showToast('No hay contenido en la plantilla ejecutiva para enviar', 'warning');
+          return;
+        }
+
+        const incId = state.activeCommsIncId || state.activeOrchIncId;
+        const phase = state.activeCommsPhase || 'inicial';
+        let inc = state.incidents.find(i => i.id === incId);
+        if (!inc && state.activeOrchIncId) {
+          inc = state.incidents.find(i => i.id === state.activeOrchIncId);
+        }
+        if (!inc) {
+          showToast('No se encontró la incidencia activa para despachar el comunicado', 'warning');
+          return;
+        }
+
+        const origHtml = dom.btnTplSendTeams.innerHTML;
+        dom.btnTplSendTeams.disabled = true;
+        dom.btnTplSendTeams.classList.add('is-sending');
+        dom.btnTplSendTeams.innerHTML = '<span aria-hidden="true" style="display:inline-block; animation: spin 1s infinite linear;">🔄</span> Despachando a Teams...';
+
+        try {
+          if (!state.teamsConfig) {
+            await loadTeamsConfig();
+          }
+
+          const targetChannel = resolveLocalTeamsChannel('notificacion_direccion', inc.grupo_asignado);
+          const channelName = targetChannel ? targetChannel.nombre : 'Notificaciones Dirección';
+
+          let sendSuccess = false;
+          let errorDetail = '';
+
+          try {
+            const backendRes = await fetch('/api/teams/send', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                action: 'notificacion_direccion',
+                incident_id: inc.id,
+                incident: inc,
+                phase: phase,
+                executive_text: text || textBreve
+              })
+            });
+
+            if (backendRes.ok) {
+              const resData = await backendRes.json();
+              if (resData.success) {
+                sendSuccess = true;
+              } else {
+                errorDetail = resData.error || 'Respuesta no exitosa del servidor';
+              }
+            } else {
+              errorDetail = `HTTP ${backendRes.status}`;
+            }
+          } catch (backendErr) {
+            console.warn('Backend /api/teams/send no disponible, probando envío directo desde navegador:', backendErr);
+            if (targetChannel && targetChannel.webhook_url) {
+              try {
+                const cardPayload = buildClientAdaptiveCard(inc, state.teamsConfig?.remedy_base_url, 'notificacion_direccion', {
+                  executiveText: text || textBreve
+                });
+                const directRes = await fetch(targetChannel.webhook_url, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify(cardPayload)
+                });
+                if (directRes.ok || directRes.status === 202 || directRes.status === 200) {
+                  sendSuccess = true;
+                } else {
+                  errorDetail = `Webhook Teams HTTP ${directRes.status}`;
+                }
+              } catch (directErr) {
+                errorDetail = `Fallo de red al conectar con webhook de Teams: ${directErr.message}`;
+              }
+            } else {
+              errorDetail = 'Canal de Dirección no tiene webhook configurado';
+            }
+          }
+
+          if (sendSuccess) {
+            dom.btnTplSendTeams.classList.remove('is-sending');
+            dom.btnTplSendTeams.classList.add('is-success');
+            dom.btnTplSendTeams.innerHTML = `<span aria-hidden="true">✅</span> ¡Enviado a ${escapeHtml(channelName)}!`;
+
+            const phaseLabel = phase === 'inicial'
+              ? 'Inicial (<20 min)'
+              : (phase === 'actualizacion' ? 'Actualización (Seguimiento)' : 'Cierre / Resolución');
+
+            addLogEntry(
+              inc.id,
+              'NOTIFICACION',
+              `📢 Difusión Notificación Oficial Teams (${phaseLabel})`,
+              `Comunicado ejecutivo despachado exitosamente al canal Teams "${channelName}".\nContenido transmitido:\n"${text || textBreve}"`,
+              'role-notificacion'
+            );
+
+            const escState = state.orchestratorEscalations[inc.id] || {};
+            escState.commDone = true;
+            state.orchestratorEscalations[inc.id] = escState;
+            try {
+              localStorage.setItem('emergency_esc_' + inc.id, JSON.stringify(escState));
+            } catch (_) {}
+
+            updateOrchestratorClocks();
+            showToast(`📢 Notificación para Dirección entregada con éxito a Teams: ${channelName}`, 'success');
+          } else {
+            throw new Error(errorDetail || 'Error desconocido al despachar a Teams');
+          }
+        } catch (err) {
+          console.error('Error al enviar comunicado a Teams:', err);
+          showToast(`❌ Error al notificar Teams: ${err.message}`, 'error');
+          dom.btnTplSendTeams.classList.remove('is-sending');
+          dom.btnTplSendTeams.classList.remove('is-success');
+          dom.btnTplSendTeams.disabled = false;
+          dom.btnTplSendTeams.innerHTML = origHtml;
+        }
+      });
+    }
+
     // Transferir plantilla generada al Gateway de la Web de Explotación
     if (dom.btnTplLoadGateway) {
       dom.btnTplLoadGateway.addEventListener('click', () => {
@@ -5078,6 +5763,89 @@ Puente Teams: ${teamsUrl}
     // Despachar notificación formal en la Web de Explotación
     if (dom.btnGwDispatch) {
       dom.btnGwDispatch.addEventListener('click', dispatchGatewayMessage);
+    }
+
+    // Despachar comunicado ejecutivo directamente al canal Teams de Dirección IT
+    if (dom.btnGwSendTeams) {
+      dom.btnGwSendTeams.addEventListener('click', async () => {
+        const incId = state.activeCommsIncId;
+        const inc = state.incidents.find(i => i.id === incId);
+        if (!inc) {
+          showToast('Seleccione una incidencia en el Centro de Comunicaciones antes de enviar a Teams', 'warning');
+          return;
+        }
+
+        const execBody = dom.gwBody ? dom.gwBody.value.trim() : '';
+        const origText = dom.btnGwSendTeams.innerHTML;
+        dom.btnGwSendTeams.disabled = true;
+        dom.btnGwSendTeams.innerHTML = `<span>⏳ Enviando a Teams...</span>`;
+
+        try {
+          if (!state.teamsConfig) await loadTeamsConfig();
+          const targetChannel = resolveLocalTeamsChannel('notificacion_direccion', inc.grupo_asignado);
+          const channelName = targetChannel ? targetChannel.nombre : 'Notificaciones Dirección IT';
+
+          let sendSuccess = false;
+          let errorDetail = '';
+
+          try {
+            const res = await fetch('/api/teams/send', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                action: 'notificacion_direccion',
+                incident_id: inc.id,
+                incident: inc,
+                executive_text: execBody
+              })
+            });
+
+            if (res.ok) {
+              const data = await res.json();
+              if (data.success) {
+                sendSuccess = true;
+              } else {
+                errorDetail = data.error || 'Respuesta no exitosa del servidor';
+              }
+            } else {
+              errorDetail = `HTTP ${res.status}`;
+            }
+          } catch (backendErr) {
+            console.warn('Backend /api/teams/send no disponible, probando envío directo desde navegador:', backendErr);
+            if (targetChannel && targetChannel.webhook_url) {
+              try {
+                const cardPayload = buildClientAdaptiveCard(inc, state.teamsConfig?.remedy_base_url, 'notificacion_direccion', { executiveText: execBody });
+                const directRes = await fetch(targetChannel.webhook_url, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify(cardPayload)
+                });
+                if (directRes.ok || directRes.status === 200 || directRes.status === 202) {
+                  sendSuccess = true;
+                } else {
+                  errorDetail = `Webhook Teams HTTP ${directRes.status}`;
+                }
+              } catch (directErr) {
+                errorDetail = `Fallo de red: ${directErr.message}`;
+              }
+            } else {
+              errorDetail = 'Canal Dirección IT no tiene webhook configurado';
+            }
+          }
+
+          if (sendSuccess) {
+            showToast(`📢 Comunicado ejecutivo despachado con éxito a Teams: ${channelName}`, 'success');
+            addLogEntry(incId, '📢 Comunicado ejecutivo para Dirección despachado a Teams: ' + channelName, 'role-notificacion');
+          } else {
+            showToast(`⚠️ Error al enviar a Teams: ${errorDetail}`, 'warning');
+          }
+        } catch (err) {
+          showToast(`❌ Error al notificar Teams: ${err.message}`, 'error');
+        } finally {
+          dom.btnGwSendTeams.disabled = false;
+          dom.btnGwSendTeams.innerHTML = origText;
+        }
+      });
     }
 
     // Conmutación de marca en directorio de contactos
@@ -5632,8 +6400,23 @@ Puente Teams: ${teamsUrl}
       dom.btnAuditRefresh.addEventListener('click', () => loadIngestionAuditData(true));
     }
     if (dom.btnAuditForceAll) {
-      dom.btnAuditForceAll.addEventListener('click', () => {
-        if (confirm('¿Deseas forzar el refresco de Resumen IA en Epsilon para todas las incidencias activas ignorando la caché previa?')) {
+      dom.btnAuditForceAll.addEventListener('click', async () => {
+        const ok = await showSecurityConfirm({
+          title: 'Regeneración Masiva de Resumen IA',
+          badge: 'PROCESO PESADO',
+          badgeType: 'warning',
+          icon: '⚡',
+          message: '¿Deseas forzar el refresco de Resumen IA en Epsilon para todas las incidencias activas ignorando la caché previa?',
+          details: [
+            { label: 'Alcance', value: 'Todas las incidencias activas en consola' },
+            { label: 'Operación', value: 'Ignorar caché y regenerar síntesis IA en segundo plano' }
+          ],
+          warningText: 'Este proceso consume llamadas de inferencia y puede tardar unos segundos en completarse.',
+          confirmText: '⚡ Forzar Regeneración Masiva',
+          cancelText: 'Cancelar',
+          confirmType: 'primary'
+        });
+        if (ok) {
           triggerEpsilonRetry({ all: true, force: true });
         }
       });
@@ -5698,11 +6481,2195 @@ Puente Teams: ${teamsUrl}
     }
   }
 
+  // ============================================================
+  // MÓDULO INTEGRACIÓN MICROSOFT TEAMS & ENRUTAMIENTO CONFIGURABLE
+  // ============================================================
+
+  const DEFAULT_TEAMS_CONFIG = {
+    _version: '1.0',
+    descripcion: 'Configuración de canales y enrutamiento a Microsoft Teams',
+    remedy_base_url: 'https://epsilon-itsm.si.orange.es/arsys/forms/ars_front_f5.si.orange.es/SHR:LandingConsole/Default+Administrator+View/?cacheid=e870b03e',
+    canales: {
+      masivas_it: {
+        id: 'masivas_it',
+        nombre: 'Masivas IT',
+        descripcion: 'Chat/Canal oficial de Masivas IT para seguimiento operativo y alertas',
+        tipo: 'power_automate_workflow',
+        webhook_url: 'https://defaultc10a36d829814b7b9b892ef5936549.3a.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/05/workflows/251b155948b445fb872eeb5ed34d1fa9/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=SsB01Uv2lgQf4-cucTfHGW_ciVlZD9f09M7VNM2_4gY',
+        activo: true
+      },
+      warroom_sl1: {
+        id: 'warroom_sl1',
+        nombre: 'War Room ITIL SL1/P1',
+        descripcion: 'Canal de crisis y coordinación de emergencias de criticidad máxima (SL1)',
+        tipo: 'power_automate_workflow',
+        webhook_url: '',
+        activo: false
+      },
+      notificaciones_direccion: {
+        id: 'notificaciones_direccion',
+        nombre: 'Notificaciones Dirección IT',
+        descripcion: 'Canal de avisos ejecutivos a Dirección de Operaciones',
+        tipo: 'power_automate_workflow',
+        webhook_url: '',
+        activo: false
+      }
+    },
+    rutas_acciones: {
+      reclamacion_worklog: {
+        descripcion: 'Reclamación formal de apunte técnico en Work Log de BMC Remedy',
+        canal_predeterminado: 'masivas_it',
+        mapeo_por_grupo: {
+          'DES_DJINGO': 'masivas_it',
+          'RED FIBRA': 'masivas_it'
+        }
+      },
+      notificacion_direccion: {
+        descripcion: 'Comunicaciones ejecutivas de incidentes para Dirección',
+        canal_predeterminado: 'masivas_it',
+        mapeo_por_grupo: {}
+      },
+      convocatoria_warroom: {
+        descripcion: 'Apertura y convocatoria de War Room para incidencias SL1 / P1',
+        canal_predeterminado: 'masivas_it',
+        mapeo_por_grupo: {}
+      },
+      cierre_zombi: {
+        descripcion: 'Solicitud formal de cierre administrativo para tickets zombi',
+        canal_predeterminado: 'masivas_it',
+        mapeo_por_grupo: {}
+      },
+      traspaso_guardia: {
+        descripcion: 'Publicación del informe oficial de relevo y traspaso de guardia',
+        canal_predeterminado: 'masivas_it',
+        mapeo_por_grupo: {}
+      }
+    }
+  };
+
+  async function loadTeamsConfig(forceRefresh = false) {
+    const timestamp = Date.now();
+    const candidateUrls = [
+      '/api/teams/channels?t=' + timestamp,
+      '../../data/teams_channels_config.json?t=' + timestamp,
+      '/data/teams_channels_config.json?t=' + timestamp
+    ];
+
+    for (const url of candidateUrls) {
+      try {
+        const res = await fetch(url);
+        if (res.ok) {
+          const data = await res.json();
+          const cfg = data.config || data;
+          if (cfg && cfg.canales && cfg.rutas_acciones) {
+            state.teamsConfig = cfg;
+            try {
+              localStorage.setItem('orange_teams_channels_config', JSON.stringify(cfg));
+            } catch (_) {}
+            return cfg;
+          }
+        }
+      } catch (_) {}
+    }
+
+    // Fallback a localStorage
+    try {
+      const cached = localStorage.getItem('orange_teams_channels_config');
+      if (cached) {
+        state.teamsConfig = JSON.parse(cached);
+        return state.teamsConfig;
+      }
+    } catch (_) {}
+
+    state.teamsConfig = JSON.parse(JSON.stringify(DEFAULT_TEAMS_CONFIG));
+    return state.teamsConfig;
+  }
+
+  async function saveTeamsConfigToServer() {
+    if (!state.teamsConfig) return false;
+    try {
+      localStorage.setItem('orange_teams_channels_config', JSON.stringify(state.teamsConfig));
+    } catch (_) {}
+
+    try {
+      const res = await fetch('/api/teams/channels', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ config: state.teamsConfig })
+      });
+      return res.ok;
+    } catch (err) {
+      console.warn('No se pudo persistir en backend /api/teams/channels, guardado localmente:', err);
+      return false;
+    }
+  }
+
+  async function loadTeamsAudit() {
+    try {
+      const res = await fetch('/api/teams/audit?t=' + Date.now());
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success && Array.isArray(data.audit)) {
+          state.teamsAudit = data.audit;
+          return data.audit;
+        }
+      }
+    } catch (_) {}
+    return null;
+  }
+
+  function formatAuditTime(isoStr) {
+    if (!isoStr) return '';
+    try {
+      const d = new Date(isoStr);
+      return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    } catch (_) {
+      return '';
+    }
+  }
+
+  function formatAuditTimeAgo(isoStr) {
+    if (!isoStr) return '';
+    try {
+      const d = new Date(isoStr);
+      const diffMin = Math.round((Date.now() - d.getTime()) / 60000);
+      if (isNaN(diffMin)) return '';
+      if (diffMin < 1) return 'hace un momento';
+      if (diffMin === 1) return 'hace 1 min';
+      if (diffMin < 60) return `hace ${diffMin} min`;
+      const hours = Math.floor(diffMin / 60);
+      return `hace ${hours}h`;
+    } catch (_) {
+      return '';
+    }
+  }
+
+  function determineExecutivePhase(inc) {
+    if (!inc) return 'apertura';
+    const incId = inc.id || inc.inc_id || '';
+    const estatus = (inc.estatus || inc.estado || '').toLowerCase();
+
+    // 1. Si la incidencia se encuentra ya en estado Resuelto, Cerrado o Solucionado
+    if (estatus.includes('resuel') || estatus.includes('cerra') || estatus.includes('solucion') || estatus.includes('cancel')) {
+      return 'cierre';
+    }
+
+    // 2. Si ya se despachó comunicación previa en esta sesión o auditoría
+    const dirStatus = getExecutiveStatus(incId);
+    if (dirStatus.sent) {
+      if (dirStatus.lastPhase === 'cierre') return 'cierre';
+      return 'seguimiento';
+    }
+
+    // 3. Primer comunicado de un ticket activo
+    return 'apertura';
+  }
+
+  function getExecutiveStatus(incId) {
+    if (!incId) return { sent: false };
+
+    // 1. Revisar auditoría del backend si está cargada
+    if (Array.isArray(state.teamsAudit)) {
+      const entry = [...state.teamsAudit].reverse().find(
+        e => (e.incident_id === incId || e.id === incId) && e.action === 'notificacion_direccion' && e.success
+      );
+      if (entry) {
+        return {
+          sent: true,
+          timestamp: entry.timestamp,
+          channelName: entry.channel_name || 'Notificaciones Dirección',
+          timeStr: formatAuditTime(entry.timestamp),
+          timeAgoText: formatAuditTimeAgo(entry.timestamp),
+          lastPhase: entry.phase || 'apertura'
+        };
+      }
+    }
+
+    // 2. Revisar almacenamiento local del navegador
+    try {
+      const raw = localStorage.getItem('triage_official_msg_sent_' + incId);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        return {
+          sent: true,
+          timestamp: parsed.timestamp,
+          channelName: parsed.channelName || 'Notificaciones Dirección',
+          timeStr: formatAuditTime(parsed.timestamp),
+          timeAgoText: formatAuditTimeAgo(parsed.timestamp),
+          lastPhase: parsed.phase || 'apertura'
+        };
+      }
+    } catch (_) {}
+
+    return { sent: false };
+  }
+
+  function getExecutiveTextForIncident(inc, requestedPhase = null) {
+    if (!inc) return '';
+    const incId = inc.id || inc.inc_id || '';
+    const phase = requestedPhase || determineExecutivePhase(inc);
+
+    // 1. Mensaje oficial guardado o editado por el operador en localStorage para la fase solicitada
+    try {
+      const raw = localStorage.getItem(`triage_official_msg_${incId}_${phase}`);
+      if (raw) {
+        try {
+          const parsed = JSON.parse(raw);
+          if (parsed && parsed.completo && parsed.completo.trim()) {
+            return parsed.completo.trim();
+          }
+        } catch (_) {
+          if (raw.trim()) return raw.trim();
+        }
+      }
+      // También comprobar borrador activo no consolidado
+      const draft = localStorage.getItem(`triage_draft_tpl_comp_${incId}_${phase}`);
+      if (draft && draft.trim()) return draft.trim();
+
+      const saved90 = localStorage.getItem('triage_official_msg_' + incId + '_90');
+      if (saved90 && saved90.trim()) return saved90.trim();
+    } catch (_) {}
+
+    // 2. Mensajes oficiales del pipeline de incident-reporter para esta fase
+    if (inc.mensajes_ejecutivos) {
+      const me = inc.mensajes_ejecutivos;
+      const obj = me[phase];
+      if (obj && typeof obj === 'object') {
+        if (obj.completo && typeof obj.completo === 'string' && obj.completo.trim() && obj.estado !== 'pendiente') {
+          return obj.completo.trim();
+        }
+      }
+      // Si la fase requerida no estuviera disponible, intentar con las otras fases disponibles como fallback
+      for (const altPhase of ['apertura', 'seguimiento', 'cierre']) {
+        if (altPhase === phase) continue;
+        const altObj = me[altPhase];
+        if (altObj && typeof altObj === 'object' && altObj.completo && altObj.completo.trim() && altObj.estado !== 'pendiente') {
+          return altObj.completo.trim();
+        }
+      }
+      // Claves alternativas
+      if (me.version_completa_90 && typeof me.version_completa_90 === 'string' && me.version_completa_90.trim()) {
+        return me.version_completa_90.trim();
+      }
+      if (me.mensaje_90 && typeof me.mensaje_90 === 'string' && me.mensaje_90.trim()) {
+        return me.mensaje_90.trim();
+      }
+    }
+
+    if (inc.mensaje_ejecutivo && typeof inc.mensaje_ejecutivo === 'string' && inc.mensaje_ejecutivo.trim()) {
+      return inc.mensaje_ejecutivo.trim();
+    }
+
+    // 3. Plantilla dinámica oficial para Dirección IT según fase (≤ 90 palabras monopárrafo según protocolo ITIL Orange)
+    try {
+      const templatePhase = phase === 'apertura' ? 'inicial' : (phase === 'seguimiento' ? 'actualizacion' : 'cierre');
+      const tpl = generateDynamicTemplates(inc, templatePhase);
+      if (tpl && tpl.completo && tpl.completo.trim()) {
+        return tpl.completo.trim();
+      }
+    } catch (_) {}
+
+    // 4. Fallback estructurado de seguridad
+    const resIa = inc.resumen_ia || {};
+    const impacto = resIa.impacto || inc.evaluacion?.impacto_justificacion || inc.titulo || 'Impacto bajo evaluación';
+    const causa = resIa.solucion || resIa.problema || 'Investigación técnica en curso con equipos resolutores';
+    const accion = inc.guia_operativa?.accion_recomendada || resIa.siguiente_accion || 'Monitorización activa y seguimiento estrecho';
+
+    return `[COMUNICADO OFICIAL DIRECCIÓN IT - ${incId}]\nSeveridad: ${inc.prioridad_sugerida || inc.prioridad || 'P1'}\nServicio / Proceso: ${inc.proceso_negocio || inc.servicio || inc.titulo || 'N/A'}\nImpacto: ${impacto}\nEstado y Causa: ${causa}\nSiguiente Acción: ${accion}`;
+  }
+
+  function getWarRoomStatus(incId) {
+    if (!incId) return { summoned: false };
+
+    // 1. Revisar auditoría del backend si está cargada
+    if (Array.isArray(state.teamsAudit)) {
+      const entry = [...state.teamsAudit].reverse().find(
+        e => (e.incident_id === incId || e.id === incId) && e.action === 'convocatoria_warroom' && e.success
+      );
+      if (entry) {
+        return {
+          summoned: true,
+          timestamp: entry.timestamp,
+          channelName: entry.channel_name || 'War Room SL1/P1',
+          timeStr: formatAuditTime(entry.timestamp),
+          timeAgoText: formatAuditTimeAgo(entry.timestamp)
+        };
+      }
+    }
+
+    // 2. Revisar almacenamiento local del navegador
+    try {
+      const raw = localStorage.getItem('triage_warroom_summoned_' + incId);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        return {
+          summoned: true,
+          timestamp: parsed.timestamp,
+          channelName: parsed.channelName || 'War Room SL1/P1',
+          timeStr: formatAuditTime(parsed.timestamp),
+          timeAgoText: formatAuditTimeAgo(parsed.timestamp)
+        };
+      }
+    } catch (_) {}
+
+    return { summoned: false };
+  }
+
+  function getWorklogClaimStatus(incId) {
+    if (!incId) return { claimed: false };
+
+    // 1. Revisar auditoría del backend si está cargada
+    if (Array.isArray(state.teamsAudit)) {
+      const entry = [...state.teamsAudit].reverse().find(
+        e => (e.incident_id === incId || e.id === incId) && e.action === 'reclamacion_worklog' && e.success
+      );
+      if (entry) {
+        return {
+          claimed: true,
+          timestamp: entry.timestamp,
+          channelName: entry.channel_name || 'Masivas IT',
+          group: entry.group || '',
+          timeStr: formatAuditTime(entry.timestamp),
+          timeAgoText: formatAuditTimeAgo(entry.timestamp)
+        };
+      }
+    }
+
+    // 2. Revisar almacenamiento local del navegador
+    try {
+      const raw = localStorage.getItem('triage_wl_claimed_' + incId);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        return {
+          claimed: true,
+          timestamp: parsed.timestamp,
+          channelName: parsed.channelName || 'Masivas IT',
+          group: parsed.group || '',
+          timeStr: formatAuditTime(parsed.timestamp),
+          timeAgoText: formatAuditTimeAgo(parsed.timestamp)
+        };
+      }
+    } catch (_) {}
+
+    return { claimed: false };
+  }
+
+  function getZombieClosureStatus(incId) {
+    if (!incId) return { requested: false };
+
+    // 1. Revisar auditoría del backend si está cargada
+    if (Array.isArray(state.teamsAudit)) {
+      const entry = [...state.teamsAudit].reverse().find(
+        e => (e.incident_id === incId || e.id === incId) && e.action === 'cierre_zombi' && e.success
+      );
+      if (entry) {
+        return {
+          requested: true,
+          timestamp: entry.timestamp,
+          channelName: entry.channel_name || 'Cierre Zombi',
+          group: entry.group || '',
+          timeStr: formatAuditTime(entry.timestamp),
+          timeAgoText: formatAuditTimeAgo(entry.timestamp)
+        };
+      }
+    }
+
+    // 2. Revisar almacenamiento local del navegador
+    try {
+      const raw = localStorage.getItem('triage_zombi_requested_' + incId);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        return {
+          requested: true,
+          timestamp: parsed.timestamp,
+          channelName: parsed.channelName || 'Cierre Zombi',
+          group: parsed.group || '',
+          timeStr: formatAuditTime(parsed.timestamp),
+          timeAgoText: formatAuditTimeAgo(parsed.timestamp)
+        };
+      }
+    } catch (_) {}
+
+    return { requested: false };
+  }
+
+  function getShiftHandoverStatus() {
+    // 1. Revisar auditoría de Teams en memoria
+    if (Array.isArray(state.teamsAudit)) {
+      const entry = [...state.teamsAudit].reverse().find(
+        e => e.action === 'traspaso_guardia' && e.success
+      );
+      if (entry) {
+        return {
+          published: true,
+          timestamp: entry.timestamp,
+          channelName: entry.channel_name || 'Masivas IT',
+          summary: entry.meta_summary || '',
+          timeStr: formatAuditTime(entry.timestamp),
+          timeAgoText: formatAuditTimeAgo(entry.timestamp)
+        };
+      }
+    }
+
+    // 2. Revisar almacenamiento local del navegador
+    try {
+      const raw = localStorage.getItem('triage_handover_published');
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        return {
+          published: true,
+          timestamp: parsed.timestamp,
+          channelName: parsed.channelName || 'Masivas IT',
+          summary: parsed.summary || '',
+          timeStr: formatAuditTime(parsed.timestamp),
+          timeAgoText: formatAuditTimeAgo(parsed.timestamp)
+        };
+      }
+    } catch (_) {}
+
+    return { published: false };
+  }
+
+  function resolveLocalTeamsChannel(action, group) {
+    const cfg = state.teamsConfig || DEFAULT_TEAMS_CONFIG;
+    const channels = cfg.canales || {};
+    const route = cfg.rutas_acciones?.[action];
+    if (route) {
+      if (group && route.mapeo_por_grupo) {
+        const normGroup = String(group).trim().toLowerCase();
+        for (const [gKey, cId] of Object.entries(route.mapeo_por_grupo)) {
+          if (gKey.toLowerCase() === normGroup || normGroup.includes(gKey.toLowerCase())) {
+            if (channels[cId] && channels[cId].activo && channels[cId].webhook_url) {
+              return channels[cId];
+            }
+          }
+        }
+      }
+      const defId = route.canal_predeterminado;
+      if (defId && channels[defId] && channels[defId].activo && channels[defId].webhook_url) {
+        return channels[defId];
+      }
+    }
+    for (const c of Object.values(channels)) {
+      if (c.activo && c.webhook_url) return c;
+    }
+    return null;
+  }
+
+  function buildClientAdaptiveCard(incident, remedyBaseUrl, action = 'reclamacion_worklog', extraOpts = {}) {
+    const incId = incident.id || 'INC000000000000';
+    const prio = incident.prioridad_sugerida || incident.prioridad_nominal || 'P2';
+    const prioNom = incident.prioridad_original || incident.prioridad_nominal || prio;
+    const wlStatus = incident.worklog_status || {};
+    const guia = incident.guia_operador || {};
+    const resumenIa = incident.resumen_ia || {};
+    const evaluacion = incident.evaluacion || {};
+    const horasWl = wlStatus.horas_sin_worklog || 0;
+    const grupo = incident.grupo_asignado || wlStatus.ultimo_grupo || 'Grupo Resolutor';
+    const titulo = incident.titulo || 'Incidencia de Servicio';
+    const proceso = evaluacion.proceso_negocio || evaluacion.proceso || 'Servicios IT Core';
+    const remedyUrl = remedyBaseUrl || 'https://epsilon-itsm.si.orange.es/arsys/forms/ars_front_f5.si.orange.es/SHR:LandingConsole/Default+Administrator+View/?cacheid=e870b03e';
+
+    if (action === 'convocatoria_warroom') {
+      const meetUrl = extraOpts.teamsMeetingUrl || generateTeamsWarRoomUrl(incId);
+      const sintoma = resumenIa.problema || evaluacion.urgencia_justificacion || titulo;
+      const sistemasStr = Array.isArray(incident.sistemas) ? incident.sistemas.join(', ') : (incident.sistemas || 'Core IT');
+      return {
+        type: 'message',
+        attachments: [{
+          contentType: 'application/vnd.microsoft.card.adaptive',
+          contentUrl: null,
+          content: {
+            $schema: 'http://adaptivecards.io/schemas/adaptive-card.json',
+            type: 'AdaptiveCard',
+            version: '1.4',
+            msteams: { width: 'Full' },
+            body: [
+              {
+                type: 'Container',
+                style: 'attention',
+                bleed: true,
+                items: [
+                  { type: 'TextBlock', text: '🔥 CONVOCATORIA WAR ROOM ITIL · CRITICIDAD SL1 / P1', weight: 'Bolder', size: 'Medium', color: 'Attention', wrap: true },
+                  { type: 'TextBlock', text: `**EMERGENCIA EN CURSO** · ${incId} · ${grupo}`, size: 'Small', isSubtle: true, spacing: 'None' }
+                ]
+              },
+              { type: 'TextBlock', text: `**Título:** ${titulo}`, wrap: true, spacing: 'Medium' },
+              {
+                type: 'Container',
+                style: 'warning',
+                items: [{ type: 'TextBlock', text: '🚨 **CONVOCATORIA OBLIGATORIA:** Se requiere la incorporación inmediata a la sesión del grupo resolutor N2/N3, líder técnico y coordinador IM-CSO.', wrap: true, size: 'Small' }]
+              },
+              {
+                type: 'FactSet',
+                spacing: 'Medium',
+                facts: [
+                  { title: 'Incidencia:', value: incId },
+                  { title: 'Severidad ITIL:', value: 'SL1 / P1 (Máxima Criticidad)' },
+                  { title: 'Proceso Afectado:', value: proceso },
+                  { title: 'Sistemas Impactados:', value: String(sistemasStr) },
+                  { title: 'Grupo Asignado:', value: grupo },
+                  { title: 'Coordinación:', value: 'IM-CSO / Puente Operativo' }
+                ]
+              },
+              {
+                type: 'Container',
+                style: 'emphasis',
+                items: [
+                  { type: 'TextBlock', text: '💥 **Afectación y Síntoma Crítico:**', weight: 'Bolder', size: 'Small' },
+                  { type: 'TextBlock', text: sintoma, wrap: true, size: 'Small' }
+                ]
+              }
+            ],
+            actions: [
+              { type: 'Action.OpenUrl', title: '📞 Unirse a Sesión War Room (Teams)', url: meetUrl },
+              { type: 'Action.OpenUrl', title: '🔗 Abrir Incidencia en BMC Remedy', url: remedyUrl }
+            ]
+          }
+        }]
+      };
+    }
+
+    if (action === 'notificacion_direccion') {
+      const currentPhase = extraOpts.phase || 'apertura';
+      const phaseBadge = currentPhase === 'cierre' ? ' · CIERRE' : (currentPhase === 'seguimiento' ? ' · SEGUIMIENTO' : ' · APERTURA');
+      const resumenTxt = extraOpts.executiveText || getExecutiveTextForIncident(incident, currentPhase) || incident.mensaje_ejecutivo || resumenIa.problema || guia.accion_recomendada || titulo;
+      const impactoTxt = resumenIa.impacto || evaluacion.impacto_justificacion || 'Impacto en evaluación técnica.';
+      const planTxt = guia.accion_recomendada || resumenIa.solucion_recomendada || 'Diagnóstico y resolución en curso.';
+      const prioLabel = prio === prioNom ? prio : `${prio} (Nominal: ${prioNom})`;
+
+      return {
+        type: 'message',
+        attachments: [{
+          contentType: 'application/vnd.microsoft.card.adaptive',
+          contentUrl: null,
+          content: {
+            $schema: 'http://adaptivecards.io/schemas/adaptive-card.json',
+            type: 'AdaptiveCard',
+            version: '1.4',
+            msteams: { width: 'Full' },
+            body: [
+              {
+                type: 'Container',
+                style: currentPhase === 'cierre' ? 'good' : 'emphasis',
+                bleed: true,
+                items: [
+                  { type: 'TextBlock', text: `📢 COMUNICACIÓN EJECUTIVA · DIRECCIÓN IT${phaseBadge}`, weight: 'Bolder', size: 'Medium', color: currentPhase === 'cierre' ? 'Good' : 'Accent', wrap: true },
+                  { type: 'TextBlock', text: `**${incId}** · Prioridad ${prio} · ${proceso}`, size: 'Small', isSubtle: true, spacing: 'None' }
+                ]
+              },
+              { type: 'TextBlock', text: `**Título:** ${titulo}`, wrap: true, spacing: 'Medium' },
+              {
+                type: 'FactSet',
+                spacing: 'Medium',
+                facts: [
+                  { title: 'Incidencia:', value: incId },
+                  { title: 'Prioridad:', value: prioLabel },
+                  { title: 'Estado:', value: incident.estatus || 'En Gestión' },
+                  { title: 'Proceso Crítico:', value: proceso },
+                  { title: 'Grupo Asignado:', value: grupo }
+                ]
+              },
+              {
+                type: 'Container',
+                style: 'default',
+                items: [
+                  { type: 'TextBlock', text: '📢 **Comunicado Oficial Dirección IT (≤ 90 palabras):**', weight: 'Bolder', size: 'Small', color: 'Accent' },
+                  { type: 'TextBlock', text: resumenTxt, wrap: true, size: 'Small' }
+                ]
+              },
+              {
+                type: 'Container',
+                style: 'emphasis',
+                items: [
+                  { type: 'TextBlock', text: '🎯 **Afectación y Riesgo Operativo:**', weight: 'Bolder', size: 'Small' },
+                  { type: 'TextBlock', text: impactoTxt, wrap: true, size: 'Small' }
+                ]
+              },
+              {
+                type: 'Container',
+                style: 'default',
+                items: [
+                  { type: 'TextBlock', text: '⚡ **Plan de Acción Inmediato:**', weight: 'Bolder', size: 'Small' },
+                  { type: 'TextBlock', text: planTxt, wrap: true, size: 'Small' }
+                ]
+              }
+            ],
+            actions: [
+              { type: 'Action.OpenUrl', title: '🔗 Abrir Incidencia en BMC Remedy', url: remedyUrl }
+            ]
+          }
+        }]
+      };
+    }
+
+    if (action === 'cierre_zombi') {
+      const detalleZombi = incident.detalle_zombi || 'Ticket sin impacto activo o resuelto sin transición administrativa.';
+      const accion = guia.accion_recomendada || 'Se solicita al grupo resolutor proceder con la resolución o cierre administrativo en BMC Remedy.';
+      return {
+        type: 'message',
+        attachments: [{
+          contentType: 'application/vnd.microsoft.card.adaptive',
+          contentUrl: null,
+          content: {
+            $schema: 'http://adaptivecards.io/schemas/adaptive-card.json',
+            type: 'AdaptiveCard',
+            version: '1.4',
+            msteams: { width: 'Full' },
+            body: [
+              {
+                type: 'Container',
+                style: 'warning',
+                bleed: true,
+                items: [
+                  { type: 'TextBlock', text: '🧟 SOLICITUD DE CIERRE ADMINISTRATIVO · TICKET ZOMBI', weight: 'Bolder', size: 'Medium', color: 'Warning', wrap: true },
+                  { type: 'TextBlock', text: `**${incId}** · ${grupo} · Auditoría de Ciclo de Vida ITIL`, size: 'Small', isSubtle: true, spacing: 'None' }
+                ]
+              },
+              { type: 'TextBlock', text: `**Título:** ${titulo}`, wrap: true, spacing: 'Medium' },
+              {
+                type: 'FactSet',
+                spacing: 'Medium',
+                facts: [
+                  { title: 'Incidencia:', value: incId },
+                  { title: 'Estado Actual:', value: incident.estatus || 'Asignado' },
+                  { title: 'Grupo Asignado:', value: grupo },
+                  { title: 'Diagnóstico:', value: 'Ticket sin impacto activo / Cierre pendiente' }
+                ]
+              },
+              {
+                type: 'Container',
+                style: 'emphasis',
+                items: [
+                  { type: 'TextBlock', text: '📋 **Dictamen de Auditoría de Mesa:**', weight: 'Bolder', size: 'Small' },
+                  { type: 'TextBlock', text: detalleZombi, wrap: true, size: 'Small' }
+                ]
+              },
+              {
+                type: 'Container',
+                style: 'default',
+                items: [
+                  { type: 'TextBlock', text: '📝 **Requerimiento Operativo Formal:**', weight: 'Bolder', size: 'Small' },
+                  { type: 'TextBlock', text: accion, wrap: true, size: 'Small' }
+                ]
+              }
+            ],
+            actions: [
+              { type: 'Action.OpenUrl', title: '🔗 Regularizar en BMC Remedy', url: remedyUrl }
+            ]
+          }
+        }]
+      };
+    }
+
+    if (action === 'traspaso_guardia') {
+      const summary = extraOpts.metaSummary || 'Compilación automática de relevo de guardia ITIL';
+      const cleanText = (extraOpts.reportText || '').trim();
+      const displayTxt = cleanText.length > 3800 ? cleanText.substring(0, 3800) + '\n\n*(Informe truncado para Teams; consultar consola web para versión completa)*' : cleanText;
+      return {
+        type: 'message',
+        attachments: [{
+          contentType: 'application/vnd.microsoft.card.adaptive',
+          contentUrl: null,
+          content: {
+            $schema: 'http://adaptivecards.io/schemas/adaptive-card.json',
+            type: 'AdaptiveCard',
+            version: '1.4',
+            msteams: { width: 'Full' },
+            body: [
+              {
+                type: 'Container',
+                style: 'accent',
+                bleed: true,
+                items: [
+                  { type: 'TextBlock', text: '📋 RELEVO / TRASPASO DE GUARDIA ITIL', weight: 'Bolder', size: 'Medium', color: 'Accent', wrap: true },
+                  { type: 'TextBlock', text: `Orange Tech Operations · ${summary}`, size: 'Small', isSubtle: true, spacing: 'None' }
+                ]
+              },
+              { type: 'TextBlock', text: displayTxt || 'Sin notas adicionales en el informe de relevo.', wrap: true, spacing: 'Medium' }
+            ],
+            actions: [
+              { type: 'Action.OpenUrl', title: '🖥️ Abrir Consola de Triaje IT', url: remedyUrl }
+            ]
+          }
+        }]
+      };
+    }
+
+    // Default: 'reclamacion_worklog'
+    let headerColor = 'Accent';
+    let containerStyle = 'emphasis';
+    let badgeIcon = '⚠️';
+    let nivelLabel = `ALERTA SEGUIMIENTO (>6h sin notas: ${horasWl}h)`;
+    const nivel = wlStatus.nivel_inactividad || 'WL_ALERTA_6H';
+
+    if (nivel === 'WL_BLOQUEO_24H') {
+      headerColor = 'Attention';
+      containerStyle = 'attention';
+      badgeIcon = '🚨';
+      nivelLabel = `BLOQUEO CRÍTICO (>24h sin notas: ${horasWl}h)`;
+    } else if (nivel === 'WL_ESTANCAMIENTO_12H') {
+      headerColor = 'Warning';
+      containerStyle = 'warning';
+      badgeIcon = '⏳';
+      nivelLabel = `ESTANCAMIENTO (>12h sin notas: ${horasWl}h)`;
+    }
+
+    const claimBody = guia.plantilla_reclamacion_wl || (
+      `Se constata que la incidencia ${incId} asignada a ${grupo} no registra notas técnicas desde hace ${horasWl}h. Se requiere actualización inmediata en BMC Remedy.`
+    );
+
+    return {
+      type: 'message',
+      attachments: [{
+        contentType: 'application/vnd.microsoft.card.adaptive',
+        contentUrl: null,
+        content: {
+          $schema: 'http://adaptivecards.io/schemas/adaptive-card.json',
+          type: 'AdaptiveCard',
+          version: '1.4',
+          msteams: { width: 'Full' },
+          body: [
+            {
+              type: 'Container',
+              style: containerStyle,
+              bleed: true,
+              items: [
+                {
+                  type: 'TextBlock',
+                  text: `${badgeIcon} RECLAMACIÓN DE WORK LOG · ORANGE TECH OPERATIONS`,
+                  weight: 'Bolder',
+                  size: 'Medium',
+                  color: headerColor,
+                  wrap: true
+                },
+                {
+                  type: 'TextBlock',
+                  text: `**${incId}** (${prio}) · ${grupo}`,
+                  size: 'Small',
+                  isSubtle: true,
+                  spacing: 'None'
+                }
+              ]
+            },
+            {
+              type: 'TextBlock',
+              text: `**Título:** ${titulo}`,
+              wrap: true,
+              spacing: 'Medium'
+            },
+            {
+              type: 'FactSet',
+              spacing: 'Medium',
+              facts: [
+                { title: 'Incidencia:', value: incId },
+                { title: 'Prioridad ITIL:', value: prio },
+                { title: 'Grupo Asignado:', value: grupo },
+                { title: 'Estado Work Log:', value: nivelLabel },
+                { title: 'Horas sin Notas:', value: `${horasWl}h` }
+              ]
+            },
+            {
+              type: 'Container',
+              style: 'emphasis',
+              items: [
+                {
+                  type: 'TextBlock',
+                  text: '📝 **Requerimiento Operativo Formal:**',
+                  weight: 'Bolder',
+                  size: 'Small'
+                },
+                {
+                  type: 'TextBlock',
+                  text: claimBody,
+                  wrap: true,
+                  size: 'Small'
+                }
+              ]
+            }
+          ],
+          actions: [
+            {
+              type: 'Action.OpenUrl',
+              title: '🔗 Abrir Incidencia en BMC Remedy',
+              url: remedyUrl
+            }
+          ]
+        }
+      }]
+    };
+  }
+
+  async function sendWorklogClaimToTeams(inc, btnElement = null) {
+    const incId = inc.id;
+    const group = inc.grupo_asignado || inc.worklog_status?.ultimo_grupo || '';
+    const origHtml = btnElement ? btnElement.innerHTML : '';
+
+    const wlClaimStatus = getWorklogClaimStatus(incId);
+    if (wlClaimStatus.claimed) {
+      const ok = await showSecurityConfirm({
+        title: 'Reclamación de Work Log en Teams',
+        badge: 'RECLAMACIÓN YA ENVIADA',
+        badgeType: 'warning',
+        icon: '⚠️',
+        message: `Ya se despachó una reclamación previa de Work Log para la incidencia <strong>${escapeHtml(incId)}</strong> ${escapeHtml(wlClaimStatus.timeAgoText || 'previamente')} en Microsoft Teams.`,
+        details: [
+          { label: 'Incidencia', value: incId },
+          { label: 'Grupo Resolutor', value: group || wlClaimStatus.group || 'Sin Grupo Asignado' },
+          { label: 'Canal de Destino', value: wlClaimStatus.channelName || 'Masivas IT' },
+          { label: 'Envío Previo', value: `${wlClaimStatus.timeStr || '--:--'} (${wlClaimStatus.timeAgoText || ''})` }
+        ],
+        warningText: '¿Deseas enviar un <strong>RECORDATORIO / SEGUNDA RECLAMACIÓN</strong> a Microsoft Teams? Esto notificará nuevamente al grupo resolutor para que actualice la bitácora en Remedy.',
+        confirmText: '📢 Reenviar Reclamación a Teams',
+        cancelText: 'Cancelar',
+        confirmType: 'warning'
+      });
+      if (!ok) return;
+    }
+
+    if (btnElement) {
+      btnElement.disabled = true;
+      btnElement.classList.add('is-sending');
+      btnElement.innerHTML = `<span aria-hidden="true" style="display:inline-block; animation: spin 1s infinite linear;">🔄</span> Enviando a Teams...`;
+    }
+
+    try {
+      if (!state.teamsConfig) {
+        await loadTeamsConfig();
+      }
+
+      const targetChannel = resolveLocalTeamsChannel('reclamacion_worklog', group);
+      const channelName = targetChannel ? targetChannel.nombre : 'Masivas IT';
+
+      let sendSuccess = false;
+      let errorDetail = '';
+
+      try {
+        const backendRes = await fetch('/api/teams/send', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'reclamacion_worklog',
+            incident_id: incId,
+            incident: inc,
+            group: group
+          })
+        });
+
+        if (backendRes.ok) {
+          const resData = await backendRes.json();
+          if (resData.success) {
+            sendSuccess = true;
+          } else {
+            errorDetail = resData.error || 'Respuesta no exitosa del servidor';
+          }
+        } else {
+          errorDetail = `HTTP ${backendRes.status}`;
+        }
+      } catch (backendErr) {
+        console.warn('Backend /api/teams/send no disponible, probando envío directo desde navegador:', backendErr);
+        if (targetChannel && targetChannel.webhook_url) {
+          try {
+            const cardPayload = buildClientAdaptiveCard(inc, state.teamsConfig?.remedy_base_url);
+            const directRes = await fetch(targetChannel.webhook_url, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(cardPayload)
+            });
+            if (directRes.ok || directRes.status === 202 || directRes.status === 200) {
+              sendSuccess = true;
+            } else {
+              errorDetail = `Webhook Teams HTTP ${directRes.status}`;
+            }
+          } catch (directErr) {
+            errorDetail = `Fallo de red al conectar con webhook de Teams: ${directErr.message}`;
+          }
+        } else {
+          errorDetail = 'Canal de Teams no tiene URL configurada';
+        }
+      }
+
+      if (sendSuccess) {
+        const nowIso = new Date().toISOString();
+        try {
+          localStorage.setItem('triage_wl_claimed_' + incId, JSON.stringify({
+            timestamp: nowIso,
+            channelName: channelName,
+            group: group
+          }));
+        } catch (_) {}
+        if (!state.teamsAudit) state.teamsAudit = [];
+        state.teamsAudit.push({
+          timestamp: nowIso,
+          action: 'reclamacion_worklog',
+          incident_id: incId,
+          channel_name: channelName,
+          group: group,
+          success: true
+        });
+
+        document.querySelectorAll(`.btn-send-worklog-teams[data-inc="${incId}"]`).forEach(b => {
+          b.classList.remove('is-sending');
+          b.classList.add('is-sent');
+          b.disabled = false;
+          b.innerHTML = `<span aria-hidden="true">✅</span> Reclamación Enviada (${formatAuditTime(nowIso)}) · Volver a Reclamar`;
+          b.title = `Reclamación enviada a las ${formatAuditTime(nowIso)} en ${channelName}. Haz clic para enviar un recordatorio.`;
+        });
+
+        showToast(`📢 Reclamación de Work Log enviada con éxito a Teams: ${channelName} (${incId})`, 'success');
+        addLogEntry(incId, 'WORKLOG', `📢 Reclamación Work Log despachada a Teams: ${channelName}`, `Grupo: ${group || 'N/A'}`, 'role-worklog');
+      } else {
+        throw new Error(errorDetail || 'Error desconocido al despachar a Teams');
+      }
+    } catch (err) {
+      console.error('Error al enviar reclamación de Work Log a Teams:', err);
+      showToast(`❌ Error al enviar a Teams: ${err.message}. Puedes copiar la plantilla manualmente.`, 'error');
+      if (btnElement) {
+        btnElement.classList.remove('is-sending');
+        btnElement.disabled = false;
+        btnElement.innerHTML = origHtml;
+      }
+    }
+  }
+
+  async function sendZombieClosureToTeams(inc, btnElement = null) {
+    const incId = inc.id;
+    const group = inc.grupo_asignado || '';
+    const origHtml = btnElement ? btnElement.innerHTML : '';
+
+    const zStatus = getZombieClosureStatus(incId);
+    if (zStatus.requested) {
+      const ok = await showSecurityConfirm({
+        title: 'Solicitud de Cierre Administrativo en Teams',
+        badge: 'SOLICITUD YA ENVIADA',
+        badgeType: 'warning',
+        icon: '⚠️',
+        message: `Ya se despachó una solicitud formal de cierre administrativo para el ticket zombi <strong>${escapeHtml(incId)}</strong> ${escapeHtml(zStatus.timeAgoText || 'previamente')} en Microsoft Teams.`,
+        details: [
+          { label: 'Incidencia', value: incId },
+          { label: 'Grupo Resolutor', value: group || zStatus.group || 'Sin Grupo Asignado' },
+          { label: 'Canal de Destino', value: zStatus.channelName || 'Cierre Zombi' },
+          { label: 'Envío Previo', value: `${zStatus.timeStr || '--:--'} (${zStatus.timeAgoText || ''})` }
+        ],
+        warningText: '¿Deseas enviar un <strong>RECORDATORIO DE CIERRE ADMINISTRATIVO</strong> a Microsoft Teams? Esto notificará de nuevo al grupo resolutor para que proceda al cierre inmediato en Remedy.',
+        confirmText: '📢 Reenviar Solicitud a Teams',
+        cancelText: 'Cancelar',
+        confirmType: 'warning'
+      });
+      if (!ok) return;
+    }
+
+    if (btnElement) {
+      btnElement.disabled = true;
+      btnElement.classList.add('is-sending');
+      btnElement.innerHTML = `<span aria-hidden="true" style="display:inline-block; animation: spin 1s infinite linear;">🔄</span> Enviando a Teams...`;
+    }
+
+    try {
+      if (!state.teamsConfig) {
+        await loadTeamsConfig();
+      }
+
+      const targetChannel = resolveLocalTeamsChannel('cierre_zombi', group);
+      const channelName = targetChannel ? targetChannel.nombre : 'Cierre Zombi';
+
+      let sendSuccess = false;
+      let errorDetail = '';
+
+      try {
+        const backendRes = await fetch('/api/teams/send', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'cierre_zombi',
+            incident_id: incId,
+            incident: inc,
+            group: group
+          })
+        });
+
+        if (backendRes.ok) {
+          const resData = await backendRes.json();
+          if (resData.success) {
+            sendSuccess = true;
+          } else {
+            errorDetail = resData.error || 'Respuesta no exitosa del servidor';
+          }
+        } else {
+          errorDetail = `HTTP ${backendRes.status}`;
+        }
+      } catch (backendErr) {
+        console.warn('Backend /api/teams/send no disponible, probando envío directo desde navegador:', backendErr);
+        if (targetChannel && targetChannel.webhook_url) {
+          try {
+            const cardPayload = buildClientAdaptiveCard(inc, state.teamsConfig?.remedy_base_url, 'cierre_zombi');
+            const directRes = await fetch(targetChannel.webhook_url, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(cardPayload)
+            });
+            if (directRes.ok || directRes.status === 202 || directRes.status === 200) {
+              sendSuccess = true;
+            } else {
+              errorDetail = `Webhook Teams HTTP ${directRes.status}`;
+            }
+          } catch (directErr) {
+            errorDetail = `Fallo de red al conectar con webhook de Teams: ${directErr.message}`;
+          }
+        } else {
+          errorDetail = 'Canal de Teams no tiene URL configurada';
+        }
+      }
+
+      if (sendSuccess) {
+        const nowIso = new Date().toISOString();
+        try {
+          localStorage.setItem('triage_zombi_requested_' + incId, JSON.stringify({
+            timestamp: nowIso,
+            channelName: channelName,
+            group: group
+          }));
+        } catch (_) {}
+        if (!state.teamsAudit) state.teamsAudit = [];
+        state.teamsAudit.push({
+          timestamp: nowIso,
+          action: 'cierre_zombi',
+          incident_id: incId,
+          channel_name: channelName,
+          group: group,
+          success: true
+        });
+
+        document.querySelectorAll(`.btn-send-zombi-teams[data-inc="${incId}"]`).forEach(b => {
+          b.classList.remove('is-sending');
+          b.classList.add('is-sent');
+          b.disabled = false;
+          b.innerHTML = `<span aria-hidden="true">✅</span> Cierre Solicitado (${formatAuditTime(nowIso)}) · Volver a Reclamar`;
+          b.title = `Solicitud de cierre enviada a las ${formatAuditTime(nowIso)} en ${channelName}. Haz clic para reenviar recordatorio.`;
+        });
+
+        showToast(`📢 Solicitud de Cierre Zombi enviada con éxito a Teams: ${channelName} (${incId})`, 'success');
+        addLogEntry(incId, 'ZOMBI', `📢 Solicitud de Cierre Zombi despachada a Teams: ${channelName}`, `Grupo: ${group || 'N/A'}`, 'role-resolutor');
+      } else {
+        throw new Error(errorDetail || 'Error desconocido al despachar a Teams');
+      }
+    } catch (err) {
+      console.error('Error al enviar solicitud de cierre zombi a Teams:', err);
+      showToast(`❌ Error al enviar a Teams: ${err.message}. Puedes copiar la plantilla manualmente.`, 'error');
+      if (btnElement) {
+        btnElement.classList.remove('is-sending');
+        btnElement.classList.remove('is-sent');
+        btnElement.disabled = false;
+        btnElement.innerHTML = origHtml;
+      }
+    }
+  }
+
+  async function sendWarRoomInvitationToTeams(inc, btnElement = null) {
+    const incId = inc.id;
+    const wrStatus = getWarRoomStatus(incId);
+    if (wrStatus.summoned) {
+      const ok = await showSecurityConfirm({
+        title: 'Convocatoria War Room en Teams',
+        badge: 'WAR ROOM YA CONVOCADA',
+        badgeType: 'warning',
+        icon: '⚠️',
+        message: `Esta War Room ya fue convocada <strong>${escapeHtml(wrStatus.timeAgoText || 'previamente')}</strong> en el canal de Microsoft Teams.`,
+        details: [
+          { label: 'Incidencia', value: incId },
+          { label: 'Canal de Destino', value: wrStatus.channelName || 'War Room SL1/P1' },
+          { label: 'Convocatoria Inicial', value: `${wrStatus.timeStr || '--:--'} (${wrStatus.timeAgoText || ''})` }
+        ],
+        warningText: '¿Deseas enviar una <strong>RECONVOCATORIA / RECORDATORIO</strong> a Microsoft Teams? Esto enviará una nueva tarjeta al canal con enlace directo a la reunión.',
+        confirmText: '🚨 Enviar Reconvocatoria a Teams',
+        cancelText: 'Cancelar',
+        confirmType: 'warning'
+      });
+      if (!ok) return;
+    }
+
+    const group = inc.grupo_asignado || '';
+    const teamsUrl = generateTeamsWarRoomUrl(incId);
+    const origHtml = btnElement ? btnElement.innerHTML : '';
+
+    if (btnElement) {
+      btnElement.disabled = true;
+      btnElement.classList.add('is-sending');
+      btnElement.innerHTML = `<span aria-hidden="true" style="display:inline-block; animation: spin 1s infinite linear;">🔄</span> Convocando en Teams...`;
+    }
+
+    try {
+      if (!state.teamsConfig) {
+        await loadTeamsConfig();
+      }
+
+      const targetChannel = resolveLocalTeamsChannel('convocatoria_warroom', group);
+      const channelName = targetChannel ? targetChannel.nombre : 'War Room SL1/P1';
+
+      let sendSuccess = false;
+      let errorDetail = '';
+
+      try {
+        const backendRes = await fetch('/api/teams/send', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'convocatoria_warroom',
+            incident_id: incId,
+            incident: inc,
+            teams_meeting_url: teamsUrl
+          })
+        });
+
+        if (backendRes.ok) {
+          const resData = await backendRes.json();
+          if (resData.success) {
+            sendSuccess = true;
+          } else {
+            errorDetail = resData.error || 'Respuesta no exitosa del servidor';
+          }
+        } else {
+          errorDetail = `HTTP ${backendRes.status}`;
+        }
+      } catch (backendErr) {
+        console.warn('Backend /api/teams/send no disponible, probando envío directo desde navegador:', backendErr);
+        if (targetChannel && targetChannel.webhook_url) {
+          try {
+            const cardPayload = buildClientAdaptiveCard(inc, state.teamsConfig?.remedy_base_url, 'convocatoria_warroom', {
+              teamsMeetingUrl: teamsUrl
+            });
+            const directRes = await fetch(targetChannel.webhook_url, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(cardPayload)
+            });
+            if (directRes.ok || directRes.status === 202 || directRes.status === 200) {
+              sendSuccess = true;
+            } else {
+              errorDetail = `Webhook Teams HTTP ${directRes.status}`;
+            }
+          } catch (directErr) {
+            errorDetail = `Fallo de red al conectar con webhook de Teams: ${directErr.message}`;
+          }
+        } else {
+          errorDetail = 'Canal War Room no tiene webhook configurado';
+        }
+      }
+
+      if (sendSuccess) {
+        const nowIso = new Date().toISOString();
+        try {
+          localStorage.setItem('triage_warroom_summoned_' + incId, JSON.stringify({ timestamp: nowIso, channelName: channelName }));
+        } catch (_) {}
+        if (!state.teamsAudit) state.teamsAudit = [];
+        state.teamsAudit.push({ timestamp: nowIso, action: 'convocatoria_warroom', incident_id: incId, channel_name: channelName, success: true });
+
+        document.querySelectorAll(`.btn-send-warroom-teams[data-inc="${incId}"]`).forEach(b => {
+          b.classList.remove('is-sending');
+          b.classList.add('is-summoned');
+          b.disabled = false;
+          b.innerHTML = `<span aria-hidden="true">✅</span> War Room Convocada (${formatAuditTime(nowIso)}) · Reconvocar`;
+          b.title = `War Room convocada a las ${formatAuditTime(nowIso)} en ${channelName}. Haz clic para enviar un recordatorio.`;
+        });
+        if (dom.orchBtnNotifyTeams && state.activeOrchIncId === incId) {
+          dom.orchBtnNotifyTeams.innerHTML = `<span>✅ War Room Convocada (${formatAuditTime(nowIso)}) · Reconvocar</span>`;
+          dom.orchBtnNotifyTeams.classList.add('is-summoned');
+          dom.orchBtnNotifyTeams.title = `War Room convocada a las ${formatAuditTime(nowIso)} en ${channelName}. Haz clic para enviar un recordatorio.`;
+        }
+        showToast(`📢 Convocatoria War Room enviada con éxito a Teams: ${channelName} (${incId})`, 'success');
+        addLogEntry(incId, 'WARROOM', `📢 Convocatoria War Room despachada a Teams: ${channelName}`, `Enlace Teams: ${teamsUrl}`, 'role-warroom');
+      } else {
+        throw new Error(errorDetail || 'Error desconocido al convocar War Room por Teams');
+      }
+    } catch (err) {
+      console.error('Error al convocar War Room por Teams:', err);
+      showToast(`❌ Error al notificar Teams: ${err.message}`, 'error');
+      if (btnElement) {
+        btnElement.classList.remove('is-sending');
+        btnElement.classList.remove('is-success');
+        btnElement.disabled = false;
+        btnElement.innerHTML = origHtml;
+      }
+    }
+  }
+
+  async function sendExecutiveNotificationToTeams(inc, btnElement = null, forcedPhase = null) {
+    const incId = inc.id;
+    const dirStatus = getExecutiveStatus(incId);
+    const phase = forcedPhase || btnElement?.getAttribute('data-phase') || determineExecutivePhase(inc);
+    const phaseLabel = phase === 'apertura' ? 'Apertura' : (phase === 'cierre' ? 'Cierre' : 'Seguimiento');
+
+    if (dirStatus.sent) {
+      const ok = await showSecurityConfirm({
+        title: `Comunicación Oficial Dirección IT (${phaseLabel})`,
+        badge: `FASE: ${phaseLabel.toUpperCase()} · REENVÍO`,
+        badgeType: phase === 'cierre' ? 'success' : 'warning',
+        icon: phase === 'cierre' ? '🏁' : '⚠️',
+        message: `Ya se despachó una comunicación previa para la incidencia <strong>${escapeHtml(incId)}</strong> ${escapeHtml(dirStatus.timeAgoText || 'previamente')} en Microsoft Teams. Se transmitirá la actualización oficial en fase de <strong>${phaseLabel.toUpperCase()}</strong>.`,
+        details: [
+          { label: 'Incidencia', value: incId },
+          { label: 'Fase a Transmitir', value: phaseLabel.toUpperCase() },
+          { label: 'Canal de Destino', value: dirStatus.channelName || 'Notificaciones Dirección' },
+          { label: 'Envío Anterior', value: `${dirStatus.timeStr || '--:--'} (${dirStatus.timeAgoText || ''}) [${(dirStatus.lastPhase || 'apertura').toUpperCase()}]` },
+          { label: 'Servicio / Proceso', value: inc.proceso_negocio || inc.servicio || inc.titulo || 'N/A' }
+        ],
+        warningText: `¿Deseas enviar el comunicado de <strong>${phaseLabel.toUpperCase()}</strong> a Microsoft Teams? Esto actualizará el canal de Dirección IT.`,
+        confirmText: `📢 Enviar ${phaseLabel} a Teams`,
+        cancelText: 'Cancelar',
+        confirmType: phase === 'cierre' ? 'primary' : 'warning'
+      });
+      if (!ok) return;
+    }
+
+    const group = inc.grupo_asignado || '';
+    const origHtml = btnElement ? btnElement.innerHTML : '';
+
+    if (btnElement) {
+      btnElement.disabled = true;
+      btnElement.classList.add('is-sending');
+      btnElement.innerHTML = `<span aria-hidden="true" style="display:inline-block; animation: spin 1s infinite linear;">🔄</span> Transmitiendo ${phaseLabel}...`;
+    }
+
+    try {
+      if (!state.teamsConfig) {
+        await loadTeamsConfig();
+      }
+
+      const targetChannel = resolveLocalTeamsChannel('notificacion_direccion', group);
+      const channelName = targetChannel ? targetChannel.nombre : 'Notificaciones Dirección';
+
+      // Recuperar mensaje oficial con fallback estructurado para la fase concreta
+      const execText = getExecutiveTextForIncident(inc, phase);
+
+      let sendSuccess = false;
+      let errorDetail = '';
+
+      try {
+        const backendRes = await fetch('/api/teams/send', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'notificacion_direccion',
+            incident_id: incId,
+            incident: inc,
+            group: group,
+            executive_text: execText,
+            phase: phase
+          })
+        });
+
+        if (backendRes.ok) {
+          const resData = await backendRes.json();
+          if (resData.success) {
+            sendSuccess = true;
+          } else {
+            errorDetail = resData.error || 'Respuesta no exitosa del servidor';
+          }
+        } else {
+          errorDetail = `HTTP ${backendRes.status}`;
+        }
+      } catch (backendErr) {
+        console.warn('Backend /api/teams/send no disponible, probando envío directo desde navegador:', backendErr);
+        if (targetChannel && targetChannel.webhook_url) {
+          try {
+            const cardPayload = buildClientAdaptiveCard(inc, state.teamsConfig?.remedy_base_url, 'notificacion_direccion', {
+              executiveText: execText,
+              phase: phase
+            });
+            const directRes = await fetch(targetChannel.webhook_url, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(cardPayload)
+            });
+            if (directRes.ok || directRes.status === 202 || directRes.status === 200) {
+              sendSuccess = true;
+            } else {
+              errorDetail = `Webhook Teams HTTP ${directRes.status}`;
+            }
+          } catch (directErr) {
+            errorDetail = `Fallo de red al conectar con webhook de Teams: ${directErr.message}`;
+          }
+        } else {
+          errorDetail = 'Canal de Dirección IT no tiene webhook configurado';
+        }
+      }
+
+      if (sendSuccess) {
+        const nowIso = new Date().toISOString();
+        try {
+          localStorage.setItem('triage_official_msg_sent_' + incId, JSON.stringify({
+            timestamp: nowIso,
+            channelName: channelName,
+            phase: phase
+          }));
+        } catch (_) {}
+        if (!state.teamsAudit) state.teamsAudit = [];
+        state.teamsAudit.push({
+          timestamp: nowIso,
+          action: 'notificacion_direccion',
+          incident_id: incId,
+          channel_name: channelName,
+          phase: phase,
+          success: true
+        });
+
+        // Determinar siguiente fase esperada según ciclo de vida de la incidencia
+        const isClosed = inc.estatus && ['resuelto', 'cerrado', 'solucionado', 'cancelado'].includes(inc.estatus.toLowerCase());
+        const nextPhase = isClosed ? 'cierre' : 'seguimiento';
+        const nextPhaseLabel = nextPhase === 'cierre' ? 'Cierre' : 'Seguimiento';
+
+        // Actualizar todos los botones de dirección de esta incidencia
+        document.querySelectorAll(`.btn-send-direccion-teams[data-inc="${incId}"]`).forEach(b => {
+          b.classList.remove('is-sending');
+          b.classList.add('is-sent');
+          b.setAttribute('data-phase', nextPhase);
+          b.disabled = false;
+          b.innerHTML = `<span aria-hidden="true">✅</span> ${phaseLabel} Enviada (${formatAuditTime(nowIso)}) · Enviar ${nextPhaseLabel}`;
+          b.title = `${phaseLabel} enviada a las ${formatAuditTime(nowIso)} en ${channelName}. Haz clic para enviar ${nextPhaseLabel}.`;
+        });
+
+        // Actualizar botón de copiar comunicado a la siguiente fase
+        document.querySelectorAll(`.btn-copy-direccion-comm[data-inc="${incId}"]`).forEach(b => {
+          b.setAttribute('data-phase', nextPhase);
+          b.innerHTML = `<span aria-hidden="true">📋</span> Copiar Comunicado (${nextPhaseLabel})`;
+          b.title = `Copiar al portapapeles el texto oficial de ${nextPhaseLabel} (≤ 90 palabras)`;
+        });
+
+        showToast(`📢 Notificación (${phaseLabel}) para Dirección IT enviada con éxito a Teams: ${channelName} (${incId})`, 'success');
+
+        addLogEntry(
+          incId,
+          'NOTIFICACION',
+          `📢 Difusión Notificación Oficial Dirección [${phaseLabel.toUpperCase()}] (${channelName})`,
+          `Comunicado ejecutivo (${phaseLabel}) despachado exitosamente al canal Teams "${channelName}".\nContenido transmitido:\n"${execText}"`,
+          'role-notificacion'
+        );
+
+        // Completar reloj de escalado 20m en el orquestador
+        const escState = state.orchestratorEscalations[incId] || {};
+        escState.commDone = true;
+        state.orchestratorEscalations[incId] = escState;
+        try {
+          localStorage.setItem('emergency_esc_' + incId, JSON.stringify(escState));
+        } catch (_) {}
+
+        updateOrchestratorClocks();
+      } else {
+        throw new Error(errorDetail || 'Error desconocido al notificar a Dirección por Teams');
+      }
+    } catch (err) {
+      console.error('Error al notificar a Dirección por Teams:', err);
+      showToast(`❌ Error al notificar a Dirección por Teams: ${err.message}`, 'error');
+      if (btnElement) {
+        btnElement.classList.remove('is-sending');
+        btnElement.classList.remove('is-success');
+        btnElement.disabled = false;
+        btnElement.innerHTML = origHtml;
+      }
+    }
+  }
+
+  async function sendShiftHandoverToTeams(reportText, metaSummary, btnElement = null) {
+    if (!state.teamsConfig) {
+      await loadTeamsConfig();
+    }
+
+    const targetChannel = resolveLocalTeamsChannel('traspaso_guardia');
+    const channelName = targetChannel ? targetChannel.nombre : 'Masivas IT';
+    const hStatus = getShiftHandoverStatus();
+
+    const isReSend = hStatus.published;
+    const ok = await showSecurityConfirm({
+      title: 'Publicación de Traspaso de Guardia en Teams',
+      badge: isReSend ? 'REENVÍO DE TRASPASO' : 'RELEVO DE TURNO ITIL',
+      badgeType: isReSend ? 'warning' : 'accent',
+      icon: isReSend ? '⚠️' : '📋',
+      message: isReSend
+        ? `Ya se publicó un Informe de Traspaso de Guardia <strong>${escapeHtml(hStatus.timeAgoText || 'previamente')} (${escapeHtml(hStatus.timeStr || '--:--')})</strong> en Microsoft Teams.`
+        : `Estás a punto de emitir y publicar el <strong>Informe Oficial de Traspaso de Guardia</strong> con la consolidación en tiempo real de todas las emergencias activas, discrepancias y contingencias.`,
+      details: [
+        { label: 'Acción', value: 'Traspaso de Turno / Relevo ITIL' },
+        { label: 'Canal de Destino', value: channelName },
+        { label: 'Balance de Guardia', value: metaSummary || 'Resumen consolidado' },
+        ...(isReSend ? [{ label: 'Envío Previo', value: `${hStatus.timeStr || '--:--'} (${hStatus.timeAgoText || ''}) en ${hStatus.channelName}` }] : [])
+      ],
+      warningText: isReSend
+        ? '¿Deseas enviar una <strong>ACTUALIZACIÓN / SEGUNDO INFORME DE TRASPASO</strong> a Microsoft Teams? Esto publicará una nueva tarjeta consolidada en el canal de seguimiento operativo.'
+        : '¿Deseas proceder con la <strong>PUBLICACIÓN INMEDIATA</strong> en Microsoft Teams? Esta acción notificará a los Incident Managers entrantes y al CCO.',
+      confirmText: isReSend ? '📢 Reenviar Traspaso a Teams' : '📢 Publicar Traspaso en Teams',
+      cancelText: 'Cancelar',
+      confirmType: isReSend ? 'warning' : 'primary'
+    });
+    if (!ok) return;
+
+    const origHtml = btnElement ? btnElement.innerHTML : '';
+
+    if (btnElement) {
+      btnElement.disabled = true;
+      btnElement.classList.add('is-sending');
+      btnElement.innerHTML = `<span aria-hidden="true" style="display:inline-block; animation: spin 1s infinite linear;">🔄</span> Publicando en Teams...`;
+    }
+
+    try {
+      let sendSuccess = false;
+      let errorDetail = '';
+
+      try {
+        const backendRes = await fetch('/api/teams/send', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'traspaso_guardia',
+            report_text: reportText,
+            meta_summary: metaSummary
+          })
+        });
+
+        if (backendRes.ok) {
+          const resData = await backendRes.json();
+          if (resData.success) {
+            sendSuccess = true;
+          } else {
+            errorDetail = resData.error || 'Respuesta no exitosa del servidor';
+          }
+        } else {
+          errorDetail = `HTTP ${backendRes.status}`;
+        }
+      } catch (backendErr) {
+        console.warn('Backend /api/teams/send no disponible, probando envío directo desde navegador:', backendErr);
+        if (targetChannel && targetChannel.webhook_url) {
+          try {
+            const cardPayload = buildClientAdaptiveCard(null, state.teamsConfig?.remedy_base_url, 'traspaso_guardia', {
+              reportText: reportText,
+              metaSummary: metaSummary
+            });
+            const directRes = await fetch(targetChannel.webhook_url, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(cardPayload)
+            });
+            if (directRes.ok || directRes.status === 202 || directRes.status === 200) {
+              sendSuccess = true;
+            } else {
+              errorDetail = `Webhook Teams HTTP ${directRes.status}`;
+            }
+          } catch (directErr) {
+            errorDetail = `Fallo de red al conectar con webhook de Teams: ${directErr.message}`;
+          }
+        } else {
+          errorDetail = 'Canal de relevo no tiene webhook configurado';
+        }
+      }
+
+      if (sendSuccess) {
+        const nowIso = new Date().toISOString();
+        try {
+          localStorage.setItem('triage_handover_published', JSON.stringify({
+            timestamp: nowIso,
+            channelName: channelName,
+            summary: metaSummary
+          }));
+        } catch (_) {}
+
+        if (!state.teamsAudit) state.teamsAudit = [];
+        state.teamsAudit.push({
+          timestamp: nowIso,
+          action: 'traspaso_guardia',
+          incident_id: 'RELEVO-GUARDIA',
+          channel_name: channelName,
+          meta_summary: metaSummary,
+          success: true
+        });
+
+        if (btnElement) {
+          btnElement.classList.remove('is-sending');
+          btnElement.classList.add('is-sent');
+          btnElement.disabled = false;
+          btnElement.innerHTML = `<span aria-hidden="true">✅</span> Traspaso Publicado (${formatAuditTime(nowIso)}) · Volver a Publicar`;
+          btnElement.title = `Informe publicado a las ${formatAuditTime(nowIso)} en ${channelName}. Haz clic si deseas emitir una actualización consolidada.`;
+        }
+
+        showToast(`📢 Informe de traspaso de guardia publicado con éxito en Teams: ${channelName}`, 'success');
+        addLogEntry('GLOBAL', 'HANDOVER', `📢 Informe de Traspaso de Guardia publicado en Teams: ${channelName}`, metaSummary || 'Relevo ITIL completado', 'role-notificacion');
+      } else {
+        throw new Error(errorDetail || 'Error desconocido al publicar informe de traspaso');
+      }
+    } catch (err) {
+      console.error('Error al publicar informe de traspaso en Teams:', err);
+      showToast(`❌ Error al publicar en Teams: ${err.message}`, 'error');
+      if (btnElement) {
+        btnElement.classList.remove('is-sending');
+        btnElement.classList.remove('is-sent');
+        btnElement.disabled = false;
+        btnElement.innerHTML = origHtml;
+      }
+    }
+  }
+
+  function maskWebhookUrl(url) {
+    if (!url) return '(no configurada)';
+    if (url.includes('sig=')) {
+      const parts = url.split('?');
+      if (parts.length > 1) {
+        const qParts = parts[1].split('&').map(p => {
+          if (p.startsWith('sig=')) {
+            const val = p.substring(4);
+            return 'sig=' + val.substring(0, 4) + '...' + val.substring(val.length - 4);
+          }
+          return p;
+        });
+        return parts[0] + '?' + qParts.join('&');
+      }
+    }
+    if (url.length > 55) {
+      return url.substring(0, 25) + '...' + url.substring(url.length - 15);
+    }
+    return url;
+  }
+
+  function renderTeamsChannelsTab() {
+    if (!dom.teamsChannelsList) return;
+    const channels = state.teamsConfig?.canales || {};
+    const channelKeys = Object.keys(channels);
+
+    if (channelKeys.length === 0) {
+      dom.teamsChannelsList.innerHTML = `<div class="teams-empty-state">No hay canales configurados. Haz clic en "Nuevo Canal".</div>`;
+      return;
+    }
+
+    let html = '';
+    for (const [cId, cData] of Object.entries(channels)) {
+      const isActive = Boolean(cData.activo && cData.webhook_url);
+      const isConfigured = Boolean(cData.webhook_url);
+      html += `
+        <div class="teams-channel-card ${isActive ? 'is-active' : 'is-inactive'}" data-channel-id="${escapeHtml(cId)}">
+          <div class="teams-channel-card-header">
+            <div class="teams-channel-title-group">
+              <span class="teams-channel-name">${escapeHtml(cData.nombre || cId)}</span>
+              <span class="teams-channel-id-badge">[${escapeHtml(cId)}]</span>
+              <span class="teams-channel-status-badge ${isActive ? 'is-ok' : 'is-off'}">
+                ${isActive ? '🟢 Activo' : (isConfigured ? '⚪ Desactivado' : '⚠️ Sin URL')}
+              </span>
+            </div>
+            <div class="teams-channel-actions">
+              <button type="button" class="teams-btn-sm btn-test btn-channel-test" data-cid="${escapeHtml(cId)}" title="Enviar mensaje de prueba a este canal">
+                <span>🧪 Probar Envío</span>
+              </button>
+              <button type="button" class="teams-btn-sm btn-channel-edit" data-cid="${escapeHtml(cId)}" title="Modificar datos o Webhook URL">
+                <span>✏️ Editar</span>
+              </button>
+              <button type="button" class="teams-btn-sm btn-delete btn-channel-delete" data-cid="${escapeHtml(cId)}" title="Eliminar este canal">
+                <span>🗑️ Eliminar</span>
+              </button>
+            </div>
+          </div>
+          <div class="teams-channel-meta">
+            ${escapeHtml(cData.descripcion || 'Sin descripción')} · Conector: <code>${escapeHtml(cData.tipo || 'power_automate_workflow')}</code>
+          </div>
+          <div class="teams-channel-url-preview" title="${escapeHtml(cData.webhook_url || '')}">
+            ${escapeHtml(maskWebhookUrl(cData.webhook_url))}
+          </div>
+        </div>
+      `;
+    }
+    dom.teamsChannelsList.innerHTML = html;
+
+    // Listeners de tarjetas
+    dom.teamsChannelsList.querySelectorAll('.btn-channel-edit').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const cid = btn.getAttribute('data-cid');
+        openChannelForm(cid);
+      });
+    });
+
+    dom.teamsChannelsList.querySelectorAll('.btn-channel-delete').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const cid = btn.getAttribute('data-cid');
+        const channelName = state.teamsConfig?.canales?.[cid]?.nombre || cid;
+        const ok = await showSecurityConfirm({
+          title: 'Eliminar Canal de Teams',
+          badge: 'ACCIÓN IRREVERSIBLE',
+          badgeType: 'danger',
+          icon: '🗑️',
+          message: `¿Estás seguro de eliminar el canal <strong>${escapeHtml(channelName)}</strong> [<code>${escapeHtml(cid)}</code>]?`,
+          details: [
+            { label: 'Canal ID', value: cid },
+            { label: 'Nombre Canal', value: channelName },
+            { label: 'Impacto en Rutas', value: 'Las rutas que apunten a él volverán al predeterminado masivas_it' }
+          ],
+          warningText: 'Esta acción eliminará el webhook y la configuración de este canal en la consola.',
+          confirmText: '🗑️ Eliminar Canal',
+          cancelText: 'Cancelar',
+          confirmType: 'danger'
+        });
+        if (!ok) return;
+
+        delete state.teamsConfig.canales[cid];
+        // Limpiar referencias
+        const routes = state.teamsConfig.rutas_acciones || {};
+        for (const r of Object.values(routes)) {
+          if (r.canal_predeterminado === cid) r.canal_predeterminado = 'masivas_it';
+          if (r.mapeo_por_grupo) {
+            for (const [grp, mappedId] of Object.entries(r.mapeo_por_grupo)) {
+              if (mappedId === cid) delete r.mapeo_por_grupo[grp];
+            }
+          }
+        }
+        await saveTeamsConfigToServer();
+        renderTeamsModalContent();
+        showToast(`Canal [${cid}] eliminado con éxito.`, 'info');
+      });
+    });
+
+    dom.teamsChannelsList.querySelectorAll('.btn-channel-test').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const cid = btn.getAttribute('data-cid');
+        const channel = state.teamsConfig?.canales?.[cid];
+        if (!channel || !channel.webhook_url) {
+          showToast(`El canal [${cid}] no tiene una Webhook URL configurada.`, 'warning');
+          return;
+        }
+
+        const origText = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = `<span>⏳ Probando...</span>`;
+
+        try {
+          let testAction = 'reclamacion_worklog';
+          let sampleInc = null;
+
+          if (cid === 'warroom_sl1' || cid.includes('warroom')) {
+            testAction = 'convocatoria_warroom';
+            sampleInc = {
+              id: 'INC000004189001',
+              prioridad_sugerida: 'P1',
+              prioridad_nominal: 'P1',
+              titulo: 'PRUEBA CONVOCATORIA WAR ROOM · CAÍDA PASARELA DE PAGOS REDSYS',
+              grupo_asignado: 'PRODUCCIÓN CRÍTICA',
+              estatus: 'En Curso',
+              sistemas: ['REDSYS', 'TPV Virtual', 'Pasarela Pagos'],
+              evaluacion: {
+                proceso_negocio: 'Cobros y Medios de Pago',
+                minutos_desde_apertura: 35
+              },
+              resumen_ia: {
+                problema: 'Indisponibilidad masiva en la pasarela de pagos Redsys afectando a transacciones web y app Mi Orange.',
+                impacto: '100% de operaciones de recarga y pago con tarjeta denegadas.'
+              },
+              guia_operador: {
+                accion_recomendada: 'Coordinación urgente con Redsys y activación del circuito redundante.'
+              }
+            };
+          } else if (cid === 'notificaciones_direccion' || cid.includes('direccion')) {
+            testAction = 'notificacion_direccion';
+            sampleInc = {
+              id: 'INC000004189002',
+              prioridad_sugerida: 'P1',
+              prioridad_nominal: 'P2',
+              titulo: 'PRUEBA NOTIFICACIÓN DIRECCIÓN · CORTE FIBRA BGP MADRID-SUR',
+              grupo_asignado: 'RED CORE Y TRANSMISIÓN',
+              estatus: 'Pendiente',
+              evaluacion: {
+                proceso_negocio: 'Conectividad Troncal',
+                minutos_desde_apertura: 55,
+                impacto_justificacion: 'Degradación en 12.000 clientes residenciales y 340 corporativos en la zona sur de Madrid.'
+              },
+              resumen_ia: {
+                problema: 'Corte de troncal secundario BGP provocando saturación en el enlace principal y latencias elevadas.',
+                impacto: '12.000 líneas afectadas con degradación de velocidad.'
+              },
+              guia_operador: {
+                accion_recomendada: 'Enrutamiento estático preventivo por enlace secundario mientras desplaza contrata de campo.'
+              }
+            };
+          } else if (cid === 'cierre_zombi' || cid.includes('zombi')) {
+            testAction = 'cierre_zombi';
+            sampleInc = {
+              id: 'INC000004189003',
+              prioridad_sugerida: 'P3',
+              prioridad_nominal: 'P2',
+              titulo: 'PRUEBA CIERRE ZOMBI · REGULARIZACIÓN TICKET SIN IMPACTO',
+              grupo_asignado: 'SOPORTE LOCAL',
+              estatus: 'Asignado',
+              detalle_zombi: 'Ticket sin notas desde hace más de 15 días tras confirmación de servicio restaurado.',
+              guia_operador: {
+                accion_recomendada: 'Cierre administrativo en BMC Remedy por falta de afectación.'
+              }
+            };
+          } else {
+            testAction = 'reclamacion_worklog';
+            sampleInc = {
+              id: 'INC000004100002',
+              prioridad_sugerida: 'P2',
+              titulo: 'PRUEBA SEGUIMIENTO MASIVAS IT · RECLAMACIÓN DE WORK LOG',
+              grupo_asignado: 'MESA TECNICA',
+              worklog_status: { horas_sin_worklog: 14.2, nivel_inactividad: 'WL_ESTANCAMIENTO_12H' },
+              guia_operador: { plantilla_reclamacion_wl: 'Mensaje de prueba de seguimiento operativo emitido desde la Consola de Triaje IT.' }
+            };
+          }
+
+          let sendSuccess = false;
+          let errorDetail = '';
+
+          try {
+            const res = await fetch('/api/teams/send', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                action: testAction,
+                incident_id: sampleInc.id,
+                incident: sampleInc,
+                channel_id: cid
+              })
+            });
+
+            if (res.ok) {
+              const resData = await res.json();
+              if (resData.success) {
+                sendSuccess = true;
+              } else {
+                errorDetail = resData.error || 'Respuesta no exitosa del servidor';
+              }
+            } else {
+              errorDetail = `HTTP ${res.status}`;
+            }
+          } catch (backendErr) {
+            console.warn('Backend /api/teams/send no disponible, probando envío directo desde navegador:', backendErr);
+            if (channel && channel.webhook_url) {
+              try {
+                const cardPayload = buildClientAdaptiveCard(sampleInc, state.teamsConfig?.remedy_base_url, testAction);
+                const directRes = await fetch(channel.webhook_url, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify(cardPayload)
+                });
+                if (directRes.ok || directRes.status === 200 || directRes.status === 202) {
+                  sendSuccess = true;
+                } else {
+                  errorDetail = `Webhook Teams HTTP ${directRes.status}`;
+                }
+              } catch (directErr) {
+                errorDetail = `Fallo de red: ${directErr.message}`;
+              }
+            }
+          }
+
+          if (sendSuccess) {
+            showToast(`✅ ¡Prueba exitosa! Tarjeta [${testAction}] entregada a ${channel.nombre || cid}`, 'success');
+          } else {
+            showToast(`❌ Error en prueba: ${errorDetail}`, 'error');
+          }
+        } catch (err) {
+          showToast(`❌ Error de red en prueba: ${err.message}`, 'error');
+        } finally {
+          btn.disabled = false;
+          btn.innerHTML = origText;
+        }
+      });
+    });
+  }
+
+  function renderTeamsRoutingTab() {
+    if (!dom.teamsRoutingTbody) return;
+    const routes = state.teamsConfig?.rutas_acciones || {};
+    const channels = state.teamsConfig?.canales || {};
+
+    let html = '';
+    for (const [actionKey, routeData] of Object.entries(routes)) {
+      const defChannelId = routeData.canal_predeterminado || 'masivas_it';
+      
+      let optionsHtml = '';
+      for (const [cid, cData] of Object.entries(channels)) {
+        const isSel = cid === defChannelId;
+        optionsHtml += `<option value="${escapeHtml(cid)}" ${isSel ? 'selected' : ''}>${escapeHtml(cData.nombre || cid)} [${escapeHtml(cid)}]</option>`;
+      }
+
+      html += `
+        <tr>
+          <td><strong>${escapeHtml(actionKey.toUpperCase())}</strong></td>
+          <td>${escapeHtml(routeData.descripcion || '-')}</td>
+          <td>
+            <select class="select-route-action" data-action="${escapeHtml(actionKey)}">
+              ${optionsHtml}
+            </select>
+          </td>
+        </tr>
+      `;
+    }
+    dom.teamsRoutingTbody.innerHTML = html;
+
+    dom.teamsRoutingTbody.querySelectorAll('.select-route-action').forEach(sel => {
+      sel.addEventListener('change', (e) => {
+        const action = sel.getAttribute('data-action');
+        const chosenCid = e.target.value;
+        if (state.teamsConfig?.rutas_acciones?.[action]) {
+          state.teamsConfig.rutas_acciones[action].canal_predeterminado = chosenCid;
+        }
+      });
+    });
+  }
+
+  function renderTeamsGroupsTab() {
+    if (!dom.teamsGroupRoutesList) return;
+    const routes = state.teamsConfig?.rutas_acciones || {};
+    const channels = state.teamsConfig?.canales || {};
+
+    // Rellenar select de canal para nuevo mapeo
+    const selChannel = document.getElementById('teams-new-group-channel');
+    if (selChannel) {
+      let opts = '';
+      for (const [cid, cData] of Object.entries(channels)) {
+        opts += `<option value="${escapeHtml(cid)}">${escapeHtml(cData.nombre || cid)}</option>`;
+      }
+      selChannel.innerHTML = opts;
+    }
+
+    let itemsHtml = '';
+    let hasAny = false;
+
+    for (const [actionKey, routeData] of Object.entries(routes)) {
+      const groupMap = routeData.mapeo_por_grupo || {};
+      for (const [groupName, targetCid] of Object.entries(groupMap)) {
+        hasAny = true;
+        const channelData = channels[targetCid] || {};
+        const chName = channelData.nombre || targetCid;
+        itemsHtml += `
+          <div class="teams-group-route-item" data-action="${escapeHtml(actionKey)}" data-group="${escapeHtml(groupName)}">
+            <div class="teams-group-route-info">
+              <span class="teams-group-badge">${escapeHtml(groupName)}</span>
+              <span style="font-size: 11px; color: var(--triage-text-muted);">(${escapeHtml(actionKey)})</span>
+              <span class="teams-arrow">➔</span>
+              <span class="teams-target-channel">📡 [${escapeHtml(targetCid)}] ${escapeHtml(chName)}</span>
+            </div>
+            <button type="button" class="teams-btn-sm btn-delete btn-remove-group-route" data-action="${escapeHtml(actionKey)}" data-group="${escapeHtml(groupName)}" title="Eliminar enlace de este grupo">
+              ✕ Quitar
+            </button>
+          </div>
+        `;
+      }
+    }
+
+    if (!hasAny) {
+      itemsHtml = `<div class="teams-empty-state" style="padding: 12px; font-size: 13px; color: var(--triage-text-muted);">No hay sobrescrituras por grupo configuradas. Las acciones seguirán el canal predeterminado.</div>`;
+    }
+
+    dom.teamsGroupRoutesList.innerHTML = itemsHtml;
+
+    dom.teamsGroupRoutesList.querySelectorAll('.btn-remove-group-route').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const action = btn.getAttribute('data-action');
+        const grp = btn.getAttribute('data-group');
+        if (state.teamsConfig?.rutas_acciones?.[action]?.mapeo_por_grupo?.[grp]) {
+          delete state.teamsConfig.rutas_acciones[action].mapeo_por_grupo[grp];
+          await saveTeamsConfigToServer();
+          renderTeamsGroupsTab();
+          showToast(`Sobrescritura para "${grp}" eliminada.`, 'info');
+        }
+      });
+    });
+  }
+
+  function openChannelForm(channelId = null) {
+    if (!dom.teamsChannelFormBox) return;
+    state.editingChannelId = channelId;
+    const isEdit = Boolean(channelId);
+
+    const titleEl = document.getElementById('teams-form-title');
+    if (titleEl) {
+      titleEl.textContent = isEdit ? `Editar Canal Teams [${channelId}]` : 'Añadir Nuevo Canal Teams';
+    }
+
+    const inputId = document.getElementById('teams-form-id');
+    const inputName = document.getElementById('teams-form-name');
+    const inputUrl = document.getElementById('teams-form-url');
+    const inputDesc = document.getElementById('teams-form-desc');
+    const selectType = document.getElementById('teams-form-type');
+    const checkActive = document.getElementById('teams-form-active');
+
+    if (isEdit && state.teamsConfig?.canales?.[channelId]) {
+      const ch = state.teamsConfig.canales[channelId];
+      if (inputId) {
+        inputId.value = ch.id || channelId;
+        inputId.disabled = true;
+      }
+      if (inputName) inputName.value = ch.nombre || '';
+      if (inputUrl) inputUrl.value = ch.webhook_url || '';
+      if (inputDesc) inputDesc.value = ch.descripcion || '';
+      if (selectType) selectType.value = ch.tipo || 'power_automate_workflow';
+      if (checkActive) checkActive.checked = Boolean(ch.activo);
+    } else {
+      if (inputId) {
+        inputId.value = '';
+        inputId.disabled = false;
+      }
+      if (inputName) inputName.value = '';
+      if (inputUrl) inputUrl.value = '';
+      if (inputDesc) inputDesc.value = '';
+      if (selectType) selectType.value = 'power_automate_workflow';
+      if (checkActive) checkActive.checked = true;
+    }
+
+    dom.teamsChannelFormBox.style.display = 'block';
+    if (inputName) inputName.focus();
+  }
+
+  function closeChannelForm() {
+    if (dom.teamsChannelFormBox) {
+      dom.teamsChannelFormBox.style.display = 'none';
+    }
+    state.editingChannelId = null;
+  }
+
+  function renderTeamsModalContent() {
+    renderTeamsChannelsTab();
+    renderTeamsRoutingTab();
+    renderTeamsGroupsTab();
+  }
+
+  async function openTeamsConfigModal() {
+    const modal = dom.modalTeamsConfig || document.getElementById('modal-teams-config');
+    if (!modal) {
+      console.error('[Teams] Modal #modal-teams-config no encontrado en el DOM.');
+      return;
+    }
+    modal.classList.add('open');
+    modal.setAttribute('aria-hidden', 'false');
+
+    try {
+      await loadTeamsConfig();
+    } catch (err) {
+      console.warn('[Teams] Advertencia al refrescar configuración:', err);
+    }
+
+    try {
+      renderTeamsModalContent();
+    } catch (err) {
+      console.error('[Teams] Error renderizando contenido del modal Teams:', err);
+    }
+  }
+
+  function closeTeamsConfigModal() {
+    const modal = dom.modalTeamsConfig || document.getElementById('modal-teams-config');
+    if (!modal) return;
+    modal.classList.remove('open');
+    modal.setAttribute('aria-hidden', 'true');
+    closeChannelForm();
+  }
+
+  // Exponer a ámbito global window para invocaciones inline y compatibilidad
+  window.openTeamsConfigModal = openTeamsConfigModal;
+  window.closeTeamsConfigModal = closeTeamsConfigModal;
+
+  function setupTeamsListeners() {
+    const btnOpen = dom.btnTeamsConfig || document.getElementById('btn-teams-channels-config');
+    if (btnOpen) {
+      btnOpen.onclick = (e) => {
+        if (e && e.preventDefault) e.preventDefault();
+        openTeamsConfigModal();
+      };
+    }
+    const btnClose = dom.btnModalTeamsClose || document.getElementById('btn-modal-teams-close');
+    if (btnClose) {
+      btnClose.onclick = (e) => {
+        if (e && e.preventDefault) e.preventDefault();
+        closeTeamsConfigModal();
+      };
+    }
+    const btnCloseBottom = dom.btnModalTeamsCloseBottom || document.getElementById('btn-modal-teams-close-bottom');
+    if (btnCloseBottom) {
+      btnCloseBottom.onclick = (e) => {
+        if (e && e.preventDefault) e.preventDefault();
+        closeTeamsConfigModal();
+      };
+    }
+
+    const modal = dom.modalTeamsConfig || document.getElementById('modal-teams-config');
+    if (modal) {
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) closeTeamsConfigModal();
+      });
+    }
+
+    // Pestañas internas
+    const tabChannels = document.getElementById('tab-teams-channels');
+    const tabRouting = document.getElementById('tab-teams-routing');
+    const tabGroups = document.getElementById('tab-teams-groups');
+
+    const panelChannels = document.getElementById('teams-panel-channels');
+    const panelRouting = document.getElementById('teams-panel-routing');
+    const panelGroups = document.getElementById('teams-panel-groups');
+
+    function selectTab(selectedTab, activePanel) {
+      [tabChannels, tabRouting, tabGroups].forEach(t => {
+        if (t) {
+          t.classList.remove('active');
+          t.setAttribute('aria-selected', 'false');
+        }
+      });
+      [panelChannels, panelRouting, panelGroups].forEach(p => {
+        if (p) p.style.display = 'none';
+      });
+
+      if (selectedTab) {
+        selectedTab.classList.add('active');
+        selectedTab.setAttribute('aria-selected', 'true');
+      }
+      if (activePanel) {
+        activePanel.style.display = 'block';
+      }
+    }
+
+    if (tabChannels) {
+      tabChannels.addEventListener('click', () => selectTab(tabChannels, panelChannels));
+    }
+    if (tabRouting) {
+      tabRouting.addEventListener('click', () => {
+        selectTab(tabRouting, panelRouting);
+        renderTeamsRoutingTab();
+      });
+    }
+    if (tabGroups) {
+      tabGroups.addEventListener('click', () => {
+        selectTab(tabGroups, panelGroups);
+        renderTeamsGroupsTab();
+      });
+    }
+
+    // Botón Nuevo Canal
+    const btnAddChannel = dom.btnTeamsAddChannel || document.getElementById('btn-teams-add-channel');
+    if (btnAddChannel) {
+      btnAddChannel.addEventListener('click', () => openChannelForm());
+    }
+    const btnCancelForm = dom.btnTeamsFormCancel || document.getElementById('btn-teams-form-cancel');
+    if (btnCancelForm) {
+      btnCancelForm.addEventListener('click', closeChannelForm);
+    }
+
+    // Guardar Canal desde formulario
+    const channelForm = dom.teamsChannelForm || document.getElementById('teams-channel-form');
+    if (channelForm) {
+      channelForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const inputId = document.getElementById('teams-form-id');
+        const inputName = document.getElementById('teams-form-name');
+        const inputUrl = document.getElementById('teams-form-url');
+        const inputDesc = document.getElementById('teams-form-desc');
+        const selectType = document.getElementById('teams-form-type');
+        const checkActive = document.getElementById('teams-form-active');
+
+        const cid = (inputId?.value || '').trim().toLowerCase().replace(/\s+/g, '_');
+        if (!cid) {
+          alert('Por favor indica un ID / clave único para el canal.');
+          return;
+        }
+
+        if (!state.teamsConfig.canales) {
+          state.teamsConfig.canales = {};
+        }
+
+        const now = new Date().toISOString();
+        const existing = state.teamsConfig.canales[cid] || {};
+
+        state.teamsConfig.canales[cid] = {
+          id: cid,
+          nombre: (inputName?.value || '').trim() || cid,
+          descripcion: (inputDesc?.value || '').trim(),
+          tipo: selectType?.value || 'power_automate_workflow',
+          webhook_url: (inputUrl?.value || '').trim(),
+          activo: Boolean(checkActive?.checked),
+          creado_el: existing.creado_el || now,
+          actualizado_el: now
+        };
+
+        await saveTeamsConfigToServer();
+        closeChannelForm();
+        renderTeamsModalContent();
+        showToast(`Canal [${cid}] guardado con éxito.`, 'success');
+      });
+    }
+
+    // Añadir sobrescritura de grupo
+    const btnAddGroupRoute = dom.btnTeamsAddGroupRoute || document.getElementById('btn-teams-add-group-route');
+    if (btnAddGroupRoute) {
+      btnAddGroupRoute.addEventListener('click', async () => {
+        const inputName = document.getElementById('teams-new-group-name');
+        const selectAction = document.getElementById('teams-new-group-action');
+        const selectChannel = document.getElementById('teams-new-group-channel');
+
+        const group = (inputName?.value || '').trim();
+        const action = selectAction?.value || 'reclamacion_worklog';
+        const channelId = selectChannel?.value;
+
+        if (!group) {
+          alert('Por favor introduce el nombre exacto del Grupo Resolutor de Remedy (ej: RED FIBRA).');
+          return;
+        }
+        if (!channelId) {
+          alert('Por favor selecciona un canal de destino.');
+          return;
+        }
+
+        if (!state.teamsConfig.rutas_acciones) {
+          state.teamsConfig.rutas_acciones = {};
+        }
+        if (!state.teamsConfig.rutas_acciones[action]) {
+          state.teamsConfig.rutas_acciones[action] = {
+            descripcion: action,
+            canal_predeterminado: 'masivas_it',
+            mapeo_por_grupo: {}
+          };
+        }
+        if (!state.teamsConfig.rutas_acciones[action].mapeo_por_grupo) {
+          state.teamsConfig.rutas_acciones[action].mapeo_por_grupo = {};
+        }
+
+        state.teamsConfig.rutas_acciones[action].mapeo_por_grupo[group] = channelId;
+        await saveTeamsConfigToServer();
+        if (inputName) inputName.value = '';
+        renderTeamsGroupsTab();
+        showToast(`Enlace configurado: ${group} ➔ [${channelId}]`, 'success');
+      });
+    }
+
+    // Guardar toda la configuración
+    const btnSaveAll = dom.btnTeamsSaveAll || document.getElementById('btn-teams-save-all');
+    if (btnSaveAll) {
+      btnSaveAll.addEventListener('click', async () => {
+        const origHtml = btnSaveAll.innerHTML;
+        btnSaveAll.disabled = true;
+        btnSaveAll.innerHTML = `<span>⏳ Guardando...</span>`;
+
+        const saved = await saveTeamsConfigToServer();
+        btnSaveAll.disabled = false;
+        btnSaveAll.innerHTML = origHtml;
+
+        if (saved) {
+          showToast('✅ Configuración de Canales Microsoft Teams guardada con éxito', 'success');
+          closeTeamsConfigModal();
+        } else {
+          showToast('⚠️ Configuración guardada en caché local del navegador (backend no respondió).', 'info');
+          closeTeamsConfigModal();
+        }
+      });
+    }
+  }
+
   async function init() {
-    await loadScheduledChangesPaP();
+    // 1. Inicialización inmediata de listeners para garantizar interactividad instantánea
     setupGlobalListeners();
     setupIngestionAuditListeners();
+    setupTeamsListeners();
     updateTabStyles();
+
+    // 2. Carga asíncrona de datos en paralelo sin bloquear los botones de la interfaz
+    try {
+      await Promise.allSettled([
+        loadScheduledChangesPaP(),
+        loadTeamsConfig(),
+        loadTeamsAudit()
+      ]);
+    } catch (_) {}
+
     performInspection(false);
     resetAutoRefreshTimer();
 

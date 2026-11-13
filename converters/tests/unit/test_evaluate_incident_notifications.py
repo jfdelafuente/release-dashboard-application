@@ -23,6 +23,9 @@ from converters.cli.evaluate_incident_notifications import (
     parse_incident_datetime,
     compute_emergency_sla_status,
     format_operational_duration,
+    detect_planned_resolution,
+    compute_worklog_stagnation,
+    generate_operator_guidance,
 )
 
 
@@ -1059,6 +1062,58 @@ def test_should_include_new_discrepancy_and_aging_kpis_in_batch_catalog():
     assert "+2 niveles" in item["discrepancia_motivo"]
 
 
+def test_should_not_duplicate_root_fields_inside_evaluacion_in_batch_catalog():
+    ticket = {
+        "ID de incidencia": "INC000004999951",
+        "Prioridad": "Media",
+        "Descripción": "Corte de fibra afectando a 5 tiendas",
+        "Estatus": "Asignado",
+        "Fecha de envío": "14/10/2026 10:00",
+        "Urgencia": "Alta",
+        "Impacto": "Alto"
+    }
+    ref_time = datetime(2026, 10, 14, 10, 15)
+    catalog = evaluate_incidents_batch([ticket], epsilon_client=None, reference_time=ref_time)
+    assert len(catalog["data"]) == 1
+    item = catalog["data"][0]
+
+    # 1. Operational and guidance fields must reside at root
+    assert "es_discrepancia" in item
+    assert "guia_operador" in item
+    assert "fecha_apertura" in item
+    assert "aging_escalated" in item
+    assert "es_planificada" in item
+    assert "es_zombi" in item
+    assert "es_local_departamental" in item
+
+    # 2. The 12 duplicate keys must NOT be present inside evaluacion
+    eval_block = item["evaluacion"]
+    duplicated_keys = [
+        "es_discrepancia",
+        "discrepancia_delta",
+        "discrepancia_gravedad",
+        "discrepancia_motivo",
+        "aging_escalated",
+        "es_planificada",
+        "detalle_planificacion",
+        "es_zombi",
+        "detalle_zombi",
+        "es_local_departamental",
+        "guia_operador",
+        "fecha_apertura",
+    ]
+    for key in duplicated_keys:
+        assert key not in eval_block, f"Field '{key}' should not be duplicated inside evaluacion"
+
+    # 3. Technical ITIL metadata and SLAs must remain in evaluacion
+    assert "proceso" in eval_block or "proceso_negocio" in eval_block
+    assert "criterio" in eval_block
+    assert "impacto" in eval_block
+    assert "urgencia" in eval_block
+    assert "minutos_desde_apertura" in eval_block
+    assert "requiere_escalado_telefonico" in eval_block
+
+
 def test_should_discriminate_impact_when_remedy_impacto_is_masiva_without_total_outage():
     """Remedy exports every row with 'Impacto': 'Masiva'. The engine must discriminate real impact."""
     evaluator = SeverityEvaluator()
@@ -1352,7 +1407,7 @@ def test_should_include_ingestion_delta_in_catalog_metadata():
         ingestion_delta=delta_mock
     )
     meta = catalog["_metadata"]
-    assert meta["version"] == "2.6.0"
+    assert meta["version"] in ("2.6.0", "2.7.0")
     assert meta["skills_version"]["it-severity-matrix"] == "2.7.0"
     assert meta["skills_version"]["incident-reporter"] == "1.5.0"
     assert meta["ingestion_delta"] == delta_mock
@@ -1516,3 +1571,260 @@ def test_should_generate_actionable_operator_guidance_for_console_operator():
     assert guia_planned["categoria_operativa"] == "RESOLUCION_PLANIFICADA"
     assert "Monitorizar pase" in guia_planned["accion_recomendada"]
     assert guia_planned["requiere_llamada_cso"] is False
+
+
+def test_should_compute_worklog_stagnation_levels_and_thresholds():
+    """Valida el cálculo de niveles de estancamiento del Work Log (<6h, 6-12h, 12-24h, >24h)."""
+    from converters.cli.evaluate_incident_notifications import compute_worklog_stagnation
+
+    ref_time = datetime(2026, 11, 12, 12, 0, 0)
+
+    # 1. Ticket al día (modificado hace 2 horas -> WL_OK)
+    # En Noviembre, Madrid es UTC+1. 09:00 UTC = 10:00 Madrid. Contra ref_time 12:00 Madrid -> 2.0h
+    t_ok = {
+        "id": "INC0001",
+        "fechaUltimaModificacion": "2026-11-12T09:00:00.000+00:00",
+        "Grupo asignado": "SOPORTE N1"
+    }
+    st_ok = compute_worklog_stagnation(t_ok, reference_time=ref_time)
+    assert st_ok["nivel_inactividad"] == "WL_OK"
+    assert st_ok["horas_sin_worklog"] == 2.0
+    assert st_ok["es_inactivo_6h"] is False
+    assert st_ok["es_inactivo_12h"] is False
+    assert st_ok["es_inactivo_24h"] is False
+    assert st_ok["exento_inactividad"] is False
+
+    # 2. Ticket alerta 6h (modificado hace 8 horas: 03:00 UTC = 04:00 Madrid -> 8h contra 12:00)
+    t_6h = {
+        "id": "INC0002",
+        "fechaUltimaModificacion": "2026-11-12T03:00:00.000+00:00",
+        "Grupo asignado": "SOPORTE N2"
+    }
+    st_6h = compute_worklog_stagnation(t_6h, reference_time=ref_time)
+    assert st_6h["nivel_inactividad"] == "WL_ALERTA_6H"
+    assert st_6h["horas_sin_worklog"] == 8.0
+    assert st_6h["es_inactivo_6h"] is True
+    assert st_6h["es_inactivo_12h"] is False
+    assert st_6h["es_inactivo_24h"] is False
+
+    # 3. Ticket estancamiento 12h (modificado hace 18 horas: 17:00 UTC = 18:00 Madrid -> 18h contra 12:00)
+    t_12h = {
+        "id": "INC0003",
+        "fechaUltimaModificacion": "2026-11-11T17:00:00.000+00:00",
+        "Grupo asignado": "SOPORTE N3"
+    }
+    st_12h = compute_worklog_stagnation(t_12h, reference_time=ref_time)
+    assert st_12h["nivel_inactividad"] == "WL_ESTANCAMIENTO_12H"
+    assert st_12h["horas_sin_worklog"] == 18.0
+    assert st_12h["es_inactivo_6h"] is True
+    assert st_12h["es_inactivo_12h"] is True
+    assert st_12h["es_inactivo_24h"] is False
+
+    # 4. Ticket bloqueo crítico 24h (modificado hace 30 horas: 05:00 UTC = 06:00 Madrid -> 30h contra 12:00)
+    t_24h = {
+        "id": "INC0004",
+        "fechaUltimaModificacion": "2026-11-11T05:00:00.000+00:00",
+        "Grupo asignado": "APLICACIONES CORE"
+    }
+    st_24h = compute_worklog_stagnation(t_24h, reference_time=ref_time)
+    assert st_24h["nivel_inactividad"] == "WL_BLOQUEO_24H"
+    assert st_24h["horas_sin_worklog"] == 30.0
+    assert st_24h["es_inactivo_6h"] is True
+    assert st_24h["es_inactivo_12h"] is True
+    assert st_24h["es_inactivo_24h"] is True
+
+
+def test_should_exempt_planned_and_zombie_tickets_from_worklog_stagnation():
+    """Valida que los tickets planificados o zombi queden exentos de alertas de Work Log."""
+    from converters.cli.evaluate_incident_notifications import compute_worklog_stagnation
+
+    ref_time = datetime(2026, 11, 12, 12, 0, 0)
+    ticket = {
+        "id": "INC0005",
+        "fechaUltimaModificacion": "2026-11-10T10:00:00.000+00:00"
+    }
+    st_planned = compute_worklog_stagnation(ticket, reference_time=ref_time, is_planned=True)
+    assert st_planned["exento_inactividad"] is True
+
+    st_zombie = compute_worklog_stagnation(ticket, reference_time=ref_time, is_zombie=True)
+    assert st_zombie["exento_inactividad"] is True
+
+
+def test_should_prioritize_detailed_remedy_worklogs_over_header_dates():
+    """Valida que si existe detalle Remedy, se utilice la fecha del último apunte de worklogs."""
+    from converters.cli.evaluate_incident_notifications import compute_worklog_stagnation
+
+    ref_time = datetime(2026, 11, 12, 12, 0, 0)
+    ticket = {
+        "id": "INC0006",
+        "fechaUltimaModificacion": "2026-11-10T10:00:00.000+00:00"  # Cabecera antigua (48h)
+    }
+    remedy_detail = {
+        "worklogs": [
+            {"fecha": "2026-11-11T09:00:00.000+00:00", "usuario": "user1", "detalle": "Nota preliminar"},
+            {"fecha": "2026-11-12T10:00:00.000+00:00", "usuario": "expert1", "detalle": "Avance técnico reciente"}
+        ]
+    }
+    st = compute_worklog_stagnation(ticket, reference_time=ref_time, remedy_detail=remedy_detail)
+    assert st["horas_sin_worklog"] == 1.0  # Tomó la última nota de las 11:00
+    assert st["nivel_inactividad"] == "WL_OK"
+    assert st["ultimo_autor"] == "expert1"
+    assert "Avance técnico" in st["ultimo_extracto"]
+
+
+def test_should_consider_epsilon_hitos_and_recent_modifications_for_worklog_stagnation():
+    """Valida que si Epsilon IA contiene hitos técnicos o modificaciones más recientes que el volcado, se usen para el Work Log."""
+    from converters.cli.evaluate_incident_notifications import compute_worklog_stagnation
+
+    ref_time = datetime(2026, 11, 12, 12, 0, 0)
+    ticket = {
+        "id": "INC0007",
+        "fechaUltimaModificacion": "2026-11-11T16:00:00.000+00:00"  # 17:00 Madrid ayer (~19h de inactividad)
+    }
+    epsilon_data = {
+        "hitosTecnicos": [
+            "[11/11/2026 18:00]: Inicio de análisis",
+            "[12/11/2026 10:30]: Escalado a grupo especialista con evidencias actualizadas"  # Hace 1.5h respecto a las 12:00
+        ]
+    }
+    st = compute_worklog_stagnation(ticket, reference_time=ref_time, epsilon_data=epsilon_data)
+    assert st["horas_sin_worklog"] == 1.5
+    assert st["nivel_inactividad"] == "WL_OK"
+    assert st["es_inactivo_6h"] is False
+    assert st["ultimo_autor"] == "Epsilon IA"
+    assert "Escalado a grupo especialista" in st["ultimo_extracto"]
+
+
+def test_should_include_worklog_status_and_kpis_in_batch_catalog():
+    """Valida que evaluate_incidents_batch incluya worklog_status y los KPIs en metadata."""
+    from converters.cli.evaluate_incident_notifications import evaluate_incidents_batch
+
+    ref_time = datetime(2026, 11, 12, 12, 0, 0)
+    tickets = [
+        {
+            "ID de incidencia": "INC000004100001",
+            "Descripción": "ERROR EN PASARELA DE PAGOS // CAIDA TOTAL",
+            "Prioridad": "Alta",
+            "Impacto": "Masiva",
+            "Urgencia": "1-Crítico",
+            "Estatus": "Asignado",
+            "Fecha de envío": "12/11/2026 00:00",
+            "fechaUltimaModificacion": "2026-11-12T01:00:00.000+00:00",  # 11h -> WL_ALERTA_6H
+            "Grupo asignado": "PAGOS CORE"
+        },
+        {
+            "ID de incidencia": "INC000004100002",
+            "Descripción": "PROVISION FIBRA // CORTE GENERAL",
+            "Prioridad": "Alta",
+            "Impacto": "Masiva",
+            "Urgencia": "1-Crítico",
+            "Estatus": "Asignado",
+            "Fecha de envío": "10/11/2026 00:00",
+            "fechaUltimaModificacion": "2026-11-10T12:00:00.000+00:00",  # 48h -> WL_BLOQUEO_24H
+            "Grupo asignado": "RED FIBRA"
+        }
+    ]
+
+    catalog = evaluate_incidents_batch(
+        tickets=tickets,
+        epsilon_client=None,
+        write_audit=False,
+        reference_time=ref_time
+    )
+
+    kpis = catalog["_metadata"]["kpis"]
+    assert "tickets_sin_worklog_6h" in kpis
+    assert "tickets_sin_worklog_12h" in kpis
+    assert "tickets_sin_worklog_24h" in kpis
+    assert kpis["tickets_sin_worklog_6h"] == 2
+    assert kpis["tickets_sin_worklog_12h"] == 1
+    assert kpis["tickets_sin_worklog_24h"] == 1
+
+    item1 = next(it for it in catalog["data"] if it["id"] == "INC000004100001")
+    assert "worklog_status" in item1
+    assert item1["worklog_status"]["nivel_inactividad"] == "WL_ALERTA_6H"
+    assert "guia_operador" in item1
+    assert item1["guia_operador"].get("reclamar_worklog") is True
+    assert "plantilla_reclamacion_wl" in item1["guia_operador"]
+    assert "PAGOS CORE" in item1["guia_operador"]["plantilla_reclamacion_wl"]
+
+
+def test_should_detect_planned_resolution_from_remedy_worklogs_and_exempt_from_stagnation():
+    """Validates that planned resolution committed in Remedy worklog (e.g. 'WI. Previsión 12/11.')
+    is detected, prevents aging escalation, sets Scenario 2 (RESOLUCION_PLANIFICADA),
+    and marks worklog status as exempt (WL_PLANIFICADA)."""
+    ticket = {
+        "ID de incidencia": "INC000004156790",
+        "Descripción": "Ficha Cliente Orange | Error funcional | Madison - Valladolid",
+        "Prioridad": "P3",
+        "Impacto": "Masiva",
+        "Urgencia": "Alta",
+        "Estatus": "Asignado",
+        "Fecha de envío": "14/10/2026 13:26",  # ~41,000 mins open
+        "Grupo asignado": "DES_SOE_FICHA",
+        "es_reapertura": True,
+    }
+    remedy_detail = {
+        "idRemedy": "INC000004156790",
+        "fechaUltimaModificacion": "2026-11-05T07:46:24.000+00:00",
+        "worklogs": [
+            {
+                "fecha": "2026-11-05T07:46:24",
+                "autor": "dlopezga",
+                "grupo": "DES_SOE_FICHA",
+                "detalle": "WI. Previsión 12/11.\n"
+            }
+        ]
+    }
+    ref_time = datetime(2026, 11, 12, 10, 0, 0)
+
+    # 1. detect_planned_resolution
+    is_planned, planned_label = detect_planned_resolution(None, ticket, remedy_detail=remedy_detail)
+    assert is_planned is True
+    assert "12/11" in planned_label
+
+    # 2. SeverityEvaluator
+    evaluator = SeverityEvaluator()
+    res = evaluator.evaluate(ticket, None, reference_time=ref_time, remedy_detail=remedy_detail)
+    assert res["es_planificada"] is True
+    assert res["aging_escalated"] is False
+    assert res["prioridad_sugerida"] == "P2"
+
+    # 3. compute_worklog_stagnation
+    wl_status = compute_worklog_stagnation(
+        ticket=ticket,
+        reference_time=ref_time,
+        remedy_detail=remedy_detail,
+        is_planned=res["es_planificada"],
+        is_zombie=res["es_zombi"]
+    )
+    assert wl_status["nivel_inactividad"] == "WL_PLANIFICADA"
+    assert wl_status["exento_inactividad"] is True
+    assert wl_status["es_inactivo_6h"] is False
+    assert wl_status["es_inactivo_24h"] is False
+
+    # 4. generate_operator_guidance
+    guia = generate_operator_guidance(
+        incident_id="INC000004156790",
+        priority=res["prioridad_sugerida"],
+        is_zombie=res["es_zombi"],
+        zombie_detail=res["detalle_zombi"],
+        is_planned=res["es_planificada"],
+        planned_detail=res["detalle_planificacion"],
+        is_local_departmental=res["es_local_departamental"],
+        mins_open=40000,
+        assigned_group="DES_SOE_FICHA",
+        has_exec_msg_apertura=True,
+        quant_metrics=None,
+        is_reopened=ticket["es_reapertura"],
+        is_discrepancy=res["es_discrepancia"],
+        discrepancy_delta=res["discrepancia_delta"],
+        has_workaround=res["evaluacion"]["workaround"],
+        is_multisite_partial=False,
+        worklog_status=wl_status
+    )
+    assert guia["categoria_operativa"] == "RESOLUCION_PLANIFICADA"
+    assert guia["escenario_num"] == 2
+    assert guia.get("reclamar_worklog") is not True
+    assert guia["requiere_llamada_cso"] is False
+
