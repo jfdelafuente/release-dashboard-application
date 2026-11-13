@@ -450,6 +450,12 @@ if (-not $SkipBuild) {
             Write-Ok "Especificación de Epsilon Prompt (resumen_incidencia_epsilon.md) empaquetada"
         }
 
+        if (Test-Path "$ProjectRoot\data\teams_channels_config.json") {
+            $DataRootStaging = Join-Path $StagingDir "data"
+            Copy-Item "$ProjectRoot\data\teams_channels_config.json" -Destination $DataRootStaging
+            Write-Ok "Configuración de canales Teams (teams_channels_config.json) empaquetada"
+        }
+
         # 7. Generar archivo tarball comprimido
         if (Test-Path $TarballFullPath) { Remove-Item $TarballFullPath -Force }
 
@@ -627,6 +633,10 @@ fi
 if [ -f "`$NEW_RELEASE_DIR/data/resumen_incidencia_epsilon.md" ]; then
     echo "--> [Remoto] Sincronizando especificación de Epsilon Prompt a `$STORAGE_BASE/resumen_incidencia_epsilon.md..."
     cp -f "`$NEW_RELEASE_DIR/data/resumen_incidencia_epsilon.md" "`$STORAGE_BASE/resumen_incidencia_epsilon.md" 2>/dev/null || true
+fi
+if [ -f "`$NEW_RELEASE_DIR/data/teams_channels_config.json" ]; then
+    echo "--> [Remoto] Sincronizando configuración de canales Teams a `$STORAGE_BASE/teams_channels_config.json..."
+    cp -f "`$NEW_RELEASE_DIR/data/teams_channels_config.json" "`$STORAGE_BASE/teams_channels_config.json" 2>/dev/null || true
 fi
 rm -rf "`$NEW_RELEASE_DIR/data"
 
