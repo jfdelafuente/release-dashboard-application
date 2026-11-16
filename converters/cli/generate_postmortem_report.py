@@ -37,7 +37,10 @@ from report_generator.release_kpis_charts import (
     build_kpi_post_chart,
 )
 from report_generator.chart_utils import export_figure_to_png, KPI_TARGET_PCT
-from report_generator.pptx_builder import new_presentation, add_kpi_and_chart_slide, add_dual_chart_slide
+from report_generator.pptx_builder import (
+    new_presentation, add_kpi_and_chart_slide, add_dual_chart_slide, add_trend_narrative_slide,
+)
+from report_generator.release_trend import compute_release_trend, DEFAULT_TREND_WINDOW
 from report_generator.paths import report_output_path
 
 # Nº de releases más recientes que muestran las gráficas del informe (eje X)
@@ -132,6 +135,9 @@ def generate_report(release_name, output_path=None, project_root=None):
                 ("KPI % PaP", pap_chart),
                 ("KPI % 1ª semana", post_chart),
             ])
+
+            trend = compute_release_trend(releases, release_name, window=DEFAULT_TREND_WINDOW)
+            add_trend_narrative_slide(prs, trend)
 
             final_path.parent.mkdir(parents=True, exist_ok=True)
             try:

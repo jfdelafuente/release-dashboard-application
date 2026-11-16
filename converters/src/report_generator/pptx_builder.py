@@ -198,6 +198,62 @@ def add_kpi_and_chart_slide(prs, release, chart_png, target_pct):
     return slide
 
 
+def _trend_color(delta, favorable_when_positive):
+    """Verde si el delta es favorable, rojo si es desfavorable.
+
+    `favorable_when_positive` es False para total_incidencias (menos
+    incidencias es mejor, así que un delta negativo es el caso favorable).
+    """
+    is_favorable = delta >= 0 if favorable_when_positive else delta <= 0
+    return _RGB_SUCCESS if is_favorable else _RGB_DANGER
+
+
+def add_trend_narrative_slide(prs, trend):
+    """Diapositiva "Tendencia Ejecutiva": párrafo narrativo generado por
+    release_trend.build_trend_narrative() + deltas individuales frente a la
+    media móvil de releases anteriores.
+
+    `trend` es el dict devuelto por release_trend.compute_release_trend().
+    Si no hay baseline (primera release del histórico), se omite la tabla
+    de deltas y solo se muestra el mensaje narrativo.
+    """
+    from report_generator.release_trend import build_trend_narrative
+
+    release = trend["release"]
+    slide = _blank_slide(prs)
+    _add_title_bar(slide, f"Tendencia Ejecutiva — {release['name']}")
+
+    _add_textbox(
+        slide, Inches(0.5), Inches(1.2), SLIDE_WIDTH - Inches(1), Inches(1.3),
+        build_trend_narrative(trend), size=17, color=_RGB_INK,
+    )
+
+    if not trend["has_baseline"]:
+        return slide
+
+    card_top = Inches(2.9)
+    card_width = Inches(3.9)
+    card_height = Inches(1.5)
+    card_gap = Inches(0.3)
+    margin = Inches(0.5)
+
+    deltas = [
+        ("% Resueltas PaP", trend["delta_pct_pap"], True, "pp"),
+        ("% Resueltas Mesa", trend["delta_pct_first_week"], True, "pp"),
+        ("Total Incidencias", trend["delta_total_incidencias"], False, ""),
+    ]
+    for idx, (label, delta, favorable_when_positive, unit) in enumerate(deltas):
+        left = margin + idx * (card_width + card_gap)
+        _add_kpi_card(
+            slide, left, card_top, card_width, card_height,
+            f"{delta:+.1f}{unit}", label,
+            detail_lines=["vs. media de las releases anteriores"],
+            value_color=_trend_color(delta, favorable_when_positive),
+        )
+
+    return slide
+
+
 def add_dual_chart_slide(prs, title, charts):
     """Diapositiva final con las gráficas de `charts` ([(título, png_bytes), ...])
     repartidas en columnas iguales, cada una con su propio título."""

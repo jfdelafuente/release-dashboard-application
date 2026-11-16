@@ -14,7 +14,7 @@ metadata:
   role: post_incident_review_governance
   culture: blameless_systemic_resilience
   security_level: internal_confidential
-  last_updated: 2026-11-04
+  last_updated: 2026-11-16
 ---
 
 # Flujo de Trabajo para Post-Incident Review (PIR / Blameless Post-Mortem) — v2.1
@@ -273,3 +273,26 @@ Antes de archivar o presentar el informe PIR al comité de dirección, comprueba
 - [ ] ¿El resumen ejecutivo puede ser entendido íntegramente por Dirección en menos de 1 minuto?
 - [ ] ¿El análisis de 5 Porqués alcanza la causa raíz sistémica y no se detiene en la causa aparente?
 - [ ] ¿Todas las acciones CAPA tienen asignado un rol responsable, una prioridad (P1/P2/P3) y una fecha límite comprometida?
+
+---
+
+## 7. Narrativa de Tendencia entre Releases
+
+Esta sección aplica a quien genera o interpreta el **informe PPT de postmortem por release** (`converters/cli/generate_postmortem_report.py`, feature `008-postmortem-ppt-report`), no al PIR individual de una incidencia concreta de las secciones 1-6. Un PIR analiza un único incidente; la narrativa de tendencia analiza la **serie histórica de releases** para detectar si la calidad de los despliegues mejora, se estanca o empeora.
+
+### 7.1 Alcance y Fuente de Verdad
+
+- Esta narrativa aparece como la **4ª diapositiva** ("Tendencia Ejecutiva") del informe `.pptx` generado por `generate_postmortem_report.py`, después de la portada, las Métricas Globales y la Comparativa de KPIs por Release.
+- El cálculo exacto (ventana de comparación, redondeo, condición de baseline) vive únicamente en `converters/src/report_generator/release_trend.py` (`compute_release_trend()`, `build_trend_narrative()`). Esta sección **no repite la fórmula en prosa** para evitar que diverja del código — consulta siempre ese módulo como fuente de verdad.
+- La comparación es contra la **media móvil de las 4 releases cronológicamente anteriores** a la release del informe (menos si el histórico disponible es más corto), nunca contra el JSON de postmortem — la única fuente de datos de todo el pipeline de `report_generator/` es `dashboards/release-kpis/releases-data.js`.
+
+### 7.2 Ejemplo Ficticio
+
+- **Release que mejora:** `2026R5` resuelve el 100% de PaP (+35.0 pp vs. media de las 4 releases anteriores) y el 90% en primera semana (+22.0 pp). Total de incidencias: 60 (-15.0 vs. media). → Lectura: tendencia de mejora sostenida, sin acción CAPA adicional derivada de esta narrativa.
+- **Release que empeora:** `2026R2` resuelve el 20% de PaP (-70.0 pp vs. media de la release anterior) y el 35% en primera semana (-40.0 pp). Total de incidencias: 140 (+55.0 vs. media). → Lectura: señal de alerta ejecutiva; esta narrativa por sí sola no sustituye un PIR, pero debe motivar que se abra uno si no existe ya.
+
+### 7.3 Prohibiciones Explícitas (Nunca Hagas Esto)
+
+- **Nunca** calcules o presentes un baseline con 0 releases reales de histórico: si la release del informe es la más antigua registrada (`has_baseline = False`), la diapositiva debe mostrar únicamente el mensaje de "primera release sin comparación disponible" — jamás un 0% o una media inventada.
+- **Nunca** omitas el signo explícito (`+`/`-`) de un delta: el informe es un `.pptx` estático sin tooltips ni interactividad, así que el signo es la única señal de dirección del cambio junto al color.
+- **Nunca** confundas esta narrativa agregada entre releases con el PIR individual de una incidencia (secciones 1-6 de esta skill): una release con tendencia positiva puede seguir conteniendo incidencias SL1/P1 individuales que requieren su propio PIR blameless completo, y viceversa.

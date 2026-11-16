@@ -111,7 +111,7 @@ class TestReleaseKpisContextInReport:
         from pptx import Presentation
 
         prs = Presentation(str(report_path))
-        assert len(prs.slides) == 3
+        assert len(prs.slides) == 4
         kpi_slide_text = "\n".join(
             s.text_frame.text for s in prs.slides[1].shapes if s.has_text_frame
         )
