@@ -137,7 +137,7 @@ Las 9 Reglas de Oro anteriores están redactadas mayoritariamente en forma posit
 | **SL4 / P4** | **Informativa** | Errores menores o anomalías sin impacto que se registran para seguimiento en *backlog*. | N/A | Planificada | Backlog de mantenimiento |
 
 > [!NOTE]
-> Para el catálogo exhaustivo de 120 sistemas oficiales (`CORE++` y `CORE`), umbrales numéricos (3.1 a 3.10) y glosario de acrónimos, consúltese la skill canónica [`it-severity-matrix`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/.agents/skills/it-severity-matrix/SKILL.md) y el [Catálogo Canónico de Sistemas y Colas Remedy](references/catalogo_sistemas_y_colas_remedy.md).
+> Para el catálogo exhaustivo de 120 sistemas oficiales (`CORE++` y `CORE`), umbrales numéricos (3.1 a 3.10) y glosario de acrónimos, consúltese la skill canónica [`it-severity-matrix`](../it-severity-matrix/SKILL.md) y el [Catálogo Canónico de Sistemas y Colas Remedy](../it-severity-matrix/references/catalogo_sistemas_y_colas_remedy.md).
 
 ---
 

@@ -25,8 +25,8 @@ Esta skill proporciona el marco de auditoría, las reglas metodológicas y las h
 
 Sistematiza de forma rigurosa los aprendizajes y patrones extraídos de incidencias complejas reales:
 
-1. **Resoluciones Planificadas con Pase a Producción Programado** (Caso [`INC000004122710`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/data/.epsilon_cache/INC000004122710.json)): Tratamiento de PRs validadas en espera de ventana de release, calibración de urgencia a nivel planificado, establecimiento de techo P2 y exención de *Aging Escalation* descontrolado.
-2. **Resoluciones Parciales Multisede y Falsos Cierres Alucinados** (Caso [`INC000004156790`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/data/.epsilon_cache/INC000004156790.json)): Detección de bloqueos persistentes en sedes operativas pese a la normalización de otras, erradicación de discrepancias de ciclo de vida (`LIFECYCLE_STATUS_MISMATCH`) y corrección de infratriaje administrativo en Remedy.
+1. **Resoluciones Planificadas con Pase a Producción Programado** (Caso `INC000004122710` en `data/.epsilon_cache/INC000004122710.json`): Tratamiento de PRs validadas en espera de ventana de release, calibración de urgencia a nivel planificado, establecimiento de techo P2 y exención de *Aging Escalation* descontrolado.
+2. **Resoluciones Parciales Multisede y Falsos Cierres Alucinados** (Caso `INC000004156790` en `data/.epsilon_cache/INC000004156790.json`): Detección de bloqueos persistentes en sedes operativas pese a la normalización de otras, erradicación de discrepancias de ciclo de vida (`LIFECYCLE_STATUS_MISMATCH`) y corrección de infratriaje administrativo en Remedy.
 
 > [!IMPORTANT]
 > **Aislamiento de Entorno y Límite de Seguridad (Local vs Producción):**  
@@ -40,7 +40,7 @@ Esta Skill actúa bajo un marco estricto de **Auditoría Técnica y Soporte Espe
 
 ### 0.1 Capacidades en Alcance (In-Scope)
 
-- **Auditoría de Clasificación ITIL:** Evaluar si la prioridad asignada en Remedy (P1 a P4) refleja fielmente el impacto en Procesos Críticos de Negocio ([`it-severity-matrix`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/.agents/skills/it-severity-matrix/SKILL.md) §3).
+- **Auditoría de Clasificación ITIL:** Evaluar si la prioridad asignada en Remedy (P1 a P4) refleja fielmente el impacto en Procesos Críticos de Negocio ([`it-severity-matrix`](../it-severity-matrix/SKILL.md) §3).
 - **Detección de Resoluciones Planificadas:** Identificar si la incidencia cuenta con una solución técnica desarrollada y validada en PR/testing a la espera de ventana de mantenimiento, ajustando la urgencia operativa para evitar falsas emergencias.
 - **Auditoría de Afectación Multisede:** Comprobar si existen sedes, canales o segmentos de usuarios con bloqueos activos no mitigados cuando se reporta normalización en otros centros.
 - **Auditoría de Coherencia de Ciclo de Vida:** Detectar inconsistencias críticas donde tickets activos en Remedy (`Asignado`, `En curso`, `Pendiente`) cuentan con mensajes de cierre oficial en la consola (`LIFECYCLE_STATUS_MISMATCH`).
@@ -146,7 +146,7 @@ flowchart TD
   - En la consola se había redactado un mensaje de "cierre" alucinando que todas las sedes operaban sin problemas y el proceso de venta estaba restablecido.
 - **Solución y Aprendizaje**:
   - **Resolución Parcial $\neq$ Cierre**: Mientras una sede mantenga un reporte de "NO RESUELTO" o bloqueo en la operativa, el incidente sigue **ACTIVO**. Prohibido generar o mantener un mensaje de cierre.
-  - **Infratriaje Administrativo**: La afectación de venta en sede telefónica corresponde a un **SL2 / P2 Mayor** (§3.1 de [`it-severity-matrix`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/.agents/skills/it-severity-matrix/SKILL.md)), no a un P3 de Remedy.
+  - **Infratriaje Administrativo**: La afectación de venta en sede telefónica corresponde a un **SL2 / P2 Mayor** (§3.1 de [`it-severity-matrix`](../it-severity-matrix/SKILL.md)), no a un P3 de Remedy.
   - **Alarma de Estancamiento**: Al superar 2 horas en estado no resuelto en una sede activa, aplica el protocolo de escalado telefónico con IM-CSO y activación del grupo especialista (`DES_SOE_FICHA`).
 
 ---
@@ -164,7 +164,7 @@ Para auditar cualquier incidencia de forma determinista, sigue este pipeline:
 
 ### Fase 2: Determinación del Impacto Real de Negocio
 
-Contrastar con el catálogo de [`it-severity-matrix`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/.agents/skills/it-severity-matrix/SKILL.md):
+Contrastar con el catálogo de [`it-severity-matrix`](../it-severity-matrix/SKILL.md):
 
 - **SL1 / P1**: Caída total o degradación $\ge 20\%$ en Procesos Críticos (Ventas, Cobros, Portabilidad, Provisión, ATC). Caída total de infraestructuras Core++ sin HA.
 - **SL2 / P2**: Afectación parcial o degradación del 5% al 20%. Fallo funcional en una sede comercial/call center (ej. Madison-Valladolid). Pérdida de redundancia en sistemas CORE.
@@ -190,7 +190,7 @@ Determinar si aplica la regla de **Resolución Planificada**:
 
 ### Fase 5: Auditoría de Coherencia de Ciclo de Vida y Mensajes
 
-Verificar en [`data/agent_executive_messages.json`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/data/agent_executive_messages.json):
+Verificar en `data/agent_executive_messages.json`:
 
 1. **Regla de Oro del Ciclo de Vida:** Si el ticket está en estado activo en Remedy (`Asignado`, `En curso`, `Pendiente`), **NO PUEDE TENER FASE `cierre`**.
 2. **Límites Físicos:**
@@ -313,8 +313,8 @@ Al presentar la revisión de una incidencia al usuario o Incident Manager, utili
 
 Esta skill se articula de forma sinérgica con las demás capacidades especializadas:
 
-- [`it-severity-matrix`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/.agents/skills/it-severity-matrix/SKILL.md): Proporciona los umbrales cuantitativos de procesos críticos y las reglas maestras de severidad ITIL.
-- [`orange-it-emergency-management`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/.agents/skills/orange-it-emergency-management/SKILL.md): Dictamina los protocolos de escalado telefónico obligatorio de Emergencias (45 min, 1h 45 min, Alarma >2h) y la gobernanza de workarounds con IM-CSO.
-- [`incident-executive-notifications`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/.agents/skills/incident-executive-notifications/SKILL.md): Gestiona el almacenamiento local en `data/agent_executive_messages.json` y el ciclo de vida de los borradores ejecutivos.
-- [`incident-reporter`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/agents/it-incidents/incident-reporter.md): Agente oficial para la redacción de mensajes de apertura, seguimiento, reapertura y cierre en dos niveles.
-- [`postmortem-pir-workflow`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/.agents/skills/postmortem-pir-workflow/SKILL.md): Canaliza la información de incidencias cerradas para el análisis retrospectivo y plan de acciones CAPA.
+- [`it-severity-matrix`](../it-severity-matrix/SKILL.md): Proporciona los umbrales cuantitativos de procesos críticos y las reglas maestras de severidad ITIL.
+- [`orange-it-emergency-management`](../orange-it-emergency-management/SKILL.md): Dictamina los protocolos de escalado telefónico obligatorio de Emergencias (45 min, 1h 45 min, Alarma >2h) y la gobernanza de workarounds con IM-CSO.
+- [`incident-executive-notifications`](../incident-executive-notifications/SKILL.md): Gestiona el almacenamiento local en `data/agent_executive_messages.json` y el ciclo de vida de los borradores ejecutivos.
+- [`incident-reporter`](../../../agents/it-incidents/incident-reporter.md): Agente oficial para la redacción de mensajes de apertura, seguimiento, reapertura y cierre en dos niveles.
+- [`postmortem-pir-workflow`](../postmortem-pir-workflow/SKILL.md): Canaliza la información de incidencias cerradas para el análisis retrospectivo y plan de acciones CAPA.

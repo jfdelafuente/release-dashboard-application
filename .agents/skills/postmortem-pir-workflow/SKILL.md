@@ -7,7 +7,7 @@ description: >-
   línea de tiempo verificada y plan de acciones CAPA. Úsese al documentar el cierre
   o análisis retrospectivo de una incidencia IT.
 domain: it-incidents
-version: 2.1.0
+version: 2.2.0
 language: es
 owner: Orange Tech Operations
 metadata:
@@ -17,7 +17,7 @@ metadata:
   last_updated: 2026-11-16
 ---
 
-# Flujo de Trabajo para Post-Incident Review (PIR / Blameless Post-Mortem) — v2.1
+# Flujo de Trabajo para Post-Incident Review (PIR / Blameless Post-Mortem) — v2.2
 
 Esta skill establece el estándar oficial y la metodología de ingeniería para transformar los datos de una incidencia crítica resuelta (SL1/P1 o SL2/P2) en un **informe de aprendizaje organizacional riguroso, sistemático y libre de culpas (*Blameless Post-Mortem*)**.
 

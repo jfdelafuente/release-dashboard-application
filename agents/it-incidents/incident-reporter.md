@@ -16,6 +16,7 @@ recommended_skills:
   - it-severity-matrix
   - orange-it-emergency-management
   - incident-executive-notifications
+  - incident-triage-review
   - postmortem-pir-workflow
 tools:
   - read_file

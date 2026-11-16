@@ -11,6 +11,7 @@ version: 1.3.0
 recommended_skills:
   - it-severity-matrix
   - orange-it-emergency-management
+  - incident-triage-review
   - postmortem-pir-workflow
 output_schema: ../../schemas/incident-ticket.schema.json
 ---
