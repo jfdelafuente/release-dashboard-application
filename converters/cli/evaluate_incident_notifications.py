@@ -13,6 +13,7 @@ This CLI utility:
 from __future__ import annotations
 
 import argparse
+from dataclasses import dataclass, field
 from datetime import datetime, timezone
 import json
 import logging
@@ -991,6 +992,32 @@ def generate_operator_guidance(
     return res
 
 
+@dataclass
+class EvaluationState:
+    """Estado mutable compartido entre los bloques de reglas de SeverityEvaluator.evaluate()."""
+
+    impact: str
+    impact_reason: str
+    urgency: str
+    urgency_reason: str
+    priority: str
+    has_workaround: str
+    quant_metrics: dict[str, Any]
+    historial_reclasificacion: list[str] = field(default_factory=list)
+    is_closed: bool = False
+    title_raw: str = ""
+    is_reopened: bool = False
+    reopening_criterion_prefix: str = ""
+    is_planned: bool = False
+    planned_label: str = ""
+    is_zombie: bool = False
+    zombie_label: str = ""
+    is_local_departmental: bool = False
+    aging_escalated: bool = False
+    aging_criterion_prefix: str = ""
+    mins_open: Optional[int] = None
+
+
 class SeverityEvaluator:
     """Evaluates ITIL severity based on Impact and Urgency heuristics."""
 
@@ -1018,6 +1045,85 @@ class SeverityEvaluator:
         remedy_detail: Optional[dict[str, Any]] = None,
     ) -> dict[str, Any]:
         """Calculates suggested priority (P1-P4) and structured ITIL justification."""
+        state = self._build_base_state(ticket, epsilon_data, remedy_detail)
+        self._apply_sl_tag_rule(state, ticket, epsilon_data)
+        self._apply_reopening_rule(state, ticket)
+        self._detect_planned_and_zombie(state, ticket, epsilon_data, remedy_detail)
+        self._apply_planned_resolution_downgrade(state, ticket, epsilon_data)
+        self._apply_zombie_rule(state)
+        self._apply_aging_escalation(state, ticket, epsilon_data, reference_time)
+
+        is_high_priority = state.priority in ("P1", "P2")
+
+        original_raw = ticket.get("Prioridad") or ticket.get("prioridad")
+        disc_details = compute_discrepancy_details(original_raw, state.priority, reasons=[state.impact_reason, state.urgency_reason])
+        is_discrepancy = disc_details["es_discrepancia"]
+
+        proceso, proceso_negocio, dominio_tecnico = self._classify_process_multi_domain(ticket, epsilon_data)
+        criterio = self._determine_criterion(proceso, state.priority, state.impact, state.urgency, ticket, epsilon_data, state.quant_metrics)
+        if state.reopening_criterion_prefix:
+            criterio = state.reopening_criterion_prefix + criterio
+        if state.aging_criterion_prefix:
+            criterio = state.aging_criterion_prefix + criterio
+
+        sla_minutes = SLA_TARGET_MINUTES.get(state.priority, 240)
+
+        # Reglas de Oro 2 y 3 (orange-it-emergency-management): Gobernanza de Workarounds
+        if state.has_workaround == "Sí":
+            workaround_gobernanza = "Pendiente autorización IM-CSO (SL1 activa)"
+        elif state.has_workaround == "No":
+            workaround_gobernanza = "Sin workaround (Resolución directa requerida)"
+        else:
+            workaround_gobernanza = "No identificado"
+
+        return {
+            "prioridad_sugerida": state.priority,
+            "es_alta_prioridad": is_high_priority,
+            "es_discrepancia": is_discrepancy,
+            "discrepancia_delta": disc_details["delta"],
+            "discrepancia_gravedad": disc_details["gravedad"],
+            "discrepancia_motivo": disc_details["motivo"],
+            "aging_escalated": state.aging_escalated,
+            "es_planificada": state.is_planned,
+            "detalle_planificacion": state.planned_label,
+            "es_zombi": state.is_zombie,
+            "detalle_zombi": state.zombie_label,
+            "es_local_departamental": state.is_local_departmental,
+            "es_reapertura": state.is_reopened,
+            "evaluacion": {
+                "proceso": proceso,
+                "proceso_negocio": proceso_negocio,
+                "dominio_tecnico": dominio_tecnico,
+                "criterio": criterio,
+                "impacto": state.impact,
+                "impacto_justificacion": state.impact_reason,
+                "urgencia": state.urgency,
+                "urgencia_justificacion": state.urgency_reason,
+                "historial_reclasificacion": state.historial_reclasificacion,
+                "workaround": state.has_workaround,
+                "workaround_gobernanza": workaround_gobernanza,
+                "sla_objetivo_minutos": sla_minutes,
+                "metricas_cuantitativas": state.quant_metrics,
+                "es_discrepancia": is_discrepancy,
+                "discrepancia_delta": disc_details["delta"],
+                "discrepancia_gravedad": disc_details["gravedad"],
+                "discrepancia_motivo": disc_details["motivo"],
+                "aging_escalated": state.aging_escalated,
+                "es_planificada": state.is_planned,
+                "detalle_planificacion": state.planned_label,
+                "es_zombi": state.is_zombie,
+                "detalle_zombi": state.zombie_label,
+                "es_local_departamental": state.is_local_departmental,
+                "es_reapertura": state.is_reopened,
+            }
+        }
+
+    def _build_base_state(
+        self,
+        ticket: dict[str, Any],
+        epsilon_data: Optional[dict[str, Any]],
+        remedy_detail: Optional[dict[str, Any]],
+    ) -> "EvaluationState":
         impact, impact_reason, quant_metrics = self._evaluate_impact(ticket, epsilon_data)
         urgency, urgency_reason, has_workaround = self._evaluate_urgency(ticket, epsilon_data, remedy_detail=remedy_detail)
 
@@ -1030,67 +1136,102 @@ class SeverityEvaluator:
 
         priority = self._calculate_matrix(impact, urgency, has_workaround)
 
-        # Regla de Etiquetado Operativo Explícito (/SL1 y /SL2) en Nomenclatura de N1 (it-severity-matrix v2)
         title_raw = str(ticket.get("Descripción") or ticket.get("descripcion") or (epsilon_data.get("titulo") if epsilon_data else "") or "")
         status_raw = str(ticket.get("Estatus") or (epsilon_data.get("estadoActual") if epsilon_data else "") or "").lower()
         is_closed = "cerrad" in status_raw or "resuelt" in status_raw or "cancelad" in status_raw
-        if not is_closed:
-            if re.search(r"(?:^|/|\s|\|)SL1(?:/|\s|\||$|:)", title_raw, flags=re.IGNORECASE):
-                priority = "P1"
-                impact = "Alto"
-                impact_reason = "Etiquetado explícito /SL1 por N1 en apertura (Emergencia Crítica)."
-                historial_reclasificacion.append(f"Regla /SL1: Impacto -> Alto ({impact_reason})")
-                if urgency == "Baja":
-                    urgency = "Alta"
-                    urgency_reason = "Emergencia /SL1 activa en tratamiento prioritario."
-                    historial_reclasificacion.append(f"Regla /SL1: Urgencia -> Alta ({urgency_reason})")
-            elif re.search(r"(?:^|/|\s|\|)SL2(?:/|\s|\||$|:)", title_raw, flags=re.IGNORECASE) and priority not in ("P1", "P2"):
-                priority = "P2"
-                if impact == "Bajo":
-                    impact = "Medio"
-                    impact_reason = "Etiquetado explícito /SL2 por N1 (Incidencia Mayor / Pérdida de redundancia o degradación)."
-                    historial_reclasificacion.append(f"Regla /SL2: Impacto -> Medio ({impact_reason})")
 
+        return EvaluationState(
+            impact=impact,
+            impact_reason=impact_reason,
+            urgency=urgency,
+            urgency_reason=urgency_reason,
+            priority=priority,
+            has_workaround=has_workaround,
+            quant_metrics=quant_metrics,
+            historial_reclasificacion=historial_reclasificacion,
+            is_closed=is_closed,
+            title_raw=title_raw,
+        )
+
+    @staticmethod
+    def _apply_sl_tag_rule(state: "EvaluationState", ticket: dict[str, Any], epsilon_data: Optional[dict[str, Any]]) -> None:
+        # Regla de Etiquetado Operativo Explícito (/SL1 y /SL2) en Nomenclatura de N1 (it-severity-matrix v2)
+        if state.is_closed:
+            return
+        if re.search(r"(?:^|/|\s|\|)SL1(?:/|\s|\||$|:)", state.title_raw, flags=re.IGNORECASE):
+            state.priority = "P1"
+            state.impact = "Alto"
+            state.impact_reason = "Etiquetado explícito /SL1 por N1 en apertura (Emergencia Crítica)."
+            state.historial_reclasificacion.append(f"Regla /SL1: Impacto -> Alto ({state.impact_reason})")
+            if state.urgency == "Baja":
+                state.urgency = "Alta"
+                state.urgency_reason = "Emergencia /SL1 activa en tratamiento prioritario."
+                state.historial_reclasificacion.append(f"Regla /SL1: Urgencia -> Alta ({state.urgency_reason})")
+        elif re.search(r"(?:^|/|\s|\|)SL2(?:/|\s|\||$|:)", state.title_raw, flags=re.IGNORECASE) and state.priority not in ("P1", "P2"):
+            state.priority = "P2"
+            if state.impact == "Bajo":
+                state.impact = "Medio"
+                state.impact_reason = "Etiquetado explícito /SL2 por N1 (Incidencia Mayor / Pérdida de redundancia o degradación)."
+                state.historial_reclasificacion.append(f"Regla /SL2: Impacto -> Medio ({state.impact_reason})")
+
+    def _apply_reopening_rule(self, state: "EvaluationState", ticket: dict[str, Any]) -> None:
         # Regla Canónica de Incidencias Reabiertas (it-severity-matrix v2.4):
         # Transición de Resuelto/Cerrado a estado activo (Asignado/En Curso/Pendiente).
         # Factor agravante: Urgencia Alta, riesgo de recurrencia activa y preservación del envejecimiento operativo acumulativo.
-        is_reopened = bool(ticket.get("es_reapertura"))
-        reopening_criterion_prefix = ""
-        if not is_closed and is_reopened:
-            if urgency in ("Baja", "Media"):
-                urgency = "Alta"
-                urgency_reason = "Incidencia reabierta tras resolución previa (recurrencia activa sin solución definitiva). Factor agravante aplicado: Urgencia Alta."
-                historial_reclasificacion.append(f"Regla Reapertura: Urgencia -> Alta ({urgency_reason})")
-                priority = self._calculate_matrix(impact, urgency, has_workaround)
-            reopening_criterion_prefix = "Incidencia Reabierta (Recurrencia Activa) | "
+        state.is_reopened = bool(ticket.get("es_reapertura"))
+        if not state.is_closed and state.is_reopened:
+            if state.urgency in ("Baja", "Media"):
+                state.urgency = "Alta"
+                state.urgency_reason = "Incidencia reabierta tras resolución previa (recurrencia activa sin solución definitiva). Factor agravante aplicado: Urgencia Alta."
+                state.historial_reclasificacion.append(f"Regla Reapertura: Urgencia -> Alta ({state.urgency_reason})")
+                state.priority = self._calculate_matrix(state.impact, state.urgency, state.has_workaround)
+            state.reopening_criterion_prefix = "Incidencia Reabierta (Recurrencia Activa) | "
 
-        is_planned, planned_label = detect_planned_resolution(epsilon_data, ticket, remedy_detail=remedy_detail)
-        is_zombie, zombie_label = detect_zombie_ticket(epsilon_data, ticket)
+    @staticmethod
+    def _detect_planned_and_zombie(
+        state: "EvaluationState",
+        ticket: dict[str, Any],
+        epsilon_data: Optional[dict[str, Any]],
+        remedy_detail: Optional[dict[str, Any]],
+    ) -> None:
+        state.is_planned, state.planned_label = detect_planned_resolution(epsilon_data, ticket, remedy_detail=remedy_detail)
+        state.is_zombie, state.zombie_label = detect_zombie_ticket(epsilon_data, ticket)
 
+    @staticmethod
+    def _apply_planned_resolution_downgrade(state: "EvaluationState", ticket: dict[str, Any], epsilon_data: Optional[dict[str, Any]]) -> None:
         # Regla de Resolución Planificada (Seguimiento de Release P2 / it-severity-matrix v2.7):
         # Una incidencia con resolución planificada o pase acordado no constituye una emergencia P1 en vivo.
         # Se calibra la prioridad sugerida a P2 (Seguimiento de Release) salvo caída total de servicio no mitigada.
-        if is_planned and priority == "P1":
+        if state.is_planned and state.priority == "P1":
             desc_text = str(ticket.get("Descripción") or ticket.get("descripcion") or "")
             prob_text = str(epsilon_data.get("problema") if epsilon_data else "")
             full_text = f"{desc_text} {prob_text}".lower()
             has_total_outage = any(kw in full_text for kw in ["caída total", "caida total", "sin servicio", "corte total"])
             if not has_total_outage:
-                priority = "P2"
-                if urgency == "Alta":
-                    urgency = "Media"
-                    urgency_reason = f"Resolución planificada en ventana acordada ({planned_label}). Prioridad calibrada a P2, Urgencia reducida a Media por ausencia de caída total de servicio."
-                    historial_reclasificacion.append(f"Regla Resolución Planificada: Prioridad -> P2, Urgencia -> Media ({urgency_reason})")
+                state.priority = "P2"
+                if state.urgency == "Alta":
+                    state.urgency = "Media"
+                    state.urgency_reason = f"Resolución planificada en ventana acordada ({state.planned_label}). Prioridad calibrada a P2, Urgencia reducida a Media por ausencia de caída total de servicio."
+                    state.historial_reclasificacion.append(f"Regla Resolución Planificada: Prioridad -> P2, Urgencia -> Media ({state.urgency_reason})")
 
+    @staticmethod
+    def _apply_zombie_rule(state: "EvaluationState") -> None:
         # Regla de Tickets Zombi (Desincronización Jira / Remedy):
         # Si un ticket fue cancelado o resuelto en Jira, no constituye una emergencia viva.
         # Se fija prioridad técnica P3 con requerimiento de cierre administrativo en Remedy.
-        if is_zombie and priority in ("P1", "P2"):
-            priority = "P3"
-            urgency = "Baja"
-            urgency_reason = f"Ticket cancelado/resuelto en Jira ({zombie_label}). Requiere cierre administrativo formal en BMC Remedy."
-            historial_reclasificacion.append(f"Regla Ticket Zombi: Prioridad -> P3, Urgencia -> Baja ({urgency_reason})")
+        if state.is_zombie and state.priority in ("P1", "P2"):
+            state.priority = "P3"
+            state.urgency = "Baja"
+            state.urgency_reason = f"Ticket cancelado/resuelto en Jira ({state.zombie_label}). Requiere cierre administrativo formal en BMC Remedy."
+            state.historial_reclasificacion.append(f"Regla Ticket Zombi: Prioridad -> P3, Urgencia -> Baja ({state.urgency_reason})")
 
+    @staticmethod
+    def _apply_aging_escalation(
+        state: "EvaluationState",
+        ticket: dict[str, Any],
+        epsilon_data: Optional[dict[str, Any]],
+        reference_time: Optional[datetime],
+    ) -> None:
         # Regla Operativa de Aging Escalation:
         # P2 activa por >= 120 minutos sin workaround autorizado escala preventivamente a P1
         # Excepción 1: Incidencias con resolución planificada o ventana de pase acordada con negocio
@@ -1098,106 +1239,39 @@ class SeverityEvaluator:
         raw_date = ticket.get("Fecha de envío") or ticket.get("fecha_envio") or ""
         parsed_date = parse_incident_datetime(raw_date)
         sla_info = compute_emergency_sla_status(parsed_date, reference_time=reference_time)
-        mins_open = sla_info.get("minutos_desde_apertura")
+        state.mins_open = sla_info.get("minutos_desde_apertura")
 
-        aging_escalated = False
-        aging_criterion_prefix = ""
-        is_local_departmental = False
+        if state.is_closed or state.is_zombie:
+            return
 
-        if not is_closed and not is_zombie:
-            user_count = quant_metrics.get("usuarios")
-            site_count = quant_metrics.get("sedes")
-            is_single_site_or_none = site_count is None or site_count <= 1
-            has_few_users = user_count is not None and user_count <= 20
+        user_count = state.quant_metrics.get("usuarios")
+        site_count = state.quant_metrics.get("sedes")
+        is_single_site_or_none = site_count is None or site_count <= 1
+        has_few_users = user_count is not None and user_count <= 20
 
-            desc_text = str(ticket.get("Descripción") or ticket.get("descripcion") or "")
-            prob_text = str(epsilon_data.get("problema") if epsilon_data else "")
-            full_text = f"{desc_text} {prob_text}".lower()
-            has_total_outage = any(kw in full_text for kw in ["caída total", "caida total", "sin servicio", "corte total", "afectación global", "afectacion global"])
+        desc_text = str(ticket.get("Descripción") or ticket.get("descripcion") or "")
+        prob_text = str(epsilon_data.get("problema") if epsilon_data else "")
+        full_text = f"{desc_text} {prob_text}".lower()
+        has_total_outage = any(kw in full_text for kw in ["caída total", "caida total", "sin servicio", "corte total", "afectación global", "afectacion global"])
 
-            if is_single_site_or_none and has_few_users and not has_total_outage:
-                is_local_departmental = True
+        if is_single_site_or_none and has_few_users and not has_total_outage:
+            state.is_local_departmental = True
 
-            if is_planned:
-                aging_criterion_prefix = f"Resolución Planificada ({planned_label}) | "
-                urgency_reason = f"Resolución planificada en ventana acordada ({planned_label}). Exenta de escalado preventivo por envejecimiento a P1."
-                historial_reclasificacion.append(f"Regla Aging/Exención Planificada: {urgency_reason}")
-            elif priority == "P2" and has_workaround != "Sí" and mins_open is not None and mins_open >= 120:
-                if is_local_departmental:
-                    aging_criterion_prefix = f"Estancamiento Local (>120m en P2 - {mins_open}m) | "
-                    urgency_reason = f"Estancamiento operativo ({mins_open} min >= 120 min) en grupo resolutor. Prioridad acotada a P2 Local por alcance acotado ({user_count} usuarios en sede única)."
-                    historial_reclasificacion.append(f"Regla Aging/Estancamiento Local: {urgency_reason}")
-                else:
-                    priority = "P1"
-                    aging_escalated = True
-                    aging_criterion_prefix = f"Aging Escalation (>120m en P2 sin workaround - {mins_open}m) | "
-                    urgency_reason = f"Escalado operativo a P1 por tiempo transcurrido ({mins_open} min >= 120 min) sin mitigación ni workaround."
-                    historial_reclasificacion.append(f"Regla Aging Escalation: Prioridad -> P1 ({urgency_reason})")
-
-        is_high_priority = priority in ("P1", "P2")
-
-        original_raw = ticket.get("Prioridad") or ticket.get("prioridad")
-        disc_details = compute_discrepancy_details(original_raw, priority, reasons=[impact_reason, urgency_reason])
-        is_discrepancy = disc_details["es_discrepancia"]
-
-        proceso, proceso_negocio, dominio_tecnico = self._classify_process_multi_domain(ticket, epsilon_data)
-        criterio = self._determine_criterion(proceso, priority, impact, urgency, ticket, epsilon_data, quant_metrics)
-        if reopening_criterion_prefix:
-            criterio = reopening_criterion_prefix + criterio
-        if aging_criterion_prefix:
-            criterio = aging_criterion_prefix + criterio
-
-        sla_minutes = SLA_TARGET_MINUTES.get(priority, 240)
-
-        # Reglas de Oro 2 y 3 (orange-it-emergency-management): Gobernanza de Workarounds
-        if has_workaround == "Sí":
-            workaround_gobernanza = "Pendiente autorización IM-CSO (SL1 activa)"
-        elif has_workaround == "No":
-            workaround_gobernanza = "Sin workaround (Resolución directa requerida)"
-        else:
-            workaround_gobernanza = "No identificado"
-
-        return {
-            "prioridad_sugerida": priority,
-            "es_alta_prioridad": is_high_priority,
-            "es_discrepancia": is_discrepancy,
-            "discrepancia_delta": disc_details["delta"],
-            "discrepancia_gravedad": disc_details["gravedad"],
-            "discrepancia_motivo": disc_details["motivo"],
-            "aging_escalated": aging_escalated,
-            "es_planificada": is_planned,
-            "detalle_planificacion": planned_label,
-            "es_zombi": is_zombie,
-            "detalle_zombi": zombie_label,
-            "es_local_departamental": is_local_departmental,
-            "es_reapertura": is_reopened,
-            "evaluacion": {
-                "proceso": proceso,
-                "proceso_negocio": proceso_negocio,
-                "dominio_tecnico": dominio_tecnico,
-                "criterio": criterio,
-                "impacto": impact,
-                "impacto_justificacion": impact_reason,
-                "urgencia": urgency,
-                "urgencia_justificacion": urgency_reason,
-                "historial_reclasificacion": historial_reclasificacion,
-                "workaround": has_workaround,
-                "workaround_gobernanza": workaround_gobernanza,
-                "sla_objetivo_minutos": sla_minutes,
-                "metricas_cuantitativas": quant_metrics,
-                "es_discrepancia": is_discrepancy,
-                "discrepancia_delta": disc_details["delta"],
-                "discrepancia_gravedad": disc_details["gravedad"],
-                "discrepancia_motivo": disc_details["motivo"],
-                "aging_escalated": aging_escalated,
-                "es_planificada": is_planned,
-                "detalle_planificacion": planned_label,
-                "es_zombi": is_zombie,
-                "detalle_zombi": zombie_label,
-                "es_local_departamental": is_local_departmental,
-                "es_reapertura": is_reopened,
-            }
-        }
+        if state.is_planned:
+            state.aging_criterion_prefix = f"Resolución Planificada ({state.planned_label}) | "
+            state.urgency_reason = f"Resolución planificada en ventana acordada ({state.planned_label}). Exenta de escalado preventivo por envejecimiento a P1."
+            state.historial_reclasificacion.append(f"Regla Aging/Exención Planificada: {state.urgency_reason}")
+        elif state.priority == "P2" and state.has_workaround != "Sí" and state.mins_open is not None and state.mins_open >= 120:
+            if state.is_local_departmental:
+                state.aging_criterion_prefix = f"Estancamiento Local (>120m en P2 - {state.mins_open}m) | "
+                state.urgency_reason = f"Estancamiento operativo ({state.mins_open} min >= 120 min) en grupo resolutor. Prioridad acotada a P2 Local por alcance acotado ({user_count} usuarios en sede única)."
+                state.historial_reclasificacion.append(f"Regla Aging/Estancamiento Local: {state.urgency_reason}")
+            else:
+                state.priority = "P1"
+                state.aging_escalated = True
+                state.aging_criterion_prefix = f"Aging Escalation (>120m en P2 sin workaround - {state.mins_open}m) | "
+                state.urgency_reason = f"Escalado operativo a P1 por tiempo transcurrido ({state.mins_open} min >= 120 min) sin mitigación ni workaround."
+                state.historial_reclasificacion.append(f"Regla Aging Escalation: Prioridad -> P1 ({state.urgency_reason})")
 
     @staticmethod
     def _score_patterns(pattern: re.Pattern, text: str) -> int:
