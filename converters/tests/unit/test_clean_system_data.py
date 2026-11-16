@@ -68,6 +68,9 @@ def test_collect_and_execute_clean_in_temp_dir(tmp_path):
     log_file = storage_dir / "logs" / "ingestion_audit.log"
     log_file.write_text("2026-11-03 line 1\n2026-11-03 line 2\n")
 
+    teams_audit_file = storage_dir / "output" / "teams_delivery_audit.json"
+    teams_audit_file.write_text('[{"action": "NOTIFICACION_DIRECCION"}]')
+
     # Create protected files
     pap_file = storage_dir / "scheduled_changes_pap.json"
     pap_file.write_text('{"crq": 123}')
@@ -79,7 +82,7 @@ def test_collect_and_execute_clean_in_temp_dir(tmp_path):
     dry_result = clean_system_data.execute_clean(storage_dir, dry_run=True)
     assert dry_result["dry_run"] is True
     assert dry_result["deleted_count"] == 7  # csv, massive, postmortem, archive, error, cache, pptx
-    assert dry_result["reset_count"] == 5
+    assert dry_result["reset_count"] == 6
     assert dry_result["protected_count"] == 2
     assert csv_file.exists()  # Not deleted in dry run
 
@@ -87,7 +90,7 @@ def test_collect_and_execute_clean_in_temp_dir(tmp_path):
     real_result = clean_system_data.execute_clean(storage_dir, dry_run=False)
     assert real_result["dry_run"] is False
     assert real_result["deleted_count"] == 7
-    assert real_result["reset_count"] == 5
+    assert real_result["reset_count"] == 6
 
     # Check deleted files are gone
     assert not csv_file.exists()
@@ -122,4 +125,5 @@ def test_collect_and_execute_clean_in_temp_dir(tmp_path):
 
     assert json.loads(msg_file.read_text()) == {}
     assert log_file.read_text() == ""
+    assert json.loads(teams_audit_file.read_text()) == []
 

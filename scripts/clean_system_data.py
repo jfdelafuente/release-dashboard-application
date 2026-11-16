@@ -10,12 +10,14 @@ Acciones realizadas:
 2. Elimina los ficheros *-massive.json y *-postmortem.json en data/output/
 3. Vacía data/archive/ y data/errors/
 4. Vacía la caché de IA corporativa data/.epsilon_cache/
-5. Elimina los informes generados *.pptx en data/reports/
-6. Trunca a vacío data/logs/ingestion_audit.log
-7. Resetea data/agent_executive_messages.json a {}
-8. Resetea data/output/index.json a estructura vacía
-9. Resetea data/output/high_priority_notifications.json a catálogo vacío
-10. Resetea data/output/ingestion_audit_summary.json a estructura vacía
+5. Vacía la caché de detalle Remedy data/.remedy_cache/
+6. Elimina los informes generados *.pptx en data/reports/
+7. Trunca a vacío data/logs/ingestion_audit.log
+8. Resetea data/agent_executive_messages.json a {}
+9. Resetea data/output/index.json a estructura vacía
+10. Resetea data/output/high_priority_notifications.json a catálogo vacío
+11. Resetea data/output/ingestion_audit_summary.json a estructura vacía
+12. Resetea data/output/teams_delivery_audit.json a historial vacío ([])
 
 Ficheros PROTEGIDOS (NUNCA se tocan):
 - data/scheduled_changes_pap.json (Catálogo de Trabajos Programados / CRQs Remedy)
@@ -150,14 +152,15 @@ def collect_items_to_clean(storage_dir: Path, keep_cache: bool = False) -> Tuple
                 if p.is_file() and p.name not in PROTECTED_FILENAMES:
                     files_to_delete.append(p)
 
-    # 4. data/.epsilon_cache/ -> vaciar salvo que se pida conservar
-    cache_dir = storage_dir / '.epsilon_cache'
-    if cache_dir.exists():
-        for p in cache_dir.glob('*.json'):
-            if keep_cache:
-                files_protected.append(p)
-            else:
-                files_to_delete.append(p)
+    # 4. data/.epsilon_cache/ y data/.remedy_cache/ -> vaciar salvo que se pida conservar
+    for cache_name in ('.epsilon_cache', '.remedy_cache'):
+        cache_dir = storage_dir / cache_name
+        if cache_dir.exists():
+            for p in cache_dir.glob('*.json'):
+                if keep_cache:
+                    files_protected.append(p)
+                else:
+                    files_to_delete.append(p)
 
     # 5. data/reports/ -> eliminar *.pptx
     reports_dir = storage_dir / 'reports'
@@ -174,6 +177,11 @@ def collect_items_to_clean(storage_dir: Path, keep_cache: bool = False) -> Tuple
     log_file = storage_dir / 'logs' / 'ingestion_audit.log'
     if log_file.exists():
         files_to_reset.append(log_file)
+
+    # 7b. data/output/teams_delivery_audit.json -> resetear a historial vacío
+    teams_audit_file = storage_dir / 'output' / 'teams_delivery_audit.json'
+    if teams_audit_file.exists():
+        files_to_reset.append(teams_audit_file)
 
     # 8. Ficheros protegidos en la raíz de data/
     pap_file = storage_dir / 'scheduled_changes_pap.json'
@@ -249,6 +257,12 @@ def execute_clean(storage_dir: Path, dry_run: bool = False, keep_cache: bool = F
             f.write("")  # Truncar a vacío
         reset_count += 1
 
+        teams_audit_file = storage_dir / 'output' / 'teams_delivery_audit.json'
+        teams_audit_file.parent.mkdir(parents=True, exist_ok=True)
+        with open(teams_audit_file, 'w', encoding='utf-8') as f:
+            json.dump([], f, indent=2, ensure_ascii=False)
+        reset_count += 1
+
     else:
         deleted_count = len(to_delete)
         reset_count = len(to_reset)
@@ -282,7 +296,7 @@ def main():
     parser.add_argument(
         '--keep-cache',
         action='store_true',
-        help="Conservar la caché de Epsilon (.epsilon_cache/) en lugar de vaciarla."
+        help="Conservar las cachés de Epsilon (.epsilon_cache/) y Remedy (.remedy_cache/) en lugar de vaciarlas."
     )
     parser.add_argument(
         '--storage-dir',

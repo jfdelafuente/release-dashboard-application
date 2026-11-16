@@ -1,64 +1,67 @@
 # Guía Operativa: Redacción y Despliegue de Notificaciones Ejecutivas de Incidencias
 
-Esta guía describe el procedimiento paso a paso que debes seguir **cada vez que recibas un nuevo fichero CSV de incidencias Remedy**, para redactar las comunicaciones oficiales de alta prioridad para Dirección (P1, P2 y discrepancias) y publicarlas de forma 100% segura y coherente en producción.
+Esta guía describe el procedimiento paso a paso para gestionar la ingesta de incidencias Remedy (tanto por sincronización API automática como por carga de ficheros CSV), redactar las comunicaciones oficiales de alta prioridad para Dirección (`P1`, `P2` y discrepancias) mediante el agente **`incident-reporter`** y publicarlas de forma 100% segura y coherente en producción.
 
 ---
 
 ## 🎯 Principios y Reglas Clave
 
-1. **El operador manda sobre los datos (Single Source of Truth):**
-   * El CSV se procesa **primero en local** para redactar y revisar los mensajes sin prisa.
-   * La publicación en producción es una **acción controlada y desacoplada** de la redacción.
-2. **Estándar Ejecutivo Estricto:**
-   * **Mensaje para Dirección:** Exactamente **1 único párrafo**, máximo **90 palabras**.
-   * **Versión breve (SMS / Guardia):** Máximo **30 palabras**.
-   * **Regla Anti-Alucinación:** No inventar horas, causas técnicas ni cifras de afectados no presentes en el ticket.
-3. **Persistencia Acumulativa:**
-   * Todos los mensajes redactados por la IA se guardan de por vida en `data/agent_executive_messages.json` para que nunca se pierdan ni se sobreescriban al subir nuevos ficheros.
+1. **Separación clara entre Motor de Triaje (Producción) y Agente Redactor (Local):**
+   * En el **VPS de producción (`:8081`)** corre el motor determinista ITIL, la sincronización periódica con Remedy/MonTMC y el proxy técnico `/api/epsilon/` (Resumen IA técnico de Epsilon), pero **no** reside el asistente Antigravity ni el agente redactor `incident-reporter`.
+   * Las comunicaciones ejecutivas definitivas para Dirección se redactan y validan en **local** (con supervisión humana) y se sincronizan al almacén persistente del servidor.
+2. **Estándar Ejecutivo Estricto (`incident-reporter` v1.5.0):**
+   * **Fases soportadas (4):** `apertura`, `seguimiento`, `reapertura` y `cierre` *(nota: las pestañas del editor visual de la consola cubren `apertura`, `seguimiento` y `cierre`; la fase `reapertura` se persiste desde la skill o mediante `update_agent_message.py --phase reapertura`)*.
+   * **Bloqueo de Falso Cierre (`LIFECYCLE_STATUS_MISMATCH`):** Está terminantemente prohibido redactar o publicar una fase `cierre` mientras el ticket siga activo en Remedy (`Asignado`, `En curso`, `Pendiente`) o mantenga afectación parcial en alguna sede.
+   * **Mensaje para Dirección (versión completa):** Exactamente **1 único párrafo** (sin saltos de línea ni viñetas), máximo **90 palabras**.
+   * **Versión aún más breve (SMS / Guardia):** Exactamente **1 sola línea**, máximo **30 palabras**.
+   * **Regla Anti-Alucinación y Anti-PII:** Prohibido inventar horas estimadas de resolución, causas raíz o métricas no respaldadas por el ticket, y prohibido incluir datos personales (nombres propios, MSISDN, DNI).
+3. **Fuente de Verdad del Almacén (`Git` ➔ `VPS`):**
+   * Todos los mensajes oficiales validados se acumulan de forma incremental en `data/agent_executive_messages.json` ante nuevas ingestas locales.
+   * Al ejecutar `scripts/deploy-production.ps1`, la versión versionada en Git de `agent_executive_messages.json`, `high_priority_notifications.json` y `teams_channels_config.json` **sobrescribe (`cp -f`)** las copias de `/infocodes/var/storage/release-dashboard/` en el VPS. Por ello, `data/agent_executive_messages.json` en Git es siempre la fuente de verdad canónica.
 
 ---
 
 ## 🗺️ Mapa Visual de Procesos
 
-### ESCENARIO 1: Flujo Habitual (Local Primero -> Producción)
+### ESCENARIO 1: Flujo Habitual (Preparación en Local ➔ Publicación en Producción)
 
 ```mermaid
 flowchart TD
-    subgraph E1_LOCAL["1. Entorno Local (:8080) [Con Skill y Asistente IA]"]
-        E1_A["Subir CSV (web local o data/input/)"] --> E1_B["Evaluación ITIL y detección de pendientes"]
-        E1_B --> E1_C["Skill incident-executive-notifications<br/>(Redacta mensajes oficiales)"]
-        E1_C --> E1_D["Persistencia local en<br/>data/agent_executive_messages.json"]
+    subgraph E1_LOCAL["1. Entorno Local (:8080) [Con Agente incident-reporter]"]
+        E1_A["Sincronizar API Remedy o Convertir CSV"] --> E1_B["Evaluación ITIL (high_priority_notifications.json)"]
+        E1_B --> E1_C["Skill incident-executive-notifications<br/>(Ejecuta escaneo + incident-reporter redacta)"]
+        E1_C --> E1_D["Persistencia acumulativa en<br/>data/agent_executive_messages.json"]
     end
-    subgraph E1_PROD["2. Servidor de Producción (:8081) [Sin Skill ni IA]"]
-        E1_E["Subida CSV por web de producción"] --> E1_F["Despliegue de almacén (deploy-production.ps1)"]
-        E1_F --> E1_G["Dashboard en Vivo: 100% Oficiales"]
+    subgraph E1_PROD["2. Servidor de Producción (:8081) [Motor ITIL + Proxy Epsilon + Teams]"]
+        E1_E["deploy-production.ps1<br/>(Copia almacén y catálogo al VPS con cp -f)"] --> E1_F["Consola de Triaje en Vivo: 100% Oficiales"]
+        E1_F --> E1_G["Difusión 1-Clic a Microsoft Teams<br/>(Dirección / War Room / Work Log / Zombi / Relevo)"]
     end
     E1_D --> E1_E
 ```
 
 ---
 
-### ESCENARIO 2: Subida Directa por Web en Producción
+### ESCENARIO 2: Entrada Directa en Producción (Cron API MonTMC cada 15 min o Subida CSV Web)
 
 ```mermaid
 flowchart TD
-    subgraph E2_PROD_INI["Fase A: Servidor Producción (:8081) [¡Sin Skill ni IA!]"]
-        E2_A["Operador sube CSV por formulario web"] --> E2_B["Servidor procesa CSV y calcula severidad"]
-        E2_B --> E2_C{"¿Existe en almacén persistente?"}
-        E2_C -- Sí --> E2_D["Muestra texto oficial existente"]
-        E2_C -- No --> E2_E["Queda en estado 'PENDIENTE'<br/>(¡En prod NO hay skill para redactarlo!)"]
+    subgraph E2_PROD_INI["Fase A: Servidor Producción (:8081) [Sin Agente Redactor incident-reporter]"]
+        E2_A["Cron API Remedy (cada 15 min)<br/>o Subida CSV Web (Shift+U)"] --> E2_B["Motor procesa tickets, consulta /api/epsilon/<br/>y calcula severidad ITIL"]
+        E2_B --> E2_C{"¿Existe en agent_executive_messages.json?"}
+        E2_C -- Sí --> E2_D["Muestra texto OFICIAL existente"]
+        E2_C -- No --> E2_E["Queda en estado 'PENDIENTE'<br/>(Operador puede usar '✨ Sugerir Borrador IA' en su navegador)"]
     end
 
-    subgraph E2_LOCAL["Fase B: Resolución en Entorno Local [Con Skill e IA]"]
-        E2_F["Copiar CSV al entorno local (data/input/)"] --> E2_G["Ejecutar Skill incident-executive-notifications<br/>(Agente redacta tickets pendientes)"]
+    subgraph E2_LOCAL["Fase B: Consolidación Oficial en Local [Con Antigravity]"]
+        E2_F["Sincronizar API / CSV en local"] --> E2_G["Activar skill incident-executive-notifications<br/>(incident-reporter redacta pendientes)"]
         E2_G --> E2_H["Guardar en data/agent_executive_messages.json"]
     end
 
     subgraph E2_PROD_FIN["Fase C: Sincronización al VPS"]
-        E2_I["deploy-production.ps1<br/>(Sincroniza almacén persistente al VPS)"] --> E2_J["Dashboard en Vivo:<br/>Todos los tickets pasan a OFICIALES"]
+        E2_I["deploy-production.ps1<br/>(Sincroniza almacén persistente al VPS)"] --> E2_J["Consola en Vivo:<br/>Todos los tickets pasan a OFICIALES para todo el equipo"]
     end
 
-    E2_E -.->|"Requiere intervención local"| E2_F
+    E2_E -.->|"Consolidación global en Git"| E2_F
     E2_H --> E2_I
 ```
 
@@ -66,236 +69,164 @@ flowchart TD
 
 ## 🛠️ Procedimiento Paso a Paso
 
-### ESCENARIO 1: Flujo Habitual (Preparación en Local -> Publicación en Producción)
+### ESCENARIO 1: Flujo Habitual (Preparación en Local ➔ Publicación en Producción)
 
 #### FASE 1: Entorno Local (Preparación y Redacción)
 
-#### Paso 1: Ingesta del nuevo CSV en Local (Elige una opción)
+#### Paso 1: Ingesta de incidencias en Local (Elige una opción)
 
-* **Opción A (Recomendada: A través del Formulario Web Local):**
-  1. Asegúrate de tener arrancado el servidor local: `python serve_app.py` (puerto `8080`).
-  2. Abre en tu navegador el dashboard local de incidencias masivas:  
-     **[http://localhost:8080/dashboards/massive-incidents/](http://localhost:8080/dashboards/massive-incidents/)**  
-     *(o el Portal Central: [http://localhost:8080/dashboards/portal/](http://localhost:8080/dashboards/portal/))*.
-  3. En la barra superior, haz clic en **"Seleccionar archivo"** (o arrastra el CSV).
-  4. La aplicación web local automáticamente:
-     * Guarda el CSV en `data/input/`.
-     * Convierte el archivo a JSON masivo en `data/output/`.
-     * Dispara en segundo plano `evaluate_incident_notifications.py` actualizando el catálogo de alertas.
-  * *¡Listo! Si usas esta opción, puedes saltar directamente al Paso 3.*
+* **Opción A (Sincronización incremental desde API Remedy / MonTMC):**
+  ```powershell
+  python converters/cli/sync_montmc_incidents.py --dias 3
+  ```
+  Descarga las incidencias recientes desde MonTMC, actualiza de forma no destructiva el dataset masivo local (`data/output/index.json`) y lanza automáticamente `evaluate_incident_notifications.py`.
 
-* **Opción B (Alternativa manual por terminal):**
-  1. Copia tu nuevo archivo CSV a la carpeta:
-     ```text
-     data/input/CS-Informe incidencias P1,  P2 y P3 - 2026 - <FECHA>.csv
-     ```
-  2. Ejecuta manualmente la evaluación de prioridades:
+* **Opción B (A través del Formulario Web Local o Consola de Triaje):**
+  1. Arranca el servidor local si no está activo: `python serve_app.py` (puerto `8080`).
+  2. Abre la Consola de Triaje (`http://localhost:8080/dashboards/emergency-triage-console/` y pulsa `Shift + U`) o el dashboard de Incidencias Masivas (`http://localhost:8080/dashboards/massive-incidents/`).
+  3. Selecciona o arrastra el archivo CSV exportado de Remedy. La aplicación guarda el CSV en `data/input/`, convierte el CSV a JSON actualizando `data/output/index.json` y dispara `evaluate_incident_notifications.py`.
+
+* **Opción C (Manual por terminal con fichero CSV):**
+  1. Copia el CSV a `data/input/CS-Informe incidencias P1,  P2 y P3 - 2026 - <FECHA>.csv`.
+  2. Convierte el CSV a JSON, actualiza `data/output/index.json` y ejecuta la evaluación de notificaciones:
      ```powershell
-     python converters/evaluate_incident_notifications.py
+     python converters/cli/upload_csv.py "data/input/CS-Informe incidencias P1,  P2 y P3 - 2026 - <FECHA>.csv" massive . --wait-eval
      ```
+     > **Nota importante:** No ejecutes `evaluate_incident_notifications.py` en solitario tras copiar un CSV sin pasar antes por `upload_csv.py` (o `convert_incidents.py`), ya que `evaluate_incident_notifications.py` **no lee ficheros CSV**, sino únicamente el último JSON registrado en `data/output/index.json`. *(Si tras convertir deseas generar además borradores provisionales `[BORRADOR PROVISIONAL]`, ejecuta después `python converters/cli/evaluate_incident_notifications.py --auto-draft`).*
 
-#### Paso 2: Escanear incidencias pendientes de redacción
-Comprueba qué tickets de alta prioridad no disponen aún de mensaje oficial:
+#### Paso 2: Escanear incidencias pendientes de redacción *(Opcional — Solo inspección previa por terminal)*
+> [!NOTE]
+> **Este paso es opcional si vas a ejecutar a continuación el Paso 3.**  
+> La skill `incident-executive-notifications` (Paso 3) ya ejecuta internamente `scan_pending_incidents.py` de forma automática tanto al arrancar como al verificar el cierre (`0 pendientes`). Ejecútalo manualmente solo si deseas consultar por terminal qué hay pendiente antes de invocar al agente:
+
 ```powershell
 python .agents/skills/incident-executive-notifications/scripts/scan_pending_incidents.py
 ```
-*Si faltan tickets por redactar, el script listará los IDs, sistemas y el estado de enriquecimiento de Epsilon IA.*
 
-#### Paso 3: Invocar la Skill de Asistente (Redacción IA)
+* **Alcance real del escáner:** `scan_pending_incidents.py` comprueba únicamente qué tickets activos carecen de comunicado oficial de **`apertura`** en `data/agent_executive_messages.json` (los borradores `--auto-draft` siguen figurando como pendientes hasta validarse). Si un ticket **ya tenía `apertura`** y requiere ahora un **`seguimiento`**, **`reapertura`** o **`cierre`**, el escáner mostrará `0 pendientes`; indícale al agente en el Paso 3 el ID del ticket y la fase que necesitas actualizar (o apóyate en `review_incident_triage.py --all`).
+
+#### Paso 3: Invocar la Skill del Agente (`incident-reporter`)
 Pide a Antigravity en el chat:
-> *"He cargado un nuevo CSV de incidencias. Activa la skill incident-executive-notifications para redactar las comunicaciones oficiales pendientes."*
+> *"He actualizado las incidencias. Activa la skill `incident-executive-notifications` para redactar las comunicaciones oficiales pendientes."*
+> *(Para actualizaciones posteriores de un ticket concreto añade, por ejemplo: "...y redacta un `seguimiento` / `reapertura` / `cierre` para `INC000004XXXXXX`").*
 
 El asistente:
-1. Inspeccionará los datos técnicos y resúmenes de Epsilon IA de cada ticket pendiente.
-2. Adoptará el rol `incident-reporter` y redactará los dos niveles obligatorios ($\le 90$ palabras monopárrafo y $\le 30$ palabras breve).
-3. Guardará automáticamente las salidas validadas en `data/agent_executive_messages.json` usando `update_agent_message.py`.
+1. Ejecutará `scan_pending_incidents.py` e inspeccionará los datos objetivos de Remedy y el Resumen IA de Epsilon de cada ticket, aplicando las reglas de triaje y calibración (`it-severity-matrix` v2.7.0, `orange-it-emergency-management` v2.6.0 e `incident-triage-review` v1.1.0).
+2. Adoptará el rol **`incident-reporter`** y redactará la fase correspondiente (`apertura`, `seguimiento`, `reapertura` o `cierre`) en los dos niveles estrictos ($\le 90$ palabras monopárrafo y $\le 30$ palabras en una línea).
+3. Persistirá automáticamente cada mensaje validado en `data/agent_executive_messages.json` mediante `converters/cli/update_agent_message.py`, regenerará `data/output/high_priority_notifications.json` y verificará que el escáner quede en `0 pendientes`.
 
-#### Paso 4: Revisión de Textos y Validación Humana (*Human-in-the-Loop*)
-1. El asistente te presentará en el chat el resumen de todos los mensajes generados.
-2. Si deseas ajustar manualmente la redacción de alguna incidencia concreta:
+#### Paso 4: Revisión Humana (*Human-in-the-Loop*) y Auditoría de Triaje
+1. Revisa en el chat el resumen de los mensajes generados. Si deseas ajustar manualmente alguno:
    ```powershell
-   python converters/cli/update_agent_message.py --id INC000004XXXXXX --phase apertura --raw "**Mensaje para Dirección (versión completa):**
-   Tu nuevo texto formal aquí...
+   python converters/cli/update_agent_message.py --id INC000004XXXXXX --phase seguimiento --raw "**Mensaje para Dirección (versión completa):**
+   Tu nuevo texto formal en un único párrafo aquí...
 
    **Versión aún más breve:**
-   P1: Alerta breve ajustada."
+   P1 INC000004XXXXXX: Alerta breve ajustada en una sola línea."
    ```
-3. Verifica que el escáner informe que todo está listo:
+2. Audita que no existan incoherencias de ciclo de vida (como falsos cierres o discrepancias sin calibrar):
    ```powershell
-   python .agents/skills/incident-executive-notifications/scripts/scan_pending_incidents.py
+   python .agents/skills/incident-triage-review/scripts/review_incident_triage.py --all
    ```
-   *(Debe mostrar: `✅ Todas las incidencias activas disponen de mensajes ejecutivos oficiales`)*
 
 ---
 
 #### FASE 2: Servidor de Producción (Publicación y Sincronización)
 
-Una vez que los mensajes y los datos están validados en local, sigue este orden para evitar desincronizaciones:
+#### Paso 5: Verificar la alineación del dataset local antes de desplegar
+> [!IMPORTANT]
+> **Cómo sincroniza `deploy-production.ps1` los datos al VPS (`cp -f`):**  
+> El script de despliegue copia forzosamente (`cp -f`) tu `data/agent_executive_messages.json` y tu `data/output/high_priority_notifications.json` locales hacia `/infocodes/var/storage/release-dashboard/` en el VPS.  
+> * **Nunca despliegues con un `high_priority_notifications.json` local vacío o antiguo** (por ejemplo, si `data/output/index.json` apunta a `test-massive.json`), o sobrescribirás temporalmente las alertas activas del servidor hasta el próximo ciclo del cron. Asegúrate de haber ejecutado antes el Paso 1 en local.
+> * **Si trabajas con un CSV puntual exportado** (en lugar de la sincronización API de Remedy), recuerda subir ese mismo CSV en la web de producción **después** (o además) del despliegue si también necesitas actualizar los paneles generales de Incidencias Masivas en el VPS.
 
-#### Paso 5: Subir el CSV en la web de producción
-1. Abre tu navegador y accede al dashboard de incidencias masivas en producción:
-   **[http://infocodes.si.orange.es:8081/dashboards/massive-incidents/](http://infocodes.si.orange.es:8081/dashboards/massive-incidents/)**
-2. Haz clic en **"Seleccionar archivo"** y sube el mismo fichero CSV que procesaste en local.
-3. Espera a que termine la barra de carga y la conversión a JSON en el servidor.
-
-#### Paso 6: Desplegar y sincronizar el almacén al servidor
-Ejecuta el script de despliegue desde PowerShell:
+#### Paso 6: Desplegar y sincronizar el almacén al VPS
+Haz commit de los datos actualizados en la rama `production` y ejecuta el script oficial de despliegue desde PowerShell:
 ```powershell
-powershell -ExecutionPolicy Bypass -File scripts/deploy-production.ps1 -AgentsLibraryPath . -SkipPush
+powershell -ExecutionPolicy Bypass -File scripts/deploy-production.ps1
 ```
-*(Si deseas subir además los commits a Git, retira el flag `-SkipPush`)*.
+*(Si únicamente has actualizado mensajes ejecutivos y no necesitas regenerar el catálogo de agentes desde `biblioteca-agentes`, puedes abreviar con `-SkipCatalogBuild`).*
 
-**¿Qué hace este script en este paso?**
-* Empaqueta el runtime y los catálogos actualizados.
-* Sube el paquete al servidor VPS (`10.132.26.96`).
-* **Sincroniza `agent_executive_messages.json`** y `high_priority_notifications.json` en el almacenamiento persistente `/infocodes/var/storage/release-dashboard/`.
-* Reinicia el backend y realiza las comprobaciones de salud HTTP (todas en `200 OK`).
+> [!WARNING]
+> **No utilices `-AgentsLibraryPath .` en el despliegue habitual.**  
+> El script lee por defecto la biblioteca canónica `C:\Users\jose.delafuente\Claude\Projects\biblioteca-agentes`. Apuntar a `.` excluiría agentes de otros dominios (como `orange-brand-generator`) e incluiría skills externas de terceros instaladas en el proyecto.
 
-#### Paso 7: Verificación en Vivo
-Accede al portal y comprueba que la campana de notificaciones y los modales ejecutivos muestran los textos redactados:
-* **Portal Principal:** [http://infocodes.si.orange.es:8081/dashboards/portal/](http://infocodes.si.orange.es:8081/dashboards/portal/)
-* **Incidencias Masivas:** [http://infocodes.si.orange.es:8081/dashboards/massive-incidents/](http://infocodes.si.orange.es:8081/dashboards/massive-incidents/)
-* **Consola de Emergencias IT:** [http://infocodes.si.orange.es:8081/dashboards/emergency-triage-console/](http://infocodes.si.orange.es:8081/dashboards/emergency-triage-console/)
-  * En la tarjeta de detalle de cada incidencia, el Incident Manager puede utilizar el botón **`📢 Enviar [Apertura/Seguimiento/Cierre] a Teams`** para difundir directamente el comunicado oficial validado hacia el canal de Dirección IT.
+**¿Qué sincroniza este script en `/infocodes/var/storage/release-dashboard/`?**
+* `agent_executive_messages.json` (almacén acumulativo de mensajes oficiales).
+* `output/high_priority_notifications.json` (catálogo evaluado para la consola).
+* `teams_channels_config.json` (canales y enrutamiento de acciones hacia Microsoft Teams).
+* `output/agents_catalog.json`, `scheduled_changes_pap.json` y `resumen_incidencia_epsilon.md`.
+
+*(Tras completar el despliegue, si en el VPS entraron novedades de Remedy durante los últimos minutos, basta con pulsar **"Sincronizar Remedy"** en la consola o esperar al cron de 15 min: el servidor reevaluará respetando el nuevo `agent_executive_messages.json` recién subido).*
+
+#### Paso 7: Verificación en Vivo y Difusión por Teams
+Comprueba las vistas en producción:
+* **Consola de Emergencias IT:** `http://infocodes.si.orange.es:8081/dashboards/emergency-triage-console/`
+* **Incidencias Masivas:** `http://infocodes.si.orange.es:8081/dashboards/massive-incidents/`
+* **Portal Principal:** `http://infocodes.si.orange.es:8081/dashboards/portal/`
+
+Desde la Consola de Emergencias, el Incident Manager dispone del botón **📣 Notificación Dirección** para publicar la tarjeta Adaptive Card validada directamente en el canal de Microsoft Teams asignado a Dirección.
 
 ---
 
-### ESCENARIO 2: Subida Directa del CSV a través del Formulario Web en Producción
+### ESCENARIO 2: Entrada Directa de Tickets Nuevos en Producción
 
-Este escenario ocurre cuando un operador o usuario **sube un nuevo CSV directamente desde el formulario web de producción** ([http://infocodes.si.orange.es:8081](http://infocodes.si.orange.es:8081)) antes de que los mensajes hayan sido procesados en local.
+Ocurre cuando el cron automático cada 15 min (`sync-remedy-cron.sh`) detecta una avería nueva en Remedy o cuando un operador sube un CSV directamente en `http://infocodes.si.orange.es:8081` antes de pasar por el entorno local.
 
 > [!IMPORTANT]
-> **En el servidor de producción NO existen skills ni agentes de IA.**
-> El VPS de producción (`10.132.26.96`) opera de manera puramente determinista (Python y Nginx). No tiene conexión a modelos de lenguaje (LLM), no dispone del asistente Antigravity, ni tiene desplegada la carpeta de skills (`.agents/`).
-> Por este motivo, **la subida web en producción por sí sola NUNCA redacta comunicaciones oficiales**. Su único cometido es convertir el CSV, evaluar la severidad ITIL por reglas fijas y consultar si los tickets ya existen en el almacén persistente.
+> **¿Qué IA y qué endpoints existen en Producción (`:8081`) frente a Local (`:8080`)?**
+> * **SÍ existe `/api/epsilon/` (`converters/src/fastapi_epsilon_router.py`):** El servidor consulta o solicita el **Resumen IA técnico de Epsilon** (síntoma, sistemas, hitos y bloqueos del ticket).
+> * **NO existe `incident-reporter` ni Antigravity:** El VPS no redacta por su cuenta comunicados ejecutivos para Dirección en `agent_executive_messages.json`. Toda incidencia nueva sin registro previo aparece inicialmente en `"estado": "pendiente"`.
+> * **Persistencia en cliente vs global (`serve_app.py` vs VPS):** Los endpoints `/api/incident-manager/save-message`, `/api/teams/channels` y `/api/teams/send` pertenecen al servidor local (`serve_app.py` en `:8080`). En producción (`:8081`), la consola opera automáticamente con *fallback* en el navegador del operador:
+>   * Al pulsar **"Guardar Mensaje Oficial"** o editar canales en el modal de Teams en `:8081`, los cambios quedan guardados en el `localStorage` del navegador de ese operador (no en el disco del VPS para el resto del turno).
+>   * Al pulsar cualquiera de los **5 botones de Teams**, el navegador envía la tarjeta directamente al webhook de Power Automate (funcionando incluso sin salida directa a Internet desde el VPS).
+
+#### ¿Cómo actúa el operador de guardia y cómo se consolida después para todo el equipo?
+1. **Respuesta inmediata en caliente (<20 min en SL1/P1):** En la Consola de Producción (`:8081`), el operador abre la incidencia, pulsa **"✨ Sugerir Borrador IA"** (que construye en su navegador una propuesta acotada con los datos de Remedy/Epsilon y validadores de 90/30 palabras en vivo), la revisa, la guarda en su sesión (`localStorage`) y la difunde al instante a Teams con **📣 Notificación Dirección**.
+2. **Consolidación oficial y global en Local (Git ➔ VPS):** Para que el mensaje ejecutivo (o cualquier cambio en canales de Teams) quede persistido oficialmente para todos los operadores y no se pierda en futuros despliegues:
+   * Sincroniza en local (`python converters/cli/sync_montmc_incidents.py --dias 3` o descarga el CSV del VPS con `scp infocodes@10.132.26.96:"/infocodes/var/storage/release-dashboard/input/CS-Informe*.csv" data/input/` y conviértelo con `upload_csv.py`).
+   * Redacta y guarda en `data/agent_executive_messages.json` con la skill `incident-executive-notifications` en Antigravity (y si modificaste canales de Teams, actualízalos en `data/teams_channels_config.json` con `scripts/manage_teams_channels.py` o en `localhost:8080`).
+   * Haz commit y ejecuta `powershell -ExecutionPolicy Bypass -File scripts/deploy-production.ps1 -SkipCatalogBuild` para sincronizar el almacén al VPS.
 
 ---
 
-#### Fase A: Lo que ocurre automáticamente en Producción (¡Sin Skill ni IA!)
+## 🖥️ Capacidades Clave de la Consola Operativa de Emergencias (Cockpit IM)
 
-1. El backend web guarda el archivo en `/infocodes/var/storage/release-dashboard/input/` y genera el JSON masivo.
-2. Automáticamente ejecuta `evaluate_incident_notifications.py` en el VPS.
-3. **Comportamiento según el almacén persistente**:
-   * **Incidencias ya redactadas previamente:** Se cargan desde `/infocodes/var/storage/release-dashboard/agent_executive_messages.json` mostrando su **texto oficial**.
-   * **Incidencias nuevas:** Dado que en el VPS no hay ninguna skill para redactarlas, quedan marcadas con **`"estado": "pendiente"`** (con un badge de alerta y su prompt técnico preparado a la espera de redacción).
+> 📖 Para el detalle completo del turno de guardia, atajos de teclado y protocolos de escalado, consulta el **[Manual del Operador de la Consola Operativa](./manual-consola-operativa.md)**, el **[Triaje ITIL Automatizado](./triaje-itil-automatizado.md)** y el **[Protocolo IM-CSO y Escenarios](./protocolo-im-cso-escenarios-triaje.md)**.
 
----
-
-#### Fase B: Resolución de Tickets Pendientes en Local (Donde SÍ reside la Skill y el Asistente)
-
-Para convertir esas incidencias pendientes en comunicaciones oficiales validadas, debes intervenir desde tu entorno de desarrollo local:
-
-#### Paso 1: Disponer del fichero CSV en tu entorno local
-Si ya tienes el fichero CSV en tu máquina:
-* Cópialo a tu carpeta local `data/input/`.
-
-*(Si no dispones del fichero localmente, descárgalo directamente del VPS por SCP)*:
-```powershell
-scp infocodes@10.132.26.96:"/infocodes/var/storage/release-dashboard/input/CS-Informe*.csv" data/input/
-```
-
-#### Paso 2: Evaluar y escanear los tickets pendientes en local
-Ejecuta la evaluación ITIL local para identificar exactamente los tickets que quedaron pendientes en el servidor:
-```powershell
-python converters/evaluate_incident_notifications.py
-python .agents/skills/incident-executive-notifications/scripts/scan_pending_incidents.py
-```
-El escáner listará las incidencias nuevas que requieren redacción.
-
-#### Paso 3: Redactar los tickets pendientes con la Skill en Local
-Pide al asistente en el chat local de Antigravity:
-> *"He sincronizado el CSV subido a producción. Activa la skill incident-executive-notifications para redactar las incidencias pendientes."*
-
-El asistente ejecutará la skill en local, adoptará el rol `incident-reporter`, redactará los mensajes (≤ 90 palabras para Dirección y ≤ 30 palabras versión breve) y los guardará en el almacén acumulativo local `data/agent_executive_messages.json`.
-
----
-
-#### Fase C: Sincronización y Publicación en Producción
-
-#### Paso 4: Desplegar el almacén actualizado a Producción
-Sincroniza el almacén de mensajes con el servidor ejecutando el script de despliegue desde PowerShell:
-```powershell
-powershell -ExecutionPolicy Bypass -File scripts/deploy-production.ps1 -AgentsLibraryPath .
-```
-El script transferirá el almacén actualizado a `/infocodes/var/storage/release-dashboard/agent_executive_messages.json` y actualizará automáticamente el catálogo de notificaciones.
-
-#### Paso 5: Verificación en el Navegador
-Recarga la web en producción:
-* **[http://infocodes.si.orange.es:8081/dashboards/massive-incidents/](http://infocodes.si.orange.es:8081/dashboards/massive-incidents/)**
-
-Verás que las incidencias que antes figuraban en estado `"pendiente"` ahora muestran el badge verde con el texto oficial completo y breve listo para Dirección.
-
----
-
-## 🖥️ Consola Operativa: Consola de Emergencias IT Orange (Cockpit Incident Manager)
-
-Para facilitar la supervisión del estado de las redacciones de agente y la gobernanza en tiempo real de situaciones de crisis según el procedimiento corporativo de **Orange España**, el sistema cuenta con la **Consola Operativa de Emergencias IT del Incident Manager** (*Cockpit IM*).
-
-### Acceso a la Consola
-* **Entorno de Desarrollo Local:** [http://localhost:8080/dashboards/emergency-triage-console/](http://localhost:8080/dashboards/emergency-triage-console/)
-* **Entorno de Producción VPS:** [http://infocodes.si.orange.es:8081/dashboards/emergency-triage-console/](http://infocodes.si.orange.es:8081/dashboards/emergency-triage-console/)
-
-> [!NOTE]
-> **Aislamiento Estricto:** Esta herramienta es de uso exclusivo para el Incident Manager y el equipo de guardia operativa. **No aparece enlazada en el portal general público** (`/dashboards/portal/` o `/dashboards/index.html`) para mantener aislada la gestión de crisis IT. Su acceso se realiza mediante URL directa o marcadores de navegador.
-> 
-> 📖 Para consultar la guía de uso detallada durante los turnos de guardia, consulta el [Manual del Operador de la Consola Operativa](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/docs/MANUAL-OPERADOR-CONSOLA-OPERATIVA.md).
-
-### Capacidades de la Consola Operativa de Emergencias:
 1. **Barra de KPIs de Emergencia en Tiempo Real:**
-   * Contador de incidencias pendientes de redacción con alerta visual dinámica (rojo si $> 0$, verde si $= 0$).
-   * Desglose de oficiales emitidos, total de activas y criticidad P1/SL1 y P2/SL2.
-   * Contador de **Subescalaciones (Discrepancias de Triaje)** desglosando casos SL1 vs SL2 con métricas objetivas.
-   * Contador de **Alertas de Escalado Telefónico (≥45m / +1h)** con resaltado visual.
-   * Contador de **Workarounds Pendientes CSO** con aviso de bloqueo de desescalada.
-2. **Detección Cuantitativa de Discrepancias (Regla de Oro N1):**
-   * Despliega la tabla comparativa de Severidad Remedy Nominal vs Severidad ITIL Orange (SL1/SL2).
-   * Identifica el Proceso Crítico afectado (ATC, Ventas, Facturación, Provisión, Red o Sistemas Core) y el **umbral numérico exacto superado** (ej. $>100$ llamadas en cola ATC, indisponibilidad POS $>50\%$ tiendas, corte de provisión $>500$ líneas).
-3. **Cronometraje Anti-Drift y Alertas de Escalado Telefónico:**
-   * Cronómetro en vivo de minutos transcurridos desde la apertura Remedy (`minutos_desde_apertura`), calculado sobre epoch UTC cada 10s con sobrecarga de CPU $<0.1\%$.
-   * **Alerta 45 min (1er Escalado):** Banner ámbar que exige convocatoria obligatoria a resolutores N2/N3 vía telefónica/audio (Regla de Oro).
-   * **Alerta +1h / 105 min (2º Escalado):** Banner rojo crítico que exige escalado telefónico a Dirección y Customer & Service Ops (IM-CSO).
-4. **Gobernanza de Workarounds y Bloqueo Institucional de Desescaladas:**
-   * Banner institucional con candado 🔒 (`.im-gov-lock-banner`).
-   * Bloqueo estricto de desescaladas en la consola: una mitigación provisional **nunca** permite rebajar la severidad mientras el impacto en clientes siga activo y sin la autorización explícita de **IM-CSO**.
-5. **Reporte Normalizado de Emergencia en 4 Bloques (1-Click Copy):**
-   * Generador de reporte estructurado oficial con monospaced styling:
-     * `[1] CLASIFICACIÓN DEL TICKET`: ID, Severidad ITIL, Proceso Crítico, Umbral de Emergencia, Sistemas e Impacto.
-     * `[2] ESTADO DE COMUNICACIONES Y SLAS`: Tiempo transcurrido, estado de 1ª notificación (<20 min) y frecuencia.
-     * `[3] PLAN DE ACCIÓN Y GOBERNANZA DE WORKAROUNDS`: Diagnóstico técnico, estatus de workaround y gobernanza CSO.
-     * `[4] ESTADO DE ESCALADO TELEFÓNICO`: Fase temporal, canal telefónico obligatorio y matriz RACI.
-   * Botón **"Copiar Reporte"** con retroalimentación instantánea al portapapeles y anuncio ARIA para lectores de pantalla.
-6. **Alternancia de Modos de Consola:**
-   * Botón **"Modo Emergencias" / "Modo Compacto"** para desplegar u ocultar los bloques operativos según la intensidad del turno de guardia.
-7. **Protocolo de Emergencias IT & Matriz RACI (Drawer / Modal):**
-   * Botón de cabecera **"Protocolo & Contactos"** que despliega el modal accesible con la matriz RACI corporativa:
-     * **Incident Manager (IM):** Responsable (R) de triaje, cronometraje, convocatoria telefónica y reporte.
-     * **Customer & Service Ops (IM-CSO):** Aprobador (A) exclusivo de mitigaciones (workarounds) y escalados a Dirección.
-   * Enlaces directos a directorios de guardias y matrices de contacto: **GRIAL Orange** (`https://grial.orange.es`) y **Confluence Operaciones MasMóvil** (`https://confluence.masmovil.com`).
-8. **Asistente de Ingesta Integrado con Validación Reactiva y Sugerencia IA:**
-   * Botón **"✨ Sugerir Borrador IA"** (en la cabecera del editor) y **"✨ Sugerir"** (en la barra de ingesta rápida) para rellenar de forma inmediata un borrador normativo conforme a los límites de Orange ($\le 90$ palabras monopárrafo para Versión Completa y $\le 30$ palabras para Versión Breve).
-   * Contadores en vivo de longitud de palabras con alerta visual en rojo ante excesos.
-   * Botón **"Guardar en Almacén Oficial"** que persiste directamente vía API en `data/agent_executive_messages.json` y regenera el catálogo en vivo.
-   * Botón de contingencia **"Copiar Comando CLI"** que genera la sintaxis exacta de `update_agent_message.py` lista para pegar en terminal si se opera sin conectividad API.
-9. **Herramientas de Ejecución Rápida y Ciclo de Vida (4 Estados):**
-   * Botón **"📋 Reclasif." / "Copiar Solicitud Reclasificación Remedy"** para generar la justificación formal ITIL al grupo resolutor N1.
-   * Botón **"📞 War Room" / "Convocatoria War Room Teams"** para citar a canal de audio a los técnicos ante escalados $\ge 45\text{m}$.
-   * Selector del **Ciclo de Vida de 4 Estados** (`Pendiente`, `Comunicada`, `En Seguimiento`, `Descartada`) con persistencia en `localStorage` y filtros reactivos `Solo Pendientes` vs `Todas las Activas`.
+   * Contadores en vivo de *Pendientes*, *Al Día*, *Total Activas*, *P1/SL1 y P2/SL2*, *Subescalaciones (Discrepancias)*, *Alertas de Escalado Telefónico (≥45m / ≥105m)* y *Workarounds Pendientes de visado IM-CSO*.
+2. **Calibración Inteligente de Triaje ITIL (`incident-triage-review`):**
+   * **Discrepancias Cuantitativas (Regla de Oro N1):** Contrasta la prioridad nominal de Remedy frente a los umbrales reales de procesos críticos, sedes/tiendas e infraestructura Core++/Core.
+   * **Resoluciones Planificadas 📅:** Detecta tickets con fix validado pendiente de ventana de release, aplicando **tope máximo `P2`** y **exención de *Aging Escalation*** para evitar falsas alarmas P1.
+   * **Tickets Zombi 🧟:** Identifica desincronizaciones administrativas (resueltos/cancelados en Jira pero aún abiertos en Remedy).
+   * **Estancamiento de Work Log:** Señaliza tickets activos con más de `6h`, `12h` o `24h` sin apuntes técnicos en BMC Remedy.
+3. **Cronometraje Anti-Drift y Gobernanza de Workarounds 🔒:**
+   * Reloj sobre epoch UTC cada 10s con alertas en **45 min** (1er escalado telefónico a N2/N3 + War Room) y **105 min / +1h adicional** (2º escalado telefónico a IM-CSO y Dirección).
+   * Candado institucional (`.im-gov-lock-banner`) que **prohíbe rebajar la severidad** por la mera existencia de un *workaround* sin erradicación real del impacto y sin visado de **IM-CSO**.
+4. **Los 5 Botones Operativos de Microsoft Teams y Enrutamiento Multicanal:**
+   * Integración mediante tarjetas Adaptive Cards y webhooks de Power Automate leídos desde `data/teams_channels_config.json` y configurables en el modal **"💬 Canales y Enrutamiento Microsoft Teams"** (pestañas *Canales y Webhooks*, *🔀 Enrutamiento de Acciones* y *Sobrescrituras por Grupo Resolutor*, con persistencia en disco en `:8080` / Git y en `localStorage` en `:8081`):
+     1. **📢 Reclamación Work Log (`RECLAMACION_WORKLOG`):** Reclama actualización técnica en Remedy al grupo resolutor.
+     2. **📣 Notificación Dirección (`NOTIFICACION_DIRECCION`):** Publica el comunicado ejecutivo validado (`apertura`, `seguimiento`, `reapertura` o `cierre`).
+     3. **🚨 Convocatoria War Room (`CONVOCATORIA_WARROOM`):** Abre y difunde sala de crisis de voz para emergencias SL1/P1.
+     4. **🧟 Solicitud Cierre Zombi (`CIERRE_ZOMBI`):** Solicita el cierre administrativo formal de tickets zombi.
+     5. **📋 Traspaso Guardia (`TRASPASO_GUARDIA`):** Genera y publica el informe estructurado de relevo de turno ITIL.
+5. **Editor Ejecutivo Integrado y Ciclo de Vida de 4 Estados:**
+   * Botón **"✨ Sugerir Borrador IA"**, contadores de palabras reactivos ($\le 90$ monopárrafo / $\le 30$ breve), pestañas para `apertura`, `seguimiento` y `cierre` (`reapertura` vía CLI/skill), guardado directo en `:8080` (o `localStorage` en `:8081`) y copia de comando CLI de contingencia.
+   * Selector de estado operativo (`Pendiente`, `Comunicada`, `En Seguimiento`, `Descartada`) y **Reporte Normalizado de Emergencia en 4 Bloques** con copia en 1 clic.
 
 ---
 
 ## ❓ Preguntas Frecuentes y Diagnóstico (FAQ)
 
-### 1. ¿Por qué la subida web de un CSV en producción no genera los textos del agente automáticamente?
-* **Diseño sin LLM en el servidor**: Por motivos de gobernanza, costes y prevención de alucinaciones, en el VPS de producción no corre ningún modelo de lenguaje desatendido.
-* **Separación de responsabilidades**: La redacción ejecutiva formal para Dirección la genera el agente `incident-reporter` en el entorno local (con supervisión humana).
-* **Comportamiento esperado**: Cuando el backend web de producción procesa un CSV, evalúa la severidad ITIL y busca los mensajes en el almacén persistente `/infocodes/var/storage/release-dashboard/agent_executive_messages.json`. Cualquier incidencia nueva que no esté en dicho almacén se marca automáticamente como `"estado": "pendiente"` con su prompt técnico listo para ser procesado.
+### 1. ¿Por qué al entrar un ticket nuevo en producción no aparece redactado el texto oficial del agente automáticamente?
+* **Prevención de alucinaciones en comunicaciones a Dirección:** En el VPS no se ejecuta ningún agente LLM autónomo escribiendo directamente boletines para Dirección sin revisión. El servidor calcula la severidad ITIL, obtiene el Resumen IA técnico (`/api/epsilon/`) y busca si existe redacción en `/infocodes/var/storage/release-dashboard/agent_executive_messages.json`; si es nuevo, lo deja en `"estado": "pendiente"` (pudiendo el operador usar **"✨ Sugerir Borrador IA"** en su navegador y consolidarlo después en Git con `incident-reporter`).
 
-### 2. ¿Por qué al ejecutar `deploy-production.ps1 -SkipPush` no veía los ficheros JSON actualizados en producción?
-* **Seguridad de Git**: El script de despliegue verifica que el estado de Git esté limpio (`git status --porcelain`). Si tienes modificaciones locales no commiteadas o una confirmación interactiva esperando en terminal, el script aborta antes de empaquetar o conectar por SSH al VPS.
-* **Ubicación en el servidor**: Los datos persistentes no residen dentro del árbol de código estático de la release, sino en el storage desacoplado:
-  * Notificaciones activas: `/infocodes/var/storage/release-dashboard/output/high_priority_notifications.json`
-  * Almacén de redacciones: `/infocodes/var/storage/release-dashboard/agent_executive_messages.json`
-* **Sincronización en el script**: Asegúrate de que el script copie tanto `high_priority_notifications.json` como `agent_executive_messages.json` hacia `$STORAGE_BASE` antes de recrear el symlink `data/`.
+### 2. ¿Por qué `deploy-production.ps1` se detiene si tengo archivos sin commitear?
+* **Salvaguarda de integridad Git:** El script comprueba `git status --porcelain` en la rama `production` para garantizar trazabilidad exacta entre lo versionado en Git y lo desplegado con `cp -f` en `/infocodes/var/storage/release-dashboard/` (`high_priority_notifications.json`, `agent_executive_messages.json` y `teams_channels_config.json`).
+
+### 3. ¿Por qué Power Automate devuelve `ChatAppCUDOperationNotAllowedForFederatedUsers` al enviar a un chat nuevo de Teams?
+* En entornos corporativos federados, el `Flow bot` de Power Automate no tiene permiso para auto-instalarse en un chat grupal donde no exista previamente. Solución: añade manualmente la app **Power Automate / Workflows** al chat desde Microsoft Teams, o configura la acción `Post_card` del flujo con **Post as: `User`** en lugar de `Flow bot`.
 
 ---
 
@@ -303,23 +234,32 @@ Para facilitar la supervisión del estado de las redacciones de agente y la gobe
 
 | Acción | Comando |
 | :--- | :--- |
-| **Escanear pendientes** | `python .agents/skills/incident-executive-notifications/scripts/scan_pending_incidents.py` |
-| **Pendientes en formato JSON** | `python .agents/skills/incident-executive-notifications/scripts/scan_pending_incidents.py --json` |
+| **Sincronizar incidencias Remedy (API MonTMC)** | `python converters/cli/sync_montmc_incidents.py --dias 3` |
+| **Convertir CSV manual y evaluar notificaciones** | `python converters/cli/upload_csv.py "data/input/<FICHERO>.csv" massive . --wait-eval` |
+| **Reevaluar notificaciones ITIL (sobre JSON actual)** | `python converters/cli/evaluate_incident_notifications.py` |
+| **Reevaluar con borradores provisionales** | `python converters/cli/evaluate_incident_notifications.py --auto-draft` |
+| **Escanear pendientes de `apertura` (opcional)** | `python .agents/skills/incident-executive-notifications/scripts/scan_pending_incidents.py` |
 | **Ver contexto y prompt de un ticket** | `python .agents/skills/incident-executive-notifications/scripts/scan_pending_incidents.py --id <INC>` |
-| **Guardar redacción manual** | `python converters/cli/update_agent_message.py --id <INC> --phase apertura --raw "<texto>"` |
-| **Guardar desde archivo borrador** | `python converters/cli/update_agent_message.py --id <INC> --phase apertura --file "borrador.txt"` |
-| **Reevaluar notificaciones** | `python converters/evaluate_incident_notifications.py` |
-| **Ejecutar tests unitarios** | `python -m pytest converters/tests/unit/test_update_agent_message.py -v` |
-| **Desplegar a producción** | `powershell -ExecutionPolicy Bypass -File scripts/deploy-production.ps1 -AgentsLibraryPath .` |
+| **Auditar coherencia de triaje y falsos cierres** | `python .agents/skills/incident-triage-review/scripts/review_incident_triage.py --all` |
+| **Guardar redacción (`apertura`/`seguimiento`/`reapertura`/`cierre`)** | `python converters/cli/update_agent_message.py --id <INC> --phase seguimiento --raw "<texto>"` |
+| **Gestionar canales de Teams por CLI** | `python scripts/manage_teams_channels.py list` |
+| **Ejecutar tests unitarios de notificaciones** | `python -m pytest converters/tests/unit/test_update_agent_message.py converters/tests/unit/test_incident_triage_review.py -v` |
+| **Desplegar a producción (estándar)** | `powershell -ExecutionPolicy Bypass -File scripts/deploy-production.ps1` |
+| **Desplegar rápido (sin regenerar catálogo IA)** | `powershell -ExecutionPolicy Bypass -File scripts/deploy-production.ps1 -SkipCatalogBuild` |
 
 ---
 
 ## 📁 Archivos Involucrados
 
-* **Almacén acumulativo de mensajes oficiales:** [`data/agent_executive_messages.json`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/data/agent_executive_messages.json)
-* **Catálogo de notificaciones para el frontend:** [`data/output/high_priority_notifications.json`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/data/output/high_priority_notifications.json)
-* **Skill de redacción:** [`.agents/skills/incident-executive-notifications/SKILL.md`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/.agents/skills/incident-executive-notifications/SKILL.md)
-* **Escáner auxiliar:** [`.agents/skills/incident-executive-notifications/scripts/scan_pending_incidents.py`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/.agents/skills/incident-executive-notifications/scripts/scan_pending_incidents.py)
-* **CLI de actualización:** [`converters/cli/update_agent_message.py`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/converters/cli/update_agent_message.py)
-* **Script de despliegue:** [`scripts/deploy-production.ps1`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/scripts/deploy-production.ps1)
-
+* **Agente redactor ejecutivo:** `agents/it-incidents/incident-reporter.md`
+* **Skill de síntesis ejecutiva:** `.agents/skills/incident-executive-notifications/SKILL.md`
+* **Skill y auditor de calibración de triaje:** `.agents/skills/incident-triage-review/SKILL.md` (`scripts/review_incident_triage.py`)
+* **Escáner de tickets pendientes:** `.agents/skills/incident-executive-notifications/scripts/scan_pending_incidents.py`
+* **Almacén acumulativo de mensajes oficiales:** `data/agent_executive_messages.json`
+* **Catálogo evaluado para la consola:** `data/output/high_priority_notifications.json`
+* **Configuración de canales y rutas Teams:** `data/teams_channels_config.json`
+* **CLI de actualización de mensajes:** `converters/cli/update_agent_message.py`
+* **Orquestador CLI de carga CSV:** `converters/cli/upload_csv.py`
+* **Router FastAPI de Epsilon IA:** `converters/src/fastapi_epsilon_router.py`
+* **Sincronizador API Remedy / MonTMC:** `converters/cli/sync_montmc_incidents.py` (`scripts/sync-remedy-cron.sh`)
+* **Script de despliegue a producción:** `scripts/deploy-production.ps1`
