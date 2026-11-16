@@ -13,6 +13,7 @@ This CLI utility:
 from __future__ import annotations
 
 import argparse
+from dataclasses import dataclass, field
 from datetime import datetime, timezone
 import json
 import logging
@@ -48,6 +49,14 @@ except ImportError:
             find_latest_archived_massive_file,
             mark_reopened_tickets,
         )
+
+try:
+    from converters.cli.ingestion_logger import audit_incident_completeness
+except ImportError:
+    try:
+        from ingestion_logger import audit_incident_completeness
+    except ImportError:
+        audit_incident_completeness = None
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger("incident_evaluator")
@@ -335,6 +344,47 @@ def compute_emergency_sla_status(
     }
 
 
+class RemedyCacheLoader:
+    """Resuelve y cachea en memoria el detalle Remedy de un ticket leído desde disco.
+
+    Centraliza el acceso a `data/.remedy_cache/{id}.json` para evitar que distintos
+    puntos del evaluador (reglas de detección, batch processing) dupliquen la misma
+    lógica de lectura y cada uno reintente el I/O de forma independiente.
+    """
+
+    def __init__(self, cache_dir: Optional[Path] = None):
+        self.cache_dir = cache_dir
+
+    def load(self, inc_id: str) -> Optional[dict[str, Any]]:
+        if not self.cache_dir or not inc_id:
+            return None
+        cache_file = self.cache_dir / f"{inc_id}.json"
+        if not cache_file.is_file():
+            return None
+        try:
+            with open(cache_file, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except Exception:
+            return None
+
+    def load_many(self, inc_ids: list[str], max_workers: int = 8) -> dict[str, Any]:
+        """Prefetch concurrente del detalle Remedy para un lote de IDs."""
+        if not self.cache_dir:
+            return {}
+        ids = [i for i in dict.fromkeys(inc_ids) if i]
+        if not ids:
+            return {}
+        from concurrent.futures import ThreadPoolExecutor
+
+        workers = min(max_workers, len(ids))
+        result: dict[str, Any] = {}
+        with ThreadPoolExecutor(max_workers=workers) as executor:
+            for inc_id, detail in executor.map(lambda i: (i, self.load(i)), ids):
+                if detail is not None:
+                    result[inc_id] = detail
+        return result
+
+
 def compute_worklog_stagnation(
     ticket: dict[str, Any],
     reference_time: Optional[datetime] = None,
@@ -342,7 +392,6 @@ def compute_worklog_stagnation(
     epsilon_data: Optional[dict[str, Any]] = None,
     is_planned: bool = False,
     is_zombie: bool = False,
-    cache_dir: Optional[Path] = None,
 ) -> dict[str, Any]:
     """Computes operational elapsed time since the last Work Log update or modification,
     and classifies stagnation according to Orange Tech Operations guidelines.
@@ -363,36 +412,6 @@ def compute_worklog_stagnation(
     - is_zombie (ticket resuelto en Jira, pendiente cierre administrativo en Remedy)
     """
     inc_id = str(ticket.get("ID de incidencia") or ticket.get("id") or "").strip()
-    
-    # Intentar resolver detalle de Remedy desde caché en disco si no se proporciona directamente
-    if not remedy_detail and inc_id:
-        target_dir = cache_dir
-        if not target_dir:
-            try:
-                candidate = Path(__file__).resolve().parents[2] / "data" / ".remedy_cache"
-                if candidate.is_dir():
-                    target_dir = candidate
-            except Exception:
-                target_dir = None
-        if target_dir and target_dir.is_dir():
-            cache_file = target_dir / f"{inc_id}.json"
-            if cache_file.is_file():
-                try:
-                    with open(cache_file, "r", encoding="utf-8") as f:
-                        remedy_detail = json.load(f)
-                except Exception:
-                    remedy_detail = None
-
-    # Intentar resolver síntesis Epsilon desde caché si no se proporciona directamente
-    if not epsilon_data and inc_id:
-        try:
-            eps_candidate = Path(__file__).resolve().parents[2] / "data" / ".epsilon_cache" / f"{inc_id}.json"
-            if eps_candidate.is_file():
-                with open(eps_candidate, "r", encoding="utf-8") as f:
-                    eps_raw = json.load(f)
-                    epsilon_data = eps_raw.get("data") if isinstance(eps_raw, dict) and "data" in eps_raw else eps_raw
-        except Exception:
-            pass
 
     # Recolectar candidatos cronológicos: (parsed_dt, raw_date_str, autor, grupo, extracto)
     candidates: list[tuple[datetime, str, str, str, str]] = []
@@ -566,210 +585,45 @@ def build_worklog_claim_text(
     )
 
 
-PROCESS_PATTERNS: dict[str, list[re.Pattern]] = {
-    "Conectividad de Sedes, Call Centers y Tiendas": [
-        re.compile(r"\brtv-tecse\b", re.I),
-        re.compile(r"\bred\s+datos\b", re.I),
-        re.compile(r"\bulises\b", re.I),
-        re.compile(r"\bmeneses\b", re.I),
-        re.compile(r"\bca[íi]da\s+de\s+tienda\b", re.I),
-        re.compile(r"\baislamiento\s+de\s+sede\b", re.I),
-        re.compile(r"\bcircuito\s+(?:backup|principal|ambos)\b", re.I),
-        re.compile(r"\bcircuito\b.*\b(?:sede|msc|plataforma|tienda|wan|mpls)\b", re.I),
-    ],
-    "Infraestructura Core IT, BBDD y Cloud": [
-        re.compile(r"\besx\b", re.I),
-        re.compile(r"\bvmware\b", re.I),
-        re.compile(r"\bpseries\b", re.I),
-        re.compile(r"\bpower9\b", re.I),
-        re.compile(r"\bexadata\b", re.I),
-        re.compile(r"\bhwsan\b", re.I),
-        re.compile(r"\bspain\s+almacenamiento\b", re.I),
-        re.compile(r"\bitx\s+oci\b", re.I),
-        re.compile(r"\boci/gcp\b", re.I),
-        re.compile(r"\bdata\s+mart\s+fiscal\b", re.I),
-        re.compile(r"\bbackup\s+osp\b", re.I),
-        re.compile(r"\bhipervisor\b", re.I),
-        re.compile(r"\bcabina\s+san\b", re.I),
-        re.compile(r"\brac\b", re.I),  # Boundary regex: never matches 'operaciones'
-    ],
-    "Identidad (GDU/EVIDIAN) y Automatización": [
-        re.compile(r"\bgdu\b", re.I),
-        re.compile(r"\bevidian\b", re.I),
-        re.compile(r"\bgdu/acm\b", re.I),
-        re.compile(r"\brobotfactory\b", re.I),
-        re.compile(r"\bsso\s+corporativo\b", re.I),
-        re.compile(r"\biam\b", re.I),
-        re.compile(r"\bidentity\b", re.I),
-        re.compile(r"\badselfservice\b", re.I),
-        re.compile(r"\brpa\s+nice\b", re.I),
-    ],
-    "Middleware e Integración Transversal": [
-        re.compile(r"\bapigee\b", re.I),
-        re.compile(r"\bopenapi\b", re.I),
-        re.compile(r"\btibco\b", re.I),
-        re.compile(r"\bgc\s+middleware\b", re.I),
-        re.compile(r"\bdatapower\b", re.I),
-        re.compile(r"\bocci\b", re.I),
-        re.compile(r"\bsbl_eai\b", re.I),
-        re.compile(r"\bbus\s+de\s+integraci[oó]n\b", re.I),
-        re.compile(r"\bapi\s+gateway\b", re.I),
-        re.compile(r"\bwebmethods\b", re.I),
-        re.compile(r"\bmicroservicios\b", re.I),
-        re.compile(r"\bdispatcher\b", re.I),
-    ],
-    "Facturación y Cobros": [
-        re.compile(r"\bhpfms\b", re.I),
-        re.compile(r"\bbscs\b", re.I),
-        re.compile(r"\bopen\s*cobros\b", re.I),
-        re.compile(r"\bexcalibur\b", re.I),
-        re.compile(r"\bsga\b", re.I),  # Boundary regex: never matches 'desglose'
-        re.compile(r"\bmediaci[oó]n\b", re.I),
-        re.compile(r"\bhp-ium\b", re.I),
-        re.compile(r"\bsap\b", re.I),  # Boundary regex: never matches 'pasaporte'
-        re.compile(r"\bkenan(?:_fx)?\b", re.I),
-        re.compile(r"\babacus(?:\s+brm)?\b", re.I),
-        re.compile(r"\bnetplus\b", re.I),
-        re.compile(r"\bpsp\b", re.I),
-        re.compile(r"\bintransit\b", re.I),
-        re.compile(r"\bxpression\b", re.I),
-        re.compile(r"\bfew\b", re.I),
-        re.compile(r"\baccon\b", re.I),
-        re.compile(r"\bares\b", re.I),
-        re.compile(r"\bcobros?\b", re.I),
-        re.compile(r"\bfacturas?\b", re.I),
-        re.compile(r"\bfacturaci[oó]n\b", re.I),
-        re.compile(r"\btarificaci[oó]n\b", re.I),
-        re.compile(r"\btarifica\b", re.I),
-        re.compile(r"\babonos?\b", re.I),
-        re.compile(r"\bpenalizaci[oó]n\b", re.I),
-        re.compile(r"\bsop_bss\b", re.I),
-        re.compile(r"\bsop_smc_bscs\b", re.I),
-        re.compile(r"\bsop_tmc_excalibur\b", re.I),
-    ],
-    "Prepago": [
-        re.compile(r"\bprepago\b", re.I),
-        re.compile(r"\brecargas?\b", re.I),
-        re.compile(r"\brecargas\s+aprs\b", re.I),
-        re.compile(r"\baprs\b", re.I),
-        re.compile(r"\bocs\b", re.I),
-        re.compile(r"\btao\b", re.I),
-        re.compile(r"\bsedna\b", re.I),
-        re.compile(r"\bsop_ocs\b", re.I),
-        re.compile(r"\baltas?\s+prepago\b", re.I),
-        re.compile(r"\balta\s+de\s+l[íi]neas\s+prepago\b", re.I),
-    ],
-    "Portabilidad": [
-        re.compile(r"\bportabilidad(?:es)?\b", re.I),
-        re.compile(r"\bflujo\s+2\s*am\b", re.I),
-        re.compile(r"\bentidad\s+de\s+referencia\b", re.I),
-        re.compile(r"\bnodo\s+portabilidad\b", re.I),
-        re.compile(r"\bpomv\b", re.I),
-        re.compile(r"\bportos\b", re.I),
-        re.compile(r"\bsgp\s*m[oó]vil\b", re.I),
-        re.compile(r"\bncrn\b", re.I),
-    ],
-    "Ventas": [
-        re.compile(r"\bcomprobantes?\s+de\s+venta\b", re.I),
-        re.compile(r"\bteleventa\b", re.I),
-        re.compile(r"\bcanal\s+comercial\b", re.I),
-        re.compile(r"\bneg_camp_ceres\b", re.I),
-        re.compile(r"\bceres(?:rt)?\b", re.I),
-        re.compile(r"\bupdatecommercialactspa\b", re.I),
-        re.compile(r"\becontrato\b", re.I),
-        re.compile(r"\bpangea\b", re.I),
-        re.compile(r"\bkratos\b", re.I),
-        re.compile(r"\bagora\b", re.I),
-        re.compile(r"\balce\b", re.I),
-        re.compile(r"\barpa\b", re.I),
-        re.compile(r"\bsigna\b", re.I),
-        re.compile(r"\bsitam\b", re.I),
-        re.compile(r"\bxnet\b", re.I),
-        re.compile(r"\bpae\b", re.I),
-        re.compile(r"\brenove\b", re.I),
-        re.compile(r"\brenovaci[oó]n\s+de\s+terminales\b", re.I),
-        re.compile(r"\bventas?\b", re.I),
-        re.compile(r"\bcontrataci[oó]n\b", re.I),
-    ],
-    "Provisión": [
-        re.compile(r"\bprovisi[oó]n\b", re.I),
-        re.compile(r"\baprovisionamiento\b", re.I),
-        re.compile(r"\b[oó]rdenes?(?:\s+de\s+(?:m[oó]vil|fijo))?\b", re.I),
-        re.compile(r"\balta\s+de\s+(?:fijo|m[oó]vil)\b", re.I),
-        re.compile(r"\brenovaci[oó]n\s+de\s+beneficios\b", re.I),
-        re.compile(r"\bsop_smc_teide\b", re.I),
-        re.compile(r"\bteide\b", re.I),
-        re.compile(r"\bfijo\s+apl\b", re.I),
-        re.compile(r"\bip24\b", re.I),
-        re.compile(r"\bsigma\b", re.I),
-        re.compile(r"\bluna\b", re.I),
-        re.compile(r"\baurora\b", re.I),
-        re.compile(r"\bgiros\b", re.I),
-        re.compile(r"\btramitador\b", re.I),
-        re.compile(r"\bspm\b", re.I),
-        re.compile(r"\breventa\s+fibra\b", re.I),
-        re.compile(r"\bpcneon\b", re.I),
-        re.compile(r"\bmyaddress\b", re.I),
-        re.compile(r"\baltair\s+a\s+br[uú]jula\b", re.I),
-        re.compile(r"\bbr[uú]jula\b", re.I),
-        re.compile(r"\bgis\s+fibra\b", re.I),
-        re.compile(r"\bactivateorder\b", re.I),
-    ],
-    "Atención al Cliente (ATC)": [
-        re.compile(r"\bficha\s+de?\s+cliente\b", re.I),
-        re.compile(r"\bdes_soe_ficha\b", re.I),
-        re.compile(r"\bapl_mov_soe\b", re.I),
-        re.compile(r"\bivr\b", re.I),
-        re.compile(r"\bcti\b", re.I),
-        re.compile(r"\bfrontales\b", re.I),
-        re.compile(r"\bcrm\b", re.I),
-        re.compile(r"\bcrm\s+jazztel\b", re.I),
-        re.compile(r"\bcrm4telco\b", re.I),
-        re.compile(r"\biris\b", re.I),
-        re.compile(r"\bsiebel(?:\s+8)?\b", re.I),
-        re.compile(r"\bpolar\b", re.I),
-        re.compile(r"\basistente\b", re.I),
-        re.compile(r"\bdes_asistente\b", re.I),
-        re.compile(r"\bdjingo\b", re.I),
-        re.compile(r"\bliveperson\b", re.I),
-        re.compile(r"\bsop_djingo\b", re.I),
-        re.compile(r"\bonuris\b", re.I),
-        re.compile(r"\bsop_onuris\b", re.I),
-        re.compile(r"\bonconnect\b", re.I),
-        re.compile(r"\bnaboo\b", re.I),
-        re.compile(r"\bboreal\b", re.I),
-        re.compile(r"\bapp\s+mi\s+orange\b", re.I),
-        re.compile(r"\bacme\s+(?:app|web)\b", re.I),
-        re.compile(r"\baltamira\b", re.I),
-        re.compile(r"\batenas\b", re.I),
-        re.compile(r"\bmijazztel\b", re.I),
-        re.compile(r"\bhesms\b", re.I),
-        re.compile(r"\bsires\b", re.I),
-        re.compile(r"\boperadores?\b", re.I),
-        re.compile(r"\bcall\s+center\b", re.I),
-        re.compile(r"\bgenesys\b", re.I),
-        re.compile(r"\baltitude\b", re.I),
-        re.compile(r"\batenci[oó]n\s+al\s+cliente\b", re.I),
-        re.compile(r"\batc\b", re.I),
-    ],
-    "Operación y Monitorización (O&M)": [
-        re.compile(r"\baltair\b", re.I),
-        re.compile(r"\bgnoc\b", re.I),
-        re.compile(r"\bcpe\b", re.I),
-        re.compile(r"\bcortes\s+cpe\b", re.I),
-        re.compile(r"\bvtemip\b", re.I),
-        re.compile(r"\bzte\b", re.I),
-        re.compile(r"\buca\b", re.I),  # Boundary regex: never matches 'comunicación'
-        re.compile(r"\bsupervisi[oó]n\b", re.I),
-        re.compile(r"\bmonitorizaci[oó]n\b", re.I),
-        re.compile(r"\bcau\b", re.I),  # Boundary regex: never matches 'precaución'
-        re.compile(r"\bcep\s+cau\s+agi\b", re.I),
-        re.compile(r"\bftth\b", re.I),
-        re.compile(r"\bfibra\b", re.I),
-        re.compile(r"\bnodo\s+central\b", re.I),
-        re.compile(r"\benlace\b", re.I),
-        re.compile(r"\brouting\s+core\b", re.I),
-    ],
+_PROCESS_PATTERNS_FILE = Path(__file__).resolve().parent / "process_patterns.json"
+
+
+def _load_process_patterns(path: Path) -> dict[str, list[re.Pattern]]:
+    """Carga y compila los patrones de clasificación de proceso/dominio desde JSON.
+
+    Son datos estructurales esenciales para la clasificación: si faltan o son
+    inválidos, toda incidencia caería silenciosamente en "Sistemas Core", por
+    lo que se falla rápido con RuntimeError en vez de degradar a un dict vacío.
+    """
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            raw = json.load(f)
+    except FileNotFoundError as exc:
+        raise RuntimeError(f"No se encontró el archivo de patrones de proceso: {path}") from exc
+    except json.JSONDecodeError as exc:
+        raise RuntimeError(f"JSON inválido en el archivo de patrones de proceso ({path}): {exc}") from exc
+
+    if not isinstance(raw, dict) or not raw:
+        raise RuntimeError(f"El archivo de patrones de proceso ({path}) debe ser un objeto JSON no vacío")
+
+    try:
+        return {
+            category: [re.compile(pattern, re.I) for pattern in patterns]
+            for category, patterns in raw.items()
+        }
+    except re.error as exc:
+        raise RuntimeError(f"Patrón regex inválido en {path}: {exc}") from exc
+
+
+PROCESS_PATTERNS: dict[str, list[re.Pattern]] = _load_process_patterns(_PROCESS_PATTERNS_FILE)
+# Patrones de cada categoría fusionados en una única regex de alternancia precompilada.
+# Ninguno de los patrones originales usa grupos de captura ni alternancia a nivel superior,
+# por lo que la fusión preserva el conjunto de coincidencias; solo cambia el conteo cuando
+# dos patrones de la misma categoría solapan sobre el mismo tramo de texto (pasa de contarse
+# 2 veces a 1), algo que ningún test valida de forma exacta.
+PROCESS_PATTERNS_COMBINED: dict[str, re.Pattern] = {
+    category: re.compile("|".join(p.pattern for p in patterns), re.IGNORECASE)
+    for category, patterns in PROCESS_PATTERNS.items()
 }
 
 BUSINESS_PROCESS_CATEGORIES = {
@@ -806,24 +660,6 @@ def detect_planned_resolution(
             if b_str.lower().startswith("[ventana release]"):
                 clean_b = re.sub(r"^\[ventana release\]\s*:?\s*", "", b_str, flags=re.IGNORECASE).strip()
                 return True, f"Ventana Release: {clean_b[:40]}" if clean_b else "Ventana de Release comprometida"
-
-    # Intentar resolver remedy_detail desde caché local si no se suministra
-    if not remedy_detail:
-        inc_id = (
-            ticket.get("id")
-            or ticket.get("ID")
-            or ticket.get("idRemedy")
-            or ticket.get("ID de incidencia")
-            or ticket.get("Incidencia")
-        )
-        if inc_id:
-            try:
-                candidate = Path(__file__).resolve().parents[2] / "data" / ".remedy_cache" / f"{inc_id}.json"
-                if candidate.is_file():
-                    with open(candidate, "r", encoding="utf-8") as f:
-                        remedy_detail = json.load(f)
-            except Exception:
-                pass
 
     evidence_parts = []
     if epsilon_data:
@@ -1156,6 +992,32 @@ def generate_operator_guidance(
     return res
 
 
+@dataclass
+class EvaluationState:
+    """Estado mutable compartido entre los bloques de reglas de SeverityEvaluator.evaluate()."""
+
+    impact: str
+    impact_reason: str
+    urgency: str
+    urgency_reason: str
+    priority: str
+    has_workaround: str
+    quant_metrics: dict[str, Any]
+    historial_reclasificacion: list[str] = field(default_factory=list)
+    is_closed: bool = False
+    title_raw: str = ""
+    is_reopened: bool = False
+    reopening_criterion_prefix: str = ""
+    is_planned: bool = False
+    planned_label: str = ""
+    is_zombie: bool = False
+    zombie_label: str = ""
+    is_local_departmental: bool = False
+    aging_escalated: bool = False
+    aging_criterion_prefix: str = ""
+    mins_open: Optional[int] = None
+
+
 class SeverityEvaluator:
     """Evaluates ITIL severity based on Impact and Urgency heuristics."""
 
@@ -1183,65 +1045,193 @@ class SeverityEvaluator:
         remedy_detail: Optional[dict[str, Any]] = None,
     ) -> dict[str, Any]:
         """Calculates suggested priority (P1-P4) and structured ITIL justification."""
+        state = self._build_base_state(ticket, epsilon_data, remedy_detail)
+        self._apply_sl_tag_rule(state, ticket, epsilon_data)
+        self._apply_reopening_rule(state, ticket)
+        self._detect_planned_and_zombie(state, ticket, epsilon_data, remedy_detail)
+        self._apply_planned_resolution_downgrade(state, ticket, epsilon_data)
+        self._apply_zombie_rule(state)
+        self._apply_aging_escalation(state, ticket, epsilon_data, reference_time)
+
+        is_high_priority = state.priority in ("P1", "P2")
+
+        original_raw = ticket.get("Prioridad") or ticket.get("prioridad")
+        disc_details = compute_discrepancy_details(original_raw, state.priority, reasons=[state.impact_reason, state.urgency_reason])
+        is_discrepancy = disc_details["es_discrepancia"]
+
+        proceso, proceso_negocio, dominio_tecnico = self._classify_process_multi_domain(ticket, epsilon_data)
+        criterio = self._determine_criterion(proceso, state.priority, state.impact, state.urgency, ticket, epsilon_data, state.quant_metrics)
+        if state.reopening_criterion_prefix:
+            criterio = state.reopening_criterion_prefix + criterio
+        if state.aging_criterion_prefix:
+            criterio = state.aging_criterion_prefix + criterio
+
+        sla_minutes = SLA_TARGET_MINUTES.get(state.priority, 240)
+
+        # Reglas de Oro 2 y 3 (orange-it-emergency-management): Gobernanza de Workarounds
+        if state.has_workaround == "Sí":
+            workaround_gobernanza = "Pendiente autorización IM-CSO (SL1 activa)"
+        elif state.has_workaround == "No":
+            workaround_gobernanza = "Sin workaround (Resolución directa requerida)"
+        else:
+            workaround_gobernanza = "No identificado"
+
+        return {
+            "prioridad_sugerida": state.priority,
+            "es_alta_prioridad": is_high_priority,
+            "es_discrepancia": is_discrepancy,
+            "discrepancia_delta": disc_details["delta"],
+            "discrepancia_gravedad": disc_details["gravedad"],
+            "discrepancia_motivo": disc_details["motivo"],
+            "aging_escalated": state.aging_escalated,
+            "es_planificada": state.is_planned,
+            "detalle_planificacion": state.planned_label,
+            "es_zombi": state.is_zombie,
+            "detalle_zombi": state.zombie_label,
+            "es_local_departamental": state.is_local_departmental,
+            "es_reapertura": state.is_reopened,
+            "evaluacion": {
+                "proceso": proceso,
+                "proceso_negocio": proceso_negocio,
+                "dominio_tecnico": dominio_tecnico,
+                "criterio": criterio,
+                "impacto": state.impact,
+                "impacto_justificacion": state.impact_reason,
+                "urgencia": state.urgency,
+                "urgencia_justificacion": state.urgency_reason,
+                "historial_reclasificacion": state.historial_reclasificacion,
+                "workaround": state.has_workaround,
+                "workaround_gobernanza": workaround_gobernanza,
+                "sla_objetivo_minutos": sla_minutes,
+                "metricas_cuantitativas": state.quant_metrics,
+                "es_discrepancia": is_discrepancy,
+                "discrepancia_delta": disc_details["delta"],
+                "discrepancia_gravedad": disc_details["gravedad"],
+                "discrepancia_motivo": disc_details["motivo"],
+                "aging_escalated": state.aging_escalated,
+                "es_planificada": state.is_planned,
+                "detalle_planificacion": state.planned_label,
+                "es_zombi": state.is_zombie,
+                "detalle_zombi": state.zombie_label,
+                "es_local_departamental": state.is_local_departmental,
+                "es_reapertura": state.is_reopened,
+            }
+        }
+
+    def _build_base_state(
+        self,
+        ticket: dict[str, Any],
+        epsilon_data: Optional[dict[str, Any]],
+        remedy_detail: Optional[dict[str, Any]],
+    ) -> "EvaluationState":
         impact, impact_reason, quant_metrics = self._evaluate_impact(ticket, epsilon_data)
         urgency, urgency_reason, has_workaround = self._evaluate_urgency(ticket, epsilon_data, remedy_detail=remedy_detail)
 
+        # Historial de reclasificación: traza cada regla que modifica impacto/urgencia/prioridad
+        # tras la evaluación ITIL base, para no perder el razonamiento previo al sobrescribir
+        # impact_reason/urgency_reason en las reglas de negocio aplicadas más abajo.
+        historial_reclasificacion: list[str] = [
+            f"Evaluación base ITIL: Impacto={impact} ({impact_reason}); Urgencia={urgency} ({urgency_reason})"
+        ]
+
         priority = self._calculate_matrix(impact, urgency, has_workaround)
 
-        # Regla de Etiquetado Operativo Explícito (/SL1 y /SL2) en Nomenclatura de N1 (it-severity-matrix v2)
         title_raw = str(ticket.get("Descripción") or ticket.get("descripcion") or (epsilon_data.get("titulo") if epsilon_data else "") or "")
         status_raw = str(ticket.get("Estatus") or (epsilon_data.get("estadoActual") if epsilon_data else "") or "").lower()
         is_closed = "cerrad" in status_raw or "resuelt" in status_raw or "cancelad" in status_raw
-        if not is_closed:
-            if re.search(r"(?:^|/|\s|\|)SL1(?:/|\s|\||$|:)", title_raw, flags=re.IGNORECASE):
-                priority = "P1"
-                impact = "Alto"
-                impact_reason = "Etiquetado explícito /SL1 por N1 en apertura (Emergencia Crítica)."
-                if urgency == "Baja":
-                    urgency = "Alta"
-                    urgency_reason = "Emergencia /SL1 activa en tratamiento prioritario."
-            elif re.search(r"(?:^|/|\s|\|)SL2(?:/|\s|\||$|:)", title_raw, flags=re.IGNORECASE) and priority not in ("P1", "P2"):
-                priority = "P2"
-                if impact == "Bajo":
-                    impact = "Medio"
-                    impact_reason = "Etiquetado explícito /SL2 por N1 (Incidencia Mayor / Pérdida de redundancia o degradación)."
 
+        return EvaluationState(
+            impact=impact,
+            impact_reason=impact_reason,
+            urgency=urgency,
+            urgency_reason=urgency_reason,
+            priority=priority,
+            has_workaround=has_workaround,
+            quant_metrics=quant_metrics,
+            historial_reclasificacion=historial_reclasificacion,
+            is_closed=is_closed,
+            title_raw=title_raw,
+        )
+
+    @staticmethod
+    def _apply_sl_tag_rule(state: "EvaluationState", ticket: dict[str, Any], epsilon_data: Optional[dict[str, Any]]) -> None:
+        # Regla de Etiquetado Operativo Explícito (/SL1 y /SL2) en Nomenclatura de N1 (it-severity-matrix v2)
+        if state.is_closed:
+            return
+        if re.search(r"(?:^|/|\s|\|)SL1(?:/|\s|\||$|:)", state.title_raw, flags=re.IGNORECASE):
+            state.priority = "P1"
+            state.impact = "Alto"
+            state.impact_reason = "Etiquetado explícito /SL1 por N1 en apertura (Emergencia Crítica)."
+            state.historial_reclasificacion.append(f"Regla /SL1: Impacto -> Alto ({state.impact_reason})")
+            if state.urgency == "Baja":
+                state.urgency = "Alta"
+                state.urgency_reason = "Emergencia /SL1 activa en tratamiento prioritario."
+                state.historial_reclasificacion.append(f"Regla /SL1: Urgencia -> Alta ({state.urgency_reason})")
+        elif re.search(r"(?:^|/|\s|\|)SL2(?:/|\s|\||$|:)", state.title_raw, flags=re.IGNORECASE) and state.priority not in ("P1", "P2"):
+            state.priority = "P2"
+            if state.impact == "Bajo":
+                state.impact = "Medio"
+                state.impact_reason = "Etiquetado explícito /SL2 por N1 (Incidencia Mayor / Pérdida de redundancia o degradación)."
+                state.historial_reclasificacion.append(f"Regla /SL2: Impacto -> Medio ({state.impact_reason})")
+
+    def _apply_reopening_rule(self, state: "EvaluationState", ticket: dict[str, Any]) -> None:
         # Regla Canónica de Incidencias Reabiertas (it-severity-matrix v2.4):
         # Transición de Resuelto/Cerrado a estado activo (Asignado/En Curso/Pendiente).
         # Factor agravante: Urgencia Alta, riesgo de recurrencia activa y preservación del envejecimiento operativo acumulativo.
-        is_reopened = bool(ticket.get("es_reapertura"))
-        reopening_criterion_prefix = ""
-        if not is_closed and is_reopened:
-            if urgency in ("Baja", "Media"):
-                urgency = "Alta"
-                urgency_reason = "Incidencia reabierta tras resolución previa (recurrencia activa sin solución definitiva). Factor agravante aplicado: Urgencia Alta."
-                priority = self._calculate_matrix(impact, urgency, has_workaround)
-            reopening_criterion_prefix = "Incidencia Reabierta (Recurrencia Activa) | "
+        state.is_reopened = bool(ticket.get("es_reapertura"))
+        if not state.is_closed and state.is_reopened:
+            if state.urgency in ("Baja", "Media"):
+                state.urgency = "Alta"
+                state.urgency_reason = "Incidencia reabierta tras resolución previa (recurrencia activa sin solución definitiva). Factor agravante aplicado: Urgencia Alta."
+                state.historial_reclasificacion.append(f"Regla Reapertura: Urgencia -> Alta ({state.urgency_reason})")
+                state.priority = self._calculate_matrix(state.impact, state.urgency, state.has_workaround)
+            state.reopening_criterion_prefix = "Incidencia Reabierta (Recurrencia Activa) | "
 
-        is_planned, planned_label = detect_planned_resolution(epsilon_data, ticket, remedy_detail=remedy_detail)
-        is_zombie, zombie_label = detect_zombie_ticket(epsilon_data, ticket)
+    @staticmethod
+    def _detect_planned_and_zombie(
+        state: "EvaluationState",
+        ticket: dict[str, Any],
+        epsilon_data: Optional[dict[str, Any]],
+        remedy_detail: Optional[dict[str, Any]],
+    ) -> None:
+        state.is_planned, state.planned_label = detect_planned_resolution(epsilon_data, ticket, remedy_detail=remedy_detail)
+        state.is_zombie, state.zombie_label = detect_zombie_ticket(epsilon_data, ticket)
 
+    @staticmethod
+    def _apply_planned_resolution_downgrade(state: "EvaluationState", ticket: dict[str, Any], epsilon_data: Optional[dict[str, Any]]) -> None:
         # Regla de Resolución Planificada (Seguimiento de Release P2 / it-severity-matrix v2.7):
         # Una incidencia con resolución planificada o pase acordado no constituye una emergencia P1 en vivo.
         # Se calibra la prioridad sugerida a P2 (Seguimiento de Release) salvo caída total de servicio no mitigada.
-        if is_planned and priority == "P1":
+        if state.is_planned and state.priority == "P1":
             desc_text = str(ticket.get("Descripción") or ticket.get("descripcion") or "")
             prob_text = str(epsilon_data.get("problema") if epsilon_data else "")
             full_text = f"{desc_text} {prob_text}".lower()
             has_total_outage = any(kw in full_text for kw in ["caída total", "caida total", "sin servicio", "corte total"])
             if not has_total_outage:
-                priority = "P2"
-                if urgency == "Alta":
-                    urgency = "Media"
+                state.priority = "P2"
+                if state.urgency == "Alta":
+                    state.urgency = "Media"
+                    state.urgency_reason = f"Resolución planificada en ventana acordada ({state.planned_label}). Prioridad calibrada a P2, Urgencia reducida a Media por ausencia de caída total de servicio."
+                    state.historial_reclasificacion.append(f"Regla Resolución Planificada: Prioridad -> P2, Urgencia -> Media ({state.urgency_reason})")
 
+    @staticmethod
+    def _apply_zombie_rule(state: "EvaluationState") -> None:
         # Regla de Tickets Zombi (Desincronización Jira / Remedy):
         # Si un ticket fue cancelado o resuelto en Jira, no constituye una emergencia viva.
         # Se fija prioridad técnica P3 con requerimiento de cierre administrativo en Remedy.
-        if is_zombie and priority in ("P1", "P2"):
-            priority = "P3"
-            urgency = "Baja"
-            urgency_reason = f"Ticket cancelado/resuelto en Jira ({zombie_label}). Requiere cierre administrativo formal en BMC Remedy."
+        if state.is_zombie and state.priority in ("P1", "P2"):
+            state.priority = "P3"
+            state.urgency = "Baja"
+            state.urgency_reason = f"Ticket cancelado/resuelto en Jira ({state.zombie_label}). Requiere cierre administrativo formal en BMC Remedy."
+            state.historial_reclasificacion.append(f"Regla Ticket Zombi: Prioridad -> P3, Urgencia -> Baja ({state.urgency_reason})")
 
+    @staticmethod
+    def _apply_aging_escalation(
+        state: "EvaluationState",
+        ticket: dict[str, Any],
+        epsilon_data: Optional[dict[str, Any]],
+        reference_time: Optional[datetime],
+    ) -> None:
         # Regla Operativa de Aging Escalation:
         # P2 activa por >= 120 minutos sin workaround autorizado escala preventivamente a P1
         # Excepción 1: Incidencias con resolución planificada o ventana de pase acordada con negocio
@@ -1249,108 +1239,45 @@ class SeverityEvaluator:
         raw_date = ticket.get("Fecha de envío") or ticket.get("fecha_envio") or ""
         parsed_date = parse_incident_datetime(raw_date)
         sla_info = compute_emergency_sla_status(parsed_date, reference_time=reference_time)
-        mins_open = sla_info.get("minutos_desde_apertura")
+        state.mins_open = sla_info.get("minutos_desde_apertura")
 
-        aging_escalated = False
-        aging_criterion_prefix = ""
-        is_local_departmental = False
+        if state.is_closed or state.is_zombie:
+            return
 
-        if not is_closed and not is_zombie:
-            user_count = quant_metrics.get("usuarios")
-            site_count = quant_metrics.get("sedes")
-            is_single_site_or_none = site_count is None or site_count <= 1
-            has_few_users = user_count is not None and user_count <= 20
+        user_count = state.quant_metrics.get("usuarios")
+        site_count = state.quant_metrics.get("sedes")
+        is_single_site_or_none = site_count is None or site_count <= 1
+        has_few_users = user_count is not None and user_count <= 20
 
-            desc_text = str(ticket.get("Descripción") or ticket.get("descripcion") or "")
-            prob_text = str(epsilon_data.get("problema") if epsilon_data else "")
-            full_text = f"{desc_text} {prob_text}".lower()
-            has_total_outage = any(kw in full_text for kw in ["caída total", "caida total", "sin servicio", "corte total", "afectación global", "afectacion global"])
+        desc_text = str(ticket.get("Descripción") or ticket.get("descripcion") or "")
+        prob_text = str(epsilon_data.get("problema") if epsilon_data else "")
+        full_text = f"{desc_text} {prob_text}".lower()
+        has_total_outage = any(kw in full_text for kw in ["caída total", "caida total", "sin servicio", "corte total", "afectación global", "afectacion global"])
 
-            if is_single_site_or_none and has_few_users and not has_total_outage:
-                is_local_departmental = True
+        if is_single_site_or_none and has_few_users and not has_total_outage:
+            state.is_local_departmental = True
 
-            if is_planned:
-                aging_criterion_prefix = f"Resolución Planificada ({planned_label}) | "
-                urgency_reason = f"Resolución planificada en ventana acordada ({planned_label}). Exenta de escalado preventivo por envejecimiento a P1."
-            elif priority == "P2" and has_workaround != "Sí" and mins_open is not None and mins_open >= 120:
-                if is_local_departmental:
-                    aging_criterion_prefix = f"Estancamiento Local (>120m en P2 - {mins_open}m) | "
-                    urgency_reason = f"Estancamiento operativo ({mins_open} min >= 120 min) en grupo resolutor. Prioridad acotada a P2 Local por alcance acotado ({user_count} usuarios en sede única)."
-                else:
-                    priority = "P1"
-                    aging_escalated = True
-                    aging_criterion_prefix = f"Aging Escalation (>120m en P2 sin workaround - {mins_open}m) | "
-                    urgency_reason = f"Escalado operativo a P1 por tiempo transcurrido ({mins_open} min >= 120 min) sin mitigación ni workaround."
-
-        is_high_priority = priority in ("P1", "P2")
-
-        original_raw = ticket.get("Prioridad") or ticket.get("prioridad")
-        disc_details = compute_discrepancy_details(original_raw, priority, reasons=[impact_reason, urgency_reason])
-        is_discrepancy = disc_details["es_discrepancia"]
-
-        proceso, proceso_negocio, dominio_tecnico = self._classify_process_multi_domain(ticket, epsilon_data)
-        criterio = self._determine_criterion(proceso, priority, impact, urgency, ticket, epsilon_data, quant_metrics)
-        if reopening_criterion_prefix:
-            criterio = reopening_criterion_prefix + criterio
-        if aging_criterion_prefix:
-            criterio = aging_criterion_prefix + criterio
-
-        sla_minutes = SLA_TARGET_MINUTES.get(priority, 240)
-
-        # Reglas de Oro 2 y 3 (orange-it-emergency-management): Gobernanza de Workarounds
-        if has_workaround == "Sí":
-            workaround_gobernanza = "Pendiente autorización IM-CSO (SL1 activa)"
-        elif has_workaround == "No":
-            workaround_gobernanza = "Sin workaround (Resolución directa requerida)"
-        else:
-            workaround_gobernanza = "No identificado"
-
-        return {
-            "prioridad_sugerida": priority,
-            "es_alta_prioridad": is_high_priority,
-            "es_discrepancia": is_discrepancy,
-            "discrepancia_delta": disc_details["delta"],
-            "discrepancia_gravedad": disc_details["gravedad"],
-            "discrepancia_motivo": disc_details["motivo"],
-            "aging_escalated": aging_escalated,
-            "es_planificada": is_planned,
-            "detalle_planificacion": planned_label,
-            "es_zombi": is_zombie,
-            "detalle_zombi": zombie_label,
-            "es_local_departamental": is_local_departmental,
-            "es_reapertura": is_reopened,
-            "evaluacion": {
-                "proceso": proceso,
-                "proceso_negocio": proceso_negocio,
-                "dominio_tecnico": dominio_tecnico,
-                "criterio": criterio,
-                "impacto": impact,
-                "impacto_justificacion": impact_reason,
-                "urgencia": urgency,
-                "urgencia_justificacion": urgency_reason,
-                "workaround": has_workaround,
-                "workaround_gobernanza": workaround_gobernanza,
-                "sla_objetivo_minutos": sla_minutes,
-                "metricas_cuantitativas": quant_metrics,
-                "es_discrepancia": is_discrepancy,
-                "discrepancia_delta": disc_details["delta"],
-                "discrepancia_gravedad": disc_details["gravedad"],
-                "discrepancia_motivo": disc_details["motivo"],
-                "aging_escalated": aging_escalated,
-                "es_planificada": is_planned,
-                "detalle_planificacion": planned_label,
-                "es_zombi": is_zombie,
-                "detalle_zombi": zombie_label,
-                "es_local_departamental": is_local_departmental,
-                "es_reapertura": is_reopened,
-            }
-        }
+        if state.is_planned:
+            state.aging_criterion_prefix = f"Resolución Planificada ({state.planned_label}) | "
+            state.urgency_reason = f"Resolución planificada en ventana acordada ({state.planned_label}). Exenta de escalado preventivo por envejecimiento a P1."
+            state.historial_reclasificacion.append(f"Regla Aging/Exención Planificada: {state.urgency_reason}")
+        elif state.priority == "P2" and state.has_workaround != "Sí" and state.mins_open is not None and state.mins_open >= 120:
+            if state.is_local_departmental:
+                state.aging_criterion_prefix = f"Estancamiento Local (>120m en P2 - {state.mins_open}m) | "
+                state.urgency_reason = f"Estancamiento operativo ({state.mins_open} min >= 120 min) en grupo resolutor. Prioridad acotada a P2 Local por alcance acotado ({user_count} usuarios en sede única)."
+                state.historial_reclasificacion.append(f"Regla Aging/Estancamiento Local: {state.urgency_reason}")
+            else:
+                state.priority = "P1"
+                state.aging_escalated = True
+                state.aging_criterion_prefix = f"Aging Escalation (>120m en P2 sin workaround - {state.mins_open}m) | "
+                state.urgency_reason = f"Escalado operativo a P1 por tiempo transcurrido ({state.mins_open} min >= 120 min) sin mitigación ni workaround."
+                state.historial_reclasificacion.append(f"Regla Aging Escalation: Prioridad -> P1 ({state.urgency_reason})")
 
     @staticmethod
-    def _score_patterns(patterns: list[re.Pattern], text: str) -> int:
+    def _score_patterns(pattern: re.Pattern, text: str) -> int:
         if not text:
             return 0
-        return sum(len(p.findall(text)) for p in patterns)
+        return len(pattern.findall(text))
 
     @classmethod
     def _classify_process_multi_domain(
@@ -1383,11 +1310,11 @@ class SeverityEvaluator:
         detail_corpus = f"{desc} {problem_text}"
 
         scores: dict[str, float] = {}
-        for category, patterns in PROCESS_PATTERNS.items():
-            g_score = cls._score_patterns(patterns, group) * 4.0
-            s_score = cls._score_patterns(patterns, sistemas_text) * 3.0
-            t_score = cls._score_patterns(patterns, title) * 2.0
-            d_score = cls._score_patterns(patterns, detail_corpus) * 1.0
+        for category, pattern in PROCESS_PATTERNS_COMBINED.items():
+            g_score = cls._score_patterns(pattern, group) * 4.0
+            s_score = cls._score_patterns(pattern, sistemas_text) * 3.0
+            t_score = cls._score_patterns(pattern, title) * 2.0
+            d_score = cls._score_patterns(pattern, detail_corpus) * 1.0
             total = g_score + s_score + t_score + d_score
             scores[category] = total
 
@@ -2208,6 +2135,13 @@ class EpsilonClient:
             logger.debug("Error leyendo caché de %s: %s", cache_file, e)
             return None
 
+    def load_cached(self, incident_code: str) -> Optional[dict[str, Any]]:
+        """Lee la caché en disco sin red ni control de TTL, para callers externos (p. ej. compute_worklog_stagnation)."""
+        cache_file = self._get_cache_path(incident_code)
+        if not cache_file.is_file():
+            return None
+        return self._read_cache_file(cache_file)
+
     def _fetch_from_url(self, target_base: str, incident_code: str) -> Optional[dict[str, Any]]:
         url = f"{target_base}/{incident_code}"
         req = urllib.request.Request(
@@ -2380,11 +2314,22 @@ def evaluate_incidents_batch(
         ]
         epsilon_client.prefetch([c for c in active_codes if c])
 
+    # Pre-cargar concurrentemente las cachés de detalle Remedy (I/O de disco por ticket)
+    remedy_cache_by_id: dict[str, Any] = {}
+    if project_root:
+        remedy_loader = RemedyCacheLoader(cache_dir=project_root / "data" / ".remedy_cache")
+        candidate_ids = [
+            str(item.get("ID de incidencia") or item.get("id") or "").strip()
+            for item in processed_tickets
+        ]
+        remedy_cache_by_id = remedy_loader.load_many(candidate_ids)
+
     high_priority_items: list[dict[str, Any]] = []
     p1_count = 0
     p2_count = 0
     discrepancies_count = 0
     terminal_skipped_count = 0
+    error_skipped_count = 0
     batch_start_time = time.time()
     audit_records: list[dict[str, Any]] = []
     seen_batch_ids: set[str] = set()
@@ -2399,13 +2344,6 @@ def evaluate_incidents_batch(
         status_val = item.get("Estatus") or item.get("estatus") or item.get("Estado") or item.get("estado") or ""
         if is_terminal_status(status_val):
             terminal_skipped_count += 1
-            try:
-                from converters.cli.ingestion_logger import audit_incident_completeness
-            except ImportError:
-                try:
-                    from ingestion_logger import audit_incident_completeness
-                except ImportError:
-                    audit_incident_completeness = None
             if audit_incident_completeness:
                 audit_records.append(
                     audit_incident_completeness(
@@ -2419,216 +2357,215 @@ def evaluate_incidents_batch(
                 )
             continue
 
-        # Cargar detalle de Remedy desde caché local si existe
-        remedy_detail = None
-        if project_root and inc_id:
-            rem_cache_file = project_root / "data" / ".remedy_cache" / f"{inc_id}.json"
-            if rem_cache_file.is_file():
-                try:
-                    with open(rem_cache_file, "r", encoding="utf-8") as f:
-                        remedy_detail = json.load(f)
-                except Exception:
-                    remedy_detail = None
-
-        epsilon_data = epsilon_client.get_resumen_ia(inc_id) if epsilon_client else None
-        evaluation = evaluator.evaluate(item, epsilon_data, reference_time=reference_time, remedy_detail=remedy_detail)
-
-        prio_sugerida = evaluation["prioridad_sugerida"]
-        es_alta = evaluation["es_alta_prioridad"]
-        es_disc = evaluation["es_discrepancia"]
-
-        if es_disc:
-            discrepancies_count += 1
-
-        if prio_sugerida == "P1":
-            p1_count += 1
-        elif prio_sugerida == "P2":
-            p2_count += 1
-
-        # Procesar todos los tickets activos evaluados para el catálogo de triaje y notificaciones
-        raw_date = item.get("Fecha de envío") or item.get("fecha_envio") or ""
-        parsed_date = parse_incident_datetime(raw_date)
-        sla_status = compute_emergency_sla_status(parsed_date, reference_time=reference_time)
-        is_zombie = evaluation.get("es_zombi", False)
-        zombie_label = evaluation.get("detalle_zombi", "")
-        is_planned = evaluation.get("es_planificada", False)
-        planned_label = evaluation.get("detalle_planificacion", "")
-        is_local_dept = evaluation.get("es_local_departamental", False)
-
-        if not es_alta or is_zombie:
-            # Los SLAs de notificación urgente a dirección y escalado telefónico aplican a emergencias vivas
-            sla_status["sla_primera_notificacion_vencido"] = False
-            sla_status["requiere_escalado_telefonico"] = False
-            sla_status["escalado_estamentos_superiores"] = False
-            sla_status["proxima_ventana_update_minutos"] = None
-        elif is_planned or is_local_dept:
-            sla_status["requiere_escalado_telefonico"] = False
-            sla_status["escalado_estamentos_superiores"] = False
-
-        eval_dict = dict(evaluation["evaluacion"])
-        eval_dict["fecha_apertura"] = raw_date
-        eval_dict["minutos_desde_apertura"] = sla_status["minutos_desde_apertura"]
-        eval_dict["sla_primera_notificacion_vencido"] = sla_status["sla_primera_notificacion_vencido"]
-        eval_dict["requiere_escalado_telefonico"] = sla_status["requiere_escalado_telefonico"]
-        eval_dict["escalado_estamentos_superiores"] = sla_status["escalado_estamentos_superiores"]
-        eval_dict["proxima_ventana_update_minutos"] = sla_status["proxima_ventana_update_minutos"]
-        evaluation["evaluacion"] = eval_dict
-
-        mensajes = msg_generator.generate(item, evaluation, epsilon_data, auto_draft=auto_draft)
-        has_apertura = bool(mensajes.get("apertura", {}).get("completo"))
-
-        is_reopened_val = bool(evaluation.get("es_reapertura") or item.get("es_reapertura"))
-        workaround_val = str(evaluation.get("evaluacion", {}).get("workaround", "No"))
-        disc_delta = evaluation.get("discrepancia_delta", 0)
-        quant_m = evaluation.get("evaluacion", {}).get("metricas_cuantitativas")
-        sedes_cnt = (quant_m or {}).get("sedes")
-        multisite_partial = False
-        if sedes_cnt and sedes_cnt >= 2:
-            desc_lower = (str(item.get("Descripción") or "") + " " + str(epsilon_data.get("problema") if epsilon_data else "")).lower()
-            if any(k in desc_lower for k in ["parcial", "recuperad", "algunas sedes", "resto de sedes"]):
-                multisite_partial = True
-
-        # Calcular estancamiento de Work Log
-        worklog_status = compute_worklog_stagnation(
-            ticket=item,
-            reference_time=reference_time,
-            remedy_detail=remedy_detail,
-            epsilon_data=epsilon_data,
-            is_planned=is_planned,
-            is_zombie=is_zombie,
-            cache_dir=(project_root / "data" / ".remedy_cache") if project_root else None,
-        )
-
-        guia_operador = generate_operator_guidance(
-            incident_id=inc_id,
-            priority=prio_sugerida,
-            is_zombie=is_zombie,
-            zombie_detail=zombie_label,
-            is_planned=is_planned,
-            planned_detail=planned_label,
-            is_local_departmental=is_local_dept,
-            mins_open=sla_status["minutos_desde_apertura"],
-            assigned_group=str(item.get("Grupo asignado") or item.get("Grupo Resolutor") or ""),
-            has_exec_msg_apertura=has_apertura,
-            quant_metrics=quant_m,
-            is_reopened=is_reopened_val,
-            is_discrepancy=es_disc,
-            discrepancy_delta=disc_delta,
-            has_workaround=workaround_val,
-            is_multisite_partial=multisite_partial,
-            worklog_status=worklog_status,
-        )
-        eval_dict["guia_operador"] = guia_operador
-        evaluation["evaluacion"] = eval_dict
-
-        reporte_emergencia = msg_generator.generate_emergency_4blocks_report(
-            ticket=item,
-            evaluation=evaluation,
-            resumen_ia=epsilon_data,
-            sla_status=sla_status,
-        )
-        # reporte_emergencia se expone exclusivamente en la raíz de la incidencia (evitando duplicidad en mensajes_ejecutivos)
-        
-        sistemas = []
-        if epsilon_data and isinstance(epsilon_data.get("sistemas"), list):
-            sistemas = epsilon_data["sistemas"]
-        elif item.get("Grupo asignado"):
-            sistemas = [item["Grupo asignado"]]
-
-        resumen_ia_block = None
-        if epsilon_data:
-            hitos = epsilon_data.get("hitosTecnicos") or epsilon_data.get("hitos_tecnicos") or []
-            ultimo_hito = hitos[-1] if isinstance(hitos, list) and len(hitos) > 0 else ""
-            solucion_val = epsilon_data.get("solucion") or ultimo_hito or "En análisis técnico por equipo resolutor."
-
-            bloqueos_raw = epsilon_data.get("bloqueos", [])
-            bloqueos_str = "; ".join(bloqueos_raw) if isinstance(bloqueos_raw, list) else str(bloqueos_raw or "")
-            
-            sig_raw = str(epsilon_data.get("siguienteAccion") or epsilon_data.get("siguiente_accion") or "").strip()
-            if sig_raw in ("[]", "{}", "None", "null", "N/A", "-", "none", ""):
-                sig_raw = ""
-            siguiente_accion_val = sig_raw or bloqueos_str or "Seguimiento técnico en curso."
-
-            resumen_ia_block = {
-                "problema": epsilon_data.get("problema", ""),
-                "impacto": epsilon_data.get("impacto", ""),
-                "solucion": solucion_val,
-                "bloqueos": bloqueos_str,
-                "siguiente_accion": siguiente_accion_val,
-                "hitos_tecnicos": hitos if isinstance(hitos, list) else []
-            }
-
-        # Deduplicación: Las propiedades operativas y guía residen exclusivamente en la raíz del ticket.
-        # En el bloque evaluacion se preservan los metadatos analíticos/algorítmicos ITIL y SLAs técnicos.
-        eval_clean = dict(eval_dict)
-        for dup_key in (
-            "es_discrepancia",
-            "discrepancia_delta",
-            "discrepancia_gravedad",
-            "discrepancia_motivo",
-            "aging_escalated",
-            "es_planificada",
-            "detalle_planificacion",
-            "es_zombi",
-            "detalle_zombi",
-            "es_local_departamental",
-            "guia_operador",
-            "fecha_apertura",
-            "worklog_status",
-        ):
-            eval_clean.pop(dup_key, None)
-
-        high_priority_items.append({
-            "id": inc_id,
-            "titulo": item.get("Descripción") or item.get("descripcion") or (epsilon_data.get("titulo") if epsilon_data else ""),
-            "sistemas": sistemas,
-            "prioridad_original": item.get("Prioridad") or "Media",
-            "prioridad_sugerida": prio_sugerida,
-            "es_alta_prioridad": es_alta,
-            "es_discrepancia": es_disc,
-            "discrepancia_delta": evaluation.get("discrepancia_delta", 0),
-            "discrepancia_gravedad": evaluation.get("discrepancia_gravedad", "Sin discrepancia"),
-            "discrepancia_motivo": evaluation.get("discrepancia_motivo", ""),
-            "aging_escalated": evaluation.get("aging_escalated", False),
-            "es_planificada": is_planned,
-            "detalle_planificacion": planned_label,
-            "es_zombi": is_zombie,
-            "detalle_zombi": zombie_label,
-            "es_local_departamental": is_local_dept,
-            "guia_operador": guia_operador,
-            "estatus": item.get("Estatus") or "Asignado",
-            "fecha_envio": raw_date,
-            "fecha_apertura": raw_date,
-            "fecha_ultima_modificacion": item.get("fechaUltimaModificacion") or item.get("fecha_ultima_modificacion") or "",
-            "worklog_status": worklog_status,
-            "evaluacion": eval_clean,
-            "resumen_ia": resumen_ia_block,
-            "mensajes_ejecutivos": mensajes,
-            "reporte_emergencia": reporte_emergencia,
-        })
-
         try:
-            from converters.cli.ingestion_logger import audit_incident_completeness
-        except ImportError:
-            try:
-                from ingestion_logger import audit_incident_completeness
-            except ImportError:
-                audit_incident_completeness = None
-        if audit_incident_completeness:
-            eps_reason = None
-            if epsilon_client and hasattr(epsilon_client, "fetch_reasons"):
-                eps_reason = epsilon_client.fetch_reasons.get(inc_id)
-            agent_msgs_item = msg_generator.agent_store.get(inc_id) if hasattr(msg_generator, "agent_store") else None
-            audit_records.append(
-                audit_incident_completeness(
-                    item=item,
-                    epsilon_data=epsilon_data,
-                    epsilon_reason=eps_reason,
-                    agent_msgs=agent_msgs_item,
-                    evaluation=evaluation,
-                    is_terminal=False,
-                )
+            remedy_detail = remedy_cache_by_id.get(inc_id)
+
+            epsilon_data = epsilon_client.get_resumen_ia(inc_id) if epsilon_client else None
+            evaluation = evaluator.evaluate(item, epsilon_data, reference_time=reference_time, remedy_detail=remedy_detail)
+
+            prio_sugerida = evaluation["prioridad_sugerida"]
+            es_alta = evaluation["es_alta_prioridad"]
+            es_disc = evaluation["es_discrepancia"]
+
+            if es_disc:
+                discrepancies_count += 1
+
+            if prio_sugerida == "P1":
+                p1_count += 1
+            elif prio_sugerida == "P2":
+                p2_count += 1
+
+            # Procesar todos los tickets activos evaluados para el catálogo de triaje y notificaciones
+            raw_date = item.get("Fecha de envío") or item.get("fecha_envio") or ""
+            parsed_date = parse_incident_datetime(raw_date)
+            sla_status = compute_emergency_sla_status(parsed_date, reference_time=reference_time)
+            is_zombie = evaluation.get("es_zombi", False)
+            zombie_label = evaluation.get("detalle_zombi", "")
+            is_planned = evaluation.get("es_planificada", False)
+            planned_label = evaluation.get("detalle_planificacion", "")
+            is_local_dept = evaluation.get("es_local_departamental", False)
+
+            if not es_alta or is_zombie:
+                # Los SLAs de notificación urgente a dirección y escalado telefónico aplican a emergencias vivas
+                sla_status["sla_primera_notificacion_vencido"] = False
+                sla_status["requiere_escalado_telefonico"] = False
+                sla_status["escalado_estamentos_superiores"] = False
+                sla_status["proxima_ventana_update_minutos"] = None
+            elif is_planned or is_local_dept:
+                sla_status["requiere_escalado_telefonico"] = False
+                sla_status["escalado_estamentos_superiores"] = False
+
+            eval_dict = dict(evaluation["evaluacion"])
+            eval_dict["fecha_apertura"] = raw_date
+            eval_dict["minutos_desde_apertura"] = sla_status["minutos_desde_apertura"]
+            eval_dict["sla_primera_notificacion_vencido"] = sla_status["sla_primera_notificacion_vencido"]
+            eval_dict["requiere_escalado_telefonico"] = sla_status["requiere_escalado_telefonico"]
+            eval_dict["escalado_estamentos_superiores"] = sla_status["escalado_estamentos_superiores"]
+            eval_dict["proxima_ventana_update_minutos"] = sla_status["proxima_ventana_update_minutos"]
+            evaluation["evaluacion"] = eval_dict
+
+            mensajes = msg_generator.generate(item, evaluation, epsilon_data, auto_draft=auto_draft)
+            has_apertura = bool(mensajes.get("apertura", {}).get("completo"))
+
+            is_reopened_val = bool(evaluation.get("es_reapertura") or item.get("es_reapertura"))
+            workaround_val = str(evaluation.get("evaluacion", {}).get("workaround", "No"))
+            disc_delta = evaluation.get("discrepancia_delta", 0)
+            quant_m = evaluation.get("evaluacion", {}).get("metricas_cuantitativas")
+            sedes_cnt = (quant_m or {}).get("sedes")
+            multisite_partial = False
+            if sedes_cnt and sedes_cnt >= 2:
+                desc_lower = (str(item.get("Descripción") or "") + " " + str(epsilon_data.get("problema") if epsilon_data else "")).lower()
+                if any(k in desc_lower for k in ["parcial", "recuperad", "algunas sedes", "resto de sedes"]):
+                    multisite_partial = True
+
+            # Calcular estancamiento de Work Log
+            worklog_status = compute_worklog_stagnation(
+                ticket=item,
+                reference_time=reference_time,
+                remedy_detail=remedy_detail,
+                epsilon_data=epsilon_data,
+                is_planned=is_planned,
+                is_zombie=is_zombie,
             )
+
+            guia_operador = generate_operator_guidance(
+                incident_id=inc_id,
+                priority=prio_sugerida,
+                is_zombie=is_zombie,
+                zombie_detail=zombie_label,
+                is_planned=is_planned,
+                planned_detail=planned_label,
+                is_local_departmental=is_local_dept,
+                mins_open=sla_status["minutos_desde_apertura"],
+                assigned_group=str(item.get("Grupo asignado") or item.get("Grupo Resolutor") or ""),
+                has_exec_msg_apertura=has_apertura,
+                quant_metrics=quant_m,
+                is_reopened=is_reopened_val,
+                is_discrepancy=es_disc,
+                discrepancy_delta=disc_delta,
+                has_workaround=workaround_val,
+                is_multisite_partial=multisite_partial,
+                worklog_status=worklog_status,
+            )
+            eval_dict["guia_operador"] = guia_operador
+            evaluation["evaluacion"] = eval_dict
+
+            reporte_emergencia = msg_generator.generate_emergency_4blocks_report(
+                ticket=item,
+                evaluation=evaluation,
+                resumen_ia=epsilon_data,
+                sla_status=sla_status,
+            )
+            # reporte_emergencia se expone exclusivamente en la raíz de la incidencia (evitando duplicidad en mensajes_ejecutivos)
+        
+            sistemas = []
+            if epsilon_data and isinstance(epsilon_data.get("sistemas"), list):
+                sistemas = epsilon_data["sistemas"]
+            elif item.get("Grupo asignado"):
+                sistemas = [item["Grupo asignado"]]
+
+            resumen_ia_block = None
+            if epsilon_data:
+                hitos = epsilon_data.get("hitosTecnicos") or epsilon_data.get("hitos_tecnicos") or []
+                ultimo_hito = hitos[-1] if isinstance(hitos, list) and len(hitos) > 0 else ""
+                solucion_val = epsilon_data.get("solucion") or ultimo_hito or "En análisis técnico por equipo resolutor."
+
+                bloqueos_raw = epsilon_data.get("bloqueos", [])
+                bloqueos_str = "; ".join(bloqueos_raw) if isinstance(bloqueos_raw, list) else str(bloqueos_raw or "")
+            
+                sig_raw = str(epsilon_data.get("siguienteAccion") or epsilon_data.get("siguiente_accion") or "").strip()
+                if sig_raw in ("[]", "{}", "None", "null", "N/A", "-", "none", ""):
+                    sig_raw = ""
+                siguiente_accion_val = sig_raw or bloqueos_str or "Seguimiento técnico en curso."
+
+                resumen_ia_block = {
+                    "problema": epsilon_data.get("problema", ""),
+                    "impacto": epsilon_data.get("impacto", ""),
+                    "solucion": solucion_val,
+                    "bloqueos": bloqueos_str,
+                    "siguiente_accion": siguiente_accion_val,
+                    "hitos_tecnicos": hitos if isinstance(hitos, list) else []
+                }
+
+            # Deduplicación: Las propiedades operativas y guía residen exclusivamente en la raíz del ticket.
+            # En el bloque evaluacion se preservan los metadatos analíticos/algorítmicos ITIL y SLAs técnicos.
+            eval_clean = dict(eval_dict)
+            for dup_key in (
+                "es_discrepancia",
+                "discrepancia_delta",
+                "discrepancia_gravedad",
+                "discrepancia_motivo",
+                "aging_escalated",
+                "es_planificada",
+                "detalle_planificacion",
+                "es_zombi",
+                "detalle_zombi",
+                "es_local_departamental",
+                "guia_operador",
+                "fecha_apertura",
+                "worklog_status",
+            ):
+                eval_clean.pop(dup_key, None)
+
+            high_priority_items.append({
+                "id": inc_id,
+                "titulo": item.get("Descripción") or item.get("descripcion") or (epsilon_data.get("titulo") if epsilon_data else ""),
+                "sistemas": sistemas,
+                "prioridad_original": item.get("Prioridad") or "Media",
+                "prioridad_sugerida": prio_sugerida,
+                "es_alta_prioridad": es_alta,
+                "es_discrepancia": es_disc,
+                "discrepancia_delta": evaluation.get("discrepancia_delta", 0),
+                "discrepancia_gravedad": evaluation.get("discrepancia_gravedad", "Sin discrepancia"),
+                "discrepancia_motivo": evaluation.get("discrepancia_motivo", ""),
+                "aging_escalated": evaluation.get("aging_escalated", False),
+                "es_planificada": is_planned,
+                "detalle_planificacion": planned_label,
+                "es_zombi": is_zombie,
+                "detalle_zombi": zombie_label,
+                "es_local_departamental": is_local_dept,
+                "guia_operador": guia_operador,
+                "estatus": item.get("Estatus") or "Asignado",
+                "fecha_envio": raw_date,
+                "fecha_apertura": raw_date,
+                "fecha_ultima_modificacion": item.get("fechaUltimaModificacion") or item.get("fecha_ultima_modificacion") or "",
+                "worklog_status": worklog_status,
+                "evaluacion": eval_clean,
+                "resumen_ia": resumen_ia_block,
+                "mensajes_ejecutivos": mensajes,
+                "reporte_emergencia": reporte_emergencia,
+            })
+
+            if audit_incident_completeness:
+                eps_reason = None
+                if epsilon_client and hasattr(epsilon_client, "fetch_reasons"):
+                    eps_reason = epsilon_client.fetch_reasons.get(inc_id)
+                agent_msgs_item = msg_generator.agent_store.get(inc_id) if hasattr(msg_generator, "agent_store") else None
+                audit_records.append(
+                    audit_incident_completeness(
+                        item=item,
+                        epsilon_data=epsilon_data,
+                        epsilon_reason=eps_reason,
+                        agent_msgs=agent_msgs_item,
+                        evaluation=evaluation,
+                        is_terminal=False,
+                    )
+                )
+        except Exception as e:
+            error_skipped_count += 1
+            logger.warning("Error evaluando incidencia %s, se omite del lote: %s", inc_id, e)
+            if audit_incident_completeness:
+                audit_records.append(
+                    audit_incident_completeness(
+                        item=item,
+                        epsilon_data=None,
+                        epsilon_reason=f"Error durante evaluación: {e}",
+                        agent_msgs=None,
+                        evaluation=None,
+                        is_terminal=False,
+                    )
+                )
+            continue
 
     # Ordenar: primero P1, luego discrepancias, luego P2, luego resto
     def sort_key(doc: dict[str, Any]) -> tuple[int, int, int]:
@@ -2688,7 +2625,8 @@ def evaluate_incidents_batch(
             "kpis": {
                 "total_scanned": total_scanned,
                 "terminal_skipped_count": terminal_skipped_count,
-                "active_evaluated_count": total_scanned - terminal_skipped_count,
+                "error_skipped_count": error_skipped_count,
+                "active_evaluated_count": total_scanned - terminal_skipped_count - error_skipped_count,
                 "total_high_priority": p1_count + p2_count,
                 "p1_critical_count": p1_count,
                 "p2_high_count": p2_count,
