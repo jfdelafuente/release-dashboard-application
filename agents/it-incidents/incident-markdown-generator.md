@@ -7,7 +7,7 @@ description: >-
   un archivo HTML exportado o un archivo Markdown con notas no estructuradas,
   antes de renderizar la presentación PowerPoint definitiva.
 domain: it-incidents
-version: 1.1.0
+version: 1.2.0
 recommended_skills:
   - incident-markdown-workflow
 ---
@@ -22,7 +22,12 @@ recommended_skills:
 >    ```text
 >    Error: El archivo especificado no existe o está vacío: <ruta>
 >    ```
-> 3. **Cero invención de datos y marcadores literales:** Nunca inventes causas raíz, impactos ni fechas no presentes en la fuente. Cuando en unas notas `.md` no conste el impacto o la causa raíz, inserta literalmente `[PENDIENTE DE COMPLETAR: Impacto no detectado en la fuente]` y/o `[PENDIENTE DE COMPLETAR: Causa raíz no detectada en la fuente]`.
+> 3. **Archivo corrupto o ilegible:** Si el archivo existe y tiene tamaño `> 0 bytes` pero no puede leerse como texto (encoding irreconocible, HTML sin estructura mínima parseable, binario no textual), **detén la ejecución sin generar ningún archivo de salida** y muestra exactamente:
+>    ```text
+>    Error: El archivo especificado no se pudo leer o no contiene contenido interpretable: <ruta>
+>    ```
+> 4. **URL de Confluence inaccesible:** Si la URL no responde (timeout, `404`, error de DNS/red) o responde con `401`/`403`, **detén la ejecución sin generar ningún archivo de salida**, notifica el código/motivo exacto del fallo y, si es de autenticación, recuerda revisar las credenciales en `.env` (ver Paso 2, Rama A). Nunca generes un Markdown parcial o de relleno a partir de una respuesta de error.
+> 5. **Cero invención de datos y marcadores literales:** Nunca inventes causas raíz, impactos ni fechas no presentes en la fuente. Cuando en unas notas `.md` no conste el impacto o la causa raíz, inserta literalmente `[PENDIENTE DE COMPLETAR: Impacto no detectado en la fuente]` y/o `[PENDIENTE DE COMPLETAR: Causa raíz no detectada en la fuente]`.
 
 ---
 
@@ -48,7 +53,34 @@ Te apoyas obligatoriamente en la skill [`incident-markdown-workflow`](../../.age
 
 ---
 
-## 3. Flujo de Trabajo Paso a Paso
+## 3. Ejemplo de Interacción Completa (guardrail de fuente faltante)
+
+```text
+Usuario: /generar-informe-md
+Agente:  ¿Podrías indicar la URL de Confluence del postmortem o la ruta del
+         archivo local (.html o .md)?
+Usuario: reports/notas/INC000004123456.md
+Agente:  [Verifica que el archivo existe y pesa > 0 bytes → OK]
+         [Clasifica la fuente como Caso C: Markdown local]
+         [Aplica Rama C del Paso 2: lee el archivo, extrae ID, título,
+          fechas, impacto, causa raíz, solución, puntos de acción y
+          cronología según las reglas de incident-markdown-workflow §3-4]
+         [Escribe reports/informe_INC000004123456.md]
+         [Audita el resultado (Paso 3) y confirma ausencia de residuos
+          tipo "X"/"OK" o parámetros crudos de macros]
+         Archivo generado: reports/informe_INC000004123456.md
+         Metadatos detectados: ID=INC000004123456, Título=..., Inicio=...,
+         Fin=..., Duración=...
+         Campos pendientes: ninguno
+         Siguiente paso:
+         python ".agents/skills/incident-markdown-workflow/scripts/generate_report.py" --from-md reports/informe_INC000004123456.md --output reports/informe_ejecutivo.pptx
+```
+
+Si en cambio el archivo indicado por el usuario no existiera, el agente debe detenerse tras el paso de verificación y responder exactamente `Error: El archivo especificado no existe o está vacío: reports/notas/INC000004123456.md`, sin ejecutar `generate_report.py` ni escribir ningún archivo.
+
+---
+
+## 4. Flujo de Trabajo Paso a Paso
 
 ### Paso 1: Obtener, clasificar y validar la entrada
 El usuario puede invocar el agente indicando:
@@ -61,6 +93,8 @@ El usuario puede invocar el agente indicando:
    - **Caso B (Archivo HTML local):** Termina en `.html` o `.htm`.
    - **Caso C (Archivo Markdown local):** Termina en `.md` (notas libres o borrador).
 3. **Si es un archivo local (Casos B o C):** Verifica existencia en disco y tamaño `> 0 bytes`. Si falla cualquiera de las dos comprobaciones, emite el mensaje `Error: El archivo especificado no existe o está vacío: <ruta>` y detén el proceso.
+4. **Si el archivo local existe y no está vacío pero es ilegible o corrupto** (encoding irreconocible, HTML sin estructura mínima, binario no textual): emite el mensaje `Error: El archivo especificado no se pudo leer o no contiene contenido interpretable: <ruta>` y detén el proceso.
+5. **Si es una URL (Caso A) y resulta inaccesible** (timeout, DNS, `404`, `401`/`403`): no reintentes de forma silenciosa ni generes contenido de relleno; notifica el error exacto devuelto por `generate_report.py` y detén el proceso.
 
 ### Paso 2: Procesar la fuente según su tipo (aplicando [`incident-markdown-workflow`](../../.agents/skills/incident-markdown-workflow/SKILL.md))
 
@@ -114,12 +148,26 @@ El usuario puede invocar el agente indicando:
 
 ---
 
-## 4. Reglas Anti-Defectos y Comprobación Final
+## 5. Prohibiciones Explícitas (Nunca Hagas Esto)
 
-Antes de dar por finalizada la tarea, verifica que:
-- [ ] Si el usuario no indicó fuente, se ha preguntado amablemente por la URL o ruta local antes de ejecutar nada.
-- [ ] Si la fuente era un archivo local inexistente o de `0 bytes`, se ha devuelto el error exacto y no se ha creado archivo de salida.
-- [ ] En notas `.md` sin impacto o sin causa raíz, se han insertado los textos exactos `[PENDIENTE DE COMPLETAR: Impacto no detectado en la fuente]` y/o `[PENDIENTE DE COMPLETAR: Causa raíz no detectada en la fuente]`.
-- [ ] Se ha auditado que `Impacto`, `Causa Raíz` y `Solución` no contengan marcas de checklist (`X`, `OK`) ni parámetros internos de macros (`key,summary,type...`).
-- [ ] Las tablas `Puntos de Acción` (4 columnas) y `Cronología` (2 columnas) existen y tienen al menos una fila con `—` si no había datos.
-- [ ] Se ha indicado en la respuesta final el comando `--from-md <RUTA_SALIDA> --output reports/informe_ejecutivo.pptx`.
+- **Nunca** generes ni escribas el Markdown de salida si el guardrail de entrada (Sección 2 / Bloque de Arranque) no se completó con éxito: fuente ausente sin respuesta del usuario, archivo local inexistente/vacío/corrupto, o URL inaccesible.
+- **Nunca** inventes secciones, cifras, nombres de responsables, fechas o eventos de cronología que no estén soportados literalmente por la fuente; usa siempre los marcadores `[PENDIENTE DE COMPLETAR: ...]` o `—` definidos en este documento.
+- **Nunca** vuelques parámetros crudos de macros de Confluence/Jira (`key,summary,type,updated,assignee,status`) ni marcas de checklist (`X`, `OK`, `Sí`, `No`) como si fueran el contenido real de `Impacto`, `Causa Raíz` o `Solución`.
+- **Nunca** reintentes silenciosamente una URL que falló ni sustituyas el error por contenido de relleno o una suposición razonable.
+- **Nunca** omitas en la respuesta final el comando de la Etapa 2 (`--from-md ... --output reports/informe_ejecutivo.pptx`) cuando la generación fue exitosa.
+- **Nunca** dupliques aquí las reglas de extracción/plantilla detalladas de [`incident-markdown-workflow`](../../.agents/skills/incident-markdown-workflow/SKILL.md); si hay duda sobre formato de una sección, la skill es la fuente de verdad.
+
+---
+
+## 6. Reglas Anti-Defectos y Comprobación Final
+
+Antes de dar por finalizada la tarea, verifica objetivamente que:
+
+- [ ] Si el usuario no indicó fuente, el agente preguntó literalmente por la URL o ruta local y esperó respuesta antes de ejecutar cualquier comando.
+- [ ] Si la fuente era un archivo local inexistente o de `0 bytes`, se devolvió el texto exacto `Error: El archivo especificado no existe o está vacío: <ruta>` y no se creó ningún archivo de salida.
+- [ ] Si la fuente era un archivo local corrupto/ilegible, se devolvió el texto exacto `Error: El archivo especificado no se pudo leer o no contiene contenido interpretable: <ruta>` y no se creó ningún archivo de salida.
+- [ ] Si la fuente era una URL inaccesible (timeout/404/401/403), se notificó el error concreto devuelto por `generate_report.py` y no se generó Markdown parcial.
+- [ ] En notas `.md` sin impacto o sin causa raíz, se insertaron los textos exactos `[PENDIENTE DE COMPLETAR: Impacto no detectado en la fuente]` y/o `[PENDIENTE DE COMPLETAR: Causa raíz no detectada en la fuente]`.
+- [ ] Se auditó (leyendo el archivo final del disco) que `Impacto`, `Causa Raíz` y `Solución` no contienen marcas de checklist (`X`, `OK`, `Sí`, `No`) ni parámetros internos de macros (`key,summary,type...`).
+- [ ] Las tablas `Puntos de Acción` (4 columnas) y `Cronología` (2 columnas) existen en el archivo final y tienen al menos una fila con `—` si no había datos.
+- [ ] Cuando la generación fue exitosa, la respuesta final incluyó el comando exacto `--from-md <RUTA_SALIDA> --output reports/informe_ejecutivo.pptx`.

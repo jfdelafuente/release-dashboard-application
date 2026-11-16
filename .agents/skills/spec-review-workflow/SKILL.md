@@ -1,6 +1,7 @@
 ---
 name: spec-review-workflow
 alias: flujo-revision-spec
+version: 1
 description: >-
   Audita y compara lo construido por spec-build-workflow contra la
   especificación guardada en specs/, evaluando requisito por requisito,
@@ -56,16 +57,60 @@ Por cada requisito, restricción o caso límite que **no esté completamente cum
 
 ## Paso 3: Veredicto Estricto
 
-Solo declara la construcción **APROBADA** si **absolutamente todos** los requisitos obligatorios, restricciones y casos límite de la especificación quedaron completamente cumplidos, y todos los criterios de la Definición de terminado se verificaron con éxito. **Un solo punto incumplido o parcialmente cumplido significa que la construcción NO está aprobada todavía**, sin importar cuán menor parezca la brecha.
+El veredicto es **binario y sin matices**: no existen aprobaciones parciales, condicionales, "aprobado con observaciones" ni porcentajes de cumplimiento mínimo. No hay umbral de tolerancia.
 
-Presenta el resultado en dos partes claras:
-1. **Veredicto explícito al principio:** `**APROBADO**` o `**NO APROBADO**`.
-2. **Desglose completo requisito por requisito:** Incluye también los que sí se cumplieron (marcados como `Cumplido`) para que quede constancia de que se revisaron, junto con las correcciones específicas y accionables para cada punto que falló.
+- **APROBADO:** únicamente si el desglose del Paso 2 no contiene ni un solo ítem marcado `Parcialmente cumplido` o `Incumplido`, en ninguna de las cuatro categorías (Requisitos, Restricciones, Casos límite, Definición de terminado), y cada ítem fue efectivamente inspeccionado (ninguno quedó como `No verificado`).
+- **NO APROBADO:** basta con **un solo ítem** `Parcialmente cumplido`, `Incumplido` o `No verificado` en cualquiera de las cuatro categorías, sin importar cuán menor parezca la brecha o cuántos otros ítems sí se cumplieron.
+
+Si durante el Paso 1 o 2 no fue posible inspeccionar directamente algún requisito, restricción o caso límite (por ejemplo, porque no se pudo ejecutar el código, no se pudo acceder a un entorno, o la evidencia es ambigua), clasifícalo como **`No verificado`** — nunca lo asumas `Cumplido` por omisión ni lo ignores en el conteo. Un ítem `No verificado` siempre fuerza el veredicto a `NO APROBADO`.
+
+### Formato de salida obligatorio
+
+Presenta el resultado exactamente en este orden y estructura:
+
+1. **Veredicto explícito al principio**, en su propia línea: `**APROBADO**` o `**NO APROBADO**`.
+2. **Desglose completo requisito por requisito**, en una tabla o lista con, por cada ítem: identificador/cita del elemento de la especificación, categoría (Requisito / Restricción / Caso límite / Definición de terminado), estado (`Cumplido` / `Parcialmente cumplido` / `Incumplido` / `No verificado`), evidencia encontrada, y — solo si el estado no es `Cumplido` — la corrección específica y accionable. Incluye **todos** los ítems, incluso los `Cumplido`, para dejar constancia de que se revisaron.
+3. **Sugerencias opcionales** (si las hay): lista aparte, claramente separada, de mejoras que no están en la especificación y que por tanto no afectan el veredicto.
+
+#### Ejemplo relleno — Veredicto APROBADO
+
+> **APROBADO**
+>
+> | # | Categoría | Elemento de la especificación | Estado | Evidencia |
+> | --- | --- | --- | --- | --- |
+> | R1 | Requisito | "El endpoint `/upload` debe rechazar archivos mayores a 10MB con error 413" | Cumplido | Se probó subiendo un archivo de 12MB a `/upload`; el servidor respondió `413 Payload Too Large` tal como especifica el requisito. |
+> | C1 | Caso límite | "Archivo de exactamente 10MB debe aceptarse" | Cumplido | Se probó con un archivo de 10.00MB exacto; el servidor lo procesó correctamente (200 OK). |
+> | DT1 | Definición de terminado | "Pruebas automatizadas del endpoint pasan en CI" | Cumplido | Se ejecutó `pytest tests/test_upload.py`; 14/14 pruebas pasaron. |
+>
+> Sugerencias opcionales (no afectan el veredicto): considerar loggear el tamaño del archivo rechazado para facilitar soporte.
+
+#### Ejemplo relleno — Veredicto NO APROBADO
+
+> **NO APROBADO**
+>
+> | # | Categoría | Elemento de la especificación | Estado | Evidencia | Corrección |
+> | --- | --- | --- | --- | --- | --- |
+> | R1 | Requisito | "El endpoint `/upload` debe rechazar archivos mayores a 10MB con error 413" | Incumplido | Se probó subiendo un archivo de 12MB a `/upload`; el servidor lo aceptó con `200 OK` y lo procesó igual que uno válido. No existe ninguna validación de tamaño en `handlers/upload.py`. | Añadir en `handlers/upload.py`, antes de procesar el archivo, una comprobación de `content-length` (o tamaño real del stream) que devuelva `413 Payload Too Large` cuando supere 10MB, con un mensaje de error indicando el límite. |
+> | C1 | Caso límite | "Archivo de exactamente 10MB debe aceptarse" | No verificado | No se pudo generar un archivo de prueba de exactamente 10MB en este entorno; el caso límite no fue ejercitado. | Repetir la verificación una vez disponible un archivo de prueba de 10.00MB exacto; no asumir que pasa porque el caso de 12MB falló. |
+>
+> Sugerencias opcionales (no afectan el veredicto): ninguna.
+
+---
+
+## Prohibiciones (nunca hacer esto)
+
+- **Nunca** declares `APROBADO` si queda al menos un ítem `Parcialmente cumplido`, `Incumplido` o `No verificado` en el desglose.
+- **Nunca** marques un ítem como `Cumplido` sin haberlo inspeccionado directamente (leyendo el archivo, ejecutando el código o las pruebas, abriendo el documento). Si no pudiste verificarlo, usa `No verificado`, nunca `Cumplido` por defecto ni por "parece razonable que funcione".
+- **Nunca** afirmes en el reporte que se ejecutó una prueba, comando o inspección que no se ejecutó realmente. Si no se corrió, dilo explícitamente (`No verificado`) en vez de inventar evidencia.
+- **Nunca** promedies, pondérés o calcules un "porcentaje de cumplimiento" para decidir el veredicto — es binario, un solo fallo basta para `NO APROBADO`.
+- **Nunca** marques como brecha algo que la especificación no pide explícitamente; eso va solo en "Sugerencias opcionales", separado del veredicto.
+- **Nunca** inventes una especificación ni proceses una revisión si `specs/` no existe o está vacía — detente y pregunta.
+- **Nunca** omitas del desglose los ítems que sí se cumplieron; el reporte debe listar todos los ítems evaluados, no solo los que fallaron.
 
 ---
 
 ## Transición al Terminar
 
-- **Si el veredicto es `NO APROBADO`:** Activa la skill [`spec-build-workflow`](../spec-build-workflow/SKILL.md) (`/build` / `flujo-construccion-spec`) pasándole la lista de correcciones específicas como su lista de trabajo para resolver a continuación — no reinicies la construcción desde cero, el objetivo es que `spec-build-workflow` cierre exactamente esas brechas. Si la skill no está disponible, entrega la lista de correcciones directamente a la persona para que decida cómo aplicarlas.
+- **Si el veredicto es `NO APROBADO`:** Activa la skill [`spec-build-workflow`](../spec-build-workflow/SKILL.md) (`/build` / `flujo-construccion-spec`) pasándole la lista de correcciones específicas (incluyendo los ítems `No verificado`, que deben re-chequearse, no asumirse) como su lista de trabajo para resolver a continuación — no reinicies la construcción desde cero, el objetivo es que `spec-build-workflow` cierre exactamente esas brechas. Si la skill no está disponible, entrega la lista de correcciones directamente a la persona para que decida cómo aplicarlas.
 - **Si el veredicto es `APROBADO`:** Dilo con claridad y no actives ninguna otra skill — el ciclo **Especificación (`/spec`) → Construcción (`/build`) → Revisión (`/spec-review`)** termina aquí con éxito.
 

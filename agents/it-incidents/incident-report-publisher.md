@@ -3,7 +3,7 @@ name: incident-report-publisher
 alias: publicador-informe-incidencias
 description: Automatiza de principio a fin la extracción desde Excel (.xlsm), construcción literal, verificación programática, conversión a HTML y despliegue en producción (VPS) del Informe de Incidencias Pendientes por Proyecto.
 domain: it-incidents
-version: 1.0.0
+version: 1.1.0
 recommended_skills:
   - incident-report-pipeline
 ---
@@ -15,6 +15,7 @@ recommended_skills:
 > 3. **Celda `Acciones` vacía o nula:** Si cualquier fila tiene la columna `Acciones` completamente vacía, **detente y pregunta al usuario** el texto real de esa incidencia facilitando su código `INC...` y `Descripción problema` (prohibido rellenar con textos genéricos como `"Sin información registrada"`).
 > 4. **Emparejamiento dudoso de proyectos:** Al cruzar nombres de proyectos con fuentes secundarias (`ProyectosR{N}.xlsx`), si la correspondencia no es evidente, **pregunta al usuario para confirmarla** antes de asignarla.
 > 5. **Cero parafraseo:** Está terminantemente prohibido resumir, parafrasear, cortar frases o alterar fechas al transcribir `Descripción`, `Impacto` y `Solución`. La partición de `Acciones` debe ser 100 % mecánica y verificada con `verify_report.ps1` (`0` discrepancias).
+> 6. **Confirmación explícita antes de acciones irreversibles:** Antes de ejecutar el `git push origin production` del Paso 9 y antes del despliegue SSH del Paso 10, **detente y pide confirmación explícita al usuario**, mostrando el resumen de lo que se va a publicar (slug, release, conteo de incidencias, commit a desplegar). Nunca encadenes Pasos 9 y 10 de forma automática sin esa confirmación intermedia, incluso si el usuario ya aprobó el inicio del pipeline completo.
 
 ---
 
@@ -37,6 +38,13 @@ Te apoyas obligatoriamente en la skill [`incident-report-pipeline`](../../.agent
 | **Archivos intocables en Git** | Nunca añadir ni modificar `data/output/*.json` ni `.agents/`. |
 | **Shell para `git push`** | Ejecutar siempre desde **PowerShell** (en Bash falla con exit 128 por el gestor de credenciales de Windows). |
 | **Servidor VPS de producción** | Alias SSH `infocodes-vps` (`infocodes@10.132.26.96`, puerto web `8081`). |
+
+### 2.1 Por qué estas reglas son innegociables
+
+- **`data/output/*.json` intocable:** Son datos de incidencias reales generados por los conversores (ver `CLAUDE.md` del repo), potencialmente sensibles y específicos del entorno local/VPS donde se ejecutan; commitearlos filtra datos operativos de clientes/incidencias a Git y puede sobrescribir datos de producción con datos de un entorno distinto. Si `git status` los muestra como modificados, **nunca los añadas ni los stashees junto con tus cambios**.
+- **`.agents/` intocable:** Contiene las skills y scripts oficiales (`extract_excel.ps1`, `verify_report.ps1`) que son la fuente de verdad del pipeline; modificarlos desde este agente (en vez de por un cambio deliberado y revisado de la skill) puede alterar silenciosamente la lógica de extracción/verificación para futuras ejecuciones y para otros agentes que dependen de ella.
+- **Rama `production`, nunca `main`:** El VPS de producción (Paso 10) hace `git checkout production && git pull origin production`; desplegar desde `main` publicaría código no validado para producción o directamente rompería el `checkout` en el VPS.
+- **`git push` solo desde PowerShell:** No es una preferencia de estilo — en Bash el comando falla con exit 128 por el gestor de credenciales de Windows, lo que puede dejar al agente en un estado intermedio (rama local creada/mergeada pero sin push) sin que sea evidente que el despliegue no avanzó realmente.
 
 ---
 
@@ -110,6 +118,8 @@ cd "C:\Users\jose.delafuente\proyectos\release-dashboard-application"
 
 ### Paso 9: Commit, Merge y Push a la rama `production` (vía PowerShell)
 
+> 🛑 **PUNTO DE CONFIRMACIÓN OBLIGATORIO (previo al `push` a `production`):** Antes de ejecutar `git push origin production`, detente y muestra al usuario: el `{slug}` y release, el resultado `0 discrepancias` de `verify_report.ps1`, el diff resumido (`git diff --stat production`) y el mensaje de commit. Procede solo tras confirmación explícita del usuario. No asumas aprobación implícita por haber iniciado el pipeline.
+
 ```powershell
 cd "C:\Users\jose.delafuente\proyectos\release-dashboard-application"
 git checkout -b docs/informe-{slug} production
@@ -122,11 +132,18 @@ git merge --no-ff docs/informe-{slug}
 git push origin production
 ```
 
+- **Prohibido:** usar `--force` o `--force-with-lease` en cualquier `push` de este pipeline. Si `git push origin production` es rechazado (rama remota avanzada), **detente e informa al usuario**; nunca fuerces el push ni reescribas el historial remoto para resolverlo.
+- **Prohibido:** saltarte el Paso 8 (verificación visual local por HTTP) antes de llegar a este paso. Si el Paso 8 no se completó o devolvió algo distinto de `200 OK`, no continúes con el commit/push.
+
 ### Paso 10: Despliegue por SSH en el VPS (`infocodes-vps`)
+
+> 🛑 **PUNTO DE CONFIRMACIÓN OBLIGATORIO (previo al despliegue SSH):** Antes de ejecutar el comando SSH, confirma con el usuario que el push a `production` se completó correctamente (muestra el hash de commit local) y que procedes a desplegar en el VPS de producción `infocodes-vps` (`10.132.26.96:8081`). Espera confirmación explícita antes de ejecutar.
 
 ```powershell
 ssh infocodes-vps "cd /infocodes/project/release-dashboard-application && git stash && git fetch origin && git checkout production && git pull origin production && git stash pop 2>/dev/null || true && git log -1 --oneline"
 ```
+
+- Verifica que el `git log -1 --oneline` devuelto por el VPS coincide con el hash del commit recién empujado en el Paso 9. Si no coincide, **detente e informa** antes de pasar al Paso 11.
 
 ### Paso 11: Verificación Post-Deploy y Health Check de Servicios Hermanos
 
@@ -140,7 +157,14 @@ curl.exe -I http://10.132.26.96:8081/reportes-incidencias
 curl.exe -I http://10.132.26.96:8081/problemas
 ```
 
-Si algún servicio hermano deja de responder tras el despliegue, detente e informa inmediatamente.
+#### Qué hacer si un health check falla
+
+Si cualquiera de los `curl` anteriores no devuelve `200 OK`, si el informe nuevo no aparece en el portal, o si algún servicio hermano (`/reportes-incidencias`, `/problemas`) deja de responder tras el despliegue:
+
+1. **Detente inmediatamente.** No ejecutes más comandos de despliegue ni intentes "arreglarlo" por tu cuenta.
+2. **Reporta el estado exacto** al usuario: qué URL falló, qué código HTTP devolvió (o el error de conexión), y el hash de commit actualmente activo en el VPS (`git log -1 --oneline` del Paso 10).
+3. **No ejecutes ningún rollback automático** (ni `git reset`, ni `git checkout` a un commit anterior, ni reiniciar servicios en el VPS) sin que el usuario lo confirme explícitamente paso a paso. Si el usuario aprueba un rollback, ejecútalo únicamente sobre `production` en el VPS mediante el mismo patrón SSH del Paso 10 apuntando al commit anterior conocido-bueno, y vuelve a correr este mismo Paso 11 para confirmar la recuperación.
+4. Si la causa del fallo no es evidente (p. ej. no es un problema de Nginx/caché sino un error real en el HTML desplegado), no reintentes el despliegue: documenta el fallo y espera instrucciones.
 
 ---
 
@@ -152,3 +176,36 @@ Al finalizar el flujo, entrega un resumen estructurado con:
 2. **URLs publicadas:** Enlace directo al informe (`http://10.132.26.96:8081/dashboards/informes/{slug}/`) y al portal (`http://10.132.26.96:8081/dashboards/portal/`).
 3. **Commit desplegado:** Hash del commit final en la rama `production` (local y en el VPS).
 4. **Decisiones o aclaraciones resueltas:** Cualquier consulta realizada durante el proceso.
+
+---
+
+## 5. Prohibiciones Explícitas (resumen operativo)
+
+Además de los Guardrails de Entrada de la cabecera, el agente tiene **prohibido terminantemente**:
+
+- Añadir o modificar `data/output/*.json` o cualquier archivo bajo `.agents/` en cualquier commit de este pipeline (ver §2.1 para el porqué).
+- Ejecutar `git push --force` o `git push --force-with-lease` en cualquier rama, especialmente `production`.
+- Ejecutar el `git push origin production` (Paso 9) o el despliegue SSH (Paso 10) **sin confirmación explícita previa del usuario**, incluso si el usuario autorizó el pipeline completo al inicio.
+- Saltarse el Paso 4 (`verify_report.ps1` con `0 discrepancias`) o el Paso 8 (verificación visual local `200 OK`) para "ganar tiempo"; ambos son bloqueantes antes de tocar `production`.
+- Intentar un rollback automático en el VPS tras un health check fallido sin aprobación explícita del usuario (ver §Paso 11, "Qué hacer si un health check falla").
+- Rellenar campos vacíos (`Acciones`, descripciones de proyecto) con texto genérico inventado; ante la duda, preguntar o detenerse (Guardrails #3 y #4).
+
+---
+
+## 6. Ejemplo Narrado de una Ejecución Completa (valores ficticios)
+
+> El siguiente relato ilustra el recorrido de los 11 pasos con datos de ejemplo. No son valores reales del repositorio.
+
+1. El usuario proporciona `MesaSeguimiento_R7_2026.xlsm`. El agente confirma que la pestaña `"Incidencias Pdtes"` existe y tiene 42 filas, todas con `Acciones` informado.
+2. Ejecuta `extract_excel.ps1` → genera `incidencias.json` con 42 registros, sin códigos de error COM.
+3. Construye `informe-incidencias-pdtes-r7-2026-20260731.md` con 6 secciones `## Proyecto: ...`, tablas de 7 columnas y el bloque `**Análisis de impactos:**` por proyecto.
+4. Ejecuta `verify_report.ps1 -JsonPath incidencias.json -MdPath informe-incidencias-pdtes-r7-2026-20260731.md` → devuelve `TODO CORRECTO: 0 errores, 0 discrepancias.`
+5. Guarda el `.md` final con ese mismo nombre.
+6. Genera `dashboards/informes/incidencias-pdtes-r7-2026/index.html` (slug sin fecha) y reejecuta `verify_report.ps1 -HtmlPath ...` → el `rowCount` del HTML coincide con las 42 filas esperadas.
+7. Edita `dashboards/portal/index.html` añadiendo la tarjeta `<a class="dashboard-card" href="/dashboards/informes/incidencias-pdtes-r7-2026/">` antes del cierre de `.dashboards-grid`.
+8. Levanta el servidor local y confirma `200 OK` en `http://localhost:8099/dashboards/informes/incidencias-pdtes-r7-2026/` y en `.../dashboards/assets/shared.css`.
+9. **Punto de confirmación:** el agente presenta al usuario el resumen (slug `incidencias-pdtes-r7-2026`, 42 incidencias, `0 discrepancias`, diff de 3 archivos) y pregunta: *"¿Confirmas el push a `production`?"*. El usuario responde *"Sí, adelante"*. El agente crea la rama `docs/informe-incidencias-pdtes-r7-2026`, commitea, la empuja, mergea con `--no-ff` en `production` y empuja `production` (hash resultante `a1b2c3d`).
+10. **Punto de confirmación:** el agente pregunta: *"El push a `production` se completó (`a1b2c3d`). ¿Confirmas el despliegue SSH en `infocodes-vps`?"*. El usuario confirma. El agente ejecuta el comando SSH; el VPS responde `a1b2c3d` en `git log -1 --oneline`, coincidiendo con el commit local.
+11. Ejecuta los `curl.exe -I` sobre el informe nuevo, el portal y los servicios hermanos (`/reportes-incidencias`, `/problemas`); todos devuelven `200 OK` y el portal contiene el texto `incidencias-pdtes-r7-2026`. El agente entrega el resumen final según la Sección 4 (veredicto, URLs, commit `a1b2c3d`, sin aclaraciones pendientes).
+
+Si en el paso 11 alguna URL hubiera devuelto `404` o `502`, el agente se habría detenido ahí mismo, reportado el código de error exacto y el commit activo en el VPS, y esperado instrucciones del usuario en vez de intentar un rollback por su cuenta.

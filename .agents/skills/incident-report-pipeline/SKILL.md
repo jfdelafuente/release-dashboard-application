@@ -8,6 +8,20 @@ description: Extrae datos de ficheros Excel (.xlsm/.xlsx) de la Mesa de Seguimie
 
 Esta skill proporciona las reglas normativas de extracción, transformación literal, verificación programática y conversión a HTML para el informe de **Incidencias Pendientes por Proyecto** a partir del fichero `.xlsm` de la Mesa de Seguimiento.
 
+**Propósito en una frase:** convertir de forma mecánica y sin pérdida de información un Excel `.xlsm` de seguimiento de incidencias en un informe Markdown verificado y su publicación HTML en el portal, sin que el modelo reescriba, resuma ni invente ningún dato.
+
+---
+
+## 0. Flujo Completo del Pipeline (orden obligatorio)
+
+Ejecuta siempre las fases en este orden. No saltes ni reordenes ninguna:
+
+1. **Extracción** — corre `scripts/extract_excel.ps1` sobre el `.xlsm` de origen y genera `incidencias.json` (ver §1).
+2. **Construcción del Markdown** — agrupa por proyecto, resuelve `Estado` y divide `Acciones` fila por fila según las reglas mecánicas (ver §2).
+3. **Verificación obligatoria** — corre `scripts/verify_report.ps1` contra el JSON y el Markdown generados; si reporta cualquier discrepancia, corrige el Markdown y vuelve a verificar hasta obtener 0 discrepancias (ver §3). No continúes a la fase 4 sin esto.
+4. **Conversión a HTML** — transforma el Markdown verificado en `index.html` siguiendo el parser y las clases de badge especificadas (ver §4).
+5. **Publicación en el portal** — añade o actualiza la tarjeta correspondiente en `dashboards/portal/index.html` (ver §4, último punto).
+
 ---
 
 ## 1. Extracción Segura del Excel vía COM (`scripts/extract_excel.ps1`)
@@ -30,6 +44,8 @@ powershell -ExecutionPolicy Bypass -File ".agents/skills/incident-report-pipelin
 
 ### A. Estructura general y Título
 - **Nombre del archivo Markdown:** `informe-incidencias-pdtes-{slug-release}-{fecha}.md` (ej. `informe-incidencias-pdtes-r7-2026-20260731.md`).
+- **Definición exacta de `{slug-release}`:** toma el código de release tal como figura en el Excel (ej. `"R7 2026"`), conviértelo a minúsculas y sustituye cada espacio por un guion (`-`). No elimines ni reordenes los componentes: `"R7 2026"` → `r7-2026`.
+- **Definición exacta de `{fecha}`:** fecha del export del Excel en formato `AAAAMMDD` (ej. `31/07/2026` → `20260731`).
 - **Título principal (`# `):** Usa exclusivamente el código de release y la fecha del export, **sin prefijo genérico**:
   - ✅ Correcto: `# R7 2026 (Mesa de Seguimiento, export 31/07/2026)`
   - ❌ Incorrecto: `# Informe de Incidencias Pendientes por Proyecto — R7 2026 (...)`
@@ -57,7 +73,7 @@ Cada proyecto contiene una única tabla GFM continua, ordenada por severidad des
   | **`Solución Rechazada`** | `Solución Rechazada (DD/MM/AAAA)` o `Solución Rechazada (sin fecha)` | **Sin** la palabra `"Estimado"`. |
 
 ### D. Split Mecánico y Literal de la Columna `Acciones` (Cero Parafraseo)
-> **PROHIBIDO parafrasear, resumir, reordenar o recortar frases** al transcribir `Descripción`, `Impacto` o `Solución`.
+> **PROHIBIDO parafrasear, resumir, reordenar, corregir redacción/ortografía o recortar frases** al transcribir `Descripción`, `Impacto` o `Solución`. El texto resultante debe ser una subcadena literal, carácter por carácter, del contenido original de `Acciones` (solo recortando espacios en los extremos de cada tramo, ver regla 5).
 
 1. **Si `Acciones` está completamente vacío/null:** detén el proceso y pregunta al usuario el texto real de esa incidencia indicando su código `INC...` y `Descripción problema`.
 2. **Partición mecánica por marcadores `⚠ Impacto` y `✓ Solución`:**
@@ -82,6 +98,31 @@ Cada proyecto contiene una única tabla GFM continua, ordenada por severidad des
      `[Texto principal]<br><br>**Bloqueos:** [detalle]<br><br>**Siguiente acción:** [detalle]<br><br>**Hitos técnicos:**<br>• DD/MM/AAAA: [detalle 1]<br>• DD/MM/AAAA: [detalle 2]`
    - En **Hitos técnicos**, cada fecha debe ir en su propia línea precedida por `<br>• DD/MM/AAAA:`.
 4. **Escape de tuberías (`|`):** Sustituye cualquier carácter `|` literal del texto extraído por `\|` antes de insertarlo en una celda Markdown.
+5. **Recorte de espacios en los bordes del split:** el marcador (`⚠ Impacto`, `✓ Solución`) y cualquier espacio o salto de línea inmediatamente adyacente a él se eliminan; el texto interior se conserva íntegro y solo se le aplica `trim()` en sus dos extremos. No se elimina ni se normaliza ningún espacio o puntuación dentro del cuerpo del texto.
+
+#### Ejemplo concreto obligatorio (úsalo como referencia de formato exacto)
+
+**Celda `Acciones` original en el Excel** (una sola celda, incidencia `INC000012345678`, `Status` = `Resuelto`, `Fecha Prevista` = `15/07/2026`):
+
+```text
+El servicio de facturación presenta cortes intermitentes desde el 03/07/2026 afectando a clientes empresariales de la región norte.⚠ Impacto Los clientes no pueden consultar sus facturas electrónicas, lo que genera llamadas al CAU y reclamaciones formales.✓ Solución Se ha desplegado un parche en el servicio de facturación que corrige el timeout de conexión a la base de datos histórica.
+```
+
+**Resultado del split mecánico (regla "con `⚠ Impacto` y `✓ Solución`"):**
+
+| Campo | Valor literal resultante |
+| :--- | :--- |
+| `Descripción` | `El servicio de facturación presenta cortes intermitentes desde el 03/07/2026 afectando a clientes empresariales de la región norte.` |
+| `Impacto` | `Los clientes no pueden consultar sus facturas electrónicas, lo que genera llamadas al CAU y reclamaciones formales.` |
+| `Solución` | `Se ha desplegado un parche en el servicio de facturación que corrige el timeout de conexión a la base de datos histórica.` |
+
+**Fila de tabla Markdown resultante** (7 columnas exactas, `Estado` con fecha de `Resuelto`):
+
+```text
+| INC000012345678 | 03/07/2026 | Facturación | Resuelto (15/07/2026) | El servicio de facturación presenta cortes intermitentes desde el 03/07/2026 afectando a clientes empresariales de la región norte. | Los clientes no pueden consultar sus facturas electrónicas, lo que genera llamadas al CAU y reclamaciones formales. | Se ha desplegado un parche en el servicio de facturación que corrige el timeout de conexión a la base de datos histórica. |
+```
+
+Este mismo caso, convertido a HTML, se usa como referencia en §4.
 
 ---
 
@@ -99,6 +140,8 @@ El script comprueba automáticamente:
 3. Correspondencia exacta de `Fecha Apertura` y formato estricto de `Estado` (`En Análisis` sin fecha vs. estados con fecha).
 4. Recálculo mecánico de `Descripción`, `Impacto` y `Solución` carácter por carácter (`0` discrepancias requeridas).
 5. Conteo de filas `<tr><td>INC...` en el archivo HTML generado.
+
+**Criterio de aceptación:** el informe solo se considera terminado cuando `verify_report.ps1` reporta 0 discrepancias en los 5 puntos anteriores. Si reporta cualquier discrepancia, corrige el Markdown (nunca el JSON de origen) y vuelve a ejecutar el verificador antes de pasar a la fase de HTML.
 
 ---
 
@@ -118,3 +161,38 @@ El script comprueba automáticamente:
   5. **Layout y Cabecera:** Reutiliza `dashboards/assets/shared.css` y `dashboards/assets/topbar.js` (`<div id="mo-topbar-root" data-active="informes">`). Incluye únicamente el eyebrow (`"Fiabilidad de servicio · Customer & Service Operations"`), el `<h1>` con el título corto del Paso 2.A y el divisor, **sin subtítulo explicativo**.
 - **Tarjeta en `dashboards/portal/index.html`:** Añade o actualiza `<a class="dashboard-card" href="/dashboards/informes/{slug}/">` justo antes del cierre de `.dashboards-grid`.
 
+### Ejemplo concreto obligatorio del fragmento HTML (misma fila que en §2.D)
+
+Fila Markdown de entrada:
+
+```text
+| INC000012345678 | 03/07/2026 | Facturación | Resuelto (15/07/2026) | El servicio de facturación presenta cortes intermitentes desde el 03/07/2026 afectando a clientes empresariales de la región norte. | Los clientes no pueden consultar sus facturas electrónicas, lo que genera llamadas al CAU y reclamaciones formales. | Se ha desplegado un parche en el servicio de facturación que corrige el timeout de conexión a la base de datos histórica. |
+```
+
+HTML resultante (badge `status-cerrada` porque `Status` = `Resuelto`):
+
+```html
+<tr>
+  <td>INC000012345678</td>
+  <td>03/07/2026</td>
+  <td>Facturación</td>
+  <td><span class="status-badge status-cerrada">Resuelto (15/07/2026)</span></td>
+  <td>El servicio de facturación presenta cortes intermitentes desde el 03/07/2026 afectando a clientes empresariales de la región norte.</td>
+  <td>Los clientes no pueden consultar sus facturas electrónicas, lo que genera llamadas al CAU y reclamaciones formales.</td>
+  <td>Se ha desplegado un parche en el servicio de facturación que corrige el timeout de conexión a la base de datos histórica.</td>
+</tr>
+```
+
+---
+
+## 5. Prohibiciones Explícitas (Nunca hagas esto)
+
+- **Nunca parafrasees, resumas, reordenes, corrijas ortografía/redacción ni recortes** el texto original de `Descripción`, `Impacto` o `Solución`: deben ser subcadenas literales de `Acciones` o `Descripción problema` según la regla aplicable de §2.D.
+- **Nunca inventes datos** (proyecto, descripción funcional, impacto o solución) cuando la fuente esté vacía o el emparejamiento no sea evidente al 100%: detente y pregunta al usuario, u omite la línea según indique la regla correspondiente.
+- **Nunca proceses una fila con `Acciones` completamente vacío** sin antes preguntar al usuario el texto real de esa incidencia.
+- **Nunca infieras una `Solución` no escrita explícitamente** solo porque `Status` figure como `"Resuelto"`.
+- **Nunca saltes ni sustituyas por una revisión visual** la ejecución de `scripts/verify_report.ps1`; el informe no está terminado hasta que reporte 0 discrepancias.
+- **Nunca dejes procesos `EXCEL.EXE` huérfanos**: toda apertura COM de Excel debe liberarse en un bloque `finally` con `$excel.Quit()` y `ReleaseComObject`.
+- **Nunca uses la columna `Estatus`** para rellenar `Estado`; usa siempre `Status`.
+- **Nunca fuerces a `"Sin proyecto asignado"`** un `prj` con valor no estándar pero no vacío (ej. `"REGRESION"`).
+- **Nunca inserte `|` sin escapar** en una celda Markdown, ni confunda una línea `**negrita**` con la descripción de proyecto en cursiva simple (`*texto*`).
