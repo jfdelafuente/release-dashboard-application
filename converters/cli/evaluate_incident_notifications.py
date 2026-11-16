@@ -343,6 +343,47 @@ def compute_emergency_sla_status(
     }
 
 
+class RemedyCacheLoader:
+    """Resuelve y cachea en memoria el detalle Remedy de un ticket leído desde disco.
+
+    Centraliza el acceso a `data/.remedy_cache/{id}.json` para evitar que distintos
+    puntos del evaluador (reglas de detección, batch processing) dupliquen la misma
+    lógica de lectura y cada uno reintente el I/O de forma independiente.
+    """
+
+    def __init__(self, cache_dir: Optional[Path] = None):
+        self.cache_dir = cache_dir
+
+    def load(self, inc_id: str) -> Optional[dict[str, Any]]:
+        if not self.cache_dir or not inc_id:
+            return None
+        cache_file = self.cache_dir / f"{inc_id}.json"
+        if not cache_file.is_file():
+            return None
+        try:
+            with open(cache_file, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except Exception:
+            return None
+
+    def load_many(self, inc_ids: list[str], max_workers: int = 8) -> dict[str, Any]:
+        """Prefetch concurrente del detalle Remedy para un lote de IDs."""
+        if not self.cache_dir:
+            return {}
+        ids = [i for i in dict.fromkeys(inc_ids) if i]
+        if not ids:
+            return {}
+        from concurrent.futures import ThreadPoolExecutor
+
+        workers = min(max_workers, len(ids))
+        result: dict[str, Any] = {}
+        with ThreadPoolExecutor(max_workers=workers) as executor:
+            for inc_id, detail in executor.map(lambda i: (i, self.load(i)), ids):
+                if detail is not None:
+                    result[inc_id] = detail
+        return result
+
+
 def compute_worklog_stagnation(
     ticket: dict[str, Any],
     reference_time: Optional[datetime] = None,
@@ -350,7 +391,6 @@ def compute_worklog_stagnation(
     epsilon_data: Optional[dict[str, Any]] = None,
     is_planned: bool = False,
     is_zombie: bool = False,
-    cache_dir: Optional[Path] = None,
 ) -> dict[str, Any]:
     """Computes operational elapsed time since the last Work Log update or modification,
     and classifies stagnation according to Orange Tech Operations guidelines.
@@ -371,36 +411,6 @@ def compute_worklog_stagnation(
     - is_zombie (ticket resuelto en Jira, pendiente cierre administrativo en Remedy)
     """
     inc_id = str(ticket.get("ID de incidencia") or ticket.get("id") or "").strip()
-    
-    # Intentar resolver detalle de Remedy desde caché en disco si no se proporciona directamente
-    if not remedy_detail and inc_id:
-        target_dir = cache_dir
-        if not target_dir:
-            try:
-                candidate = Path(__file__).resolve().parents[2] / "data" / ".remedy_cache"
-                if candidate.is_dir():
-                    target_dir = candidate
-            except Exception:
-                target_dir = None
-        if target_dir and target_dir.is_dir():
-            cache_file = target_dir / f"{inc_id}.json"
-            if cache_file.is_file():
-                try:
-                    with open(cache_file, "r", encoding="utf-8") as f:
-                        remedy_detail = json.load(f)
-                except Exception:
-                    remedy_detail = None
-
-    # Intentar resolver síntesis Epsilon desde caché si no se proporciona directamente
-    if not epsilon_data and inc_id:
-        try:
-            eps_candidate = Path(__file__).resolve().parents[2] / "data" / ".epsilon_cache" / f"{inc_id}.json"
-            if eps_candidate.is_file():
-                with open(eps_candidate, "r", encoding="utf-8") as f:
-                    eps_raw = json.load(f)
-                    epsilon_data = eps_raw.get("data") if isinstance(eps_raw, dict) and "data" in eps_raw else eps_raw
-        except Exception:
-            pass
 
     # Recolectar candidatos cronológicos: (parsed_dt, raw_date_str, autor, grupo, extracto)
     candidates: list[tuple[datetime, str, str, str, str]] = []
@@ -824,24 +834,6 @@ def detect_planned_resolution(
             if b_str.lower().startswith("[ventana release]"):
                 clean_b = re.sub(r"^\[ventana release\]\s*:?\s*", "", b_str, flags=re.IGNORECASE).strip()
                 return True, f"Ventana Release: {clean_b[:40]}" if clean_b else "Ventana de Release comprometida"
-
-    # Intentar resolver remedy_detail desde caché local si no se suministra
-    if not remedy_detail:
-        inc_id = (
-            ticket.get("id")
-            or ticket.get("ID")
-            or ticket.get("idRemedy")
-            or ticket.get("ID de incidencia")
-            or ticket.get("Incidencia")
-        )
-        if inc_id:
-            try:
-                candidate = Path(__file__).resolve().parents[2] / "data" / ".remedy_cache" / f"{inc_id}.json"
-                if candidate.is_file():
-                    with open(candidate, "r", encoding="utf-8") as f:
-                        remedy_detail = json.load(f)
-            except Exception:
-                pass
 
     evidence_parts = []
     if epsilon_data:
@@ -2244,6 +2236,13 @@ class EpsilonClient:
             logger.debug("Error leyendo caché de %s: %s", cache_file, e)
             return None
 
+    def load_cached(self, incident_code: str) -> Optional[dict[str, Any]]:
+        """Lee la caché en disco sin red ni control de TTL, para callers externos (p. ej. compute_worklog_stagnation)."""
+        cache_file = self._get_cache_path(incident_code)
+        if not cache_file.is_file():
+            return None
+        return self._read_cache_file(cache_file)
+
     def _fetch_from_url(self, target_base: str, incident_code: str) -> Optional[dict[str, Any]]:
         url = f"{target_base}/{incident_code}"
         req = urllib.request.Request(
@@ -2419,30 +2418,12 @@ def evaluate_incidents_batch(
     # Pre-cargar concurrentemente las cachés de detalle Remedy (I/O de disco por ticket)
     remedy_cache_by_id: dict[str, Any] = {}
     if project_root:
-        remedy_cache_dir = project_root / "data" / ".remedy_cache"
+        remedy_loader = RemedyCacheLoader(cache_dir=project_root / "data" / ".remedy_cache")
         candidate_ids = [
             str(item.get("ID de incidencia") or item.get("id") or "").strip()
             for item in processed_tickets
         ]
-        candidate_ids = [inc for inc in candidate_ids if inc]
-        if candidate_ids:
-            from concurrent.futures import ThreadPoolExecutor
-
-            def _load_remedy_cache(inc_id: str) -> tuple[str, Optional[dict[str, Any]]]:
-                cache_file = remedy_cache_dir / f"{inc_id}.json"
-                if not cache_file.is_file():
-                    return inc_id, None
-                try:
-                    with open(cache_file, "r", encoding="utf-8") as f:
-                        return inc_id, json.load(f)
-                except Exception:
-                    return inc_id, None
-
-            workers = min(8, len(candidate_ids))
-            with ThreadPoolExecutor(max_workers=workers) as executor:
-                for inc_id, detail in executor.map(_load_remedy_cache, candidate_ids):
-                    if detail is not None:
-                        remedy_cache_by_id[inc_id] = detail
+        remedy_cache_by_id = remedy_loader.load_many(candidate_ids)
 
     high_priority_items: list[dict[str, Any]] = []
     p1_count = 0
@@ -2546,7 +2527,6 @@ def evaluate_incidents_batch(
                 epsilon_data=epsilon_data,
                 is_planned=is_planned,
                 is_zombie=is_zombie,
-                cache_dir=(project_root / "data" / ".remedy_cache") if project_root else None,
             )
 
             guia_operador = generate_operator_guidance(
