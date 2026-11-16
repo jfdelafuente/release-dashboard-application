@@ -48,7 +48,7 @@ Ante cualquier consulta sobre el estado de un escalado o cambio en producción:
 
 ---
 
-## 0.4 Glosario de Términos Clave
+### 0.4 Glosario de Términos Clave
 
 Para evitar ambigüedad en la interpretación de esta skill, los siguientes términos se usan con el significado exacto indicado:
 
@@ -172,6 +172,8 @@ Toda afectación con corte de servicio, indisponibilidad masiva o bloqueo operat
 ---
 
 ## 5. Protocolo de Escalados y Matriz de Tiempos
+
+### 5.1 Régimen Temporal de Escalado
 
 El **Incident Manager (IM)** coordina las acciones bajo este régimen temporal riguroso:
 
