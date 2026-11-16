@@ -7,7 +7,7 @@ description: >-
   línea de tiempo verificada y plan de acciones CAPA. Úsese al documentar el cierre
   o análisis retrospectivo de una incidencia IT.
 domain: it-incidents
-version: 2.0.0
+version: 2.1.0
 language: es
 owner: Orange Tech Operations
 metadata:
@@ -17,7 +17,7 @@ metadata:
   last_updated: 2026-11-04
 ---
 
-# Flujo de Trabajo para Post-Incident Review (PIR / Blameless Post-Mortem) — v2.0
+# Flujo de Trabajo para Post-Incident Review (PIR / Blameless Post-Mortem) — v2.1
 
 Esta skill establece el estándar oficial y la metodología de ingeniería para transformar los datos de una incidencia crítica resuelta (SL1/P1 o SL2/P2) en un **informe de aprendizaje organizacional riguroso, sistemático y libre de culpas (*Blameless Post-Mortem*)**.
 
@@ -33,18 +33,51 @@ flowchart LR
 
 ---
 
+## 0. Terminología y Alcance
+
+| Término | Definición |
+| :--- | :--- |
+| **PIR (Post-Incident Review)** | Informe retrospectivo y proceso de aprendizaje organizacional que se elabora tras el cierre de una incidencia mayor; sinónimo operativo de *Blameless Post-Mortem* en este documento. |
+| **Blameless (Sin Culpa)** | Cultura de análisis que trata el error humano como síntoma de un fallo sistémico, nunca como causa final; prohíbe sanciones o señalamientos individuales. |
+| **SL1/P1, SL2/P2** | Niveles de severidad/prioridad Remedy: SL1/P1 = incidencia crítica con impacto masivo o de negocio; SL2/P2 = incidencia mayor con impacto significativo pero acotado. |
+| **War Room** | Sala (física o virtual, p. ej. Teams) donde se reúnen los equipos N2/N3 y el Incident Manager (IM) para coordinar el diagnóstico y la resolución en tiempo real. |
+| **IM (Incident Manager) / IM-CSO** | Responsable de coordinar la respuesta a la incidencia y autorizar decisiones críticas (rollback, escalados); IM-CSO es el IM del Centro de Soporte y Operaciones. |
+| **N1 / N2 / N3** | Niveles de soporte: N1 = monitorización y primer triaje; N2 = soporte técnico especializado; N3 = desarrollo/arquitectura o proveedor. |
+| **PaP (Puesta a Producción)** | Despliegue de un cambio o release en el entorno productivo. |
+| **Workaround** | Solución temporal que restaura el servicio sin corregir la causa raíz; debe quedar marcada como pendiente de erradicación en el PIR. |
+| **CAPA (Corrective and Preventive Actions)** | Conjunto de acciones correctivas (corrigen el fallo ya ocurrido) y preventivas (evitan su recurrencia) derivadas del PIR. |
+| **SMART** | Criterio de calidad de una acción CAPA: Específica, Medible, Alcanzable, Relevante y con plazo Temporal definido. |
+| **Triaje** | Proceso de clasificación y diagnóstico inicial de una incidencia para determinar severidad, sistemas afectados y siguiente responsable. |
+| **MTTD / MTTA / MTTR / TTR** | Ver fórmulas exactas en la §2.2. No son sinónimos intercambiables: cada uno mide un tramo distinto de la cronología. |
+| **Causa Raíz** | Condición estructural (técnica, de proceso o de arquitectura) cuya corrección habría evitado el incidente; nunca es "un empleado cometió un error". |
+
+---
+
 ## 1. Principios de Cultura Blameless (Sin Culpa) y Seguridad
 
 ### 1.1 Prohibición Estricta de Señalar Individuos
+
 - **Error humano como síntoma, no como causa:** En sistemas complejos, si un ser humano comete un error, el fallo de ingeniería radica en que el sistema carecía de salvaguardas que impidieran o mitigaran dicha acción.
 - **Sustitución de nombres por roles funcionales:** Nunca escribas *"Juan ejecutó un script sin permisos"* o *"Fallo del operador X"*. Emplea siempre formulaciones sistémicas: *"El ingeniero de soporte de guardia ejecutó la tarea de mantenimiento..."*, identificando la brecha de control (*"La herramienta de despliegue carecía de validación sintáctica de entorno antes de la ejecución"*).
 
 ### 1.2 Privacidad de Datos y Sanitización Operativa (PII & Security)
+
 - En el informe PIR queda prohibido incluir:
   - Teléfonos de clientes (MSISDN), DNI/CIF o datos bancarios.
   - Credenciales maestras, contraseñas, tokens JWT o claves de API.
   - Información contractual confidencial de terceros proveedores.
 - Las referencias a bases de datos o servidores se citarán por su nombre lógico o clúster corporativo (ej. `Exadata Yécora`, `BSS Jazztel DB`), omitiendo claves de acceso o contraseñas en scripts adjuntos.
+
+### 1.3 Prohibiciones Explícitas (Nunca Hagas Esto)
+
+- **Nunca** nombres, identifiques o hagas identificable a una persona física en el cuerpo del informe (nombre propio, usuario corporativo, extensión telefónica personal, correo nominal). Usa siempre rol funcional (ej. "el ingeniero de guardia N2", "el DBA de turno").
+- **Nunca** publiques o dejes sin expurgar PII de clientes (MSISDN, DNI/CIF, IBAN, tarjetas) ni credenciales (contraseñas, tokens, claves API, certificados) en ningún bloque del PIR, incluidos logs o capturas adjuntas.
+- **Nunca** inventes, estimes a ojo o redondees una marca temporal ($T_0$–$T_4$) sin respaldo de telemetría o bitácora. Si no hay evidencia, consigna literalmente `[PENDIENTE RECONCILIACIÓN LOGS]`; no dejes el campo en blanco ni pongas una hora aproximada sin marcarla como estimada.
+- **Nunca** cierres el análisis de causa raíz en el primer o segundo "porqué" (causa aparente). El 5 Porqués debe llegar a una condición estructural (proceso, arquitectura o control ausente), no a "el sistema falló".
+- **Nunca** registres una acción CAPA sin propietario (rol), prioridad (P1/P2/P3) y fecha límite explícita; una acción sin estos tres campos no es una acción CAPA válida.
+- **Nunca** des por cerrado un PIR mientras exista un workaround activo sin plan de erradicación explícito o sin autorización formal de IM-CSO para mantenerlo temporalmente.
+- **Nunca** uses un tono de juicio, sanción o reproche (ej. "el equipo no revisó bien", "fallo por negligencia"); reformula siempre en términos de brecha de control o salvaguarda ausente.
+- **Nunca** mezcles MTTD, MTTA, MTTR y TTR como si fueran el mismo número: cada uno tiene un punto de inicio y fin distinto (ver §2.2) y deben reportarse todos por separado.
 
 ---
 
@@ -63,6 +96,7 @@ timeline
 ```
 
 ### 2.1 Hitos Clave de Tiempo
+
 1. **$T_0$ — Inicio Real del Fallo:** Momento exacto en que comenzó la degradación funcional o se ejecutó el cambio anómalo.
 2. **$T_1$ — Detección y Alerta:** Momento en que saltó la primera alarma sintética (Zabbix, APM, Dynatrace) o entró el primer reporte en N1.
 3. **$T_2$ — Reconocimiento e Intervención:** Momento en que el Incident Manager o el equipo de guardia abrió la War Room e inició el triaje activo.
@@ -70,6 +104,7 @@ timeline
 5. **$T_4$ — Resolución Definitiva:** Momento en que se aplicó el parche final y se dio por cerrado el ticket Remedy.
 
 ### 2.2 Fórmulas Operativas de Desempeño
+
 - **MTTD (Mean Time To Detect):**  
   $$\text{MTTD} = T_1 - T_0$$  
   *Mide la efectividad de la monitorización sintética y la observabilidad preventiva.*
@@ -85,6 +120,39 @@ timeline
 
 *(Si alguna hora exacta no está disponible en la telemetría, debe consignarse como `[PENDIENTE RECONCILIACIÓN LOGS]` sin inventar valores ficticios).*
 
+### 2.3 Ejemplo End-to-End Resuelto (Incidente Ficticio `INC000009999001`)
+
+El siguiente caso ilustra el flujo completo, desde la cronología cruda hasta el cálculo de métricas, usando datos y horas **ficticios** con fines exclusivamente didácticos.
+
+**Contexto simulado:** una release introduce un cambio de esquema en `BSS Jazztel DB` sin el índice correspondiente; a las 09:58 un batch nocturno lanza una consulta sin índice que retiene locks y agota el pool de conexiones del microservicio de provisión.
+
+**Cronología cruda capturada (evidencias ficticias):**
+
+| Hora | Evento | Fuente |
+| :---: | :--- | :--- |
+| 09:58 | Inicio real del fallo: el batch ejecuta la consulta sin índice y empieza a agotar el pool de conexiones. | Logs de base de datos |
+| 10:03 | Zabbix dispara alerta de saturación del pool de conexiones (>95%). | Zabbix |
+| 10:07 | N1 escala la alerta y el IM-CSO convoca War Room con N2/N3. | Teams IM |
+| 10:41 | Se autoriza y ejecuta rollback del cambio de esquema; el servicio vuelve a responder a clientes. | IM-CSO / Bitácora |
+| 11:15 | Se aplica el índice correctivo definitivo en producción y se certifica estabilidad; se cierra el ticket Remedy. | Logs APIGEE / Remedy |
+
+**Hitos T0–T4 resultantes:**
+
+- $T_0$ = 09:58 (inicio real del fallo)
+- $T_1$ = 10:03 (detección/alerta Zabbix)
+- $T_2$ = 10:07 (reconocimiento / War Room)
+- $T_3$ = 10:41 (mitigación / restauración vía rollback)
+- $T_4$ = 11:15 (resolución definitiva)
+
+**Cálculo de métricas aplicando las fórmulas de §2.2:**
+
+- **MTTD** $= T_1 - T_0$ = 10:03 − 09:58 = **5 minutos**
+- **MTTA** $= T_2 - T_1$ = 10:07 − 10:03 = **4 minutos**
+- **MTTR** $= T_3 - T_0$ = 10:41 − 09:58 = **43 minutos**
+- **TTR** $= T_4 - T_0$ = 11:15 − 09:58 = **1 hora 17 minutos**
+
+**Lectura del resultado:** la detección (MTTD = 5 min) y el reconocimiento (MTTA = 4 min) fueron rápidos gracias a la alarma sintética de saturación de pool; el grueso del impacto a cliente (MTTR = 43 min) corresponde al tiempo de diagnóstico y ejecución del rollback, y el cierre estructural completo (TTR = 1 h 17 min) incluye además el tiempo para aplicar el índice correctivo definitivo. Este patrón alimentaría directamente las acciones CAPA-01/CAPA-02 de la tabla de la §4 (alarma de pool ya existente a reforzar, y validación de `EXPLAIN PLAN` en CI/CD como prevención estructural).
+
 ---
 
 ## 3. Metodología de Análisis Causa Raíz (5 Porqués y Factores)
@@ -98,6 +166,7 @@ Para evitar quedarse en la causa inmediata (ej. *"El disco se llenó"* o *"El mi
 5. **¿Por qué el pipeline de CI/CD permitió el paso a producción sin índice?** $\rightarrow$ *La validación automática de schemas en staging solo comprobaba sintaxis y no planes de ejecución.*
 
 ### Dimensiones de Factores Contribuyentes
+
 - **Técnico / Código:** Bugs, fugas de memoria, falta de índices, timeouts incorrectos.
 - **Observabilidad / Monitorización:** Alarma inexistente, umbral de saturación mal configurado o ruido excesivo que enmascaró la alerta.
 - **Proceso / Despliegue:** Falta de pruebas de carga, rollback tardío o ventanas de cambio no coordinadas.
@@ -121,7 +190,8 @@ Cada acción correctiva debe ser concreta, verificable y contar con un propietar
 | **P2** | **Observabilidad / Test Automatizado** | **$\le 30$ días naturales** | Añade probes sintéticas, alertas de saturación o pruebas de integración en CI/CD. |
 | **P3** | **Optimización / Documentación** | **$\le 60$ días naturales** | Mejoras de rendimiento secundarias, actualización de runbooks o refactor de deuda técnica. |
 
-### Tabla Estándar de Acciones CAPA:
+### Tabla Estándar de Acciones CAPA
+
 | ID Acción | Tipo | Descripción de la Acción Técnica | Propietario / Rol | Prioridad | Fecha Límite (SLA) |
 | :--- | :--- | :--- | :--- | :---: | :---: |
 | `CAPA-01` | Detección | Crear alarma en Zabbix para alertar cuando las conexiones superen el 75%. | Equipo Monitorización | P2 | 2026-11-20 |
@@ -196,6 +266,7 @@ Utiliza la siguiente plantilla para generar o validar el informe final:
 ## 6. Checklist de Control de Calidad del PIR
 
 Antes de archivar o presentar el informe PIR al comité de dirección, comprueba:
+
 - [ ] ¿El informe es estrictamente **blameless** (sin nombres personales de ingenieros ni juicios de culpabilidad)?
 - [ ] ¿Se han expurgado todos los datos personales de clientes (MSISDN, DNI, datos de pago)?
 - [ ] ¿Los hitos temporales ($T_0$ a $T_4$) y las métricas (MTTD, MTTA, MTTR) están justificados con telemetría?

@@ -9,17 +9,17 @@ description: >-
   alucinaciones de cierre prematuro (LIFECYCLE_STATUS_MISMATCH) y prescribe acciones operativas y
   saneamiento de mensajes ejecutivos según las matrices ITIL y protocolos de IM-CSO.
 domain: it-incidents
-version: 1.0.0
+version: 1.1.0
 language: es
 owner: Orange Tech Operations
 metadata:
   role: incident_triage_auditor_and_reviewer
   pipeline_stage: triage_audit_and_calibration
   security_level: internal_confidential
-  last_updated: 2026-11-04
+  last_updated: 2026-11-16
 ---
 
-# Revisión y Calibración de Triaje de Incidencias IT (`incident-triage-review`) — v1.0
+# Revisión y Calibración de Triaje de Incidencias IT (`incident-triage-review`) — v1.1
 
 Esta skill proporciona el marco de auditoría, las reglas metodológicas y las herramientas automatizadas para **revisar, auditar y calibrar el triaje técnico y operativo de cualquier incidencia IT** en el entorno de Orange Tech Operations.
 
@@ -45,13 +45,39 @@ Esta Skill actúa bajo un marco estricto de **Auditoría Técnica y Soporte Espe
 - **Auditoría de Afectación Multisede:** Comprobar si existen sedes, canales o segmentos de usuarios con bloqueos activos no mitigados cuando se reporta normalización en otros centros.
 - **Auditoría de Coherencia de Ciclo de Vida:** Detectar inconsistencias críticas donde tickets activos en Remedy (`Asignado`, `En curso`, `Pendiente`) cuentan con mensajes de cierre oficial en la consola (`LIFECYCLE_STATUS_MISMATCH`).
 - **Verificación de Envejecimiento (*Aging Escalation*):** Controlar si el tiempo transcurrido sin workaround justifica la elevación a P1 o si aplica una exención por despliegue comprometido.
-- **Prescripción de Acciones Operativas:** Formular las recomendaciones exactas para la Mesa de Incidencias, equipos resolutores e Incident Manager (IM-CSO).
+- **Prescripción de Acciones Operativas:** Formular las recomendaciones exactas para la Mesa de Incidencias, equipos resolutores, Incident Manager (IM) e IM-CSO (Customer & Service Ops) — ver distinción de roles en §0.4.
 
 ### 0.2 Capacidades Fuera de Alcance y Salvaguardas (Out-of-Scope / Non-Goals)
 
 - ❌ **Modificación Directa en BMC Remedy ITSM:** La skill diagnostica y formula la recomendación de reclasificación; la modificación en la herramienta de ticketing es responsabilidad del operador o gestor de incidencias.
 - ❌ **Cierre Administrativo Ficticio:** Jamás dar por resuelta o cerrada una incidencia mientras el ticket continúe abierto en Remedy o exista al menos una sede con reporte "NO RESUELTO".
 - ❌ **Alucinación de Causas o Métricas:** Estrictamente prohibido conjeturar fechas de pase a producción, horas de normalización o causas raíz sin respaldo en Epsilon IA o notas técnicas.
+
+### 0.3 Reglas Invariables — Nunca Hagas Esto
+
+Estas prohibiciones son de cumplimiento obligatorio en cualquier auditoría, con independencia del caso particular analizado:
+
+1. **Nunca** escales a P1 por *Aging* una incidencia marcada `es_planificada: true` o con fecha de pase a producción comprometida; el tope es **P2** (§3, Fase 3-4).
+2. **Nunca** mantengas o redactes una fase `cierre` si al menos una sede, canal o segmento reporta "NO RESUELTO" (`CIERRE_PREMATURO_MULTI_SEDE`).
+3. **Nunca** mantengas una fase `cierre` mientras el ticket siga en estado activo en Remedy (`Asignado`, `En curso`, `Pendiente`) (`LIFECYCLE_STATUS_MISMATCH`).
+4. **Nunca** superes los límites físicos de los mensajes ejecutivos (≤90 palabras monopárrafo en la versión completa, ≤30 palabras en una línea en la versión breve) ni los dejes sin redactar tras un cierre real en Remedy (`LIFECYCLE_PENDING_CLOSURE`).
+5. **Nunca** inventes fechas de pase a producción, horas de normalización, causas raíz o porcentajes de impacto que no estén respaldados por Epsilon IA, notas técnicas de Remedy o telemetría verificable.
+6. **Nunca** des por cerrado administrativamente un ticket "zombi" (cancelado/resuelto en Jira) sin antes señalar la desincronización a la Mesa de Seguimiento (`TICKET_ZOMBI_DESYNC`); la skill nunca cierra el ticket por sí misma.
+7. **Nunca** trates "Incident Manager (IM)" e "IM-CSO" como el mismo rol al redactar recomendaciones: solo IM-CSO tiene potestad para aprobar workarounds y autorizar desescaladas (§0.4).
+8. **Nunca** emitas un veredicto `✅ CONFORME` si existe al menos una anomalía de severidad `CRITICAL` o `HIGH` pendiente de corrección (§6).
+
+### 0.4 Glosario de Términos y Acrónimos
+
+| Término | Definición Operativa |
+| :--- | :--- |
+| **IM (Incident Manager)** | Rol humano de guardia que lidera la respuesta operativa y es el único autorizado para registrar cambios de estado en Remedy. Esta skill le asesora; no sustituye sus decisiones. |
+| **IM-CSO (Customer & Service Ops)** | Rol humano distinto del IM, con potestad exclusiva para aprobar workarounds, validar/discrepar severidades y autorizar desescaladas o Rollbacks. Ningún workaround ni desescalado es válido sin su visto bueno explícito. |
+| **N1 / N2 / N3** | Niveles de soporte escalonado: N1 (Service Desk, triaje inicial), N2 (soporte especializado por aplicativo), N3 (desarrollo / expertise de producto o proveedor para causa raíz). |
+| **Aging / Aging Escalation** | Tiempo transcurrido desde la apertura del ticket sin workaround autorizado. Al superar los **120 minutos**, dispara la evaluación de escalado a P1, salvo que la incidencia esté marcada como planificada (§3, Fase 4). |
+| **CORE++** | Catálogo oficial de aplicativos ultra-críticos de Orange (`it-severity-matrix` §3.0). La caída total de un sistema `CORE++` impone de forma determinista el suelo `SL1/P1`. |
+| **Resolución Planificada (`es_planificada`)** | Incidencia con causa raíz identificada y solución (PR) validada a la espera de una ventana de despliegue comprometida. Calibra la urgencia a "Planificada/Baja", fija el tope de prioridad en P2 y exime del escalado por Aging. |
+| **Ticket Zombi** | Incidencia marcada como cancelada o resuelta en Jira (sistema de desarrollo) que permanece activa en BMC Remedy, generando una desincronización administrativa (anomalía `TICKET_ZOMBI_DESYNC`). |
+| **Resolución Parcial Multisede** | Estado en el que una o más sedes/canales confirman normalización mientras al menos otra reporta "NO RESUELTO"; el incidente global permanece ACTIVO hasta que todas las sedes normalicen. |
 
 ---
 
@@ -132,8 +158,9 @@ Para auditar cualquier incidencia de forma determinista, sigue este pipeline:
 ### Fase 1: Extracción de Hechos Objetivos
 
 1. Extraer identificador, estatus Remedy, prioridad Remedy, impacto, urgencia, grupo asignado y fecha de envío desde el último fichero masivo (`data/output/*-massive.json`).
-2. Consultar el extracto técnico en `data/.epsilon_cache/{INC}.json` (o invocar `retry_epsilon_ia.py` si no existe caché).
+2. Consultar el extracto técnico en `data/.epsilon_cache/{INC}.json` (o invocar `converters/cli/retry_epsilon_ia.py --id {INC}` si no existe caché; el script crea el fichero JSON en esa misma ruta).
 3. Contrastar notas técnicas: ¿Se menciona alguna sede específica? ¿Hay confirmación de prueba funcional de usuario?
+4. Comprobar desincronización administrativa: ¿El sistema de desarrollo (Jira) marca el ticket como cancelado o resuelto mientras BMC Remedy lo mantiene activo? Si es así, márcalo como candidato a `TICKET_ZOMBI_DESYNC` (§4) y no lo trates como cierre válido hasta que la Mesa de Seguimiento lo confirme en Remedy.
 
 ### Fase 2: Determinación del Impacto Real de Negocio
 
@@ -143,6 +170,8 @@ Contrastar con el catálogo de [`it-severity-matrix`](file:///c:/Users/jose.dela
 - **SL2 / P2**: Afectación parcial o degradación del 5% al 20%. Fallo funcional en una sede comercial/call center (ej. Madison-Valladolid). Pérdida de redundancia en sistemas CORE.
 - **SL3 / P3**: Incidencias funcionales aisladas con método alternativo operativo o impacto administrativo menor.
 - **SL4 / P4**: Consultas, peticiones o anomalías cosméticas.
+
+**Sub-paso obligatorio — Auditoría de Afectación Multisede** (equivalente al Paso 4 del diagrama §1, caso de referencia `INC000004156790`): Busca en las notas técnicas y en el texto libre menciones explícitas a sedes, canales o segmentos (ej. nombres de call center, "sede", palabras como "no resuelto" combinadas con "normalizado"/"resuelto" para otra sede). Si **al menos una sede reporta bloqueo persistente mientras otra(s) confirman normalización**: (a) fija el estado global como **ACTIVO** sin importar el estatus agregado en Remedy, (b) descarta cualquier fase `cierre`, y (c) marca `CIERRE_PREMATURO_MULTI_SEDE` si ya existe un mensaje de cierre redactado (ver §4).
 
 ### Fase 3: Evaluación de la Urgencia y Factor Temporal
 
@@ -171,7 +200,10 @@ Verificar en [`data/agent_executive_messages.json`](file:///c:/Users/jose.delafu
 
 ### Fase 6: Prescripción Operativa y Recomendaciones
 
-Generar el informe de diagnóstico, detallando acciones correctivas automáticas y recomendaciones operativas para la Mesa de Incidencias.
+1. Consolidar todas las anomalías detectadas en Fases 1-5 usando los códigos exactos del catálogo (§4), ordenadas por gravedad (`CRITICAL` → `HIGH` → `MEDIUM` → `WARNING`).
+2. Determinar el veredicto global: `✅ CONFORME` únicamente si no existe ninguna anomalía `CRITICAL` o `HIGH` pendiente; en cualquier otro caso, `⚠️ INCONSISTENCIAS DETECTADAS` (regla también codificada en `es_conforme` dentro de `review_incident_triage.py`).
+3. Redactar el informe siguiendo **estrictamente** la plantilla de la §6, sin omitir ninguna de sus 5 secciones aunque algún campo quede como "No aplica".
+4. Formular las recomendaciones operativas distinguiendo explícitamente el destinatario humano responsable de ejecutarlas: Mesa de Incidencias (reclasificación en Remedy), IM (registro y liderazgo de la respuesta) o IM-CSO (aprobación de workarounds/desescaladas) — ver §0.4.
 
 ---
 
@@ -183,9 +215,14 @@ Generar el informe de diagnóstico, detallando acciones correctivas automáticas
 | `CIERRE_PREMATURO_MULTI_SEDE` | **CRITICAL** | Fase `cierre` presente mientras al menos una sede reporta `NO RESUELTO`. | Ocultación de incidencias activas en sedes y abandono de soporte técnico. | Retirar fase `cierre`, redactar `seguimiento` reflejando afectación dispar e intervenir sede. |
 | `INFRATRIAJE_REMEDY` | **HIGH** | Remedy clasifica como P3/P4 pero la evaluación técnica determina P1/P2. | Falta de foco en N1/N2 y riesgo de superación de SLAs de negocio. | Solicitar a la Mesa de Incidencias e IM-CSO elevar la prioridad en Remedy a P1/P2. |
 | `AGING_ESCALATION_INDEBIDO` | **HIGH** | Ticket planificado escalado a P1 por superar 120 minutos. | Falsa alarma de emergencia a Dirección por tareas en espera de ventana de release. | Calibrar urgencia a Planificada/Baja en el motor de triaje y aplicar tope P2. |
-| `SOBRETIAJE_REMEDY` | **MEDIUM** | Remedy clasifica nominalmente P1/P2 pero la telemetría no evidencia impacto. | Distracción de recursos críticos en incidencias menores. | Solicitar reevaluación técnica y ajuste de prioridad en Remedy. |
-| `EXCESSIVE_WORD_COUNT` | **WARNING** | Versión completa $>90$ palabras o breve $>30$ palabras. | Ruptura de directivas ejecutivas y degradación visual en paneles de control. | Resumir el mensaje eliminando jerga redundante. |
+| `TICKET_ZOMBI_DESYNC` | **WARNING** | Ticket cancelado o resuelto en Jira (sistema de desarrollo) pero sigue activo en BMC Remedy. | Incidencia fantasma ocupando la cola de emergencias vivas de Dirección sin actividad real. | Solicitar a la Mesa de Seguimiento el cierre administrativo formal en Remedy y retirar de la cola de emergencias. |
+| `LIFECYCLE_PENDING_CLOSURE` | **WARNING** | Ticket resuelto/cerrado en Remedy sin mensaje de cierre registrado en `agent_executive_messages.json`. | Dirección carece de comunicación final formal pese a la resolución real. | Redactar y registrar el mensaje de cierre con `incident-reporter`. |
+| `SOBRETRIAJE_REMEDY` (código interno histórico: `SOBRETIAJE_REMEDY`) | **MEDIUM** | Remedy clasifica nominalmente P1 pero la evaluación técnica determina P3/P4 sin evidencia de impacto. | Distracción de recursos críticos en incidencias menores. | Solicitar reevaluación técnica y ajuste de prioridad en Remedy. |
+| `EXCESSIVE_WORD_COUNT_COMPLETO` | **WARNING** | Versión completa $>90$ palabras. | Ruptura de directivas ejecutivas y degradación visual en paneles de control. | Resumir el mensaje eliminando jerga redundante. |
+| `EXCESSIVE_WORD_COUNT_BREVE` | **WARNING** | Versión breve $>30$ palabras o con más de una línea. | Ruptura de directivas ejecutivas y degradación visual en paneles de control. | Resumir la versión breve a una sola línea $\le 30$ palabras. |
 | `MULTI_PARAGRAPH_COMPLETO` | **WARNING** | Versión completa contiene saltos de línea intermedios. | Inconsistencia de formato en visualización del dashboard. | Reemplazar saltos de línea por redacción en un único párrafo continuo. |
+
+> **Nota de implementación:** `scripts/review_incident_triage.py` emite literalmente el código `SOBRETIAJE_REMEDY` (con la errata histórica "TIAJE") en su campo `code`. Al generar el informe de salida (§6), usa siempre el código tal como lo emite el script para que el reporte sea trazable y buscable; no lo corrijas a `SOBRETRIAJE_REMEDY` salvo que también se actualice el script.
 
 ---
 

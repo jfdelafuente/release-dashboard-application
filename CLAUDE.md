@@ -8,7 +8,7 @@ El proyecto integra:
 
 - **Portal Hub** (`dashboards/portal/`): Punto de acceso con buscador hero y pantalla modal interactiva de Resumen IA (Epsilon IA).
 - **Massive Incidents Dashboard** (`dashboards/massive-incidents/`): Análisis de incidencias masivas con métricas temporales y evolución de backlog.
-- **Postmortem Dashboard** (`dashboards/postmortem/`): Análisis de post-mortem por despliegues (PAP / MESA) y SLAs.
+- **Postmortem Dashboard** (`dashboards/postmortem/`): Análisis de post-mortem por despliegues (PAP / MESA — ver [Glosario de Términos Clave](#glosario-de-términos-clave)) y SLAs.
 - **Release KPIs Dashboard** (`dashboards/release-kpis/`): Métricas históricas de calidad de releases.
 - **Reportes de Incidencias** (`dashboards/reportes-incidencias/`): Frontend del editor y visor de reportes semanales conectado a la API de `cso-incident-masivas-report`.
 - **Catálogo de Agentes IA y Skills** (`dashboards/agents-catalog/`): Catálogo interactivo de agentes de IA y habilidades técnicas (*skills*) de la biblioteca corporativa, con métricas KPI, filtrado por dominio, visor de prompts y generador de comandos CLI de despliegue.
@@ -718,9 +718,24 @@ data/output/CS_Masiva_20260514-massive.json
 data/errors/CS_Masiva_20260514_errors.json
 ```
 
+## Glosario de Términos Clave
+
+Términos y siglas que aparecen en este documento sin definición en el punto donde se usan por primera vez:
+
+| Término | Significado |
+| --- | --- |
+| **PAP** | "Puesta en Producción" — despliegue cuya `Fecha de Pase` es la más antigua dentro de un conjunto de postmortem de una misma release. Se deriva automáticamente (ver [Conversor de Postmortem](#conversor-de-postmortem-postmortem-converter)), nunca se introduce a mano. |
+| **MESA** | Cualquier despliegue posterior al PAP dentro de la misma release (Mesa de Cambios). Se deriva automáticamente igual que PAP. |
+| **VPS** | Servidor de producción (`10.132.26.96`) donde corre Nginx en el puerto `8081`. Es el único destino válido de despliegue. |
+| **Standalone Runtime / Zero Git** | Estrategia de despliegue de `scripts/deploy-production.ps1`: empaqueta y copia al VPS solo los artefactos necesarios para ejecutar la app (HTML/JS/Python), sin enviar el historial de git ni archivos de desarrollo — el VPS no es un clon del repositorio. |
+| **CORE++ / CORE / IM-CSO / War Room** | Términos de gobernanza de emergencias IT de Orange, definidos en detalle en `.agents/skills/orange-it-emergency-management/SKILL.md` y `.agents/skills/it-severity-matrix/SKILL.md`. Este documento (CLAUDE.md) no profundiza en ellos; consulta esas skills si trabajas en la Consola Operativa de Emergencias. |
+| **Epsilon IA** | Servicio interno de Orange que genera un resumen con IA de una incidencia a partir de su ID (ver endpoint en [Referencias Útiles](#referencias-útiles)). |
+
 ## Idioma de Comunicación
 
 - 🇪🇸 **Todas las conversaciones deben ser en español**. Esta es la lengua preferida para toda la comunicación con Claude.
+- Aplica a: respuestas conversacionales, resúmenes, mensajes de commit y texto visible en los dashboards (labels, tooltips, mensajes de error de UI).
+- No aplica a: identificadores de código (nombres de variables/funciones/clases), que deben seguir convenciones en inglés como es estándar en el ecosistema JS/Python, ni a los nombres de campos del dominio de datos (p. ej. "Estatus", "Urgencia" se mantienen tal cual aparecen en los CSV de origen, aunque ya estén en español).
 
 ## Preferencias de Colaboración
 
@@ -735,6 +750,15 @@ data/errors/CS_Masiva_20260514_errors.json
 - ✅ Servidor local: `python serve_app.py` en puerto `8080` (evita conflicto con FastAPI en `:8000`)
 - ✅ Despliegue en producción: `.\scripts\deploy-production.ps1` (Standalone Runtime a `10.132.26.96:8081`)
 - ✅ Almacenamiento persistente: Desacoplado en `/infocodes/var/storage/` en VPS, fallback a `data/` en local
+
+### Prohibiciones Explícitas (Nunca Hagas Esto)
+
+- ❌ Nunca uses "MASORANGE" como nombre de marca en ningún dashboard, informe o commit — la marca es siempre **Orange**.
+- ❌ Nunca hagas `git add -A` / `git add .` en este repositorio: los directorios bajo `data/` (`data/input/`, `data/output/`, `data/errors/`) deben quedar fuera de cualquier commit aunque `git status` los muestre como modificados o eliminados — son artefactos locales de ejecución, no cambios intencionados. Si el usuario no pide explícitamente comitear un archivo de `data/`, omítelo en silencio.
+- ❌ Nunca ejecutes `.\scripts\deploy-production.ps1` sin confirmación explícita del usuario inmediatamente antes — es un despliegue a producción real (VPS `10.132.26.96:8081`).
+- ❌ Nunca asumas que el servidor local corre en el puerto `8000`: ese puerto es de la API FastAPI hermana (`cso-incident-masivas-report`); este proyecto usa el `8080` para `serve_app.py`.
+- ❌ Nunca apliques un filtro de tabla (Estado/Sistema/Urgencia) antes del filtro de tiempo global — el orden de aplicación (global → específico) es obligatorio para que los KPIs y gráficas sean consistentes entre dashboards.
+- ❌ Nunca inventes o asumas el formato de fecha de un campo nuevo: usa siempre `dd/mm/yyyy HH:mm a` salvo que el propio CSV/JSON de entrada documente explícitamente otro formato.
 
 ## Referencias Útiles
 

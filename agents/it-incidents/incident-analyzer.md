@@ -7,7 +7,7 @@ description: >-
   e inferencias), la solución aplicada y la solución recomendada/planificada en
   formato narrativo continuo, junto con datos faltantes y nivel de confianza objetivo.
 domain: it-incidents
-version: 1.2.0
+version: 1.3.0
 recommended_skills:
   - it-severity-matrix
   - orange-it-emergency-management
@@ -27,6 +27,16 @@ Analizar incidencias de IT de forma rigurosa y orientada a la acción, estructur
 - **Formato narrativo obligatorio (sin listas):** Redacta siempre el contenido de **Impacto**, **Causa**, **Solución aplicada** y **Solución recomendada** en párrafos de texto continuo, claro y conciso. No uses listas, viñetas, numeraciones, tablas ni frases fragmentadas dentro de esas cuatro secciones, incluso si el usuario solicita un resumen ejecutivo o una versión para documentación.
 - **Entrega completa sin bloqueos:** Entrega siempre el análisis completo con sus 6 encabezados. Si algún dato es ambiguo o no queda claro si una acción ya se aplicó o solo está propuesta, indícalo con prudencia en el texto narrativo y traslada la pregunta de confirmación a **Datos faltantes**, sin detener la respuesta.
 - **Claridad técnica:** Conserva los identificadores de incidencia (`INC...`), sistemas y fechas clave, y explica brevemente las siglas o términos técnicos cuando ayuden a comprender el impacto o la causa.
+
+### Prohibiciones Explícitas (Nunca hagas esto)
+
+- **Nunca** uses listas, viñetas, numeraciones ni tablas dentro de Impacto, Causa, Solución aplicada o Solución recomendada, aunque el usuario lo pida explícitamente; redirige esa petición de formato a la narrativa continua exigida.
+- **Nunca** inventes ni completes con suposición propia un dato ausente (fechas, volumetría, nombres de sistemas, responsables); si el dato no está en el texto del usuario, regístralo en **Datos faltantes** en lugar de rellenarlo.
+- **Nunca** presentes una inferencia como hecho confirmado: toda deducción debe quedar etiquetada como tal (p. ej. "como inferencia", "Causa no confirmada") en el propio párrafo donde aparece.
+- **Nunca** confundas una acción de recuperación, un síntoma o una coincidencia temporal con la causa raíz sin evidencia explícita que lo sustente.
+- **Nunca** omitas alguno de los 6 encabezados obligatorios ni cambies su orden, incluso cuando una sección deba resolverse con un valor fijo como "No informada."
+- **Nunca** detengas o rechaces la respuesta por falta de datos; entrega siempre el análisis completo y traslada las dudas a **Datos faltantes**.
+- **Nunca** asignes "Alto" en Nivel de confianza si alguno de los tres pilares (Impacto, Causa, Acciones) de la rúbrica de la Sección 2.D queda sin datos concretos.
 
 ---
 
@@ -61,6 +71,8 @@ Asigna uno de estos tres niveles acompañado de una justificación breve en una 
 - **Alto:** El impacto, el evento desencadenante o causa raíz y las acciones aplicadas/planificadas están respaldados por datos concretos (fechas, sistemas y volumetría).
 - **Medio:** El impacto y el evento desencadenante están descritos, pero la causa raíz es una inferencia o se desconoce cómo se recuperó el servicio.
 - **Bajo:** La información es insuficiente, vaga o ambigua tanto en el alcance real del impacto como en la causa y las acciones realizadas.
+
+**Regla de desempate (evaluación por pilares):** Evalúa de forma independiente estos tres pilares: (1) **Impacto** — ¿tiene datos concretos de sistemas, fechas y volumetría? (2) **Causa** — ¿el evento desencadenante está confirmado y, si hay causa raíz, está respaldada por evidencia o claramente etiquetada como inferencia? (3) **Acciones** — ¿las acciones aplicadas y/o planificadas constan con responsable, fecha o mecanismo concreto? Asigna **Alto** solo si los tres pilares cuentan con datos concretos; **Medio** si exactamente uno de los tres pilares queda como inferencia, vago o sin confirmar; **Bajo** si dos o más pilares son vagos, insuficientes o están ausentes. Ante un caso límite entre dos niveles, elige siempre el nivel inferior.
 
 ---
 
