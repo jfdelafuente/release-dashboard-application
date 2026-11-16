@@ -344,6 +344,17 @@ def compute_emergency_sla_status(
     }
 
 
+def read_json_cache_file(cache_file: Path) -> Optional[Any]:
+    """Lee y parsea un fichero JSON de caché en disco, devolviendo None ante cualquier
+    fallo de E/S o de formato (fichero ausente, corrupto, permisos). Punto único de
+    lectura de caché compartido por RemedyCacheLoader y EpsilonClient."""
+    try:
+        with open(cache_file, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except (OSError, json.JSONDecodeError):
+        return None
+
+
 class RemedyCacheLoader:
     """Resuelve y cachea en memoria el detalle Remedy de un ticket leído desde disco.
 
@@ -361,11 +372,7 @@ class RemedyCacheLoader:
         cache_file = self.cache_dir / f"{inc_id}.json"
         if not cache_file.is_file():
             return None
-        try:
-            with open(cache_file, "r", encoding="utf-8") as f:
-                return json.load(f)
-        except Exception:
-            return None
+        return read_json_cache_file(cache_file)
 
     def load_many(self, inc_ids: list[str], max_workers: int = 8) -> dict[str, Any]:
         """Prefetch concurrente del detalle Remedy para un lote de IDs."""
@@ -1802,7 +1809,15 @@ class ExecutiveMessageGenerator:
                 self.agent_store_path = candidate
             else:
                 self.agent_store_path = Path("data/agent_executive_messages.json")
-        self.agent_store = self._load_agent_store()
+        self._agent_store: Optional[dict[str, Any]] = None
+
+    @property
+    def agent_store(self) -> dict[str, Any]:
+        """Carga perezosa del almacén de mensajes de agente: el I/O de disco se difiere
+        hasta el primer acceso real, no ocurre en la construcción del generador."""
+        if self._agent_store is None:
+            self._agent_store = self._load_agent_store()
+        return self._agent_store
 
     def _load_agent_store(self) -> dict[str, Any]:
         if self.agent_store_path and self.agent_store_path.exists():
@@ -1810,7 +1825,7 @@ class ExecutiveMessageGenerator:
                 with open(self.agent_store_path, "r", encoding="utf-8") as f:
                     data = json.load(f)
                     return data.get("incidents", {})
-            except Exception as e:
+            except (OSError, json.JSONDecodeError) as e:
                 logger.debug("No se pudo cargar el almacén de agentes: %s", e)
         return {}
 
@@ -1942,6 +1957,31 @@ class ExecutiveMessageGenerator:
         sla_status: Optional[dict[str, Any]] = None,
     ) -> str:
         """Generates the standardized 4-block emergency report mandated by orange-it-emergency-management."""
+        ctx = cls._build_emergency_report_context(ticket, evaluation, resumen_ia, sla_status)
+        lines = [
+            "🚨 REPORTE DE EMERGENCIA IT - ORANGE TECH OPERATIONS",
+            cls._EMERGENCY_REPORT_SEPARATOR,
+        ]
+        lines.extend(cls._build_classification_block(ctx))
+        lines.extend(cls._build_sla_block(ctx))
+        lines.extend(cls._build_action_block(ctx))
+        lines.extend(cls._build_escalation_block(ctx))
+        return "\n".join(lines)
+
+    _EMERGENCY_REPORT_SEPARATOR = "────────────────────────────────────────────────────────────"
+    _EMERGENCY_PARALLEL_ESCALATION_PROCESSES = ("Middleware e Integración Transversal", "Infraestructura Core IT, BBDD y Cloud")
+    _EMERGENCY_AGING_ESCALATION_THRESHOLD_MINS = 120
+    _EMERGENCY_PHONE_ESCALATION_WINDOW_MINS = 45
+
+    @classmethod
+    def _build_emergency_report_context(
+        cls,
+        ticket: dict[str, Any],
+        evaluation: dict[str, Any],
+        resumen_ia: Optional[dict[str, Any]],
+        sla_status: Optional[dict[str, Any]],
+    ) -> dict[str, Any]:
+        """Deriva todos los valores necesarios para los 4 bloques del reporte de emergencia."""
         inc_id = ticket.get("ID de incidencia") or ticket.get("id") or "INC"
         titulo = ticket.get("Descripción") or ticket.get("descripcion") or (resumen_ia.get("titulo") if resumen_ia else "")
         prio = evaluation.get("prioridad_sugerida", "P1")
@@ -1956,7 +1996,6 @@ class ExecutiveMessageGenerator:
         urgencia = eval_data.get("urgencia", "Alta")
         urgencia_just = eval_data.get("urgencia_justificacion", "Impacto activo en vivo.")
         workaround = eval_data.get("workaround", "No")
-        workaround_gob = eval_data.get("workaround_gobernanza", "Pendiente autorización IM-CSO (SL1 activa)" if workaround == "Sí" else "Sin workaround")
         disc_motivo = evaluation.get("discrepancia_motivo") or eval_data.get("discrepancia_motivo")
         disc_gravedad = evaluation.get("discrepancia_gravedad") or eval_data.get("discrepancia_gravedad")
         aging_esc = evaluation.get("aging_escalated") or eval_data.get("aging_escalated")
@@ -1992,98 +2031,124 @@ class ExecutiveMessageGenerator:
 
         # Protocolo de Escalado: Normal vs Paralelo (Estructural)
         requires_parallel = (
-            proceso in ("Middleware e Integración Transversal", "Infraestructura Core IT, BBDD y Cloud")
-            or dominio_tecnico in ("Middleware e Integración Transversal", "Infraestructura Core IT, BBDD y Cloud")
+            proceso in cls._EMERGENCY_PARALLEL_ESCALATION_PROCESSES
+            or dominio_tecnico in cls._EMERGENCY_PARALLEL_ESCALATION_PROCESSES
         )
 
         problema = (resumen_ia.get("problema") if resumen_ia else None) or titulo
         solucion = (resumen_ia.get("solucion") if resumen_ia else None) or "Diagnóstico y contención técnica en curso por equipos resolutores"
         siguiente = (resumen_ia.get("siguienteAccion") or resumen_ia.get("siguiente_accion") if resumen_ia else None) or "Auditoría preventiva PaP y restablecimiento de servicio"
 
-        lines = [
-            "🚨 REPORTE DE EMERGENCIA IT - ORANGE TECH OPERATIONS",
-            "────────────────────────────────────────────────────────────",
-            "[1] CLASIFICACIÓN DEL TICKET",
-            f"• Incidencia: {inc_id} ({sl_level})",
-            f"• Proceso Crítico: {proceso}",
-        ]
-        if dominio_tecnico and dominio_tecnico != proceso:
-            lines.append(f"• Dominio Técnico: {dominio_tecnico}")
-        if disc_motivo:
-            lines.append(f"• Alerta de Subescalación: {disc_motivo} [{disc_gravedad}]")
-        if aging_esc:
-            lines.append("• Escalado por Envejecimiento: Elevado a P1 tras >=120 min activo sin workaround")
-        elif is_planned:
-            lines.append(f"• Resolución Planificada: {planned_label} (Exenta de escalado por envejecimiento)")
-        lines.extend([
-            f"• Umbral de Emergencia: {criterio}",
-            f"• Alcance y Sistemas: {sistemas_str}",
-            f"• Impacto: {impacto} ({impacto_just})",
-            f"• Urgencia: {urgencia} ({urgencia_just})",
-            "",
-            "[2] ESTADO DE COMUNICACIONES Y SLAS",
-        ])
+        return {
+            "inc_id": inc_id, "prio": prio, "sl_level": sl_level,
+            "proceso": proceso, "dominio_tecnico": dominio_tecnico, "criterio": criterio,
+            "impacto": impacto, "impacto_just": impacto_just, "urgencia": urgencia, "urgencia_just": urgencia_just,
+            "workaround": workaround, "workaround_gob": workaround_gob,
+            "disc_motivo": disc_motivo, "disc_gravedad": disc_gravedad,
+            "aging_esc": aging_esc, "is_planned": is_planned, "planned_label": planned_label,
+            "sistemas_str": sistemas_str, "is_closed": is_closed,
+            "mins": mins, "mins_str": mins_str, "sla_notif_vencido": sla_notif_vencido,
+            "req_tel": req_tel, "esc_sup": esc_sup, "requires_parallel": requires_parallel,
+            "problema": problema, "solucion": solucion, "siguiente": siguiente,
+        }
 
-        if is_closed:
+    @classmethod
+    def _build_classification_block(cls, ctx: dict[str, Any]) -> list[str]:
+        lines = [
+            "[1] CLASIFICACIÓN DEL TICKET",
+            f"• Incidencia: {ctx['inc_id']} ({ctx['sl_level']})",
+            f"• Proceso Crítico: {ctx['proceso']}",
+        ]
+        if ctx["dominio_tecnico"] and ctx["dominio_tecnico"] != ctx["proceso"]:
+            lines.append(f"• Dominio Técnico: {ctx['dominio_tecnico']}")
+        if ctx["disc_motivo"]:
+            lines.append(f"• Alerta de Subescalación: {ctx['disc_motivo']} [{ctx['disc_gravedad']}]")
+        if ctx["aging_esc"]:
+            lines.append(
+                f"• Escalado por Envejecimiento: Elevado a P1 tras >={cls._EMERGENCY_AGING_ESCALATION_THRESHOLD_MINS} min activo sin workaround"
+            )
+        elif ctx["is_planned"]:
+            lines.append(f"• Resolución Planificada: {ctx['planned_label']} (Exenta de escalado por envejecimiento)")
+        lines.extend([
+            f"• Umbral de Emergencia: {ctx['criterio']}",
+            f"• Alcance y Sistemas: {ctx['sistemas_str']}",
+            f"• Impacto: {ctx['impacto']} ({ctx['impacto_just']})",
+            f"• Urgencia: {ctx['urgencia']} ({ctx['urgencia_just']})",
+            "",
+        ])
+        return lines
+
+    @classmethod
+    def _build_sla_block(cls, ctx: dict[str, Any]) -> list[str]:
+        lines = ["[2] ESTADO DE COMUNICACIONES Y SLAS"]
+        if ctx["is_closed"]:
             lines.extend([
-                f"• Estado Operativo: ✅ INCIDENCIA RESUELTA / ESTABILIZADA",
-                f"• Duración Total: {mins_str} hasta restablecimiento",
+                "• Estado Operativo: ✅ INCIDENCIA RESUELTA / ESTABILIZADA",
+                f"• Duración Total: {ctx['mins_str']} hasta restablecimiento",
                 "• Notificación de Cierre: Emitida a Dirección y partes interesadas",
                 "• War Room / Teams: Concluida y desconvocada por Incident Manager",
             ])
         else:
+            mins = ctx["mins"]
+            mins_str = ctx["mins_str"]
             if mins is None:
                 estado_1a_notif = "En ventana (<20 min)"
             else:
                 estado_1a_notif = (
                     f"⚠️ SLA 1ª Notificación VENCIDO (>20 min - {mins_str} transcurridos)"
-                    if sla_notif_vencido
+                    if ctx["sla_notif_vencido"]
                     else f"✅ En SLA 1ª Notificación (<20 min - {mins_str} transcurridos)"
                 )
-
             lines.extend([
                 f"• Tiempo desde Apertura: {mins_str}",
                 f"• 1ª Notificación a Dirección: {estado_1a_notif}",
                 "• Frecuencia de Actualizaciones: Cada 60 min (o <30m ante cambios críticos)",
                 "• War Room / Teams: Liderado por Incident Manager (IM)",
             ])
+        lines.append("")
+        return lines
 
-        lines.extend([
-            "",
+    @classmethod
+    def _build_action_block(cls, ctx: dict[str, Any]) -> list[str]:
+        return [
             "[3] PLAN DE ACCIÓN Y GOBERNANZA DE WORKAROUNDS",
-            f"• Diagnóstico Técnico: {problema}",
-            f"• Acciones en Curso: {solucion}",
-            f"• Siguiente Hito: {siguiente}",
-            f"• Workaround: {workaround} | Gobernanza: {workaround_gob}",
+            f"• Diagnóstico Técnico: {ctx['problema']}",
+            f"• Acciones en Curso: {ctx['solucion']}",
+            f"• Siguiente Hito: {ctx['siguiente']}",
+            f"• Workaround: {ctx['workaround']} | Gobernanza: {ctx['workaround_gob']}",
             "• Regla de Oro: Prohibida la desescalada automática sin erradicación total del impacto",
             "• Revisión Trabajos Programados (PaP): Auditoría preventiva de Rollback en curso",
             "",
-            "[4] ESTADO DE ESCALADO TELEFÓNICO",
-        ])
+        ]
 
-        if is_closed:
+    @classmethod
+    def _build_escalation_block(cls, ctx: dict[str, Any]) -> list[str]:
+        lines = ["[4] ESTADO DE ESCALADO TELEFÓNICO"]
+        if ctx["is_closed"]:
             lines.extend([
                 "• Protocolo de Tiempos: ✅ Proceso de escalado concluido por resolución",
                 "• Transición Operativa: Paso a Post-Incident Review (PIR) / Problem Management",
                 "• Regla de Oro 3: Confirmada erradicación total del impacto en servicio y negocio",
             ])
         else:
-            if is_planned:
-                estado_escalado = f"🗓️ RESOLUCIÓN PLANIFICADA ({planned_label}): Seguimiento operativo hasta despliegue ({mins_str})"
+            mins = ctx["mins"]
+            mins_str = ctx["mins_str"]
+            if ctx["is_planned"]:
+                estado_escalado = f"🗓️ RESOLUCIÓN PLANIFICADA ({ctx['planned_label']}): Seguimiento operativo hasta despliegue ({mins_str})"
             elif mins is None:
-                estado_escalado = "Ventana operativa inicial (<45 min)"
-            elif mins >= 120 and prio == "P1":
+                estado_escalado = f"Ventana operativa inicial (<{cls._EMERGENCY_PHONE_ESCALATION_WINDOW_MINS} min)"
+            elif mins >= cls._EMERGENCY_AGING_ESCALATION_THRESHOLD_MINS and ctx["prio"] == "P1":
                 estado_escalado = f"🚨 ALARMA POR ESTANCAMIENTO (>2h): Escalado a Dirección IM-CSO y reevaluación técnica ({mins_str})"
-            elif esc_sup:
+            elif ctx["esc_sup"]:
                 estado_escalado = f"🚨 2º Escalado Requerido a Estamentos Superiores (+{mins_str} transcurridos)"
-            elif req_tel:
+            elif ctx["req_tel"]:
                 estado_escalado = f"📞 1er Escalado Telefónico Requerido a N3/Proveedor (+{mins_str} transcurridos)"
             else:
-                estado_escalado = f"🟢 En plazo de intervención inicial ({mins}/45 min)"
+                estado_escalado = f"🟢 En plazo de intervención inicial ({mins}/{cls._EMERGENCY_PHONE_ESCALATION_WINDOW_MINS} min)"
 
             lines.append(f"• Protocolo de Tiempos: {estado_escalado}")
 
-            if requires_parallel:
+            if ctx["requires_parallel"]:
                 lines.append("• Directiva de Escalado: ⚡ ESCALADO EN PARALELO ACTIVADO (Convocatoria simultánea obligatoria a todos los grupos resolutores)")
             else:
                 lines.append("• Canal de Escalado: Vía Telefónica obligatoria (Regla de Oro)")
@@ -2091,9 +2156,9 @@ class ExecutiveMessageGenerator:
         lines.extend([
             "• Matrices de Contacto: GRIAL (entornos Orange/Jazztel) | Confluence (entornos MasMóvil/KRT)",
             "• Gobernanza RACI: Incident Manager (R) / Customer & Service Ops IM-CSO (A)",
-            "────────────────────────────────────────────────────────────"
+            cls._EMERGENCY_REPORT_SEPARATOR,
         ])
-        return "\n".join(lines)
+        return lines
 
 
 class EpsilonClient:
@@ -2113,7 +2178,6 @@ class EpsilonClient:
             self.cache_dir = Path(cache_dir)
         else:
             self.cache_dir = Path(__file__).resolve().parents[2] / "data" / ".epsilon_cache"
-        self.cache_dir.mkdir(parents=True, exist_ok=True)
         self.max_consecutive_failures = max_consecutive_failures
         self._server_offline = False
         self._consecutive_failures = 0
@@ -2125,15 +2189,12 @@ class EpsilonClient:
         return self.cache_dir / f"{incident_code}.json"
 
     def _read_cache_file(self, cache_file: Path) -> Optional[dict[str, Any]]:
-        try:
-            with open(cache_file, "r", encoding="utf-8") as f:
-                content = json.load(f)
-                if isinstance(content, dict) and "data" in content and isinstance(content["data"], dict):
-                    return content["data"]
-                return content
-        except Exception as e:
-            logger.debug("Error leyendo caché de %s: %s", cache_file, e)
+        content = read_json_cache_file(cache_file)
+        if content is None:
             return None
+        if isinstance(content, dict) and "data" in content and isinstance(content["data"], dict):
+            return content["data"]
+        return content
 
     def load_cached(self, incident_code: str) -> Optional[dict[str, Any]]:
         """Lee la caché en disco sin red ni control de TTL, para callers externos (p. ej. compute_worklog_stagnation)."""
@@ -2162,96 +2223,124 @@ class EpsilonClient:
                     return data
         return None
 
+    def _write_cache(self, cache_file: Path, incident_code: str, data: dict[str, Any]) -> None:
+        try:
+            self.cache_dir.mkdir(parents=True, exist_ok=True)
+            with open(cache_file, "w", encoding="utf-8") as f:
+                json.dump(data, f, ensure_ascii=False, indent=2)
+        except OSError as write_err:
+            logger.debug("No se pudo escribir caché para %s: %s", incident_code, write_err)
+
+    def _try_fresh_cache_hit(self, cache_file: Path, incident_code: str, force_refresh: bool) -> Optional[dict[str, Any]]:
+        """Paso 1: devuelve datos de caché si existen, no se fuerza refresco y no ha expirado el TTL."""
+        if force_refresh or not cache_file.exists():
+            return None
+        try:
+            age = time.time() - cache_file.stat().st_mtime
+        except OSError as e:
+            logger.debug("Error comprobando caché de %s: %s", incident_code, e)
+            return None
+        if age >= self.CACHE_TTL_SECONDS:
+            return None
+        cached_data = self._read_cache_file(cache_file)
+        if cached_data:
+            self.fetch_reasons[incident_code] = "Caché local válida (HIT)"
+            return cached_data
+        return None
+
+    def _try_offline_cache(self, cache_file: Path, incident_code: str) -> Optional[dict[str, Any]]:
+        """Paso 2: si el servidor ya se marcó offline, usar exclusivamente la caché en disco."""
+        if cache_file.exists():
+            cached_data = self._read_cache_file(cache_file)
+            if cached_data:
+                self.fetch_reasons[incident_code] = "Servidor offline, recuperado de caché local previa"
+                return cached_data
+        self.fetch_reasons[incident_code] = "Servidor Epsilon offline y sin caché previa en disco"
+        return None
+
+    def _try_fallback_urls(self, incident_code: str, cache_file: Path) -> Optional[dict[str, Any]]:
+        """Intenta URLs alternativas conocidas tras el fallo del endpoint principal."""
+        if not (self._allow_fallback and self._fallback_urls):
+            return None
+        for candidate in list(self._fallback_urls):
+            try:
+                cand_data = self._fetch_from_url(candidate, incident_code)
+            except (urllib.error.URLError, urllib.error.HTTPError, TimeoutError, OSError):
+                continue
+            if cand_data:
+                logger.info("Conectado con éxito a endpoint alternativo de Epsilon: %s", candidate)
+                self.base_url = candidate
+                self._fallback_urls.remove(candidate)
+                self._consecutive_failures = 0
+                self.fetch_reasons[incident_code] = f"API Epsilon fallback ({candidate}) 200 OK"
+                self._write_cache(cache_file, incident_code, cand_data)
+                return cand_data
+        return None
+
+    def _handle_fetch_failure(self, incident_code: str, cache_file: Path, net_err: Exception) -> Optional[dict[str, Any]]:
+        """Registra el fallo de red del endpoint principal, intenta fallbacks y recurre a caché local."""
+        if isinstance(net_err, urllib.error.HTTPError) and net_err.code == 404:
+            err_detail = "HTTP 404 (incidencia no indexada en telemetría Epsilon)"
+        else:
+            err_detail = f"{type(net_err).__name__} ({net_err})"
+
+        fallback_data = self._try_fallback_urls(incident_code, cache_file)
+        if fallback_data:
+            return fallback_data
+
+        self._consecutive_failures += 1
+        if self._consecutive_failures >= self.max_consecutive_failures:
+            self._server_offline = True
+            logger.warning(
+                "Servicio Epsilon no disponible en %s (%s). Se continuará la evaluación usando caché en disco y metadatos de tickets.",
+                self.base_url,
+                net_err
+            )
+        else:
+            logger.debug("Epsilon no disponible o error para %s (%s)", incident_code, net_err)
+
+        # Fallback a caché local si la red falló y tenemos archivo en disco (resiliencia offline)
+        if cache_file.exists():
+            cached_data = self._read_cache_file(cache_file)
+            if cached_data:
+                self.fetch_reasons[incident_code] = f"Fallo de red ({err_detail}), recuperado de caché local previa"
+                return cached_data
+
+        self.fetch_reasons[incident_code] = f"Epsilon no disponible: {err_detail}"
+        return None
+
+    def _fetch_fresh(self, incident_code: str, cache_file: Path) -> Optional[dict[str, Any]]:
+        """Paso 3: petición de red contra el endpoint principal, con fallback a URLs alternativas
+        y a caché local en disco ante cualquier fallo."""
+        try:
+            data = self._fetch_from_url(self.base_url, incident_code)
+        except (urllib.error.URLError, urllib.error.HTTPError, TimeoutError, OSError) as net_err:
+            return self._handle_fetch_failure(incident_code, cache_file, net_err)
+
+        if data:
+            self._consecutive_failures = 0
+            self.fetch_reasons[incident_code] = "API Epsilon online 200 OK (datos frescos)"
+            self._write_cache(cache_file, incident_code, data)
+            return data
+
+        self.fetch_reasons[incident_code] = "Epsilon 200 OK pero respuesta sin datos"
+        return None
+
     def get_resumen_ia(self, incident_code: str, force_refresh: bool = False) -> Optional[dict[str, Any]]:
         """Fetches AI summary for an incident, using local cache when valid or when server is offline."""
         cache_file = self._get_cache_path(incident_code)
 
-        # 1. Caché válida reciente
-        if not force_refresh and cache_file.exists():
-            try:
-                stat = cache_file.stat()
-                age = time.time() - stat.st_mtime
-                if age < self.CACHE_TTL_SECONDS:
-                    cached_data = self._read_cache_file(cache_file)
-                    if cached_data:
-                        self.fetch_reasons[incident_code] = "Caché local válida (HIT)"
-                        return cached_data
-            except Exception as e:
-                logger.debug("Error comprobando caché de %s: %s", incident_code, e)
+        cached_hit = self._try_fresh_cache_hit(cache_file, incident_code, force_refresh)
+        if cached_hit:
+            return cached_hit
 
-        # 2. Si el servidor ya falló repetidamente, usar caché en disco existente (resiliencia offline)
         if self._server_offline:
-            if cache_file.exists():
-                cached_data = self._read_cache_file(cache_file)
-                if cached_data:
-                    self.fetch_reasons[incident_code] = "Servidor offline, recuperado de caché local previa"
-                    return cached_data
-            self.fetch_reasons[incident_code] = "Servidor Epsilon offline y sin caché previa en disco"
-            return None
+            return self._try_offline_cache(cache_file, incident_code)
 
-        # 3. Petición de red contra endpoint principal y fallbacks
-        try:
-            data = self._fetch_from_url(self.base_url, incident_code)
-            if data:
-                self._consecutive_failures = 0
-                self.fetch_reasons[incident_code] = "API Epsilon online 200 OK (datos frescos)"
-                try:
-                    with open(cache_file, "w", encoding="utf-8") as f:
-                        json.dump(data, f, ensure_ascii=False, indent=2)
-                except Exception as write_err:
-                    logger.debug("No se pudo escribir caché para %s: %s", incident_code, write_err)
-                return data
-            else:
-                self.fetch_reasons[incident_code] = "Epsilon 200 OK pero respuesta sin datos"
-        except (urllib.error.URLError, urllib.error.HTTPError, TimeoutError, OSError) as net_err:
-            if isinstance(net_err, urllib.error.HTTPError) and net_err.code == 404:
-                err_detail = "HTTP 404 (incidencia no indexada en telemetría Epsilon)"
-            else:
-                err_detail = f"{type(net_err).__name__} ({net_err})"
-
-            if self._allow_fallback and self._fallback_urls:
-                for candidate in list(self._fallback_urls):
-                    try:
-                        cand_data = self._fetch_from_url(candidate, incident_code)
-                        if cand_data:
-                            logger.info("Conectado con éxito a endpoint alternativo de Epsilon: %s", candidate)
-                            self.base_url = candidate
-                            self._fallback_urls.remove(candidate)
-                            self._consecutive_failures = 0
-                            self.fetch_reasons[incident_code] = f"API Epsilon fallback ({candidate}) 200 OK"
-                            try:
-                                with open(cache_file, "w", encoding="utf-8") as f:
-                                    json.dump(cand_data, f, ensure_ascii=False, indent=2)
-                            except Exception as write_err:
-                                logger.debug("No se pudo escribir caché para %s: %s", incident_code, write_err)
-                            return cand_data
-                    except (urllib.error.URLError, urllib.error.HTTPError, TimeoutError, OSError):
-                        pass
-
-            self._consecutive_failures += 1
-            if self._consecutive_failures >= self.max_consecutive_failures:
-                self._server_offline = True
-                logger.warning(
-                    "Servicio Epsilon no disponible en %s (%s). Se continuará la evaluación usando caché en disco y metadatos de tickets.",
-                    self.base_url,
-                    net_err
-                )
-            else:
-                logger.debug("Epsilon no disponible o error para %s (%s)", incident_code, net_err)
-
-            # Fallback a caché local si la red falló y tenemos archivo en disco (resiliencia offline)
-            if cache_file.exists():
-                cached_data = self._read_cache_file(cache_file)
-                if cached_data:
-                    self.fetch_reasons[incident_code] = f"Fallo de red ({err_detail}), recuperado de caché local previa"
-                    return cached_data
-
-            self.fetch_reasons[incident_code] = f"Epsilon no disponible: {err_detail}"
-
+        result = self._fetch_fresh(incident_code, cache_file)
         if incident_code not in self.fetch_reasons:
             self.fetch_reasons[incident_code] = "Sin telemetría o no indexada en Epsilon"
-
-        return None
+        return result
 
     def prefetch(self, incident_codes: list[str], max_workers: int = 5) -> None:
         """Pre-descarga concurrentemente resúmenes IA en caché local para acelerar evaluaciones batch."""
@@ -2266,7 +2355,7 @@ class EpsilonClient:
             with ThreadPoolExecutor(max_workers=workers) as executor:
                 list(executor.map(lambda c: self.get_resumen_ia(c), uncached))
         except Exception as e:
-            logger.debug("Aviso en prefetch concurrente de Epsilon: %s", e)
+            logger.warning("Fallo inesperado en prefetch concurrente de Epsilon: %s", e)
 
 
 # Estados finales que no requieren notificación ni triaje
