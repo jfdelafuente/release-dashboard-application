@@ -4,9 +4,13 @@ Unit tests for scripts/clean_system_data.py
 """
 
 import json
+import shutil
+import subprocess
 import pytest
 from pathlib import Path
 import sys
+
+GIT_EXE = shutil.which("git") or r"C:\Program Files\Git\mingw64\bin\git.exe"
 
 SCRIPTS_DIR = Path(__file__).resolve().parent.parent.parent.parent / "scripts"
 sys.path.insert(0, str(SCRIPTS_DIR))
@@ -126,4 +130,31 @@ def test_collect_and_execute_clean_in_temp_dir(tmp_path):
     assert json.loads(msg_file.read_text()) == {}
     assert log_file.read_text() == ""
     assert json.loads(teams_audit_file.read_text()) == []
+
+
+def test_preserves_tracked_pptx_but_deletes_untracked(tmp_path):
+    """Los .pptx versionados en git bajo reports/ (fallback pregenerado) nunca se borran;
+    los generados dinámicamente (no trackeados) sí se eliminan como siempre."""
+    storage_dir = tmp_path / "data"
+    reports_dir = storage_dir / "reports"
+    reports_dir.mkdir(parents=True)
+
+    subprocess.run([GIT_EXE, "init", "-q"], cwd=reports_dir, check=True)
+    subprocess.run([GIT_EXE, "config", "user.email", "test@test.com"], cwd=reports_dir, check=True)
+    subprocess.run([GIT_EXE, "config", "user.name", "Test"], cwd=reports_dir, check=True)
+
+    tracked_pptx = reports_dir / "2026R4-postmortem-report.pptx"
+    tracked_pptx.write_bytes(b"pregenerado versionado")
+    subprocess.run([GIT_EXE, "add", "2026R4-postmortem-report.pptx"], cwd=reports_dir, check=True)
+    subprocess.run([GIT_EXE, "commit", "-q", "-m", "fallback pregenerado"], cwd=reports_dir, check=True)
+
+    untracked_pptx = reports_dir / "2026R5-postmortem-report.pptx"
+    untracked_pptx.write_bytes(b"generado dinamicamente, no commiteado")
+
+    result = clean_system_data.execute_clean(storage_dir, dry_run=False)
+
+    assert tracked_pptx.exists()
+    assert not untracked_pptx.exists()
+    assert result["deleted_count"] == 1
+    assert result["protected_count"] == 1
 

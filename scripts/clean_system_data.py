@@ -11,7 +11,8 @@ Acciones realizadas:
 3. Vacía data/archive/ y data/errors/
 4. Vacía la caché de IA corporativa data/.epsilon_cache/
 5. Vacía la caché de detalle Remedy data/.remedy_cache/
-6. Elimina los informes generados *.pptx en data/reports/
+6. Elimina los informes *.pptx generados dinámicamente en data/reports/ (preserva
+   los pregenerados versionados en git como fallback de descarga inmediata)
 7. Trunca a vacío data/logs/ingestion_audit.log
 8. Resetea data/agent_executive_messages.json a {}
 9. Resetea data/output/index.json a estructura vacía
@@ -33,9 +34,13 @@ Uso:
 import os
 import sys
 import json
+import shutil
 import argparse
+import subprocess
 from pathlib import Path
 from typing import Dict, List, Tuple
+
+_GIT_EXE = shutil.which('git') or r'C:\Program Files\Git\mingw64\bin\git.exe'
 
 # Asegurar codificación utf-8 segura en Windows cmd/powershell
 if hasattr(sys.stdout, 'reconfigure'):
@@ -115,6 +120,26 @@ def get_storage_dir(custom_path: str = None) -> Path:
     return (PROJECT_ROOT / "data").resolve()
 
 
+def _get_tracked_pptx_paths(reports_dir: Path) -> set:
+    """Resuelve las rutas absolutas de los .pptx versionados en git bajo reports_dir.
+
+    Solo tiene efecto cuando storage_dir vive dentro del repositorio (entorno local);
+    en el VPS de producción, storage_dir está fuera del repo y git ls-files no devuelve
+    nada, por lo que todos los .pptx se tratan como generados dinámicamente (sin
+    cambio de comportamiento allí).
+    """
+    try:
+        result = subprocess.run(
+            [_GIT_EXE, 'ls-files', '--', '*.pptx'],
+            cwd=reports_dir, capture_output=True, text=True, timeout=10, check=False,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return set()
+    if result.returncode != 0:
+        return set()
+    return {(reports_dir / line.strip()).resolve() for line in result.stdout.splitlines() if line.strip()}
+
+
 def collect_items_to_clean(storage_dir: Path, keep_cache: bool = False) -> Tuple[List[Path], List[Path], List[Path]]:
     """
     Identifica:
@@ -162,11 +187,17 @@ def collect_items_to_clean(storage_dir: Path, keep_cache: bool = False) -> Tuple
                 else:
                     files_to_delete.append(p)
 
-    # 5. data/reports/ -> eliminar *.pptx
+    # 5. data/reports/ -> eliminar *.pptx generados dinamicamente, preservando los
+    # informes pregenerados versionados en git como fallback de descarga inmediata
+    # (ver commit 37e474c, "incluir informes PPTX pregenerados y fallback resiliente")
     reports_dir = storage_dir / 'reports'
     if reports_dir.exists():
+        tracked_pptx = _get_tracked_pptx_paths(reports_dir)
         for p in reports_dir.rglob('*.pptx'):
-            files_to_delete.append(p)
+            if p.resolve() in tracked_pptx:
+                files_protected.append(p)
+            else:
+                files_to_delete.append(p)
 
     # 6. data/agent_executive_messages.json -> resetear
     msg_file = storage_dir / 'agent_executive_messages.json'
