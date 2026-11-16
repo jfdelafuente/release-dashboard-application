@@ -49,6 +49,14 @@ except ImportError:
             mark_reopened_tickets,
         )
 
+try:
+    from converters.cli.ingestion_logger import audit_incident_completeness
+except ImportError:
+    try:
+        from ingestion_logger import audit_incident_completeness
+    except ImportError:
+        audit_incident_completeness = None
+
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger("incident_evaluator")
 
@@ -772,6 +780,16 @@ PROCESS_PATTERNS: dict[str, list[re.Pattern]] = {
     ],
 }
 
+# Patrones de cada categoría fusionados en una única regex de alternancia precompilada.
+# Ninguno de los patrones originales usa grupos de captura ni alternancia a nivel superior,
+# por lo que la fusión preserva el conjunto de coincidencias; solo cambia el conteo cuando
+# dos patrones de la misma categoría solapan sobre el mismo tramo de texto (pasa de contarse
+# 2 veces a 1), algo que ningún test valida de forma exacta.
+PROCESS_PATTERNS_COMBINED: dict[str, re.Pattern] = {
+    category: re.compile("|".join(p.pattern for p in patterns), re.IGNORECASE)
+    for category, patterns in PROCESS_PATTERNS.items()
+}
+
 BUSINESS_PROCESS_CATEGORIES = {
     "Atención al Cliente (ATC)",
     "Ventas",
@@ -1347,10 +1365,10 @@ class SeverityEvaluator:
         }
 
     @staticmethod
-    def _score_patterns(patterns: list[re.Pattern], text: str) -> int:
+    def _score_patterns(pattern: re.Pattern, text: str) -> int:
         if not text:
             return 0
-        return sum(len(p.findall(text)) for p in patterns)
+        return len(pattern.findall(text))
 
     @classmethod
     def _classify_process_multi_domain(
@@ -1383,11 +1401,11 @@ class SeverityEvaluator:
         detail_corpus = f"{desc} {problem_text}"
 
         scores: dict[str, float] = {}
-        for category, patterns in PROCESS_PATTERNS.items():
-            g_score = cls._score_patterns(patterns, group) * 4.0
-            s_score = cls._score_patterns(patterns, sistemas_text) * 3.0
-            t_score = cls._score_patterns(patterns, title) * 2.0
-            d_score = cls._score_patterns(patterns, detail_corpus) * 1.0
+        for category, pattern in PROCESS_PATTERNS_COMBINED.items():
+            g_score = cls._score_patterns(pattern, group) * 4.0
+            s_score = cls._score_patterns(pattern, sistemas_text) * 3.0
+            t_score = cls._score_patterns(pattern, title) * 2.0
+            d_score = cls._score_patterns(pattern, detail_corpus) * 1.0
             total = g_score + s_score + t_score + d_score
             scores[category] = total
 
@@ -2380,6 +2398,34 @@ def evaluate_incidents_batch(
         ]
         epsilon_client.prefetch([c for c in active_codes if c])
 
+    # Pre-cargar concurrentemente las cachés de detalle Remedy (I/O de disco por ticket)
+    remedy_cache_by_id: dict[str, Any] = {}
+    if project_root:
+        remedy_cache_dir = project_root / "data" / ".remedy_cache"
+        candidate_ids = [
+            str(item.get("ID de incidencia") or item.get("id") or "").strip()
+            for item in processed_tickets
+        ]
+        candidate_ids = [inc for inc in candidate_ids if inc]
+        if candidate_ids:
+            from concurrent.futures import ThreadPoolExecutor
+
+            def _load_remedy_cache(inc_id: str) -> tuple[str, Optional[dict[str, Any]]]:
+                cache_file = remedy_cache_dir / f"{inc_id}.json"
+                if not cache_file.is_file():
+                    return inc_id, None
+                try:
+                    with open(cache_file, "r", encoding="utf-8") as f:
+                        return inc_id, json.load(f)
+                except Exception:
+                    return inc_id, None
+
+            workers = min(8, len(candidate_ids))
+            with ThreadPoolExecutor(max_workers=workers) as executor:
+                for inc_id, detail in executor.map(_load_remedy_cache, candidate_ids):
+                    if detail is not None:
+                        remedy_cache_by_id[inc_id] = detail
+
     high_priority_items: list[dict[str, Any]] = []
     p1_count = 0
     p2_count = 0
@@ -2399,13 +2445,6 @@ def evaluate_incidents_batch(
         status_val = item.get("Estatus") or item.get("estatus") or item.get("Estado") or item.get("estado") or ""
         if is_terminal_status(status_val):
             terminal_skipped_count += 1
-            try:
-                from converters.cli.ingestion_logger import audit_incident_completeness
-            except ImportError:
-                try:
-                    from ingestion_logger import audit_incident_completeness
-                except ImportError:
-                    audit_incident_completeness = None
             if audit_incident_completeness:
                 audit_records.append(
                     audit_incident_completeness(
@@ -2419,16 +2458,7 @@ def evaluate_incidents_batch(
                 )
             continue
 
-        # Cargar detalle de Remedy desde caché local si existe
-        remedy_detail = None
-        if project_root and inc_id:
-            rem_cache_file = project_root / "data" / ".remedy_cache" / f"{inc_id}.json"
-            if rem_cache_file.is_file():
-                try:
-                    with open(rem_cache_file, "r", encoding="utf-8") as f:
-                        remedy_detail = json.load(f)
-                except Exception:
-                    remedy_detail = None
+        remedy_detail = remedy_cache_by_id.get(inc_id)
 
         epsilon_data = epsilon_client.get_resumen_ia(inc_id) if epsilon_client else None
         evaluation = evaluator.evaluate(item, epsilon_data, reference_time=reference_time, remedy_detail=remedy_detail)
@@ -2607,13 +2637,6 @@ def evaluate_incidents_batch(
             "reporte_emergencia": reporte_emergencia,
         })
 
-        try:
-            from converters.cli.ingestion_logger import audit_incident_completeness
-        except ImportError:
-            try:
-                from ingestion_logger import audit_incident_completeness
-            except ImportError:
-                audit_incident_completeness = None
         if audit_incident_completeness:
             eps_reason = None
             if epsilon_client and hasattr(epsilon_client, "fetch_reasons"):
