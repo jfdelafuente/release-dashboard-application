@@ -345,12 +345,12 @@ powershell -ExecutionPolicy Bypass -File scripts/deploy-production.ps1 -AgentsLi
 
 ## 📁 Archivos y Rutas Relacionadas
 
-* **Guía Operativa de Notificaciones Ejecutivas:** [`docs/INCIDENT-EXECUTIVE-NOTIFICATIONS-WORKFLOW.md`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/docs/INCIDENT-EXECUTIVE-NOTIFICATIONS-WORKFLOW.md)
-* **Manual del Operador de la Consola:** [`docs/MANUAL-OPERADOR-CONSOLA-OPERATIVA.md`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/docs/MANUAL-OPERADOR-CONSOLA-OPERATIVA.md)
-* **Consola Operativa (HTML/JS/CSS):** [`dashboards/emergency-triage-console/`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/dashboards/emergency-triage-console/)
-* **Servicio Backend de Gestión de Incidencias:** [`converters/cli/incident_manager_service.py`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/converters/cli/incident_manager_service.py)
-* **Skill Especialista en Emergencias IT Orange:** [`.agents/skills/orange-it-emergency-management/SKILL.md`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/.agents/skills/orange-it-emergency-management/SKILL.md)
-* **Skill Matriz de Severidad y Escalados:** [`.agents/skills/it-severity-matrix/SKILL.md`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/.agents/skills/it-severity-matrix/SKILL.md)
-* **Skill Redacción Ejecutiva:** [`.agents/skills/incident-executive-notifications/SKILL.md`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/.agents/skills/incident-executive-notifications/SKILL.md)
-* **Skill Flujo Post-Mortem (PIR):** [`.agents/skills/postmortem-pir-workflow/SKILL.md`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/.agents/skills/postmortem-pir-workflow/SKILL.md)
+* **Guía Operativa de Notificaciones Ejecutivas:** [`notificaciones-ejecutivas.md`](notificaciones-ejecutivas.md)
+* **Manual del Operador de la Consola:** [`manual-consola-operativa.md`](manual-consola-operativa.md)
+* **Consola Operativa (HTML/JS/CSS):** [`dashboards/emergency-triage-console/`](../../dashboards/emergency-triage-console/)
+* **Servicio Backend de Gestión de Incidencias:** [`converters/cli/incident_manager_service.py`](../../converters/cli/incident_manager_service.py)
+* **Skill Especialista en Emergencias IT Orange:** [`.agents/skills/orange-it-emergency-management/SKILL.md`](../../.agents/skills/orange-it-emergency-management/SKILL.md)
+* **Skill Matriz de Severidad y Escalados:** [`.agents/skills/it-severity-matrix/SKILL.md`](../../.agents/skills/it-severity-matrix/SKILL.md)
+* **Skill Redacción Ejecutiva:** [`.agents/skills/incident-executive-notifications/SKILL.md`](../../.agents/skills/incident-executive-notifications/SKILL.md)
+* **Skill Flujo Post-Mortem (PIR):** [`.agents/skills/postmortem-pir-workflow/SKILL.md`](../../.agents/skills/postmortem-pir-workflow/SKILL.md)
 

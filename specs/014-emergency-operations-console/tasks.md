@@ -152,7 +152,7 @@
 - [x] T036 [P] Comprobar el contraste de color WCAG 2.1 AA en badges de alerta roja/ámbar y en el banner de candado institucional en `monitor.css`.
 - [x] T037 Ejecutar la suite completa de tests de la consola (`pytest converters/tests/unit/test_incident_manager_monitor.py -v`) y asegurar 100% de tests passing.
 - [x] T038 Ejecutar las suites de evaluación de incidencias (`test_evaluate_incident_notifications.py` y `test_update_agent_message.py`) para confirmar ausencia de regresiones.
-- [x] T039 [P] Actualizar la guía operativa [`docs/INCIDENT-EXECUTIVE-NOTIFICATIONS-WORKFLOW.md`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/docs/INCIDENT-EXECUTIVE-NOTIFICATIONS-WORKFLOW.md) reflejando las nuevas capacidades de la consola de emergencias Orange.
+- [x] T039 [P] Actualizar la guía operativa [`docs/INCIDENT-EXECUTIVE-NOTIFICATIONS-WORKFLOW.md`](../../docs/02-gestion-emergencias/notificaciones-ejecutivas.md) reflejando las nuevas capacidades de la consola de emergencias Orange.
 
 ---
 

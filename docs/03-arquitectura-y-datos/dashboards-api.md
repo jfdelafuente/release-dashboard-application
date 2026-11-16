@@ -2,7 +2,7 @@
 
 Este documento describe todas las APIs, rutas y servicios backend que consumen los distintos dashboards de la plataforma:
 
-- Los dashboards estáticos bajo [`dashboards/`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/dashboards/):
+- Los dashboards estáticos bajo [`dashboards/`](../../dashboards/):
   - **Portal Hub** (`dashboards/portal/`)
   - **Incidencias Masivas** (`dashboards/massive-incidents/`)
   - **Postmortem / Release** (`dashboards/postmortem/`)
@@ -11,7 +11,7 @@ Este documento describe todas las APIs, rutas y servicios backend que consumen l
   - **Catálogo de Agentes IA y Skills** (`dashboards/agents-catalog/`)
   - **Informes Específicos** (`dashboards/informes/incidencias-pdtes-r9-2026/`)
 - La aplicación Next.js de **Gestión de Problemas** bajo `/problemas` (alojada en el repositorio hermano `gestion-problemas-dashboard`).
-- Los componentes transversales de cliente: [`topbar.js`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/dashboards/assets/topbar.js) (sondeo de salud) y [`resumen-ia.js`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/dashboards/assets/resumen-ia.js) (Epsilon IA).
+- Los componentes transversales de cliente: [`topbar.js`](../../dashboards/assets/topbar.js) (sondeo de salud) y [`resumen-ia.js`](../../dashboards/assets/resumen-ia.js) (Epsilon IA).
 
 ---
 
@@ -138,7 +138,7 @@ flowchart TD
   - El archivo se deposita en el directorio de almacenamiento desacoplado:
     - **Producción**: `/infocodes/var/storage/release-dashboard/input/`
     - **Desarrollo**: `data/input/` (o ruta indicada por `RELEASE_DASHBOARD_STORAGE_DIR`).
-  - Se invoca la función `run_upload()` de [`converters/cli/upload_csv.py`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/converters/cli/upload_csv.py).
+  - Se invoca la función `run_upload()` de [`converters/cli/upload_csv.py`](../../converters/cli/upload_csv.py).
   - El conversor genera el JSON estructurado en `output/` y actualiza automáticamente `output/index.json`.
 
 ---
@@ -213,7 +213,7 @@ flowchart TD
 
 ### 4. API de Reportes de Incidencias (`/api/reports/*`)
 
-Invocada por el cliente [`dashboards/reportes-incidencias/api-client.js`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/dashboards/reportes-incidencias/api-client.js):
+Invocada por el cliente [`dashboards/reportes-incidencias/api-client.js`](../../dashboards/reportes-incidencias/api-client.js):
 
 | Método | Endpoint | Propósito |
 | --- | --- | --- |
@@ -290,7 +290,7 @@ Invocada por el cliente [`dashboards/reportes-incidencias/api-client.js`](file:/
 
 #### `GET /api/epsilon/resumenIA/{codigo}`
 
-* **Invocado por**: [`dashboards/assets/resumen-ia.js`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/dashboards/assets/resumen-ia.js) al hacer clic sobre cualquier identificador de incidencia o botón "Resumen IA" en el Portal y dashboards.
+* **Invocado por**: [`dashboards/assets/resumen-ia.js`](../../dashboards/assets/resumen-ia.js) al hacer clic sobre cualquier identificador de incidencia o botón "Resumen IA" en el Portal y dashboards.
 - **Propósito**: Actúa como proxy inteligente hacia el servicio corporativo de IA de Orange:
   `https://soptmc.si.orange.es/MonTMC/api/epsilon/resumenIA/{codigo}`
 - **Fallback Inteligente y Detección de Obsolescencia (`LIFECYCLE_STATUS_MISMATCH`)**:
@@ -318,7 +318,7 @@ Invocada por el cliente [`dashboards/reportes-incidencias/api-client.js`](file:/
   - Al procesar una subida exitosa de CSV en `POST /api/upload`, se invoca automáticamente `EPSILON_CACHE.clear()` para garantizar que los tickets modificados o reabiertos en el nuevo CSV no sirvan datos cacheados obsoletos.
 - **Topología de Ejecución**:
   - **Desarrollo**: Servido directamente por `serve_app.py` en el puerto `:8080`.
-  - **Producción (VPS)**: Proxificado por Nginx en `:8081` (`location /api/epsilon/`) hacia el backend FastAPI en `:8000` montando el router oficial [`converters/src/fastapi_epsilon_router.py`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/converters/src/fastapi_epsilon_router.py).
+  - **Producción (VPS)**: Proxificado por Nginx en `:8081` (`location /api/epsilon/`) hacia el backend FastAPI en `:8000` montando el router oficial [`converters/src/fastapi_epsilon_router.py`](../../converters/src/fastapi_epsilon_router.py).
 
 ---
 
@@ -364,7 +364,7 @@ Invocada por el cliente [`dashboards/reportes-incidencias/api-client.js`](file:/
 
 #### `GET /api/health`
 
-* **Invocado por**: [`dashboards/assets/topbar.js`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/dashboards/assets/topbar.js) y [`api-client.js`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/dashboards/reportes-incidencias/api-client.js).
+* **Invocado por**: [`dashboards/assets/topbar.js`](../../dashboards/assets/topbar.js) y [`api-client.js`](../../dashboards/reportes-incidencias/api-client.js).
 - **Propósito**: Valida que la API REST (FastAPI) está viva. Actualiza el indicador visual circular de la barra superior a verde (`API OK`) o rojo (`API Offline`).
 
 #### `GET /healthz` y `GET /readyz`
@@ -377,7 +377,7 @@ Invocada por el cliente [`dashboards/reportes-incidencias/api-client.js`](file:/
 
 #### `GET /api/agents-catalog`
 
-* **Invocado por**: [`dashboards/agents-catalog/agents-catalog.js`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/dashboards/agents-catalog/agents-catalog.js).
+* **Invocado por**: [`dashboards/agents-catalog/agents-catalog.js`](../../dashboards/agents-catalog/agents-catalog.js).
 - **Propósito**: Proporciona el catálogo interactivo de agentes de IA y habilidades técnicas (*skills*) de la biblioteca corporativa (`biblioteca-agentes`), correlacionando qué agentes emplean cada skill, métricas de reusabilidad y comando de despliegue.
 - **Respuesta (`200 OK`)**: Estructura Envelope (`success`, `data`, `metadata`). Si la biblioteca externa no está presente localmente (entorno VPS), sirve de forma transparente el dataset estático generado en `data/output/agents_catalog.json`.
 - **Esquema**:
@@ -416,7 +416,7 @@ Invocada por el cliente [`dashboards/reportes-incidencias/api-client.js`](file:/
 
 * **Invocado por**: Consola de Auditoría y Telemetría IA en el Cockpit del Incident Manager (<kbd>Shift</kbd> + <kbd>I</kbd>).
 - **Parámetros**: `?lines=N` (número de líneas a leer desde el final del log; por defecto `100`, máximo `1000`).
-- **Propósito**: Devuelve en tiempo real las últimas líneas de [`data/logs/ingestion_audit.log`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/data/logs/ingestion_audit.log) para diagnóstico de la carga de ficheros CSV, tiempos de conversión, llamadas a Epsilon y estado de enriquecimiento.
+- **Propósito**: Devuelve en tiempo real las últimas líneas de [`data/logs/ingestion_audit.log`](../../data/logs/ingestion_audit.log) para diagnóstico de la carga de ficheros CSV, tiempos de conversión, llamadas a Epsilon y estado de enriquecimiento.
 - **Respuesta (`200 OK`)**: Texto plano estructurado (`text/plain; charset=utf-8`) o JSON envelope conteniendo las trazas.
 
 #### `POST /api/ingestion/retry-ia` (alias: `POST /api/epsilon/retry`)
@@ -435,7 +435,7 @@ Invocada por el cliente [`dashboards/reportes-incidencias/api-client.js`](file:/
 - **Comportamiento**:
   1. Filtra automáticamente las incidencias en estado terminal (evitando peticiones redundantes).
   2. Consulta Epsilon IA actualizando la caché local en `.epsilon_cache/`.
-  3. Regenera [`data/output/high_priority_notifications.json`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/data/output/high_priority_notifications.json) y [`data/output/ingestion_audit_summary.json`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/data/output/ingestion_audit_summary.json).
+  3. Regenera [`data/output/high_priority_notifications.json`](../../data/output/high_priority_notifications.json) y [`data/output/ingestion_audit_summary.json`](../../data/output/ingestion_audit_summary.json).
   4. Registra el detalle del reintento en `data/logs/ingestion_audit.log`.
 - **Respuesta (`200 OK`)**:
 

@@ -14,9 +14,9 @@
 
 En las operaciones de telecomunicaciones y TI de Orange Tech Operations, la gestión de incidentes mayores (SL1/SL2) exige un control milimétrico del tiempo, triaje riguroso sin ambigüedades y una estricta gobernanza en la toma de decisiones técnicas. 
 
-La herramienta actual `incident-manager-monitor` (especificada en [`013-incident-manager-monitor`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/specs/013-incident-manager-monitor/spec.md) y desplegada en `/dashboards/incident-manager-monitor/`) nació orientada a la vigilancia de redacciones ejecutivas de agente pendientes de emisión. 
+La herramienta actual `incident-manager-monitor` (especificada en [`013-incident-manager-monitor`](../013-incident-manager-monitor/spec.md) y desplegada en `/dashboards/incident-manager-monitor/`) nació orientada a la vigilancia de redacciones ejecutivas de agente pendientes de emisión. 
 
-Esta especificación define la **evolución y transformación integral de `incident-manager-monitor` en una Consola Operativa de Emergencias IT de Orange en Tiempo Real**, integrando formalmente los principios de la skill corporativa **`orange-it-emergency-management`** ([`.agents/skills/orange-it-emergency-management/SKILL.md`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/.agents/skills/orange-it-emergency-management/SKILL.md)) y de la matriz de severidad **`it-severity-matrix`** ([`.agents/skills/it-severity-matrix/SKILL.md`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/.agents/skills/it-severity-matrix/SKILL.md)).
+Esta especificación define la **evolución y transformación integral de `incident-manager-monitor` en una Consola Operativa de Emergencias IT de Orange en Tiempo Real**, integrando formalmente los principios de la skill corporativa **`orange-it-emergency-management`** ([`.agents/skills/orange-it-emergency-management/SKILL.md`](../../.agents/skills/orange-it-emergency-management/SKILL.md)) y de la matriz de severidad **`it-severity-matrix`** ([`.agents/skills/it-severity-matrix/SKILL.md`](../../.agents/skills/it-severity-matrix/SKILL.md)).
 
 ### Pilares de la Consola de Emergencias
 

@@ -1,6 +1,6 @@
 # Guía de Configuración y Uso: CLI de Calibración Epsilon Resumen IA
 
-Esta guía documenta la configuración del entorno, opciones de ejecución, integración multi-proveedor y casos prácticos de la herramienta CLI [`scripts/test_epsilon_prompt.py`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/scripts/test_epsilon_prompt.py) para evaluar el System Prompt de **Epsilon Resumen IA**.
+Esta guía documenta la configuración del entorno, opciones de ejecución, integración multi-proveedor y casos prácticos de la herramienta CLI [`scripts/test_epsilon_prompt.py`](../../scripts/test_epsilon_prompt.py) para evaluar el System Prompt de **Epsilon Resumen IA**.
 
 ---
 
@@ -183,8 +183,8 @@ El script acepta cualquier volcado JSON de ticket Remedy. Para obtener resultado
 ```
 
 * Archivos de ejemplo provistos en el repositorio:
-  * [`data/samples/remedy_incident_sample.json`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/data/samples/remedy_incident_sample.json) (Incidencia de integración MDG/Siebel en logística inversa).
-  * [`data/samples/remedy_incident_sample2.json`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/data/samples/remedy_incident_sample2.json) (Incidencia de activación MultiSIM en Ficha Cliente).
+  * [`data/samples/remedy_incident_sample.json`](../../data/samples/remedy_incident_sample.json) (Incidencia de integración MDG/Siebel en logística inversa).
+  * [`data/samples/remedy_incident_sample2.json`](../../data/samples/remedy_incident_sample2.json) (Incidencia de activación MultiSIM en Ficha Cliente).
 
 ---
 

@@ -1,6 +1,6 @@
 # Especificación Técnica: Catálogo de Incidencias de Alta Prioridad (`high_priority_notifications.json`)
 
-Documentación técnica, funcional y de arquitectura del fichero [`data/output/high_priority_notifications.json`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/data/output/high_priority_notifications.json), el catálogo unificado y enriquecido de incidencias IT de alta prioridad (P1, P2 y discrepancias de subescalación N1) en el entorno Orange Tech Operations.
+Documentación técnica, funcional y de arquitectura del fichero [`data/output/high_priority_notifications.json`](../../data/output/high_priority_notifications.json), el catálogo unificado y enriquecido de incidencias IT de alta prioridad (P1, P2 y discrepancias de subescalación N1) en el entorno Orange Tech Operations.
 
 * **Versión del Esquema:** `2.6.0`
 * **Skills de Referencia:** `it-severity-matrix` (v2.8.0), `orange-it-emergency-management` (v2.6.0), `incident-reporter` (v1.5.0), `incident-executive-notifications` (v1.5.0), `incident-triage-review` (v1.1.0).
@@ -11,7 +11,7 @@ Documentación técnica, funcional y de arquitectura del fichero [`data/output/h
 
 El catálogo `high_priority_notifications.json` constituye la **Fuente Única de Verdad (Single Source of Truth)** para el triaje automatizado, el gobierno de crisis IT y la toma de decisiones del Incident Manager y los operadores de consola:
 
-1. **Triaje ITIL Automatizado & Calibrado**: Evalúa el impacto y la urgencia real sobre el negocio de todos los tickets masivos de Remedy aplicando la matriz corporativa de Orange ([`it-severity-matrix`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/.agents/skills/it-severity-matrix/SKILL.md)), evitando tanto la subescalación de N1 como el sobreescalado ciego por tiempo.
+1. **Triaje ITIL Automatizado & Calibrado**: Evalúa el impacto y la urgencia real sobre el negocio de todos los tickets masivos de Remedy aplicando la matriz corporativa de Orange ([`it-severity-matrix`](../../.agents/skills/it-severity-matrix/SKILL.md)), evitando tanto la subescalación de N1 como el sobreescalado ciego por tiempo.
 2. **Guía Determinista para el Operador (`guia_operador`)**: Proporciona instrucciones operativas unívocas, categorizadas y accionables para que el operador de consola sepa exactamente qué protocolo activar, qué canal utilizar y si procede o no convocar War Room o emitir comunicaciones ejecutivas.
 3. **Discriminación de Tipologías Operativas**: Diferencia de forma automatizada entre:
    - **Emergencias Críticas Vivas (`EMERGENCIA_VIVA`)**: Caídas masivas o de servicios core sin mitigación.
@@ -20,13 +20,13 @@ El catálogo `high_priority_notifications.json` constituye la **Fuente Única de
    - **Tickets Zombi de Remedy (`TICKET_ZOMBI_REMEDY`)**: Desincronizaciones donde el problema ya fue cerrado/cancelado en Jira pero sigue como `Asignado` en Remedy, desescalando a P3 administrativo.
 4. **Control de SLAs de Crisis y Cronómetros de Escalado**: Monitoriza los cronómetros de Orange IT Emergency Management: 20 min (1ª Notificación a Dirección), 45 min (Escalado telefónico obligatorio a IM-CSO/N3) y 105 min / >2h (Alarma por estancamiento y escalado a estamentos superiores).
 5. **Consolidación de Comunicaciones Ejecutivas**: Almacena los comunicados oficiales auditados para Dirección (**Apertura**, **Seguimiento** y **Cierre**) cumpliendo los límites normativos ($\le 90$ palabras monopárrafo y $\le 30$ palabras en versión breve).
-6. **Alimentación de Interfaces**: Provee los datos en tiempo real a la **Consola de Triaje y Operaciones de Emergencias** ([`dashboards/emergency-triage-console/`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/dashboards/emergency-triage-console/)) y los endpoints REST de la aplicación.
+6. **Alimentación de Interfaces**: Provee los datos en tiempo real a la **Consola de Triaje y Operaciones de Emergencias** ([`dashboards/emergency-triage-console/`](../../dashboards/emergency-triage-console/)) y los endpoints REST de la aplicación.
 
 ---
 
 ## 🏛️ 2. Arquitectura y Flujo de Generación
 
-El catálogo es generado de forma programática por el CLI [`evaluate_incident_notifications.py`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/converters/cli/evaluate_incident_notifications.py):
+El catálogo es generado de forma programática por el CLI [`evaluate_incident_notifications.py`](../../converters/cli/evaluate_incident_notifications.py):
 
 ```mermaid
 flowchart TD
@@ -257,7 +257,7 @@ Datos semánticos provistos por el microservicio o la caché local de **Epsilon 
 
 ### 3.7. Sub-objeto `mensajes_ejecutivos`
 
-Estructura de comunicaciones formales oficiales para Dirección generadas por [`incident-reporter`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/agents/it-incidents/incident-reporter.md) y auditadas por [`audit_executive_messages_coherence.py`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/converters/cli/audit_executive_messages_coherence.py):
+Estructura de comunicaciones formales oficiales para Dirección generadas por [`incident-reporter`](../../agents/it-incidents/incident-reporter.md) y auditadas por [`audit_executive_messages_coherence.py`](../../converters/cli/audit_executive_messages_coherence.py):
 
 * Fases disponibles: **`apertura`**, **`seguimiento`** y **`cierre`**.
 * Campos de cada fase:

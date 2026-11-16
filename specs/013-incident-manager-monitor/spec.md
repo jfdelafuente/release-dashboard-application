@@ -14,18 +14,18 @@
 
 En la gestión de incidentes mayores de Orange, tras la ingesta de un nuevo informe masivo de incidencias (ficheros `CS-Informe incidencias P1, P2 y P3 - *.csv` procesados hacia `data/output/*-massive.json`), el sistema evalúa la severidad ITIL/SRE a través del motor `converters/cli/evaluate_incident_notifications.py` y genera el catálogo persistente `data/output/high_priority_notifications.json`.
 
-Dicho catálogo cruza los metadatos de tickets con la síntesis de **Epsilon IA** y aplica las reglas de la skill corporativa **`it-severity-matrix`** ([`.agents/skills/it-severity-matrix/SKILL.md`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/.agents/skills/it-severity-matrix/SKILL.md)) para identificar:
+Dicho catálogo cruza los metadatos de tickets con la síntesis de **Epsilon IA** y aplica las reglas de la skill corporativa **`it-severity-matrix`** ([`.agents/skills/it-severity-matrix/SKILL.md`](../../.agents/skills/it-severity-matrix/SKILL.md)) para identificar:
 1. **Incidencias de Alta Prioridad Activas**: Incidentes clasificados como **P1 (Crítica)** o **P2 (Alta)** con estatus operativo no terminal (`Asignado`, `En Curso`, `Pendiente`).
 2. **Discrepancias de Triaje (Subescalaciones)**: Tickets nominalmente clasificados como P3 (Media) o P4 (Baja) en Remedy cuya afectación real amerita SL1/P1 o SL2/P2 según los umbrales de los 6 Procesos Críticos de Negocio y la Regla de Oro N1.
-3. **Estado de Redacción Ejecutiva**: Cada incidencia evaluada requiere mensajes ejecutivos oficiales para Dirección redactados en dos niveles estrictos (versión completa de hasta 90 palabras en monopárrafo y versión breve de hasta 30 palabras) por el agente corporativo **`incident-reporter`** ([`agents/it-incidents/incident-reporter.md`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/agents/it-incidents/incident-reporter.md)) para tres fases: `apertura`, `seguimiento` y `cierre`.
+3. **Estado de Redacción Ejecutiva**: Cada incidencia evaluada requiere mensajes ejecutivos oficiales para Dirección redactados en dos niveles estrictos (versión completa de hasta 90 palabras en monopárrafo y versión breve de hasta 30 palabras) por el agente corporativo **`incident-reporter`** ([`agents/it-incidents/incident-reporter.md`](../../agents/it-incidents/incident-reporter.md)) para tres fases: `apertura`, `seguimiento` y `cierre`.
 
 ### Herramientas y Componentes Existentes Reutilizados
 
 El proyecto ya cuenta con un ecosistema robusto de herramientas que deben servir de base directa para este frontal:
 - **`data/output/high_priority_notifications.json`**: Almacena el catálogo unificado en tiempo real con las incidencias activas, su prioridad sugerida, proceso de negocio, criterio/umbral, justificación ITIL, resumen de Epsilon IA y el estado de sus mensajes ejecutivos (`generado_por_agente: true/false`, `estado: "pendiente"` y el campo `prompt_agente` precalculado).
 - **`data/agent_executive_messages.json`**: Almacén persistente oficial de las redacciones emitidas por el agente `incident-reporter`.
-- **`scan_pending_incidents.py`** ([`.agents/skills/incident-executive-notifications/scripts/scan_pending_incidents.py`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/.agents/skills/incident-executive-notifications/scripts/scan_pending_incidents.py)): Script de escaneo que cruza el catálogo y el almacén para aislar las incidencias con redacciones pendientes, ofreciendo modos `--json` y `--id <INC>`.
-- **`update_agent_message.py`** ([`converters/cli/update_agent_message.py`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/converters/cli/update_agent_message.py)): Utilidad CLI para registrar redacciones oficiales validadas y desencadenar la regeneración automática de las notificaciones.
+- **`scan_pending_incidents.py`** ([`.agents/skills/incident-executive-notifications/scripts/scan_pending_incidents.py`](../../.agents/skills/incident-executive-notifications/scripts/scan_pending_incidents.py)): Script de escaneo que cruza el catálogo y el almacén para aislar las incidencias con redacciones pendientes, ofreciendo modos `--json` y `--id <INC>`.
+- **`update_agent_message.py`** ([`converters/cli/update_agent_message.py`](../../converters/cli/update_agent_message.py)): Utilidad CLI para registrar redacciones oficiales validadas y desencadenar la regeneración automática de las notificaciones.
 - **Proxy Epsilon IA** (`/api/epsilon/resumenIA/{codigo}`): Servicio en `serve_app.py` y Nginx para consultar la síntesis contextual de problemas, bloqueos y soluciones.
 - **Activos UI y Estilos Corporativos**: `/dashboards/assets/topbar.css`, `/dashboards/assets/shared.css`, `/dashboards/assets/incident-notifications.css` y `/dashboards/assets/resumen-ia.css` (modal de Epsilon).
 
@@ -41,7 +41,7 @@ El objetivo de esta especificación es definir el **Frontal Web de Monitorizaci�
 - **Detalle**:
   - El frontal se implementará en una ruta operativa específica: `/dashboards/incident-manager-monitor/` (fichero físico `dashboards/incident-manager-monitor/index.html`).
   - **Aislamiento estricto**: Queda expresamente prohibido incluir tarjetas, enlaces o accesos a esta ruta en la página principal del portal general (`dashboards/portal/index.html` y `dashboards/index.html`).
-  - **Canal de acceso**: Los Incident Managers accederán mediante URL directa, marcadores de navegador o enlaces en la documentación operativa interna ([`docs/INCIDENT-EXECUTIVE-NOTIFICATIONS-WORKFLOW.md`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/docs/INCIDENT-EXECUTIVE-NOTIFICATIONS-WORKFLOW.md)).
+  - **Canal de acceso**: Los Incident Managers accederán mediante URL directa, marcadores de navegador o enlaces en la documentación operativa interna ([`docs/INCIDENT-EXECUTIVE-NOTIFICATIONS-WORKFLOW.md`](../../docs/02-gestion-emergencias/notificaciones-ejecutivas.md)).
 
 ### Q2: Arquitectura de Datos y Estrategia de Carga
 - **Decisión**: **Carga Directa del Catálogo JSON con API de Soporte en Servidor**.

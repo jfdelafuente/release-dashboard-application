@@ -159,7 +159,7 @@ Muestra:
 - Sondas de salud HTTP para todos los dashboards y endpoints de proxy.
 
 ### 2. Rollback Inmediato (`./rollback.sh`)
-El script [`scripts/rollback.sh`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/scripts/rollback.sh) cuenta con un **doble mecanismo de reversión**:
+El script [`scripts/rollback.sh`](../../scripts/rollback.sh) cuenta con un **doble mecanismo de reversión**:
 
 1. **Reversión Atómica por Symlink (Prioritaria y en milisegundos)**:
    Conmuta el enlace simbólico `current` a la release anterior presente en `releases/`, restaura symlinks de datos y recarga Nginx.

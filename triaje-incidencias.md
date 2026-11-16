@@ -16,13 +16,13 @@ Aquí tienes todo el proceso explicado desde cero, dividido en **lo que hace la 
 En el servidor de producción (`infocodes.si.orange.es:8081`), el sistema trabaja en piloto automático mediante tres pasos:
 
 1. **Recoge las averías recientes:**
-   * **Automático:** Cada 15 minutos ([sync-remedy-cron.sh](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/scripts/sync-remedy-cron.sh)) consulta a Remedy/MonTMC las incidencias nuevas o modificadas.
+   * **Automático:** Cada 15 minutos ([sync-remedy-cron.sh](scripts/sync-remedy-cron.sh)) consulta a Remedy/MonTMC las incidencias nuevas o modificadas.
    * **Manual (opcional):** El operador también puede pulsar el botón **Sincronizar Remedy** o subir un Excel/CSV exportado de Remedy pulsando `Shift + U`.
 2. **Limpia el ruido y resume con IA:**
    * Descarta automáticamente los tickets que ya están *Resueltos*, *Cerrados* o *Cancelados* para no saturar la pantalla.
    * Para las averías vivas, pide a **Epsilon IA** que lea todas las notas técnicas largas y saque un resumen limpio: *qué falla, a quién afecta y si hay algún bloqueo*.
 3. **Calcula la gravedad real (Motor de Reglas):**
-   * El motor ([evaluate_incident_notifications.py](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/converters/cli/evaluate_incident_notifications.py)) cruza cada avería contra el catálogo oficial de Orange y calcula qué prioridad **debería** tener (`P1 Crítica`, `P2 Alta`, `P3 Media`, `P4 Baja`), dejando el resultado listo en la web.
+   * El motor ([evaluate_incident_notifications.py](converters/cli/evaluate_incident_notifications.py)) cruza cada avería contra el catálogo oficial de Orange y calcula qué prioridad **debería** tener (`P1 Crítica`, `P2 Alta`, `P3 Media`, `P4 Baja`), dejando el resultado listo en la web.
 
 ---
 
@@ -113,7 +113,7 @@ flowchart LR
     G --> H["5. Fin de turno: Publica Traspaso de Guardia 📋"]
 ```
 
-Si quieres profundizar en algún botón o protocolo concreto, tienes toda la referencia detallada en el [manual-consola-operativa.md](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/docs/02-gestion-emergencias/manual-consola-operativa.md) (también navegable en `http://infocodes.si.orange.es:8081/docs/`).
+Si quieres profundizar en algún botón o protocolo concreto, tienes toda la referencia detallada en el [manual-consola-operativa.md](docs/02-gestion-emergencias/manual-consola-operativa.md) (también navegable en `http://infocodes.si.orange.es:8081/docs/`).
 
 Analyzed notificaciones-ejecutivas.md:L1-120
 Analyzed notificaciones-ejecutivas.md:L121-240
@@ -122,14 +122,14 @@ Ran check auto-draft and executive-messages endpoints
 La forma más sencilla de entenderlo es pensar en un periódico:
 
 * **La Consola de Producción** es la **imprenta y la sala de control** (detecta qué noticias son urgentes, lleva los relojes y tiene el botón de enviar a Teams).
-* **El agente `incident-reporter`** ([incident-reporter.md](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/agents/it-incidents/incident-reporter.md)) es el **redactor jefe experto** que escribe los comunicados para Dirección sin tecnicismos, sin inventar datos y clavando el límite de palabras.
+* **El agente `incident-reporter`** ([incident-reporter.md](agents/it-incidents/incident-reporter.md)) es el **redactor jefe experto** que escribe los comunicados para Dirección sin tecnicismos, sin inventar datos y clavando el límite de palabras.
 
 Lo más importante que debes saber es **dónde vive cada uno**:
 
 > [!IMPORTANT]
 > **`incident-reporter` NO corre dentro del servidor de producción.**  
 > El servidor de producción (`infocodes.si.orange.es:8081`) solo tiene Python y Nginx (reglas matemáticas fijas, sin IA redactora).  
-> **`incident-reporter` vive en tu entorno local (Antigravity)** y se conecta con Producción a través de un archivo puente: [data/agent_executive_messages.json](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/data/agent_executive_messages.json).
+> **`incident-reporter` vive en tu entorno local (Antigravity)** y se conecta con Producción a través de un archivo puente: [data/agent_executive_messages.json](data/agent_executive_messages.json).
 
 ---
 
@@ -148,12 +148,12 @@ flowchart LR
 ```
 
 1. **El Motor de Triaje detecta "qué falta por escribir":**
-   Cuando entran tickets nuevos (`P1`, `P2` o discrepancias), el motor ([evaluate_incident_notifications.py](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/converters/cli/evaluate_incident_notifications.py)) comprueba si ese `INC...` ya tiene un comunicado guardado en `agent_executive_messages.json`. Si no lo tiene, lo marca como **`pendiente`** y deja preparado un paquete con todos los datos técnicos y el Resumen IA de Epsilon.
+   Cuando entran tickets nuevos (`P1`, `P2` o discrepancias), el motor ([evaluate_incident_notifications.py](converters/cli/evaluate_incident_notifications.py)) comprueba si ese `INC...` ya tiene un comunicado guardado en `agent_executive_messages.json`. Si no lo tiene, lo marca como **`pendiente`** y deja preparado un paquete con todos los datos técnicos y el Resumen IA de Epsilon.
 
 2. **`incident-reporter` entra en acción en Local:**
-   Cuando pides en el chat de Antigravity redactar las incidencias pendientes (activando su skill [incident-executive-notifications](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/.agents/skills/incident-executive-notifications/SKILL.md)), el asistente asume el rol de **`incident-reporter`** y aplica 4 reglas estrictas que un humano con prisa suele pasar por alto:
+   Cuando pides en el chat de Antigravity redactar las incidencias pendientes (activando su skill [incident-executive-notifications](.agents/skills/incident-executive-notifications/SKILL.md)), el asistente asume el rol de **`incident-reporter`** y aplica 4 reglas estrictas que un humano con prisa suele pasar por alto:
    * **Elige la fase correcta** (`apertura`, `seguimiento`, `reapertura` o `cierre`), teniendo **prohibido** escribir un cierre si en Remedy el ticket sigue abierto.
-   * **Traduce la jerga técnica a impacto de negocio** usando las matrices de Orange ([it-severity-matrix](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/.agents/skills/it-severity-matrix/SKILL.md) y [incident-triage-review](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/.agents/skills/incident-triage-review/SKILL.md)).
+   * **Traduce la jerga técnica a impacto de negocio** usando las matrices de Orange ([it-severity-matrix](.agents/skills/it-severity-matrix/SKILL.md) y [incident-triage-review](.agents/skills/incident-triage-review/SKILL.md)).
    * **Elimina datos prohibidos:** Cero nombres de personas/clientes/teléfonos (PII) y cero horas de arreglo inventadas (regla anti-alucinación).
    * **Clava los dos formatos obligatorios:**
      * *Versión completa:* **1 solo párrafo** de **máximo 90 palabras**.
@@ -171,4 +171,4 @@ Para que el operador de guardia nunca se quede bloqueado esperando a `incident-r
 * **Salida de emergencia en vivo (en la web de Producción):** La consola tiene el botón **✨ Sugerir Borrador IA**, que construye al instante una plantilla segura en el navegador con los datos de Remedy/Epsilon y un contador de palabras en vivo (90 / 30). El operador puede revisarla y enviarla a Teams en menos de 1 minuto.
 * **Consolidación posterior:** Más tarde, cuando procesas los tickets en local con `incident-reporter` y despliegas, ese borrador de urgencia queda sustituido en el almacén histórico por la redacción ejecutiva oficial.
 
-Tienes este flujo local ↔ producción documentado en detalle en [notificaciones-ejecutivas.md](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/docs/02-gestion-emergencias/notificaciones-ejecutivas.md).
+Tienes este flujo local ↔ producción documentado en detalle en [notificaciones-ejecutivas.md](docs/02-gestion-emergencias/notificaciones-ejecutivas.md).

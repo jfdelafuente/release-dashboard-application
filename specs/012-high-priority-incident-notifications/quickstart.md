@@ -16,7 +16,7 @@ Esta guía rápida describe cómo ejecutar, probar y verificar el Sistema de Not
 
 ## 2. Ejecución del Escáner y Evaluador CLI
 
-El script CLI principal se ubica en [`converters/cli/evaluate_incident_notifications.py`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/converters/cli/evaluate_incident_notifications.py).
+El script CLI principal se ubica en [`converters/cli/evaluate_incident_notifications.py`](../../converters/cli/evaluate_incident_notifications.py).
 
 ### 2.1. Escaneo Estándar (Generación de Catálogo)
 Procesa la última lista de incidencias masivas registradas en `data/output/index.json`, consulta Epsilon (con caché local de 15 min) y genera `data/output/high_priority_notifications.json`:

@@ -87,7 +87,7 @@ flowchart TD
 - **Filtro de Alta Prioridad**: Solo las incidencias con resultado **P1** o **P2** generan notificación activa.
 
 ### Decisión 3: Formato de Notificación Ejecutiva (`incident-reporter`)
-- Cumple estrictamente con las reglas de [`agents/it-incidents/incident-reporter.md`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/agents/it-incidents/incident-reporter.md):
+- Cumple estrictamente con las reglas de [`agents/it-incidents/incident-reporter.md`](../../agents/it-incidents/incident-reporter.md):
   - **Versión completa (Dirección)**: Un solo párrafo de **hasta 90 palabras**.
     - Estructura: `[Incidencia/Código] [Qué ha pasado] [Sistemas y usuarios afectados] [Impacto negocio] [Acciones en curso] [Próxima actualización/resolución estimada]`.
   - **Versión breve (Asunto / SMS)**: **Hasta 30 palabras**.

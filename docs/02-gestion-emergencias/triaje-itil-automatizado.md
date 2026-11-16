@@ -10,15 +10,15 @@ En grandes infraestructuras de telecomunicaciones y servicios, la clasificación
 
 El **Triaje ITIL Automatizado** es el motor algorítmico y determinista que evalúa el **impacto real sobre el negocio y los servicios** de cada incidencia activa, aplicando de forma estricta:
 
-1. La **Matriz de Severidad y Criticidad IT** ([`.agents/skills/it-severity-matrix/SKILL.md`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/.agents/skills/it-severity-matrix/SKILL.md)).
-2. El **Marco Operativo de Gestión de Emergencias IT de Orange** ([`.agents/skills/orange-it-emergency-management/SKILL.md`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/.agents/skills/orange-it-emergency-management/SKILL.md)).
+1. La **Matriz de Severidad y Criticidad IT** ([`.agents/skills/it-severity-matrix/SKILL.md`](../../.agents/skills/it-severity-matrix/SKILL.md)).
+2. El **Marco Operativo de Gestión de Emergencias IT de Orange** ([`.agents/skills/orange-it-emergency-management/SKILL.md`](../../.agents/skills/orange-it-emergency-management/SKILL.md)).
 3. La detección automática de **Discrepancias de Prioridad** (alertando al Incident Manager cuando la prioridad sugerida supera la nominal del ticket).
 
 ---
 
 ## 2. Arquitectura del Motor de Triaje
 
-El motor se implementa en la clase [`SeverityEvaluator`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/converters/cli/evaluate_incident_notifications.py#L1028) dentro de la utilidad CLI [`converters/cli/evaluate_incident_notifications.py`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/converters/cli/evaluate_incident_notifications.py):
+El motor se implementa en la clase [`SeverityEvaluator`](../../converters/cli/evaluate_incident_notifications.py#L1028) dentro de la utilidad CLI [`converters/cli/evaluate_incident_notifications.py`](../../converters/cli/evaluate_incident_notifications.py):
 
 ```mermaid
 flowchart TD
@@ -58,7 +58,7 @@ Para superar la brevedad o ambigüedad del título de Remedy, el evaluador const
 * **Diagnóstico Epsilon IA**: `problema`, `impacto`, `solucion`, `sistemas`, `bloqueos`, `siguienteAccion`.
 
 > [!NOTE]
-> Gracias al cliente [`EpsilonClient`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/converters/cli/evaluate_incident_notifications.py#L2164) con fallback inteligente y caché en disco ([`data/.epsilon_cache/`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/data/.epsilon_cache/)), si el microservicio Epsilon no estuviera disponible, el sistema degrada elegantemente y realiza el triaje usando únicamente los campos nativos de Remedy.
+> Gracias al cliente [`EpsilonClient`](../../converters/cli/evaluate_incident_notifications.py#L2164) con fallback inteligente y caché en disco ([`data/.epsilon_cache/`](../../data/.epsilon_cache/)), si el microservicio Epsilon no estuviera disponible, el sistema degrada elegantemente y realiza el triaje usando únicamente los campos nativos de Remedy.
 
 ---
 
@@ -251,7 +251,7 @@ timeline
 
 ## 6. Salida Estructurada en el Catálogo JSON
 
-El resultado del triaje se almacena dentro de cada incidencia en el campo `"evaluacion"` del fichero [`high_priority_notifications.json`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/data/output/high_priority_notifications.json):
+El resultado del triaje se almacena dentro de cada incidencia en el campo `"evaluacion"` del fichero [`high_priority_notifications.json`](../../data/output/high_priority_notifications.json):
 
 ```json
 {
@@ -370,5 +370,5 @@ python converters/cli/evaluate_incident_notifications.py --dry-run
 * **[CATALOGO-INCIDENCIAS-ALTA-PRIORIDAD.md](catalogo-alta-prioridad.md)**: Especificación técnica integral del catálogo JSON `high_priority_notifications.json`.
 * **[INCIDENT-EXECUTIVE-NOTIFICATIONS-WORKFLOW.md](notificaciones-ejecutivas.md)**: Flujo de redacción de mensajes oficiales para Dirección con la skill `incident-executive-notifications`.
 * **[MANUAL-OPERADOR-CONSOLA-OPERATIVA.md](manual-consola-operativa.md)**: Manual del Incident Manager en la Consola de Emergencias IT.
-* **[it-severity-matrix SKILL.md](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/.agents/skills/it-severity-matrix/SKILL.md)**: Matriz cuantitativa oficial de severidades IT.
-* **[orange-it-emergency-management SKILL.md](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/.agents/skills/orange-it-emergency-management/SKILL.md)**: Protocolos operativos de escalado, War Room y gobernanza RACI.
+* **[it-severity-matrix SKILL.md](../../.agents/skills/it-severity-matrix/SKILL.md)**: Matriz cuantitativa oficial de severidades IT.
+* **[orange-it-emergency-management SKILL.md](../../.agents/skills/orange-it-emergency-management/SKILL.md)**: Protocolos operativos de escalado, War Room y gobernanza RACI.

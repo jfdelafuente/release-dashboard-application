@@ -26,7 +26,7 @@ El propósito de esta fase de investigación técnica es determinar la arquitect
 * **Justificación**:
   - `serve_app.py` y Nginx ya mapean `/dashboards/*` hacia la carpeta física `dashboards/`.
   - El aislamiento del portal general no depende de la ruta del archivo, sino de **no incluir ninguna tarjeta ni enlace** en `dashboards/portal/index.html` ni `dashboards/index.html`.
-  - El Incident Manager accederá directamente por URL o desde la documentación operativa de guardia ([`docs/INCIDENT-EXECUTIVE-NOTIFICATIONS-WORKFLOW.md`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/docs/INCIDENT-EXECUTIVE-NOTIFICATIONS-WORKFLOW.md)).
+  - El Incident Manager accederá directamente por URL o desde la documentación operativa de guardia ([`docs/INCIDENT-EXECUTIVE-NOTIFICATIONS-WORKFLOW.md`](../../docs/02-gestion-emergencias/notificaciones-ejecutivas.md)).
 
 ---
 

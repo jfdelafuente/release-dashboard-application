@@ -46,7 +46,7 @@ Este documento describe la arquitectura, ubicación y operativa de los registros
 ## 📜 Detalle de Archivos de Log
 
 ### 1. Conversión Batch de Dashboards (`dashboards-generation-YYYYMMDD.log`)
-* **Generado por**: [`scripts/generate-dashboards.sh`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/scripts/generate-dashboards.sh).
+* **Generado por**: [`scripts/generate-dashboards.sh`](../../scripts/generate-dashboards.sh).
 * **Frecuencia**: Rotación diaria por fecha (ej: `dashboards-generation-20261020.log`).
 * **Contenido**:
   - Timestamp exacto de inicio y fin de la ejecución.
@@ -68,7 +68,7 @@ Este documento describe la arquitectura, ubicación y operativa de los registros
   * **Contenido**: Registro de rotaciones semanales por *copy-truncate*, compresión gzip (>7d) y purga de logs históricos (>30d).
 
 ### 3. Registro de Accesos Nginx (`infocodes.access.log`)
-* **Configurado en**: [`nginx.conf`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/nginx.conf) (`access_log /infocodes/var/log/nginx/infocodes.access.log;`).
+* **Configurado en**: [`nginx.conf`](../../nginx.conf) (`access_log /infocodes/var/log/nginx/infocodes.access.log;`).
 * **Contenido**: Peticiones HTTP procesadas por el servidor web en el puerto 8081:
   - URLs de dashboards solicitadas (`/dashboards/portal/`, `/dashboards/postmortem/`, etc.).
   - Descargas de datos JSON (`/data/output/*.json`).
@@ -79,7 +79,7 @@ Este documento describe la arquitectura, ubicación y operativa de los registros
 
 ## 🚀 Trazabilidad y Auditoría de Despliegues
 
-El despliegue a producción se gestiona desde la estación de desarrollo con el script [`scripts/deploy-production.ps1`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/scripts/deploy-production.ps1). La trazabilidad y seguridad se garantiza a través de:
+El despliegue a producción se gestiona desde la estación de desarrollo con el script [`scripts/deploy-production.ps1`](../../scripts/deploy-production.ps1). La trazabilidad y seguridad se garantiza a través de:
 
 ### 1. Copias Preventivas Automáticas (Backups)
 * Antes de aplicar cualquier cambio, el script empaqueta el estado previo en:
@@ -95,7 +95,7 @@ El despliegue a producción se gestiona desde la estación de desarrollo con el 
   ```
 
 ### 2. Sondas de Salud Post-Despliegue (`Smoke Tests`)
-* Tras la recarga en caliente de Nginx (`nginx -s reload`), el despliegue ejecuta automáticamente [`scripts/status.sh`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/scripts/status.sh) tanto en local como en remoto:
+* Tras la recarga en caliente de Nginx (`nginx -s reload`), el despliegue ejecuta automáticamente [`scripts/status.sh`](../../scripts/status.sh) tanto en local como en remoto:
   - Comprobación de versión desplegada (`VERSION`).
   - Validación sintáctica de Nginx (`nginx -t`).
   - Validación de respuesta HTTP 200 OK para todos los dashboards y proxies.
@@ -104,7 +104,7 @@ El despliegue a producción se gestiona desde la estación de desarrollo con el 
 
 ## 💻 Logs en Entorno de Desarrollo Local (`serve_app.py`)
 
-Al ejecutar [`serve_app.py`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/serve_app.py) en local (puerto `8080`), los logs se imprimen de forma interactiva en la consola de PowerShell:
+Al ejecutar [`serve_app.py`](../../serve_app.py) en local (puerto `8080`), los logs se imprimen de forma interactiva en la consola de PowerShell:
 
 ```
 [127.0.0.1] "GET /dashboards/portal/ HTTP/1.1" 200 -
@@ -148,7 +148,7 @@ ls -lh /infocodes/var/backups/release-dashboard-application/
 
 ## 🔍 Trazabilidad y Auditoría de Ingesta Masiva y Telemetría Semántica
 
-Para garantizar la máxima transparencia operativa sobre qué incidencias disponen de información completa y justificar técnicamente cualquier dato faltante, el sistema incorpora un motor de auditoría continua ([`converters/cli/ingestion_logger.py`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/converters/cli/ingestion_logger.py)):
+Para garantizar la máxima transparencia operativa sobre qué incidencias disponen de información completa y justificar técnicamente cualquier dato faltante, el sistema incorpora un motor de auditoría continua ([`converters/cli/ingestion_logger.py`](../../converters/cli/ingestion_logger.py)):
 
 ### 1. Fichero de Log de Auditoría (`data/logs/ingestion_audit.log`)
 Registra de forma cronológica y persistente cada fase de la ingesta de tickets:
@@ -201,7 +201,7 @@ Generado en paralelo en formato JSON para consumo inmediato por parte de la API 
 
 ## 🧽 Procedimiento de Purga y Reseteo Seguro del Sistema
 
-Cuando un operador o desarrollador necesita **limpiar los datos previos de pruebas o cargas masivas antiguas para iniciar una nueva subida limpia desde cero**, debe emplear el script oficial de saneamiento ([`scripts/clean_system_data.py`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/scripts/clean_system_data.py)) o su acceso rápido en la raíz ([`clean_data.bat`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/clean_data.bat)).
+Cuando un operador o desarrollador necesita **limpiar los datos previos de pruebas o cargas masivas antiguas para iniciar una nueva subida limpia desde cero**, debe emplear el script oficial de saneamiento ([`scripts/clean_system_data.py`](../../scripts/clean_system_data.py)) o su acceso rápido en la raíz ([`clean_data.bat`](../../clean_data.bat)).
 
 ### Matriz de Acciones de Purga
 

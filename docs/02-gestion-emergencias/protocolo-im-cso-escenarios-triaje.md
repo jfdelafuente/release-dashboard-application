@@ -4,7 +4,7 @@ Guía procedimental y marco de gobernanza operativa para la actuación coordinad
 
 * **Versión:** `1.0.0`
 * **Ámbito:** Operaciones IT, Centros de Control (CCO/NOC), Gestión de Crisis y Mesas de Seguimiento.
-* **Skills Relacionadas:** [`orange-it-emergency-management`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/.agents/skills/orange-it-emergency-management/SKILL.md), [`it-severity-matrix`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/.agents/skills/it-severity-matrix/SKILL.md), [`incident-triage-review`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/.agents/skills/incident-triage-review/SKILL.md), [`incident-executive-notifications`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/.agents/skills/incident-executive-notifications/SKILL.md).
+* **Skills Relacionadas:** [`orange-it-emergency-management`](../../.agents/skills/orange-it-emergency-management/SKILL.md), [`it-severity-matrix`](../../.agents/skills/it-severity-matrix/SKILL.md), [`incident-triage-review`](../../.agents/skills/incident-triage-review/SKILL.md), [`incident-executive-notifications`](../../.agents/skills/incident-executive-notifications/SKILL.md).
 
 ---
 
@@ -53,7 +53,7 @@ flowchart LR
 
 ## 🚦 2. Matriz Sintética de Actuación por Escenario Post-Triaje
 
-Una vez emitido el dictamen del triaje (visible en el campo `guia_operador` de [`data/output/high_priority_notifications.json`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/data/output/high_priority_notifications.json) y en la Consola Operativa), el operador y el Incident Manager deben seguir de forma estricta las siguientes pautas:
+Una vez emitido el dictamen del triaje (visible en el campo `guia_operador` de [`data/output/high_priority_notifications.json`](../../data/output/high_priority_notifications.json) y en la Consola Operativa), el operador y el Incident Manager deben seguir de forma estricta las siguientes pautas:
 
 | Escenario Post-Triaje | Prioridad Operativa | Llamada IM-CSO | Canal Prescrito | SLA 1ª Acción | Regla de Oro / Condicionante Clave | Guía Detallada |
 | :--- | :---: | :---: | :--- | :---: | :--- | :---: |
@@ -639,9 +639,9 @@ Antes de realizar cualquier acción operativa o llamada telefónica, el operador
 
 ## 🔗 7. Documentación y Recursos Relacionados
 
-* [`flujo-gestion-incidencias.md`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/docs/02-gestion-emergencias/flujo-gestion-incidencias.md): Ciclo de vida integral de incidencias y SLAs de comunicación.
-* [`catalogo-alta-prioridad.md`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/docs/02-gestion-emergencias/catalogo-alta-prioridad.md): Especificación técnica del catálogo unificado y campos de `guia_operador`.
-* [`notificaciones-ejecutivas.md`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/docs/02-gestion-emergencias/notificaciones-ejecutivas.md): Estándar de comunicaciones oficiales para Dirección ($\le 90$ palabras).
-* [`triaje-itil-automatizado.md`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/docs/02-gestion-emergencias/triaje-itil-automatizado.md): Motor algorítmico de evaluación y Reglas de Oro.
-* [Skill `orange-it-emergency-management`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/.agents/skills/orange-it-emergency-management/SKILL.md): Especialista operativo en gobernanza de crisis y escalados.
+* [`flujo-gestion-incidencias.md`](flujo-gestion-incidencias.md): Ciclo de vida integral de incidencias y SLAs de comunicación.
+* [`catalogo-alta-prioridad.md`](catalogo-alta-prioridad.md): Especificación técnica del catálogo unificado y campos de `guia_operador`.
+* [`notificaciones-ejecutivas.md`](notificaciones-ejecutivas.md): Estándar de comunicaciones oficiales para Dirección ($\le 90$ palabras).
+* [`triaje-itil-automatizado.md`](triaje-itil-automatizado.md): Motor algorítmico de evaluación y Reglas de Oro.
+* [Skill `orange-it-emergency-management`](../../.agents/skills/orange-it-emergency-management/SKILL.md): Especialista operativo en gobernanza de crisis y escalados.
 

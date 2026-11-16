@@ -160,4 +160,4 @@ converters/
 ### Paso 4: Verificación Integral y Despliegue
 1. Ejecutar batería completa de tests (`pytest`).
 2. Probar manualmente la consola en `http://localhost:8080/dashboards/incident-manager-monitor/`.
-3. Actualizar la documentación operativa [`docs/INCIDENT-EXECUTIVE-NOTIFICATIONS-WORKFLOW.md`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/docs/INCIDENT-EXECUTIVE-NOTIFICATIONS-WORKFLOW.md) añadiendo la referencia al monitor para los Incident Managers.
+3. Actualizar la documentación operativa [`docs/INCIDENT-EXECUTIVE-NOTIFICATIONS-WORKFLOW.md`](../../docs/02-gestion-emergencias/notificaciones-ejecutivas.md) añadiendo la referencia al monitor para los Incident Managers.

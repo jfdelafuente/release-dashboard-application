@@ -8,7 +8,7 @@
 ## 1. Motor de Generación del Informe PowerPoint (`.pptx`)
 
 ### Decisión
-Utilizar `python-pptx` (ya disponible en el ecosistema del proyecto) para clonar y cumplimentar dinámicamente la plantilla de referencia [`20260609 Incidencia IVR ExMM.pptx`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/20260609%20Incidencia%20IVR%20ExMM.pptx) preservada en `converters/src/report_generator/assets/executive_template.pptx`.
+Utilizar `python-pptx` (ya disponible en el ecosistema del proyecto) para clonar y cumplimentar dinámicamente la plantilla de referencia [`20260609 Incidencia IVR ExMM.pptx`](./20260609%20Incidencia%20IVR%20ExMM.pptx) preservada en `converters/src/report_generator/assets/executive_template.pptx`.
 
 ### Rationale
 - **Fidelidad Visual Absoluta**: La plantilla `20260609 Incidencia IVR ExMM.pptx` ya contiene los estilos aprobados por la dirección de Orange: paleta de colores, márgenes, proporciones de cajas de texto, cabeceras con el color corporativo (`#FF7900`), tamaños de fuente y estilos de tabla.

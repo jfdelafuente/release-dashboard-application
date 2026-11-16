@@ -678,11 +678,11 @@ El script `csv_to_json.py` anterior era un conversor simple sin validación ni n
 
 **Related Documentation**:
 
-- Implementation Plan: [specs/006-optimize-csv-converters/plan.md](specs/006-optimize-csv-converters/plan.md)
-- Specification: [specs/006-optimize-csv-converters/spec.md](specs/006-optimize-csv-converters/spec.md)
-- Data Model: [specs/006-optimize-csv-converters/data-model.md](specs/006-optimize-csv-converters/data-model.md)
-- Testing Guide: [specs/006-optimize-csv-converters/quickstart.md](specs/006-optimize-csv-converters/quickstart.md)
-- Task Breakdown: [specs/006-optimize-csv-converters/tasks.md](specs/006-optimize-csv-converters/tasks.md) (80 tasks, 7 phases complete)
+- Implementation Plan: [converters/specs/006-optimize-csv-converters/plan.md](converters/specs/006-optimize-csv-converters/plan.md)
+- Specification: [converters/specs/006-optimize-csv-converters/spec.md](converters/specs/006-optimize-csv-converters/spec.md)
+- Data Model: [converters/specs/006-optimize-csv-converters/data-model.md](converters/specs/006-optimize-csv-converters/data-model.md)
+- Testing Guide: [converters/specs/006-optimize-csv-converters/quickstart.md](converters/specs/006-optimize-csv-converters/quickstart.md)
+- Task Breakdown: [converters/specs/006-optimize-csv-converters/tasks.md](converters/specs/006-optimize-csv-converters/tasks.md) (80 tasks, 7 phases complete)
 - Test Structure: [docs/04-conversores/estructura-tests.md](docs/04-conversores/estructura-tests.md) - Hybrid organization for clarity
 - Test Structure Diagram: [docs/04-conversores/test-structure-diagram.txt](docs/04-conversores/test-structure-diagram.txt) - Visual reference
 

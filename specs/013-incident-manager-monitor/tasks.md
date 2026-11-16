@@ -163,7 +163,7 @@
 
 **Purpose**: Documentación operativa para el equipo de Incident Management, validación de accesibilidad WCAG y ejecución de la suite completa de pruebas.
 
-- [x] T028 [P] Actualizar la guía operativa [`docs/INCIDENT-EXECUTIVE-NOTIFICATIONS-WORKFLOW.md`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/docs/INCIDENT-EXECUTIVE-NOTIFICATIONS-WORKFLOW.md) documentando la URL directa de la herramienta (`/dashboards/incident-manager-monitor/`), el flujo de trabajo y la operativa del Incident Manager.
+- [x] T028 [P] Actualizar la guía operativa [`docs/INCIDENT-EXECUTIVE-NOTIFICATIONS-WORKFLOW.md`](../../docs/02-gestion-emergencias/notificaciones-ejecutivas.md) documentando la URL directa de la herramienta (`/dashboards/incident-manager-monitor/`), el flujo de trabajo y la operativa del Incident Manager.
 - [x] T029 [P] Validar accesibilidad WCAG 2.1 AA (contraste de colores corporativos `#FF7900` / `#000000` / `#D32F2F`, navegación por teclado con tabulación e indicador de foco visible) en `dashboards/incident-manager-monitor/monitor.css` y `dashboards/incident-manager-monitor/index.html`.
 - [x] T030 Ejecutar suite de pruebas completa con `pytest converters/tests/unit/test_incident_manager_monitor.py -v` y validar 100% de éxito.
 

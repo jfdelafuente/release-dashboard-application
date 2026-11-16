@@ -29,10 +29,10 @@ Adicionalmente, el entorno dispone de integración con el servicio **Epsilon IA*
 - `siguienteAccion`: Próximos pasos operativos.
 - `hitos`: Cronología de eventos significativos.
 
-Para la determinación rigurosa y justificada de la severidad, el proyecto dispone de la skill corporativa **`it-severity-matrix`** ([`.agents/skills/it-severity-matrix/SKILL.md`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/.agents/skills/it-severity-matrix/SKILL.md)), que cruza el **Impacto en el Negocio** (Alto, Medio, Bajo) con la **Urgencia Operativa** (Alta, Media, Baja) bajo el estándar ITIL/SRE, estableciendo:
+Para la determinación rigurosa y justificada de la severidad, el proyecto dispone de la skill corporativa **`it-severity-matrix`** ([`.agents/skills/it-severity-matrix/SKILL.md`](../../.agents/skills/it-severity-matrix/SKILL.md)), que cruza el **Impacto en el Negocio** (Alto, Medio, Bajo) con la **Urgencia Operativa** (Alta, Media, Baja) bajo el estándar ITIL/SRE, estableciendo:
 - **P1 (Crítica)** y **P2 (Alta)** como niveles de **Alta Prioridad** que exigen notificación y escalado inmediato.
 - Justificación formal obligatoria: Prioridad sugerida, Impacto evaluado, Urgencia evaluada y Existencia de workaround.
-- Pautas de comunicación ejecutiva alineadas con el agente corporativo **`incident-reporter`** ([`agents/it-incidents/incident-reporter.md`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/agents/it-incidents/incident-reporter.md)), produciendo mensajes para Dirección en dos niveles estrictos: versión completa (hasta 90 palabras) y versión breve (hasta 30 palabras).
+- Pautas de comunicación ejecutiva alineadas con el agente corporativo **`incident-reporter`** ([`agents/it-incidents/incident-reporter.md`](../../agents/it-incidents/incident-reporter.md)), produciendo mensajes para Dirección en dos niveles estrictos: versión completa (hasta 90 palabras) y versión breve (hasta 30 palabras).
 
 El objetivo de esta especificación es definir el **Sistema de Notificación de Incidencias de Alta Prioridad**, que identifica, evalúa y notifica las incidencias críticas (P1/P2) combinando los datos masivos con la inteligencia contextual de Epsilon IA.
 
