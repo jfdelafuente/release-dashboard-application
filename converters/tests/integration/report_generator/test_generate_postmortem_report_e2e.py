@@ -57,8 +57,8 @@ class TestGenerateReportE2E:
         assert report_path.exists()
 
         prs = Presentation(str(report_path))
-        # Portada + Métricas Globales (3 KPIs + gráfica) + Comparativa (2 gráficas)
-        assert len(prs.slides) == 3
+        # Portada + Métricas Globales (3 KPIs + gráfica) + Comparativa (2 gráficas) + Tendencia Ejecutiva
+        assert len(prs.slides) == 4
 
         kpi_slide = prs.slides[1]
         slide_text = "\n".join(s.text_frame.text for s in kpi_slide.shapes if s.has_text_frame)
@@ -75,6 +75,18 @@ class TestGenerateReportE2E:
         last_slide_text = "\n".join(s.text_frame.text for s in prs.slides[2].shapes if s.has_text_frame)
         assert "KPI % PaP" in last_slide_text
         assert "KPI % 1ª semana" in last_slide_text
+
+        # 4ª diapositiva: Tendencia Ejecutiva. Única release anterior disponible
+        # es 2026R6 (pct_pap=80, pct_first_week=67, total_incidencias=80), así
+        # que 2026TEST tiene baseline PARCIAL (1 release, aunque window=4):
+        # delta_pct_pap = 90-80 = +10.0, delta_pct_first_week = 60-67 = -7.0,
+        # delta_total_incidencias = 30-80 = -50.0.
+        trend_slide_text = "\n".join(s.text_frame.text for s in prs.slides[3].shapes if s.has_text_frame)
+        assert "Tendencia Ejecutiva" in trend_slide_text
+        assert "2026TEST" in trend_slide_text
+        assert "+10.0" in trend_slide_text
+        assert "-7.0" in trend_slide_text
+        assert "-50.0" in trend_slide_text
 
     def test_unknown_release_returns_error_without_creating_file(self, tmp_path, monkeypatch):
         releases_path = _write_releases_js(tmp_path)
