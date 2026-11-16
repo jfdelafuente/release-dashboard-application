@@ -18,7 +18,7 @@ El **Triaje ITIL Automatizado** es el motor algorítmico y determinista que eval
 
 ## 2. Arquitectura del Motor de Triaje
 
-El motor se implementa en la clase [`SeverityEvaluator`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/converters/cli/evaluate_incident_notifications.py#L152) dentro de la utilidad CLI [`converters/cli/evaluate_incident_notifications.py`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/converters/cli/evaluate_incident_notifications.py):
+El motor se implementa en la clase [`SeverityEvaluator`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/converters/cli/evaluate_incident_notifications.py#L1028) dentro de la utilidad CLI [`converters/cli/evaluate_incident_notifications.py`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/converters/cli/evaluate_incident_notifications.py):
 
 ```mermaid
 flowchart TD
@@ -58,7 +58,7 @@ Para superar la brevedad o ambigüedad del título de Remedy, el evaluador const
 * **Diagnóstico Epsilon IA**: `problema`, `impacto`, `solucion`, `sistemas`, `bloqueos`, `siguienteAccion`.
 
 > [!NOTE]
-> Gracias al cliente [`EpsilonClient`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/converters/cli/evaluate_incident_notifications.py#L762) con fallback inteligente y caché en disco ([`data/.epsilon_cache/`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/data/.epsilon_cache/)), si el microservicio Epsilon no estuviera disponible, el sistema degrada elegantemente y realiza el triaje usando únicamente los campos nativos de Remedy.
+> Gracias al cliente [`EpsilonClient`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/converters/cli/evaluate_incident_notifications.py#L2164) con fallback inteligente y caché en disco ([`data/.epsilon_cache/`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/data/.epsilon_cache/)), si el microservicio Epsilon no estuviera disponible, el sistema degrada elegantemente y realiza el triaje usando únicamente los campos nativos de Remedy.
 
 ---
 
