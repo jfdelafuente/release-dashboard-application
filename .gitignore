@@ -49,6 +49,7 @@ venv.bak/
 !README.md
 !project.json
 !specs/project.json
+!converters/cli/process_patterns.json
 !tests/test_data/**/*.csv
 !converters/tests/test_data/**/*.csv
 

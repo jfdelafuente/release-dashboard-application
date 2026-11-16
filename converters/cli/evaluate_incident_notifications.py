@@ -584,212 +584,37 @@ def build_worklog_claim_text(
     )
 
 
-PROCESS_PATTERNS: dict[str, list[re.Pattern]] = {
-    "Conectividad de Sedes, Call Centers y Tiendas": [
-        re.compile(r"\brtv-tecse\b", re.I),
-        re.compile(r"\bred\s+datos\b", re.I),
-        re.compile(r"\bulises\b", re.I),
-        re.compile(r"\bmeneses\b", re.I),
-        re.compile(r"\bca[íi]da\s+de\s+tienda\b", re.I),
-        re.compile(r"\baislamiento\s+de\s+sede\b", re.I),
-        re.compile(r"\bcircuito\s+(?:backup|principal|ambos)\b", re.I),
-        re.compile(r"\bcircuito\b.*\b(?:sede|msc|plataforma|tienda|wan|mpls)\b", re.I),
-    ],
-    "Infraestructura Core IT, BBDD y Cloud": [
-        re.compile(r"\besx\b", re.I),
-        re.compile(r"\bvmware\b", re.I),
-        re.compile(r"\bpseries\b", re.I),
-        re.compile(r"\bpower9\b", re.I),
-        re.compile(r"\bexadata\b", re.I),
-        re.compile(r"\bhwsan\b", re.I),
-        re.compile(r"\bspain\s+almacenamiento\b", re.I),
-        re.compile(r"\bitx\s+oci\b", re.I),
-        re.compile(r"\boci/gcp\b", re.I),
-        re.compile(r"\bdata\s+mart\s+fiscal\b", re.I),
-        re.compile(r"\bbackup\s+osp\b", re.I),
-        re.compile(r"\bhipervisor\b", re.I),
-        re.compile(r"\bcabina\s+san\b", re.I),
-        re.compile(r"\brac\b", re.I),  # Boundary regex: never matches 'operaciones'
-    ],
-    "Identidad (GDU/EVIDIAN) y Automatización": [
-        re.compile(r"\bgdu\b", re.I),
-        re.compile(r"\bevidian\b", re.I),
-        re.compile(r"\bgdu/acm\b", re.I),
-        re.compile(r"\brobotfactory\b", re.I),
-        re.compile(r"\bsso\s+corporativo\b", re.I),
-        re.compile(r"\biam\b", re.I),
-        re.compile(r"\bidentity\b", re.I),
-        re.compile(r"\badselfservice\b", re.I),
-        re.compile(r"\brpa\s+nice\b", re.I),
-    ],
-    "Middleware e Integración Transversal": [
-        re.compile(r"\bapigee\b", re.I),
-        re.compile(r"\bopenapi\b", re.I),
-        re.compile(r"\btibco\b", re.I),
-        re.compile(r"\bgc\s+middleware\b", re.I),
-        re.compile(r"\bdatapower\b", re.I),
-        re.compile(r"\bocci\b", re.I),
-        re.compile(r"\bsbl_eai\b", re.I),
-        re.compile(r"\bbus\s+de\s+integraci[oó]n\b", re.I),
-        re.compile(r"\bapi\s+gateway\b", re.I),
-        re.compile(r"\bwebmethods\b", re.I),
-        re.compile(r"\bmicroservicios\b", re.I),
-        re.compile(r"\bdispatcher\b", re.I),
-    ],
-    "Facturación y Cobros": [
-        re.compile(r"\bhpfms\b", re.I),
-        re.compile(r"\bbscs\b", re.I),
-        re.compile(r"\bopen\s*cobros\b", re.I),
-        re.compile(r"\bexcalibur\b", re.I),
-        re.compile(r"\bsga\b", re.I),  # Boundary regex: never matches 'desglose'
-        re.compile(r"\bmediaci[oó]n\b", re.I),
-        re.compile(r"\bhp-ium\b", re.I),
-        re.compile(r"\bsap\b", re.I),  # Boundary regex: never matches 'pasaporte'
-        re.compile(r"\bkenan(?:_fx)?\b", re.I),
-        re.compile(r"\babacus(?:\s+brm)?\b", re.I),
-        re.compile(r"\bnetplus\b", re.I),
-        re.compile(r"\bpsp\b", re.I),
-        re.compile(r"\bintransit\b", re.I),
-        re.compile(r"\bxpression\b", re.I),
-        re.compile(r"\bfew\b", re.I),
-        re.compile(r"\baccon\b", re.I),
-        re.compile(r"\bares\b", re.I),
-        re.compile(r"\bcobros?\b", re.I),
-        re.compile(r"\bfacturas?\b", re.I),
-        re.compile(r"\bfacturaci[oó]n\b", re.I),
-        re.compile(r"\btarificaci[oó]n\b", re.I),
-        re.compile(r"\btarifica\b", re.I),
-        re.compile(r"\babonos?\b", re.I),
-        re.compile(r"\bpenalizaci[oó]n\b", re.I),
-        re.compile(r"\bsop_bss\b", re.I),
-        re.compile(r"\bsop_smc_bscs\b", re.I),
-        re.compile(r"\bsop_tmc_excalibur\b", re.I),
-    ],
-    "Prepago": [
-        re.compile(r"\bprepago\b", re.I),
-        re.compile(r"\brecargas?\b", re.I),
-        re.compile(r"\brecargas\s+aprs\b", re.I),
-        re.compile(r"\baprs\b", re.I),
-        re.compile(r"\bocs\b", re.I),
-        re.compile(r"\btao\b", re.I),
-        re.compile(r"\bsedna\b", re.I),
-        re.compile(r"\bsop_ocs\b", re.I),
-        re.compile(r"\baltas?\s+prepago\b", re.I),
-        re.compile(r"\balta\s+de\s+l[íi]neas\s+prepago\b", re.I),
-    ],
-    "Portabilidad": [
-        re.compile(r"\bportabilidad(?:es)?\b", re.I),
-        re.compile(r"\bflujo\s+2\s*am\b", re.I),
-        re.compile(r"\bentidad\s+de\s+referencia\b", re.I),
-        re.compile(r"\bnodo\s+portabilidad\b", re.I),
-        re.compile(r"\bpomv\b", re.I),
-        re.compile(r"\bportos\b", re.I),
-        re.compile(r"\bsgp\s*m[oó]vil\b", re.I),
-        re.compile(r"\bncrn\b", re.I),
-    ],
-    "Ventas": [
-        re.compile(r"\bcomprobantes?\s+de\s+venta\b", re.I),
-        re.compile(r"\bteleventa\b", re.I),
-        re.compile(r"\bcanal\s+comercial\b", re.I),
-        re.compile(r"\bneg_camp_ceres\b", re.I),
-        re.compile(r"\bceres(?:rt)?\b", re.I),
-        re.compile(r"\bupdatecommercialactspa\b", re.I),
-        re.compile(r"\becontrato\b", re.I),
-        re.compile(r"\bpangea\b", re.I),
-        re.compile(r"\bkratos\b", re.I),
-        re.compile(r"\bagora\b", re.I),
-        re.compile(r"\balce\b", re.I),
-        re.compile(r"\barpa\b", re.I),
-        re.compile(r"\bsigna\b", re.I),
-        re.compile(r"\bsitam\b", re.I),
-        re.compile(r"\bxnet\b", re.I),
-        re.compile(r"\bpae\b", re.I),
-        re.compile(r"\brenove\b", re.I),
-        re.compile(r"\brenovaci[oó]n\s+de\s+terminales\b", re.I),
-        re.compile(r"\bventas?\b", re.I),
-        re.compile(r"\bcontrataci[oó]n\b", re.I),
-    ],
-    "Provisión": [
-        re.compile(r"\bprovisi[oó]n\b", re.I),
-        re.compile(r"\baprovisionamiento\b", re.I),
-        re.compile(r"\b[oó]rdenes?(?:\s+de\s+(?:m[oó]vil|fijo))?\b", re.I),
-        re.compile(r"\balta\s+de\s+(?:fijo|m[oó]vil)\b", re.I),
-        re.compile(r"\brenovaci[oó]n\s+de\s+beneficios\b", re.I),
-        re.compile(r"\bsop_smc_teide\b", re.I),
-        re.compile(r"\bteide\b", re.I),
-        re.compile(r"\bfijo\s+apl\b", re.I),
-        re.compile(r"\bip24\b", re.I),
-        re.compile(r"\bsigma\b", re.I),
-        re.compile(r"\bluna\b", re.I),
-        re.compile(r"\baurora\b", re.I),
-        re.compile(r"\bgiros\b", re.I),
-        re.compile(r"\btramitador\b", re.I),
-        re.compile(r"\bspm\b", re.I),
-        re.compile(r"\breventa\s+fibra\b", re.I),
-        re.compile(r"\bpcneon\b", re.I),
-        re.compile(r"\bmyaddress\b", re.I),
-        re.compile(r"\baltair\s+a\s+br[uú]jula\b", re.I),
-        re.compile(r"\bbr[uú]jula\b", re.I),
-        re.compile(r"\bgis\s+fibra\b", re.I),
-        re.compile(r"\bactivateorder\b", re.I),
-    ],
-    "Atención al Cliente (ATC)": [
-        re.compile(r"\bficha\s+de?\s+cliente\b", re.I),
-        re.compile(r"\bdes_soe_ficha\b", re.I),
-        re.compile(r"\bapl_mov_soe\b", re.I),
-        re.compile(r"\bivr\b", re.I),
-        re.compile(r"\bcti\b", re.I),
-        re.compile(r"\bfrontales\b", re.I),
-        re.compile(r"\bcrm\b", re.I),
-        re.compile(r"\bcrm\s+jazztel\b", re.I),
-        re.compile(r"\bcrm4telco\b", re.I),
-        re.compile(r"\biris\b", re.I),
-        re.compile(r"\bsiebel(?:\s+8)?\b", re.I),
-        re.compile(r"\bpolar\b", re.I),
-        re.compile(r"\basistente\b", re.I),
-        re.compile(r"\bdes_asistente\b", re.I),
-        re.compile(r"\bdjingo\b", re.I),
-        re.compile(r"\bliveperson\b", re.I),
-        re.compile(r"\bsop_djingo\b", re.I),
-        re.compile(r"\bonuris\b", re.I),
-        re.compile(r"\bsop_onuris\b", re.I),
-        re.compile(r"\bonconnect\b", re.I),
-        re.compile(r"\bnaboo\b", re.I),
-        re.compile(r"\bboreal\b", re.I),
-        re.compile(r"\bapp\s+mi\s+orange\b", re.I),
-        re.compile(r"\bacme\s+(?:app|web)\b", re.I),
-        re.compile(r"\baltamira\b", re.I),
-        re.compile(r"\batenas\b", re.I),
-        re.compile(r"\bmijazztel\b", re.I),
-        re.compile(r"\bhesms\b", re.I),
-        re.compile(r"\bsires\b", re.I),
-        re.compile(r"\boperadores?\b", re.I),
-        re.compile(r"\bcall\s+center\b", re.I),
-        re.compile(r"\bgenesys\b", re.I),
-        re.compile(r"\baltitude\b", re.I),
-        re.compile(r"\batenci[oó]n\s+al\s+cliente\b", re.I),
-        re.compile(r"\batc\b", re.I),
-    ],
-    "Operación y Monitorización (O&M)": [
-        re.compile(r"\baltair\b", re.I),
-        re.compile(r"\bgnoc\b", re.I),
-        re.compile(r"\bcpe\b", re.I),
-        re.compile(r"\bcortes\s+cpe\b", re.I),
-        re.compile(r"\bvtemip\b", re.I),
-        re.compile(r"\bzte\b", re.I),
-        re.compile(r"\buca\b", re.I),  # Boundary regex: never matches 'comunicación'
-        re.compile(r"\bsupervisi[oó]n\b", re.I),
-        re.compile(r"\bmonitorizaci[oó]n\b", re.I),
-        re.compile(r"\bcau\b", re.I),  # Boundary regex: never matches 'precaución'
-        re.compile(r"\bcep\s+cau\s+agi\b", re.I),
-        re.compile(r"\bftth\b", re.I),
-        re.compile(r"\bfibra\b", re.I),
-        re.compile(r"\bnodo\s+central\b", re.I),
-        re.compile(r"\benlace\b", re.I),
-        re.compile(r"\brouting\s+core\b", re.I),
-    ],
-}
+_PROCESS_PATTERNS_FILE = Path(__file__).resolve().parent / "process_patterns.json"
 
+
+def _load_process_patterns(path: Path) -> dict[str, list[re.Pattern]]:
+    """Carga y compila los patrones de clasificación de proceso/dominio desde JSON.
+
+    Son datos estructurales esenciales para la clasificación: si faltan o son
+    inválidos, toda incidencia caería silenciosamente en "Sistemas Core", por
+    lo que se falla rápido con RuntimeError en vez de degradar a un dict vacío.
+    """
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            raw = json.load(f)
+    except FileNotFoundError as exc:
+        raise RuntimeError(f"No se encontró el archivo de patrones de proceso: {path}") from exc
+    except json.JSONDecodeError as exc:
+        raise RuntimeError(f"JSON inválido en el archivo de patrones de proceso ({path}): {exc}") from exc
+
+    if not isinstance(raw, dict) or not raw:
+        raise RuntimeError(f"El archivo de patrones de proceso ({path}) debe ser un objeto JSON no vacío")
+
+    try:
+        return {
+            category: [re.compile(pattern, re.I) for pattern in patterns]
+            for category, patterns in raw.items()
+        }
+    except re.error as exc:
+        raise RuntimeError(f"Patrón regex inválido en {path}: {exc}") from exc
+
+
+PROCESS_PATTERNS: dict[str, list[re.Pattern]] = _load_process_patterns(_PROCESS_PATTERNS_FILE)
 # Patrones de cada categoría fusionados en una única regex de alternancia precompilada.
 # Ninguno de los patrones originales usa grupos de captura ni alternancia a nivel superior,
 # por lo que la fusión preserva el conjunto de coincidencias; solo cambia el conteo cuando
