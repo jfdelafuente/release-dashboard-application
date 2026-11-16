@@ -137,7 +137,7 @@ Las 9 Reglas de Oro anteriores están redactadas mayoritariamente en forma posit
 | **SL4 / P4** | **Informativa** | Errores menores o anomalías sin impacto que se registran para seguimiento en *backlog*. | N/A | Planificada | Backlog de mantenimiento |
 
 > [!NOTE]
-> Para el catálogo exhaustivo de 120 sistemas oficiales (`CORE++` y `CORE`), umbrales numéricos (3.1 a 3.10) y glosario de acrónimos, consúltese la skill canónica [`it-severity-matrix`](../it-severity-matrix/SKILL.md) y el [Catálogo Canónico de Sistemas y Colas Remedy](../it-severity-matrix/references/catalogo_sistemas_y_colas_remedy.md).
+> Para el catálogo exhaustivo de 117 sistemas críticos activos (`38 CORE++` y `79 CORE`, más `82` aplicaciones `Tier 2` en BIAs/Pilares), umbrales numéricos (3.1 a 3.10) y glosario de acrónimos, consúltese la skill canónica [`it-severity-matrix`](../it-severity-matrix/SKILL.md) y el [Catálogo Canónico de Sistemas y Colas Remedy](../it-severity-matrix/references/catalogo_sistemas_y_colas_remedy.md).
 
 ---
 
@@ -147,7 +147,7 @@ La emergencia se declara de forma automática al superar cualquiera de estos esc
 
 ### 4.0 Regla Canónica sobre Sistemas CORE++ (Tier 0)
 
-Toda afectación con corte de servicio, indisponibilidad masiva o bloqueo operativo en un aplicativo del inventario **`CORE++`** (`BSCS`, `CALL CENTER CTI`, `IVR`, `FICHA DE CLIENTE`, `IRIS`, `CRM4TELCO`, `BOREAL`, `AURORA`, `LUNA`, `TEIDE`, `SIGMA`, `GIROS`, `OPENAPI/APIGEE`, `TIBCO`, `LDAP CORPORATIVO`, `IDENTITY`, `ACME APP/WEB ORANGE`, `ALTAMIRA`) **declara automáticamente la Emergencia SL1 / P1**.
+Toda afectación con corte de servicio, indisponibilidad masiva o bloqueo operativo en un aplicativo del inventario **`CORE++`** (`BSCS`, `CALL CENTER CTI`, `IVR`, `FICHA DE CLIENTE`, `IRIS`, `CRM4TELCO`, `MAGALLANES`, `ESHOP FRONTEND`, `BOREAL`, `AURORA`, `LUNA`, `TEIDE`, `SIGMA`, `GIROS`, `OPENAPI/APIGEE`, `TIBCO`, `LDAP CORPORATIVO`, `IDENTITY`, `SSO OAM`, `ACME APP/WEB ORANGE`, `ALTAMIRA`) **declara automáticamente la Emergencia SL1 / P1**.
 
 - **Convocatoria Inmediata:** War Room activa en <10 minutos y primer comunicado ejecutivo en <20 minutos.
 - **Tolerancia Cero en Escalados:** Los escalados telefónicos (T+45 min / T+1h 45 min / Alarma >2h) son estrictamente obligatorios y no admiten ventanas de cortesía.

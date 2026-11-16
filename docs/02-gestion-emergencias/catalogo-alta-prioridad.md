@@ -3,7 +3,7 @@
 Documentación técnica, funcional y de arquitectura del fichero [`data/output/high_priority_notifications.json`](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/data/output/high_priority_notifications.json), el catálogo unificado y enriquecido de incidencias IT de alta prioridad (P1, P2 y discrepancias de subescalación N1) en el entorno Orange Tech Operations.
 
 * **Versión del Esquema:** `2.6.0`
-* **Skills de Referencia:** `it-severity-matrix` (v2.7.0), `orange-it-emergency-management` (v2.6.0), `incident-reporter` (v1.5.0), `incident-executive-notifications` (v1.5.0), `incident-triage-review` (v1.0.0).
+* **Skills de Referencia:** `it-severity-matrix` (v2.8.0), `orange-it-emergency-management` (v2.6.0), `incident-reporter` (v1.5.0), `incident-executive-notifications` (v1.5.0), `incident-triage-review` (v1.1.0).
 
 ---
 
@@ -112,7 +112,7 @@ Proporciona trazabilidad completa del procesamiento, versiones de skills aplicad
 | :--- | :--- | :--- |
 | `type` | `string` | `"high_priority_notifications"`. |
 | `version` | `string` | Versión del esquema (`"2.6.0"`). |
-| `skills_version` | `object` | Versiones exactas de las skills empleadas durante el triaje: `it-severity-matrix` (2.7.0), `orange-it-emergency-management` (2.6.0), `incident-reporter` (1.5.0), `incident-executive-notifications` (1.5.0). |
+| `skills_version` | `object` | Versiones exactas de las skills empleadas durante el triaje: `it-severity-matrix` (2.8.0), `orange-it-emergency-management` (2.6.0), `incident-reporter` (1.5.0), `incident-executive-notifications` (1.5.0). |
 | `generated_at` | `string (ISO-8601 UTC)` | Fecha/hora UTC de generación (ej. `"2026-11-04T18:52:07.834784+00:00"`). |
 | `source_file` | `string` | Nombre base del archivo masivo procesado. |
 | `ingestion_delta` | `object` | Comparativa contra el lote masivo previo (fichero anterior, conteo nuevos, resueltos, reabiertos e IDs específicos). |

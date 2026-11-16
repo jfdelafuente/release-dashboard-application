@@ -111,7 +111,7 @@ Pide a Antigravity en el chat:
 > *(Para actualizaciones posteriores de un ticket concreto añade, por ejemplo: "...y redacta un `seguimiento` / `reapertura` / `cierre` para `INC000004XXXXXX`").*
 
 El asistente:
-1. Ejecutará `scan_pending_incidents.py` e inspeccionará los datos objetivos de Remedy y el Resumen IA de Epsilon de cada ticket, aplicando las reglas de triaje y calibración (`it-severity-matrix` v2.7.0, `orange-it-emergency-management` v2.6.0 e `incident-triage-review` v1.1.0).
+1. Ejecutará `scan_pending_incidents.py` e inspeccionará los datos objetivos de Remedy y el Resumen IA de Epsilon de cada ticket, aplicando las reglas de triaje y calibración (`it-severity-matrix` v2.8.0, `orange-it-emergency-management` v2.6.0 e `incident-triage-review` v1.1.0).
 2. Adoptará el rol **`incident-reporter`** y redactará la fase correspondiente (`apertura`, `seguimiento`, `reapertura` o `cierre`) en los dos niveles estrictos ($\le 90$ palabras monopárrafo y $\le 30$ palabras en una línea).
 3. Persistirá automáticamente cada mensaje validado en `data/agent_executive_messages.json` mediante `converters/cli/update_agent_message.py`, regenerará `data/output/high_priority_notifications.json` y verificará que el escáner quede en `0 pendientes`.
 

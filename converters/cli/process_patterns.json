@@ -7,7 +7,8 @@
     "\\bca[íi]da\\s+de\\s+tienda\\b",
     "\\baislamiento\\s+de\\s+sede\\b",
     "\\bcircuito\\s+(?:backup|principal|ambos)\\b",
-    "\\bcircuito\\b.*\\b(?:sede|msc|plataforma|tienda|wan|mpls)\\b"
+    "\\bcircuito\\b.*\\b(?:sede|msc|plataforma|tienda|wan|mpls)\\b",
+    "\\bvpn\\s+corporativa\\b"
   ],
   "Infraestructura Core IT, BBDD y Cloud": [
     "\\besx\\b",
@@ -48,7 +49,8 @@
     "\\bapi\\s+gateway\\b",
     "\\bwebmethods\\b",
     "\\bmicroservicios\\b",
-    "\\bdispatcher\\b"
+    "\\bdispatcher\\b",
+    "\\bexperience\\s+layer\\b"
   ],
   "Facturación y Cobros": [
     "\\bhpfms\\b",
@@ -58,16 +60,17 @@
     "\\bsga\\b",
     "\\bmediaci[oó]n\\b",
     "\\bhp-ium\\b",
-    "\\bsap\\b",
+    "\\bsap(?:\\s+basis)?\\b",
     "\\bkenan(?:_fx)?\\b",
     "\\babacus(?:\\s+brm)?\\b",
-    "\\bnetplus\\b",
     "\\bpsp\\b",
     "\\bintransit\\b",
     "\\bxpression\\b",
     "\\bfew\\b",
     "\\baccon\\b",
     "\\bares\\b",
+    "\\bdigo\\b",
+    "\\bkyc\\s+online\\s+identity\\b",
     "\\bcobros?\\b",
     "\\bfacturas?\\b",
     "\\bfacturaci[oó]n\\b",
@@ -109,6 +112,8 @@
     "\\bceres(?:rt)?\\b",
     "\\bupdatecommercialactspa\\b",
     "\\becontrato\\b",
+    "\\bfirma\\s+digital\\b",
+    "\\beshop(?:\\s+frontend)?\\b",
     "\\bpangea\\b",
     "\\bkratos\\b",
     "\\bagora\\b",
@@ -140,6 +145,7 @@
     "\\btramitador\\b",
     "\\bspm\\b",
     "\\breventa\\s+fibra\\b",
+    "\\bprovision\\s+wholesale\\b",
     "\\bpcneon\\b",
     "\\bmyaddress\\b",
     "\\baltair\\s+a\\s+br[uú]jula\\b",
@@ -173,8 +179,10 @@
     "\\bapp\\s+mi\\s+orange\\b",
     "\\bacme\\s+(?:app|web)\\b",
     "\\baltamira\\b",
-    "\\batenas\\b",
+    "\\bmagallanes\\b",
     "\\bmijazztel\\b",
+    "\\bcrm\\s+b2b\\b",
+    "\\bvista360(?:\\s+b2b)?\\b",
     "\\bhesms\\b",
     "\\bsires\\b",
     "\\boperadores?\\b",
@@ -200,6 +208,8 @@
     "\\bfibra\\b",
     "\\bnodo\\s+central\\b",
     "\\benlace\\b",
-    "\\brouting\\s+core\\b"
+    "\\brouting\\s+core\\b",
+    "\\boceane\\b",
+    "\\btorre\\s+de\\s+control\\b"
   ]
 }

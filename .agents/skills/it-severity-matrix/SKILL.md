@@ -9,7 +9,7 @@ description: >-
   (GDU/EVIDIAN/ROBOTFACTORY), la Regla de Oro del triaje N1 y el protocolo oficial de escalados
   de Emergencias (45 min / +1 hora / Alarma >2h) con IM-CSO.
 domain: it-incidents
-version: 2.7.0
+version: 2.8.0
 language: es
 owner: Orange Tech Operations
 metadata:
@@ -19,7 +19,7 @@ metadata:
   last_updated: 2026-11-16
 ---
 
-# Matriz de Severidad, Prioridad y Protocolo de Escalados IT (Orange) — v2.7
+# Matriz de Severidad, Prioridad y Protocolo de Escalados IT (Orange) — v2.8
 
 Esta skill actúa como el **Motor Determinista de Clasificación y Fuente Única de Verdad (SSOT)** para auditar, calcular y justificar el nivel objetivo de severidad y prioridad operativa (SL1/P1 a SL4/P4) en el ecosistema de incidentes de Orange Tech Operations.
 
@@ -177,17 +177,17 @@ Las siguientes acciones están **terminantemente prohibidas** en cualquier ejecu
 Cualquier incidencia que cumpla las condiciones cuantitativas o cualitativas descritas en este catálogo se cataloga **automáticamente como Emergencia (`SL1 / P1`)** o como **Mayor (`SL2 / P2`)**, prevaleciendo sobre el campo `Prioridad` de Remedy.
 
 > [!NOTE]
-> **Modularidad y Carga Bajo Demanda:** El inventario exhaustivo de 120 sistemas oficiales (`CORE++` y `CORE`), colas Remedy (`grupo_asignado`) y glosario de acrónimos de telecomunicaciones se encuentra desacoplado en el [Catálogo Canónico de Sistemas, Aplicativos y Colas Remedy](references/catalogo_sistemas_y_colas_remedy.md). La IA debe cargarlo mediante `read_file` únicamente cuando se requiera desambiguar un subsistema, verificar la criticidad oficial o resolver la correspondencia con una cola técnica.
+> **Modularidad y Carga Bajo Demanda:** El inventario exhaustivo de 117 sistemas críticos oficiales activos (`38 CORE++` y `79 CORE`, más `82` aplicaciones `Tier 2` en BIAs/Pilares), colas Remedy (`grupo_asignado`) y glosario de acrónimos de telecomunicaciones se encuentra desacoplado en el [Catálogo Canónico de Sistemas, Aplicativos y Colas Remedy](references/catalogo_sistemas_y_colas_remedy.md). La IA debe cargarlo mediante `read_file` únicamente cuando se requiera desambiguar un subsistema, verificar la criticidad oficial o resolver la correspondencia con una cola técnica.
 
 ### 3.0 Gobernanza de Tiers de Criticidad Oficial (`CORE++` vs `CORE`)
 
-El catálogo oficial de aplicaciones corporativas de Orange Tech Operations establece dos niveles canónicos de impacto:
+El catálogo oficial de aplicaciones corporativas y BIAs de Orange Tech Operations (`Aplicaciones - BIAs_16112026.csv`) establece tres niveles canónicos de impacto:
 
-- **Tier 0 (`CORE++` — 39 Aplicaciones Ultra-Críticas):** Representan el corazón operativo de la compañía (`BSCS`, `CALL CENTER CTI`, `IVR`, `FICHA DE CLIENTE`, `IRIS`, `CRM4TELCO`, `BOREAL`, `AURORA`, `LUNA`, `TEIDE`, `SIGMA`, `GIROS`, `OPENAPI/APIGEE`, `TIBCO`, `LDAP CORPORATIVO`, `IDENTITY`, `ACME APP/WEB ORANGE`, `ALTAMIRA`, etc.).
+- **Tier 0 (`CORE++` — 38 Aplicaciones Ultra-Críticas):** Representan el corazón operativo de la compañía (`BSCS`, `CALL CENTER CTI`, `IVR`, `FICHA DE CLIENTE`, `IRIS`, `CRM4TELCO`, `MAGALLANES`, `ESHOP FRONTEND`, `BOREAL`, `AURORA`, `LUNA`, `TEIDE`, `SIGMA`, `GIROS`, `OPENAPI/APIGEE`, `TIBCO`, `LDAP CORPORATIVO`, `IDENTITY`, `SSO OAM`, `ACME APP/WEB ORANGE`, `ALTAMIRA`, etc.).
   - **Regla Determinista CORE++:** Toda indisponibilidad total, caída o bloqueo de servicio en un aplicativo `CORE++` impone de forma determinista el suelo **`SL1 / P1`**, activando la apertura de War Room (<10 min) y escalados telefónicos cada 45 min / +1h sin tolerar subescalación.
-- **Tier 1 (`CORE` — 81 Aplicaciones Críticas):** Sistemas con alto impacto en facturación, provisión, ventas, mediación o soporte mayor (`KENAN_FX`, `MEDIACION`, `ABACUS BRM`, `OCS`, `APRS`, `TAO`, `PORTOS`, `SGP MOVIL`, `POMV`, `TRAMITADOR SPM`, `DATAPOWER`, `WEBMETHODS`, `HPFMS`, `SCORING`, `SIEBEL`, `EPSILON`).
+- **Tier 1 (`CORE` — 79 Aplicaciones Críticas Activas):** Sistemas con alto impacto en facturación, provisión, ventas, mediación o soporte mayor (`KENAN_FX`, `MEDIACION`, `ABACUS BRM`, `OCS`, `APRS`, `TAO`, `PORTOS`, `SGP MOVIL`, `PROVISION MOVIL` / `POMV`, `TRAMITADOR` / `SPM`, `SAP BASIS`, `DATAPOWER`, `WEBMETHODS`, `HPFMS`, `SCORING`, `SIEBEL`, `EPSILON`). *(Excluye `APOLO WORKFLOW EMPRESAS` por constar en `Baja 2021`)*.
   - **Regla Determinista CORE:** Una indisponibilidad total en aplicativo `CORE` sin mecanismo de redundancia/contingencia activa **`SL1 / P1`**; ante degradación parcial, subcanal secundario o contingencia activa se clasifica como **`SL2 / P2`**.
-- **Tier 2 (`Non-CORE con Pilares` — 66 Aplicaciones):** Aplicativos departamentales de soporte (Fraude como `HUNTER`/`BLACK-LIST`, Cobros como `OPENCOBROS`/`ARES`, Identidad como `GDU`/`ADSELFSERVICE`, o Citas `POLAR`) cuya severidad se determina según el cumplimiento de los umbrales específicos de las Secciones 3.1 a 3.10.
+- **Tier 2 (`Non-CORE en BIA / Pilares` — 82 Aplicaciones):** Aplicativos incluidos oficialmente en BIAs (`En BIAS = Si`, 80) o pilares de Fraude (2) —como Fraude (`HUNTER`/`BLACK-LIST`/`DIGO`/`KYC ONLINE IDENTITY`), Cobros (`OPENCOBROS`/`ARES`), Identidad (`GDU`), Citas (`POLAR`), B2B (`CRM B2B`/`VISTA360 B2B`), Mayorista (`PROVISION WHOLESALE`), Red/Puesto (`VPN CORPORATIVA`/`OFFICE 365`/`NOSOTROS`) u Observabilidad/Ticketing (`OCEANE`/`TORRE DE CONTROL`)— cuya severidad se determina según los umbrales específicos de las Secciones 3.1 a 3.10.
 
 ### Matriz Ejecutiva Resumen (Cheat-Sheet de Triaje Rápido)
 
@@ -227,7 +227,7 @@ El catálogo oficial de aplicaciones corporativas de Orange Tech Operations esta
 
 ### 3.2 Ventas y Contratación Comercial
 
-**Sistemas y Aplicativos Core:** `CERES` (`APL_MOV_CERES` / `NEG_CAMP_CERES`), `Actos Comerciales` (`updateCommercialActSPA`), `ECONTRATO` (`Econtrato_N2`), `PANGEA` (altas/portas/migras), `Televenta`.
+**Sistemas y Aplicativos Core:** `CERES` / `CERESRT` (`APL_MOV_CERES` / `NEG_CAMP_CERES`), `ESHOP FRONTEND`, `KRATOS`, `Actos Comerciales` (`updateCommercialActSPA`), `ECONTRATO` / `FIRMA DIGITAL` (`Econtrato_N2`), `PANGEA` (altas/portas/migras), `Televenta`.
 
 | Código Canónico | Nivel | Componente / Ámbito | Criterio Objetivo de Disparo | Protocolo Operativo |
 | :--- | :---: | :--- | :--- | :--- |

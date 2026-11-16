@@ -1407,8 +1407,8 @@ def test_should_include_ingestion_delta_in_catalog_metadata():
         ingestion_delta=delta_mock
     )
     meta = catalog["_metadata"]
-    assert meta["version"] in ("2.6.0", "2.7.0")
-    assert meta["skills_version"]["it-severity-matrix"] == "2.7.0"
+    assert meta["version"] in ("2.6.0", "2.7.0", "2.8.0")
+    assert meta["skills_version"]["it-severity-matrix"] == "2.8.0"
     assert meta["skills_version"]["incident-reporter"] == "1.5.0"
     assert meta["ingestion_delta"] == delta_mock
     assert "reabiertas_count" in meta["kpis"]
