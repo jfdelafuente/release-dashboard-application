@@ -20,4 +20,8 @@ beautifulsoup4>=4.12.0
 fastapi>=0.100.0
 pydantic>=2.0.0
 
+# Homogeneización de zona horaria Europe/Madrid (epsilon_service.py) vía zoneinfo.
+# Fallback puro-Python de la IANA tzdata si el SO (VPS) no trae su propia base de datos.
+tzdata>=2024.1
+
 

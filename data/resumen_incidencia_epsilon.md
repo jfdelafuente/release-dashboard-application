@@ -44,6 +44,7 @@ Sigue estrictamente estas reglas:
      * Prohibido inventar segundos `:00` o medianoches artificiales `00:00:00` cuando no figuren en los datos.
    - Prohibido usar rangos en la fecha/hora (no usar intervalos como [DD-DD/MM/YYYY] ni [HH:mm a HH:mm]); si los datos abarcan un intervalo, usa siempre la marca temporal de inicio.
    - Si no hay fecha deducible en los datos, usa [S/F].
+   - Prohibido duplicar hitos: cada elemento de `hitosTecnicos` debe ser un evento distinto con texto íntegramente diferente al resto. Nunca repitas literalmente el mismo hito (misma marca temporal y misma descripción) aunque aparezca varias veces en el volcado de origen; inclúyelo una única vez.
    - Orden cronológico ascendente OBLIGATORIO: Una vez seleccionados los 5-6 hitos y convertidas las horas UTC a `Europe/Madrid`, ORDENA el array `hitosTecnicos` estrictamente de más antiguo a más reciente según el timestamp escrito entre corchetes (`hito[0] <= hito[1] <= ... <= hito[n]`). Verifica antes de emitir el JSON que ninguna marca sea anterior a la del elemento precedente.
 
 6. BLOQUEOS (`bloqueos`):
@@ -271,6 +272,7 @@ public final class EpsilonPrompts {
              * Prohibido inventar segundos ':00' o medianoches '00:00:00' cuando no figuren en los datos.
            - Prohibido usar rangos en la fecha/hora (no usar intervalos como [DD-DD/MM/YYYY] ni [HH:mm a HH:mm]); si los datos abarcan un intervalo, usa siempre la marca temporal de inicio.
            - Si no hay fecha deducible en los datos, usa [S/F].
+           - Prohibido duplicar hitos: cada elemento de `hitosTecnicos` debe ser un evento distinto con texto íntegramente diferente al resto; nunca repitas literalmente el mismo hito aunque aparezca varias veces en el volcado de origen.
            - Orden cronológico ascendente OBLIGATORIO: Ordena el array final `hitosTecnicos` estrictamente de más antiguo a más reciente según el timestamp escrito entre corchetes (`hito[0] <= hito[1] <= ... <= hito[n]`) y verifícalo antes de devolver el JSON.
 
         6. BLOQUEOS (`bloqueos`):

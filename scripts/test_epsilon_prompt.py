@@ -42,6 +42,7 @@ from epsilon_service import (  # noqa: E402
     load_project_env,
     normalize_anthropic_model_name,
     parse_timestamp_dt,
+    urlopen_with_ssl_fallback,
 )
 
 load_project_env()
@@ -49,8 +50,6 @@ load_project_env()
 
 def list_available_models() -> int:
     """Consulta el endpoint /v1/models del proveedor configurado y lista los modelos admitidos."""
-    import ssl
-    import urllib.error
     import urllib.request
 
     load_project_env()
@@ -69,24 +68,9 @@ def list_available_models() -> int:
     }
     req = urllib.request.Request(endpoint, headers=headers, method="GET")
 
-    ssl_context = ssl.create_default_context()
-    verify_ssl = os.environ.get("ANTHROPIC_VERIFY_SSL", "").lower() not in ("0", "false", "no")
-    if not verify_ssl or os.environ.get("PYTHONHTTPSVERIFY") == "0":
-        ssl_context.check_hostname = False
-        ssl_context.verify_mode = ssl.CERT_NONE
-
     print(f"\nConsultando modelos disponibles en: {endpoint} ...")
     try:
-        try:
-            resp_cm = urllib.request.urlopen(req, timeout=15, context=ssl_context)
-        except urllib.error.URLError as ssl_err:
-            if "CERTIFICATE_VERIFY_FAILED" in str(ssl_err) or "certificate verify failed" in str(ssl_err):
-                insecure_context = ssl._create_unverified_context()
-                resp_cm = urllib.request.urlopen(req, timeout=15, context=insecure_context)
-            else:
-                raise ssl_err
-
-        with resp_cm as resp:
+        with urlopen_with_ssl_fallback(req, timeout=15) as resp:
             data = json.loads(resp.read().decode("utf-8"))
             models = []
             if isinstance(data, dict):
@@ -115,7 +99,6 @@ def list_available_models() -> int:
 
 def fetch_incident_from_url(url: str, timeout: int = 30) -> str:
     """Descarga el JSON de entrada de una incidencia desde una URL HTTP/HTTPS."""
-    import ssl
     import urllib.error
     import urllib.parse
     import urllib.request
@@ -133,28 +116,8 @@ def fetch_incident_from_url(url: str, timeout: int = 30) -> str:
     }
     req = urllib.request.Request(clean_url, headers=headers, method="GET")
 
-    ssl_context = None
-    if parsed.scheme == "https":
-        ssl_context = ssl.create_default_context()
-        verify_ssl = os.environ.get("ANTHROPIC_VERIFY_SSL", "").lower() not in ("0", "false", "no")
-        if not verify_ssl or os.environ.get("PYTHONHTTPSVERIFY") == "0":
-            ssl_context.check_hostname = False
-            ssl_context.verify_mode = ssl.CERT_NONE
-
     try:
-        try:
-            resp_cm = urllib.request.urlopen(req, timeout=timeout, context=ssl_context)
-        except urllib.error.URLError as ssl_err:
-            if parsed.scheme == "https" and (
-                "CERTIFICATE_VERIFY_FAILED" in str(ssl_err)
-                or "certificate verify failed" in str(ssl_err)
-            ):
-                insecure_context = ssl._create_unverified_context()
-                resp_cm = urllib.request.urlopen(req, timeout=timeout, context=insecure_context)
-            else:
-                raise ssl_err
-
-        with resp_cm as resp:
+        with urlopen_with_ssl_fallback(req, timeout=timeout) as resp:
             raw_bytes = resp.read()
             charset = resp.headers.get_content_charset() or "utf-8"
             return raw_bytes.decode(charset, errors="replace")

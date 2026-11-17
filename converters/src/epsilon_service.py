@@ -9,7 +9,7 @@ servidor HTTP (serve_app.py) y las suites de pruebas unitarias.
 
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 import json
 import os
 from pathlib import Path
@@ -17,6 +17,7 @@ import re
 import sys
 import time
 from typing import Any, Dict, List, Optional, Tuple
+from zoneinfo import ZoneInfo
 
 from pydantic import BaseModel, Field, field_validator, model_validator
 
@@ -184,6 +185,18 @@ def count_words(text: Optional[str]) -> int:
     return len(text.strip().split())
 
 
+def find_duplicate_hitos(hitos: List[str]) -> List[str]:
+    """Devuelve los textos (normalizados) de hitos repetidos textualmente dentro del array."""
+    seen: set = set()
+    duplicated: List[str] = []
+    for hito in hitos:
+        normalized = str(hito).strip()
+        if normalized in seen and normalized not in duplicated:
+            duplicated.append(normalized)
+        seen.add(normalized)
+    return duplicated
+
+
 def parse_timestamp_dt(item: str) -> Optional[datetime]:
     """Extrae la fecha/hora de un hito técnico si existe."""
     match = re.match(r"^\[(\d{2}/\d{2}/\d{4})(?:\s+(\d{2}:\d{2}(?::\d{2})?))?\]:", item)
@@ -286,6 +299,11 @@ class EpsilonResumenModel(BaseModel):
     @field_validator("hitosTecnicos")
     @classmethod
     def validate_hitos(cls, v: List[str]) -> List[str]:
+        duplicated = find_duplicate_hitos(v)
+        if duplicated:
+            raise ValueError(
+                f"'hitosTecnicos' contiene hitos duplicados (texto idéntico): {duplicated}"
+            )
         if len(v) > 6:
             raise ValueError(f"'hitosTecnicos' permite un máximo de 5-6 hitos (recibidos: {len(v)}).")
         prev_dt: Optional[datetime] = None
@@ -477,6 +495,8 @@ def evaluate_contract(data: Dict[str, Any]) -> Tuple[List[EpsilonResumenValidati
     hitos = data.get("hitosTecnicos", [])
     if isinstance(hitos, list):
         count_hitos = len(hitos)
+        hitos_duplicated = find_duplicate_hitos(hitos)
+        hitos_no_dup_ok = not hitos_duplicated
         hitos_len_ok = count_hitos <= 6
         hitos_format_ok = True
         hitos_chrono_ok = True
@@ -495,8 +515,11 @@ def evaluate_contract(data: Dict[str, Any]) -> Tuple[List[EpsilonResumenValidati
             if cur_dt:
                 prev_dt = cur_dt
 
-        hitos_total_ok = hitos_len_ok and hitos_format_ok and hitos_chrono_ok
+        hitos_total_ok = hitos_no_dup_ok and hitos_len_ok and hitos_format_ok and hitos_chrono_ok
         detalle_hitos = []
+        if not hitos_no_dup_ok:
+            preview = hitos_duplicated[0][:60] + ("..." if len(hitos_duplicated[0]) > 60 else "")
+            detalle_hitos.append(f"Hitos duplicados ({len(hitos_duplicated)}): \"{preview}\"")
         if not hitos_len_ok:
             detalle_hitos.append(f"Excede 6 hitos ({count_hitos})")
         if not hitos_format_ok:
@@ -508,7 +531,7 @@ def evaluate_contract(data: Dict[str, Any]) -> Tuple[List[EpsilonResumenValidati
         checks.append(
             EpsilonResumenValidationCheck(
                 campo="hitosTecnicos",
-                criterio="<= 6 hitos, formato adaptativo y orden cronológico",
+                criterio="<= 6 hitos únicos, formato adaptativo y orden cronológico",
                 metrica=f"{count_hitos} hitos",
                 cumple=hitos_total_ok,
                 detalle=", ".join(detalle_hitos),
@@ -606,6 +629,9 @@ def extract_json_content(raw_text: str) -> str:
     return text
 
 
+_SYSTEM_PROMPT_TRUNCATION_MARKER = "## 5. Implementación en Código"
+
+
 def build_epsilon_system_prompt() -> str:
     """Carga el System Prompt desde data/resumen_incidencia_epsilon.md (sin anexos de código/futuro) si existe."""
     spec_path = get_project_root() / "data" / "resumen_incidencia_epsilon.md"
@@ -614,26 +640,24 @@ def build_epsilon_system_prompt() -> str:
             with open(spec_path, "r", encoding="utf-8") as f:
                 content = f.read().strip()
                 if content:
-                    prompt_only = content.split("## 5. Implementación en Código")[0].strip()
+                    if _SYSTEM_PROMPT_TRUNCATION_MARKER not in content:
+                        sys.stderr.write(
+                            f"[Aviso] No se encontró el marcador '{_SYSTEM_PROMPT_TRUNCATION_MARKER}' en "
+                            f"{spec_path}; se usará el documento completo como System Prompt (incluyendo "
+                            "posibles anexos de código o secciones futuras).\n"
+                        )
+                        return content
+                    prompt_only = content.split(_SYSTEM_PROMPT_TRUNCATION_MARKER)[0].strip()
                     return prompt_only or content
         except Exception:
             pass
     return EPSILON_SYSTEM_PROMPT
 
 
-def _last_sunday_of_month_utc(year: int, month: int) -> datetime:
-    """Devuelve las 01:00 UTC del último domingo del mes indicado (cambio horario UE)."""
-    if month == 12:
-        next_month = datetime(year + 1, 1, 1, 1, 0, 0, tzinfo=timezone.utc)
-    else:
-        next_month = datetime(year, month + 1, 1, 1, 0, 0, tzinfo=timezone.utc)
-    last_day = next_month - timedelta(days=1)
-    days_since_sunday = (last_day.weekday() + 1) % 7
-    return last_day - timedelta(days=days_since_sunday)
-
+_MADRID_TZ = ZoneInfo("Europe/Madrid")
 
 _ISO_UTC_REGEX = re.compile(
-    r"^(\d{4}-\d{2}-\d{2})T(\d{2}:\d{2}:\d{2})(?:\.\d+)?(?:Z|\+00:?00)$"
+    r"^(\d{4}-\d{2}-\d{2})T(\d{2}:\d{2}:\d{2}(?:\.\d+)?)(?:Z|\+00:?00)$"
 )
 
 
@@ -647,14 +671,10 @@ def convert_utc_iso_to_madrid(value: Any) -> Any:
         m = _ISO_UTC_REGEX.match(value.strip())
         if m:
             try:
-                utc_dt = datetime.strptime(
-                    f"{m.group(1)}T{m.group(2)}", "%Y-%m-%dT%H:%M:%S"
-                ).replace(tzinfo=timezone.utc)
-                dst_start = _last_sunday_of_month_utc(utc_dt.year, 3)
-                dst_end = _last_sunday_of_month_utc(utc_dt.year, 10)
-                offset_hours = 2 if dst_start <= utc_dt < dst_end else 1
-                madrid_tz = timezone(timedelta(hours=offset_hours))
-                local_dt = utc_dt.astimezone(madrid_tz)
+                utc_dt = datetime.fromisoformat(f"{m.group(1)}T{m.group(2)}").replace(
+                    tzinfo=timezone.utc
+                )
+                local_dt = utc_dt.astimezone(_MADRID_TZ)
                 return local_dt.isoformat()
             except ValueError:
                 return value
@@ -808,6 +828,39 @@ def call_gemini(user_prompt: str, model_name: str, system_prompt: Optional[str] 
         raise RuntimeError("Ningún SDK de Gemini instalado ('google-genai' o 'google-generativeai').")
 
 
+def urlopen_with_ssl_fallback(req: "urllib.request.Request", timeout: int = 60) -> Any:
+    """Invoca urlopen() reintentando sin verificación de certificado si falla la validación TLS.
+
+    El reintento solo se activa ante CERTIFICATE_VERIFY_FAILED (típico de proxies corporativos
+    con MITM de certificado propio) o si ANTHROPIC_VERIFY_SSL/PYTHONHTTPSVERIFY lo desactivan
+    explícitamente. Avisa por stderr cuando degrada la verificación para que no pase inadvertido.
+    """
+    import ssl
+    import urllib.error
+    import urllib.request
+
+    ssl_context = ssl.create_default_context()
+    verify_ssl = os.environ.get("ANTHROPIC_VERIFY_SSL", "").lower() not in ("0", "false", "no")
+    if not verify_ssl or os.environ.get("PYTHONHTTPSVERIFY") == "0":
+        ssl_context.check_hostname = False
+        ssl_context.verify_mode = ssl.CERT_NONE
+        sys.stderr.write(
+            f"[Aviso] Verificación SSL deshabilitada explícitamente para '{req.full_url}'.\n"
+        )
+
+    try:
+        return urllib.request.urlopen(req, timeout=timeout, context=ssl_context)
+    except urllib.error.URLError as ssl_err:
+        if "CERTIFICATE_VERIFY_FAILED" in str(ssl_err) or "certificate verify failed" in str(ssl_err):
+            sys.stderr.write(
+                f"[Aviso] Certificado TLS no verificable para '{req.full_url}'; "
+                "reintentando sin verificación de certificado.\n"
+            )
+            insecure_context = ssl._create_unverified_context()
+            return urllib.request.urlopen(req, timeout=timeout, context=insecure_context)
+        raise
+
+
 def _call_anthropic_native_http(
     token: str,
     model_name: str,
@@ -816,7 +869,6 @@ def _call_anthropic_native_http(
     base_url: Optional[str] = None,
 ) -> Tuple[Dict[str, Any], int, float]:
     """Fallback HTTP nativo (urllib) para Anthropic Claude y gateways corporativos (LiteLLM MasOrange)."""
-    import ssl
     import urllib.error
     import urllib.request
 
@@ -848,24 +900,9 @@ def _call_anthropic_native_http(
 
     req = urllib.request.Request(endpoint, data=json.dumps(payload).encode("utf-8"), headers=headers, method="POST")
 
-    ssl_context = ssl.create_default_context()
-    verify_ssl = os.environ.get("ANTHROPIC_VERIFY_SSL", "").lower() not in ("0", "false", "no")
-    if not verify_ssl or os.environ.get("PYTHONHTTPSVERIFY") == "0":
-        ssl_context.check_hostname = False
-        ssl_context.verify_mode = ssl.CERT_NONE
-
     t0 = time.time()
     try:
-        try:
-            resp_cm = urllib.request.urlopen(req, timeout=60, context=ssl_context)
-        except urllib.error.URLError as ssl_err:
-            if "CERTIFICATE_VERIFY_FAILED" in str(ssl_err) or "certificate verify failed" in str(ssl_err):
-                insecure_context = ssl._create_unverified_context()
-                resp_cm = urllib.request.urlopen(req, timeout=60, context=insecure_context)
-            else:
-                raise ssl_err
-
-        with resp_cm as resp:
+        with urlopen_with_ssl_fallback(req, timeout=60) as resp:
             elapsed = time.time() - t0
             resp_bytes = resp.read()
             resp_body = json.loads(resp_bytes.decode("utf-8"))

@@ -128,6 +128,28 @@ def test_hitos_chronological_order_violation(valid_payload):
         EpsilonResumenModel(**valid_payload)
 
 
+def test_hitos_duplicated_text_fails_with_specific_message(valid_payload):
+    """Verifica que hitos con texto exactamente duplicado se rechacen con un mensaje propio
+    y no se enmascaren como 'exceso de hitos' u 'orden cronológico'."""
+    valid_payload["hitosTecnicos"] = [
+        "[17/11/2026 09:05]: Detección inicial en OEST Oviedo de ausencia de carga diaria.",
+        "[17/11/2026 09:16]: Confirmación de afectación en Teleperformance Salamanca.",
+        "[17/11/2026 09:30:46]: N1 CSO contacta con N3 CERES y autoriza escalado masivo P3.",
+        "[17/11/2026 09:43]: Transcom León reporta mismo fallo en fichero ASP_EMP.",
+        "[17/11/2026 09:30:46]: N1 CSO contacta con N3 CERES y autoriza escalado masivo P3.",
+        "[17/11/2026 09:43]: Transcom León reporta mismo fallo en fichero ASP_EMP.",
+        "[17/11/2026 10:27]: Foundever Sevilla confirma afectación.",
+        "[17/11/2026 10:52:19]: NEG_CAMP_CERES resuelve incidencia.",
+    ]
+    with pytest.raises(ValueError, match="hitos duplicados"):
+        EpsilonResumenModel(**valid_payload)
+
+    checks, all_passed = evaluate_contract(valid_payload)
+    assert all_passed is False
+    hitos_check = next(c for c in checks if c.campo == "hitosTecnicos")
+    assert "Hitos duplicados (2)" in hitos_check.detalle
+
+
 def test_bloqueos_invalid_prefix(valid_payload):
     """Verifica que bloqueos sin prefijo estandarizado sean rechazados."""
     valid_payload["bloqueos"] = ["Esperando parche del proveedor sin prefijo."]
