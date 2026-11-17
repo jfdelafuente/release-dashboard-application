@@ -17,6 +17,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 import json
 import logging
+import os
 from pathlib import Path
 import re
 import ssl
@@ -2330,7 +2331,11 @@ class EpsilonClient:
         self._server_offline = False
         self._consecutive_failures = 0
         self._allow_fallback = (base_url.rstrip("/") in self.DEFAULT_CANDIDATE_URLS)
-        self._fallback_urls = [u for u in self.DEFAULT_CANDIDATE_URLS if u != self.base_url]
+        provider_mode = os.environ.get("EPSILON_PROVIDER_MODE", "internal").strip().lower()
+        candidates = list(self.DEFAULT_CANDIDATE_URLS)
+        if provider_mode not in ("soptmc", "internal_with_soptmc_fallback"):
+            candidates = [u for u in candidates if u != self.CORPORATE_URL]
+        self._fallback_urls = [u for u in candidates if u != self.base_url]
         self.fetch_reasons: dict[str, str] = {}
 
     def _get_cache_path(self, incident_code: str) -> Path:
@@ -2435,6 +2440,27 @@ class EpsilonClient:
         fallback_data = self._try_fallback_urls(incident_code, cache_file)
         if fallback_data:
             return fallback_data
+
+        # Si los endpoints HTTP locales no responden y estamos en modo interno, sintetizar in-process
+        if self._allow_fallback and os.environ.get("EPSILON_PROVIDER_MODE", "internal").strip().lower() != "soptmc":
+            try:
+                src_dir = Path(__file__).resolve().parents[1] / "src"
+                if str(src_dir) not in sys.path:
+                    sys.path.insert(0, str(src_dir))
+                from epsilon_service import has_live_llm_credentials, resolve_or_generate_epsilon_summary
+                if has_live_llm_credentials():
+                    proj_root = self.cache_dir.parent.parent if self.cache_dir.parent.name == "data" else self.cache_dir.parent
+                    status_code, payload, cache_status = resolve_or_generate_epsilon_summary(
+                        incident_code=incident_code,
+                        cache_dir=self.cache_dir,
+                        project_root=proj_root,
+                    )
+                    if status_code == 200 and isinstance(payload, dict) and payload:
+                        self._consecutive_failures = 0
+                        self.fetch_reasons[incident_code] = f"Motor interno Epsilon IA ({cache_status})"
+                        return payload
+            except Exception as internal_err:
+                logger.debug("Aviso en motor interno Epsilon in-process para %s: %s", incident_code, internal_err)
 
         self._consecutive_failures += 1
         if self._consecutive_failures >= self.max_consecutive_failures:

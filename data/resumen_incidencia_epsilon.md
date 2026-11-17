@@ -166,7 +166,26 @@ Resume la siguiente incidencia de Remedy siguiendo las directrices del sistema y
 
 ## 5. Implementación en Código
 
-### 5.1 Implementación en Python
+### 5.0 Arquitectura Activa en `release-dashboard-application` (Motor Interno + Conmutación)
+
+En este repositorio, las secciones **1 a 4** de este documento son leídas dinámicamente en caliente por [`converters/src/epsilon_service.py`](../converters/src/epsilon_service.py) (`build_epsilon_system_prompt()`), truncando automáticamente a partir del encabezado `## 5. Implementación en Código`.
+
+1. **Flujo bajo demanda (`GET /api/epsilon/resumenIA/{codigo}`)**:
+   - Servido en local por [`serve_app.py`](../serve_app.py) y en producción por [`converters/src/fastapi_epsilon_router.py`](../converters/src/fastapi_epsilon_router.py).
+   - Descarga el detalle crudo del ticket desde `MonTMC` (`GET /MonTMC/api/eps/remedyG/{idRemedy}`, respaldado en `data/.remedy_cache/{id}.json`), homogeneiza marcas ISO UTC (`+00:00`/`Z`) a `Europe/Madrid` y valida las 10 reglas en `EpsilonResumenModel` (con **1 reintento autocorrectivo** automático si el LLM incumple algún criterio).
+2. **Smart Fingerprint Cache (`FINGERPRINT_HIT`)**:
+   - Calcula una huella determinista del estado del ticket (`fechaUltimaModificacion`, `estadoDesc`, `detalleSolucion`, número y último apunte de `worklog` y `paps`) + el hash SHA-256 de este prompt (`prompt_hash`).
+   - Si ni el ticket en Remedy ni este documento han cambiado, sirve `data/.epsilon_cache/{codigo}.json` en milisegundos con **0 consumo de tokens LLM**. Si editas cualquier regla de las secciones 1–4, el `prompt_hash` cambia y los resúmenes se actualizan solos.
+3. **Pre-generación proactiva en background (`EPSILON_SYNC_PREGEN=1`)**:
+   - [`converters/cli/sync_montmc_incidents.py`](../converters/cli/sync_montmc_incidents.py) y [`converters/cli/retry_epsilon_ia.py`](../converters/cli/retry_epsilon_ia.py) pre-generan concurrentemente los resúmenes de incidencias activas nuevas o modificadas antes de evaluar alertas ejecutivas.
+4. **Conmutación de motor (`EPSILON_PROVIDER_MODE` en `.env`)**:
+   - `internal` *(por defecto)*: Motor Interno propio.
+   - `internal_with_soptmc_fallback`: Motor Interno con respaldo automático a SopTMC si cae el gateway LLM.
+   - `soptmc`: Flujo legado externo (`GET https://soptmc.si.orange.es/MonTMC/api/epsilon/resumenIA/{codigo}`).
+
+---
+
+### 5.1 Implementación de Referencia en Python
 
 Si integras este prompt en scripts Python (ej. `retry_epsilon_ia.py` o backend FastAPI/Flask):
 

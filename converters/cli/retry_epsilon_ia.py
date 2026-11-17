@@ -39,6 +39,22 @@ def get_project_root() -> Path:
     return Path.cwd()
 
 
+_ROOT_FOR_IMPORT = get_project_root()
+if str(_ROOT_FOR_IMPORT) not in sys.path:
+    sys.path.insert(0, str(_ROOT_FOR_IMPORT))
+
+try:
+    from converters.src.epsilon_service import get_epsilon_provider_mode, resolve_or_generate_epsilon_summary
+except ImportError:
+    try:
+        if str(_ROOT_FOR_IMPORT / "converters" / "src") not in sys.path:
+            sys.path.insert(0, str(_ROOT_FOR_IMPORT / "converters" / "src"))
+        from epsilon_service import get_epsilon_provider_mode, resolve_or_generate_epsilon_summary
+    except ImportError:
+        get_epsilon_provider_mode = None
+        resolve_or_generate_epsilon_summary = None
+
+
 def get_cache_dir(project_root: Path) -> Path:
     cache_dir = project_root / "data" / ".epsilon_cache"
     cache_dir.mkdir(parents=True, exist_ok=True)
@@ -166,12 +182,19 @@ def retry_incidents(
     root = project_root or get_project_root()
     cache_dir = get_cache_dir(root)
 
+    explicit_urls = bool(base_urls)
+    mode = get_epsilon_provider_mode() if get_epsilon_provider_mode else "internal"
+    use_internal_engine = (not explicit_urls) and (mode != "soptmc") and (resolve_or_generate_epsilon_summary is not None)
+
     if not base_urls:
-        base_urls = [CORPORATE_EPSILON_URL, LOCAL_PROXY_URL]
+        base_urls = [LOCAL_PROXY_URL, CORPORATE_EPSILON_URL] if mode != "soptmc" else [CORPORATE_EPSILON_URL, LOCAL_PROXY_URL]
 
     print("=" * 80)
     print(f"RELANZAMIENTO DE RESUMEN IA DE EPSILON ({len(incident_codes)} incidencias)")
-    print(f"Endpoints candidatos: {', '.join(base_urls)}")
+    if use_internal_engine:
+        print(f"Motor activo: Motor Interno Epsilon IA (resumen_incidencia_epsilon.md | modo={mode})")
+    else:
+        print(f"Endpoints candidatos: {', '.join(base_urls)}")
     print("=" * 80)
 
     results = {
@@ -192,6 +215,28 @@ def retry_incidents(
                     continue
             except Exception:
                 pass
+
+        if use_internal_engine and resolve_or_generate_epsilon_summary is not None:
+            print(f"[{idx}/{len(incident_codes)}] {inc_id}: Sintetizando con motor interno Epsilon IA...", end=" ", flush=True)
+            status_code, payload, cache_status = resolve_or_generate_epsilon_summary(
+                incident_code=inc_id,
+                force=force,
+                cache_dir=cache_dir,
+                project_root=root,
+            )
+            if status_code == 200 and isinstance(payload, dict) and (payload.get("problema") or payload.get("impacto")):
+                reason = f"{cache_status} (motor interno Epsilon)"
+                print(f"[OK] Guardado en caché ({reason})")
+                results["success"].append({
+                    "id": inc_id,
+                    "titulo": payload.get("titulo", ""),
+                    "reason": reason,
+                })
+            else:
+                err_txt = str(payload.get("error") if isinstance(payload, dict) else "Error desconocido")
+                print(f"[FALLO] {err_txt}")
+                results["failed"].append({"id": inc_id, "error": err_txt})
+            continue
 
         print(f"[{idx}/{len(incident_codes)}] {inc_id}: Consultando telemetría Epsilon...", end=" ", flush=True)
         data, reason = fetch_epsilon_data(inc_id, base_urls)
@@ -244,7 +289,7 @@ def main() -> int:
     args = parser.parse_args()
     project_root = get_project_root()
 
-    candidate_urls = [args.base_url] if args.base_url else [CORPORATE_EPSILON_URL, LOCAL_PROXY_URL]
+    candidate_urls = [args.base_url] if args.base_url else None
 
     incident_codes = list(args.incidents)
     if not incident_codes:

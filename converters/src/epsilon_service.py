@@ -9,7 +9,9 @@ servidor HTTP (serve_app.py) y las suites de pruebas unitarias.
 
 from __future__ import annotations
 
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
+import hashlib
 import json
 import os
 from pathlib import Path
@@ -17,6 +19,7 @@ import re
 import sys
 import time
 from typing import Any, Dict, List, Optional, Tuple
+import urllib.request
 from zoneinfo import ZoneInfo
 
 from pydantic import BaseModel, Field, field_validator, model_validator
@@ -828,7 +831,7 @@ def call_gemini(user_prompt: str, model_name: str, system_prompt: Optional[str] 
         raise RuntimeError("Ningún SDK de Gemini instalado ('google-genai' o 'google-generativeai').")
 
 
-def urlopen_with_ssl_fallback(req: "urllib.request.Request", timeout: int = 60) -> Any:
+def urlopen_with_ssl_fallback(req: urllib.request.Request, timeout: int = 60) -> Any:
     """Invoca urlopen() reintentando sin verificación de certificado si falla la validación TLS.
 
     El reintento solo se activa ante CERTIFICATE_VERIFY_FAILED (típico de proxies corporativos
@@ -1057,6 +1060,39 @@ def resolve_llm_provider(explicit_provider: Optional[str] = None) -> str:
 # =====================================================================
 # FUNCIÓN PRINCIPAL DE SERVICIO
 # =====================================================================
+def _invoke_llm_provider(
+    resolved_provider: str,
+    resolved_model: str,
+    user_prompt: str,
+    prompt_sys: str,
+    mock_data_path: Optional[str] = None,
+    incident_data: Optional[Dict[str, Any]] = None,
+) -> Tuple[Dict[str, Any], int, float]:
+    """Despacha la invocación al proveedor LLM configurado."""
+    if resolved_provider == "mock":
+        return call_mock(user_prompt, mock_data_path=mock_data_path, incident_data=incident_data)
+    if resolved_provider == "anthropic":
+        return call_anthropic(user_prompt, model_name=resolved_model, system_prompt=prompt_sys)
+    if resolved_provider == "openai":
+        return call_openai(user_prompt, model_name=resolved_model, system_prompt=prompt_sys)
+    if resolved_provider == "gemini":
+        return call_gemini(user_prompt, model_name=resolved_model, system_prompt=prompt_sys)
+    raise ValueError(f"Proveedor no soportado: '{resolved_provider}'")
+
+
+def _extract_validation_errors(exc: Exception) -> List[str]:
+    """Formatea los errores de validación de Pydantic en mensajes legibles."""
+    validation_errors: List[str] = []
+    if hasattr(exc, "errors") and callable(exc.errors):
+        for err in exc.errors():
+            loc = " -> ".join(str(x) for x in err.get("loc", []))
+            msg = err.get("msg", "")
+            validation_errors.append(f"{loc}: {msg}" if loc else msg)
+    else:
+        validation_errors.append(str(exc))
+    return validation_errors
+
+
 def generate_epsilon_summary(
     incident_data: Dict[str, Any],
     provider: Optional[str] = None,
@@ -1064,14 +1100,16 @@ def generate_epsilon_summary(
     mock: bool = False,
     mock_data_path: Optional[str] = None,
     system_prompt: Optional[str] = None,
+    max_retries: int = 1,
 ) -> Tuple[bool, Dict[str, Any], Dict[str, Any]]:
     """
     Genera, extrae y valida el resumen de una incidencia IT siguiendo el contrato Epsilon IA.
+    Incluye autocorrección (1 reintento correctivo por defecto) si el LLM incumple el contrato Pydantic.
 
     Devuelve: (is_valid, data_or_errors, meta)
     - is_valid: True si supera la validación estricta de Pydantic.
     - data_or_errors: Diccionario con los campos del resumen validado, o lista de errores.
-    - meta: Diccionario con estadísticas (proveedor, modelo, tokens, elapsed_seconds, etc.).
+    - meta: Diccionario con estadísticas (proveedor, modelo, tokens, elapsed_seconds, retries, etc.).
     """
     load_project_env()
 
@@ -1079,7 +1117,7 @@ def generate_epsilon_summary(
         return (
             False,
             {"error": "Datos de incidencia insuficientes o vacíos", "validation_errors": ["incident_data debe ser un dict no vacío"]},
-            {"provider": "none", "elapsed_seconds": 0.0, "tokens": 0},
+            {"provider": "none", "elapsed_seconds": 0.0, "tokens": 0, "retries": 0},
         )
 
     is_mock = mock or (os.environ.get("EPSILON_MOCK", "").lower() in ("1", "true", "yes"))
@@ -1097,52 +1135,64 @@ def generate_epsilon_summary(
         resolved_provider = "mock"
         resolved_model = "mock-epsilon"
 
-    user_prompt = build_user_message(incident_data)
+    base_user_prompt = build_user_message(incident_data)
     prompt_sys = system_prompt or build_epsilon_system_prompt()
 
-    # Invocación al proveedor seleccionado
-    if resolved_provider == "mock":
-        raw_dict, tokens, elapsed = call_mock(user_prompt, mock_data_path=mock_data_path, incident_data=incident_data)
-    elif resolved_provider == "anthropic":
-        raw_dict, tokens, elapsed = call_anthropic(user_prompt, model_name=resolved_model, system_prompt=prompt_sys)
-    elif resolved_provider == "openai":
-        raw_dict, tokens, elapsed = call_openai(user_prompt, model_name=resolved_model, system_prompt=prompt_sys)
-    elif resolved_provider == "gemini":
-        raw_dict, tokens, elapsed = call_gemini(user_prompt, model_name=resolved_model, system_prompt=prompt_sys)
-    else:
-        raise ValueError(f"Proveedor no soportado: '{resolved_provider}'")
+    effective_retries = 0 if resolved_provider == "mock" else max(0, int(max_retries))
+    total_tokens = 0
+    total_elapsed = 0.0
+    current_user_prompt = base_user_prompt
+    raw_dict: Dict[str, Any] = {}
+    last_validation_errors: List[str] = []
 
-    meta = {
-        "provider": resolved_provider,
-        "model": resolved_model,
-        "mock": resolved_provider == "mock",
-        "tokens": tokens,
-        "elapsed_seconds": round(elapsed, 3),
-        "timestamp": datetime.utcnow().isoformat() + "Z",
-    }
+    for attempt in range(effective_retries + 1):
+        raw_dict, tokens, elapsed = _invoke_llm_provider(
+            resolved_provider=resolved_provider,
+            resolved_model=resolved_model,
+            user_prompt=current_user_prompt,
+            prompt_sys=prompt_sys,
+            mock_data_path=mock_data_path,
+            incident_data=incident_data,
+        )
+        total_tokens += tokens
+        total_elapsed += elapsed
 
-    # Validación Pydantic estricta
-    try:
-        validated_model = EpsilonResumenModel(**raw_dict)
-        validated_dict = validated_model.model_dump()
-        validated_dict["meta"] = meta
-        return True, validated_dict, meta
-    except Exception as exc:
-        validation_errors: List[str] = []
-        if hasattr(exc, "errors") and callable(exc.errors):
-            for err in exc.errors():
-                loc = " -> ".join(str(x) for x in err.get("loc", []))
-                msg = err.get("msg", "")
-                validation_errors.append(f"{loc}: {msg}" if loc else msg)
-        else:
-            validation_errors.append(str(exc))
-
-        error_payload = {
-            "error": "Error de validación de esquema Epsilon",
-            "validation_errors": validation_errors,
-            "raw_output": raw_dict,
+        meta = {
+            "provider": resolved_provider,
+            "model": resolved_model,
+            "mock": resolved_provider == "mock",
+            "tokens": total_tokens,
+            "elapsed_seconds": round(total_elapsed, 3),
+            "retries": attempt,
+            "timestamp": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
         }
-        return False, error_payload, meta
+
+        try:
+            validated_model = EpsilonResumenModel(**raw_dict)
+            validated_dict = validated_model.model_dump()
+            validated_dict["meta"] = meta
+            return True, validated_dict, meta
+        except Exception as exc:
+            last_validation_errors = _extract_validation_errors(exc)
+            if attempt < effective_retries:
+                current_user_prompt = (
+                    f"{base_user_prompt}\n\n"
+                    "IMPORTANTE - CORRECCIÓN DE VALIDACIÓN REQUERIDA:\n"
+                    "Tu respuesta JSON previa incumplió las reglas estrictas del contrato Epsilon IA:\n"
+                    + "\n".join(f"- {err}" for err in last_validation_errors)
+                    + "\n\nRespuesta previa a corregir:\n"
+                    + json.dumps(raw_dict, ensure_ascii=False, indent=2)
+                    + "\n\nDevuelve ÚNICAMENTE el objeto JSON corregido respetando límites de palabras, "
+                    "mención explícita de workaround/sin alternativa en `impacto`, prefijos válidos en `bloqueos` "
+                    "y orden cronológico ascendente estricto en `hitosTecnicos`."
+                )
+
+    error_payload = {
+        "error": "Error de validación de esquema Epsilon",
+        "validation_errors": last_validation_errors,
+        "raw_output": raw_dict,
+    }
+    return False, error_payload, meta
 
 
 # =====================================================================
@@ -1204,3 +1254,464 @@ def find_incident_in_local_dumps(
             continue
 
     return None
+
+
+# =====================================================================
+# MOTOR INTERNO EPSILON IA + FINGERPRINT CACHE + PRE-GENERACIÓN (OPCIÓN 2)
+# =====================================================================
+CORPORATE_SOPTMC_EPSILON_URL = "https://soptmc.si.orange.es/MonTMC/api/epsilon/resumenIA"
+VALID_PROVIDER_MODES = ("internal", "internal_with_soptmc_fallback", "soptmc")
+
+
+def get_epsilon_provider_mode(explicit_mode: Optional[str] = None) -> str:
+    """Devuelve el modo operativo del servicio Epsilon IA ('internal' por defecto)."""
+    load_project_env()
+    raw = (explicit_mode or os.environ.get("EPSILON_PROVIDER_MODE") or "internal").strip().lower()
+    if raw in VALID_PROVIDER_MODES:
+        return raw
+    return "internal"
+
+
+def has_live_llm_credentials() -> bool:
+    """Indica si hay credenciales activas de algún proveedor LLM o modo mock explícito."""
+    load_project_env()
+    if os.environ.get("EPSILON_MOCK", "").lower() in ("1", "true", "yes"):
+        return True
+    return any(
+        bool(os.environ.get(var, "").strip())
+        for var in ("ANTHROPIC_AUTH_TOKEN", "ANTHROPIC_API_KEY", "OPENAI_API_KEY", "GEMINI_API_KEY")
+    )
+
+
+def get_prompt_hash(system_prompt: Optional[str] = None) -> str:
+    """Calcula un hash corto determinista del System Prompt activo para invalidación automática."""
+    prompt_text = system_prompt or build_epsilon_system_prompt()
+    return hashlib.sha256(prompt_text.encode("utf-8")).hexdigest()[:12]
+
+
+def extract_remedy_incident_node(payload: Any, fallback_id: str = "") -> Optional[Dict[str, Any]]:
+    """Extrae y normaliza el nodo de incidencia Remedy desde respuestas de MonTMC o .remedy_cache."""
+    if not isinstance(payload, dict) or not payload:
+        return None
+
+    node: Optional[Dict[str, Any]] = None
+    if isinstance(payload.get("remedy"), dict) and payload["remedy"]:
+        node = dict(payload["remedy"])
+        if "worklogs" in payload and "worklog" not in node and isinstance(payload["worklogs"], list):
+            node["worklog"] = payload["worklogs"]
+    else:
+        known_keys = (
+            "idRemedy",
+            "ID de incidencia",
+            "resumen",
+            "detalle",
+            "Descripción",
+            "worklog",
+            "worklogs",
+            "estadoDesc",
+            "Estatus",
+        )
+        if any(k in payload for k in known_keys):
+            node = dict(payload)
+
+    if not node:
+        return None
+
+    if fallback_id and not (node.get("idRemedy") or node.get("ID de incidencia") or node.get("codigo")):
+        node["idRemedy"] = fallback_id
+
+    return node
+
+
+def compute_remedy_fingerprint(remedy_node: Dict[str, Any]) -> str:
+    """
+    Calcula la huella digital (fingerprint) del estado técnico real del ticket en Remedy.
+    Cambia únicamente cuando varía el estado, la fecha de última modificación, la solución
+    o el número/último apunte de worklogs/PaPs.
+    """
+    worklogs = remedy_node.get("worklog")
+    if not isinstance(worklogs, list):
+        worklogs = remedy_node.get("worklogs") if isinstance(remedy_node.get("worklogs"), list) else []
+
+    last_wl_sig = ""
+    if worklogs:
+        # Ordenar de forma estable o inspeccionar el más reciente por fecha/índice
+        dates = [str(w.get("fecha") or w.get("date") or w.get("timestamp") or "") for w in worklogs if isinstance(w, dict)]
+        max_date = max(dates) if dates else ""
+        last_item = worklogs[-1] if isinstance(worklogs[-1], dict) else {}
+        last_text = str(last_item.get("detalle") or last_item.get("texto") or "")[:120]
+        last_wl_sig = f"{max_date}|{last_item.get('idWorklog', '')}|{last_text}"
+
+    paps = remedy_node.get("paps") if isinstance(remedy_node.get("paps"), list) else []
+
+    canonical = {
+        "id": str(remedy_node.get("idRemedy") or remedy_node.get("ID de incidencia") or remedy_node.get("codigo") or ""),
+        "estado": str(remedy_node.get("estadoDesc") or remedy_node.get("Estatus") or remedy_node.get("estado") or ""),
+        "urgencia": str(remedy_node.get("urgenciaDesc") or remedy_node.get("Urgencia") or ""),
+        "prioridad": str(remedy_node.get("prioridadDesc") or remedy_node.get("Prioridad") or ""),
+        "grupo": str(remedy_node.get("grupoAsignado") or remedy_node.get("Grupo asignado") or ""),
+        "last_mod": str(
+            remedy_node.get("fechaUltimaModificacion")
+            or remedy_node.get("Fecha de última modificación")
+            or remedy_node.get("Fecha de última resolución")
+            or ""
+        ),
+        "solucion": str(remedy_node.get("detalleSolucion") or remedy_node.get("Resolución") or ""),
+        "worklog_count": len(worklogs),
+        "last_worklog": last_wl_sig,
+        "paps_count": len(paps),
+    }
+    raw_bytes = json.dumps(canonical, sort_keys=True, ensure_ascii=False).encode("utf-8")
+    return hashlib.sha256(raw_bytes).hexdigest()[:16]
+
+
+def _write_json_atomic(target_file: Path, payload: Dict[str, Any]) -> None:
+    """Escribe un archivo JSON en disco creando directorios padre de forma segura."""
+    target_file.parent.mkdir(parents=True, exist_ok=True)
+    text = json.dumps(payload, ensure_ascii=False, indent=2)
+    tmp_file = target_file.with_name(f"{target_file.name}.tmp_{os.getpid()}_{int(time.time() * 1000)}")
+    try:
+        tmp_file.write_text(text, encoding="utf-8")
+        tmp_file.replace(target_file)
+    except Exception:
+        if tmp_file.exists():
+            try:
+                tmp_file.unlink()
+            except OSError:
+                pass
+        target_file.write_text(text, encoding="utf-8")
+
+
+def _fetch_or_load_remedy_node(
+    incident_code: str,
+    root: Path,
+    mock: bool = False,
+    montmc_client: Any = None,
+) -> Tuple[Optional[Dict[str, Any]], str]:
+    """
+    Obtiene el detalle crudo de Remedy para una incidencia:
+    1. En vivo desde MonTMC API (/api/eps/remedyG/{id}) salvo si mock=True sin cliente explícito.
+    2. Fallback a caché local de Remedy en data/.remedy_cache/{id}.json.
+    """
+    code = incident_code.strip().upper()
+    remedy_cache_file = root / "data" / ".remedy_cache" / f"{code}.json"
+
+    if not mock or montmc_client is not None:
+        try:
+            client = montmc_client
+            if client is None:
+                try:
+                    from converters.src.montmc_client import MonTMCClient
+                except ImportError:
+                    from montmc_client import MonTMCClient  # type: ignore
+                client = MonTMCClient(timeout=12)
+
+            detail_resp = client.fetch_remedy_detail(code)
+            remedy_node = extract_remedy_incident_node(detail_resp, fallback_id=code)
+            if remedy_node:
+                try:
+                    remedy_snapshot = {
+                        "success": True,
+                        "idRemedy": code,
+                        "estado": remedy_node.get("estadoDesc") or "",
+                        "solucion": remedy_node.get("detalleSolucion") or "",
+                        "detalle": remedy_node.get("detalle") or "",
+                        "worklogs": remedy_node.get("worklog") or [],
+                        "asignaciones": remedy_node.get("asignaciones") or [],
+                        "remedy": remedy_node,
+                        "fetched_at": datetime.now(timezone.utc).isoformat(),
+                    }
+                    _write_json_atomic(remedy_cache_file, remedy_snapshot)
+                except Exception:
+                    pass
+                return remedy_node, "montmc_remedy_live"
+        except Exception:
+            pass
+
+    if remedy_cache_file.is_file():
+        try:
+            cached_payload = json.loads(remedy_cache_file.read_text(encoding="utf-8"))
+            remedy_node = extract_remedy_incident_node(cached_payload, fallback_id=code)
+            if remedy_node:
+                return remedy_node, "remedy_disk_cache"
+        except Exception:
+            pass
+
+    return None, "none"
+
+
+def _fetch_soptmc_summary(incident_code: str, timeout: int = 15) -> Optional[Dict[str, Any]]:
+    """Consulta de contingencia al endpoint externo legado de SOPTMC."""
+    import ssl
+    import urllib.request
+
+    code = incident_code.strip().upper()
+    target_url = f"{CORPORATE_SOPTMC_EPSILON_URL}/{code}"
+    ctx = ssl.create_default_context()
+    ctx.check_hostname = False
+    ctx.verify_mode = ssl.CERT_NONE
+    req = urllib.request.Request(
+        target_url,
+        headers={"User-Agent": "ReleaseDashboard/2.0", "Accept": "application/json"},
+    )
+    with urllib.request.urlopen(req, context=ctx, timeout=timeout) as resp:
+        if resp.status == 200:
+            raw_bytes = resp.read()
+            data = json.loads(raw_bytes.decode("utf-8"))
+            if isinstance(data, dict) and data:
+                return data
+    return None
+
+
+def resolve_or_generate_epsilon_summary(
+    incident_code: str,
+    force: bool = False,
+    mock: bool = False,
+    cache_dir: Optional[Path] = None,
+    project_root: Optional[Path] = None,
+    candidate_roots: Optional[List[Path]] = None,
+    provider_mode: Optional[str] = None,
+    montmc_client: Any = None,
+    dump_finder: Any = None,
+) -> Tuple[int, Dict[str, Any], str]:
+    """
+    Orquestador unificado del servicio propio Epsilon Resumen IA (Opción 1 + Opción 2):
+    - En modo 'internal' (por defecto) o 'internal_with_soptmc_fallback':
+      1. Obtiene el detalle crudo del ticket Remedy (MonTMC remedyG o .remedy_cache).
+      2. Calcula el fingerprint de Remedy + hash del System Prompt (resumen_incidencia_epsilon.md).
+         Si coincide con data/.epsilon_cache/{codigo}.json y force=False -> devuelve FINGERPRINT_HIT instantáneo.
+      3. Si cambió o no existe caché -> sintetiza y valida el resumen con nuestro motor LLM interno -> INTERNAL_LLM_GENERATED.
+      4. Contingencias progresivas: SOPTMC opcional (si internal_with_soptmc_fallback), caché previa en disco (DISK_HIT)
+         y volcados locales massive/postmortem (LOCAL_DUMP_FALLBACK).
+    - En modo 'soptmc': mantiene el comportamiento legado de proxy hacia SOPTMC primero.
+
+    Devuelve: (http_status_code, payload_dict, cache_status_header)
+    """
+    code = str(incident_code or "").strip().upper()
+    if not code:
+        return 400, {"success": False, "error": "Código de incidencia vacío"}, "INVALID"
+
+    root = Path(project_root) if project_root else get_project_root()
+    roots_to_search = list(candidate_roots) if candidate_roots else [root]
+    resolved_cache_dir = Path(cache_dir) if cache_dir else (root / "data" / ".epsilon_cache")
+    cache_file = resolved_cache_dir / f"{code}.json"
+
+    mode = get_epsilon_provider_mode(provider_mode)
+    is_mock = mock or (os.environ.get("EPSILON_MOCK", "").lower() in ("1", "true", "yes"))
+    can_generate_llm = is_mock or has_live_llm_credentials()
+    current_prompt_hash = get_prompt_hash()
+
+    # MODO LEGADO SOPTMC (contingencia explícita por variable de entorno)
+    if mode == "soptmc" and not is_mock:
+        try:
+            soptmc_data = _fetch_soptmc_summary(code)
+            if soptmc_data:
+                try:
+                    _write_json_atomic(cache_file, soptmc_data)
+                except Exception:
+                    pass
+                return 200, soptmc_data, "LIVE_SOPTMC_HIT"
+        except Exception:
+            pass
+
+    # MODO PROPIO INTERNO (por defecto)
+    if mode in ("internal", "internal_with_soptmc_fallback"):
+        remedy_node, remedy_source = _fetch_or_load_remedy_node(
+            incident_code=code,
+            root=root,
+            mock=mock,
+            montmc_client=montmc_client,
+        )
+
+        if remedy_node is not None:
+            remedy_fp = compute_remedy_fingerprint(remedy_node)
+
+            # Smart Fingerprint Cache: 0 coste LLM si el ticket y el prompt no han cambiado
+            if not force and cache_file.is_file():
+                try:
+                    cached_data = json.loads(cache_file.read_text(encoding="utf-8"))
+                    cached_meta = cached_data.get("meta") if isinstance(cached_data, dict) else None
+                    if (
+                        isinstance(cached_data, dict)
+                        and isinstance(cached_meta, dict)
+                        and cached_meta.get("remedy_fingerprint") == remedy_fp
+                        and cached_meta.get("prompt_hash") == current_prompt_hash
+                        and (cached_data.get("problema") or cached_data.get("impacto"))
+                    ):
+                        return 200, cached_data, "FINGERPRINT_HIT"
+                except Exception:
+                    pass
+
+            # Generación con nuestro motor interno y prompt resumen_incidencia_epsilon.md
+            if can_generate_llm:
+                try:
+                    is_valid, summary_or_err, llm_meta = generate_epsilon_summary(
+                        incident_data=remedy_node,
+                        mock=is_mock,
+                    )
+                    if is_valid:
+                        worklogs_list = remedy_node.get("worklog") or remedy_node.get("worklogs") or []
+                        summary_or_err["meta"] = {
+                            "source": "internal_epsilon_engine",
+                            "remedy_source": remedy_source,
+                            "remedy_fingerprint": remedy_fp,
+                            "prompt_hash": current_prompt_hash,
+                            "remedy_last_modified": (
+                                remedy_node.get("fechaUltimaModificacion")
+                                or remedy_node.get("Fecha de última modificación")
+                            ),
+                            "worklog_count": len(worklogs_list) if isinstance(worklogs_list, list) else 0,
+                            "generated_at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
+                            "is_stale_warning": remedy_source == "remedy_disk_cache",
+                            "stale_reason": (
+                                "El resumen se ha generado desde la caché local de Remedy por indisponibilidad temporal de MonTMC."
+                                if remedy_source == "remedy_disk_cache"
+                                else None
+                            ),
+                            "llm_meta": llm_meta,
+                        }
+                        try:
+                            _write_json_atomic(cache_file, summary_or_err)
+                        except Exception:
+                            pass
+                        return 200, summary_or_err, "INTERNAL_LLM_GENERATED"
+                except Exception as gen_exc:
+                    sys.stderr.write(f"[Aviso] Error en motor interno Epsilon para {code}: {gen_exc}\n")
+
+        # Contingencia opcional hacia SOPTMC si está habilitado internal_with_soptmc_fallback
+        if mode == "internal_with_soptmc_fallback" and not is_mock:
+            try:
+                soptmc_data = _fetch_soptmc_summary(code)
+                if soptmc_data:
+                    try:
+                        _write_json_atomic(cache_file, soptmc_data)
+                    except Exception:
+                        pass
+                    return 200, soptmc_data, "SOPTMC_FALLBACK_HIT"
+            except Exception:
+                pass
+
+    # Resiliencia offline: Snapshot previo en disco si no se fuerza regeneración
+    if not force and cache_file.is_file():
+        try:
+            disk_data = json.loads(cache_file.read_text(encoding="utf-8"))
+            if isinstance(disk_data, dict) and disk_data:
+                return 200, disk_data, "DISK_HIT"
+        except Exception:
+            pass
+
+    # Fallback sobre volcados locales massive/postmortem
+    finder_fn = dump_finder or find_incident_in_local_dumps
+    found = None
+    for candidate_root in roots_to_search:
+        found = finder_fn(code, candidate_root)
+        if found:
+            break
+
+    if found and can_generate_llm:
+        incident_item, source_filename, file_mtime = found
+        try:
+            is_valid, summary_data, llm_meta = generate_epsilon_summary(
+                incident_data=incident_item,
+                mock=is_mock,
+            )
+            if is_valid:
+                now = time.time()
+                is_stale = (now - file_mtime) > 7200  # Más de 2 horas
+                hours_ago = round((now - file_mtime) / 3600.0, 1)
+                summary_data["meta"] = {
+                    "source": "local_dump_fallback",
+                    "dump_file": source_filename,
+                    "dump_timestamp": datetime.fromtimestamp(file_mtime).isoformat(),
+                    "is_stale_warning": is_stale,
+                    "stale_reason": (
+                        f"El resumen se ha generado a partir de un volcado local con {hours_ago} horas de antigüedad; "
+                        "el estado en Remedy en vivo podría diferir."
+                        if is_stale
+                        else None
+                    ),
+                    "prompt_hash": current_prompt_hash,
+                    "llm_meta": llm_meta,
+                }
+                try:
+                    _write_json_atomic(cache_file, summary_data)
+                except Exception:
+                    pass
+                return 200, summary_data, "LOCAL_DUMP_FALLBACK"
+        except Exception as dump_exc:
+            return (
+                502,
+                {"success": False, "error": f"Error generando resumen desde volcado local para '{code}': {dump_exc}"},
+                "ERROR",
+            )
+
+    err_msg = (
+        f"Incidencia '{code}' no disponible en el motor interno Epsilon, "
+        "no disponible en SOPTMC corporativo ni en los volcados locales"
+    )
+    return 502, {"success": False, "error": err_msg}, "MISS"
+
+
+def pregenerate_epsilon_summaries(
+    incident_codes: List[str],
+    project_root: Optional[Path] = None,
+    force: bool = False,
+    mock: bool = False,
+    max_workers: int = 3,
+    montmc_client: Any = None,
+) -> Dict[str, Any]:
+    """
+    Pre-genera concurrentemente (Opción 2) los resúmenes IA de incidencias activas nuevas o actualizadas,
+    aprovechando el Smart Fingerprint Cache para no invocar el LLM en tickets sin cambios reales.
+    """
+    t0 = time.time()
+    root = Path(project_root) if project_root else get_project_root()
+
+    dedup_codes: List[str] = []
+    seen = set()
+    for raw_code in incident_codes or []:
+        c = str(raw_code or "").strip().upper()
+        if c and c not in seen:
+            seen.add(c)
+            dedup_codes.append(c)
+
+    summary: Dict[str, Any] = {
+        "total": len(dedup_codes),
+        "generated": [],
+        "fingerprint_hits": [],
+        "failed": [],
+        "elapsed_sec": 0.0,
+    }
+    if not dedup_codes:
+        return summary
+
+    workers = max(1, min(int(max_workers), len(dedup_codes)))
+
+    def _worker(code: str) -> Tuple[str, int, str, str]:
+        try:
+            status, payload, cache_status = resolve_or_generate_epsilon_summary(
+                incident_code=code,
+                force=force,
+                mock=mock,
+                project_root=root,
+                montmc_client=montmc_client,
+            )
+            err = str(payload.get("error") or "") if status != 200 else ""
+            return code, status, cache_status, err
+        except Exception as exc:
+            return code, 502, "EXCEPTION", str(exc)
+
+    with ThreadPoolExecutor(max_workers=workers) as executor:
+        futures = {executor.submit(_worker, code): code for code in dedup_codes}
+        for fut in as_completed(futures):
+            code, status, cache_status, err = fut.result()
+            if status == 200:
+                if cache_status in ("FINGERPRINT_HIT", "DISK_HIT"):
+                    summary["fingerprint_hits"].append(code)
+                else:
+                    summary["generated"].append(code)
+            else:
+                summary["failed"].append({"id": code, "status": status, "error": err})
+
+    summary["elapsed_sec"] = round(time.time() - t0, 2)
+    return summary

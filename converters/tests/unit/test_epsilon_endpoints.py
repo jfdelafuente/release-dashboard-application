@@ -265,8 +265,8 @@ def test_proxy_to_epsilon_ia_not_found_anywhere_returns_502(tmp_path):
     assert "no disponible en SOPTMC corporativo ni en los volcados locales" in written
 
 
-def test_cache_invalidation_on_upload():
-    """Verifica que EPSILON_CACHE se vacía tras una carga exitosa en handle_upload."""
+def test_cache_invalidation_on_upload(tmp_path):
+    """Verifica que EPSILON_CACHE se vacía tras una carga exitosa en handle_upload sin tocar data/ real."""
     serve_app.EPSILON_CACHE["INC000004174655"] = (123456789.0, b'{"test": 1}', 200)
     assert len(serve_app.EPSILON_CACHE) == 1
 
@@ -274,7 +274,6 @@ def test_cache_invalidation_on_upload():
     handler.headers = {"Content-Type": "multipart/form-data; boundary=---boundary", "Content-Length": "100"}
     handler._send_json = MagicMock()
 
-    # Simulamos el flujo de handle_upload parcheando run_upload para retornar success
     fake_multipart_body = (
         b"-----boundary\r\n"
         b'Content-Disposition: form-data; name="file"; filename="test.csv"\r\n\r\n'
@@ -284,13 +283,14 @@ def test_cache_invalidation_on_upload():
     handler.headers["Content-Length"] = str(len(fake_multipart_body))
     handler.rfile = io.BytesIO(fake_multipart_body)
 
-    with patch("upload_csv.run_upload", return_value={"success": True, "details": "ok"}):
+    with patch("serve_app.PROJECT_ROOT", tmp_path), \
+         patch("serve_app.STORAGE_DIR", tmp_path / "data"), \
+         patch("serve_app.run_upload", return_value={"success": True, "details": "ok"}):
         serve_app.CustomHTTPHandler.handle_upload(handler)
 
     assert handler._send_json.called
     status, res = handler._send_json.call_args[0]
     assert status == 200
-    # La caché en memoria debió haber sido limpiada
     assert len(serve_app.EPSILON_CACHE) == 0
 
 
@@ -302,19 +302,59 @@ def test_proxy_to_epsilon_ia_client_connection_aborted_handled_cleanly():
     handler.wfile = MagicMock()
     handler.wfile.write.side_effect = ConnectionAbortedError(10053, "Se ha anulado una conexión establecida")
 
-    fake_resp = MagicMock()
-    fake_resp.status = 200
-    fake_resp.read.return_value = json.dumps({"problema": "OK"}).encode("utf-8")
-    fake_resp.__enter__.return_value = fake_resp
-    fake_resp.__exit__.return_value = None
-
-    with patch("urllib.request.urlopen", return_value=fake_resp):
+    with patch(
+        "serve_app.resolve_or_generate_epsilon_summary",
+        return_value=(200, {"success": True, "problema": "OK"}, "INTERNAL_LLM_GENERATED"),
+    ):
         # No debe lanzar excepción
         serve_app.CustomHTTPHandler.proxy_to_epsilon_ia(handler, "INC000004122710")
 
     # Debe haber intentado escribir una vez y capturado la desconexión sin lanzar error
     assert handler.send_response.called
     assert handler.send_response.call_args[0][0] == 200
+
+
+def test_proxy_to_epsilon_ia_internal_engine_generates_and_caches(tmp_path, monkeypatch):
+    """Verifica que proxy_to_epsilon_ia genera el resumen con el motor interno a partir de Remedy sin usar SOPTMC IA."""
+    monkeypatch.setenv("EPSILON_PROVIDER_MODE", "internal")
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key")
+
+    remedy_payload = {
+        "codigoResp": 0,
+        "remedy": {
+            "idRemedy": "INC000004188888",
+            "resumen": "Degradación en API Pagos",
+            "estadoDesc": "En Curso",
+            "fechaUltimaModificacion": "2026-11-17T10:00:00.000+00:00",
+            "worklog": [{"idWorklog": "W1", "fecha": "2026-11-17T10:00:00.000+00:00", "detalle": "Reinicio de pods"}],
+        },
+    }
+    llm_summary = {
+        "success": True,
+        "titulo": "Degradación en API Pagos",
+        "estadoActual": "En Curso",
+        "problema": "Timeouts intermitentes en el gateway de pagos móvil.",
+        "impacto": "Afecta al 20% de transacciones móviles. Existe workaround por web.",
+        "sistemas": ["API Pagos"],
+        "hitosTecnicos": ["[17/11/2026 11:00:00]: Reinicio de pods en clúster principal."],
+        "bloqueos": [],
+    }
+
+    handler = MagicMock()
+    handler.path = "/api/epsilon/resumenIA/INC000004188888"
+    handler.headers = {}
+    handler.wfile = io.BytesIO()
+
+    with patch("serve_app.PROJECT_ROOT", tmp_path), \
+         patch("converters.src.montmc_client.MonTMCClient.fetch_remedy_detail", return_value=remedy_payload), \
+         patch("converters.src.epsilon_service.call_anthropic", return_value=(llm_summary, 190, 0.35)):
+        serve_app.CustomHTTPHandler.proxy_to_epsilon_ia(handler, "INC000004188888")
+
+    assert handler.send_response.call_args[0][0] == 200
+    written = json.loads(handler.wfile.getvalue().decode("utf-8"))
+    assert written["meta"]["source"] == "internal_epsilon_engine"
+    assert (tmp_path / "data" / ".epsilon_cache" / "INC000004188888.json").is_file()
+    assert (tmp_path / "data" / ".remedy_cache" / "INC000004188888.json").is_file()
 
 
 def test_send_json_client_connection_aborted_handled_cleanly():

@@ -58,7 +58,7 @@ Para superar la brevedad o ambigüedad del título de Remedy, el evaluador const
 * **Diagnóstico Epsilon IA**: `problema`, `impacto`, `solucion`, `sistemas`, `bloqueos`, `siguienteAccion`.
 
 > [!NOTE]
-> Gracias al cliente [`EpsilonClient`](../../converters/cli/evaluate_incident_notifications.py#L2164) con fallback inteligente y caché en disco ([`data/.epsilon_cache/`](../../data/.epsilon_cache/)), si el microservicio Epsilon no estuviera disponible, el sistema degrada elegantemente y realiza el triaje usando únicamente los campos nativos de Remedy.
+> Gracias al cliente [`EpsilonClient`](../../converters/cli/evaluate_incident_notifications.py#L2164) con fallback inteligente y caché en disco (`data/.epsilon_cache/`), si el microservicio Epsilon no estuviera disponible, el sistema degrada elegantemente y realiza el triaje usando únicamente los campos nativos de Remedy.
 
 ---
 

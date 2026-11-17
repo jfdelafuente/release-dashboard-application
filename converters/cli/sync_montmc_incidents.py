@@ -31,6 +31,17 @@ sys.path.insert(0, str(PROJECT_ROOT / "converters" / "src"))
 from montmc_client import MonTMCClient, MonTMCError
 
 try:
+    if str(PROJECT_ROOT) not in sys.path:
+        sys.path.insert(0, str(PROJECT_ROOT))
+    from converters.src.epsilon_service import has_live_llm_credentials, pregenerate_epsilon_summaries
+except ImportError:
+    try:
+        from epsilon_service import has_live_llm_credentials, pregenerate_epsilon_summaries
+    except ImportError:
+        has_live_llm_credentials = None
+        pregenerate_epsilon_summaries = None
+
+try:
     from build_index import build_index
 except ImportError:
     try:
@@ -125,6 +136,14 @@ def _trigger_notifications_evaluation(project_root: Path, wait: bool = True) -> 
         return -1
 
 
+def _is_terminal_status(status: Any) -> bool:
+    """Determina si el estado de una incidencia es final (Cerrado, Resuelto, Cancelado)."""
+    if not status:
+        return False
+    s = str(status).strip().lower()
+    return any(s.startswith(prefix) for prefix in ("cerrad", "resuel", "cancel", "clos", "resolv"))
+
+
 def sync_remedy_incidents(
     dias: int = 3,
     usuario: Optional[str] = None,
@@ -133,6 +152,7 @@ def sync_remedy_incidents(
     skip_notifications: bool = False,
     project_root: Optional[Path | str] = None,
     client: Optional[MonTMCClient] = None,
+    pregenerate_ia: Optional[bool] = None,
 ) -> Dict[str, Any]:
     """
     Función orquestadora principal para la sincronización incremental de Remedy.
@@ -227,6 +247,7 @@ def sync_remedy_incidents(
     actualizadas = 0
     sin_cambios = 0
     new_ids: List[str] = []
+    updated_ids: List[str] = []
 
     incoming_normalized: List[Dict[str, Any]] = []
     for raw_rec in raw_incidencias:
@@ -252,6 +273,7 @@ def sync_remedy_incidents(
                 updated_rec = dict(old_rec)
                 updated_rec.update(norm_rec)
                 records_by_id[inc_id] = updated_rec
+                updated_ids.append(inc_id)
                 actualizadas += 1
             else:
                 sin_cambios += 1
@@ -284,6 +306,7 @@ def sync_remedy_incidents(
     kpis["pending"] = pending_count
 
     elapsed = time.time() - start_time
+    pregen_stats: Optional[Dict[str, Any]] = None
 
     # 5. Persistencia Atómica en Disco
     if not dry_run:
@@ -324,6 +347,40 @@ def sync_remedy_incidents(
                 root,
             )
 
+        # 6. Pre-generación proactiva de Resumen IA Epsilon (Opción 2) antes de evaluar alertas
+        env_pregen_enabled = os.environ.get("EPSILON_SYNC_PREGEN", "1").strip().lower() not in ("0", "false", "no")
+        should_pregen = pregenerate_ia if pregenerate_ia is not None else (not skip_notifications and env_pregen_enabled)
+        if should_pregen and pregenerate_epsilon_summaries is not None:
+            can_run_ia = bool(has_live_llm_credentials()) if has_live_llm_credentials else False
+            if can_run_ia:
+                changed_set = set(new_ids) | set(updated_ids)
+                epsilon_cache_dir = root / "data" / ".epsilon_cache"
+                ia_candidates: List[str] = []
+                for rec in incoming_normalized:
+                    inc_id = str(rec.get("ID de incidencia") or "").strip()
+                    if not inc_id or _is_terminal_status(rec.get("Estatus")):
+                        continue
+                    cache_exists = (epsilon_cache_dir / f"{inc_id}.json").is_file()
+                    if inc_id in changed_set or not cache_exists:
+                        ia_candidates.append(inc_id)
+
+                if ia_candidates:
+                    logger.info("Pre-generando Resumen IA Epsilon para %d incidencias activas...", len(ia_candidates))
+                    try:
+                        pregen_stats = pregenerate_epsilon_summaries(
+                            incident_codes=ia_candidates,
+                            project_root=root,
+                            montmc_client=api_client,
+                        )
+                        logger.info(
+                            "Pre-generación Epsilon IA completada: generadas=%d, fingerprint_hits=%d, fallidas=%d",
+                            len(pregen_stats.get("generated", [])),
+                            len(pregen_stats.get("fingerprint_hits", [])),
+                            len(pregen_stats.get("failed", [])),
+                        )
+                    except Exception as pregen_err:
+                        logger.warning("Aviso en pre-generación proactiva Epsilon IA: %s", pregen_err)
+
         # Disparar reevaluación de notificaciones de alta prioridad
         if not skip_notifications:
             _trigger_notifications_evaluation(root, wait=True)
@@ -337,8 +394,9 @@ def sync_remedy_incidents(
         "total_dataset": total_records,
         "target_file": str(target_file),
         "dry_run": dry_run,
-        "elapsed_sec": round(elapsed, 2),
+        "elapsed_sec": round(time.time() - start_time, 2),
         "timestamp": datetime.now().isoformat(),
+        **({"epsilon_pregen": pregen_stats} if pregen_stats is not None else {}),
     }
 
 

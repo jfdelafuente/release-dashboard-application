@@ -14,6 +14,9 @@ from converters.src.epsilon_service import (
     parse_timestamp_dt,
     load_project_env,
     EpsilonResumenModel,
+    compute_remedy_fingerprint,
+    resolve_or_generate_epsilon_summary,
+    pregenerate_epsilon_summaries,
 )
 
 
@@ -132,3 +135,159 @@ def test_count_words_and_timestamps():
     assert parse_timestamp_dt("[S/F]: Incidencia histórica") is None
     # Timestamp inválido
     assert parse_timestamp_dt("invalid_string") is None
+
+
+def test_generate_epsilon_summary_self_healing_retry():
+    """Verifica que si el primer intento LLM incumple el contrato Pydantic, el reintento autocorrectivo lo subsana."""
+    sample_incident = {"idRemedy": "INC000004199001", "resumen": "Error en autenticador"}
+    invalid_first_attempt = {
+        "success": True,
+        "titulo": "Error en autenticador",
+        "estadoActual": "Asignado",
+        "problema": "Fallo en login.",
+        "impacto": "Afecta a usuarios web.",  # Falta mención explícita de workaround/sin alternativa
+        "sistemas": ["SSO"],
+        "hitosTecnicos": ["[17/11/2026 10:00]: Alerta inicial"],
+        "bloqueos": [],
+    }
+    valid_second_attempt = {
+        "success": True,
+        "titulo": "Error en autenticador",
+        "estadoActual": "Asignado",
+        "problema": "Fallo en servicio SSO al validar tokens OAuth2.",
+        "impacto": "Afecta a usuarios del portal web. Sin método alternativo disponible.",
+        "sistemas": ["SSO"],
+        "hitosTecnicos": ["[17/11/2026 10:00]: Alerta inicial en pasarela OAuth2"],
+        "bloqueos": [],
+    }
+
+    with patch(
+        "converters.src.epsilon_service.call_anthropic",
+        side_effect=[(invalid_first_attempt, 150, 0.3), (valid_second_attempt, 180, 0.4)],
+    ) as mock_call:
+        is_valid, data, meta = generate_epsilon_summary(
+            sample_incident, provider="anthropic", mock=False, max_retries=1
+        )
+        assert is_valid is True
+        assert mock_call.call_count == 2
+        assert meta["retries"] == 1
+        assert meta["tokens"] == 330
+        assert "Sin método alternativo" in data["impacto"]
+
+
+def test_resolve_or_generate_smart_fingerprint_and_invalidation(tmp_path, monkeypatch):
+    """
+    Verifica el ciclo completo del Smart Fingerprint Cache:
+    1) Genera desde Remedy -> INTERNAL_LLM_GENERATED
+    2) Sin cambios en Remedy -> FINGERPRINT_HIT (0 llamadas LLM)
+    3) Nuevo worklog en Remedy -> invalida huella y regenera -> INTERNAL_LLM_GENERATED
+    """
+    monkeypatch.setenv("EPSILON_PROVIDER_MODE", "internal")
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key")
+
+    remedy_state = {
+        "codigoResp": 0,
+        "remedy": {
+            "idRemedy": "INC000004199002",
+            "resumen": "Caída parcial TIBCO",
+            "estadoDesc": "Asignado",
+            "fechaUltimaModificacion": "2026-11-17T08:00:00.000+00:00",
+            "worklog": [
+                {"idWorklog": "1", "fecha": "2026-11-17T08:00:00.000+00:00", "detalle": "Detección inicial"}
+            ],
+        },
+    }
+
+    mock_montmc = MagicMock()
+    mock_montmc.fetch_remedy_detail.side_effect = lambda code: json.loads(json.dumps(remedy_state))
+
+    llm_output = {
+        "success": True,
+        "titulo": "Caída parcial TIBCO",
+        "estadoActual": "Asignado",
+        "problema": "Saturación de colas JMS en nodos TIBCO.",
+        "impacto": "Retraso en provisión de pedidos. Sin alternativa disponible.",
+        "sistemas": ["TIBCO"],
+        "hitosTecnicos": ["[17/11/2026 09:00:00]: Detección inicial de encolamiento."],
+        "bloqueos": [],
+    }
+
+    with patch("converters.src.epsilon_service.call_anthropic", return_value=(llm_output, 200, 0.5)) as mock_llm:
+        # 1. Primera llamada: genera con LLM
+        st1, d1, hdr1 = resolve_or_generate_epsilon_summary(
+            "INC000004199002", project_root=tmp_path, montmc_client=mock_montmc
+        )
+        assert st1 == 200
+        assert hdr1 == "INTERNAL_LLM_GENERATED"
+        assert mock_llm.call_count == 1
+        assert d1["meta"]["worklog_count"] == 1
+
+        # 2. Segunda llamada sin cambios en Remedy: FINGERPRINT_HIT (0 llamadas extra al LLM)
+        st2, d2, hdr2 = resolve_or_generate_epsilon_summary(
+            "INC000004199002", project_root=tmp_path, montmc_client=mock_montmc
+        )
+        assert st2 == 200
+        assert hdr2 == "FINGERPRINT_HIT"
+        assert mock_llm.call_count == 1
+
+        # 3. Entra nuevo worklog en Remedy: la huella cambia y regenera automáticamente
+        remedy_state["remedy"]["worklog"].append(
+            {"idWorklog": "2", "fecha": "2026-11-17T09:15:00.000+00:00", "detalle": "Reinicio de broker JMS"}
+        )
+        remedy_state["remedy"]["fechaUltimaModificacion"] = "2026-11-17T09:15:00.000+00:00"
+
+        st3, d3, hdr3 = resolve_or_generate_epsilon_summary(
+            "INC000004199002", project_root=tmp_path, montmc_client=mock_montmc
+        )
+        assert st3 == 200
+        assert hdr3 == "INTERNAL_LLM_GENERATED"
+        assert mock_llm.call_count == 2
+        assert d3["meta"]["worklog_count"] == 2
+
+
+def test_pregenerate_and_retry_cli_use_internal_engine(tmp_path, monkeypatch):
+    """Verifica pregenerate_epsilon_summaries y retry_epsilon_ia en modo interno."""
+    monkeypatch.setenv("EPSILON_MOCK", "1")
+    monkeypatch.setenv("EPSILON_PROVIDER_MODE", "internal")
+
+    mock_montmc = MagicMock()
+    mock_montmc.fetch_remedy_detail.side_effect = lambda code: {
+        "codigoResp": 0,
+        "remedy": {
+            "idRemedy": code,
+            "resumen": f"Incidencia {code}",
+            "estadoDesc": "En Curso",
+            "fechaUltimaModificacion": "2026-11-17T10:00:00.000+00:00",
+            "worklog": [{"idWorklog": "1", "fecha": "2026-11-17T10:00:00.000+00:00", "detalle": "Nota"}],
+        },
+    }
+
+    batch_res = pregenerate_epsilon_summaries(
+        ["INC000004100001", "INC000004100002"],
+        project_root=tmp_path,
+        montmc_client=mock_montmc,
+    )
+    assert batch_res["total"] == 2
+    assert set(batch_res["generated"]) == {"INC000004100001", "INC000004100002"}
+
+    # Segunda ejecución sin cambios -> fingerprint_hits
+    batch_res_2 = pregenerate_epsilon_summaries(
+        ["INC000004100001", "INC000004100002"],
+        project_root=tmp_path,
+        montmc_client=mock_montmc,
+    )
+    assert set(batch_res_2["fingerprint_hits"]) == {"INC000004100001", "INC000004100002"}
+    assert batch_res_2["generated"] == []
+
+    # Verificar CLI retry_incidents usando motor interno
+    from converters.cli.retry_epsilon_ia import retry_incidents
+    with patch("converters.src.montmc_client.MonTMCClient", return_value=mock_montmc):
+        retry_res = retry_incidents(
+            incident_codes=["INC000004100003"],
+            force=True,
+            re_evaluate=False,
+            project_root=tmp_path,
+        )
+    assert len(retry_res["success"]) == 1
+    assert "motor interno Epsilon" in retry_res["success"][0]["reason"]
+    assert (tmp_path / "data" / ".epsilon_cache" / "INC000004100003.json").is_file()
