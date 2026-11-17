@@ -17,6 +17,7 @@ from converters.src.epsilon_service import (
     compute_remedy_fingerprint,
     resolve_or_generate_epsilon_summary,
     pregenerate_epsilon_summaries,
+    build_epsilon_system_prompt,
 )
 
 
@@ -291,3 +292,113 @@ def test_pregenerate_and_retry_cli_use_internal_engine(tmp_path, monkeypatch):
     assert len(retry_res["success"]) == 1
     assert "motor interno Epsilon" in retry_res["success"][0]["reason"]
     assert (tmp_path / "data" / ".epsilon_cache" / "INC000004100003.json").is_file()
+
+
+def test_phase1_prompt_directives_present_in_system_prompt():
+    """Verifica que el System Prompt cargado incluye todas las directivas de Fase 1."""
+    prompt = build_epsilon_system_prompt()
+    assert "Sin método alternativo disponible." in prompt
+    assert "Workaround activo (pendiente de erradicación definitiva / visado CSO)." in prompt
+    assert "Existe método alternativo operativo" in prompt
+    assert "Deduplicación multisede (`OE-03`)" in prompt
+    assert "Último hito sustantivo garantizado" in prompt
+    assert "[Ventana Release]:" in prompt
+    assert "[Validación Negocio]: Pendiente de confirmación por sede/peticionario" in prompt
+
+
+@pytest.mark.parametrize(
+    "workaround_formula",
+    [
+        "Afecta a 12 agentes en Konecta Madrid. Sin método alternativo disponible.",
+        "Impacto en 25 operadores de Valencia. Workaround activo (pendiente de erradicación definitiva / visado CSO).",
+        "Afecta a 8 agentes en Oviedo. Existe método alternativo operativo (registro manual en portal secundario).",
+    ],
+)
+def test_normalized_workaround_formulas_pass_contract(workaround_formula):
+    """Las tres fórmulas normalizadas de workaround de Fase 1 deben pasar WORKAROUND_REGEX y el contrato."""
+    payload = {
+        "success": True,
+        "titulo": "Fallo funcional en aplicación CRM",
+        "estadoActual": "ASIGNADO",
+        "problema": "Error al tramitar altas de fibra en línea activa desde CRM.",
+        "impacto": workaround_formula,
+        "sistemas": ["CRM"],
+        "hitosTecnicos": [
+            "[17/11/2026 09:00]: Detección inicial del fallo en sede.",
+            "[17/11/2026 10:15]: Diagnóstico técnico preliminar por N2.",
+        ],
+        "bloqueos": ["[Ventana Release]: Parche planificado en PaP nocturno del 18/11/2026."],
+        "solucion": "Identificado defecto en validación de catálogo; parche comprometido para ventana del 18/11/2026.",
+        "siguienteAccion": "Despliegue en ventana nocturna del 18/11/2026.",
+    }
+    model = EpsilonResumenModel(**payload)
+    assert model.impacto == workaround_formula
+    checks, all_passed = evaluate_contract(payload)
+    assert all_passed is True
+    assert all(c.cumple for c in checks)
+
+
+def test_prompt_hash_change_invalidates_epsilon_cache(tmp_path, monkeypatch):
+    """Modificar data/resumen_incidencia_epsilon.md cambia prompt_hash y regenera sin --force."""
+    monkeypatch.setenv("EPSILON_PROVIDER_MODE", "internal")
+    monkeypatch.setenv("EPSILON_MOCK", "0")
+    monkeypatch.setattr("converters.src.epsilon_service.get_project_root", lambda: tmp_path)
+
+    prompt_file = tmp_path / "data" / "resumen_incidencia_epsilon.md"
+    prompt_file.parent.mkdir(parents=True, exist_ok=True)
+    prompt_file.write_text(
+        "# Prompt\n\n## 1. Instrucciones del Sistema (System Prompt)\nRegla A\n\n## 5. Implementación en Código\nIgnorar\n",
+        encoding="utf-8",
+    )
+
+    mock_montmc = MagicMock()
+    mock_montmc.fetch_remedy_detail.return_value = {
+        "codigoResp": 0,
+        "remedy": {
+            "idRemedy": "INC000004199099",
+            "resumen": "Fallo en CRM",
+            "estadoDesc": "ASIGNADO",
+            "fechaUltimaModificacion": "2026-11-17T09:00:00.000+00:00",
+            "worklog": [{"idWorklog": "1", "fecha": "2026-11-17T09:00:00.000+00:00", "detalle": "Nota inicial"}],
+        },
+    }
+
+    llm_output = {
+        "success": True,
+        "titulo": "Fallo en CRM",
+        "estadoActual": "ASIGNADO",
+        "problema": "Error funcional en CRM.",
+        "impacto": "Afecta a 5 agentes. Sin método alternativo disponible.",
+        "sistemas": ["CRM"],
+        "hitosTecnicos": ["[17/11/2026 10:00:00]: Nota inicial."],
+        "bloqueos": [],
+    }
+
+    with patch("converters.src.epsilon_service.call_anthropic", return_value=(llm_output, 200, 0.4)) as mock_llm:
+        st1, d1, hdr1 = resolve_or_generate_epsilon_summary(
+            "INC000004199099", project_root=tmp_path, montmc_client=mock_montmc
+        )
+        assert st1 == 200
+        assert hdr1 == "INTERNAL_LLM_GENERATED"
+        hash_v1 = d1["meta"]["prompt_hash"]
+
+        # Sin cambios: hit de caché
+        st2, d2, hdr2 = resolve_or_generate_epsilon_summary(
+            "INC000004199099", project_root=tmp_path, montmc_client=mock_montmc
+        )
+        assert st2 == 200
+        assert hdr2 == "FINGERPRINT_HIT"
+        assert mock_llm.call_count == 1
+
+        # Se edita el prompt (Sección 1): cambia prompt_hash y regenera automáticamente sin force=True
+        prompt_file.write_text(
+            "# Prompt\n\n## 1. Instrucciones del Sistema (System Prompt)\nRegla A + Regla B\n\n## 5. Implementación en Código\nIgnorar\n",
+            encoding="utf-8",
+        )
+        st3, d3, hdr3 = resolve_or_generate_epsilon_summary(
+            "INC000004199099", project_root=tmp_path, montmc_client=mock_montmc
+        )
+        assert st3 == 200
+        assert hdr3 == "INTERNAL_LLM_GENERATED"
+        assert mock_llm.call_count == 2
+        assert d3["meta"]["prompt_hash"] != hash_v1

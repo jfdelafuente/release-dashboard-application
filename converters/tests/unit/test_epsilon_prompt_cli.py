@@ -438,3 +438,41 @@ def test_utc_to_madrid_homogenization_and_prompt_cleanup(valid_payload):
     assert all_passed is False
     hitos_check = next(c for c in checks if c.campo == "hitosTecnicos")
     assert "17/11 08:30:46 < 17/11 09:05:00" in hitos_check.detalle
+
+
+@pytest.mark.parametrize(
+    "impacto_text,bloqueos_list",
+    [
+        (
+            "Afecta a 10 agentes en Konecta Madrid. Sin método alternativo disponible.",
+            ["[Ventana Release]: Parche planificado en CRQ0001 para el 19/11/2026."],
+        ),
+        (
+            "Afecta a 15 agentes en Jazzplat Bogotá. Workaround activo (pendiente de erradicación definitiva / visado CSO).",
+            ["[Validación Negocio]: Pendiente de confirmación por sede/peticionario"],
+        ),
+        (
+            "Afecta a 6 agentes en Oviedo. Existe método alternativo operativo (alta vía portal legacy).",
+            [],
+        ),
+    ],
+)
+def test_cli_evaluate_contract_accepts_phase1_workaround_and_blockers(impacto_text, bloqueos_list):
+    """El validador CLI acepta las fórmulas normalizadas de workaround y prefijos de bloqueo de Fase 1."""
+    from test_epsilon_prompt import evaluate_contract
+
+    payload = {
+        "success": True,
+        "titulo": "Error funcional en contratación CRM",
+        "estadoActual": "ASIGNADO",
+        "problema": "Fallo al contratar dispositivo en línea fija activa.",
+        "impacto": impacto_text,
+        "sistemas": ["CRM4TELCO"],
+        "hitosTecnicos": [
+            "[17/11/2026 09:00:00]: Detección inicial del fallo en sede.",
+            "[17/11/2026 10:30:00]: Último apunte técnico sustantivo de diagnóstico.",
+        ],
+        "bloqueos": bloqueos_list,
+    }
+    checks, all_passed = evaluate_contract(payload)
+    assert all_passed is True, f"Fallaron checks: {[c for c in checks if not c.passed]}"
