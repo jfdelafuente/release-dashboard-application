@@ -19,6 +19,7 @@ import re
 import sys
 import time
 from typing import Any, Dict, List, Optional, Tuple
+import urllib.request
 from zoneinfo import ZoneInfo
 
 from pydantic import BaseModel, Field, field_validator, model_validator
@@ -830,7 +831,7 @@ def call_gemini(user_prompt: str, model_name: str, system_prompt: Optional[str] 
         raise RuntimeError("Ningún SDK de Gemini instalado ('google-genai' o 'google-generativeai').")
 
 
-def urlopen_with_ssl_fallback(req: "urllib.request.Request", timeout: int = 60) -> Any:
+def urlopen_with_ssl_fallback(req: urllib.request.Request, timeout: int = 60) -> Any:
     """Invoca urlopen() reintentando sin verificación de certificado si falla la validación TLS.
 
     El reintento solo se activa ante CERTIFICATE_VERIFY_FAILED (típico de proxies corporativos
