@@ -1190,7 +1190,7 @@ class SeverityEvaluator:
         """Calculates suggested priority (P1-P4) and structured ITIL justification."""
         state = self._build_base_state(ticket, epsilon_data, remedy_detail)
         self._apply_sl_tag_rule(state, ticket, epsilon_data)
-        self._apply_reopening_rule(state, ticket)
+        self._apply_reopening_rule(state, ticket, epsilon_data=epsilon_data)
         self._detect_planned_and_zombie(state, ticket, epsilon_data, remedy_detail)
         self._apply_planned_resolution_downgrade(state, ticket, epsilon_data)
         self._apply_zombie_rule(state)
@@ -1219,6 +1219,12 @@ class SeverityEvaluator:
         else:
             workaround_gobernanza = "No identificado"
 
+        triaje_ia = epsilon_data.get("triaje") if isinstance(epsilon_data, dict) and isinstance(epsilon_data.get("triaje"), dict) else None
+        raw_desglose = triaje_ia.get("desgloseSedes") if triaje_ia else None
+        desglose_sedes = [s for s in raw_desglose if isinstance(s, dict) and s.get("sede")] if isinstance(raw_desglose, list) else []
+        if desglose_sedes and state.quant_metrics.get("sedes") is None:
+            state.quant_metrics["sedes"] = len(desglose_sedes)
+
         return {
             "prioridad_sugerida": state.priority,
             "es_alta_prioridad": is_high_priority,
@@ -1233,6 +1239,8 @@ class SeverityEvaluator:
             "detalle_zombi": state.zombie_label,
             "es_local_departamental": state.is_local_departmental,
             "es_reapertura": state.is_reopened,
+            "desglose_sedes": desglose_sedes,
+            "triaje_ia": triaje_ia,
             "evaluacion": {
                 "proceso": proceso,
                 "proceso_negocio": proceso_negocio,
@@ -1258,6 +1266,8 @@ class SeverityEvaluator:
                 "detalle_zombi": state.zombie_label,
                 "es_local_departamental": state.is_local_departmental,
                 "es_reapertura": state.is_reopened,
+                "desglose_sedes": desglose_sedes,
+                "triaje_ia": triaje_ia,
             }
         }
 
@@ -1317,11 +1327,45 @@ class SeverityEvaluator:
                 state.impact_reason = "Etiquetado explícito /SL2 por N1 (Incidencia Mayor / Pérdida de redundancia o degradación)."
                 state.historial_reclasificacion.append(f"Regla /SL2: Impacto -> Medio ({state.impact_reason})")
 
-    def _apply_reopening_rule(self, state: "EvaluationState", ticket: dict[str, Any]) -> None:
+    def _apply_reopening_rule(
+        self,
+        state: "EvaluationState",
+        ticket: dict[str, Any],
+        epsilon_data: Optional[dict[str, Any]] = None,
+    ) -> None:
         # Regla Canónica de Incidencias Reabiertas (it-severity-matrix v2.4):
-        # Transición de Resuelto/Cerrado a estado activo (Asignado/En Curso/Pendiente).
+        # Transición de Resuelto/Cerrado a estado activo (Asignado/En Curso/Pendiente),
+        # o rechazo explícito de cierre / reapertura reflejado en Epsilon IA.
         # Factor agravante: Urgencia Alta, riesgo de recurrencia activa y preservación del envejecimiento operativo acumulativo.
-        state.is_reopened = bool(ticket.get("es_reapertura"))
+        reopened_from_epsilon = False
+        if epsilon_data and not state.is_closed:
+            triaje_block = epsilon_data.get("triaje") if isinstance(epsilon_data.get("triaje"), dict) else None
+            if triaje_block and str(triaje_block.get("escenario") or "").strip().upper() == "REAPERTURA":
+                reopened_from_epsilon = True
+            else:
+                epsilon_text_parts = [str(epsilon_data.get("solucion") or "")]
+                raw_hitos = epsilon_data.get("hitosTecnicos")
+                if isinstance(raw_hitos, list):
+                    epsilon_text_parts.extend(str(h) for h in raw_hitos if h)
+                epsilon_text_lower = " ".join(epsilon_text_parts).lower()
+                reopen_markers = (
+                    "rechazó cierre",
+                    "rechazo cierre",
+                    "rechazó el cierre",
+                    "rechazo de cierre",
+                    "rechaza cierre",
+                    "rechaza el cierre",
+                    "segundo rechazo",
+                    "rechazo del peticionario",
+                    "ticket reabierto",
+                    "ticket fue reabierto",
+                    "incidencia reabierta",
+                    "incidencia fue reabierta",
+                    "reapertura",
+                    "reaperturas",
+                )
+                reopened_from_epsilon = any(m in epsilon_text_lower for m in reopen_markers)
+        state.is_reopened = bool(ticket.get("es_reapertura")) or reopened_from_epsilon
         if not state.is_closed and state.is_reopened:
             if state.urgency in ("Baja", "Media"):
                 state.urgency = "Alta"
@@ -1338,6 +1382,11 @@ class SeverityEvaluator:
         remedy_detail: Optional[dict[str, Any]],
     ) -> None:
         state.is_planned, state.planned_label = detect_planned_resolution(epsilon_data, ticket, remedy_detail=remedy_detail)
+        if not state.is_planned and isinstance(epsilon_data, dict):
+            triaje_block = epsilon_data.get("triaje") if isinstance(epsilon_data.get("triaje"), dict) else None
+            if triaje_block and str(triaje_block.get("escenario") or "").strip().upper() == "RESOLUCION_PLANIFICADA":
+                state.is_planned = True
+                state.planned_label = state.planned_label or "Resolución planificada (Epsilon triaje)"
         state.is_zombie, state.zombie_label = detect_zombie_ticket(epsilon_data, ticket)
 
     @staticmethod
@@ -1670,37 +1719,45 @@ class SeverityEvaluator:
         status = (ticket.get("Estatus") or (epsilon.get("estadoActual") if epsilon else "") or "").lower()
         ticket_urgency = (ticket.get("Urgencia") or "").strip().lower()
 
-        # Detectar Workaround
+        # Detectar Workaround (prioridad a triaje estructurado Fase 2; fallback regex)
         has_workaround = "Desconocido"
-        no_wa_patterns = [
-            "sin alternativa",
-            "sin método alternativo",
-            "sin metodo alternativo",
-            "sin método",
-            "sin metodo",
-            "sin workaround",
-            "sin solución temporal",
-            "sin solucion temporal",
-            "no existe método alternativo",
-            "no existe alternativa",
-            "no hay alternativa",
-        ]
-        si_wa_patterns = [
-            "workaround disponible",
-            "contingencia disponible",
-            "contingencia activa",
-            "solución temporal",
-            "solucion temporal",
-            "solución alternativa",
-            "solucion alternativa",
-            "export alternativo",
-            "método alternativo disponible",
-            "metodo alternativo disponible",
-        ]
-        if any(p in text_lower for p in no_wa_patterns):
-            has_workaround = "No"
-        elif any(p in text_lower for p in si_wa_patterns) or ("workaround" in text_lower and not any(p in text_lower for p in no_wa_patterns)):
-            has_workaround = "Sí"
+        triaje_wa = (
+            epsilon.get("triaje", {}).get("workaround")
+            if isinstance(epsilon, dict) and isinstance(epsilon.get("triaje"), dict)
+            else None
+        )
+        if isinstance(triaje_wa, bool):
+            has_workaround = "Sí" if triaje_wa else "No"
+        else:
+            no_wa_patterns = [
+                "sin alternativa",
+                "sin método alternativo",
+                "sin metodo alternativo",
+                "sin método",
+                "sin metodo",
+                "sin workaround",
+                "sin solución temporal",
+                "sin solucion temporal",
+                "no existe método alternativo",
+                "no existe alternativa",
+                "no hay alternativa",
+            ]
+            si_wa_patterns = [
+                "workaround disponible",
+                "contingencia disponible",
+                "contingencia activa",
+                "solución temporal",
+                "solucion temporal",
+                "solución alternativa",
+                "solucion alternativa",
+                "export alternativo",
+                "método alternativo disponible",
+                "metodo alternativo disponible",
+            ]
+            if any(p in text_lower for p in no_wa_patterns):
+                has_workaround = "No"
+            elif any(p in text_lower for p in si_wa_patterns) or ("workaround" in text_lower and not any(p in text_lower for p in no_wa_patterns)):
+                has_workaround = "Sí"
 
         # Epsilon bloqueos
         epsilon_bloqueos_str = ""

@@ -402,3 +402,105 @@ def test_prompt_hash_change_invalidates_epsilon_cache(tmp_path, monkeypatch):
         assert hdr3 == "INTERNAL_LLM_GENERATED"
         assert mock_llm.call_count == 2
         assert d3["meta"]["prompt_hash"] != hash_v1
+
+
+def test_epsilon_triaje_model_valid_invalid_and_optional():
+    """Valida EpsilonTriajeModel (Fase 2) como bloque opcional compatible hacia atrás."""
+    from pydantic import ValidationError
+
+    base_payload = {
+        "success": True,
+        "titulo": "Degradación parcial multisede en CRM",
+        "estadoActual": "ASIGNADO",
+        "problema": "Fallo intermitente en alta de pedidos desde CRM.",
+        "impacto": "Afecta a 2 sedes. Workaround activo (pendiente de erradicación definitiva / visado CSO).",
+        "sistemas": ["CRM"],
+        "hitosTecnicos": ["[17/11/2026 09:00]: Detección inicial del fallo en sede."],
+        "bloqueos": [],
+    }
+
+    # Sin triaje: compatible hacia atrás
+    model_without = EpsilonResumenModel(**base_payload)
+    assert model_without.triaje is None
+    checks_without, ok_without = evaluate_contract(base_payload)
+    assert ok_without is True
+    assert any(c.campo == "triaje" and c.cumple for c in checks_without)
+
+    # Con triaje válido
+    with_triaje = {
+        **base_payload,
+        "triaje": {
+            "escenario": "RESOLUCION_PARCIAL",
+            "workaround": True,
+            "multisede": True,
+            "alertaInfratriaje": False,
+            "desgloseSedes": [
+                {"sede": "Bosch-Vigo", "estado": "OK_CONFIRMADO"},
+                {"sede": "Madison-Valladolid", "estado": "FALLO_ACTIVO"},
+            ],
+        },
+    }
+    model_with = EpsilonResumenModel(**with_triaje)
+    assert model_with.triaje is not None
+    assert model_with.triaje.escenario == "RESOLUCION_PARCIAL"
+    assert len(model_with.triaje.desgloseSedes) == 2
+    checks_with, ok_with = evaluate_contract(with_triaje)
+    assert ok_with is True
+    triaje_check = next(c for c in checks_with if c.campo == "triaje")
+    assert "RESOLUCION_PARCIAL" in triaje_check.metrica
+
+    # Con escenario inválido: falla Pydantic y evaluate_contract
+    bad_triaje = {
+        **base_payload,
+        "triaje": {
+            "escenario": "NO_EXISTE",
+            "workaround": False,
+            "multisede": False,
+            "alertaInfratriaje": False,
+            "desgloseSedes": [],
+        },
+    }
+    with pytest.raises(ValidationError):
+        EpsilonResumenModel(**bad_triaje)
+    _, ok_bad = evaluate_contract(bad_triaje)
+    assert ok_bad is False
+
+
+def test_severity_evaluator_prioritizes_phase2_triaje_and_exposes_desglose_sedes():
+    """SeverityEvaluator prioriza epsilon_data['triaje'] sobre regex y expone desglose_sedes."""
+    from converters.cli.evaluate_incident_notifications import SeverityEvaluator
+
+    ev = SeverityEvaluator()
+    ticket = {
+        "id": "INC000004199888",
+        "Descripción": "CRM | Error funcional | Sede A",
+        "Prioridad": "Media",
+        "Estatus": "En Curso",
+        "Fecha": "2026-11-17 09:00:00",
+    }
+    epsilon_data = {
+        "titulo": "CRM - Error funcional multisede",
+        "estadoActual": "EN CURSO",
+        "problema": "Fallo en portal de contratación.",
+        "impacto": "Afecta a 2 sedes. Sin método alternativo disponible.",  # Texto dice sin alternativa, pero triaje.workaround=True manda
+        "solucion": "Mitigación aplicada.",
+        "bloqueos": [],
+        "hitosTecnicos": ["[17/11/2026 10:00]: Mitigación aplicada."],
+        "triaje": {
+            "escenario": "REAPERTURA",
+            "workaround": True,
+            "multisede": True,
+            "alertaInfratriaje": True,
+            "desgloseSedes": [
+                {"sede": "Bosch-Vigo", "estado": "OK_CONFIRMADO"},
+                {"sede": "Madison-Valladolid", "estado": "FALLO_ACTIVO"},
+            ],
+        },
+    }
+
+    res = ev.evaluate(ticket, epsilon_data=epsilon_data)
+    assert res["es_reapertura"] is True
+    assert res["evaluacion"]["workaround"] == "Sí"
+    assert len(res["desglose_sedes"]) == 2
+    assert res["evaluacion"]["desglose_sedes"][1]["estado"] == "FALLO_ACTIVO"
+    assert res["evaluacion"]["metricas_cuantitativas"]["sedes"] == 2

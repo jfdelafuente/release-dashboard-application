@@ -3880,6 +3880,16 @@ function renderFeed() {
         if (!metricChips.some(c => c.includes(d))) metricChips.push(`📌 ${d}`);
       });
     }
+    const desgloseSedes = Array.isArray(evaluacion.desglose_sedes)
+      ? evaluacion.desglose_sedes
+      : (Array.isArray(inc.desglose_sedes) ? inc.desglose_sedes : []);
+    desgloseSedes.forEach(item => {
+      if (!item || !item.sede) return;
+      const isOk = String(item.estado || '').toUpperCase() === 'OK_CONFIRMADO';
+      const icon = isOk ? '✅' : '🔴';
+      const labelEstado = isOk ? 'OK' : 'Fallo activo';
+      metricChips.push(`${icon} ${item.sede} (${labelEstado})`);
+    });
 
     // Sistemas tags
     const sistemasList = Array.isArray(inc.sistemas) ? inc.sistemas : (inc.sistemas ? [inc.sistemas] : []);

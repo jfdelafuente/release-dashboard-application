@@ -18,7 +18,7 @@ from pathlib import Path
 import re
 import sys
 import time
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Literal, Optional, Tuple
 import urllib.request
 from zoneinfo import ZoneInfo
 
@@ -240,6 +240,36 @@ class EpsilonResumenValidationCheck:
         }
 
 
+class EpsilonSedeStatusModel(BaseModel):
+    """Estado operativo confirmado de una sede en incidencias multisede."""
+
+    sede: str
+    estado: Literal["OK_CONFIRMADO", "FALLO_ACTIVO"]
+
+    @field_validator("sede")
+    @classmethod
+    def validate_sede_non_empty(cls, v: str) -> str:
+        if not v or not v.strip():
+            raise ValueError("El campo 'sede' en desgloseSedes no puede estar vacío.")
+        return v.strip()
+
+
+class EpsilonTriajeModel(BaseModel):
+    """Bloque estructurado opcional de triaje automatizado (Fase 2)."""
+
+    escenario: Literal[
+        "EMERGENCIA_ACTIVA",
+        "RESOLUCION_PLANIFICADA",
+        "RESOLUCION_PARCIAL",
+        "REAPERTURA",
+        "ESTANCAMIENTO",
+    ]
+    workaround: bool
+    multisede: bool
+    alertaInfratriaje: bool
+    desgloseSedes: List[EpsilonSedeStatusModel] = Field(default_factory=list)
+
+
 class EpsilonResumenModel(BaseModel):
     """Modelo Pydantic estricto para validar el contrato Epsilon Resumen IA."""
 
@@ -253,6 +283,7 @@ class EpsilonResumenModel(BaseModel):
     hitosTecnicos: List[str] = Field(default_factory=list)
     bloqueos: List[str] = Field(default_factory=list)
     siguienteAccion: Optional[str] = None
+    triaje: Optional[EpsilonTriajeModel] = None
     meta: Optional[Dict[str, Any]] = None
 
     @field_validator("titulo", "estadoActual")
@@ -605,6 +636,46 @@ def evaluate_contract(data: Dict[str, Any]) -> Tuple[List[EpsilonResumenValidati
                 detalle="",
             )
         )
+
+    # 11. triaje (opcional, informativo / Fase 2)
+    triaje_raw = data.get("triaje")
+    if triaje_raw is None:
+        checks.append(
+            EpsilonResumenValidationCheck(
+                campo="triaje",
+                criterio="Opcional (bloque estructurado Fase 2)",
+                metrica="<Omitido (opcional)>",
+                cumple=True,
+                detalle="",
+            )
+        )
+    else:
+        try:
+            triaje_model = EpsilonTriajeModel(**triaje_raw) if isinstance(triaje_raw, dict) else None
+            if triaje_model is None:
+                raise ValueError("triaje debe ser un objeto JSON.")
+            checks.append(
+                EpsilonResumenValidationCheck(
+                    campo="triaje",
+                    criterio="Opcional (bloque estructurado Fase 2)",
+                    metrica=(
+                        f"{triaje_model.escenario} | wa={triaje_model.workaround} | "
+                        f"multisede={triaje_model.multisede} | sedes={len(triaje_model.desgloseSedes)}"
+                    ),
+                    cumple=True,
+                    detalle="",
+                )
+            )
+        except Exception as exc:
+            checks.append(
+                EpsilonResumenValidationCheck(
+                    campo="triaje",
+                    criterio="Opcional (bloque estructurado Fase 2)",
+                    metrica="Inválido",
+                    cumple=False,
+                    detalle=str(exc),
+                )
+            )
 
     all_passed = all(c.cumple for c in checks)
     return checks, all_passed

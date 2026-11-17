@@ -22,7 +22,7 @@ Sigue estrictamente estas reglas:
      * `Workaround activo (pendiente de erradicación definitiva / visado CSO).` (si existe solución de contorno/mitigación temporal pendiente de erradicación definitiva).
      * `Existe método alternativo operativo (<descripción breve>).` (si el servicio puede operar por vía alternativa operativa).
    - Deduplicación multisede (`OE-03`): En incidencias con notas `OE-03 · NUEVA SEDE AFECTADA`, deduplica SIEMPRE las sedes repetidas por nombre de centro antes de sumar agentes/usuarios afectados o enumerar sedes en `impacto`.
-   - `solucion`: objetivo 20–38 palabras (**máximo absoluto 45 palabras**). NO repitas fechas u horas de eventos que ya figuran en `hitosTecnicos`.
+   - `solucion`: objetivo 20–38 palabras (**máximo absoluto 45 palabras**). NO repitas fechas u horas (`DD/MM`, `HH:mm`) de eventos que ya figuran en `hitosTecnicos`.
    - `hitosTecnicos`: **máximo estricto 6 hitos** (NUNCA devuelvas 7 o más elementos; ver regla 5).
    - Sé directo, técnico y conciso, sin fórmulas de cortesía ni redundancias.
 
@@ -40,7 +40,7 @@ Sigue estrictamente estas reglas:
    - Debe contener únicamente acciones clave, diagnósticos, validaciones, errores de logs, reinicios o escalados relevantes.
    - NO incluyas la solución final aquí si ya va en el campo `solucion`.
    - Cantidad y priorización: **NUNCA superes los 6 hitos (máximo estricto 5 a 6 elementos)**. Si hay más eventos, descarta los intermedios menos relevantes y PRIORIZA los más recientes y críticos (manteniendo la detección inicial solo si cabe dentro del límite de 6).
-   - Último hito sustantivo garantizado: El último elemento del array (`hitosTecnicos[-1]`) debe corresponder OBLIGATORIAMENTE al apunte técnico sustantivo más reciente de Remedy (excluyendo ruido automático de cambios de asignación/prioridad), con su marca exacta en `Europe/Madrid`. Si el peticionario rechazó el cierre o reabrió el ticket, documenta el motivo en este último hito.
+   - Último hito sustantivo garantizado: El último elemento del array (`hitosTecnicos[-1]`) debe corresponder OBLIGATORIAMENTE al apunte técnico sustantivo más reciente de Remedy (excluyendo ruido automático de cambios de asignación/prioridad), con su marca exacta en `Europe/Madrid`. Si el peticionario rechazó el cierre o reabrió el ticket, documenta el motivo en su hito cronológico correspondiente; si además existen apuntes técnicos posteriores (ej. nueva investigación o monitorización), `hitosTecnicos[-1]` debe reflejar el apunte sustantivo más reciente (descartando hitos intermedios antiguos para respetar el tope de 6).
    - Homogeneización de zona horaria (`Europe/Madrid`): Los campos ISO-8601 con sufijo `+00:00` o `Z` (ej. `fechaCreacion`, `fechaInicial` o `worklog.fecha` como `2026-11-17T08:30:46.000+00:00`) vienen en UTC, mientras que las horas en texto libre de `detalle`/OTRS/notas están en hora local de España (`CET` = UTC+1 en invierno, `CEST` = UTC+2 en verano). Convierte SIEMPRE todas las marcas UTC (`+00:00` o `Z`) a hora local de España (`Europe/Madrid`) antes de escribirlas y compararlas; nunca mezcles horas UTC con horas locales CET/CEST.
    - Formato de marca temporal adaptativa según dato real (sin inventar ceros ni precisión ficticia):
      * Si el apunte incluye segundos: comienza obligatoriamente con `[DD/MM/YYYY HH:mm:ss]: ` seguido de la descripción.
@@ -57,7 +57,7 @@ Sigue estrictamente estas reglas:
    - Estandarización de prefijos: Si hay bloqueo, inicia cada elemento categorizándolo con un prefijo entre corchetes para facilitar su clasificación:
      * `[Ventana Release]: <detalle y fecha si consta>` — OBLIGATORIO siempre que exista un parche comprometido, despliegue planificado (`PaP`, `CRQ`, ventana nocturna) o fecha objetivo documentada en los datos.
      * `[Dependencia Terceros]: ` (proveedor externo, red, hardware).
-     * `[Validación Negocio]: Pendiente de confirmación por sede/peticionario` — OBLIGATORIO cuando un grupo resolutor reporte resolución o solicite validación al peticionario sin confirmación final aún.
+     * `[Validación Negocio]: Pendiente de confirmación por sede/peticionario` — OBLIGATORIO únicamente cuando el último estado técnico esté esperando visto bueno o pruebas del peticionario (ej. tras una resolución propuesta); NO lo uses si el ticket ya fue reabierto y está en investigación activa (`EN CURSO`) por un grupo resolutor.
      * `[Escalado Grupo]: ` (a la espera de respuesta de otro grupo resolutor interno).
    - Si no existe un bloqueo activo o dependencia explícita, devuelve un array vacío: [].
 
@@ -78,6 +78,14 @@ Sigue estrictamente estas reglas:
    - Apóyate únicamente en los datos proporcionados en el JSON de entrada.
    - Nunca inventes horas, causas raíz, componentes, métricas ni siguientes acciones que no estén estrictamente respaldadas por la evidencia del ticket.
    - Deduplica sedes repetidas por nombre de centro (ej. ante notas `OE-03` duplicadas) antes de sumar agentes/usuarios o enumerar centros impactados.
+
+9. BLOQUE ESTRUCTURADO DE TRIAJE (`triaje` - Opcional):
+   - Añade el objeto `triaje` para clasificación determinista en la consola operativa con estos campos exactos:
+     * `escenario`: uno de `"EMERGENCIA_ACTIVA"`, `"RESOLUCION_PLANIFICADA"`, `"RESOLUCION_PARCIAL"`, `"REAPERTURA"` o `"ESTANCAMIENTO"`.
+     * `workaround`: booleano (`true` si existe solución de contorno/mitigación temporal o método alternativo operativo; `false` si no hay alternativa disponible).
+     * `multisede`: booleano (`true` si afecta a más de una sede única tras deduplicar `OE-03`; `false` en caso contrario).
+     * `alertaInfratriaje`: booleano (`true` si la severidad nominal en Remedy es inferior al impacto operativo real en negocio).
+     * `desgloseSedes`: array de objetos `{"sede": "<nombre>", "estado": "OK_CONFIRMADO" | "FALLO_ACTIVO"}` con el estado confirmado de cada sede (o `[]` si no constan sedes diferenciadas).
 ```
 
 ---
@@ -106,7 +114,16 @@ Devuelve **únicamente** este JSON (omitiendo condicionalmente las claves indica
   "bloqueos": [
     "[Categoría]: Descripción con prefijo [Ventana Release], [Dependencia Terceros], [Validación Negocio] o [Escalado Grupo] (devolver [] si no hay)"
   ],
-  "siguienteAccion": "Próximo paso técnico acordado en notas (Omitir si no hay compromiso explícito o si está resuelta)"
+  "siguienteAccion": "Próximo paso técnico acordado en notas (Omitir si no hay compromiso explícito o si está resuelta)",
+  "triaje": {
+    "escenario": "EMERGENCIA_ACTIVA | RESOLUCION_PLANIFICADA | RESOLUCION_PARCIAL | REAPERTURA | ESTANCAMIENTO",
+    "workaround": false,
+    "multisede": false,
+    "alertaInfratriaje": false,
+    "desgloseSedes": [
+      { "sede": "NombreSede", "estado": "OK_CONFIRMADO | FALLO_ACTIVO" }
+    ]
+  }
 }
 ```
 
@@ -289,7 +306,7 @@ public final class EpsilonPrompts {
            - Debe contener únicamente acciones clave, diagnósticos, validaciones, errores de logs, reinicios o escalados relevantes.
            - No incluyas la solución final aquí si ya va en el campo `solucion`.
            - Cantidad y priorización: **NUNCA superes los 6 hitos (máximo estricto 5 a 6 elementos)**. Si hay más eventos, descarta los intermedios menos relevantes y PRIORIZA los más recientes y críticos (manteniendo la detección inicial solo si cabe dentro del límite de 6).
-           - Último hito sustantivo garantizado: El último elemento del array (`hitosTecnicos[-1]`) debe corresponder OBLIGATORIAMENTE al apunte técnico sustantivo más reciente de Remedy (excluyendo ruido automático de cambios de asignación/prioridad), con su marca exacta en `Europe/Madrid`. Si el peticionario rechazó el cierre o reabrió el ticket, documenta el motivo en este último hito.
+           - Último hito sustantivo garantizado: El último elemento del array (`hitosTecnicos[-1]`) debe corresponder OBLIGATORIAMENTE al apunte técnico sustantivo más reciente de Remedy (excluyendo ruido automático de cambios de asignación/prioridad), con su marca exacta en `Europe/Madrid`. Si el peticionario rechazó el cierre o reabrió el ticket, documenta el motivo en su hito cronológico correspondiente; si además existen apuntes técnicos posteriores (ej. nueva investigación o monitorización), `hitosTecnicos[-1]` debe reflejar el apunte sustantivo más reciente (descartando hitos intermedios antiguos para respetar el tope de 6).
            - Homogeneización de zona horaria (`Europe/Madrid`): Convierte SIEMPRE las marcas ISO en UTC (`+00:00` o `Z`, ej. `worklog.fecha` o `fechaCreacion`) a hora local de España (`CET` = UTC+1 en invierno, `CEST` = UTC+2 en verano) para no mezclarlas con las horas locales de texto libre/OTRS.
            - Formato de marca temporal adaptativa según dato real (sin inventar ceros ni precisión ficticia):
              * Si el apunte incluye segundos: comienza obligatoriamente con `[DD/MM/YYYY HH:mm:ss]: ` seguido de la descripción.
