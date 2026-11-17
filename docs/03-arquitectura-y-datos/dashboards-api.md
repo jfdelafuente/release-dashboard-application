@@ -50,8 +50,8 @@ flowchart TD
         STORAGE["Almacenamiento Desacoplado<br/>/infocodes/var/storage/release-dashboard/"]
         PPT_ENG["Motor PPTX Postmortem<br/>(converters/src/report_generator)"]
         EXEC_ENG["Motor Informe Ejecutivo PPTX<br/>(cso-incident-masivas-report / backend)"]
-        EPS_SVC["Epsilon IA Corporativo<br/>(soptmc.si.orange.es)"]
-        TMC_SVC["MonTMC API Corporativa<br/>(soptmc.si.orange.es)"]
+        EPS_SVC["Motor Interno Epsilon IA<br/>(epsilon_service.py + LiteLLM MasOrange)"]
+        TMC_SVC["MonTMC API Corporativa<br/>(soptmc.si.orange.es: remedyG + masivas)"]
         JIRA_SVC["Jira API Corporativa"]
     end
 
@@ -87,7 +87,10 @@ flowchart TD
     EXEC --> EXEC_ENG
     EXEC_ENG --> STORAGE
     EPS --> EPS_SVC
+    EPS_SVC --> TMC_SVC
+    EPS_SVC --> STORAGE
     SYNC --> TMC_SVC
+    SYNC --> EPS_SVC
     SYNC --> STORAGE
     REMD --> TMC_SVC
     REMD --> STORAGE
@@ -290,35 +293,38 @@ Invocada por el cliente [`dashboards/reportes-incidencias/api-client.js`](../../
 
 #### `GET /api/epsilon/resumenIA/{codigo}`
 
-* **Invocado por**: [`dashboards/assets/resumen-ia.js`](../../dashboards/assets/resumen-ia.js) al hacer clic sobre cualquier identificador de incidencia o botón "Resumen IA" en el Portal y dashboards.
-- **Propósito**: Actúa como proxy inteligente hacia el servicio corporativo de IA de Orange:
-  `https://soptmc.si.orange.es/MonTMC/api/epsilon/resumenIA/{codigo}`
-- **Fallback Inteligente y Detección de Obsolescencia (`LIFECYCLE_STATUS_MISMATCH`)**:
-  1. Si se solicita `?force=true` o se recibe cabecera `Cache-Control: no-cache`, se omite la caché local y se fuerza la consulta en vivo.
-  2. Si está en memoria (`EPSILON_CACHE`) o disco (`data/.epsilon_cache/{codigo}.json`), se sirve inmediatamente con cabecera `X-Cache-Status: MEMORY_HIT` o `DISK_HIT`.
-  3. Se intenta consultar el servicio corporativo SOPTMC. Si responde `200 OK`, se cachea y se devuelve.
-  4. Si SOPTMC falla o no está disponible, el servidor busca automáticamente la incidencia en los volcados locales más recientes (`data/output/*-massive.json` y `*-postmortem.json`).
-  5. Si se localizan los datos, genera el resumen al vuelo con el motor local (`converters/src/epsilon_service.py`), añade advertencia de frescura (`is_stale_warning: true` si el volcado tiene más de 2 horas) y devuelve `200 OK` con metadatos:
+* **Invocado por**: [`dashboards/assets/resumen-ia.js`](../../dashboards/assets/resumen-ia.js) al hacer clic sobre cualquier identificador de incidencia o botón "✨ Resumen IA · Epsilon" en el Portal y dashboards.
+- **Propósito**: Orquestador propio de Epsilon Resumen IA (`resolve_or_generate_epsilon_summary` en [`converters/src/epsilon_service.py`](../../converters/src/epsilon_service.py)), alimentado directamente con los datos crudos de Remedy y gobernado por el System Prompt [`data/resumen_incidencia_epsilon.md`](../../data/resumen_incidencia_epsilon.md).
+- **Cadena de Resolución y Smart Fingerprint Cache (`EPSILON_PROVIDER_MODE=internal` por defecto)**:
+  1. **Caché rápida en memoria (`MEMORY_HIT` / `HIT`)**: Si no se solicita `?force=1` / `?refresh=1` ni `Cache-Control: no-cache`, sirve desde memoria (TTL 15 min).
+  2. **Lectura de detalle crudo Remedy**: Consulta `GET https://soptmc.si.orange.es/MonTMC/api/eps/remedyG/{codigo}` (con respaldo local en `data/.remedy_cache/{codigo}.json`) y normaliza marcas temporales UTC (`+00:00`/`Z`) a `Europe/Madrid`.
+  3. **Smart Fingerprint Cache (`FINGERPRINT_HIT`)**: Calcula la huella del ticket (`fechaUltimaModificacion`, `estadoDesc`, `detalleSolucion`, número y último apunte de `worklog` y `paps`) junto con el `prompt_hash` de `resumen_incidencia_epsilon.md`. Si coincide con `data/.epsilon_cache/{codigo}.json`, responde al instante sin consumir tokens LLM.
+  4. **Síntesis y Autocorrección (`INTERNAL_LLM_GENERATED`)**: Si el ticket o el prompt cambiaron, sintetiza el resumen contra el Gateway LLM corporativo (`https://llm.tools.cloud.masorange.es/v1/messages`), valida las 10 reglas de `EpsilonResumenModel` (con **1 reintento autocorrectivo** si detecta incumplimiento) y guarda en caché:
 
      ```json
      {
        "success": true,
        "meta": {
-         "source": "local_dump_fallback",
-         "dump_file": "2026-10-30-massive.json",
-         "dump_timestamp": "2026-10-30T10:15:00Z",
-         "is_stale_warning": true,
-         "stale_reason": "El resumen se ha generado a partir de un volcado local con 72.5 horas de antigüedad; el estado en Remedy en vivo podría diferir."
+         "source": "internal_epsilon_engine",
+         "remedy_source": "montmc_remedy_live",
+         "remedy_fingerprint": "1df8323c03c7bc6b",
+         "prompt_hash": "b682cbe20574",
+         "worklog_count": 21,
+         "is_stale_warning": false
        }
      }
      ```
 
-  6. Si no existe en SOPTMC ni en los volcados locales, responde `502 Bad Gateway`.
+  5. **Contingencia progresiva**:
+     - Si `EPSILON_PROVIDER_MODE=internal_with_soptmc_fallback`, recurre automáticamente al endpoint legado `https://soptmc.si.orange.es/MonTMC/api/epsilon/resumenIA/{codigo}` (`SOPTMC_FALLBACK_HIT`) en caso de caída del LLM.
+     - Si `EPSILON_PROVIDER_MODE=soptmc`, opera 100% contra el endpoint externo de SopTMC (`LIVE_SOPTMC_HIT`).
+     - Ante desconexión total, recurre a snapshot previo en disco (`DISK_HIT`) o genera sobre volcados locales `data/output/*-massive.json` / `*-postmortem.json` (`LOCAL_DUMP_FALLBACK`, marcando `is_stale_warning: true` si supera 2 horas).
+  6. Si no existe información en ninguna fuente, responde `502 Bad Gateway`.
 - **Invalidación de Caché**:
   - Al procesar una subida exitosa de CSV en `POST /api/upload`, se invoca automáticamente `EPSILON_CACHE.clear()` para garantizar que los tickets modificados o reabiertos en el nuevo CSV no sirvan datos cacheados obsoletos.
 - **Topología de Ejecución**:
   - **Desarrollo**: Servido directamente por `serve_app.py` en el puerto `:8080`.
-  - **Producción (VPS)**: Proxificado por Nginx en `:8081` (`location /api/epsilon/`) hacia el backend FastAPI en `:8000` montando el router oficial [`converters/src/fastapi_epsilon_router.py`](../../converters/src/fastapi_epsilon_router.py).
+  - **Producción (VPS)**: Proxificado por Nginx en `:8081` (`location /api/epsilon/`, con bypass en `?force` / `?refresh`) hacia el backend FastAPI en `:8000` montando [`converters/src/fastapi_epsilon_router.py`](../../converters/src/fastapi_epsilon_router.py).
 
 ---
 
@@ -431,10 +437,10 @@ Invocada por el cliente [`dashboards/reportes-incidencias/api-client.js`](../../
   }
   ```
 
-* **Propósito**: Relanza de forma controlada el enriquecimiento semántico mediante Epsilon IA para aquellas incidencias activas que hayan quedado en estado `PARCIAL` o `INCOMPLETA` (por errores transitorios de red o timeouts).
+* **Propósito**: Relanza de forma controlada el enriquecimiento semántico mediante el **Motor Interno Epsilon IA** (`resolve_or_generate_epsilon_summary`, o SopTMC si `EPSILON_PROVIDER_MODE=soptmc`) para aquellas incidencias activas que hayan quedado en estado `PARCIAL` o `INCOMPLETA`, o para forzar la regeneración global (`force: true`).
 - **Comportamiento**:
   1. Filtra automáticamente las incidencias en estado terminal (evitando peticiones redundantes).
-  2. Consulta Epsilon IA actualizando la caché local en `.epsilon_cache/`.
+  2. Sintetiza/valida los resúmenes con nuestro motor interno actualizando la caché local en `data/.epsilon_cache/`.
   3. Regenera [`data/output/high_priority_notifications.json`](../../data/output/high_priority_notifications.json) y [`data/output/ingestion_audit_summary.json`](../../data/output/ingestion_audit_summary.json).
   4. Registra el detalle del reintento en `data/logs/ingestion_audit.log`.
 - **Respuesta (`200 OK`)**:
@@ -466,7 +472,7 @@ Invocada por el cliente [`dashboards/reportes-incidencias/api-client.js`](../../
   ```
 
   *(Por defecto `dias=3` y `usuario="jdelat"`, configurables mediante variables de entorno).*
-- **Propósito**: Ejecuta la sincronización incremental de incidencias masivas consultando la API corporativa MonTMC (`GET https://soptmc.si.orange.es/MonTMC/api/epsilon/masivas?usuario={user}&dias={dias}`), realiza upsert sobre el histórico semestral (`data/output/historical_incidents.json` y `data/output/historical_kpis.json`), y reevalúa automáticamente las notificaciones ejecutivas de alta prioridad (`evaluate_incident_notifications.py`).
+- **Propósito**: Ejecuta la sincronización incremental de incidencias masivas consultando la API corporativa MonTMC (`GET https://soptmc.si.orange.es/MonTMC/api/eps/incidenciasMasivas/{dias}/{usuario}`), realiza upsert no destructivo sobre el dataset masivo activo, **pre-genera en paralelo (`pregenerate_epsilon_summaries`, `EPSILON_SYNC_PREGEN=1`) los resúmenes IA de incidencias activas nuevas o actualizadas** y reevalúa las notificaciones ejecutivas de alta prioridad (`evaluate_incident_notifications.py`).
 - **Códigos de Estado**:
   - `200 OK`: Sincronización finalizada correctamente. Devuelve métricas de inserción/actualización.
   - `500 Internal Server Error`: Fallo interno durante la persistencia o reevaluación.
@@ -527,13 +533,15 @@ Invocada por el cliente [`dashboards/reportes-incidencias/api-client.js`](../../
   }
   ```
 
-#### Variables de Entorno MonTMC
+#### Variables de Entorno MonTMC y Motor Epsilon IA
 
 * `MON_TMC_BASE_URL`: URL base de la API corporativa (por defecto `https://soptmc.si.orange.es/MonTMC`).
 - `MON_TMC_USER`: Usuario corporativo para las consultas (por defecto `jdelat`).
 - `MON_TMC_DEFAULT_DAYS`: Días de histórico hacia atrás para la consulta masiva (por defecto `3`).
 - `MON_TMC_TIMEOUT`: Timeout en segundos para las peticiones HTTP (por defecto `10`).
 - `MON_TMC_RETRIES`: Número de reintentos con backoff exponencial (por defecto `2`).
+- `EPSILON_PROVIDER_MODE`: Conmuta el flujo de generación de Resumen IA (`internal` por defecto, `internal_with_soptmc_fallback` o `soptmc` legado).
+- `EPSILON_SYNC_PREGEN`: Pre-generación proactiva en background durante `sync_montmc_incidents.py` (`1` activo por defecto, `0` desactivado).
 
 ---
 

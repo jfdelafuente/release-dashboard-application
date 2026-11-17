@@ -122,7 +122,7 @@
                 <div class="resumen-ia-loading">
                     <div class="resumen-ia-spinner" aria-hidden="true"></div>
                     <h3 class="resumen-ia-loading-text">Sintetizando información con IA...</h3>
-                    <p class="resumen-ia-loading-subtext">Consultando servicio Epsilon en soptmc.si.orange.es para ${escapeHtml(code)}</p>
+                    <p class="resumen-ia-loading-subtext">Analizando detalle Remedy y notas técnicas con el motor interno Epsilon IA para ${escapeHtml(code)}</p>
                 </div>
             </div>
             <div class="resumen-ia-footer">
@@ -442,8 +442,11 @@
         }
 
         const fetchPromise = (async () => {
-            const proxyUrl = `/api/epsilon/resumenIA/${encodeURIComponent(code)}`;
-            const directUrl = `https://soptmc.si.orange.es/MonTMC/api/epsilon/resumenIA/${encodeURIComponent(code)}`;
+            const encodedCode = encodeURIComponent(code);
+            const proxyUrl = forceRefresh
+                ? `/api/epsilon/resumenIA/${encodedCode}?force=1`
+                : `/api/epsilon/resumenIA/${encodedCode}`;
+            const directUrl = `https://soptmc.si.orange.es/MonTMC/api/epsilon/resumenIA/${encodedCode}`;
 
             const headers = { 'Accept': 'application/json' };
             if (forceRefresh) {
@@ -463,15 +466,24 @@
                     setCachedData(code, data);
                     return data;
                 } else {
-                    proxyErrorMsg = `El proxy local devolvió HTTP ${resp.status} (${resp.statusText || 'Error'})`;
-                    console.warn('Proxy local no devolvió 200 OK:', resp.status, resp.statusText);
+                    let backendDetail = '';
+                    try {
+                        const errJson = await resp.json();
+                        if (errJson && errJson.error) backendDetail = errJson.error;
+                    } catch (_) {}
+                    proxyErrorMsg = backendDetail || `El servicio Epsilon IA devolvió HTTP ${resp.status} (${resp.statusText || 'Error'})`;
+                    console.warn('Servicio Epsilon IA no devolvió 200 OK:', resp.status, proxyErrorMsg);
                 }
             } catch (proxyErr) {
-                proxyErrorMsg = proxyErr.message || 'Error de conexión con el proxy local';
-                console.warn('Proxy local no disponible o con error:', proxyErr);
+                proxyErrorMsg = proxyErr.message || 'Error de conexión con el servicio Epsilon IA';
+                console.warn('Servicio Epsilon IA no disponible o con error:', proxyErr);
             }
 
-            // 2. Fallback: consulta directa a soptmc.si.orange.es
+            // Contingencia de navegador directa a SOPTMC desactivada por defecto (solo si se activa explícitamente)
+            if (window.EPSILON_BROWSER_SOPTMC_FALLBACK !== true) {
+                throw new Error(proxyErrorMsg || 'No se pudo generar el Resumen IA para esta incidencia.');
+            }
+
             try {
                 const respDirect = await fetch(directUrl, { headers });
                 if (!respDirect.ok) {
@@ -484,9 +496,9 @@
                 }
                 throw new Error(dataDirect.error || 'La respuesta de la IA no marcó success: true');
             } catch (directErr) {
-                console.error('Error al consultar Epsilon IA directamente:', directErr);
+                console.error('Error al consultar contingencia SOPTMC directamente:', directErr);
                 if (proxyErrorMsg) {
-                    throw new Error(`${proxyErrorMsg}. (Consulta directa falló: ${directErr.message || 'CORS / Sin conexión'})`);
+                    throw new Error(`${proxyErrorMsg}. (Contingencia SOPTMC falló: ${directErr.message || 'CORS / Sin conexión'})`);
                 }
                 throw directErr;
             }

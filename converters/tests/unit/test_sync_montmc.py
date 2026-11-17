@@ -312,3 +312,58 @@ def test_sync_api_failure_returns_error_and_preserves_file(mock_dataset, tmp_pat
     with open(mock_dataset, "r", encoding="utf-8") as f:
         data = json.load(f)
     assert len(data["data"]) == 2
+
+
+def test_sync_proactive_pregeneration_option2(mock_dataset, tmp_path, monkeypatch):
+    """Verifica Opción 2: sync_remedy_incidents pre-genera Resumen IA para tickets activos nuevos/modificados y omite cerrados."""
+    monkeypatch.setenv("EPSILON_MOCK", "1")
+    monkeypatch.setenv("EPSILON_PROVIDER_MODE", "internal")
+
+    mock_client = MagicMock(spec=MonTMCClient)
+    mock_client.default_user = "testuser"
+    mock_client.fetch_masivas.return_value = {
+        "success": True,
+        "incidencias": [
+            {"idRemedy": "INC_ACTIVA_NUEVA", "estadoDesc": "Asignado", "resumen": "Caída en CRM"},
+            {"idRemedy": "INC_CERRADA_NUEVA", "estadoDesc": "Cerrado", "resumen": "Incidencia ya cerrada"},
+        ],
+    }
+
+    def fake_norm(raw):
+        return {
+            "ID de incidencia": raw["idRemedy"],
+            "Descripción": raw["resumen"],
+            "Prioridad": "Alta",
+            "Estatus": raw["estadoDesc"],
+            "Fecha de envío": "17/11/2026 09:00",
+            "Grupo asignado": "N2-CRM",
+            "Urgencia": "2-Alta",
+            "Impacto": "2-Amplio",
+        }
+
+    mock_client.normalize_mon_tmc_record.side_effect = fake_norm
+    mock_client.fetch_remedy_detail.return_value = {
+        "codigoResp": 0,
+        "remedy": {
+            "idRemedy": "INC_ACTIVA_NUEVA",
+            "resumen": "Caída en CRM",
+            "estadoDesc": "Asignado",
+            "fechaUltimaModificacion": "2026-11-17T09:05:00.000+00:00",
+            "worklog": [{"idWorklog": "1", "fecha": "2026-11-17T09:05:00.000+00:00", "detalle": "Investigando CRM"}],
+        },
+    }
+
+    res = sync_remedy_incidents(
+        dias=3,
+        output_path=mock_dataset,
+        skip_notifications=True,
+        pregenerate_ia=True,
+        project_root=tmp_path,
+        client=mock_client,
+    )
+
+    assert res["success"] is True
+    assert "epsilon_pregen" in res
+    assert res["epsilon_pregen"]["generated"] == ["INC_ACTIVA_NUEVA"]
+    assert (tmp_path / "data" / ".epsilon_cache" / "INC_ACTIVA_NUEVA.json").is_file()
+    assert not (tmp_path / "data" / ".epsilon_cache" / "INC_CERRADA_NUEVA.json").exists()

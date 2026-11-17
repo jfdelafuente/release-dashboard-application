@@ -1,10 +1,54 @@
-# Guía de Configuración y Uso: CLI de Calibración Epsilon Resumen IA
+# Guía del Motor Interno Epsilon Resumen IA, Conmutación y CLI de Calibración
 
-Esta guía documenta la configuración del entorno, opciones de ejecución, integración multi-proveedor y casos prácticos de la herramienta CLI [`scripts/test_epsilon_prompt.py`](../../scripts/test_epsilon_prompt.py) para evaluar el System Prompt de **Epsilon Resumen IA**.
+Esta guía documenta la arquitectura del **Motor Interno de Epsilon Resumen IA** ([`converters/src/epsilon_service.py`](../../converters/src/epsilon_service.py)), cómo conmutar entre el flujo interno y el antiguo flujo externo de SopTMC, las APIs implicadas y el uso de la herramienta CLI [`scripts/test_epsilon_prompt.py`](../../scripts/test_epsilon_prompt.py).
 
 ---
 
-## 🎯 Objetivo de la Herramienta
+## 🏛️ 0. Arquitectura del Servicio en Vivo y Modos de Conmutación
+
+Cuando un operador abre el modal **"✨ Resumen IA · Epsilon"** en cualquier dashboard ([`dashboards/assets/resumen-ia.js`](../../dashboards/assets/resumen-ia.js)) o cuando se ejecuta la sincronización periódica de incidencias, el sistema opera por defecto con nuestro **Motor Interno** gobernado por [`data/resumen_incidencia_epsilon.md`](../../data/resumen_incidencia_epsilon.md).
+
+### 0.1 APIs implicadas extremo a extremo
+
+| Bloque | Endpoint | Propósito |
+| :--- | :--- | :--- |
+| **1. API propia del Dashboard** | `GET /api/epsilon/resumenIA/{codigo}` *(y `?force=1`)* | Consumida por el navegador (`resumen-ia.js`). Servida por `serve_app.py` (`:8080`) o `fastapi_epsilon_router.py` (`:8000` tras Nginx `:8081`). |
+| **1b. APIs propias auxiliares** | `GET /api/remedy/detail/{codigo}`<br/>`POST /api/epsilon/generate`<br/>`POST /api/sync-remedy`<br/>`POST /api/ingestion/retry-ia` | Visor de worklogs Remedy, generación directa sobre JSON, sincronización con pre-generación IA en background y relanzamiento de faltantes. |
+| **2. Datos crudos de Remedy (MonTMC)** | `GET https://soptmc.si.orange.es/MonTMC/api/eps/remedyG/{idRemedy}`<br/>`GET https://soptmc.si.orange.es/MonTMC/api/eps/incidenciasMasivas/{dias}/{usuario}` | Fuente oficial de datos originales del ticket (descripción, `estadoDesc`, `detalleSolucion`, `worklog`, asignaciones y PaPs). |
+| **3. Pasarela Corporativa de IA** | `POST https://llm.tools.cloud.masorange.es/v1/messages` | Gateway LiteLLM de MasOrange (**Claude Sonnet 4.5**) que sintetiza el JSON siguiendo nuestro System Prompt. *(También soporta OpenAI y Gemini).* |
+| **4. API externa sustituida (Reserva)** | `GET https://soptmc.si.orange.es/MonTMC/api/epsilon/resumenIA/{idRemedy}` | Antiguo resumen IA pre-cocinado en SopTMC. Desactivado en operación normal; disponible únicamente como contingencia (`EPSILON_PROVIDER_MODE`). |
+
+### 0.2 Ventajas operativas del Motor Interno + Pre-generación
+
+1. **Control inmediato del criterio**: Editar las secciones 1–4 de [`data/resumen_incidencia_epsilon.md`](../../data/resumen_incidencia_epsilon.md) actualiza automáticamente el `prompt_hash` y regenera los resúmenes sin depender de despliegues en SopTMC.
+2. **Homogeneización horaria (`Europe/Madrid`)**: Convierte en código todas las marcas ISO UTC (`+00:00`/`Z`) de Remedy a hora local de España (`CET`/`CEST`) antes de enviarlas al modelo, evitando mezclar husos con las notas de texto libre de OTRS.
+3. **Validación estricta + Autocorrección (`max_retries=1`)**: Verifica las 10 reglas en `EpsilonResumenModel` (límites de palabras, mención explícita de workaround/sin alternativa, prefijos de bloqueos y orden cronológico ascendente). Si el primer intento falla, reintenta automáticamente enviándole los errores exactos al LLM.
+4. **Smart Fingerprint Cache (`FINGERPRINT_HIT`)**: Calcula la huella digital real del ticket en Remedy (`fechaUltimaModificacion` + `estadoDesc` + `detalleSolucion` + número/último `worklog` + `paps`) junto con `prompt_hash`. Si el ticket no se ha movido, responde desde `data/.epsilon_cache/{codigo}.json` en ~0.1 s con **0 consumo de tokens**.
+5. **Pre-generación proactiva en background (`EPSILON_SYNC_PREGEN=1`)**: Durante cada ejecución de `sync_montmc_incidents.py`, los resúmenes de incidencias activas nuevas o actualizadas quedan pre-generados antes de que el usuario haga clic.
+
+### 0.3 Cómo conmutar entre el flujo actual (Motor Interno) y el anterior (SopTMC)
+
+El flujo activo se controla mediante la variable de entorno **`EPSILON_PROVIDER_MODE`** en el archivo `.env` (o en la sesión de consola):
+
+| Valor de `EPSILON_PROVIDER_MODE` | Comportamiento |
+| :--- | :--- |
+| **`internal`** *(por defecto)* | **Flujo actual**: usa exclusivamente nuestro Motor Interno + Smart Fingerprint Cache. |
+| **`internal_with_soptmc_fallback`** | **Flujo híbrido con red de seguridad**: usa primero el Motor Interno y, solo si fallara la pasarela LLM, consulta automáticamente a SopTMC. |
+| **`soptmc`** | **Flujo anterior (legado)**: consulta directamente `soptmc.si.orange.es/MonTMC/api/epsilon/resumenIA/{id}` como antes. |
+
+* **Cambio permanente**: Edita `EPSILON_PROVIDER_MODE` en `.env` y reinicia el servidor (`serve_app.py` en local o el servicio backend en el VPS). Si ya habías abierto una incidencia en el navegador, pulsa **🔄 Refrescar** dentro del modal.
+* **Cambio puntual para una prueba en PowerShell**:
+  ```powershell
+  $env:EPSILON_PROVIDER_MODE = "soptmc"
+  python converters/cli/retry_epsilon_ia.py INC000004186294 --force --no-eval
+  # Volver al motor interno:
+  $env:EPSILON_PROVIDER_MODE = "internal"
+  ```
+* **Desactivar solo la pre-generación automática en sync** (manteniendo el Motor Interno bajo demanda): `EPSILON_SYNC_PREGEN=0`.
+
+---
+
+## 🎯 Objetivo de la Herramienta CLI de Calibración
 
 La CLI permite a los ingenieros de soporte, Incident Managers y desarrolladores:
 

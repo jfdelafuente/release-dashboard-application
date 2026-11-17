@@ -33,6 +33,7 @@ try:
     from converters.src.epsilon_service import (
         generate_epsilon_summary,
         find_incident_in_local_dumps,
+        resolve_or_generate_epsilon_summary,
     )
 except ImportError:
     _curr = Path(__file__).resolve()
@@ -42,6 +43,7 @@ except ImportError:
     from converters.src.epsilon_service import (
         generate_epsilon_summary,
         find_incident_in_local_dumps,
+        resolve_or_generate_epsilon_summary,
     )
 
 router = APIRouter()
@@ -194,11 +196,12 @@ def get_resumen_ia(
     mock: bool = Query(False, description="Generar resumen mock offline"),
 ):
     """
-    Proxy y generador de Resumen IA para una incidencia dada:
-    1. Consulta caché en memoria o disco (si no se especifica force/refresh).
-    2. Consulta en vivo al endpoint corporativo SOPTMC.
-    3. Si SOPTMC falla, ejecuta fallback inteligente buscando en los volcados locales
-       y generando el resumen mediante Epsilon Service con aviso de obsolescencia si > 2h.
+    Servicio propio de Resumen IA para una incidencia dada (Opción 1 + Opción 2):
+    1. Consulta caché rápida en memoria (si no se especifica force/refresh).
+    2. Ejecuta resolve_or_generate_epsilon_summary:
+       - Obtiene detalle Remedy (MonTMC remedyG o .remedy_cache), verifica Smart Fingerprint Cache
+         y sintetiza con nuestro motor interno (resumen_incidencia_epsilon.md).
+       - Soporta contingencia progresiva a caché en disco y volcados locales con aviso si > 2h.
     """
     codigo_clean = codigo.strip().upper()
     force_val = force if isinstance(force, bool) else False
@@ -217,99 +220,25 @@ def get_resumen_ia(
                 headers={"X-Cache-Status": "MEMORY_HIT"},
             )
 
-    # 2. Consulta en vivo a SOPTMC si no es mock
-    if not is_mock:
-        target_url = f"https://soptmc.si.orange.es/MonTMC/api/epsilon/resumenIA/{codigo_clean}"
-        try:
-            ctx = ssl.create_default_context()
-            ctx.check_hostname = False
-            ctx.verify_mode = ssl.CERT_NONE
-            req = urllib.request.Request(
-                target_url,
-                headers={"User-Agent": "ReleaseDashboardFastAPI/1.0", "Accept": "application/json"},
-            )
-            with urllib.request.urlopen(req, context=ctx, timeout=15) as resp:
-                content_bytes = resp.read()
-                if resp.status == 200:
-                    data = json.loads(content_bytes.decode("utf-8"))
-                    FASTAPI_EPSILON_CACHE[codigo_clean] = (now, data, 200)
-                    try:
-                        cache_file = _get_cache_dir() / f"{codigo_clean}.json"
-                        cache_file.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
-                    except Exception:
-                        pass
-                    return JSONResponse(
-                        status_code=200,
-                        content=data,
-                        headers={"X-Cache-Status": "LIVE_SOPTMC_HIT"},
-                    )
-        except Exception:
-            pass  # Continuar a fallbacks
+    cache_dir = _get_cache_dir()
+    primary_root = cache_dir.parent.parent if cache_dir.parent.name == "data" else cache_dir.parent
+    candidate_roots = _get_candidate_roots()
 
-    # 3. Caché en disco previa
-    cache_file = _get_cache_dir() / f"{codigo_clean}.json"
-    if not force_refresh and cache_file.exists():
-        try:
-            data = json.loads(cache_file.read_text(encoding="utf-8"))
-            FASTAPI_EPSILON_CACHE[codigo_clean] = (now, data, 200)
-            return JSONResponse(
-                status_code=200,
-                content=data,
-                headers={"X-Cache-Status": "DISK_HIT"},
-            )
-        except Exception:
-            pass
+    status_code, payload_dict, cache_status = resolve_or_generate_epsilon_summary(
+        incident_code=codigo_clean,
+        force=force_refresh,
+        mock=is_mock,
+        cache_dir=cache_dir,
+        project_root=primary_root,
+        candidate_roots=candidate_roots,
+        dump_finder=find_incident_in_local_dumps,
+    )
 
-    # 4. Fallback inteligente: buscar en volcados locales y generar al vuelo
-    found = None
-    for root_candidate in _get_candidate_roots():
-        found = find_incident_in_local_dumps(codigo_clean, root_candidate)
-        if found:
-            break
-
-    if found:
-        incident_item, source_filename, file_mtime = found
-        try:
-            is_valid, summary_data, meta = generate_epsilon_summary(
-                incident_data=incident_item,
-                mock=is_mock,
-            )
-            if is_valid:
-                is_stale = (now - file_mtime) > 7200  # Más de 2 horas
-                hours_ago = round((now - file_mtime) / 3600.0, 1)
-                summary_data["meta"] = {
-                    "source": "local_dump_fallback",
-                    "dump_file": source_filename,
-                    "dump_timestamp": datetime.fromtimestamp(file_mtime).isoformat(),
-                    "is_stale_warning": is_stale,
-                    "stale_reason": (
-                        f"El resumen se ha generado a partir de un volcado local con {hours_ago} horas de antigüedad; "
-                        "el estado en Remedy en vivo podría diferir."
-                        if is_stale
-                        else None
-                    ),
-                    "llm_meta": meta,
-                }
-                FASTAPI_EPSILON_CACHE[codigo_clean] = (now, summary_data, 200)
-                try:
-                    cache_file.write_text(json.dumps(summary_data, ensure_ascii=False, indent=2), encoding="utf-8")
-                except Exception:
-                    pass
-                return JSONResponse(
-                    status_code=200,
-                    content=summary_data,
-                    headers={"X-Cache-Status": "LOCAL_DUMP_FALLBACK"},
-                )
-        except Exception as e:
-            return JSONResponse(
-                status_code=502,
-                content={"success": False, "error": f"Error generando resumen desde volcado local: {e}"},
-            )
+    if status_code == 200:
+        FASTAPI_EPSILON_CACHE[codigo_clean] = (now, payload_dict, 200)
 
     return JSONResponse(
-        status_code=502,
-        content={
-            "success": False,
-            "error": f"No se pudo obtener ni generar el resumen de Epsilon IA para la incidencia {codigo_clean}.",
-        },
+        status_code=status_code,
+        content=payload_dict,
+        headers={"X-Cache-Status": cache_status},
     )

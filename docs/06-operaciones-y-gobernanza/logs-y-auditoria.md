@@ -108,13 +108,15 @@ Al ejecutar [`serve_app.py`](../../serve_app.py) en local (puerto `8080`), los l
 
 ```
 [127.0.0.1] "GET /dashboards/portal/ HTTP/1.1" 200 -
-  Proxy Epsilon IA (cache HIT): INC000012345678
+  Epsilon IA (memory HIT): INC000012345678
+  Epsilon IA (FINGERPRINT_HIT): INC000004186294 -> HTTP 200
+  Epsilon IA (INTERNAL_LLM_GENERATED): INC000004188888 -> HTTP 200
   [FastAPI Proxy] Delegando GET /api/reports a http://127.0.0.1:8000...
   Guardado: data/input/incidencias.csv (142058 bytes)
   Conversión OK: incidencias.csv
 ```
 
-* **Proxy Epsilon IA**: Muestra si la consulta fue resuelta desde la memoria local (`cache HIT`) o requirió petición exterior (`cache MISS/LIVE`).
+* **Motor Epsilon IA**: Muestra el estado exacto de resolución (`memory HIT`, `FINGERPRINT_HIT` cuando el ticket Remedy y el prompt no han cambiado, `INTERNAL_LLM_GENERATED` al sintetizar con el motor interno, `DISK_HIT`, `LOCAL_DUMP_FALLBACK` o `LIVE_SOPTMC_HIT` si se opera con `EPSILON_PROVIDER_MODE=soptmc`).
 * **Subida de CSV**: Muestra la ruta del archivo recibido y el resultado de la invocación a `upload_csv.py`.
 
 ---

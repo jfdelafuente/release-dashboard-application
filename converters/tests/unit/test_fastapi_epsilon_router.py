@@ -140,7 +140,8 @@ def test_fastapi_get_resumen_ia_not_found_returns_502():
         assert data["success"] is False
 
 
-def test_fastapi_get_resumen_ia_live_soptmc_hit(tmp_path):
+def test_fastapi_get_resumen_ia_live_soptmc_hit(tmp_path, monkeypatch):
+    monkeypatch.setenv("EPSILON_PROVIDER_MODE", "soptmc")
     mock_payload = {
         "success": True,
         "titulo": "SOPTMC Live",
@@ -172,6 +173,56 @@ def test_fastapi_get_resumen_ia_live_soptmc_hit(tmp_path):
         data = json.loads(resp.body.decode("utf-8"))
         assert data["titulo"] == "SOPTMC Live"
         assert (cache_dir / "INC000004183530.json").exists()
+
+
+def test_fastapi_get_resumen_ia_internal_engine_default_and_fingerprint_hit(tmp_path, monkeypatch):
+    monkeypatch.setenv("EPSILON_PROVIDER_MODE", "internal")
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "test-internal-key")
+
+    cache_dir = tmp_path / "data" / ".epsilon_cache"
+    cache_dir.mkdir(parents=True, exist_ok=True)
+
+    remedy_payload = {
+        "codigoResp": 0,
+        "remedy": {
+            "idRemedy": "INC000004186294",
+            "resumen": "Fallo en sincronización OTRS",
+            "estadoDesc": "Asignado",
+            "fechaUltimaModificacion": "2026-11-17T08:30:46.000+00:00",
+            "worklog": [
+                {"idWorklog": "WL1", "fecha": "2026-11-17T08:30:46.000+00:00", "detalle": "Apunte inicial"}
+            ],
+        },
+    }
+    valid_llm = {
+        "success": True,
+        "titulo": "Fallo en sincronización OTRS",
+        "estadoActual": "Asignado",
+        "problema": "Incidencia de comunicación entre pasarela OTRS y backend.",
+        "impacto": "Afecta al envío automático de tickets. Sin método alternativo disponible.",
+        "sistemas": ["OTRS", "Remedy"],
+        "hitosTecnicos": ["[17/11/2026 09:30:46]: Apunte inicial de diagnóstico en pasarela."],
+        "bloqueos": [],
+    }
+
+    with patch("converters.src.montmc_client.MonTMCClient.fetch_remedy_detail", return_value=remedy_payload), \
+         patch("converters.src.epsilon_service.call_anthropic", return_value=(valid_llm, 210, 0.4)) as mock_llm, \
+         patch("converters.src.fastapi_epsilon_router._get_cache_dir", return_value=cache_dir), \
+         patch("converters.src.fastapi_epsilon_router._get_candidate_roots", return_value=[tmp_path]):
+        # 1ª petición: genera con nuestro motor interno
+        resp1 = get_resumen_ia("INC000004186294", force=False, mock=False)
+        assert resp1.status_code == 200
+        assert resp1.headers.get("X-Cache-Status") == "INTERNAL_LLM_GENERATED"
+        assert mock_llm.call_count == 1
+        body1 = json.loads(resp1.body.decode("utf-8"))
+        assert body1["meta"]["source"] == "internal_epsilon_engine"
+
+        # Limpiar caché en memoria: 2ª petición debe dar FINGERPRINT_HIT sin invocar al LLM
+        clear_fastapi_cache()
+        resp2 = get_resumen_ia("INC000004186294", force=False, mock=False)
+        assert resp2.status_code == 200
+        assert resp2.headers.get("X-Cache-Status") == "FINGERPRINT_HIT"
+        assert mock_llm.call_count == 1
 
 
 def test_fastapi_get_resumen_ia_disk_hit(tmp_path):
