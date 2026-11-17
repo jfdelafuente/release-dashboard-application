@@ -19,6 +19,8 @@ Directorio oficial de guías procedimentales modulares por escenario post-triaje
 | **7** | **Workarounds y Candado 🔒** | `WORKAROUND_AUTORIZADO` | `SL1` o `SL2` | **OBLIGATORIA** | `WL-05` | [**Ver Guía Escenario 7**](./escenario-7-workaround-autorizado.md) |
 | **8** | **Reapertura / Recurrencia Activa** | `REAPERTURA_ACTIVA` | `SL1` o `SL2` | **OBLIGATORIA** (<5m) | `WL-09` | [**Ver Guía Escenario 8**](./escenario-8-reapertura-activa.md) |
 
+> ℹ️ **Categorías Base de Respaldo en Consola (`escenario_num: null`)**: Además de los 8 escenarios especiales numerados, el filtro por tipo de ticket de la Consola incluye las dos categorías residuales del motor cuando un ticket activo no encaja en ningún escenario especial: **🔶 Incidencia Mayor P2** (`INCIDENCIA_MAYOR_P2`, ticket `SL2/P2` ya bien clasificado en Remedy bajo seguimiento prioritario `N2`) y **📋 Seguimiento Estándar** (`SEGUIMIENTO_ESTANDAR`, flujo ITIL ordinario `P3/P4` en cola `N1/N2`). Véase el detalle en el [Protocolo General IM-CSO](../protocolo-im-cso-escenarios-triaje.md).
+
 ---
 
 ## 🖥️ Integración con las Consolas Operativas

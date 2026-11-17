@@ -592,6 +592,99 @@ def build_worklog_claim_text(
     )
 
 
+def extract_affected_site_from_title(ticket_title: str) -> str:
+    """Extracts the affected site/platform from a pipe-delimited Remedy N1 title (e.g. 'OEST - Oviedo')."""
+    if not ticket_title or "|" not in ticket_title:
+        return ""
+    cand = ticket_title.split("|")[-1].strip()
+    cand = re.sub(r"\s*\([^)]*\)\s*$", "", cand).strip()
+    if " - " not in cand:
+        return ""
+    cand_lower = cand.lower()
+    non_site_keywords = (
+        "error", "fallo", "caída", "caida", "acceso", "lentitud",
+        "degradación", "degradacion", "indisponibilidad", "sl1", "sl2", "sl3", "sl4",
+        "jira", "cancelado", "conciliación", "conciliacion", "bscs", "pap ",
+    )
+    if any(kw in cand_lower for kw in non_site_keywords):
+        return ""
+    return cand
+
+
+def has_documented_planned_worklog_trace(
+    epsilon_data: Optional[dict[str, Any]],
+    remedy_detail: Optional[dict[str, Any]] = None,
+    ticket_notes: str = "",
+) -> bool:
+    """Returns True if Work Log / Epsilon technical fields document the planned release/RFC/window."""
+    parts: list[str] = []
+    if epsilon_data:
+        bloqueos = epsilon_data.get("bloqueos") or []
+        if isinstance(bloqueos, str):
+            bloqueos = [bloqueos]
+        for b in bloqueos:
+            b_str = str(b).strip()
+            if b_str.lower().startswith("[ventana release]"):
+                return True
+            parts.append(b_str)
+        parts.append(str(epsilon_data.get("solucion") or ""))
+        sig_raw = str(epsilon_data.get("siguienteAccion") or epsilon_data.get("siguiente_accion") or "").strip()
+        if sig_raw not in ("[]", "{}", "None", "null", "N/A", "-", "none"):
+            parts.append(sig_raw)
+        hitos = epsilon_data.get("hitos_tecnicos") or epsilon_data.get("hitosTecnicos") or []
+        if isinstance(hitos, list):
+            parts.extend(str(h) for h in hitos)
+
+    if remedy_detail and isinstance(remedy_detail, dict):
+        worklogs = remedy_detail.get("worklogs") or remedy_detail.get("remedy", {}).get("worklog") or []
+        if isinstance(worklogs, list):
+            for w in worklogs:
+                parts.append(str(w.get("detalle") or w.get("texto") or ""))
+
+    if ticket_notes:
+        parts.append(ticket_notes)
+
+    corpus = " ".join(parts).lower()
+    if not corpus.strip():
+        return False
+
+    planned_trace_re = re.compile(
+        r"\b(?:crq\d+|chg\d+|rfc|pap\s+\d{1,2}[/-]\d{1,2}|wi\.?\s*previsi[oó]n|"
+        r"(?:pase|subida|despliegue|implantaci[oó]n|entrega|previsi[oó]n|liberaci[oó]n|conciliaci[oó]n|batch).*?"
+        r"(?:\d{1,2}[/-]\d{1,2}|lunes|martes|mi[eé]rcoles|jueves|viernes|s[aá]bado|domingo|producci[oó]n))\b",
+        flags=re.IGNORECASE,
+    )
+    return bool(planned_trace_re.search(corpus))
+
+
+def build_planned_pap_worklog_claim_text(
+    incident_id: str,
+    assigned_group: str,
+    planned_detail: str,
+    site_label: str = "",
+    horas: Optional[float] = None,
+) -> str:
+    """Builds a formal WL-04 Remedy claim requesting RFC/window documentation for a header-only PaP."""
+    horas_str = f"{horas}h" if horas is not None else ">24h"
+    grp = assigned_group or "Grupo Resolutor"
+    site_clause = f" con la sede {site_label}" if site_label else " en producción"
+    return (
+        f"[SEGUIMIENTO DE RELEASE - SOLICITUD DE TRAZABILIDAD PaP EN WORK LOG (WL-04)]\n"
+        f"INCIDENCIA: {incident_id}\n"
+        f"GRUPO ASIGNADO: {grp}\n"
+        f"DESPLIEGUE PREVISTO: {planned_detail}\n\n"
+        f"Estimado equipo,\n"
+        f"Consta en cabecera la planificación de resolución mediante {planned_detail}, pero el Work Log de Remedy "
+        f"acumula {horas_str} sin actualización técnica ni detalle formal del cambio.\n"
+        f"Conforme al Escenario 2 (RESOLUCION_PLANIFICADA) de Orange Tech Operations, se solicita registrar en el Work Log:\n"
+        f"1. ID de cambio / RFC (CRQ) asociado y ventana horaria exacta de ejecución de {planned_detail}.\n"
+        f"2. Plan de verificación funcional posdespliegue{site_clause}. Recordatorio: la incidencia permanece ACTIVA "
+        f"(candado de cierre) hasta confirmar el restablecimiento tras el pase.\n\n"
+        f"Atentamente,\n"
+        f"Mesa de Seguimiento y Triaje IT"
+    )
+
+
 _PROCESS_PATTERNS_FILE = Path(__file__).resolve().parent / "process_patterns.json"
 
 
@@ -688,10 +781,22 @@ def detect_planned_resolution(
 
     evidence_parts.append(str(ticket.get("Descripción") or ticket.get("descripcion") or ""))
     evidence_parts.append(str(ticket.get("Notas") or ticket.get("notas") or ""))
-    combined = " ".join(evidence_parts).lower()
+    combined_raw = " ".join(evidence_parts)
+    combined = combined_raw.lower()
 
     if not combined.strip():
         return False, ""
+
+    # Detección explícita de etiqueta operativa PaP DD/MM (con ID opcional Jira/CRQ/CHG, ej. "PaP 18/11 | PRDIA-3226")
+    pap_match = re.search(
+        r"\bpap\s+(\d{1,2}[/-]\d{1,2}(?:[/-]\d{2,4})?)\b(?:\s*(?:\||-|–|:|/|,)?\s*\b((?:CRQ|CHG)\d+|[A-Z][A-Z0-9]{1,11}-\d+)\b)?",
+        combined_raw,
+        flags=re.IGNORECASE,
+    )
+    if pap_match:
+        pap_date = pap_match.group(1)
+        ref_id = pap_match.group(2).upper() if pap_match.group(2) else ""
+        return True, f"PaP {pap_date} ({ref_id})" if ref_id else f"PaP {pap_date}"
 
     # Detección de patrones de despliegue con fecha numérica (ej. 17/11/2026, 12/11, Previsión 12/11)
     date_match = re.search(
@@ -856,6 +961,8 @@ def generate_operator_guidance(
     has_workaround: str = "No",
     is_multisite_partial: bool = False,
     worklog_status: Optional[dict[str, Any]] = None,
+    ticket_title: str = "",
+    missing_worklog_rfc: bool = False,
 ) -> dict[str, Any]:
     """Generates structured, actionable operational guidance for the console operator."""
     user_cnt = (quant_metrics or {}).get("usuarios")
@@ -872,15 +979,43 @@ def generate_operator_guidance(
             "requiere_comunicado_direccion": False,
         }
     elif is_planned:
+        site_label = extract_affected_site_from_title(ticket_title)
+        verif_clause = f"con la sede {site_label} " if site_label else "en producción "
+        grp = assigned_group or "grupo resolutor"
+        accion = (
+            f"Monitorizar pase programado ({planned_detail}). "
+            f"Permanece ACTIVA hasta la ejecución y verificación posdespliegue {verif_clause}antes de cerrar el ticket."
+        )
+        if missing_worklog_rfc:
+            accion += (
+                f" Reclamar a {grp} (botón Reclamación Work Log o apunte en Remedy) que documente en el Work Log "
+                f"el ID de cambio/RFC y la ventana horaria exacta de {planned_detail}."
+            )
+        accion += " No convocar War Room ni escalar telefónicamente a Dirección."
         res = {
             "categoria_operativa": "RESOLUCION_PLANIFICADA",
-            "alerta_consola": f"📅 RESOLUCIÓN PLANIFICADA: {planned_detail}",
-            "accion_recomendada": f"Monitorizar pase programado ({planned_detail}). No convocar War Room ni escalar telefónicamente a Dirección.",
+            "alerta_consola": f"📅 RESOLUCIÓN PLANIFICADA: {planned_detail} · Permanece ACTIVA hasta verificación posdespliegue",
+            "accion_recomendada": accion,
             "canal_escalado": "Mesa de Cambios (CAB) / Seguimiento de Release",
             "prioridad_operativa_consola": "P2 Seguimiento Release",
             "requiere_llamada_cso": False,
             "requiere_comunicado_direccion": False,
         }
+        if missing_worklog_rfc:
+            horas_wl = worklog_status.get("horas_sin_worklog") if worklog_status else None
+            horas_str = f"{horas_wl}h" if horas_wl is not None else ">24h"
+            res["alerta_worklog"] = (
+                f"📋 TRAZABILIDAD PaP PENDIENTE EN WORK LOG: Solicitar a {grp} documentar ID de cambio/RFC y ventana horaria exacta "
+                f"de {planned_detail} ({horas_str} sin apunte técnico en Remedy)."
+            )
+            res["reclamar_worklog"] = True
+            res["plantilla_reclamacion_wl"] = build_planned_pap_worklog_claim_text(
+                incident_id=incident_id,
+                assigned_group=grp,
+                planned_detail=planned_detail,
+                site_label=site_label,
+                horas=horas_wl,
+            )
     elif is_reopened:
         res = {
             "categoria_operativa": "REAPERTURA_ACTIVA",
@@ -1208,18 +1343,20 @@ class SeverityEvaluator:
     def _apply_planned_resolution_downgrade(state: "EvaluationState", ticket: dict[str, Any], epsilon_data: Optional[dict[str, Any]]) -> None:
         # Regla de Resolución Planificada (Seguimiento de Release P2 / it-severity-matrix v2.7):
         # Una incidencia con resolución planificada o pase acordado no constituye una emergencia P1 en vivo.
-        # Se calibra la prioridad sugerida a P2 (Seguimiento de Release) salvo caída total de servicio no mitigada.
-        if state.is_planned and state.priority == "P1":
+        # Se calibra la prioridad sugerida a P2 (Seguimiento de Release) y la urgencia a Media salvo caída total no mitigada.
+        if state.is_planned and state.priority in ("P1", "P2"):
             desc_text = str(ticket.get("Descripción") or ticket.get("descripcion") or "")
             prob_text = str(epsilon_data.get("problema") if epsilon_data else "")
             full_text = f"{desc_text} {prob_text}".lower()
             has_total_outage = any(kw in full_text for kw in ["caída total", "caida total", "sin servicio", "corte total"])
             if not has_total_outage:
+                was_p1 = state.priority == "P1"
                 state.priority = "P2"
                 if state.urgency == "Alta":
                     state.urgency = "Media"
                     state.urgency_reason = f"Resolución planificada en ventana acordada ({state.planned_label}). Prioridad calibrada a P2, Urgencia reducida a Media por ausencia de caída total de servicio."
-                    state.historial_reclasificacion.append(f"Regla Resolución Planificada: Prioridad -> P2, Urgencia -> Media ({state.urgency_reason})")
+                    rule_prefix = "Prioridad -> P2, Urgencia -> Media" if was_p1 else "Urgencia -> Media (Tope P2 Seguimiento Release)"
+                    state.historial_reclasificacion.append(f"Regla Resolución Planificada: {rule_prefix} ({state.urgency_reason})")
 
     @staticmethod
     def _apply_zombie_rule(state: "EvaluationState") -> None:
@@ -1586,7 +1723,7 @@ class SeverityEvaluator:
         # Detección de Resolución Planificada / Pase Comprometido
         is_planned, planned_label = detect_planned_resolution(epsilon, ticket, remedy_detail=remedy_detail)
         if is_planned:
-            urgency_level = "Baja" if "pendiente" in status else "Media"
+            urgency_level = "Baja" if ("pendiente" in status and has_workaround != "No") else "Media"
             return urgency_level, f"Resolución planificada en ventana acordada ({planned_label}). Urgencia operativa acotada a fecha programada.", has_workaround
 
         # Elevación de urgencia por bloqueos reportados por Epsilon IA sin workaround
@@ -2037,7 +2174,15 @@ class ExecutiveMessageGenerator:
 
         problema = (resumen_ia.get("problema") if resumen_ia else None) or titulo
         solucion = (resumen_ia.get("solucion") if resumen_ia else None) or "Diagnóstico y contención técnica en curso por equipos resolutores"
-        siguiente = (resumen_ia.get("siguienteAccion") or resumen_ia.get("siguiente_accion") if resumen_ia else None) or "Auditoría preventiva PaP y restablecimiento de servicio"
+        raw_siguiente = (resumen_ia.get("siguienteAccion") or resumen_ia.get("siguiente_accion") if resumen_ia else None)
+        if raw_siguiente:
+            siguiente = raw_siguiente
+        elif is_planned:
+            site_lbl = extract_affected_site_from_title(titulo)
+            site_str = f" con la sede {site_lbl}" if site_lbl else " en producción"
+            siguiente = f"Ejecución de {planned_label} y verificación posdespliegue{site_str} antes del cierre (Permanece ACTIVA)"
+        else:
+            siguiente = "Auditoría preventiva PaP y restablecimiento de servicio"
 
         return {
             "inc_id": inc_id, "prio": prio, "sl_level": sl_level,
@@ -2068,7 +2213,10 @@ class ExecutiveMessageGenerator:
                 f"• Escalado por Envejecimiento: Elevado a P1 tras >={cls._EMERGENCY_AGING_ESCALATION_THRESHOLD_MINS} min activo sin workaround"
             )
         elif ctx["is_planned"]:
-            lines.append(f"• Resolución Planificada: {ctx['planned_label']} (Exenta de escalado por envejecimiento)")
+            lines.append(
+                f"• Resolución Planificada: {ctx['planned_label']} "
+                f"(Exenta de escalado por envejecimiento — Permanece ACTIVA hasta verificación posdespliegue)"
+            )
         lines.extend([
             f"• Umbral de Emergencia: {ctx['criterio']}",
             f"• Alcance y Sistemas: {ctx['sistemas_str']}",
@@ -2517,6 +2665,22 @@ def evaluate_incidents_batch(
                 is_zombie=is_zombie,
             )
 
+            ticket_title_str = str(
+                item.get("Descripción") or item.get("descripcion") or (epsilon_data.get("titulo") if epsilon_data else "") or ""
+            )
+            ticket_notes_str = str(item.get("Notas") or item.get("notas") or "")
+            assigned_grp_str = str(item.get("Grupo asignado") or item.get("Grupo Resolutor") or "")
+            horas_wl_val = worklog_status.get("horas_sin_worklog")
+            missing_worklog_rfc = bool(
+                is_planned
+                and (horas_wl_val is None or horas_wl_val >= 24.0)
+                and not has_documented_planned_worklog_trace(
+                    epsilon_data=epsilon_data,
+                    remedy_detail=remedy_detail,
+                    ticket_notes=ticket_notes_str,
+                )
+            )
+
             guia_operador = generate_operator_guidance(
                 incident_id=inc_id,
                 priority=prio_sugerida,
@@ -2526,7 +2690,7 @@ def evaluate_incidents_batch(
                 planned_detail=planned_label,
                 is_local_departmental=is_local_dept,
                 mins_open=sla_status["minutos_desde_apertura"],
-                assigned_group=str(item.get("Grupo asignado") or item.get("Grupo Resolutor") or ""),
+                assigned_group=assigned_grp_str,
                 has_exec_msg_apertura=has_apertura,
                 quant_metrics=quant_m,
                 is_reopened=is_reopened_val,
@@ -2535,6 +2699,8 @@ def evaluate_incidents_batch(
                 has_workaround=workaround_val,
                 is_multisite_partial=multisite_partial,
                 worklog_status=worklog_status,
+                ticket_title=ticket_title_str,
+                missing_worklog_rfc=missing_worklog_rfc,
             )
             eval_dict["guia_operador"] = guia_operador
             evaluation["evaluacion"] = eval_dict
@@ -2599,6 +2765,7 @@ def evaluate_incidents_batch(
             high_priority_items.append({
                 "id": inc_id,
                 "titulo": item.get("Descripción") or item.get("descripcion") or (epsilon_data.get("titulo") if epsilon_data else ""),
+                "grupo_asignado": assigned_grp_str,
                 "sistemas": sistemas,
                 "prioridad_original": item.get("Prioridad") or "Media",
                 "prioridad_sugerida": prio_sugerida,

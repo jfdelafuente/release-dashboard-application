@@ -675,3 +675,44 @@ def test_worklog_stagnation_indicators_and_controls():
     assert "WL_BLOQUEO_24H" in js, "triage.js debe contemplar el nivel WL_BLOQUEO_24H"
     assert "plantilla_reclamacion_wl" in js, "triage.js debe acceder a plantilla_reclamacion_wl"
 
+
+def test_ticket_type_category_filter_elements_and_logic():
+    """Valida el filtro por Tipo de Ticket / Categoría Operativa (RESOLUCION_PLANIFICADA, etc.)."""
+    html = (CONSOLE_DIR / "index.html").read_text(encoding="utf-8")
+    css = (CONSOLE_DIR / "triage.css").read_text(encoding="utf-8")
+    js = (CONSOLE_DIR / "triage.js").read_text(encoding="utf-8")
+
+    assert 'id="filter-category"' in html
+    expected_options = {
+        "EMERGENCIA_VIVA": "🚨 Emergencia Viva",
+        "RESOLUCION_PLANIFICADA": "🗓️ Resolución Planificada",
+        "REAPERTURA_ACTIVA": "🔄 Reapertura Activa",
+        "ESTANCAMIENTO_LOCAL": "⏳ Estancamiento Local",
+        "INFRATRIAJE_REMEDY": "⚡ Infratriaje Remedy",
+        "AFECTACION_MULTISEDE_PARCIAL": "🏢 Multisede Parcial",
+        "WORKAROUND_AUTORIZADO": "🔒 Workaround Autorizado",
+        "TICKET_ZOMBI_REMEDY": "🧟 Ticket Zombi Remedy",
+        "INCIDENCIA_MAYOR_P2": "🔶 Incidencia Mayor P2",
+        "SEGUIMIENTO_ESTANDAR": "📋 Seguimiento Estándar",
+    }
+    for cat, op_label in expected_options.items():
+        assert f'<option value="{cat}">{op_label}</option>' in html, f"Opción inválida para {cat}"
+        assert f"({cat})" not in html and f"({cat})" not in js, f"No debe mostrar el código técnico ({cat}) en la etiqueta"
+
+    assert ".triage-select.is-active-filter" in css
+    assert ".triage-active-filter-chip" in css
+    assert ".triage-cat-pill-btn" in css
+
+    assert "filterCategorySelect" in js
+    assert "categoryFilter" in js
+    assert "resolveIncidentCategory" in js
+    assert "updateCategoryFilterCounts" in js
+    assert "`${base} [${cnt}]`" in js, "El filtro debe mostrar el número de incidencias por tipo entre corchetes []"
+    assert "`Todos los Tipos de Ticket [${list.length}]`" in js
+    assert "applyCategoryFilter" in js
+    assert "window.applyCategoryFilter = applyCategoryFilter;" in js
+    assert "const catOperativa = resolveIncidentCategory(inc);" in js
+    assert "v=20261113_1330" not in html, "index.html debe invalidar la caché de triage.js/triage.css tras añadir filtros nuevos"
+    assert "./triage.js?v=" in html and "./triage.css?v=" in html
+
+

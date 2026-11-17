@@ -161,6 +161,11 @@ class CustomHTTPHandler(http.server.SimpleHTTPRequestHandler):
         except (ConnectionAbortedError, ConnectionResetError, BrokenPipeError):
             pass
 
+    def end_headers(self):
+        if getattr(self, '_no_cache_static', False):
+            self.send_header('Cache-Control', 'no-cache, must-revalidate')
+        super().end_headers()
+
     def _send_raw_response(self, status, content, content_type='application/json; charset=utf-8', extra_headers=None):
         try:
             self.send_response(status)
@@ -1480,7 +1485,10 @@ class CustomHTTPHandler(http.server.SimpleHTTPRequestHandler):
                 print(f"  Error: {e}")
                 return
 
-        # Para todo lo demás, usar el comportamiento normal
+        # Para todo lo demás, usar el comportamiento normal (evitando caché obsoleta en HTML/JS/CSS)
+        static_clean = self.path.split('?')[0].lower()
+        if static_clean.endswith(('/', '.html', '.htm', '.js', '.css', '.json')):
+            self._no_cache_static = True
         print(f"  Sirviendo normalmente desde: {self.directory}")
         return super().do_GET()
 

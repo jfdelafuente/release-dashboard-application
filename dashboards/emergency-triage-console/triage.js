@@ -28,6 +28,7 @@
     incidents: [],
     activeFilter: 'reclass_only', // 'all' | 'reclass_only' | 'correct_only' | 'orchestrator_only'
     processFilter: 'all',
+    categoryFilter: 'all', // 'all' | 'EMERGENCIA_VIVA' | 'RESOLUCION_PLANIFICADA' | ...
     severityFilter: 'all',
     worklogFilter: 'all', // 'all' | 'inactivos' | '6h' | '12h' | '24h' | 'ok' | 'exento'
     sortOrder: 'date-desc', // 'date-desc' | 'worklog-desc' | 'severity-desc' | 'discrepancy-desc'
@@ -98,6 +99,7 @@
     countCorrect: document.getElementById('count-correct'),
     countOrchestrator: document.getElementById('count-orchestrator'),
     filterProcessSelect: document.getElementById('filter-process'),
+    filterCategorySelect: document.getElementById('filter-category'),
     filterSeveritySelect: document.getElementById('filter-severity'),
     filterWorklogSelect: document.getElementById('filter-worklog'),
     sortFeedSelect: document.getElementById('sort-feed'),
@@ -715,6 +717,8 @@
     if (dom.countReclass) dom.countReclass.textContent = discCount;
     if (dom.countCorrect) dom.countCorrect.textContent = correctCount;
     if (dom.countOrchestrator) dom.countOrchestrator.textContent = p1Count;
+
+    updateCategoryFilterCounts();
 
     // Renderizar Feed de Triaje (Vista Tabular con Filas Plegables)
     renderFeed();
@@ -3484,6 +3488,91 @@ Generado por Consola de Emergencias IT Orange - Motor de Triaje (Módulo 1)`;
     return 'Fecha n/d';
   }
 
+  const CATEGORY_FILTER_META = {
+    EMERGENCIA_VIVA: { name: 'Emergencia Viva', label: '🚨 Emergencia Viva', pill: '🚨 Viva', pillClass: 'status-emergencia-viva', title: 'Escenario 1: Emergencia crítica P1 activa — Clic para filtrar por este tipo' },
+    RESOLUCION_PLANIFICADA: { name: 'Resolución Planificada', label: '🗓️ Resolución Planificada', pill: '🗓️ Planif', pillClass: 'status-planificada', title: 'Escenario 2: Resolución programada (PaP/Batch/Release) — Clic para filtrar por este tipo' },
+    REAPERTURA_ACTIVA: { name: 'Reapertura Activa', label: '🔄 Reapertura Activa', pill: '🔄 Reabierta', pillClass: 'status-reapertura', title: 'Escenario 8: Reapertura activa / recurrencia — Clic para filtrar por este tipo' },
+    ESTANCAMIENTO_LOCAL: { name: 'Estancamiento Local', label: '⏳ Estancamiento Local', pill: '⏳ Local', pillClass: 'status-estancamiento-local', title: 'Escenario 4: Estancamiento departamental/local acotado — Clic para filtrar por este tipo' },
+    INFRATRIAJE_REMEDY: { name: 'Infratriaje Remedy', label: '⚡ Infratriaje Remedy', pill: '⚡ Infratriaje', pillClass: 'status-infratriaje', title: 'Escenario 5: Infratriaje Remedy detectado — Clic para filtrar por este tipo' },
+    AFECTACION_MULTISEDE_PARCIAL: { name: 'Multisede Parcial', label: '🏢 Multisede Parcial', pill: '🏢 Multisede', pillClass: 'status-multisede', title: 'Escenario 6: Afectación multisede parcial — Clic para filtrar por este tipo' },
+    WORKAROUND_AUTORIZADO: { name: 'Workaround Autorizado', label: '🔒 Workaround Autorizado', pill: '🔒 Workaround', pillClass: 'status-workaround', title: 'Escenario 7: Workaround temporal bajo candado IM-CSO — Clic para filtrar por este tipo' },
+    TICKET_ZOMBI_REMEDY: { name: 'Ticket Zombi Remedy', label: '🧟 Ticket Zombi Remedy', pill: '🧟 Zombi', pillClass: 'status-zombi', title: 'Escenario 3: Resolución Jira completada / cierre administrativo pendiente — Clic para filtrar por este tipo' },
+    INCIDENCIA_MAYOR_P2: { name: 'Incidencia Mayor P2', label: '🔶 Incidencia Mayor P2', pill: '🔶 Mayor P2', pillClass: 'status-incidencia-p2', title: 'Incidencia Mayor SL2/P2 en seguimiento — Clic para filtrar por este tipo' },
+    SEGUIMIENTO_ESTANDAR: { name: 'Seguimiento Estándar', label: '📋 Seguimiento Estándar', pill: '📋 Estándar', pillClass: 'status-seguimiento-estandar', title: 'Seguimiento operativo ordinario ITIL — Clic para filtrar por este tipo' }
+  };
+
+  function getCategoryLabel(catKey) {
+    if (!catKey || catKey === 'all') return 'Todos los Tipos de Ticket';
+    const meta = CATEGORY_FILTER_META[catKey];
+    return meta ? meta.label : String(catKey).replace(/_/g, ' ');
+  }
+
+  function getCategoryName(catKey) {
+    if (!catKey || catKey === 'all') return 'Todos los Tipos de Ticket';
+    const meta = CATEGORY_FILTER_META[catKey];
+    return meta ? meta.name : String(catKey).replace(/_/g, ' ');
+  }
+
+  function resolveIncidentCategory(inc) {
+    if (!inc) return 'SEGUIMIENTO_ESTANDAR';
+    const evalData = inc.evaluacion || {};
+    const guia = inc.guia_operador || evalData.guia_operador || {};
+    if (guia.categoria_operativa) {
+      return String(guia.categoria_operativa).trim().toUpperCase();
+    }
+    if (inc.es_zombi || evalData.es_zombi) return 'TICKET_ZOMBI_REMEDY';
+    if (inc.es_planificada || evalData.es_planificada) return 'RESOLUCION_PLANIFICADA';
+    if (inc.es_reapertura || evalData.es_reapertura) return 'REAPERTURA_ACTIVA';
+    if (inc.es_local_departamental || evalData.es_local_departamental) return 'ESTANCAMIENTO_LOCAL';
+    if (inc.workaround_autorizado || evalData.workaround_autorizado) return 'WORKAROUND_AUTORIZADO';
+    if (inc.prioridad_sugerida === 'P1') return 'EMERGENCIA_VIVA';
+    if (inc.es_discrepancia || (inc.discrepancia_delta && inc.discrepancia_delta > 0)) return 'INFRATRIAJE_REMEDY';
+    if (inc.prioridad_sugerida === 'P2') return 'INCIDENCIA_MAYOR_P2';
+    return 'SEGUIMIENTO_ESTANDAR';
+  }
+
+  function updateCategoryFilterCounts() {
+    const sel = dom.filterCategorySelect || document.getElementById('filter-category');
+    if (!sel) return;
+    const counts = {};
+    const list = state.incidents || [];
+    list.forEach(inc => {
+      const cat = resolveIncidentCategory(inc);
+      counts[cat] = (counts[cat] || 0) + 1;
+    });
+    Array.from(sel.options).forEach(opt => {
+      if (opt.value === 'all') {
+        opt.textContent = list.length > 0 ? `Todos los Tipos de Ticket [${list.length}]` : 'Todos los Tipos de Ticket';
+      } else {
+        const base = getCategoryLabel(opt.value);
+        const cnt = counts[opt.value] || 0;
+        opt.textContent = `${base} [${cnt}]`;
+      }
+    });
+    sel.classList.toggle('is-active-filter', state.categoryFilter !== 'all');
+  }
+
+  function applyCategoryFilter(nextCategory) {
+    const target = nextCategory || 'all';
+    state.categoryFilter = target;
+    const sel = dom.filterCategorySelect || document.getElementById('filter-category');
+    if (sel) {
+      sel.value = target;
+      sel.classList.toggle('is-active-filter', target !== 'all');
+    }
+
+    if (target !== 'all' && state.activeFilter !== 'all') {
+      const currentTabHasMatch = getFilteredIncidents().length > 0;
+      const globalHasMatch = (state.incidents || []).some(i => resolveIncidentCategory(i) === target);
+      if (!currentTabHasMatch && globalHasMatch) {
+        state.activeFilter = 'all';
+        updateTabStyles();
+        showToast(`Pestaña cambiada a "Todas" para mostrar tickets de tipo "${getCategoryLabel(target)}"`, 'info');
+      }
+    }
+    renderFeed();
+  }
+
   function getFilteredIncidents() {
     let filtered = state.incidents.slice();
 
@@ -3502,6 +3591,11 @@ Generado por Consola de Emergencias IT Orange - Motor de Triaje (Módulo 1)`;
         const proc = i.evaluacion?.proceso || i.evaluacion?.proceso_negocio || '';
         return proc.toLowerCase().includes(state.processFilter.toLowerCase());
       });
+    }
+
+    // 2b. Filtro por Tipo de Ticket / Categoría Operativa (RESOLUCION_PLANIFICADA, etc.)
+    if (state.categoryFilter && state.categoryFilter !== 'all') {
+      filtered = filtered.filter(i => resolveIncidentCategory(i) === state.categoryFilter);
     }
 
     // 3. Filtro de Severidad ITIL
@@ -3668,13 +3762,44 @@ function renderFeed() {
     const filtered = getFilteredIncidents();
 
     if (filtered.length === 0) {
+      const hasActiveSubfilters = (
+        state.categoryFilter !== 'all' ||
+        state.processFilter !== 'all' ||
+        state.severityFilter !== 'all' ||
+        state.worklogFilter !== 'all' ||
+        Boolean(state.searchQuery && state.searchQuery.trim())
+      );
       dom.triageFeed.innerHTML = `
         <div class="triage-empty-state">
           <div class="triage-empty-icon" aria-hidden="true">🔍</div>
           <div class="triage-empty-title">No hay incidencias que coincidan con los filtros seleccionados</div>
-          <p>Prueba a cambiar el filtro de proceso o la pestaña de reclasificaciones para ver más resultados.</p>
+          <p>${state.categoryFilter !== 'all' ? `Ninguna incidencia activa en esta vista corresponde a <strong>${escapeHtml(getCategoryLabel(state.categoryFilter))}</strong>.` : 'Prueba a cambiar el filtro de tipo, proceso o la pestaña activa para ver más resultados.'}</p>
+          ${hasActiveSubfilters ? `
+            <button type="button" class="triage-btn-reset-filters" id="btn-reset-empty-filters">
+              <span aria-hidden="true">↺</span> Restablecer filtros activos
+            </button>
+          ` : ''}
         </div>
       `;
+      const resetBtn = document.getElementById('btn-reset-empty-filters');
+      if (resetBtn) {
+        resetBtn.addEventListener('click', () => {
+          state.categoryFilter = 'all';
+          state.processFilter = 'all';
+          state.severityFilter = 'all';
+          state.worklogFilter = 'all';
+          state.searchQuery = '';
+          if (dom.filterCategorySelect) {
+            dom.filterCategorySelect.value = 'all';
+            dom.filterCategorySelect.classList.remove('is-active-filter');
+          }
+          if (dom.filterProcessSelect) dom.filterProcessSelect.value = 'all';
+          if (dom.filterSeveritySelect) dom.filterSeveritySelect.value = 'all';
+          if (dom.filterWorklogSelect) dom.filterWorklogSelect.value = 'all';
+          if (dom.searchInput) dom.searchInput.value = '';
+          renderFeed();
+        });
+      }
       return;
     }
 
@@ -3682,8 +3807,16 @@ function renderFeed() {
 
     dom.triageFeed.innerHTML = `
       <div class="triage-table-toolbar">
-        <div class="triage-table-count">
-          Mostrando <strong>${filtered.length}</strong> incidencia${filtered.length === 1 ? '' : 's'}
+        <div class="triage-table-count-group">
+          <div class="triage-table-count">
+            Mostrando <strong>${filtered.length}</strong> incidencia${filtered.length === 1 ? '' : 's'}
+          </div>
+          ${state.categoryFilter !== 'all' ? `
+            <button type="button" class="triage-active-filter-chip" id="btn-clear-category-filter" title="Quitar filtro: ${escapeHtml(getCategoryLabel(state.categoryFilter))}">
+              <span>Tipo: <strong>${escapeHtml(getCategoryLabel(state.categoryFilter))}</strong></span>
+              <span class="chip-close" aria-hidden="true">✕</span>
+            </button>
+          ` : ''}
         </div>
         <button type="button" class="triage-btn-toggle-all" id="btn-toggle-all-rows" aria-label="${state.allExpanded ? 'Plegar todas las filas' : 'Expandir todas las filas'}">
           <span aria-hidden="true">${state.allExpanded ? '▲' : '▼'}</span>
@@ -3818,7 +3951,7 @@ function renderFeed() {
 
     // Guía del Operador de Consola (incident-triage-review)
     const guia = inc.guia_operador || (evaluacion && evaluacion.guia_operador) || {};
-    const catOperativa = guia.categoria_operativa || (isDisc ? 'DISCREPANCIA_TRIAJE' : 'SEGUIMIENTO_ESTANDAR');
+    const catOperativa = resolveIncidentCategory(inc);
     const alertaConsola = guia.alerta_consola || '';
     const accionRecomendada = guia.accion_recomendada || '';
     const canalEscalado = guia.canal_escalado || 'SEGUIMIENTO_ORDINARIO_RESOLUTOR';
@@ -3901,12 +4034,12 @@ function renderFeed() {
             </button>
             <span class="triage-id-link" data-inc="${escapeHtml(incId)}" title="Ver ficha técnica Epsilon IA">${escapeHtml(incId)}</span>
             <span class="triage-status-pill ${statusPillClass}">${escapeHtml(inc.estatus || 'Pendiente')}</span>
-            ${catOperativa === 'TICKET_ZOMBI_REMEDY' ? '<span class="triage-status-pill status-zombi" title="Resolución Jira completada - Cierre administrativo pendiente en Remedy">🧟 Zombi</span>' : ''}
-            ${catOperativa === 'RESOLUCION_PLANIFICADA' ? '<span class="triage-status-pill status-planificada" title="Resolución programada (Batch/Release) - Aging no penalizado">🗓️ Planif</span>' : ''}
-            ${catOperativa === 'INFRATRIAJE_REMEDY' ? '<span class="triage-status-pill status-infratriaje" title="Infratriaje Remedy detectado - Requiere reclasificación">⚡ Infratriaje</span>' : ''}
-            ${catOperativa === 'AFECTACION_MULTISEDE_PARCIAL' ? '<span class="triage-status-pill status-multisede" title="Afectación multisede parcial - Falso cierre prevenido">🏢 Multisede</span>' : ''}
-            ${catOperativa === 'WORKAROUND_AUTORIZADO' ? '<span class="triage-status-pill status-workaround" title="Workaround temporal activo bajo candado IM-CSO">🔒 Workaround</span>' : ''}
-            ${catOperativa === 'REAPERTURA_ACTIVA' ? '<span class="triage-status-pill status-reapertura" title="Reapertura activa - Reactivación urgente requerida">🔄 Reabierta</span>' : ''}
+            ${(() => {
+              const catMeta = CATEGORY_FILTER_META[catOperativa];
+              if (!catMeta || catOperativa === 'SEGUIMIENTO_ESTANDAR') return '';
+              const isCatSelected = state.categoryFilter === catOperativa;
+              return `<button type="button" class="triage-status-pill triage-cat-pill-btn ${catMeta.pillClass} ${isCatSelected ? 'is-selected-cat' : ''}" data-filter-cat="${escapeHtml(catOperativa)}" title="${escapeHtml(catMeta.title)}">${catMeta.pill}</button>`;
+            })()}
           </div>
           <div class="triage-datetime-row">
             <span class="triage-date-label" title="Fecha oficial de apertura en Remedy">📅 ${escapeHtml(fechaStr)}</span>
@@ -3999,7 +4132,7 @@ function renderFeed() {
               <div class="triage-op-header">
                 <div class="triage-op-title-group">
                   <span class="triage-op-badge-large ${opBadgeClass}">
-                    <span aria-hidden="true">${opBadgeIcon}</span> ${escapeHtml(catOperativa.replace(/_/g, ' '))}
+                    <span aria-hidden="true">${opBadgeIcon}</span> ${escapeHtml(getCategoryName(catOperativa))}
                   </span>
                   <h4 class="triage-op-alert-text">${escapeHtml(alertaConsola || 'INSTRUCCIÓN OPERATIVA PARA EL OPERADOR DE CONSOLA')}</h4>
                 </div>
@@ -4368,6 +4501,20 @@ function renderFeed() {
       btnToggleAll.addEventListener('click', toggleAllRows);
     }
 
+    // 1b. Chip para limpiar filtro activo por tipo de ticket y pastillas clicables en fila
+    const btnClearCat = document.getElementById('btn-clear-category-filter');
+    if (btnClearCat) {
+      btnClearCat.addEventListener('click', () => applyCategoryFilter('all'));
+    }
+
+    document.querySelectorAll('.triage-cat-pill-btn[data-filter-cat]').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const cat = btn.getAttribute('data-filter-cat') || 'all';
+        applyCategoryFilter(state.categoryFilter === cat ? 'all' : cat);
+      });
+    });
+
     // 2. Botón Copiar Solicitud Reclasificación Remedy
     document.querySelectorAll('.btn-copy-reclass').forEach(btn => {
       btn.addEventListener('click', (e) => {
@@ -4587,13 +4734,28 @@ function renderFeed() {
       });
     }
 
-    // Filtros de Proceso y Severidad
+    // Filtros de Proceso, Tipo de Ticket y Severidad
     if (dom.filterProcessSelect) {
       dom.filterProcessSelect.addEventListener('change', (e) => {
         state.processFilter = e.target.value;
         renderFeed();
       });
     }
+
+    const filterCategoryEl = dom.filterCategorySelect || document.getElementById('filter-category');
+    if (filterCategoryEl) {
+      dom.filterCategorySelect = filterCategoryEl;
+      filterCategoryEl.addEventListener('change', (e) => {
+        applyCategoryFilter(e.target.value);
+      });
+    } else {
+      document.addEventListener('change', (e) => {
+        if (e.target && e.target.id === 'filter-category') {
+          applyCategoryFilter(e.target.value);
+        }
+      });
+    }
+    window.applyCategoryFilter = applyCategoryFilter;
 
     if (dom.filterSeveritySelect) {
       dom.filterSeveritySelect.addEventListener('change', (e) => {

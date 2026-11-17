@@ -17,7 +17,7 @@
   <link rel="stylesheet" href="/dashboards/assets/incident-notifications.css">
 
   <!-- Estilos del Módulo 1 (Adaptado al Sistema de Diseño del Portal) -->
-  <link rel="stylesheet" href="./triage.css?v=20261113_1330">
+  <link rel="stylesheet" href="./triage.css?v=20261117_1123">
 </head>
 <body>
 
@@ -213,6 +213,21 @@
           <option value="prepago">Prepago</option>
           <option value="middleware">Middleware Transversal</option>
           <option value="sistemas core">Sistemas Core / Infraestructura</option>
+        </select>
+
+        <label for="filter-category" class="sr-only">Filtrar por Tipo de Ticket / Escenario Operativo</label>
+        <select id="filter-category" class="triage-select" title="Filtrar por Tipo de Ticket / Escenario Operativo">
+          <option value="all">Todos los Tipos de Ticket</option>
+          <option value="EMERGENCIA_VIVA">🚨 Emergencia Viva</option>
+          <option value="RESOLUCION_PLANIFICADA">🗓️ Resolución Planificada</option>
+          <option value="REAPERTURA_ACTIVA">🔄 Reapertura Activa</option>
+          <option value="ESTANCAMIENTO_LOCAL">⏳ Estancamiento Local</option>
+          <option value="INFRATRIAJE_REMEDY">⚡ Infratriaje Remedy</option>
+          <option value="AFECTACION_MULTISEDE_PARCIAL">🏢 Multisede Parcial</option>
+          <option value="WORKAROUND_AUTORIZADO">🔒 Workaround Autorizado</option>
+          <option value="TICKET_ZOMBI_REMEDY">🧟 Ticket Zombi Remedy</option>
+          <option value="INCIDENCIA_MAYOR_P2">🔶 Incidencia Mayor P2</option>
+          <option value="SEGUIMIENTO_ESTANDAR">📋 Seguimiento Estándar</option>
         </select>
 
         <label for="filter-severity" class="sr-only">Filtrar por Severidad ITIL Evaluada</label>
@@ -1770,7 +1785,7 @@
   <script src="/dashboards/assets/ui-feedback.js"></script>
   <script src="/dashboards/assets/topbar.js"></script>
   <script src="/dashboards/assets/resumen-ia.js"></script>
-  <script src="./triage.js?v=20261113_1330"></script>
+  <script src="./triage.js?v=20261117_1130"></script>
 </body>
 </html>
 

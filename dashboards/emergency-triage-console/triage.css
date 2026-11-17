@@ -269,6 +269,13 @@ body {
   box-shadow: 0 0 0 3px rgba(255, 121, 0, 0.18);
 }
 
+.triage-select.is-active-filter {
+  border-color: var(--triage-orange);
+  background: var(--triage-orange-light);
+  color: var(--triage-text-main);
+  font-weight: 700;
+}
+
 .triage-btn {
   display: inline-flex;
   align-items: center;
@@ -708,6 +715,13 @@ body {
   padding: 2px 2px;
 }
 
+.triage-table-count-group {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
 .triage-table-count {
   font-size: 13px;
   color: var(--triage-text-muted);
@@ -716,6 +730,57 @@ body {
 .triage-table-count strong {
   color: var(--triage-text-main);
   font-family: var(--font-mono);
+}
+
+.triage-active-filter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 4px 10px;
+  border-radius: var(--radius-pill);
+  background: var(--triage-orange-light);
+  border: 1px solid var(--triage-orange);
+  color: var(--triage-text-main);
+  font-size: 11.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.triage-active-filter-chip code {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--triage-orange-dark);
+}
+
+.triage-active-filter-chip:hover {
+  background: var(--triage-orange-tint);
+}
+
+.triage-active-filter-chip:focus-visible,
+.triage-btn-reset-filters:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(255, 121, 0, 0.24);
+}
+
+.triage-btn-reset-filters {
+  margin-top: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--triage-orange);
+  background: var(--triage-orange-light);
+  color: var(--triage-text-main);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.triage-btn-reset-filters:hover {
+  background: var(--triage-orange-tint);
 }
 
 .triage-btn-toggle-all {
@@ -5638,6 +5703,56 @@ body {
   color: #DC2626;
   border: 1px solid rgba(239, 68, 68, 0.4);
   font-weight: 700;
+}
+
+.triage-status-pill.status-emergencia-viva {
+  background: rgba(220, 38, 38, 0.16);
+  color: #991B1B;
+  border: 1px solid rgba(220, 38, 38, 0.45);
+  font-weight: 700;
+}
+
+.triage-status-pill.status-estancamiento-local,
+.triage-status-pill.status-incidencia-p2 {
+  background: rgba(245, 158, 11, 0.15);
+  color: #92400E;
+  border: 1px solid rgba(245, 158, 11, 0.4);
+  font-weight: 700;
+}
+
+.triage-cat-pill-btn {
+  font-family: inherit;
+  cursor: pointer;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+
+.triage-cat-pill-btn:hover {
+  box-shadow: 0 0 0 2px rgba(12, 11, 9, 0.12);
+}
+
+.triage-cat-pill-btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(255, 121, 0, 0.35);
+}
+
+.triage-cat-pill-btn.is-selected-cat {
+  box-shadow: 0 0 0 2px var(--triage-orange);
+}
+
+@media (max-width: 680px) {
+  .triage-filters-group .triage-select,
+  .triage-filters-group .triage-search-box,
+  .triage-filters-group .triage-search-input {
+    width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .triage-cat-pill-btn,
+  .triage-active-filter-chip,
+  .triage-select {
+    transition: none;
+  }
 }
 
 /* Tarjeta Destacada de Guía Operativa en el Detalle */

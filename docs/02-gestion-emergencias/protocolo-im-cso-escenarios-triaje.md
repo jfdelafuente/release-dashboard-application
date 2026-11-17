@@ -67,6 +67,16 @@ Una vez emitido el dictamen del triaje (visible en el campo `guia_operador` de [
 | **8. Reapertura Activa** | `P1` o `P2` | **OBLIGATORIA** | Telefónico Directo IM-CSO | < 5 min | Cronómetro acumulado desde $T_0$; sin ventana de cortesía de 45m. | [📖 Escenario 8](./escenarios/escenario-8-reapertura-activa.md) |
 
 > 💡 **Acceso Monográfico a Escenarios**: Cada escenario cuenta con su documento monográfico independiente con diagramas de flujo, checklists de triaje, tiempos SLA y plantillas de worklog listas para copiar. Consulta el [Índice de Guías Operativas de Escenarios](./escenarios/README.md).
+
+### Categorías Base de Respaldo en Consola (`escenario_num: null`)
+
+Cuando un ticket activo **no activa ninguno de los 8 escenarios especiales** anteriores, el motor de triaje y el filtro por tipo de ticket de la Consola le asignan una de las dos categorías operativas ordinarias:
+
+| Categoría en Consola | Código Operativo | Prioridad Operativa | Llamada IM-CSO | Comunicado Dirección | Criterio de Asignación y Pauta Operativa |
+| :--- | :---: | :---: | :---: | :---: | :--- |
+| **🔶 Incidencia Mayor P2** | `INCIDENCIA_MAYOR_P2` | `P2 Alta` | **NO REQUERIDA** | **SÍ** | Ticket ya bien clasificado como `Alta` (`SL2/P2`) en Remedy sin pase programado, reapertura, workaround, multisede parcial ni estancamiento local. Seguimiento técnico prioritario con grupo resolutor (`N2`) e IM de turno. |
+| **📋 Seguimiento Estándar** | `SEGUIMIENTO_ESTANDAR` | `P3` / `P4` | **NO REQUERIDA** | **NO** | Categoría residual por defecto para incidencias `SL3/P3` o `SL4/P4` sin discrepancia de triaje ni condición de ticket zombi. Seguimiento ordinario en cola Remedy (`N1/N2`). |
+
 ---
 
 ## 🛠️ 3. Protocolos Operativos Detallados por Escenario

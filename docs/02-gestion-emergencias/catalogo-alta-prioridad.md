@@ -194,7 +194,7 @@ Ubicado tanto en la raíz de cada incidencia (`data[i].guia_operador`) como dent
 
 | Campo | Tipo | Valores Posibles | Propósito y Comportamiento |
 | :--- | :--- | :--- | :--- |
-| **`categoria_operativa`** | `enum string` | <ul><li>`EMERGENCIA_VIVA`</li><li>`RESOLUCION_PLANIFICADA`</li><li>`ESTANCAMIENTO_LOCAL`</li><li>`TICKET_ZOMBI_REMEDY`</li><li>`SEGUIMIENTO_ESTANDAR`</li></ul> | Define la tipología de tratamiento operativo. Determina el orden de atención y los protocolos a seguir. |
+| **`categoria_operativa`** | `enum string` | <ul><li>`EMERGENCIA_VIVA`</li><li>`RESOLUCION_PLANIFICADA`</li><li>`REAPERTURA_ACTIVA`</li><li>`ESTANCAMIENTO_LOCAL`</li><li>`INFRATRIAJE_REMEDY`</li><li>`AFECTACION_MULTISEDE_PARCIAL`</li><li>`WORKAROUND_AUTORIZADO`</li><li>`TICKET_ZOMBI_REMEDY`</li><li>`INCIDENCIA_MAYOR_P2`</li><li>`SEGUIMIENTO_ESTANDAR`</li></ul> | Define la tipología de tratamiento operativo (los 8 escenarios especiales IM-CSO + 2 categorías base de respaldo). Determina el orden de atención y los protocolos a seguir. |
 | **`alerta_consola`** | `string` | Texto descriptivo con emoji badge (ej. `🚨 EMERGENCIA CRÍTICA P1 ACTIVA`, `📅 RESOLUCIÓN PLANIFICADA: ...`, `⚠️ TICKET ZOMBI: ...`, `⏳ ESTANCAMIENTO LOCAL (>2h): ...`). | Mensaje visual de impacto inmediato que se renderiza en la cabecera de la tarjeta o fila de la consola. |
 | **`accion_recomendada`** | `string` | Instrucción procedimental en lenguaje claro y directo. | Le indica al operador qué acción ejecutar y qué acciones omitir de forma expresa para evitar errores operativos. |
 | **`canal_escalado`** | `string` | <ul><li>`Vía Telefónica IM-CSO / Teams War Room`</li><li>`Mesa de Cambios (CAB) / Seguimiento de Releases`</li><li>`Grupo Resolutor Remedy / IM de Turno`</li><li>`Mesa de Incidencias (BMC Remedy)`</li></ul> | Señala el canal técnico u organizativo correcto donde debe interactuar el operador. |
@@ -211,10 +211,15 @@ La siguiente matriz gobierna el tratamiento que el motor y la consola aplican a 
 | Categoría Operativa | Prioridad Máxima | ¿Aplica Aging Escalation? | Escalado Telefónico CSO (>45m) | War Room Teams (>1h) | Comunicado Dirección | Acción Operativa Obligatoria |
 | :--- | :---: | :---: | :---: | :---: | :---: | :--- |
 | **`EMERGENCIA_VIVA`** | **P1** | **Sí** ($\ge 120m \rightarrow P1$) | **🟢 SÍ (Obligatorio)** | **🟢 SÍ** | **🟢 SÍ ($\le 90$ palabras)** | Intervención inmediata, audio obligatorio y apertura de War Room. |
-| **`RESOLUCION_PLANIFICADA`** | **P2** | **❌ EXENTO** (Techo P2) | ⚪ NO (Salvo fallo del pase) | ⚪ NO | ⚪ NO | Monitorizar fecha/hora del pase RFC o batch semanal comprometido. |
+| **`RESOLUCION_PLANIFICADA`** | **P2** | **❌ EXENTO** (Techo P2) | ⚪ NO (Salvo fallo del pase) | ⚪ NO | ⚪ NO | Monitorizar fecha/hora del pase RFC o batch comprometido y verificar posdespliegue. |
+| **`REAPERTURA_ACTIVA`** | **P1 / P2** | **Sí** (Acumulado $T_0$) | **🟢 SÍ (<5m)** | **🟢 SÍ** | **🟢 SÍ** | Reactivación exprés sin ventana de cortesía de 45m. |
 | **`ESTANCAMIENTO_LOCAL`** | **P2 / P3** | **❌ EXENTO** (Techo P2) | ⚪ NO | ⚪ NO | ⚪ NO | Reclamar avance técnico al Grupo Resolutor asignado vía Remedy. |
+| **`INFRATRIAJE_REMEDY`** | **P1 / P2** | **Sí** (Desde $T_0$) | **🟢 SÍ (si P1)** | **🟢 SÍ (si P1)** | **🟢 SÍ** | Rectificar severidad en consola e insertar traza WL-03 en Remedy. |
+| **`AFECTACION_MULTISEDE_PARCIAL`** | **P1 / P2** | **Sí** | 🟡 Informativa / SÍ si P1 | **🟢 SÍ** | **🟢 SÍ** | Prohibido cerrar hasta confirmar normalización en el 100% de las sedes. |
+| **`WORKAROUND_AUTORIZADO`** | **P1 / P2** | **Sí** | **🟢 SÍ (Visado CSO)** | **🟢 SÍ** | ⚪ Según ticket | Candado 🔒 activo: prohibido aplicar o desescalar sin autorización IM-CSO. |
 | **`TICKET_ZOMBI_REMEDY`** | **P3** | **❌ EXENTO** (Techo P3) | ⚪ NO | ⚪ NO | ⚪ NO | Solicitar Cierre Administrativo formal a la Mesa en BMC Remedy. |
-| **`SEGUIMIENTO_ESTANDAR`** | **P3 / P4** | ⚪ No | ⚪ NO | ⚪ NO | ⚪ NO | Tratamiento estándar conforme a cola resolutora de Remedy. |
+| **`INCIDENCIA_MAYOR_P2`** | **P2** | **Sí** | ⚪ NO | ⚪ NO | **🟢 SÍ** | Seguimiento técnico prioritario con grupo resolutor (`N2`) e IM de turno. |
+| **`SEGUIMIENTO_ESTANDAR`** | **P3 / P4** | ⚪ No | ⚪ NO | ⚪ NO | ⚪ NO | Tratamiento estándar conforme a cola resolutora de Remedy (`N1/N2`). |
 
 ---
 

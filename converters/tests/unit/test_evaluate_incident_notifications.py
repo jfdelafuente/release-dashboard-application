@@ -1828,3 +1828,63 @@ def test_should_detect_planned_resolution_from_remedy_worklogs_and_exempt_from_s
     assert guia.get("reclamar_worklog") is not True
     assert guia["requiere_llamada_cso"] is False
 
+
+def test_should_detect_pap_prefix_in_title_and_require_rfc_worklog_documentation_and_post_deploy_verification(tmp_path):
+    """Valida que un título 'PaP DD/MM | JIRA-XXXX ... | Sede' se clasifique como RESOLUCION_PLANIFICADA,
+    mantenga el ticket ACTIVO hasta la verificación posdespliegue con la sede afectada, y solicite documentar
+    RFC/ventana en el Work Log cuando solo consta en cabecera y acumula >=24h sin apuntes."""
+    cache_dir = tmp_path / "eps_cache"
+    cache_dir.mkdir()
+    eps_payload = {
+        "problema": "Bot DJINGO redirige incorrectamente transferencias desde widget hacia Front Office.",
+        "impacto": "10 usuarios en OEST-Oviedo. Clientes con pedidos tienda no atendidos. Sin método alternativo disponible.",
+        "sistemas": ["DJINGO WATSON", "LivePerson"],
+        "hitosTecnicos": [
+            "[12/11/2026 12:21]: Detección de error funcional en transferencia de habilidad",
+            "[12/11/2026 12:54]: Escalado a SOP_DJINGO con detalles técnicos del fallo",
+        ],
+        "bloqueos": ["[Escalado Grupo]: Pendiente diagnóstico y resolución de SOP_DJINGO"],
+    }
+    (cache_dir / "INC000004182276.json").write_text(json.dumps(eps_payload, ensure_ascii=False), encoding="utf-8")
+
+    eps_client = EpsilonClient(base_url="http://127.0.0.1:59999/offline", cache_dir=cache_dir, max_consecutive_failures=1)
+    eps_client._server_offline = True
+
+    ticket = {
+        "ID de incidencia": "INC000004182276",
+        "Descripción": "PaP 18/11 | PRDIA-3226 DJINGO | Error funcional | OEST - Oviedo",
+        "Prioridad": "P3",
+        "Impacto": "Masiva",
+        "Urgencia": "Medio",
+        "Estatus": "Pendiente",
+        "Fecha de envío": "12/11/2026 12:39",
+        "fechaUltimaModificacion": "2026-11-12T12:20:57.000+00:00",
+        "Grupo asignado": "SOP_DJINGO",
+    }
+    ref_time = datetime(2026, 11, 17, 10, 0, 0)
+
+    catalog = evaluate_incidents_batch(
+        tickets=[ticket],
+        epsilon_client=eps_client,
+        write_audit=False,
+        reference_time=ref_time,
+    )
+    inc = catalog["data"][0]
+    assert inc["es_planificada"] is True
+    assert inc["detalle_planificacion"] == "PaP 18/11 (PRDIA-3226)"
+    assert inc["prioridad_sugerida"] == "P2"
+    assert inc["evaluacion"]["urgencia"] == "Media"
+    assert inc["aging_escalated"] is False
+
+    guia = inc["guia_operador"]
+    assert guia["categoria_operativa"] == "RESOLUCION_PLANIFICADA"
+    assert guia["escenario_num"] == 2
+    assert "Permanece ACTIVA" in guia["accion_recomendada"]
+    assert "OEST - Oviedo" in guia["accion_recomendada"]
+    assert "SOP_DJINGO" in guia["accion_recomendada"]
+    assert "ID de cambio/RFC" in guia["accion_recomendada"]
+    assert guia["reclamar_worklog"] is True
+    assert "PRDIA-3226" in guia["plantilla_reclamacion_wl"]
+    assert "OEST - Oviedo" in guia["plantilla_reclamacion_wl"]
+
+
