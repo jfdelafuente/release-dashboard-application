@@ -236,8 +236,8 @@ El script acepta cualquier volcado JSON de ticket Remedy. Para obtener resultado
 ```
 
 * Archivos de ejemplo provistos en el repositorio:
-  * [`data/samples/remedy_incident_sample.json`](../../data/samples/remedy_incident_sample.json) (Incidencia de integración MDG/Siebel en logística inversa).
-  * [`data/samples/remedy_incident_sample2.json`](../../data/samples/remedy_incident_sample2.json) (Incidencia de activación MultiSIM en Ficha Cliente).
+  * `data/samples/remedy_incident_sample.json` (Incidencia de integración MDG/Siebel en logística inversa).
+  * `data/samples/remedy_incident_sample2.json` (Incidencia de activación MultiSIM en Ficha Cliente).
 
 ---
 

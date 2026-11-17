@@ -422,7 +422,7 @@ Invocada por el cliente [`dashboards/reportes-incidencias/api-client.js`](../../
 
 * **Invocado por**: Consola de Auditoría y Telemetría IA en el Cockpit del Incident Manager (<kbd>Shift</kbd> + <kbd>I</kbd>).
 - **Parámetros**: `?lines=N` (número de líneas a leer desde el final del log; por defecto `100`, máximo `1000`).
-- **Propósito**: Devuelve en tiempo real las últimas líneas de [`data/logs/ingestion_audit.log`](../../data/logs/ingestion_audit.log) para diagnóstico de la carga de ficheros CSV, tiempos de conversión, llamadas a Epsilon y estado de enriquecimiento.
+- **Propósito**: Devuelve en tiempo real las últimas líneas de `data/logs/ingestion_audit.log` para diagnóstico de la carga de ficheros CSV, tiempos de conversión, llamadas a Epsilon y estado de enriquecimiento.
 - **Respuesta (`200 OK`)**: Texto plano estructurado (`text/plain; charset=utf-8`) o JSON envelope conteniendo las trazas.
 
 #### `POST /api/ingestion/retry-ia` (alias: `POST /api/epsilon/retry`)
@@ -441,7 +441,7 @@ Invocada por el cliente [`dashboards/reportes-incidencias/api-client.js`](../../
 - **Comportamiento**:
   1. Filtra automáticamente las incidencias en estado terminal (evitando peticiones redundantes).
   2. Sintetiza/valida los resúmenes con nuestro motor interno actualizando la caché local en `data/.epsilon_cache/`.
-  3. Regenera [`data/output/high_priority_notifications.json`](../../data/output/high_priority_notifications.json) y [`data/output/ingestion_audit_summary.json`](../../data/output/ingestion_audit_summary.json).
+  3. Regenera [`data/output/high_priority_notifications.json`](../../data/output/high_priority_notifications.json) y `data/output/ingestion_audit_summary.json`.
   4. Registra el detalle del reintento en `data/logs/ingestion_audit.log`.
 - **Respuesta (`200 OK`)**:
 
