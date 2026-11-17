@@ -34,6 +34,7 @@ from epsilon_service import (  # noqa: E402
     call_gemini,
     call_mock,
     call_openai,
+    convert_utc_iso_to_madrid,
     count_words,
     evaluate_contract,
     extract_json_content,
@@ -102,13 +103,92 @@ def list_available_models() -> int:
                     marker = " -> [RECOMENDADO]" if "sonnet" in m.lower() else ""
                     print(f"  * {m}{marker}")
                 print("\nPuedes invocar la CLI indicando cualquiera de ellos con:")
-                print("  python scripts/test_epsilon_prompt.py --file <ruta.json> --model <nombre_modelo>\n")
+                print("  python scripts/test_epsilon_prompt.py --file <ruta.json> --model <nombre_modelo>")
+                print("  python scripts/test_epsilon_prompt.py --url <http://.../api/remedy/detail/INC...> --model <nombre_modelo>\n")
             else:
                 print(f"Respuesta del endpoint: {data}")
             return 0
     except Exception as e:
         sys.stderr.write(f"Error al consultar '{endpoint}': {e}\n")
         return 1
+
+
+def fetch_incident_from_url(url: str, timeout: int = 30) -> str:
+    """Descarga el JSON de entrada de una incidencia desde una URL HTTP/HTTPS."""
+    import ssl
+    import urllib.error
+    import urllib.parse
+    import urllib.request
+
+    clean_url = (url or "").strip()
+    parsed = urllib.parse.urlparse(clean_url)
+    if parsed.scheme not in ("http", "https") or not parsed.netloc:
+        raise ValueError(
+            f"URL inválida '{clean_url}'. Debe comenzar por 'http://' o 'https://'."
+        )
+
+    headers = {
+        "Accept": "application/json",
+        "User-Agent": "EpsilonPromptCLI/1.0",
+    }
+    req = urllib.request.Request(clean_url, headers=headers, method="GET")
+
+    ssl_context = None
+    if parsed.scheme == "https":
+        ssl_context = ssl.create_default_context()
+        verify_ssl = os.environ.get("ANTHROPIC_VERIFY_SSL", "").lower() not in ("0", "false", "no")
+        if not verify_ssl or os.environ.get("PYTHONHTTPSVERIFY") == "0":
+            ssl_context.check_hostname = False
+            ssl_context.verify_mode = ssl.CERT_NONE
+
+    try:
+        try:
+            resp_cm = urllib.request.urlopen(req, timeout=timeout, context=ssl_context)
+        except urllib.error.URLError as ssl_err:
+            if parsed.scheme == "https" and (
+                "CERTIFICATE_VERIFY_FAILED" in str(ssl_err)
+                or "certificate verify failed" in str(ssl_err)
+            ):
+                insecure_context = ssl._create_unverified_context()
+                resp_cm = urllib.request.urlopen(req, timeout=timeout, context=insecure_context)
+            else:
+                raise ssl_err
+
+        with resp_cm as resp:
+            raw_bytes = resp.read()
+            charset = resp.headers.get_content_charset() or "utf-8"
+            return raw_bytes.decode(charset, errors="replace")
+    except urllib.error.HTTPError as http_err:
+        err_body = ""
+        try:
+            err_body = http_err.read().decode("utf-8", errors="replace").strip()
+        except Exception:
+            pass
+        detail = f" - {err_body[:300]}" if err_body else ""
+        raise RuntimeError(f"HTTP {http_err.code} ({http_err.reason}){detail}") from http_err
+    except Exception as exc:
+        raise RuntimeError(str(exc)) from exc
+
+
+def normalize_incident_payload(payload: Any) -> Any:
+    """Normaliza sobres de endpoints como /api/remedy/detail/{id} evitando duplicar worklogs."""
+    if not isinstance(payload, dict):
+        return payload
+
+    if payload.get("success") is False:
+        err_msg = payload.get("error") or payload.get("message") or "El endpoint devolvió success=false"
+        raise ValueError(f"Respuesta de error desde el endpoint: {err_msg}")
+
+    remedy_node = payload.get("remedy")
+    if isinstance(remedy_node, dict) and remedy_node:
+        normalized = dict(remedy_node)
+        if not normalized.get("idRemedy") and payload.get("idRemedy"):
+            normalized["idRemedy"] = payload["idRemedy"]
+        if payload.get("paps") and not normalized.get("paps"):
+            normalized["paps"] = payload["paps"]
+        return convert_utc_iso_to_madrid(normalized)
+
+    return convert_utc_iso_to_madrid(payload)
 
 
 # =====================================================================
@@ -164,8 +244,8 @@ def print_report_table(
     # Fallback ASCII robusto para cualquier terminal
     title = f"--- INFORME DE CALIBRACIÓN EPSILON RESUMEN IA ({provider.upper()} - {model}) ---"
     print("\n" + title)
-    header_fmt = "{:<16} | {:<40} | {:<34} | {:<8}"
-    row_sep = "-" * 105
+    header_fmt = "{:<16} | {:<48} | {:<52} | {:<6}"
+    row_sep = "-" * 131
     print(row_sep)
     print(header_fmt.format("Campo", "Criterio Evaluado", "Métrica Real", "Estado"))
     print(row_sep)
@@ -175,7 +255,9 @@ def print_report_table(
         metrica_display = c.metrica
         if c.detalle:
             metrica_display += f" ({c.detalle})"
-        print(header_fmt.format(c.campo, c.criterio[:40], metrica_display[:34], status_symbol))
+        print(header_fmt.format(c.campo, c.criterio[:48], metrica_display[:52], status_symbol))
+        if len(metrica_display) > 52:
+            print(header_fmt.format("", "", f"  -> {metrica_display[52:102]}", ""))
 
     print(row_sep)
     verdict = "TODAS LAS REGLAS CUMPLIDAS" if all_passed else "REGLAS INCUMPLIDAS DETECTADAS"
@@ -197,6 +279,12 @@ def build_parser() -> argparse.ArgumentParser:
         "-f",
         dest="file_path",
         help="Ruta al archivo JSON con los datos en bruto de la incidencia Remedy.",
+    )
+    parser.add_argument(
+        "--url",
+        "-u",
+        dest="url",
+        help="URL HTTP/HTTPS que devuelve el JSON de entrada de la incidencia (ej. http://infocodes.si.orange.es:8081/api/remedy/detail/INC000004186294).",
     )
     parser.add_argument(
         "--provider",
@@ -252,9 +340,21 @@ def main() -> int:
     if args.list_models:
         return list_available_models()
 
+    if args.file_path and args.url:
+        sys.stderr.write("Error: Especifique únicamente '--file' o '--url', no ambos a la vez.\n")
+        return 1
+
     # 1. Carga de datos de la incidencia
     remedy_raw_str: str = ""
-    if args.file_path:
+    if args.url:
+        if not args.json_only:
+            print(f"Descargando JSON de incidencia desde: {args.url} ...")
+        try:
+            remedy_raw_str = fetch_incident_from_url(args.url)
+        except Exception as e:
+            sys.stderr.write(f"Error al obtener la incidencia desde '{args.url}': {e}\n")
+            return 1
+    elif args.file_path:
         if not os.path.isfile(args.file_path):
             sys.stderr.write(f"Error: El archivo de entrada '{args.file_path}' no existe.\n")
             return 1
@@ -292,7 +392,7 @@ def main() -> int:
                 )
         elif not remedy_raw_str:
             sys.stderr.write(
-                "Error: Debe proporcionar un archivo con '--file <ruta.json>', datos por stdin o activar '--mock'.\n"
+                "Error: Debe proporcionar '--file <ruta.json>', '--url <http://...>', datos por stdin o activar '--mock'.\n"
             )
             return 1
 
@@ -301,10 +401,14 @@ def main() -> int:
         return 1
 
     try:
-        incident_obj = json.loads(remedy_raw_str)
+        raw_payload = json.loads(remedy_raw_str)
+        incident_obj = normalize_incident_payload(raw_payload)
         remedy_formatted = json.dumps(incident_obj, ensure_ascii=False, indent=2)
     except json.JSONDecodeError as e:
         sys.stderr.write(f"Error: La entrada no es un JSON válido: {e}\n")
+        return 1
+    except ValueError as e:
+        sys.stderr.write(f"Error: {e}\n")
         return 1
 
     user_prompt = USER_PROMPT_TEMPLATE.format(remedy_json=remedy_formatted)

@@ -36,6 +36,7 @@ Sigue estrictamente estas reglas:
    - Debe contener únicamente acciones clave, diagnósticos, validaciones, errores de logs, reinicios o escalados relevantes.
    - NO incluyas la solución final aquí si ya va en el campo `solucion`.
    - Cantidad y priorización: Máximo 5 a 6 hitos clave. Si hay más eventos, PRIORIZA SIEMPRE los hitos más recientes y críticos sobre los antiguos (manteniendo el hito de detección inicial si es relevante).
+   - Homogeneización de zona horaria (`Europe/Madrid`): Los campos ISO-8601 con sufijo `+00:00` o `Z` (ej. `fechaCreacion`, `fechaInicial` o `worklog.fecha` como `2026-11-17T08:30:46.000+00:00`) vienen en UTC, mientras que las horas en texto libre de `detalle`/OTRS/notas están en hora local de España (`CET` = UTC+1 en invierno, `CEST` = UTC+2 en verano). Convierte SIEMPRE todas las marcas UTC (`+00:00` o `Z`) a hora local de España (`Europe/Madrid`) antes de escribirlas y compararlas; nunca mezcles horas UTC con horas locales CET/CEST.
    - Formato de marca temporal adaptativa según dato real (sin inventar ceros ni precisión ficticia):
      * Si el apunte incluye segundos: comienza obligatoriamente con `[DD/MM/YYYY HH:mm:ss]: ` seguido de la descripción.
      * Si el apunte solo incluye horas y minutos: comienza con `[DD/MM/YYYY HH:mm]: `.
@@ -43,7 +44,7 @@ Sigue estrictamente estas reglas:
      * Prohibido inventar segundos `:00` o medianoches artificiales `00:00:00` cuando no figuren en los datos.
    - Prohibido usar rangos en la fecha/hora (no usar intervalos como [DD-DD/MM/YYYY] ni [HH:mm a HH:mm]); si los datos abarcan un intervalo, usa siempre la marca temporal de inicio.
    - Si no hay fecha deducible en los datos, usa [S/F].
-   - Los hitos seleccionados deben presentarse ordenados cronológicamente de más antiguo a más reciente (orden ascendente).
+   - Orden cronológico ascendente OBLIGATORIO: Una vez seleccionados los 5-6 hitos y convertidas las horas UTC a `Europe/Madrid`, ORDENA el array `hitosTecnicos` estrictamente de más antiguo a más reciente según el timestamp escrito entre corchetes (`hito[0] <= hito[1] <= ... <= hito[n]`). Verifica antes de emitir el JSON que ninguna marca sea anterior a la del elemento precedente.
 
 6. BLOQUEOS (`bloqueos`):
    - Debe listar dependencias externas, bloqueos por terceros proveedores, ventanas de release o escalados sin respuesta.
@@ -179,7 +180,7 @@ Reglas:
 2. No repitas contenido entre campos.
 3. No incluyas datos personales salvo grupos técnicos, usuarios asignados o peticionario explícitos en los datos.
 4. `sistemas`: array de strings con nombres de aplicaciones afectadas.
-5. `hitosTecnicos`: máximo 5-6 hitos clave priorizando los más recientes sobre los antiguos (ordenados cronológicamente). Cada elemento inicia con marca adaptativa `[DD/MM/YYYY HH:mm:ss]: `, `[DD/MM/YYYY HH:mm]: ` o `[DD/MM/YYYY]: ` según precisión real (prohibido inventar ':00' o '00:00:00'). No uses rangos temporales ni la solución final aquí.
+5. `hitosTecnicos`: máximo 5-6 hitos clave priorizando los más recientes sobre los antiguos. Convierte siempre marcas ISO en UTC (`+00:00`/`Z`) a hora local `Europe/Madrid` (CET=UTC+1 / CEST=UTC+2) para no mezclar husos con horas locales de notas/OTRS, y ordena el array final estrictamente de más antiguo a más reciente (`hito[0] <= hito[1] <= ...`). Cada elemento inicia con marca adaptativa `[DD/MM/YYYY HH:mm:ss]: `, `[DD/MM/YYYY HH:mm]: ` o `[DD/MM/YYYY]: ` según precisión real (prohibido inventar ':00' o '00:00:00'). No uses rangos temporales ni la solución final aquí.
 6. `bloqueos`: array de dependencias o bloqueos activos categorizados con prefijo (ej. [Ventana Release], [Dependencia Terceros], [Validación Negocio], [Escalado Grupo]); devuelve [] si no hay bloqueos.
 7. Reglas condicionales de campos:
    - `solucion`: incluir si está resuelta/cerrada, si hay causa/workaround/planificación en release, o si hubo acción inefectiva/reapertura por el peticionario. Omitir únicamente si está en diagnóstico inicial sin causa ni acción previa.
@@ -262,6 +263,7 @@ public final class EpsilonPrompts {
            - Debe contener únicamente acciones clave, diagnósticos, validaciones, errores de logs, reinicios o escalados relevantes.
            - No incluyas la solución final aquí si ya va en el campo `solucion`.
            - Cantidad y priorización: Máximo 5 a 6 hitos clave. Si hay más eventos, PRIORIZA SIEMPRE los hitos más recientes y críticos sobre los antiguos (manteniendo el hito de detección inicial si es relevante).
+           - Homogeneización de zona horaria (`Europe/Madrid`): Convierte SIEMPRE las marcas ISO en UTC (`+00:00` o `Z`, ej. `worklog.fecha` o `fechaCreacion`) a hora local de España (`CET` = UTC+1 en invierno, `CEST` = UTC+2 en verano) para no mezclarlas con las horas locales de texto libre/OTRS.
            - Formato de marca temporal adaptativa según dato real (sin inventar ceros ni precisión ficticia):
              * Si el apunte incluye segundos: comienza obligatoriamente con `[DD/MM/YYYY HH:mm:ss]: ` seguido de la descripción.
              * Si el apunte solo incluye horas y minutos: comienza con `[DD/MM/YYYY HH:mm]: `.
@@ -269,7 +271,7 @@ public final class EpsilonPrompts {
              * Prohibido inventar segundos ':00' o medianoches '00:00:00' cuando no figuren en los datos.
            - Prohibido usar rangos en la fecha/hora (no usar intervalos como [DD-DD/MM/YYYY] ni [HH:mm a HH:mm]); si los datos abarcan un intervalo, usa siempre la marca temporal de inicio.
            - Si no hay fecha deducible en los datos, usa [S/F].
-           - Los hitos seleccionados deben presentarse ordenados cronológicamente de más antiguo a más reciente (orden ascendente).
+           - Orden cronológico ascendente OBLIGATORIO: Ordena el array final `hitosTecnicos` estrictamente de más antiguo a más reciente según el timestamp escrito entre corchetes (`hito[0] <= hito[1] <= ... <= hito[n]`) y verifícalo antes de devolver el JSON.
 
         6. BLOQUEOS (`bloqueos`):
            - Debe listar dependencias externas, bloqueos por terceros proveedores, ventanas de release o escalados sin respuesta.

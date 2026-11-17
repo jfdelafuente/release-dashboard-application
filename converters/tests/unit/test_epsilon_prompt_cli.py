@@ -268,3 +268,151 @@ def test_anthropic_proxy_env_variables_resolution(monkeypatch):
     assert captured_request["headers"]["Authorization"] == "Bearer sk-token-masorange"
     assert data == {"success": True}
     assert tokens == 30
+
+
+def test_cli_url_option_fetches_and_unwraps_remedy_detail(monkeypatch, capsys):
+    """Verifica que --url descargue el JSON de un endpoint /api/remedy/detail/{id} y desempaquete el nodo remedy."""
+    import email.message
+    import io
+    import urllib.error
+    import urllib.request
+    from test_epsilon_prompt import main, normalize_incident_payload
+
+    remedy_envelope = {
+        "success": True,
+        "idRemedy": "INC000004186294",
+        "remedy": {
+            "idRemedy": "INC000004186294",
+            "estado": 1,
+            "estadoDesc": "ASIGNADO",
+            "resumen": "CERES | Error funcional | OEST - Oviedo",
+            "detalle": "No recibimos carga de fijo ni en Oest ni en Salamanca",
+            "worklog": [{"fecha": "2026-11-17T08:19:33.000+00:00", "detalle": "Nueva sede afectada"}],
+        },
+        "worklogs": [{"fecha": "2026-11-17T08:19:33.000+00:00", "detalle": "Nueva sede afectada"}],
+        "estado": "ASIGNADO",
+    }
+
+    normalized = normalize_incident_payload(remedy_envelope)
+    assert "worklogs" not in normalized
+    assert normalized["idRemedy"] == "INC000004186294"
+    assert normalized["resumen"] == "CERES | Error funcional | OEST - Oviedo"
+
+    class DummyURLResponse:
+        def __init__(self, body_bytes: bytes):
+            self._body = body_bytes
+            self.headers = email.message.Message()
+            self.headers["Content-Type"] = "application/json; charset=utf-8"
+
+        def read(self) -> bytes:
+            return self._body
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc_val, exc_tb):
+            pass
+
+    def fake_urlopen(req, *args, **kwargs):
+        url = req.full_url if hasattr(req, "full_url") else str(req)
+        if url.endswith("/INC000004186294"):
+            return DummyURLResponse(json.dumps(remedy_envelope, ensure_ascii=False).encode("utf-8"))
+        err_bytes = json.dumps({"success": False, "error": "Incidencia no encontrada"}).encode("utf-8")
+        raise urllib.error.HTTPError(url, 404, "Not Found", email.message.Message(), io.BytesIO(err_bytes))
+
+    monkeypatch.setattr(urllib.request, "urlopen", fake_urlopen)
+
+    # 1. Caso OK con --url + --mock + --json-only
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "test_epsilon_prompt.py",
+            "--url",
+            "http://infocodes.si.orange.es:8081/api/remedy/detail/INC000004186294",
+            "--mock",
+            "--json-only",
+        ],
+    )
+    rc_ok = main()
+    captured_ok = capsys.readouterr()
+    assert rc_ok == 0, captured_ok.err
+    parsed_out = json.loads(captured_ok.out)
+    assert parsed_out["titulo"] == "CERES | Error funcional | OEST - Oviedo"
+    assert parsed_out["estadoActual"] == "ASIGNADO"
+
+    # 2. Caso HTTP 404
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "test_epsilon_prompt.py",
+            "--url",
+            "http://infocodes.si.orange.es:8081/api/remedy/detail/INC000000000000",
+            "--mock",
+        ],
+    )
+    rc_404 = main()
+    captured_404 = capsys.readouterr()
+    assert rc_404 == 1
+    assert "HTTP 404" in captured_404.err
+
+    # 3. Caso exclusión mutua (--file + --url)
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "test_epsilon_prompt.py",
+            "--file",
+            "dummy.json",
+            "--url",
+            "http://infocodes.si.orange.es:8081/api/remedy/detail/INC000004186294",
+            "--mock",
+        ],
+    )
+    rc_both = main()
+    captured_both = capsys.readouterr()
+    assert rc_both == 1
+    assert "no ambos a la vez" in captured_both.err
+
+
+def test_utc_to_madrid_homogenization_and_prompt_cleanup(valid_payload):
+    """Verifica que las fechas ISO UTC (+00:00) de Remedy se conviertan a Europe/Madrid para evitar desorden frente a OTRS local."""
+    from test_epsilon_prompt import (
+        build_epsilon_system_prompt,
+        convert_utc_iso_to_madrid,
+        normalize_incident_payload,
+    )
+
+    # Invierno (CET = UTC+1): 08:30:46+00:00 -> 09:30:46+01:00 (posterior a detección OTRS 09:05:00)
+    winter = normalize_incident_payload(
+        {
+            "success": True,
+            "idRemedy": "INC000004186294",
+            "remedy": {
+                "fechaCreacion": "2026-11-17T08:17:45.000+00:00",
+                "worklog": [{"fecha": "2026-11-17T08:30:46.000+00:00", "detalle": "Contacto N3"}],
+            },
+        }
+    )
+    assert winter["fechaCreacion"] == "2026-11-17T09:17:45+01:00"
+    assert winter["worklog"][0]["fecha"] == "2026-11-17T09:30:46+01:00"
+
+    # Verano (CEST = UTC+2): 08:30:46Z -> 10:30:46+02:00
+    assert convert_utc_iso_to_madrid("2026-07-15T08:30:46Z") == "2026-07-15T10:30:46+02:00"
+
+    # El System Prompt cargado incluye la regla Europe/Madrid y excluye los anexos Java/Vía 2
+    sys_prompt = build_epsilon_system_prompt()
+    assert "Europe/Madrid" in sys_prompt
+    assert "## 5. Implementación en Código" not in sys_prompt
+
+    # Diagnóstico detallado cuando hay desorden cronológico real
+    bad_payload = dict(valid_payload)
+    bad_payload["hitosTecnicos"] = [
+        "[17/11/2026 09:05:00]: Detección inicial en OEST - Oviedo.",
+        "[17/11/2026 08:30:46]: Contacto con N3 en UTC sin convertir.",
+    ]
+    checks, all_passed = evaluate_contract(bad_payload)
+    assert all_passed is False
+    hitos_check = next(c for c in checks if c.campo == "hitosTecnicos")
+    assert "17/11 08:30:46 < 17/11 09:05:00" in hitos_check.detalle

@@ -97,7 +97,7 @@ pip install google-genai
 ### Sintaxis General
 
 ```bash
-python scripts/test_epsilon_prompt.py [--file RUTA] [--provider {openai,gemini,anthropic}] [--model MODELO] [--mock] [--strict] [--json-only]
+python scripts/test_epsilon_prompt.py [--file RUTA | --url URL] [--provider {openai,gemini,anthropic}] [--model MODELO] [--mock] [--strict] [--json-only]
 ```
 
 ### Tabla de Parámetros
@@ -105,6 +105,7 @@ python scripts/test_epsilon_prompt.py [--file RUTA] [--provider {openai,gemini,a
 | Parámetro | Tipo | Por Defecto | Descripción |
 | :--- | :--- | :--- | :--- |
 | `--file`, `-f` | Ruta | `stdin` | Ruta al archivo JSON con el volcado en bruto del ticket Remedy. |
+| `--url`, `-u` | URL | `None` | URL HTTP/HTTPS que devuelve el JSON de entrada de la incidencia (ej. `http://infocodes.si.orange.es:8081/api/remedy/detail/INC000004186294`). Si devuelve un sobre `{ "remedy": { ... } }`, extrae automáticamente el nodo `remedy` sin duplicar worklogs. |
 | `--provider`, `-p` | Opción | *Auto* (`openai`) | Proveedor LLM a invocar (`anthropic`, `openai`, `gemini`). Si se omite, autodetecta la clave configurada en el entorno (`ANTHROPIC_API_KEY` o `GEMINI_API_KEY`). |
 | `--model`, `-m` | Texto | *(Automático)* | Nombre del modelo a invocar según el proveedor (`claude-3-5-sonnet-20241022`, `gpt-4o`, `gemini-2.5-pro`). |
 | `--mock`, `--dry-run` | Flag | `False` | Modo simulado local: no conecta a internet ni consume API. |
@@ -124,7 +125,15 @@ Permite comprobar la conectividad con el proxy corporativo y listar los modelos 
 python scripts/test_epsilon_prompt.py --list-models
 ```
 
-### Caso 1: Prueba Real con Anthropic Claude (vía `.env` o Entorno)
+### Caso 1: Prueba Real desde URL de Detalle Remedy (`--url`)
+
+Permite descargar directamente el JSON en vivo del ticket desde el endpoint de detalle Remedy (producción o local) sin necesidad de guardarlo antes en disco:
+
+```powershell
+python scripts/test_epsilon_prompt.py --url http://infocodes.si.orange.es:8081/api/remedy/detail/INC000004186294
+```
+
+### Caso 1b: Prueba Real desde Archivo Local (`--file`)
 
 ```powershell
 $env:ANTHROPIC_API_KEY = "sk-ant-tu-clave"

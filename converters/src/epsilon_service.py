@@ -9,7 +9,7 @@ servidor HTTP (serve_app.py) y las suites de pruebas unitarias.
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 import json
 import os
 from pathlib import Path
@@ -100,6 +100,7 @@ Sigue estrictamente estas reglas:
    - Debe contener únicamente acciones clave, diagnósticos, validaciones, errores de logs, reinicios o escalados relevantes.
    - NO incluyas la solución final aquí si ya va en el campo `solucion`.
    - Cantidad y priorización: Máximo 5 a 6 hitos clave. Si hay más eventos, PRIORIZA SIEMPRE los hitos más recientes y críticos sobre los antiguos (manteniendo el hito de detección inicial si es relevante).
+   - Homogeneización de zona horaria (`Europe/Madrid`): Los campos ISO-8601 con sufijo `+00:00` o `Z` (ej. `fechaCreacion`, `fechaInicial` o `worklog.fecha` como `2026-11-17T08:30:46.000+00:00`) vienen en UTC, mientras que las horas en texto libre de `detalle`/OTRS/notas están en hora local de España (`CET` = UTC+1 en invierno, `CEST` = UTC+2 en verano). Convierte SIEMPRE todas las marcas UTC (`+00:00` o `Z`) a hora local de España (`Europe/Madrid`) antes de escribirlas y compararlas; nunca mezcles horas UTC con horas locales CET/CEST.
    - Formato de marca temporal adaptativa según dato real (sin inventar ceros ni precisión ficticia):
      * Si el apunte incluye segundos: comienza obligatoriamente con `[DD/MM/YYYY HH:mm:ss]: ` seguido de la descripción.
      * Si el apunte solo incluye horas y minutos: comienza con `[DD/MM/YYYY HH:mm]: `.
@@ -107,7 +108,7 @@ Sigue estrictamente estas reglas:
      * Prohibido inventar segundos `:00` o medianoches artificiales `00:00:00` cuando no figuren en los datos.
    - Prohibido usar rangos en la fecha/hora (no usar intervalos como [DD-DD/MM/YYYY] ni [HH:mm a HH:mm]); si los datos abarcan un intervalo, usa siempre la marca temporal de inicio.
    - Si no hay fecha deducible en los datos, usa [S/F].
-   - Los hitos seleccionados deben presentarse ordenados cronológicamente de más antiguo a más reciente (orden ascendente).
+   - Orden cronológico ascendente OBLIGATORIO: Una vez seleccionados los 5-6 hitos y convertidas las horas UTC a `Europe/Madrid`, ORDENA el array `hitosTecnicos` estrictamente de más antiguo a más reciente según el timestamp escrito entre corchetes (`hito[0] <= hito[1] <= ... <= hito[n]`). Verifica antes de emitir el JSON que ninguna marca sea anterior a la del elemento precedente.
 
 6. BLOQUEOS (`bloqueos`):
    - Debe listar dependencias externas, bloqueos por terceros proveedores, ventanas de release o escalados sin respuesta.
@@ -479,6 +480,7 @@ def evaluate_contract(data: Dict[str, Any]) -> Tuple[List[EpsilonResumenValidati
         hitos_len_ok = count_hitos <= 6
         hitos_format_ok = True
         hitos_chrono_ok = True
+        chrono_pair = ""
         prev_dt: Optional[datetime] = None
 
         for hito in hitos:
@@ -488,6 +490,8 @@ def evaluate_contract(data: Dict[str, Any]) -> Tuple[List[EpsilonResumenValidati
             cur_dt = parse_timestamp_dt(h_str)
             if cur_dt and prev_dt and cur_dt < prev_dt:
                 hitos_chrono_ok = False
+                if not chrono_pair:
+                    chrono_pair = f"{cur_dt.strftime('%d/%m %H:%M:%S')} < {prev_dt.strftime('%d/%m %H:%M:%S')}"
             if cur_dt:
                 prev_dt = cur_dt
 
@@ -498,7 +502,8 @@ def evaluate_contract(data: Dict[str, Any]) -> Tuple[List[EpsilonResumenValidati
         if not hitos_format_ok:
             detalle_hitos.append("Formato timestamp adaptativo inválido en algún hito")
         if not hitos_chrono_ok:
-            detalle_hitos.append("Hitos no ordenados cronológicamente")
+            suffix = f": {chrono_pair}" if chrono_pair else ""
+            detalle_hitos.append(f"Hitos no ordenados cronológicamente{suffix}")
 
         checks.append(
             EpsilonResumenValidationCheck(
@@ -602,23 +607,65 @@ def extract_json_content(raw_text: str) -> str:
 
 
 def build_epsilon_system_prompt() -> str:
-    """Carga el System Prompt desde data/resumen_incidencia_epsilon.md si existe."""
+    """Carga el System Prompt desde data/resumen_incidencia_epsilon.md (sin anexos de código/futuro) si existe."""
     spec_path = get_project_root() / "data" / "resumen_incidencia_epsilon.md"
     if spec_path.is_file():
         try:
             with open(spec_path, "r", encoding="utf-8") as f:
                 content = f.read().strip()
                 if content:
-                    return content
+                    prompt_only = content.split("## 5. Implementación en Código")[0].strip()
+                    return prompt_only or content
         except Exception:
             pass
     return EPSILON_SYSTEM_PROMPT
 
 
+def _last_sunday_of_month_utc(year: int, month: int) -> datetime:
+    """Devuelve las 01:00 UTC del último domingo del mes indicado (cambio horario UE)."""
+    if month == 12:
+        next_month = datetime(year + 1, 1, 1, 1, 0, 0, tzinfo=timezone.utc)
+    else:
+        next_month = datetime(year, month + 1, 1, 1, 0, 0, tzinfo=timezone.utc)
+    last_day = next_month - timedelta(days=1)
+    days_since_sunday = (last_day.weekday() + 1) % 7
+    return last_day - timedelta(days=days_since_sunday)
+
+
+_ISO_UTC_REGEX = re.compile(
+    r"^(\d{4}-\d{2}-\d{2})T(\d{2}:\d{2}:\d{2})(?:\.\d+)?(?:Z|\+00:?00)$"
+)
+
+
+def convert_utc_iso_to_madrid(value: Any) -> Any:
+    """Convierte recursivamente cadenas ISO-8601 en UTC (+00:00/Z) a Europe/Madrid (+01:00/+02:00)."""
+    if isinstance(value, dict):
+        return {k: convert_utc_iso_to_madrid(v) for k, v in value.items()}
+    if isinstance(value, list):
+        return [convert_utc_iso_to_madrid(item) for item in value]
+    if isinstance(value, str):
+        m = _ISO_UTC_REGEX.match(value.strip())
+        if m:
+            try:
+                utc_dt = datetime.strptime(
+                    f"{m.group(1)}T{m.group(2)}", "%Y-%m-%dT%H:%M:%S"
+                ).replace(tzinfo=timezone.utc)
+                dst_start = _last_sunday_of_month_utc(utc_dt.year, 3)
+                dst_end = _last_sunday_of_month_utc(utc_dt.year, 10)
+                offset_hours = 2 if dst_start <= utc_dt < dst_end else 1
+                madrid_tz = timezone(timedelta(hours=offset_hours))
+                local_dt = utc_dt.astimezone(madrid_tz)
+                return local_dt.isoformat()
+            except ValueError:
+                return value
+    return value
+
+
 def build_user_message(incident_data: Dict[str, Any]) -> str:
-    """Encapsula los datos brutos de la incidencia en el formato de entrada esperado."""
+    """Encapsula los datos brutos de la incidencia homogeneizando marcas ISO UTC a Europe/Madrid."""
+    normalized_data = convert_utc_iso_to_madrid(incident_data)
     return USER_PROMPT_TEMPLATE.format(
-        remedy_json=json.dumps(incident_data, ensure_ascii=False, indent=2)
+        remedy_json=json.dumps(normalized_data, ensure_ascii=False, indent=2)
     )
 
 
@@ -916,18 +963,25 @@ def call_mock(
     titulo_mock = "Ficha de Cliente - Error en sincronización de teléfono en recogidas de fijo"
     estado_mock = "Pendiente"
     if incident_data:
+        src = incident_data.get("remedy") if isinstance(incident_data.get("remedy"), dict) else incident_data
         titulo_mock = str(
-            incident_data.get("resumen")
-            or incident_data.get("Descripción")
+            src.get("resumen")
+            or src.get("Descripción")
+            or src.get("titulo")
+            or incident_data.get("resumen")
             or incident_data.get("titulo")
             or titulo_mock
         )[:100]
-        estado_mock = str(
-            incident_data.get("estado")
-            or incident_data.get("Estatus")
-            or incident_data.get("estadoActual")
+        raw_estado = (
+            src.get("estadoDesc")
+            or (src.get("estado") if not isinstance(src.get("estado"), int) else None)
+            or incident_data.get("estadoDesc")
+            or (incident_data.get("estado") if not isinstance(incident_data.get("estado"), int) else None)
+            or src.get("Estatus")
+            or src.get("estadoActual")
             or estado_mock
         )
+        estado_mock = str(raw_estado)
 
     mock_response = {
         "success": True,
