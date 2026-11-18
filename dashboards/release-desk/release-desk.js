@@ -317,12 +317,17 @@
             var statusBadgeClass = getStatusBadgeClass(inc['Estatus']);
             var sistema = inc['producto'] || inc['Grupo Resolutor'] || inc['Grupo asignado'] || '-';
             var proj = resolveProjectInfo(inc, state.projectsCatalog, state.currentRelease);
-            var jiraCell = proj
-                ? '<span class="rd-badge rd-badge-jira">' + escapeHtml(proj.code) + '</span>'
+            var jiraBug = inc['JIRA'] || inc['Jira'] || inc['jira'] || '';
+            var jiraCell = jiraBug
+                ? '<span class="rd-badge rd-badge-media">' + escapeHtml(jiraBug) + '</span>'
                 : '<span style="color:#9CA3AF;">-</span>';
             var proyectoText = proj
                 ? (proj.summary ? (proj.code + ' — ' + proj.summary) : proj.code)
                 : '-';
+            var proyectoCell = proj
+                ? '<div class="rd-cell-clamp"><span class="rd-badge rd-badge-jira">' + escapeHtml(proj.code) + '</span>' +
+                  (proj.summary ? ' <span style="font-size:11.5px;">' + escapeHtml(proj.summary) + '</span>' : '') + '</div>'
+                : '<span style="color:#9CA3AF;">-</span>';
             var acciones = (iaData && !iaData._error && (iaData.siguienteAccion || iaData.siguiente_accion || iaData.solucion))
                 || inc['detalleSolucion']
                 || '-';
@@ -354,7 +359,7 @@
                 '<td style="white-space:nowrap;"><span class="rd-badge ' + prioBadgeClass + '">' + escapeHtml(prioridadUrg) + '</span></td>' +
                 '<td style="max-width:120px;">' + sistemaCell + '</td>' +
                 '<td style="white-space:nowrap;">' + jiraCell + '</td>' +
-                '<td style="min-width:120px; max-width:190px;" title="' + escapeHtml(proyectoText) + '"><div class="rd-cell-clamp">' + escapeHtml(proyectoText) + '</div></td>' +
+                '<td style="min-width:120px; max-width:190px;" title="' + escapeHtml(proyectoText) + '">' + proyectoCell + '</td>' +
                 '<td style="min-width:150px; max-width:230px;" title="' + escapeHtml(acciones) + '"><div class="rd-cell-clamp">' + escapeHtml(acciones) + '</div></td>' +
                 '<td><span class="rd-badge ' + statusBadgeClass + '">' + escapeHtml(inc['Estatus'] || '-') + '</span></td>' +
                 '<td style="font-size:11.5px; min-width:78px;">' + fechaPrevistaCell + '</td>' +
