@@ -20,3 +20,8 @@ Este repositorio cuenta con agentes declarativos y skills sincronizados desde `b
 
 - **Regla Anti-Alucinación (Incidencias IT):** Nunca inventes horas, métricas, IPs, usuarios ni causas raíz no respaldadas por la evidencia proporcionada. Todo dato ausente debe marcarse o consultarse según indique el agente.
 <!-- END BIBLIOTECA-AGENTES -->
+
+## Agentes Locales del Proyecto
+
+- **release-opener** (`it-incidents`): Automatiza la apertura de una nueva Release mensual indicando únicamente su código `YYYYRMM` (ej. `2026R12`), registrándola en `dashboards/release-kpis/releases-data.js`, importando opcionalmente su catálogo de proyectos `PRJ-*` y sincronizando con MonTMC.
+  - Lee y sigue íntegramente las instrucciones de [`agents/it-incidents/release-opener.md`](./agents/it-incidents/release-opener.md). Apóyate obligatoriamente en la skill `release-opening-workflow` ([`.agents/skills/release-opening-workflow/SKILL.md`](./.agents/skills/release-opening-workflow/SKILL.md)).
