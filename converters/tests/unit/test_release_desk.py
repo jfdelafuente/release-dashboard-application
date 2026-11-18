@@ -253,6 +253,7 @@ def test_release_desk_js_build_export_csv():
             "    'Fecha de envío': '2026-11-10 09:00',\n"
             "    'Descripción': 'Error \"crítico\" en\\nlínea',\n"
             "    'Prioridad': 'Alta',\n"
+            "    'producto': 'AURORA',\n"
             "    'Grupo asignado': 'PORTAL',\n"
             "    'JIRA': 'JIRA-123',\n"
             "    'Estatus': 'En Curso',\n"
@@ -270,7 +271,7 @@ def test_release_desk_js_build_export_csv():
         assert out["hasBom"] is True
         assert len(out["lines"]) == 2
         assert out["lines"][0].startswith('"Código Incidencia";"Fecha Apertura";"Descripción problema"')
-        assert '"INC000001";"2026-11-10 09:00";"Resumen IA problema";"Alta";"PORTAL";"JIRA-123";"-";"Reiniciar servicio";"En Curso";"2026-11-25";"-";"N1 Soporte"' == out["lines"][1]
+        assert '"INC000001";"2026-11-10 09:00";"[AURORA] Resumen IA problema";"Alta";"PORTAL";"JIRA-123";"-";"Reiniciar servicio";"En Curso";"2026-11-25";"-";"N1 Soporte"' == out["lines"][1]
     else:
         js = RELEASE_DESK_JS.read_text(encoding="utf-8")
         assert "buildExportCsv" in js

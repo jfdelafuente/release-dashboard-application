@@ -161,7 +161,9 @@
         (incidents || []).forEach(function (inc) {
             var id = inc['ID de incidencia'] || '-';
             var iaData = iaCache ? (typeof iaCache.get === 'function' ? iaCache.get(id) : iaCache[id]) : null;
-            var descProblema = (iaData && !iaData._error && iaData.problema) ? iaData.problema : (inc['Descripción'] || '-');
+            var descBase = (iaData && !iaData._error && iaData.problema) ? iaData.problema : (inc['Descripción'] || '-');
+            var producto = inc['producto'] ? String(inc['producto']).trim() : '';
+            var descProblema = producto ? ('[' + producto + '] ' + descBase) : descBase;
             var prioridadUrg = inc['Prioridad'] || inc['Urgencia'] || '-';
             var sistema = inc['Grupo asignado'] || '-';
             var jiraBug = inc['JIRA'] || inc['Jira'] || inc['jira'] || '';
@@ -518,7 +520,10 @@
             var isSelected = id === state.selectedId;
             var fechaApertura = inc['Fecha de envío'] || '-';
             var iaData = state.iaCache.get(id);
-            var descProblema = (iaData && !iaData._error && iaData.problema) ? iaData.problema : (inc['Descripción'] || '-');
+            var descBase = (iaData && !iaData._error && iaData.problema) ? iaData.problema : (inc['Descripción'] || '-');
+            var producto = inc['producto'] ? String(inc['producto']).trim() : '';
+            var descProblema = producto ? ('[' + producto + '] ' + descBase) : descBase;
+            var descCellHtml = (producto ? '<span class="rd-badge rd-badge-sistema" style="margin-right:4px;">' + escapeHtml(producto) + '</span>' : '') + escapeHtml(descBase);
             var prioridadUrg = inc['Prioridad'] || inc['Urgencia'] || '-';
             var prioBadgeClass = getPriorityBadgeClass(inc['Prioridad'], inc['Urgencia']);
             var statusBadgeClass = getStatusBadgeClass(inc['Estatus']);
@@ -598,7 +603,7 @@
             var rowHtml = '<tr data-inc-id="' + escapeHtml(id) + '"' + rowClassAttr + ' aria-expanded="' + (isSelected ? 'true' : 'false') + '">' +
                 '<td style="white-space:nowrap;"><span class="rd-badge rd-badge-code">' + (isSelected ? '▾ ' : '▸ ') + escapeHtml(id) + '</span></td>' +
                 '<td style="font-size:11.5px; min-width:78px;">' + escapeHtml(fechaApertura) + agingHtml + '</td>' +
-                '<td style="min-width:140px; max-width:220px;" title="' + escapeHtml(descProblema) + '"><div class="rd-cell-clamp">' + escapeHtml(descProblema) + '</div></td>' +
+                '<td style="min-width:140px; max-width:220px;" title="' + escapeHtml(descProblema) + '"><div class="rd-cell-clamp">' + descCellHtml + '</div></td>' +
                 '<td style="white-space:nowrap;"><span class="rd-badge ' + prioBadgeClass + '">' + escapeHtml(prioridadUrg) + '</span></td>' +
                 '<td style="max-width:120px;">' + sistemaCell + '</td>' +
                 '<td style="white-space:nowrap;">' + jiraCell + '</td>' +
