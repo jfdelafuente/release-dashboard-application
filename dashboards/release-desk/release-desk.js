@@ -160,9 +160,12 @@
     function collectAvailableReleases(files) {
         var seen = new Set();
         var ordered = [];
-        if (typeof global.RAW_RELEASES !== 'undefined' && Array.isArray(global.RAW_RELEASES)) {
-            for (var i = global.RAW_RELEASES.length - 1; i >= 0; i--) {
-                var rName = global.RAW_RELEASES[i] && global.RAW_RELEASES[i][0];
+        var rawReleases = typeof RAW_RELEASES !== 'undefined'
+            ? RAW_RELEASES
+            : global.RAW_RELEASES;
+        if (Array.isArray(rawReleases)) {
+            for (var i = rawReleases.length - 1; i >= 0; i--) {
+                var rName = rawReleases[i] && rawReleases[i][0];
                 if (rName && !seen.has(rName)) {
                     seen.add(rName);
                     ordered.push(rName);
