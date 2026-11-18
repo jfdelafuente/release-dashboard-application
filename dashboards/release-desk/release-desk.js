@@ -312,7 +312,7 @@
             var fechaApertura = inc['Fecha de envío'] || '-';
             var iaData = state.iaCache.get(id);
             var descProblema = (iaData && !iaData._error && iaData.problema) ? iaData.problema : (inc['Descripción'] || '-');
-            var impactoRemedy = inc['Impacto'] || inc['Urgencia'] || '-';
+            var prioridadUrg = inc['Prioridad'] || inc['Urgencia'] || '-';
             var sistema = inc['producto'] || inc['Grupo Resolutor'] || inc['Grupo asignado'] || '-';
             var proj = resolveProjectInfo(inc, state.projectsCatalog, state.currentRelease);
             var jiraCell = proj
@@ -332,7 +332,7 @@
                 '<td style="font-weight:600; white-space:nowrap;">' + escapeHtml(id) + '</td>' +
                 '<td style="white-space:nowrap;">' + escapeHtml(fechaApertura) + '</td>' +
                 '<td style="min-width:220px;">' + escapeHtml(descProblema) + '</td>' +
-                '<td>' + escapeHtml(impactoRemedy) + '</td>' +
+                '<td>' + escapeHtml(prioridadUrg) + '</td>' +
                 '<td>' + escapeHtml(sistema) + '</td>' +
                 '<td style="white-space:nowrap;">' + jiraCell + '</td>' +
                 '<td style="min-width:200px;" title="' + escapeHtml(proyectoText) + '">' + escapeHtml(proyectoText) + '</td>' +

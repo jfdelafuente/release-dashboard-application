@@ -45,7 +45,7 @@ def test_release_desk_html_has_required_controls():
         "Código Incidencia",
         "Fecha Apertura",
         "Descripción problema",
-        "Impacto Remedy",
+        "Prioridad / Urg.",
         "Sistema",
         "JIRA",
         "PROYECTO",
