@@ -16,6 +16,7 @@
     { id: 'portal', label: 'Portal', href: '/dashboards/portal/' },
     { id: 'massive-incidents', label: 'Incidencias masivas', href: '/dashboards/massive-incidents/' },
     { id: 'postmortem', label: 'Release', href: '/dashboards/postmortem/' },
+    { id: 'release-desk', label: 'Mesa de Release', href: '/dashboards/release-desk/' },
     { id: 'release-kpis', label: 'KPIs Release', href: '/dashboards/release-kpis/' },
     { id: 'reportes-incidencias', label: 'Reportes de Incidencias', href: '/dashboards/reportes-incidencias/' },
     { id: 'problemas', label: 'Gestión de Problemas', href: '/problemas' },

@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mesa de Release · Seguimiento Operativo</title>
+    <link rel="stylesheet" href="/dashboards/assets/topbar.css">
+    <link rel="stylesheet" href="/dashboards/assets/toast.css">
+    <script src="/dashboards/assets/toast.js" defer></script>
+    <script src="/dashboards/release-kpis/releases-data.js"></script>
+    <style>
+        :root {
+            --bg-page: #F6F5F2;
+            --bg-card: #FFFFFF;
+            --bg-muted: #EFECE6;
+            --text-primary: #141311;
+            --text-secondary: #5C5852;
+            --border-subtle: #E2DDD5;
+            --accent: #FF7900;
+            --accent-dark: #E06800;
+            --status-ok: #16A34A;
+            --status-warn: #D97706;
+            --status-crit: #DC2626;
+            --status-info: #2563EB;
+        }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background: var(--bg-page);
+            color: var(--text-primary);
+            line-height: 1.45;
+        }
+        .rd-container {
+            max-width: 1520px;
+            margin: 0 auto;
+            padding: 20px 24px 40px;
+        }
+        .rd-header {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            margin-bottom: 18px;
+        }
+        .rd-eyebrow {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--accent);
+        }
+        .rd-title {
+            margin: 2px 0 4px;
+            font-size: 24px;
+            font-weight: 700;
+        }
+        .rd-subtitle {
+            margin: 0;
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+        .rd-header-actions {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 10px;
+        }
+        .rd-select, .rd-input {
+            height: 36px;
+            padding: 0 12px;
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            background: var(--bg-card);
+            color: var(--text-primary);
+            font-size: 13px;
+        }
+        .rd-btn {
+            height: 36px;
+            padding: 0 14px;
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            background: var(--bg-card);
+            color: var(--text-primary);
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: background 0.15s ease, border-color 0.15s ease;
+        }
+        .rd-btn:hover:not(:disabled) {
+            background: var(--bg-muted);
+        }
+        .rd-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        .rd-btn-primary {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: #FFFFFF;
+        }
+        .rd-btn-primary:hover:not(:disabled) {
+            background: var(--accent-dark);
+            border-color: var(--accent-dark);
+        }
+        .rd-btn-dark {
+            background: #141311;
+            border-color: #141311;
+            color: #FFFFFF;
+        }
+        .rd-btn-dark:hover:not(:disabled) {
+            background: #2C2A26;
+        }
+        .rd-kpis {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        .rd-kpi-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            padding: 14px 16px;
+        }
+        .rd-kpi-val {
+            font-size: 26px;
+            font-weight: 700;
+            line-height: 1.1;
+        }
+        .rd-kpi-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+        .rd-filters {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            padding: 12px 14px;
+            margin-bottom: 16px;
+        }
+        .rd-filters .rd-input {
+            flex: 1 1 240px;
+        }
+        .rd-workspace {
+            display: grid;
+            grid-template-columns: minmax(0, 1.35fr) minmax(360px, 1fr);
+            gap: 16px;
+            align-items: start;
+        }
+        .rd-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        .rd-card-header {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border-subtle);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+        .rd-table-wrap {
+            overflow-x: auto;
+            max-height: 68vh;
+            overflow-y: auto;
+        }
+        table.rd-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+        table.rd-table th {
+            position: sticky;
+            top: 0;
+            background: #FAF9F7;
+            text-align: left;
+            padding: 10px 12px;
+            border-bottom: 1px solid var(--border-subtle);
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            color: var(--text-secondary);
+            z-index: 1;
+        }
+        table.rd-table td {
+            padding: 10px 12px;
+            border-bottom: 1px solid #F0ECE5;
+            vertical-align: top;
+        }
+        table.rd-table tbody tr {
+            cursor: pointer;
+            transition: background 0.1s ease;
+        }
+        table.rd-table tbody tr:hover {
+            background: #FFF8F2;
+        }
+        table.rd-table tbody tr.is-selected {
+            background: #FFF1E5;
+        }
+        .rd-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+        .rd-badge-asignado { background: #DBEAFE; color: #1E40AF; }
+        .rd-badge-curso { background: #FEF3C7; color: #92400E; }
+        .rd-badge-pendiente { background: #F3E8FF; color: #6B21A8; }
+        .rd-badge-resuelto { background: #DCFCE7; color: #166534; }
+        .rd-badge-critica { background: #FEE2E2; color: #991B1B; }
+        .rd-badge-alta { background: #FFEDD5; color: #9A3412; }
+        .rd-badge-media { background: #F3F4F6; color: #374151; }
+        .rd-detail-body {
+            padding: 16px;
+        }
+        .rd-detail-empty {
+            padding: 40px 20px;
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 13px;
+        }
+        .rd-meta-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px;
+            margin: 12px 0 16px;
+            padding: 12px;
+            background: #FAF9F7;
+            border-radius: 8px;
+            border: 1px solid #EDE9E1;
+            font-size: 12px;
+        }
+        .rd-meta-label {
+            color: var(--text-secondary);
+            font-size: 11px;
+            display: block;
+        }
+        .rd-meta-val {
+            font-weight: 600;
+            word-break: break-word;
+        }
+        .rd-ia-box {
+            border: 1px solid #FFD8B8;
+            background: #FFF9F4;
+            border-radius: 8px;
+            padding: 14px;
+            margin-top: 12px;
+        }
+        .rd-ia-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+        .rd-ia-title {
+            font-size: 13px;
+            font-weight: 700;
+            color: #9A3412;
+            margin: 0;
+        }
+        .rd-ia-section {
+            margin-top: 10px;
+            font-size: 13px;
+        }
+        .rd-ia-section strong {
+            display: block;
+            font-size: 11px;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+            margin-bottom: 2px;
+        }
+        .rd-empty-state {
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            padding: 42px 24px;
+            text-align: center;
+            margin-top: 12px;
+        }
+        .rd-empty-state h3 {
+            margin: 0 0 8px;
+            font-size: 18px;
+        }
+        .rd-empty-state p {
+            margin: 0 0 16px;
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+        .hidden { display: none !important; }
+        @media (max-width: 1024px) {
+            .rd-workspace { grid-template-columns: 1fr; }
+            .rd-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        }
+    </style>
+</head>
+<body>
+    <div id="mo-topbar-root" data-active="release-desk"></div>
+
+    <main class="rd-container">
+        <header class="rd-header">
+            <div>
+                <div class="rd-eyebrow">Customer &amp; Service Operations · Mesa de Seguimiento</div>
+                <h1 class="rd-title">Mesa de Release</h1>
+                <p class="rd-subtitle">Seguimiento operativo de incidencias de release no cerradas con responsables, grupos soportes y Resumen IA</p>
+            </div>
+            <div class="rd-header-actions">
+                <label for="releaseSelect" class="rd-subtitle" style="font-weight:600;">Release:</label>
+                <select id="releaseSelect" class="rd-select" aria-label="Seleccionar release"></select>
+                <button id="btnSyncPostmortem" class="rd-btn rd-btn-primary" title="Sincronizar incidencias de esta release desde MonTMC">⚡ Sincronizar MonTMC</button>
+            </div>
+        </header>
+
+        <section class="rd-kpis" aria-label="Indicadores de seguimiento activo">
+            <div class="rd-kpi-card">
+                <div class="rd-kpi-val" id="kpiActiveTotal">0</div>
+                <div class="rd-kpi-label">Incidencias activas (≠ Cerrado)</div>
+            </div>
+            <div class="rd-kpi-card">
+                <div class="rd-kpi-val" id="kpiCriticalHigh">0</div>
+                <div class="rd-kpi-label">Prioridad Alta / Crítica (P1–P2)</div>
+            </div>
+            <div class="rd-kpi-card">
+                <div class="rd-kpi-val" id="kpiInProgress">0</div>
+                <div class="rd-kpi-label">Asignadas / En Curso / Pendientes</div>
+            </div>
+            <div class="rd-kpi-card">
+                <div class="rd-kpi-val" id="kpiResolvedPendingClose">0</div>
+                <div class="rd-kpi-label">Resueltas pendientes de cierre</div>
+            </div>
+        </section>
+
+        <section class="rd-filters" aria-label="Filtros de la mesa">
+            <input type="text" id="filterSearch" class="rd-input" placeholder="Buscar por ID, descripción o responsable..." aria-label="Buscar incidencias">
+            <select id="filterStatus" class="rd-select" aria-label="Filtrar por estado">
+                <option value="">Todos los estados activos</option>
+            </select>
+            <select id="filterGroup" class="rd-select" aria-label="Filtrar por grupo soporte">
+                <option value="">Todos los grupos soporte</option>
+            </select>
+            <select id="filterPriority" class="rd-select" aria-label="Filtrar por prioridad o urgencia">
+                <option value="">Todas las prioridades</option>
+            </select>
+            <select id="filterProject" class="rd-select" aria-label="Filtrar por proyecto">
+                <option value="">Todos los proyectos</option>
+            </select>
+            <button id="btnClearFilters" class="rd-btn">Limpiar filtros</button>
+        </section>
+
+        <div id="emptyStateBox" class="rd-empty-state hidden">
+            <h3 id="emptyStateTitle">Sin incidencias activas</h3>
+            <p id="emptyStateDesc">No hay datos cargados para esta release.</p>
+            <button id="btnEmptySync" class="rd-btn rd-btn-primary">⚡ Sincronizar MonTMC</button>
+        </div>
+
+        <section id="workspaceSection" class="rd-workspace">
+            <div class="rd-card">
+                <div class="rd-card-header">
+                    <span>Incidencias en seguimiento (<span id="visibleCount">0</span>)</span>
+                    <span id="lastSyncInfo" class="rd-subtitle"></span>
+                </div>
+                <div class="rd-table-wrap">
+                    <table class="rd-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Proyecto</th>
+                                <th>Descripción</th>
+                                <th>Estado</th>
+                                <th>Prioridad / Urg.</th>
+                                <th>Soporte / Resolutor</th>
+                                <th>Responsable</th>
+                                <th>Envío</th>
+                            </tr>
+                        </thead>
+                        <tbody id="incidentsTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <aside class="rd-card" aria-label="Detalle de incidencia y Resumen IA">
+                <div class="rd-card-header">
+                    <span id="detailHeaderTitle">Detalle de seguimiento</span>
+                    <button id="btnCopyFollowup" class="rd-btn rd-btn-dark" disabled>📋 Copiar seguimiento</button>
+                </div>
+                <div id="detailBody" class="rd-detail-body">
+                    <div class="rd-detail-empty">
+                        Selecciona una incidencia de la tabla para ver su información de seguimiento y Resumen IA.
+                    </div>
+                </div>
+            </aside>
+        </section>
+    </main>
+
+    <script src="/dashboards/release-desk/release-desk.js"></script>
+    <script src="/dashboards/assets/topbar.js" defer></script>
+</body>
+</html>
