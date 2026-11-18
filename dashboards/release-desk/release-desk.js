@@ -85,13 +85,38 @@
         return lines.join('\n');
     }
 
+    function computeOpenAgeDays(fechaEnvio, nowDate) {
+        if (!fechaEnvio) return null;
+        var s = String(fechaEnvio).trim();
+        var dt = null;
+        var m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:\s+(\d{1,2}):(\d{2})(?::(\d{2}))?)?$/);
+        if (m) {
+            dt = new Date(
+                parseInt(m[3], 10),
+                parseInt(m[2], 10) - 1,
+                parseInt(m[1], 10),
+                m[4] ? parseInt(m[4], 10) : 0,
+                m[5] ? parseInt(m[5], 10) : 0,
+                m[6] ? parseInt(m[6], 10) : 0
+            );
+        } else {
+            var parsed = new Date(s);
+            if (!isNaN(parsed.getTime())) dt = parsed;
+        }
+        if (!dt || isNaN(dt.getTime())) return null;
+        var ref = nowDate instanceof Date ? nowDate : new Date();
+        var diff = Math.floor((ref.getTime() - dt.getTime()) / 86400000);
+        return diff < 0 ? 0 : diff;
+    }
+
     if (typeof module !== 'undefined' && module.exports) {
         module.exports = {
             isClosedStatus: isClosedStatus,
             filterNonClosedIncidents: filterNonClosedIncidents,
             extractProjectCode: extractProjectCode,
             resolveProjectInfo: resolveProjectInfo,
-            buildFollowupText: buildFollowupText
+            buildFollowupText: buildFollowupText,
+            computeOpenAgeDays: computeOpenAgeDays
         };
     }
 
@@ -424,9 +449,19 @@
                 fechaPrevistaCell = '<button type="button" class="rd-fecha-add-btn" data-edit-fecha="' + escapeHtml(id) + '" title="Asignar fecha prevista acordada">+ Fecha</button>';
             }
 
+            var agingHtml = '';
+            if (!isResolved) {
+                var ageDays = computeOpenAgeDays(fechaApertura);
+                if (ageDays !== null && ageDays > 7) {
+                    agingHtml = '<div><span class="rd-aging-badge rd-aging-crit" title="Abierta hace ' + ageDays + ' días">' + ageDays + 'd</span></div>';
+                } else if (ageDays !== null && ageDays > 3) {
+                    agingHtml = '<div><span class="rd-aging-badge rd-aging-warn" title="Abierta hace ' + ageDays + ' días">' + ageDays + 'd</span></div>';
+                }
+            }
+
             var rowHtml = '<tr data-inc-id="' + escapeHtml(id) + '"' + rowClassAttr + ' aria-expanded="' + (isSelected ? 'true' : 'false') + '">' +
                 '<td style="white-space:nowrap;"><span class="rd-badge rd-badge-code">' + (isSelected ? '▾ ' : '▸ ') + escapeHtml(id) + '</span></td>' +
-                '<td style="font-size:11.5px; min-width:78px;">' + escapeHtml(fechaApertura) + '</td>' +
+                '<td style="font-size:11.5px; min-width:78px;">' + escapeHtml(fechaApertura) + agingHtml + '</td>' +
                 '<td style="min-width:140px; max-width:220px;" title="' + escapeHtml(descProblema) + '"><div class="rd-cell-clamp">' + escapeHtml(descProblema) + '</div></td>' +
                 '<td style="white-space:nowrap;"><span class="rd-badge ' + prioBadgeClass + '">' + escapeHtml(prioridadUrg) + '</span></td>' +
                 '<td style="max-width:120px;">' + sistemaCell + '</td>' +

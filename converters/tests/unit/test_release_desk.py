@@ -153,3 +153,26 @@ def test_release_desk_overrides_persist_and_clear(tmp_path: Path):
     cleared = set_fecha_prevista_override(tmp_path, "2026R9", "INC000004140329", "")
     assert "INC000004140329" not in cleared["overrides"]
     assert "INC000004999999" in get_overrides_for_release(tmp_path, "2026R11")
+
+
+def test_release_desk_js_compute_open_age_days():
+    if shutil.which("node") is not None:
+        script = (
+            f"const rd = require({json.dumps(str(RELEASE_DESK_JS))});\n"
+            "const ref = new Date(2026, 10, 18, 12, 0, 0);\n"
+            "console.log(JSON.stringify({\n"
+            "  d10: rd.computeOpenAgeDays('08/11/2026 10:00', ref),\n"
+            "  d4: rd.computeOpenAgeDays('14/11/2026 09:00', ref),\n"
+            "  iso: rd.computeOpenAgeDays('2026-11-10T08:00:00Z', ref),\n"
+            "  bad: rd.computeOpenAgeDays('-', ref)\n"
+            "}));\n"
+        )
+        proc = subprocess.run(["node", "-e", script], capture_output=True, text=True, check=True)
+        out = json.loads(proc.stdout)
+        assert out["d10"] == 10
+        assert out["d4"] == 4
+        assert out["iso"] >= 7
+        assert out["bad"] is None
+    else:
+        js = RELEASE_DESK_JS.read_text(encoding="utf-8")
+        assert "computeOpenAgeDays" in js

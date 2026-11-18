@@ -14,7 +14,7 @@ Lista priorizada de evolutivos para la consola **[Mesa de Release](/05-postmorte
 | **M4** | Exportación de la vista filtrada (CSV / Excel) | Operativa | Alto | `[ ] Pendiente` |
 | **M5** | Ordenación por cabeceras de columna | UX / Operativa | Medio | `[ ] Pendiente` |
 | **M6** | Importación de CSV de proyectos desde la UI | Mantenimiento | Medio | `[ ] Pendiente` |
-| **M7** | Indicador de antigüedad (Aging) en `Fecha Apertura` | Operativa | Medio | `[ ] Pendiente` |
+| **M7** | Indicador de antigüedad (Aging) en `Fecha Apertura` | Operativa | Medio | `[x] Completada` |
 | **M8** | Edición y persistencia de `Fecha Prevista` acordada | Seguimiento | Alto | `[x] Completada` |
 
 ---
