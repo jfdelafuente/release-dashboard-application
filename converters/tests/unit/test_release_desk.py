@@ -35,9 +35,7 @@ def test_release_desk_html_has_required_controls():
         "filterGroup",
         "filterPriority",
         "filterProject",
-        "btnCopyFollowup",
         "incidentsTableBody",
-        "detailBody",
     ):
         assert required_id in html, f"Falta {required_id} en release-desk/index.html"
 
@@ -65,6 +63,8 @@ def test_release_desk_js_uses_postmortem_and_resumen_ia_only():
     assert "/api/sync-postmortem" in js
     assert "/api/epsilon/resumenIA/" in js
     assert "Problema Detectado" in js
+    assert "rd-detail-row" in js
+    assert "btnCopyFollowup" in js
     assert "high_priority_notifications.json" not in js
     assert "-massive.json" not in js
 

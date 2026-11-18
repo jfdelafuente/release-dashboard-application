@@ -175,7 +175,7 @@
         }
         .rd-table-wrap {
             overflow-x: auto;
-            max-height: 68vh;
+            max-height: 76vh;
             overflow-y: auto;
         }
         table.rd-table {
@@ -219,6 +219,40 @@
         }
         table.rd-table tbody tr.is-selected {
             background: #FFF1E5;
+        }
+        table.rd-table tbody tr.rd-detail-row {
+            background: #FAF8F5;
+            cursor: default;
+        }
+        table.rd-table tbody tr.rd-detail-row:hover {
+            background: #FAF8F5;
+        }
+        table.rd-table tbody tr.rd-detail-row > td {
+            padding: 12px 14px;
+            border-bottom: 2px solid var(--accent);
+        }
+        .rd-detail-inline-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(20, 19, 17, 0.05);
+        }
+        .rd-detail-inline-header {
+            padding: 10px 14px;
+            border-bottom: 1px solid var(--border-subtle);
+            background: #FAF9F7;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+        .rd-detail-inline-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
         .rd-badge {
             display: inline-block;
@@ -407,17 +441,6 @@
                 </div>
             </div>
 
-            <aside class="rd-card" aria-label="Detalle de incidencia y Resumen IA">
-                <div class="rd-card-header">
-                    <span id="detailHeaderTitle">Detalle de seguimiento</span>
-                    <button id="btnCopyFollowup" class="rd-btn rd-btn-dark" disabled>📋 Copiar seguimiento</button>
-                </div>
-                <div id="detailBody" class="rd-detail-body">
-                    <div class="rd-detail-empty">
-                        Selecciona una incidencia de la tabla para ver su información de seguimiento y Resumen IA.
-                    </div>
-                </div>
-            </aside>
         </section>
     </main>
 

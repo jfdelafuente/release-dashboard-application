@@ -308,7 +308,8 @@
 
         tbody.innerHTML = state.filteredIncidents.map(function (inc) {
             var id = inc['ID de incidencia'] || '-';
-            var isSel = id === state.selectedId ? ' class="is-selected"' : '';
+            var isSelected = id === state.selectedId;
+            var isSel = isSelected ? ' class="is-selected"' : '';
             var fechaApertura = inc['Fecha de envío'] || '-';
             var iaData = state.iaCache.get(id);
             var descProblema = (iaData && !iaData._error && iaData.problema) ? iaData.problema : (inc['Descripción'] || '-');
@@ -328,8 +329,8 @@
             var motivoResuelto = inc['Motivo de estado'] || inc['MotivoEstado_Anterior'] || '-';
             var peticionario = inc['Grupo Remitente'] || '-';
 
-            return '<tr data-inc-id="' + escapeHtml(id) + '"' + isSel + '>' +
-                '<td style="font-weight:600; white-space:nowrap; font-size:11.5px;">' + escapeHtml(id) + '</td>' +
+            var rowHtml = '<tr data-inc-id="' + escapeHtml(id) + '"' + isSel + ' aria-expanded="' + (isSelected ? 'true' : 'false') + '">' +
+                '<td style="font-weight:600; white-space:nowrap; font-size:11.5px;">' + (isSelected ? '▾ ' : '▸ ') + escapeHtml(id) + '</td>' +
                 '<td style="font-size:11.5px; min-width:78px;">' + escapeHtml(fechaApertura) + '</td>' +
                 '<td style="min-width:140px; max-width:220px;" title="' + escapeHtml(descProblema) + '"><div class="rd-cell-clamp">' + escapeHtml(descProblema) + '</div></td>' +
                 '<td style="white-space:nowrap;">' + escapeHtml(prioridadUrg) + '</td>' +
@@ -342,6 +343,13 @@
                 '<td style="max-width:130px;">' + escapeHtml(motivoResuelto) + '</td>' +
                 '<td style="max-width:120px;">' + escapeHtml(peticionario) + '</td>' +
                 '</tr>';
+
+            if (isSelected) {
+                rowHtml += '<tr class="rd-detail-row" data-detail-for="' + escapeHtml(id) + '">' +
+                    '<td colspan="12">' + renderDetailHtml(inc) + '</td>' +
+                    '</tr>';
+            }
+            return rowHtml;
         }).join('');
 
         Array.from(tbody.querySelectorAll('tr[data-inc-id]')).forEach(function (row) {
@@ -349,6 +357,40 @@
                 selectIncident(row.getAttribute('data-inc-id'));
             });
         });
+
+        var selectedId = state.selectedId;
+        if (selectedId) {
+            var copyBtn = document.getElementById('btnCopyFollowup');
+            if (copyBtn) {
+                copyBtn.addEventListener('click', async function (ev) {
+                    ev.stopPropagation();
+                    var inc = state.activeIncidents.find(function (r) { return r['ID de incidencia'] === selectedId; });
+                    if (!inc) return;
+                    var text = buildFollowupText(inc, state.iaCache.get(selectedId), state.currentRelease, state.projectsCatalog);
+                    try {
+                        await navigator.clipboard.writeText(text);
+                        notify('Seguimiento de ' + selectedId + ' copiado al portapapeles.', 'success');
+                    } catch (_) {
+                        notify('No se pudo acceder al portapapeles.', 'warning');
+                    }
+                });
+            }
+            var closeBtn = document.getElementById('btnCloseDetail');
+            if (closeBtn) {
+                closeBtn.addEventListener('click', function (ev) {
+                    ev.stopPropagation();
+                    state.selectedId = null;
+                    renderTable();
+                });
+            }
+            var refreshBtn = document.getElementById('btnRefreshIA');
+            if (refreshBtn) {
+                refreshBtn.addEventListener('click', function (ev) {
+                    ev.stopPropagation();
+                    fetchIaSummary(selectedId, true);
+                });
+            }
+        }
     }
 
     function renderIaSection(id, iaData, isLoading) {
@@ -412,26 +454,11 @@
         return html;
     }
 
-    function renderDetail() {
-        var detailBody = document.getElementById('detailBody');
-        var copyBtn = document.getElementById('btnCopyFollowup');
-        var headerTitle = document.getElementById('detailHeaderTitle');
-
-        var inc = state.activeIncidents.find(function (r) { return r['ID de incidencia'] === state.selectedId; });
-        if (!inc) {
-            headerTitle.textContent = 'Detalle de seguimiento';
-            copyBtn.disabled = true;
-            detailBody.innerHTML = '<div class="rd-detail-empty">Selecciona una incidencia de la tabla para ver su información de seguimiento y Resumen IA.</div>';
-            return;
-        }
-
+    function renderDetailHtml(inc) {
         var id = inc['ID de incidencia'];
-        headerTitle.textContent = 'Seguimiento · ' + id;
-        copyBtn.disabled = false;
-
         var iaData = state.iaCache.get(id) || null;
         var isLoadingIa = state.iaInFlight.has(id);
-        var proj = resolveProjectInfo(inc, state.projectsCatalog);
+        var proj = resolveProjectInfo(inc, state.projectsCatalog, state.currentRelease);
         var projHtml = proj
             ? '<div style="font-size:12px; background:#F0F6FF; border:1px solid #BFDBFE; padding:10px; border-radius:8px; margin-bottom:10px;">' +
                 '<strong>Proyecto:</strong> ' + escapeHtml(proj.code) +
@@ -441,37 +468,40 @@
               '</div>'
             : '';
 
-        detailBody.innerHTML =
-            '<div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:8px;">' +
-                '<span class="rd-badge ' + getStatusBadgeClass(inc['Estatus']) + '">' + escapeHtml(inc['Estatus'] || '-') + '</span>' +
-                '<span class="rd-badge ' + getPriorityBadgeClass(inc['Prioridad'], inc['Urgencia']) + '">' + escapeHtml(inc['Prioridad'] || inc['Urgencia'] || '-') + '</span>' +
-                (inc['Despliegue'] ? '<span class="rd-badge rd-badge-media">' + escapeHtml(inc['Despliegue']) + '</span>' : '') +
+        return '<div class="rd-detail-inline-card">' +
+            '<div class="rd-detail-inline-header">' +
+                '<span>Seguimiento · ' + escapeHtml(id) + '</span>' +
+                '<div class="rd-detail-inline-actions">' +
+                    '<button id="btnCopyFollowup" class="rd-btn rd-btn-dark">📋 Copiar seguimiento</button>' +
+                    '<button id="btnCloseDetail" class="rd-btn" title="Cerrar desplegable">✕ Cerrar</button>' +
+                '</div>' +
             '</div>' +
-            '<div style="font-size:14px; font-weight:600; margin-bottom:8px;">' + escapeHtml(inc['Descripción'] || '') + '</div>' +
-            projHtml +
-            '<div class="rd-meta-grid">' +
-                '<div><span class="rd-meta-label">Grupo asignado</span><span class="rd-meta-val">' + escapeHtml(inc['Grupo asignado'] || '-') + '</span></div>' +
-                '<div><span class="rd-meta-label">Grupo resolutor</span><span class="rd-meta-val">' + escapeHtml(inc['Grupo Resolutor'] || '-') + '</span></div>' +
-                '<div><span class="rd-meta-label">Responsable / Peticionario</span><span class="rd-meta-val">' + escapeHtml(inc['Grupo Remitente'] || '-') + '</span></div>' +
-                '<div><span class="rd-meta-label">Impacto / Sistema</span><span class="rd-meta-val">' + escapeHtml(inc['Impacto'] || inc['producto'] || '-') + '</span></div>' +
-                '<div><span class="rd-meta-label">Fecha envío</span><span class="rd-meta-val">' + escapeHtml(inc['Fecha de envío'] || '-') + '</span></div>' +
-                '<div><span class="rd-meta-label">Última resolución</span><span class="rd-meta-val">' + escapeHtml(inc['Fecha de última resolución'] || '-') + '</span></div>' +
+            '<div id="detailBody" class="rd-detail-body">' +
+                '<div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:8px;">' +
+                    '<span class="rd-badge ' + getStatusBadgeClass(inc['Estatus']) + '">' + escapeHtml(inc['Estatus'] || '-') + '</span>' +
+                    '<span class="rd-badge ' + getPriorityBadgeClass(inc['Prioridad'], inc['Urgencia']) + '">' + escapeHtml(inc['Prioridad'] || inc['Urgencia'] || '-') + '</span>' +
+                    (inc['Despliegue'] ? '<span class="rd-badge rd-badge-media">' + escapeHtml(inc['Despliegue']) + '</span>' : '') +
+                '</div>' +
+                '<div style="font-size:14px; font-weight:600; margin-bottom:8px;">' + escapeHtml(inc['Descripción'] || '') + '</div>' +
+                projHtml +
+                '<div class="rd-meta-grid">' +
+                    '<div><span class="rd-meta-label">Grupo asignado</span><span class="rd-meta-val">' + escapeHtml(inc['Grupo asignado'] || '-') + '</span></div>' +
+                    '<div><span class="rd-meta-label">Grupo resolutor</span><span class="rd-meta-val">' + escapeHtml(inc['Grupo Resolutor'] || '-') + '</span></div>' +
+                    '<div><span class="rd-meta-label">Responsable / Peticionario</span><span class="rd-meta-val">' + escapeHtml(inc['Grupo Remitente'] || '-') + '</span></div>' +
+                    '<div><span class="rd-meta-label">Impacto / Sistema</span><span class="rd-meta-val">' + escapeHtml(inc['Impacto'] || inc['producto'] || '-') + '</span></div>' +
+                    '<div><span class="rd-meta-label">Fecha envío</span><span class="rd-meta-val">' + escapeHtml(inc['Fecha de envío'] || '-') + '</span></div>' +
+                    '<div><span class="rd-meta-label">Última resolución</span><span class="rd-meta-val">' + escapeHtml(inc['Fecha de última resolución'] || '-') + '</span></div>' +
+                '</div>' +
+                (inc['detalleSolucion'] ? '<div style="font-size:12px; background:#F7F5F0; padding:10px; border-radius:8px; margin-bottom:10px;"><strong>Solución registrada:</strong> ' + escapeHtml(inc['detalleSolucion']) + '</div>' : '') +
+                renderIaSection(id, iaData, isLoadingIa) +
             '</div>' +
-            (inc['detalleSolucion'] ? '<div style="font-size:12px; background:#F7F5F0; padding:10px; border-radius:8px; margin-bottom:10px;"><strong>Solución registrada:</strong> ' + escapeHtml(inc['detalleSolucion']) + '</div>' : '') +
-            renderIaSection(id, iaData, isLoadingIa);
-
-        var refreshBtn = document.getElementById('btnRefreshIA');
-        if (refreshBtn) {
-            refreshBtn.addEventListener('click', function () {
-                fetchIaSummary(id, true);
-            });
-        }
+        '</div>';
     }
 
     async function fetchIaSummary(id, forceRefresh) {
         if (!id || state.iaInFlight.has(id)) return;
         state.iaInFlight.add(id);
-        if (state.selectedId === id) renderDetail();
+        if (state.selectedId === id) renderTable();
 
         try {
             var url = '/api/epsilon/resumenIA/' + encodeURIComponent(id) + (forceRefresh ? '?force=1' : '');
@@ -488,14 +518,17 @@
         } finally {
             state.iaInFlight.delete(id);
             renderTable();
-            if (state.selectedId === id) renderDetail();
         }
     }
 
     function selectIncident(id) {
+        if (state.selectedId === id) {
+            state.selectedId = null;
+            renderTable();
+            return;
+        }
         state.selectedId = id;
         renderTable();
-        renderDetail();
         if (id && !state.iaCache.has(id)) {
             fetchIaSummary(id, false);
         }
@@ -574,9 +607,6 @@
 
             showWorkspace();
             applyFilters();
-            if (state.filteredIncidents.length > 0) {
-                selectIncident(state.filteredIncidents[0]['ID de incidencia']);
-            }
         } catch (err) {
             notify('Error cargando datos de Mesa de Release: ' + (err.message || err), 'error');
         }
@@ -613,7 +643,6 @@
         var btnSync = document.getElementById('btnSyncPostmortem');
         var btnEmptySync = document.getElementById('btnEmptySync');
         var btnClear = document.getElementById('btnClearFilters');
-        var btnCopy = document.getElementById('btnCopyFollowup');
 
         if (releaseSelect) {
             releaseSelect.addEventListener('change', function () {
@@ -637,20 +666,6 @@
                 var projEl = document.getElementById('filterProject');
                 if (projEl) projEl.value = '';
                 applyFilters();
-            });
-        }
-
-        if (btnCopy) {
-            btnCopy.addEventListener('click', async function () {
-                var inc = state.activeIncidents.find(function (r) { return r['ID de incidencia'] === state.selectedId; });
-                if (!inc) return;
-                var text = buildFollowupText(inc, state.iaCache.get(inc['ID de incidencia']), state.currentRelease, state.projectsCatalog);
-                try {
-                    await navigator.clipboard.writeText(text);
-                    notify('Seguimiento de ' + inc['ID de incidencia'] + ' copiado al portapapeles.', 'success');
-                } catch (_) {
-                    notify('No se pudo acceder al portapapeles.', 'warning');
-                }
             });
         }
 
