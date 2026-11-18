@@ -458,15 +458,6 @@
         var id = inc['ID de incidencia'];
         var iaData = state.iaCache.get(id) || null;
         var isLoadingIa = state.iaInFlight.has(id);
-        var proj = resolveProjectInfo(inc, state.projectsCatalog, state.currentRelease);
-        var projHtml = proj
-            ? '<div style="font-size:12px; background:#F0F6FF; border:1px solid #BFDBFE; padding:10px; border-radius:8px; margin-bottom:10px;">' +
-                '<strong>Proyecto:</strong> ' + escapeHtml(proj.code) +
-                (proj.summary ? ' — ' + escapeHtml(proj.summary) : '') +
-                (proj.despliegue ? ' <span class="rd-badge rd-badge-asignado" style="margin-left:6px;">' + escapeHtml(proj.despliegue) + '</span>' : '') +
-                (proj.descripcion ? '<div style="color:#374151; margin-top:4px;">' + escapeHtml(proj.descripcion) + '</div>' : '') +
-              '</div>'
-            : '';
 
         return '<div class="rd-detail-inline-card">' +
             '<div class="rd-detail-inline-header">' +
@@ -477,22 +468,6 @@
                 '</div>' +
             '</div>' +
             '<div id="detailBody" class="rd-detail-body">' +
-                '<div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:8px;">' +
-                    '<span class="rd-badge ' + getStatusBadgeClass(inc['Estatus']) + '">' + escapeHtml(inc['Estatus'] || '-') + '</span>' +
-                    '<span class="rd-badge ' + getPriorityBadgeClass(inc['Prioridad'], inc['Urgencia']) + '">' + escapeHtml(inc['Prioridad'] || inc['Urgencia'] || '-') + '</span>' +
-                    (inc['Despliegue'] ? '<span class="rd-badge rd-badge-media">' + escapeHtml(inc['Despliegue']) + '</span>' : '') +
-                '</div>' +
-                '<div style="font-size:14px; font-weight:600; margin-bottom:8px;">' + escapeHtml(inc['Descripción'] || '') + '</div>' +
-                projHtml +
-                '<div class="rd-meta-grid">' +
-                    '<div><span class="rd-meta-label">Grupo asignado</span><span class="rd-meta-val">' + escapeHtml(inc['Grupo asignado'] || '-') + '</span></div>' +
-                    '<div><span class="rd-meta-label">Grupo resolutor</span><span class="rd-meta-val">' + escapeHtml(inc['Grupo Resolutor'] || '-') + '</span></div>' +
-                    '<div><span class="rd-meta-label">Responsable / Peticionario</span><span class="rd-meta-val">' + escapeHtml(inc['Grupo Remitente'] || '-') + '</span></div>' +
-                    '<div><span class="rd-meta-label">Impacto / Sistema</span><span class="rd-meta-val">' + escapeHtml(inc['Impacto'] || inc['producto'] || '-') + '</span></div>' +
-                    '<div><span class="rd-meta-label">Fecha envío</span><span class="rd-meta-val">' + escapeHtml(inc['Fecha de envío'] || '-') + '</span></div>' +
-                    '<div><span class="rd-meta-label">Última resolución</span><span class="rd-meta-val">' + escapeHtml(inc['Fecha de última resolución'] || '-') + '</span></div>' +
-                '</div>' +
-                (inc['detalleSolucion'] ? '<div style="font-size:12px; background:#F7F5F0; padding:10px; border-radius:8px; margin-bottom:10px;"><strong>Solución registrada:</strong> ' + escapeHtml(inc['detalleSolucion']) + '</div>' : '') +
                 renderIaSection(id, iaData, isLoadingIa) +
             '</div>' +
         '</div>';
