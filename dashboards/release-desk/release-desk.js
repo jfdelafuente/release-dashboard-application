@@ -618,8 +618,7 @@
             var proyectoCell = proj
                 ? '<div class="rd-cell-clamp">' +
                   (proj.despliegue ? '<span class="rd-badge ' + despliegueBadgeClass + '" style="margin-right:4px;">' + escapeHtml(proj.despliegue) + '</span>' : '') +
-                  '<span class="rd-badge rd-badge-jira">' + escapeHtml(proj.code) + '</span>' +
-                  (proj.summary ? ' <span style="font-size:11.5px;">' + escapeHtml(proj.summary) + '</span>' : '') + '</div>'
+                  '<span class="rd-badge rd-badge-jira">' + escapeHtml(proj.code) + '</span></div>'
                 : '<span style="color:#9CA3AF;">-</span>';
             var acciones = (iaData && !iaData._error && (iaData.siguienteAccion || iaData.siguiente_accion || iaData.solucion))
                 || inc['detalleSolucion']
