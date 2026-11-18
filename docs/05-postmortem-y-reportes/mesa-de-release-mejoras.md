@@ -106,9 +106,22 @@ Lista priorizada de evolutivos para la consola **[Mesa de Release](/05-postmorte
 
 ### M10 · Notas rápidas de seguimiento de Mesa por incidencia
 - **Situación actual:** Los acuerdos verbales del comité (bloqueos, escalados, responsables puntuales) no tienen un campo propio si no se reflejan aún en Remedy.
-- **Propuesta:** Ampliar `data/release_desk_overrides.json` para guardar una nota breve de seguimiento por ticket (editable desde el detalle o la fila), mostrar un indicador visual en la tabla cuando exista nota e incluirla en la exportación CSV (`M4`).
-- **Componentes afectados:** backend API (`overrides`), `dashboards/release-desk/index.html`, `dashboards/release-desk/release-desk.js`.
-- **Criterio de aceptación:** Las notas persisten entre recargas y sincronizaciones de MonTMC sin alterar los datos crudos de Remedy.
+- **Propuesta:** Ampliar `data/release_desk_overrides.json` para guardar notas breves de seguimiento por ticket sin alterar los datos crudos de MonTMC, reflejándolas en la tabla, en la exportación CSV (`M4`) y en los briefings de Teams (`M12`).
+- **Opciones de implementación:**
+  - **Opción A · Nota única en el desplegable (MVP):**
+    - Añadir `nota_mesa` (texto breve + `updated_at`) en `data/release_desk_overrides.json` junto a `fecha_prevista`.
+    - Caja de texto editable dentro del panel desplegable de la incidencia con botón `Guardar nota` / `Limpiar`.
+    - Mostrar un badge discreto `📝 Nota` en la columna `Acciones` (con el texto completo como tooltip) e incluir la columna `Nota Mesa` en el CSV y en los briefings.
+  - **Opción B · Nota + etiqueta de situación de Mesa e edición inline:**
+    - Añadir además un selector rápido de etiqueta (`En seguimiento`, `Bloqueada`, `Escalada`, `Pendiente validación`, `Paso a PRO`) con badge de color en la tabla.
+    - Permitir editar la nota tanto desde el desplegable como inline en la fila (patrón `+ Nota` análogo al `+ Fecha` de `M8`).
+    - Permitir filtrar en barra superior por etiquetas críticas (ej. `Bloqueada` / `Escalada`).
+  - **Opción C · Bitácora cronológica de acuerdos por comité:**
+    - Persistir un historial `notas_historial: [{ fecha, texto }]` en `data/release_desk_overrides.json` en lugar de sobrescribir la nota anterior.
+    - Mostrar la última entrada en la tabla, CSV y briefing, y el histórico completo ordenado por fecha dentro del desplegable de detalle.
+- **Recomendación:** **Opción A** para entrega inmediata reutilizando `/api/release-desk/overrides`, o **Opción B** si se desea filtrar rápidamente tickets `Bloqueados` / `Escalados` durante el comité.
+- **Componentes afectados:** backend API (`overrides`), `dashboards/release-desk/index.html`, `dashboards/release-desk/release-desk.js`, `converters/tests/unit/test_release_desk.py`.
+- **Criterio de aceptación:** Las notas persisten entre recargas y sincronizaciones de MonTMC sin alterar los datos crudos de Remedy, y quedan visibles en tabla, CSV y briefings.
 
 ---
 
