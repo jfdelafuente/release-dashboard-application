@@ -192,6 +192,15 @@
             font-size: 13px;
             font-weight: 600;
         }
+        .rd-card-footer {
+            padding: 10px 16px;
+            border-top: 1px solid var(--border-subtle);
+            background: #FAF8F5;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 10px;
+        }
         .rd-table-wrap {
             overflow-x: auto;
             max-height: 80vh;
@@ -521,10 +530,7 @@
             <div class="rd-card">
                 <div class="rd-card-header">
                     <span>Incidencias en seguimiento (<span id="visibleCount">0</span>)</span>
-                    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
-                        <span id="lastSyncInfo" class="rd-subtitle"></span>
-                        <button id="btnExportCsv" class="rd-btn" title="Exportar incidencias visibles a CSV para Excel">📥 Exportar tabla</button>
-                    </div>
+                    <span id="lastSyncInfo" class="rd-subtitle"></span>
                 </div>
                 <div class="rd-table-wrap">
                     <table class="rd-table">
@@ -546,6 +552,9 @@
                         </thead>
                         <tbody id="incidentsTableBody"></tbody>
                     </table>
+                </div>
+                <div class="rd-card-footer">
+                    <button id="btnExportCsv" class="rd-btn" title="Exportar incidencias visibles a CSV para Excel">📥 Exportar tabla</button>
                 </div>
             </div>
 
