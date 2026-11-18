@@ -331,6 +331,8 @@
         .rd-badge-code { background: #F5F3EF; color: #141311; border: 1px solid #E2DDD5; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 11px; }
         .rd-badge-fecha { background: #DCFCE7; color: #166534; border: 1px solid #BBF7D0; }
         .rd-badge-fecha-acordada { background: #FEF3C7; color: #92400E; border: 1px solid #FDE68A; cursor: pointer; }
+        .rd-badge-fecha-vencida { background: #FEE2E2; color: #991B1B; border: 1px solid #FECACA; cursor: pointer; }
+        .rd-badge-fecha-proxima { background: #FFEDD5; color: #9A3412; border: 1px solid #FDBA74; cursor: pointer; }
         .rd-badge-despliegue-completo { background: #DCFCE7; color: #166534; border: 1px solid #BBF7D0; }
         .rd-badge-despliegue-piloto { background: #FEF3C7; color: #92400E; border: 1px solid #FDE68A; }
         .rd-badge-despliegue-oculto { background: #F3E8FF; color: #6B21A8; border: 1px solid #E9D5FF; }
@@ -500,6 +502,10 @@
             <button type="button" class="rd-kpi-card" data-kpi-filter="resolved" aria-pressed="false" title="Filtrar por Resueltas pendientes de cierre">
                 <div class="rd-kpi-val" id="kpiResolvedPendingClose">0</div>
                 <div class="rd-kpi-label">Resueltas pendientes de cierre</div>
+            </button>
+            <button type="button" class="rd-kpi-card" data-kpi-filter="overdue_or_missing" aria-pressed="false" title="Filtrar incidencias abiertas con Fecha Prevista vencida o sin fecha asignada">
+                <div class="rd-kpi-val" id="kpiOverdueMissing">0</div>
+                <div class="rd-kpi-label">Vencidas / Sin fecha</div>
             </button>
         </section>
 

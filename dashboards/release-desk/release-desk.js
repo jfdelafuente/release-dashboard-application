@@ -126,13 +126,37 @@
         return p.includes('p1') || p.includes('p2') || p.includes('crít') || p.includes('crit') || p.includes('alt');
     }
 
-    function matchesKpiFilter(inc, kpiFilter) {
+    function getFechaPrevistaStatus(inc, overrides, nowDate) {
+        if (!inc) return 'missing';
+        var st = String(inc['Estatus'] || '').toLowerCase();
+        if (st.includes('resuelt')) return 'resolved';
+        var id = inc['ID de incidencia'] || '';
+        var agreedFecha = (overrides && overrides[id] && overrides[id].fecha_prevista) ? String(overrides[id].fecha_prevista).trim() : '';
+        if (!agreedFecha) return 'missing';
+        var today = nowDate ? new Date(nowDate) : new Date();
+        var todayYmd = today.getFullYear() + '-' +
+            String(today.getMonth() + 1).padStart(2, '0') + '-' +
+            String(today.getDate()).padStart(2, '0');
+        var tomorrow = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
+        var tomorrowYmd = tomorrow.getFullYear() + '-' +
+            String(tomorrow.getMonth() + 1).padStart(2, '0') + '-' +
+            String(tomorrow.getDate()).padStart(2, '0');
+        if (agreedFecha < todayYmd) return 'overdue';
+        if (agreedFecha <= tomorrowYmd) return 'due_soon';
+        return 'ok';
+    }
+
+    function matchesKpiFilter(inc, kpiFilter, overrides, nowDate) {
         if (!kpiFilter || kpiFilter === 'all') return true;
         if (!inc) return false;
         var st = String(inc['Estatus'] || '').toLowerCase();
         if (kpiFilter === 'crit_high') return isCriticalOrHighPriority(inc);
         if (kpiFilter === 'in_progress') return !st.includes('resuelt');
         if (kpiFilter === 'resolved') return st.includes('resuelt');
+        if (kpiFilter === 'overdue_or_missing') {
+            var fst = getFechaPrevistaStatus(inc, overrides, nowDate);
+            return fst === 'overdue' || fst === 'missing';
+        }
         return true;
     }
 
@@ -435,7 +459,8 @@
             buildExportCsv: buildExportCsv,
             sortIncidents: sortIncidents,
             buildMesaBriefing: buildMesaBriefing,
-            buildMesaBriefingBySystem: buildMesaBriefingBySystem
+            buildMesaBriefingBySystem: buildMesaBriefingBySystem,
+            getFechaPrevistaStatus: getFechaPrevistaStatus
         };
     }
 
@@ -517,7 +542,8 @@
             }
             state.overrides = data.overrides || {};
             state.editingFechaId = null;
-            renderTable();
+            updateKPIs();
+            applyFilters();
             notify(
                 fechaPrevista
                     ? 'Fecha prevista guardada para ' + incidentId + ' (' + fechaPrevista + ')'
@@ -665,6 +691,7 @@
         var critHigh = 0;
         var inProgress = 0;
         var resolvedPendingClose = 0;
+        var overdueOrMissing = 0;
 
         state.activeIncidents.forEach(function (inc) {
             var p = String(inc['Prioridad'] || inc['Urgencia'] || '').toLowerCase();
@@ -676,6 +703,10 @@
                 resolvedPendingClose++;
             } else {
                 inProgress++;
+                var fst = getFechaPrevistaStatus(inc, state.overrides);
+                if (fst === 'overdue' || fst === 'missing') {
+                    overdueOrMissing++;
+                }
             }
         });
 
@@ -683,6 +714,8 @@
         document.getElementById('kpiCriticalHigh').textContent = critHigh;
         document.getElementById('kpiInProgress').textContent = inProgress;
         document.getElementById('kpiResolvedPendingClose').textContent = resolvedPendingClose;
+        var kpiOmEl = document.getElementById('kpiOverdueMissing');
+        if (kpiOmEl) kpiOmEl.textContent = overdueOrMissing;
     }
 
     function updateKpiActiveUI() {
@@ -707,7 +740,7 @@
         }
 
         state.filteredIncidents = state.activeIncidents.filter(function (inc) {
-            if (state.activeKpiFilter && !matchesKpiFilter(inc, state.activeKpiFilter)) return false;
+            if (state.activeKpiFilter && !matchesKpiFilter(inc, state.activeKpiFilter, state.overrides)) return false;
             if (status && inc['Estatus'] !== status) return false;
             if (group && inc['Grupo asignado'] !== group && inc['Grupo Resolutor'] !== group) return false;
             if (prio) {
@@ -823,7 +856,19 @@
                         (agreedFecha ? '<button type="button" class="rd-fecha-add-btn" data-clear-fecha="' + escapeHtml(id) + '" title="Limpiar fecha">✕</button>' : '') +
                     '</div>';
             } else if (agreedFecha) {
-                fechaPrevistaCell = '<button type="button" class="rd-badge rd-badge-fecha-acordada" data-edit-fecha="' + escapeHtml(id) + '" title="Fecha prevista acordada (clic para editar)">' + escapeHtml(agreedFecha) + '</button>';
+                var fst = getFechaPrevistaStatus(inc, state.overrides);
+                var fechaClass = 'rd-badge-fecha-acordada';
+                var fechaTitle = 'Fecha prevista acordada (clic para editar)';
+                var fechaPrefix = '';
+                if (fst === 'overdue') {
+                    fechaClass = 'rd-badge-fecha-vencida';
+                    fechaTitle = 'Fecha prevista vencida (clic para editar)';
+                    fechaPrefix = '⚠ ';
+                } else if (fst === 'due_soon') {
+                    fechaClass = 'rd-badge-fecha-proxima';
+                    fechaTitle = 'Vence hoy o mañana (clic para editar)';
+                }
+                fechaPrevistaCell = '<button type="button" class="rd-badge ' + fechaClass + '" data-edit-fecha="' + escapeHtml(id) + '" title="' + fechaTitle + '">' + fechaPrefix + escapeHtml(agreedFecha) + '</button>';
             } else {
                 fechaPrevistaCell = '<button type="button" class="rd-fecha-add-btn" data-edit-fecha="' + escapeHtml(id) + '" title="Asignar fecha prevista acordada">+ Fecha</button>';
             }

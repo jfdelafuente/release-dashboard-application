@@ -358,3 +358,46 @@ def test_release_desk_js_build_mesa_briefing_by_system():
     else:
         js = RELEASE_DESK_JS.read_text(encoding="utf-8")
         assert "buildMesaBriefingBySystem" in js
+
+
+def test_release_desk_js_fecha_prevista_status():
+    if shutil.which("node") is not None:
+        script = (
+            f"const rd = require({json.dumps(str(RELEASE_DESK_JS))});\n"
+            "const inc1 = { 'ID de incidencia': 'INC1', 'Estatus': 'En Curso' };\n"
+            "const inc2 = { 'ID de incidencia': 'INC2', 'Estatus': 'Asignado' };\n"
+            "const inc3 = { 'ID de incidencia': 'INC3', 'Estatus': 'Asignado' };\n"
+            "const inc4 = { 'ID de incidencia': 'INC4', 'Estatus': 'Asignado' };\n"
+            "const inc5 = { 'ID de incidencia': 'INC5', 'Estatus': 'Resuelto' };\n"
+            "const overrides = {\n"
+            "  INC1: { fecha_prevista: '2026-11-10' },\n"
+            "  INC2: { fecha_prevista: '2026-11-19' },\n"
+            "  INC3: { fecha_prevista: '2026-11-25' }\n"
+            "};\n"
+            "const now = '2026-11-18T12:00:00Z';\n"
+            "console.log(JSON.stringify({\n"
+            "  s1: rd.getFechaPrevistaStatus(inc1, overrides, now),\n"
+            "  s2: rd.getFechaPrevistaStatus(inc2, overrides, now),\n"
+            "  s3: rd.getFechaPrevistaStatus(inc3, overrides, now),\n"
+            "  s4: rd.getFechaPrevistaStatus(inc4, overrides, now),\n"
+            "  s5: rd.getFechaPrevistaStatus(inc5, overrides, now),\n"
+            "  f1: rd.matchesKpiFilter(inc1, 'overdue_or_missing', overrides, now),\n"
+            "  f3: rd.matchesKpiFilter(inc3, 'overdue_or_missing', overrides, now),\n"
+            "  f4: rd.matchesKpiFilter(inc4, 'overdue_or_missing', overrides, now)\n"
+            "}));\n"
+        )
+        proc = subprocess.run(["node", "-e", script], capture_output=True, text=True, check=True)
+        out = json.loads(proc.stdout)
+        assert out == {
+            "s1": "overdue",
+            "s2": "due_soon",
+            "s3": "ok",
+            "s4": "missing",
+            "s5": "resolved",
+            "f1": True,
+            "f3": False,
+            "f4": True,
+        }
+    else:
+        js = RELEASE_DESK_JS.read_text(encoding="utf-8")
+        assert "getFechaPrevistaStatus" in js
