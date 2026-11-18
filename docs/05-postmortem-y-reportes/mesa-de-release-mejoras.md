@@ -16,6 +16,13 @@ Lista priorizada de evolutivos para la consola **[Mesa de Release](/05-postmorte
 | **M6** | Importación de CSV de proyectos desde la UI | Mantenimiento | Medio | `[ ] Pendiente` |
 | **M7** | Indicador de antigüedad (Aging) en `Fecha Apertura` | Operativa | Medio | `[x] Completada` |
 | **M8** | Edición y persistencia de `Fecha Prevista` acordada | Seguimiento | Alto | `[x] Completada` |
+| **M9** | Semáforo de `Fecha Prevista` vencida / sin compromiso | Seguimiento | Alto | `[ ] Pendiente` |
+| **M10** | Notas rápidas de seguimiento de Mesa por incidencia | Seguimiento | Alto | `[ ] Pendiente` |
+| **M11** | Filtros por `Despliegue` y por `Producto` | UX / Operativa | Medio | `[ ] Pendiente` |
+| **M12** | Botón "Copiar briefing de Mesa" para actas y Teams | Operativa | Alto | `[ ] Pendiente` |
+| **M13** | Indicador de novedades desde la última sincronización | Operativa | Medio | `[ ] Pendiente` |
+| **M14** | Vista agrupada por Proyecto (`PRJ-*`) con semáforo de salud | Seguimiento | Medio | `[ ] Pendiente` |
+| **M15** | Detector de tickets sin movimiento / "ping-pong" entre grupos | Operativa | Medio | `[ ] Pendiente` |
 
 ---
 
@@ -86,3 +93,59 @@ Lista priorizada de evolutivos para la consola **[Mesa de Release](/05-postmorte
 - **Propuesta:** Permitir registrar una fecha prevista acordada en la Mesa (inline o dentro del desplegable) guardándola en un fichero auxiliar por release (p. ej. `data/release_desk_overrides.json`), sin alterar los datos crudos de MonTMC.
 - **Componentes afectados:** backend API, `dashboards/release-desk/release-desk.js`.
 - **Criterio de aceptación:** Al guardar una fecha prevista en un ticket abierto, persiste entre recargas y cuando el ticket pasa a `Resuelta` prevalece la `Fecha de última resolución` real.
+
+---
+
+### M9 · Semáforo de `Fecha Prevista` vencida / sin compromiso
+- **Situación actual:** La `Fecha Prevista` acordada (`M8`) se muestra siempre con el mismo estilo visual, sin alertar si el compromiso ya ha vencido o si está próximo a vencer.
+- **Propuesta:** Resaltar en rojo las incidencias no resueltas cuya `Fecha Prevista` sea anterior a hoy, en ámbar las que vencen hoy o mañana, y añadir un filtro rápido (o KPI) para listar tickets con compromiso vencido o sin fecha asignada.
+- **Componentes afectados:** `dashboards/release-desk/index.html`, `dashboards/release-desk/release-desk.js`, `converters/tests/unit/test_release_desk.py`.
+- **Criterio de aceptación:** En el comité diario se identifican a simple vista las fechas incumplidas y los tickets abiertos sin fecha comprometida.
+
+---
+
+### M10 · Notas rápidas de seguimiento de Mesa por incidencia
+- **Situación actual:** Los acuerdos verbales del comité (bloqueos, escalados, responsables puntuales) no tienen un campo propio si no se reflejan aún en Remedy.
+- **Propuesta:** Ampliar `data/release_desk_overrides.json` para guardar una nota breve de seguimiento por ticket (editable desde el detalle o la fila), mostrar un indicador visual en la tabla cuando exista nota e incluirla en la exportación CSV (`M4`).
+- **Componentes afectados:** backend API (`overrides`), `dashboards/release-desk/index.html`, `dashboards/release-desk/release-desk.js`.
+- **Criterio de aceptación:** Las notas persisten entre recargas y sincronizaciones de MonTMC sin alterar los datos crudos de Remedy.
+
+---
+
+### M11 · Filtros por `Despliegue` y por `Producto`
+- **Situación actual:** Se puede filtrar por proyecto (`PRJ-*`), estado, prioridad y grupo, pero no directamente por fase de `Despliegue` (`Completo`, `Piloto`, `Modo Oculto`, `PaP Técnico`) ni por `Producto` (`AURORA`, etc.).
+- **Propuesta:** Añadir selectores de `Despliegue` y `Producto` en la barra de filtros (`.rd-filters`) poblados dinámicamente con los valores presentes en la release activa.
+- **Componentes afectados:** `dashboards/release-desk/index.html`, `dashboards/release-desk/release-desk.js`.
+- **Criterio de aceptación:** Permite priorizar en segundos la revisión de incidencias en `Completo` o `Piloto`, o acotar por un producto concreto.
+
+---
+
+### M12 · Botón "Copiar briefing de Mesa" para actas y Teams
+- **Situación actual:** Tras el comité hay que redactar manualmente el resumen de seguimiento o copiar ticket a ticket.
+- **Propuesta:** Añadir un botón en la consola que genere en el portapapeles un resumen en texto/Markdown de la vista filtrada (agrupado por prioridad o proyecto, destacando P1/P2, compromisos vencidos y próximas fechas previstas).
+- **Componentes afectados:** `dashboards/release-desk/index.html`, `dashboards/release-desk/release-desk.js`.
+- **Criterio de aceptación:** Con un clic se obtiene un resumen estructurado listo para pegar en Teams o correo corporativo respetando los filtros activos.
+
+---
+
+### M13 · Indicador de novedades desde la última sincronización
+- **Situación actual:** Tras pulsar `Sincronizar MonTMC`, la tabla se refresca completa sin distinguir qué tickets son nuevos o han cambiado de estado respecto a la foto anterior.
+- **Propuesta:** Guardar en respuesta de `/api/postmortem/sync` (o metadatos locales) los IDs nuevos y los que cambiaron de estado en la última sincronización y mostrar un badge discreto (`Nuevo` / `Actualizada`) durante la sesión.
+- **Componentes afectados:** `converters/cli/sync_montmc_postmortem.py`, `dashboards/release-desk/index.html`, `dashboards/release-desk/release-desk.js`.
+- **Criterio de aceptación:** El Release Manager identifica inmediatamente qué tickets requieren atención nueva tras sincronizar con MonTMC.
+
+---
+
+### M14 · Vista agrupada por Proyecto (`PRJ-*`) con semáforo de salud
+- **Situación actual:** La vista única es plana por incidencia, dificultando evaluar de golpe el estado agregado de cada `PRJ-*` de la release.
+- **Propuesta:** Añadir un conmutador `Tabla / Por proyecto` que agrupe las incidencias activas por `PRJ-*`, mostrando `Despliegue`, resumen, conteo por prioridad (`P1/P2/P3`) y si existen compromisos vencidos.
+- **Componentes afectados:** `dashboards/release-desk/index.html`, `dashboards/release-desk/release-desk.js`.
+- **Criterio de aceptación:** Al cambiar a vista por proyecto se visualiza el riesgo agregado de cada iniciativa y se puede desplegar o filtrar sus incidencias.
+
+---
+
+### M15 · Detector de tickets sin movimiento / "ping-pong" entre grupos
+- **Situación actual:** El indicador de `Aging` (`M7`) mide la antigüedad total desde apertura, pero no detecta si un ticket lleva días sin actividad reciente en worklogs o si ha rebotado entre varios grupos.
+- **Propuesta:** Usar `fechaUltimaModificacion` (y opcionalmente los worklogs/eventos de `remedyG` ya cacheados) para marcar tickets abiertos sin movimiento reciente (p. ej. `> 48h`) o con múltiples reasignaciones de grupo.
+- **Componentes afectados:** `dashboards/release-desk/index.html`, `dashboards/release-desk/release-desk.js`.
+- **Criterio de aceptación:** Los tickets estancados o en "ping-pong" destacan en la tabla para que el Release Manager desbloquee su asignación.
