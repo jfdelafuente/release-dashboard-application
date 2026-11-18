@@ -136,6 +136,71 @@
         return true;
     }
 
+    function escapeCsvCell(val) {
+        var str = val == null ? '' : String(val);
+        str = str.replace(/\r?\n/g, ' ').replace(/"/g, '""');
+        return '"' + str + '"';
+    }
+
+    function buildExportCsv(incidents, iaCache, projectsCatalog, releaseName, overrides) {
+        var headers = [
+            'Código Incidencia',
+            'Fecha Apertura',
+            'Descripción problema',
+            'Prioridad / Urg.',
+            'Sistema',
+            'JIRA',
+            'PROYECTO',
+            'Acciones',
+            'Status',
+            'Fecha Prevista',
+            'Motivo Estado Resuelto',
+            'Grupo Peticionario'
+        ];
+        var lines = [headers.map(escapeCsvCell).join(';')];
+        (incidents || []).forEach(function (inc) {
+            var id = inc['ID de incidencia'] || '-';
+            var iaData = iaCache ? (typeof iaCache.get === 'function' ? iaCache.get(id) : iaCache[id]) : null;
+            var descProblema = (iaData && !iaData._error && iaData.problema) ? iaData.problema : (inc['Descripción'] || '-');
+            var prioridadUrg = inc['Prioridad'] || inc['Urgencia'] || '-';
+            var sistema = inc['producto'] || inc['Grupo Resolutor'] || inc['Grupo asignado'] || '-';
+            var jiraBug = inc['JIRA'] || inc['Jira'] || inc['jira'] || '';
+            var proj = resolveProjectInfo(inc, projectsCatalog, releaseName);
+            var proyectoText = proj
+                ? (proj.code + (proj.despliegue ? ' [' + proj.despliegue + ']' : '') + (proj.summary ? ' — ' + proj.summary : ''))
+                : '-';
+            var acciones = (iaData && !iaData._error && (iaData.siguienteAccion || iaData.siguiente_accion || iaData.solucion))
+                || inc['detalleSolucion']
+                || '-';
+            var estatusLower = String(inc['Estatus'] || '').toLowerCase();
+            var isResolved = estatusLower.includes('resuelt');
+            var overrideEntry = overrides && overrides[id];
+            var agreedFecha = (overrideEntry && overrideEntry.fecha_prevista) ? overrideEntry.fecha_prevista : '';
+            var fechaPrevista = isResolved
+                ? (inc['Fecha de última resolución'] || '')
+                : agreedFecha;
+            var motivoResuelto = inc['Motivo de estado'] || inc['MotivoEstado_Anterior'] || '-';
+            var peticionario = inc['Grupo Remitente'] || '-';
+
+            var row = [
+                id,
+                inc['Fecha de envío'] || '-',
+                descProblema,
+                prioridadUrg,
+                sistema,
+                jiraBug,
+                proyectoText,
+                acciones,
+                inc['Estatus'] || '-',
+                fechaPrevista,
+                motivoResuelto,
+                peticionario
+            ];
+            lines.push(row.map(escapeCsvCell).join(';'));
+        });
+        return '\uFEFF' + lines.join('\r\n');
+    }
+
     if (typeof module !== 'undefined' && module.exports) {
         module.exports = {
             isClosedStatus: isClosedStatus,
@@ -145,7 +210,8 @@
             buildFollowupText: buildFollowupText,
             computeOpenAgeDays: computeOpenAgeDays,
             isIaCacheStale: isIaCacheStale,
-            matchesKpiFilter: matchesKpiFilter
+            matchesKpiFilter: matchesKpiFilter,
+            buildExportCsv: buildExportCsv
         };
     }
 
@@ -918,6 +984,34 @@
                 applyFilters();
             });
         });
+
+        var btnExportCsv = document.getElementById('btnExportCsv');
+        if (btnExportCsv) {
+            btnExportCsv.addEventListener('click', function () {
+                if (!state.filteredIncidents || state.filteredIncidents.length === 0) {
+                    notify('No hay incidencias visibles para exportar.', 'warning');
+                    return;
+                }
+                var csvContent = buildExportCsv(
+                    state.filteredIncidents,
+                    state.iaCache,
+                    state.projectsCatalog,
+                    state.currentRelease,
+                    state.overrides
+                );
+                var blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                var url = URL.createObjectURL(blob);
+                var a = document.createElement('a');
+                var safeRel = (state.currentRelease || 'release').replace(/[^a-zA-Z0-9_-]/g, '_');
+                a.href = url;
+                a.download = 'mesa-release-' + safeRel + '.csv';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+                notify('Exportadas ' + state.filteredIncidents.length + ' incidencias a CSV.', 'success');
+            });
+        }
 
         loadProjectsCatalog().then(function () {
             loadRelease(getUrlReleaseParam());

@@ -11,7 +11,7 @@ Lista priorizada de evolutivos para la consola **[Mesa de Release](/05-postmorte
 | **M1** | Precarga pasiva de Resumen IA ya cacheado | Datos / Rendimiento | Alto | `[x] Completada` |
 | **M2** | Extracción automática del bug de `JIRA` | Datos | Alto | `[ ] Pendiente` |
 | **M3** | KPIs clicables como filtros rápidos | UX / Operativa | Medio | `[x] Completada` |
-| **M4** | Exportación de la vista filtrada (CSV / Excel) | Operativa | Alto | `[ ] Pendiente` |
+| **M4** | Exportación de la vista filtrada (CSV / Excel) | Operativa | Alto | `[x] Completada` |
 | **M5** | Ordenación por cabeceras de columna | UX / Operativa | Medio | `[ ] Pendiente` |
 | **M6** | Importación de CSV de proyectos desde la UI | Mantenimiento | Medio | `[ ] Pendiente` |
 | **M7** | Indicador de antigüedad (Aging) en `Fecha Apertura` | Operativa | Medio | `[x] Completada` |

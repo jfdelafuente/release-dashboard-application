@@ -30,6 +30,7 @@ def test_release_desk_html_has_required_controls():
         "releaseSelect",
         "btnSyncPostmortem",
         "btnEmptySync",
+        "btnExportCsv",
         "filterSearch",
         "filterStatus",
         "filterGroup",
@@ -240,3 +241,36 @@ def test_release_desk_js_matches_kpi_filter():
     else:
         js = RELEASE_DESK_JS.read_text(encoding="utf-8")
         assert "matchesKpiFilter" in js
+
+
+def test_release_desk_js_build_export_csv():
+    if shutil.which("node") is not None:
+        script = (
+            f"const rd = require({json.dumps(str(RELEASE_DESK_JS))});\n"
+            "const incidents = [\n"
+            "  {\n"
+            "    'ID de incidencia': 'INC000001',\n"
+            "    'Fecha de envío': '2026-11-10 09:00',\n"
+            "    'Descripción': 'Error \"crítico\" en\\nlínea',\n"
+            "    'Prioridad': 'Alta',\n"
+            "    'producto': 'PORTAL',\n"
+            "    'JIRA': 'JIRA-123',\n"
+            "    'Estatus': 'En Curso',\n"
+            "    'Grupo Remitente': 'N1 Soporte',\n"
+            "    'Motivo de estado': ''\n"
+            "  }\n"
+            "];\n"
+            "const iaCache = new Map([['INC000001', { problema: 'Resumen IA problema', siguienteAccion: 'Reiniciar servicio' }]]);\n"
+            "const overrides = { 'INC000001': { fecha_prevista: '2026-11-25' } };\n"
+            "const csv = rd.buildExportCsv(incidents, iaCache, {}, '2026R11', overrides);\n"
+            "console.log(JSON.stringify({ hasBom: csv.startsWith('\\uFEFF'), lines: csv.slice(1).split('\\r\\n') }));\n"
+        )
+        proc = subprocess.run(["node", "-e", script], capture_output=True, text=True, check=True)
+        out = json.loads(proc.stdout)
+        assert out["hasBom"] is True
+        assert len(out["lines"]) == 2
+        assert out["lines"][0].startswith('"Código Incidencia";"Fecha Apertura";"Descripción problema"')
+        assert '"INC000001";"2026-11-10 09:00";"Resumen IA problema";"Alta";"PORTAL";"JIRA-123";"-";"Reiniciar servicio";"En Curso";"2026-11-25";"-";"N1 Soporte"' == out["lines"][1]
+    else:
+        js = RELEASE_DESK_JS.read_text(encoding="utf-8")
+        assert "buildExportCsv" in js

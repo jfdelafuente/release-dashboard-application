@@ -499,7 +499,10 @@
             <div class="rd-card">
                 <div class="rd-card-header">
                     <span>Incidencias en seguimiento (<span id="visibleCount">0</span>)</span>
-                    <span id="lastSyncInfo" class="rd-subtitle"></span>
+                    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+                        <span id="lastSyncInfo" class="rd-subtitle"></span>
+                        <button id="btnExportCsv" class="rd-btn" title="Exportar incidencias visibles a CSV para Excel">📥 Exportar tabla</button>
+                    </div>
                 </div>
                 <div class="rd-table-wrap">
                     <table class="rd-table">
