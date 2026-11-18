@@ -65,6 +65,7 @@ def test_release_desk_js_uses_postmortem_and_resumen_ia_only():
     assert "Problema Detectado" in js
     assert "rd-detail-row" in js
     assert "btnCopyFollowup" in js
+    assert "/api/release-desk/overrides" in js
     assert "high_priority_notifications.json" not in js
     assert "-massive.json" not in js
 
@@ -130,3 +131,25 @@ def test_release_desk_js_excludes_only_closed_status():
         assert "String(status).trim().toLowerCase() === 'cerrado'" in js
         assert "!isClosedStatus(rec['Estatus'])" in js
         assert "buildFollowupText" in js
+
+
+def test_release_desk_overrides_persist_and_clear(tmp_path: Path):
+    import sys
+    if str(PROJECT_ROOT) not in sys.path:
+        sys.path.insert(0, str(PROJECT_ROOT))
+    from converters.src.release_desk_overrides import (
+        get_overrides_for_release,
+        set_fecha_prevista_override,
+    )
+
+    res = set_fecha_prevista_override(tmp_path, "2026R9", "INC000004140329", "2026-11-22")
+    assert res["success"] is True
+    assert res["overrides"]["INC000004140329"]["fecha_prevista"] == "2026-11-22"
+
+    set_fecha_prevista_override(tmp_path, "2026R11", "INC000004999999", "2026-12-01")
+    assert get_overrides_for_release(tmp_path, "2026R9")["INC000004140329"]["fecha_prevista"] == "2026-11-22"
+    assert get_overrides_for_release(tmp_path, "2026R11")["INC000004999999"]["fecha_prevista"] == "2026-12-01"
+
+    cleared = set_fecha_prevista_override(tmp_path, "2026R9", "INC000004140329", "")
+    assert "INC000004140329" not in cleared["overrides"]
+    assert "INC000004999999" in get_overrides_for_release(tmp_path, "2026R11")

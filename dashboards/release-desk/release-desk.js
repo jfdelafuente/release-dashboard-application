@@ -106,8 +106,56 @@
         iaCache: new Map(),
         iaInFlight: new Set(),
         metadata: {},
-        projectsCatalog: {}
+        projectsCatalog: {},
+        overrides: {},
+        editingFechaId: null
     };
+
+    async function loadReleaseOverrides(releaseName) {
+        state.overrides = {};
+        if (!releaseName) return;
+        try {
+            var resp = await fetch('/api/release-desk/overrides?release=' + encodeURIComponent(releaseName) + '&t=' + Date.now());
+            if (resp.ok) {
+                var json = await resp.json();
+                if (json && json.overrides && typeof json.overrides === 'object') {
+                    state.overrides = json.overrides;
+                }
+            }
+        } catch (_) {
+            state.overrides = {};
+        }
+    }
+
+    async function saveFechaPrevistaOverride(incidentId, fechaPrevista) {
+        if (!state.currentRelease || !incidentId) return;
+        try {
+            var resp = await fetch('/api/release-desk/overrides', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    release_name: state.currentRelease,
+                    incident_id: incidentId,
+                    fecha_prevista: fechaPrevista || ''
+                })
+            });
+            var data = await resp.json();
+            if (!resp.ok || !data.success) {
+                throw new Error(data.error || ('HTTP ' + resp.status));
+            }
+            state.overrides = data.overrides || {};
+            state.editingFechaId = null;
+            renderTable();
+            notify(
+                fechaPrevista
+                    ? 'Fecha prevista guardada para ' + incidentId + ' (' + fechaPrevista + ')'
+                    : 'Fecha prevista eliminada para ' + incidentId,
+                'success'
+            );
+        } catch (err) {
+            notify('Error guardando fecha prevista: ' + (err.message || err), 'error');
+        }
+    }
 
     async function loadProjectsCatalog() {
         try {
@@ -339,9 +387,12 @@
                 || inc['detalleSolucion']
                 || '-';
             var estatusLower = String(inc['Estatus'] || '').toLowerCase();
-            var fechaPrevista = estatusLower.includes('resuelt')
+            var isResolved = estatusLower.includes('resuelt');
+            var overrideEntry = state.overrides && state.overrides[id];
+            var agreedFecha = (overrideEntry && overrideEntry.fecha_prevista) ? overrideEntry.fecha_prevista : '';
+            var fechaPrevista = isResolved
                 ? (inc['Fecha de última resolución'] || '')
-                : '';
+                : agreedFecha;
             var motivoResuelto = inc['Motivo de estado'] || inc['MotivoEstado_Anterior'] || '-';
             var peticionario = inc['Grupo Remitente'] || '-';
 
@@ -349,15 +400,29 @@
             if (isSelected) rowClasses.push('is-selected');
             if (prioBadgeClass === 'rd-badge-critica') rowClasses.push('rd-row-critica');
             else if (prioBadgeClass === 'rd-badge-alta') rowClasses.push('rd-row-alta');
-            if (estatusLower.includes('resuelt')) rowClasses.push('rd-row-resuelto');
+            if (isResolved) rowClasses.push('rd-row-resuelto');
             var rowClassAttr = rowClasses.length ? ' class="' + rowClasses.join(' ') + '"' : '';
 
             var sistemaCell = sistema !== '-'
                 ? '<span class="rd-badge rd-badge-sistema" title="' + escapeHtml(sistema) + '">' + escapeHtml(sistema) + '</span>'
                 : '<span style="color:#9CA3AF;">-</span>';
-            var fechaPrevistaCell = fechaPrevista
-                ? '<span class="rd-badge rd-badge-fecha">' + escapeHtml(fechaPrevista) + '</span>'
-                : '';
+
+            var fechaPrevistaCell = '';
+            if (isResolved) {
+                fechaPrevistaCell = fechaPrevista
+                    ? '<span class="rd-badge rd-badge-fecha">' + escapeHtml(fechaPrevista) + '</span>'
+                    : '';
+            } else if (state.editingFechaId === id) {
+                fechaPrevistaCell =
+                    '<div style="display:flex; align-items:center; gap:4px;" data-fecha-editor="1">' +
+                        '<input type="date" class="rd-fecha-input" data-fecha-input="' + escapeHtml(id) + '" value="' + escapeHtml(agreedFecha) + '">' +
+                        (agreedFecha ? '<button type="button" class="rd-fecha-add-btn" data-clear-fecha="' + escapeHtml(id) + '" title="Limpiar fecha">✕</button>' : '') +
+                    '</div>';
+            } else if (agreedFecha) {
+                fechaPrevistaCell = '<button type="button" class="rd-badge rd-badge-fecha-acordada" data-edit-fecha="' + escapeHtml(id) + '" title="Fecha prevista acordada (clic para editar)">' + escapeHtml(agreedFecha) + '</button>';
+            } else {
+                fechaPrevistaCell = '<button type="button" class="rd-fecha-add-btn" data-edit-fecha="' + escapeHtml(id) + '" title="Asignar fecha prevista acordada">+ Fecha</button>';
+            }
 
             var rowHtml = '<tr data-inc-id="' + escapeHtml(id) + '"' + rowClassAttr + ' aria-expanded="' + (isSelected ? 'true' : 'false') + '">' +
                 '<td style="white-space:nowrap;"><span class="rd-badge rd-badge-code">' + (isSelected ? '▾ ' : '▸ ') + escapeHtml(id) + '</span></td>' +
@@ -385,6 +450,44 @@
         Array.from(tbody.querySelectorAll('tr[data-inc-id]')).forEach(function (row) {
             row.addEventListener('click', function () {
                 selectIncident(row.getAttribute('data-inc-id'));
+            });
+        });
+
+        Array.from(tbody.querySelectorAll('[data-edit-fecha]')).forEach(function (btn) {
+            btn.addEventListener('click', function (ev) {
+                ev.stopPropagation();
+                state.editingFechaId = btn.getAttribute('data-edit-fecha');
+                renderTable();
+                var inp = tbody.querySelector('[data-fecha-input="' + state.editingFechaId + '"]');
+                if (inp) inp.focus();
+            });
+        });
+
+        Array.from(tbody.querySelectorAll('[data-fecha-editor]')).forEach(function (wrap) {
+            wrap.addEventListener('click', function (ev) { ev.stopPropagation(); });
+        });
+
+        Array.from(tbody.querySelectorAll('[data-fecha-input]')).forEach(function (inp) {
+            var incId = inp.getAttribute('data-fecha-input');
+            inp.addEventListener('change', function () {
+                saveFechaPrevistaOverride(incId, inp.value);
+            });
+            inp.addEventListener('keydown', function (ev) {
+                if (ev.key === 'Escape') {
+                    ev.stopPropagation();
+                    state.editingFechaId = null;
+                    renderTable();
+                } else if (ev.key === 'Enter') {
+                    ev.stopPropagation();
+                    saveFechaPrevistaOverride(incId, inp.value);
+                }
+            });
+        });
+
+        Array.from(tbody.querySelectorAll('[data-clear-fecha]')).forEach(function (btn) {
+            btn.addEventListener('click', function (ev) {
+                ev.stopPropagation();
+                saveFechaPrevistaOverride(btn.getAttribute('data-clear-fecha'), '');
             });
         });
 
@@ -597,6 +700,7 @@
             document.getElementById('lastSyncInfo').textContent = syncLabel;
 
             state.activeIncidents = filterNonClosedIncidents(rawRecords);
+            await loadReleaseOverrides(state.currentRelease);
             updateKPIs();
             populateFilterSelects();
 

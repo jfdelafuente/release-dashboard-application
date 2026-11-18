@@ -57,6 +57,17 @@ except ImportError:
     except ImportError:
         sync_postmortem_release = None
 
+try:
+    from converters.src.release_desk_overrides import (
+        get_overrides_for_release,
+        set_fecha_prevista_override,
+    )
+except ImportError:
+    from release_desk_overrides import (
+        get_overrides_for_release,
+        set_fecha_prevista_override,
+    )
+
 logger = logging.getLogger("fastapi_remedy_router")
 
 router = APIRouter(tags=["Remedy MonTMC Integration"])
@@ -327,3 +338,33 @@ def get_remedy_detail(
             "idRemedy": clean_id,
         },
     )
+
+
+# =============================================================================
+# GET / POST /api/release-desk/overrides
+# =============================================================================
+
+@router.get("/api/release-desk/overrides")
+@router.get("/release-desk/overrides")
+def api_get_release_desk_overrides(
+    release: str = Query(default="", description="Código de release (ej. 2026R9)"),
+):
+    storage_dir = Path(os.environ.get("RELEASE_DASHBOARD_STORAGE_DIR", "").strip() or (_get_project_root() / "data"))
+    overrides = get_overrides_for_release(storage_dir, release)
+    return {"success": True, "release_name": release.strip(), "overrides": overrides}
+
+
+@router.post("/api/release-desk/overrides")
+@router.post("/release-desk/overrides")
+def api_set_release_desk_override(payload: Dict[str, Any] = Body(...)):
+    storage_dir = Path(os.environ.get("RELEASE_DASHBOARD_STORAGE_DIR", "").strip() or (_get_project_root() / "data"))
+    try:
+        result = set_fecha_prevista_override(
+            storage_dir=storage_dir,
+            release_name=str(payload.get("release_name") or ""),
+            incident_id=str(payload.get("incident_id") or ""),
+            fecha_prevista=str(payload.get("fecha_prevista") or ""),
+        )
+        return JSONResponse(status_code=200, content=result)
+    except ValueError as exc:
+        return JSONResponse(status_code=400, content={"success": False, "error": str(exc)})

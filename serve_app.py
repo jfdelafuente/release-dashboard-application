@@ -399,6 +399,8 @@ class CustomHTTPHandler(http.server.SimpleHTTPRequestHandler):
             self.handle_teams_channels_post()
         elif self.path.split('?')[0].rstrip('/') == '/api/teams/send':
             self.handle_teams_send()
+        elif self.path.split('?')[0].rstrip('/') == '/api/release-desk/overrides':
+            self.handle_release_desk_overrides_post()
         else:
             self.send_error(404, "Not Found")
 
@@ -1163,6 +1165,35 @@ class CustomHTTPHandler(http.server.SimpleHTTPRequestHandler):
         except Exception as e:
             self._send_json(500, {"success": False, "error": f"Error interno en sincronización Postmortem: {e}"})
 
+    def handle_release_desk_overrides_get(self):
+        """Maneja GET /api/release-desk/overrides?release=<YYYYRMM>."""
+        from converters.src.release_desk_overrides import get_overrides_for_release
+
+        q_params = urllib.parse.parse_qs(self.path.split('?', 1)[1]) if '?' in self.path else {}
+        release_name = (q_params.get('release', [''])[0] or '').strip()
+        overrides = get_overrides_for_release(STORAGE_DIR, release_name)
+        self._send_json(200, {"success": True, "release_name": release_name, "overrides": overrides})
+
+    def handle_release_desk_overrides_post(self):
+        """Maneja POST /api/release-desk/overrides para guardar Fecha Prevista acordada."""
+        from converters.src.release_desk_overrides import set_fecha_prevista_override
+
+        try:
+            content_length = int(self.headers.get('Content-Length', 0))
+            raw_body = self.rfile.read(content_length) if content_length > 0 else b'{}'
+            payload = json.loads(raw_body.decode('utf-8'))
+            result = set_fecha_prevista_override(
+                storage_dir=STORAGE_DIR,
+                release_name=str(payload.get("release_name") or ""),
+                incident_id=str(payload.get("incident_id") or ""),
+                fecha_prevista=str(payload.get("fecha_prevista") or ""),
+            )
+            self._send_json(200, result)
+        except ValueError as ve:
+            self._send_json(400, {"success": False, "error": str(ve)})
+        except Exception as e:
+            self._send_json(500, {"success": False, "error": f"Error guardando override: {e}"})
+
     def handle_remedy_detail(self, id_remedy):
         """Maneja GET /api/remedy/detail/{idRemedy} con soporte de caché en memoria y disco."""
         clean_id = (id_remedy or "").strip().upper()
@@ -1349,6 +1380,10 @@ class CustomHTTPHandler(http.server.SimpleHTTPRequestHandler):
 
         if self.path.split('?')[0].rstrip('/') == '/api/teams/audit':
             self.handle_teams_audit_get()
+            return
+
+        if self.path.split('?')[0].rstrip('/') == '/api/release-desk/overrides':
+            self.handle_release_desk_overrides_get()
             return
 
         if (

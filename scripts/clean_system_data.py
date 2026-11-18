@@ -57,6 +57,7 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 PROTECTED_FILENAMES = {
     'scheduled_changes_pap.json',
     'projects_catalog.json',
+    'release_desk_overrides.json',
     'agents_catalog.json',
     '.gitkeep',
     '.gitignore',
@@ -217,7 +218,7 @@ def collect_items_to_clean(storage_dir: Path, keep_cache: bool = False) -> Tuple
         files_to_reset.append(teams_audit_file)
 
     # 8. Ficheros protegidos en la raíz de data/
-    for protected_name in ('scheduled_changes_pap.json', 'projects_catalog.json'):
+    for protected_name in ('scheduled_changes_pap.json', 'projects_catalog.json', 'release_desk_overrides.json'):
         protected_file = storage_dir / protected_name
         if protected_file.exists():
             files_protected.append(protected_file)
