@@ -262,12 +262,65 @@
         });
     }
 
-    function buildMesaBriefing(incidents, iaCache, projectsCatalog, releaseName, overrides, nowDate) {
-        var list = Array.isArray(incidents) ? incidents : [];
+    function getBriefingTodayYmd(nowDate) {
         var today = nowDate ? new Date(nowDate) : new Date();
-        var todayYmd = today.getFullYear() + '-' +
+        return today.getFullYear() + '-' +
             String(today.getMonth() + 1).padStart(2, '0') + '-' +
             String(today.getDate()).padStart(2, '0');
+    }
+
+    function formatBriefingIncidentInfo(inc, iaCache, projectsCatalog, releaseName, overrides, todayYmd, includePriority) {
+        var id = inc['ID de incidencia'] || '-';
+        var iaData = iaCache ? (typeof iaCache.get === 'function' ? iaCache.get(id) : iaCache[id]) : null;
+        var descBase = (iaData && !iaData._error && iaData.problema) ? iaData.problema : (inc['Descripción'] || '-');
+        var producto = inc['producto'] ? String(inc['producto']).trim() : '';
+        var desc = (producto ? '[' + producto + '] ' : '') + String(descBase).replace(/\r?\n/g, ' ').trim();
+        var acciones = (iaData && !iaData._error && (iaData.siguienteAccion || iaData.siguiente_accion || iaData.solucion))
+            || inc['detalleSolucion']
+            || '';
+        acciones = String(acciones).replace(/\r?\n/g, ' ').trim();
+
+        var proj = resolveProjectInfo(inc, projectsCatalog, releaseName);
+        var projLabel = proj
+            ? ((proj.despliegue ? '[' + proj.despliegue + '] ' : '') + proj.code + (proj.summary ? ' — ' + proj.summary : ''))
+            : '';
+
+        var estatus = inc['Estatus'] || '-';
+        var isResolved = String(estatus).toLowerCase().includes('resuelt');
+        var agreedFecha = (overrides && overrides[id] && overrides[id].fecha_prevista) ? overrides[id].fecha_prevista : '';
+        var fechaPrevista = isResolved ? (inc['Fecha de última resolución'] || '') : agreedFecha;
+        var isOverdue = !isResolved && agreedFecha && agreedFecha < todayYmd;
+
+        var metaParts = [];
+        if (includePriority) {
+            metaParts.push(inc['Prioridad'] || inc['Urgencia'] || '-');
+        }
+        metaParts.push(estatus);
+        if (!includePriority && inc['Grupo asignado']) {
+            metaParts.push(inc['Grupo asignado']);
+        }
+        if (projLabel) metaParts.push(projLabel);
+        if (fechaPrevista) {
+            metaParts.push((isOverdue ? '⚠️ VENCIDA ' : 'Prev: ') + fechaPrevista);
+        } else if (!isResolved) {
+            metaParts.push('Sin fecha prevista');
+        }
+
+        var line = '- **' + id + '** (' + metaParts.join(' | ') + '): ' + desc;
+        if (acciones) line += ' — *Acción:* ' + acciones;
+
+        return {
+            line: line,
+            isResolved: isResolved,
+            isOverdue: isOverdue,
+            sistema: (inc['Grupo asignado'] && String(inc['Grupo asignado']).trim()) || 'Sin asignar',
+            rank: priorityRank(inc)
+        };
+    }
+
+    function buildMesaBriefing(incidents, iaCache, projectsCatalog, releaseName, overrides, nowDate) {
+        var list = Array.isArray(incidents) ? incidents : [];
+        var todayYmd = getBriefingTodayYmd(nowDate);
 
         var buckets = {
             1: { title: 'Crítica (P1)', items: [] },
@@ -279,44 +332,11 @@
         var resolvedCount = 0;
 
         list.forEach(function (inc) {
-            var id = inc['ID de incidencia'] || '-';
-            var iaData = iaCache ? (typeof iaCache.get === 'function' ? iaCache.get(id) : iaCache[id]) : null;
-            var descBase = (iaData && !iaData._error && iaData.problema) ? iaData.problema : (inc['Descripción'] || '-');
-            var producto = inc['producto'] ? String(inc['producto']).trim() : '';
-            var desc = (producto ? '[' + producto + '] ' : '') + String(descBase).replace(/\r?\n/g, ' ').trim();
-            var acciones = (iaData && !iaData._error && (iaData.siguienteAccion || iaData.siguiente_accion || iaData.solucion))
-                || inc['detalleSolucion']
-                || '';
-            acciones = String(acciones).replace(/\r?\n/g, ' ').trim();
-
-            var proj = resolveProjectInfo(inc, projectsCatalog, releaseName);
-            var projLabel = proj
-                ? ((proj.despliegue ? '[' + proj.despliegue + '] ' : '') + proj.code + (proj.summary ? ' — ' + proj.summary : ''))
-                : '';
-
-            var estatus = inc['Estatus'] || '-';
-            var isResolved = String(estatus).toLowerCase().includes('resuelt');
-            if (isResolved) resolvedCount++;
-            var agreedFecha = (overrides && overrides[id] && overrides[id].fecha_prevista) ? overrides[id].fecha_prevista : '';
-            var fechaPrevista = isResolved ? (inc['Fecha de última resolución'] || '') : agreedFecha;
-            var isOverdue = !isResolved && agreedFecha && agreedFecha < todayYmd;
-            if (isOverdue) overdueCount++;
-
-            var metaParts = [estatus];
-            if (inc['Grupo asignado']) metaParts.push(inc['Grupo asignado']);
-            if (projLabel) metaParts.push(projLabel);
-            if (fechaPrevista) {
-                metaParts.push((isOverdue ? '⚠️ VENCIDA ' : 'Prev: ') + fechaPrevista);
-            } else if (!isResolved) {
-                metaParts.push('Sin fecha prevista');
-            }
-
-            var line = '- **' + id + '** (' + metaParts.join(' | ') + '): ' + desc;
-            if (acciones) line += ' — *Acción:* ' + acciones;
-
-            var rank = priorityRank(inc);
-            var bucketKey = buckets[rank] ? rank : 99;
-            buckets[bucketKey].items.push(line);
+            var info = formatBriefingIncidentInfo(inc, iaCache, projectsCatalog, releaseName, overrides, todayYmd, false);
+            if (info.isResolved) resolvedCount++;
+            if (info.isOverdue) overdueCount++;
+            var bucketKey = buckets[info.rank] ? info.rank : 99;
+            buckets[bucketKey].items.push(info.line);
         });
 
         var header = '### Briefing Mesa de Release ' + (releaseName || '') + ' (' + todayYmd + ')\n' +
@@ -333,6 +353,41 @@
         return sections.join('\n');
     }
 
+    function buildMesaBriefingBySystem(incidents, iaCache, projectsCatalog, releaseName, overrides, nowDate) {
+        var list = Array.isArray(incidents) ? incidents : [];
+        var todayYmd = getBriefingTodayYmd(nowDate);
+
+        var groups = {};
+        var overdueCount = 0;
+        var resolvedCount = 0;
+
+        list.forEach(function (inc) {
+            var info = formatBriefingIncidentInfo(inc, iaCache, projectsCatalog, releaseName, overrides, todayYmd, true);
+            if (info.isResolved) resolvedCount++;
+            if (info.isOverdue) overdueCount++;
+            if (!groups[info.sistema]) groups[info.sistema] = [];
+            groups[info.sistema].push({ rank: info.rank, line: info.line });
+        });
+
+        var header = '### Briefing Mesa de Release por Sistema ' + (releaseName || '') + ' (' + todayYmd + ')\n' +
+            '**Total visibles:** ' + list.length +
+            ' | **Resueltas:** ' + resolvedCount +
+            ' | **Compromisos vencidos:** ' + overdueCount;
+
+        var systemNames = Object.keys(groups).sort(function (a, b) {
+            if (a === 'Sin asignar') return 1;
+            if (b === 'Sin asignar') return -1;
+            return a.localeCompare(b, 'es', { sensitivity: 'base' });
+        });
+
+        var sections = [header];
+        systemNames.forEach(function (sys) {
+            var items = groups[sys].slice().sort(function (a, b) { return a.rank - b.rank; });
+            sections.push('\n#### ' + sys + ' (' + items.length + ')\n' + items.map(function (x) { return x.line; }).join('\n'));
+        });
+        return sections.join('\n');
+    }
+
     if (typeof module !== 'undefined' && module.exports) {
         module.exports = {
             isClosedStatus: isClosedStatus,
@@ -345,7 +400,8 @@
             matchesKpiFilter: matchesKpiFilter,
             buildExportCsv: buildExportCsv,
             sortIncidents: sortIncidents,
-            buildMesaBriefing: buildMesaBriefing
+            buildMesaBriefing: buildMesaBriefing,
+            buildMesaBriefingBySystem: buildMesaBriefingBySystem
         };
     }
 
@@ -1171,43 +1227,51 @@
             });
         }
 
-        var btnCopyBriefing = document.getElementById('btnCopyBriefing');
-        if (btnCopyBriefing) {
-            btnCopyBriefing.addEventListener('click', function () {
+        function copyTextToClipboard(text, successMsg) {
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(text).then(function () {
+                    notify(successMsg, 'success');
+                }).catch(function () {
+                    notify('No se pudo copiar al portapapeles.', 'error');
+                });
+            } else {
+                var ta = document.createElement('textarea');
+                ta.value = text;
+                ta.style.position = 'fixed';
+                ta.style.opacity = '0';
+                document.body.appendChild(ta);
+                ta.select();
+                try {
+                    document.execCommand('copy');
+                    notify(successMsg, 'success');
+                } catch (err) {
+                    notify('No se pudo copiar al portapapeles.', 'error');
+                }
+                document.body.removeChild(ta);
+            }
+        }
+
+        function bindBriefingButton(btnId, builderFn, label) {
+            var btn = document.getElementById(btnId);
+            if (!btn) return;
+            btn.addEventListener('click', function () {
                 if (!state.filteredIncidents || state.filteredIncidents.length === 0) {
                     notify('No hay incidencias visibles para generar el briefing.', 'warning');
                     return;
                 }
-                var text = buildMesaBriefing(
+                var text = builderFn(
                     state.filteredIncidents,
                     state.iaCache,
                     state.projectsCatalog,
                     state.currentRelease,
                     state.overrides
                 );
-                if (navigator.clipboard && navigator.clipboard.writeText) {
-                    navigator.clipboard.writeText(text).then(function () {
-                        notify('Briefing de Mesa copiado (' + state.filteredIncidents.length + ' incidencias).', 'success');
-                    }).catch(function () {
-                        notify('No se pudo copiar al portapapeles.', 'error');
-                    });
-                } else {
-                    var ta = document.createElement('textarea');
-                    ta.value = text;
-                    ta.style.position = 'fixed';
-                    ta.style.opacity = '0';
-                    document.body.appendChild(ta);
-                    ta.select();
-                    try {
-                        document.execCommand('copy');
-                        notify('Briefing de Mesa copiado (' + state.filteredIncidents.length + ' incidencias).', 'success');
-                    } catch (err) {
-                        notify('No se pudo copiar al portapapeles.', 'error');
-                    }
-                    document.body.removeChild(ta);
-                }
+                copyTextToClipboard(text, label + ' copiado (' + state.filteredIncidents.length + ' incidencias).');
             });
         }
+
+        bindBriefingButton('btnCopyBriefing', buildMesaBriefing, 'Briefing de Mesa');
+        bindBriefingButton('btnCopyBriefingSystem', buildMesaBriefingBySystem, 'Briefing por Sistema');
 
         function updateSortHeadersUI() {
             Array.from(document.querySelectorAll('th.rd-sortable[data-sort-key]')).forEach(function (th) {

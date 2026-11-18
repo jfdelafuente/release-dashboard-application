@@ -32,6 +32,7 @@ def test_release_desk_html_has_required_controls():
         "btnSyncPostmortem",
         "btnEmptySync",
         "btnCopyBriefing",
+        "btnCopyBriefingSystem",
         "btnExportCsv",
         "filterSearch",
         "filterStatus",
@@ -330,3 +331,26 @@ def test_release_desk_js_build_mesa_briefing():
     else:
         js = RELEASE_DESK_JS.read_text(encoding="utf-8")
         assert "buildMesaBriefing" in js
+
+
+def test_release_desk_js_build_mesa_briefing_by_system():
+    if shutil.which("node") is not None:
+        script = (
+            f"const rd = require({json.dumps(str(RELEASE_DESK_JS))});\n"
+            "const incidents = [\n"
+            "  { 'ID de incidencia': 'INC1', 'Prioridad': 'Media', 'Descripción': 'Error A', 'Estatus': 'Asignado', 'Grupo asignado': 'SOP_SMC_GIROS' },\n"
+            "  { 'ID de incidencia': 'INC2', 'Prioridad': 'Crítica (P1)', 'Descripción': 'Error B', 'Estatus': 'En Curso', 'Grupo asignado': 'DES_CRM4T' },\n"
+            "  { 'ID de incidencia': 'INC3', 'Prioridad': 'Alta', 'Descripción': 'Error C', 'Estatus': 'Asignado', 'Grupo asignado': 'SOP_SMC_GIROS' }\n"
+            "];\n"
+            "const txt = rd.buildMesaBriefingBySystem(incidents, null, {}, '2026R11', {}, '2026-11-18T12:00:00Z');\n"
+            "console.log(txt);\n"
+        )
+        proc = subprocess.run(["node", "-e", script], capture_output=True, text=True, check=True)
+        out = proc.stdout
+        assert "### Briefing Mesa de Release por Sistema 2026R11 (2026-11-18)" in out
+        assert "#### DES_CRM4T (1)" in out
+        assert "#### SOP_SMC_GIROS (2)" in out
+        assert out.index("- **INC3**") < out.index("- **INC1**")
+    else:
+        js = RELEASE_DESK_JS.read_text(encoding="utf-8")
+        assert "buildMesaBriefingBySystem" in js
