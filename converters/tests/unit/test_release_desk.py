@@ -253,7 +253,7 @@ def test_release_desk_js_build_export_csv():
             "    'Fecha de envío': '2026-11-10 09:00',\n"
             "    'Descripción': 'Error \"crítico\" en\\nlínea',\n"
             "    'Prioridad': 'Alta',\n"
-            "    'producto': 'PORTAL',\n"
+            "    'grupoAsignado': 'PORTAL',\n"
             "    'JIRA': 'JIRA-123',\n"
             "    'Estatus': 'En Curso',\n"
             "    'Grupo Remitente': 'N1 Soporte',\n"
