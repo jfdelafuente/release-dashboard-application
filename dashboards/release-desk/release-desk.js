@@ -163,7 +163,7 @@
             var iaData = iaCache ? (typeof iaCache.get === 'function' ? iaCache.get(id) : iaCache[id]) : null;
             var descProblema = (iaData && !iaData._error && iaData.problema) ? iaData.problema : (inc['Descripción'] || '-');
             var prioridadUrg = inc['Prioridad'] || inc['Urgencia'] || '-';
-            var sistema = inc['grupoAsignado'] || '-';
+            var sistema = inc['Grupo asignado'] || '-';
             var jiraBug = inc['JIRA'] || inc['Jira'] || inc['jira'] || '';
             var proj = resolveProjectInfo(inc, projectsCatalog, releaseName);
             var proyectoText = proj
@@ -522,7 +522,7 @@
             var prioridadUrg = inc['Prioridad'] || inc['Urgencia'] || '-';
             var prioBadgeClass = getPriorityBadgeClass(inc['Prioridad'], inc['Urgencia']);
             var statusBadgeClass = getStatusBadgeClass(inc['Estatus']);
-            var sistema = inc['grupoAsignado'] || '-';
+            var sistema = inc['Grupo asignado'] || '-';
             var proj = resolveProjectInfo(inc, state.projectsCatalog, state.currentRelease);
             var jiraBug = inc['JIRA'] || inc['Jira'] || inc['jira'] || '';
             var jiraCell = jiraBug
