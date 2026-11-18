@@ -55,10 +55,10 @@ El evaluador analiza cada ticket del informe masivo y descarta de forma inmediat
 Para superar la brevedad o ambigüedad del título de Remedy, el evaluador construye un corpus textual unificado combinando:
 
 * **Metadatos Remedy**: `Descripción`, `Impacto`, `Urgencia`, `Grupo Asignado`, `Fecha de Envío`.
-* **Diagnóstico Epsilon IA**: `problema`, `impacto`, `solucion`, `sistemas`, `bloqueos`, `siguienteAccion`.
+* **Diagnóstico Epsilon IA**: `problema`, `impacto`, `solucion`, `sistemas`, `bloqueos`, `siguienteAccion` y, cuando está presente, el bloque estructurado **`triaje`** (`escenario`, `workaround`, `multisede`, `alertaInfratriaje`, `desgloseSedes`), que tiene prioridad determinista sobre las heurísticas por expresiones regulares manteniendo el motor `regex` como fallback.
 
 > [!NOTE]
-> Gracias al cliente [`EpsilonClient`](../../converters/cli/evaluate_incident_notifications.py#L2164) con fallback inteligente y caché en disco (`data/.epsilon_cache/`), si el microservicio Epsilon no estuviera disponible, el sistema degrada elegantemente y realiza el triaje usando únicamente los campos nativos de Remedy.
+> Gracias al cliente [`EpsilonClient`](../../converters/cli/evaluate_incident_notifications.py#L2164) con fallback inteligente y caché en disco (`data/.epsilon_cache/`), si el microservicio Epsilon no estuviera disponible, el sistema degrada elegantemente y realiza el triaje usando únicamente los campos nativos de Remedy. Si el resumen incluye `desgloseSedes`, el evaluador expone `desglose_sedes` y `triaje_ia` para que la consola muestre en el modal el estado confirmado de cada sede (`✅ OK` / `🔴 Fallo activo`).
 
 ---
 
@@ -290,7 +290,9 @@ El resultado del triaje se almacena dentro de cada incidencia en el campo `"eval
     "sla_primera_notificacion_vencido": true,
     "requiere_escalado_telefonico": true,
     "escalado_estamentos_superiores": true,
-    "proxima_ventana_update_minutos": 20
+    "proxima_ventana_update_minutos": 20,
+    "desglose_sedes": [],
+    "triaje_ia": null
   },
   "mensajes_ejecutivos": {
     "apertura": {

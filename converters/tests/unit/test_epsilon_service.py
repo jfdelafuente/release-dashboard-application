@@ -17,6 +17,7 @@ from converters.src.epsilon_service import (
     compute_remedy_fingerprint,
     resolve_or_generate_epsilon_summary,
     pregenerate_epsilon_summaries,
+    build_epsilon_system_prompt,
 )
 
 
@@ -291,3 +292,216 @@ def test_pregenerate_and_retry_cli_use_internal_engine(tmp_path, monkeypatch):
     assert len(retry_res["success"]) == 1
     assert "motor interno Epsilon" in retry_res["success"][0]["reason"]
     assert (tmp_path / "data" / ".epsilon_cache" / "INC000004100003.json").is_file()
+
+
+def test_phase1_prompt_directives_present_in_system_prompt():
+    """Verifica que el System Prompt cargado incluye todas las directivas de Fase 1."""
+    prompt = build_epsilon_system_prompt()
+    assert "Sin método alternativo disponible." in prompt
+    assert "Workaround activo (pendiente de erradicación definitiva / visado CSO)." in prompt
+    assert "Existe método alternativo operativo" in prompt
+    assert "Deduplicación multisede (`OE-03`)" in prompt
+    assert "Último hito sustantivo garantizado" in prompt
+    assert "[Ventana Release]:" in prompt
+    assert "[Validación Negocio]: Pendiente de confirmación por sede/peticionario" in prompt
+
+
+@pytest.mark.parametrize(
+    "workaround_formula",
+    [
+        "Afecta a 12 agentes en Konecta Madrid. Sin método alternativo disponible.",
+        "Impacto en 25 operadores de Valencia. Workaround activo (pendiente de erradicación definitiva / visado CSO).",
+        "Afecta a 8 agentes en Oviedo. Existe método alternativo operativo (registro manual en portal secundario).",
+    ],
+)
+def test_normalized_workaround_formulas_pass_contract(workaround_formula):
+    """Las tres fórmulas normalizadas de workaround de Fase 1 deben pasar WORKAROUND_REGEX y el contrato."""
+    payload = {
+        "success": True,
+        "titulo": "Fallo funcional en aplicación CRM",
+        "estadoActual": "ASIGNADO",
+        "problema": "Error al tramitar altas de fibra en línea activa desde CRM.",
+        "impacto": workaround_formula,
+        "sistemas": ["CRM"],
+        "hitosTecnicos": [
+            "[17/11/2026 09:00]: Detección inicial del fallo en sede.",
+            "[17/11/2026 10:15]: Diagnóstico técnico preliminar por N2.",
+        ],
+        "bloqueos": ["[Ventana Release]: Parche planificado en PaP nocturno del 18/11/2026."],
+        "solucion": "Identificado defecto en validación de catálogo; parche comprometido para ventana del 18/11/2026.",
+        "siguienteAccion": "Despliegue en ventana nocturna del 18/11/2026.",
+    }
+    model = EpsilonResumenModel(**payload)
+    assert model.impacto == workaround_formula
+    checks, all_passed = evaluate_contract(payload)
+    assert all_passed is True
+    assert all(c.cumple for c in checks)
+
+
+def test_prompt_hash_change_invalidates_epsilon_cache(tmp_path, monkeypatch):
+    """Modificar data/resumen_incidencia_epsilon.md cambia prompt_hash y regenera sin --force."""
+    monkeypatch.setenv("EPSILON_PROVIDER_MODE", "internal")
+    monkeypatch.setenv("EPSILON_MOCK", "0")
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key")
+    monkeypatch.setattr("converters.src.epsilon_service.get_project_root", lambda: tmp_path)
+
+    prompt_file = tmp_path / "data" / "resumen_incidencia_epsilon.md"
+    prompt_file.parent.mkdir(parents=True, exist_ok=True)
+    prompt_file.write_text(
+        "# Prompt\n\n## 1. Instrucciones del Sistema (System Prompt)\nRegla A\n\n## 5. Implementación en Código\nIgnorar\n",
+        encoding="utf-8",
+    )
+
+    mock_montmc = MagicMock()
+    mock_montmc.fetch_remedy_detail.return_value = {
+        "codigoResp": 0,
+        "remedy": {
+            "idRemedy": "INC000004199099",
+            "resumen": "Fallo en CRM",
+            "estadoDesc": "ASIGNADO",
+            "fechaUltimaModificacion": "2026-11-17T09:00:00.000+00:00",
+            "worklog": [{"idWorklog": "1", "fecha": "2026-11-17T09:00:00.000+00:00", "detalle": "Nota inicial"}],
+        },
+    }
+
+    llm_output = {
+        "success": True,
+        "titulo": "Fallo en CRM",
+        "estadoActual": "ASIGNADO",
+        "problema": "Error funcional en CRM.",
+        "impacto": "Afecta a 5 agentes. Sin método alternativo disponible.",
+        "sistemas": ["CRM"],
+        "hitosTecnicos": ["[17/11/2026 10:00:00]: Nota inicial."],
+        "bloqueos": [],
+    }
+
+    with patch("converters.src.epsilon_service.call_anthropic", return_value=(llm_output, 200, 0.4)) as mock_llm:
+        st1, d1, hdr1 = resolve_or_generate_epsilon_summary(
+            "INC000004199099", project_root=tmp_path, montmc_client=mock_montmc
+        )
+        assert st1 == 200
+        assert hdr1 == "INTERNAL_LLM_GENERATED"
+        hash_v1 = d1["meta"]["prompt_hash"]
+
+        # Sin cambios: hit de caché
+        st2, d2, hdr2 = resolve_or_generate_epsilon_summary(
+            "INC000004199099", project_root=tmp_path, montmc_client=mock_montmc
+        )
+        assert st2 == 200
+        assert hdr2 == "FINGERPRINT_HIT"
+        assert mock_llm.call_count == 1
+
+        # Se edita el prompt (Sección 1): cambia prompt_hash y regenera automáticamente sin force=True
+        prompt_file.write_text(
+            "# Prompt\n\n## 1. Instrucciones del Sistema (System Prompt)\nRegla A + Regla B\n\n## 5. Implementación en Código\nIgnorar\n",
+            encoding="utf-8",
+        )
+        st3, d3, hdr3 = resolve_or_generate_epsilon_summary(
+            "INC000004199099", project_root=tmp_path, montmc_client=mock_montmc
+        )
+        assert st3 == 200
+        assert hdr3 == "INTERNAL_LLM_GENERATED"
+        assert mock_llm.call_count == 2
+        assert d3["meta"]["prompt_hash"] != hash_v1
+
+
+def test_epsilon_triaje_model_valid_invalid_and_optional():
+    """Valida EpsilonTriajeModel (Fase 2) como bloque opcional compatible hacia atrás."""
+    from pydantic import ValidationError
+
+    base_payload = {
+        "success": True,
+        "titulo": "Degradación parcial multisede en CRM",
+        "estadoActual": "ASIGNADO",
+        "problema": "Fallo intermitente en alta de pedidos desde CRM.",
+        "impacto": "Afecta a 2 sedes. Workaround activo (pendiente de erradicación definitiva / visado CSO).",
+        "sistemas": ["CRM"],
+        "hitosTecnicos": ["[17/11/2026 09:00]: Detección inicial del fallo en sede."],
+        "bloqueos": [],
+    }
+
+    # Sin triaje: compatible hacia atrás
+    model_without = EpsilonResumenModel(**base_payload)
+    assert model_without.triaje is None
+    checks_without, ok_without = evaluate_contract(base_payload)
+    assert ok_without is True
+    assert any(c.campo == "triaje" and c.cumple for c in checks_without)
+
+    # Con triaje válido
+    with_triaje = {
+        **base_payload,
+        "triaje": {
+            "escenario": "RESOLUCION_PARCIAL",
+            "workaround": True,
+            "multisede": True,
+            "alertaInfratriaje": False,
+            "desgloseSedes": [
+                {"sede": "Bosch-Vigo", "estado": "OK_CONFIRMADO"},
+                {"sede": "Madison-Valladolid", "estado": "FALLO_ACTIVO"},
+            ],
+        },
+    }
+    model_with = EpsilonResumenModel(**with_triaje)
+    assert model_with.triaje is not None
+    assert model_with.triaje.escenario == "RESOLUCION_PARCIAL"
+    assert len(model_with.triaje.desgloseSedes) == 2
+    checks_with, ok_with = evaluate_contract(with_triaje)
+    assert ok_with is True
+    triaje_check = next(c for c in checks_with if c.campo == "triaje")
+    assert "RESOLUCION_PARCIAL" in triaje_check.metrica
+
+    # Con escenario inválido: falla Pydantic y evaluate_contract
+    bad_triaje = {
+        **base_payload,
+        "triaje": {
+            "escenario": "NO_EXISTE",
+            "workaround": False,
+            "multisede": False,
+            "alertaInfratriaje": False,
+            "desgloseSedes": [],
+        },
+    }
+    with pytest.raises(ValidationError):
+        EpsilonResumenModel(**bad_triaje)
+    _, ok_bad = evaluate_contract(bad_triaje)
+    assert ok_bad is False
+
+
+def test_severity_evaluator_prioritizes_phase2_triaje_and_exposes_desglose_sedes():
+    """SeverityEvaluator prioriza epsilon_data['triaje'] sobre regex y expone desglose_sedes."""
+    from converters.cli.evaluate_incident_notifications import SeverityEvaluator
+
+    ev = SeverityEvaluator()
+    ticket = {
+        "id": "INC000004199888",
+        "Descripción": "CRM | Error funcional | Sede A",
+        "Prioridad": "Media",
+        "Estatus": "En Curso",
+        "Fecha": "2026-11-17 09:00:00",
+    }
+    epsilon_data = {
+        "titulo": "CRM - Error funcional multisede",
+        "estadoActual": "EN CURSO",
+        "problema": "Fallo en portal de contratación.",
+        "impacto": "Afecta a 2 sedes. Sin método alternativo disponible.",  # Texto dice sin alternativa, pero triaje.workaround=True manda
+        "solucion": "Mitigación aplicada.",
+        "bloqueos": [],
+        "hitosTecnicos": ["[17/11/2026 10:00]: Mitigación aplicada."],
+        "triaje": {
+            "escenario": "REAPERTURA",
+            "workaround": True,
+            "multisede": True,
+            "alertaInfratriaje": True,
+            "desgloseSedes": [
+                {"sede": "Bosch-Vigo", "estado": "OK_CONFIRMADO"},
+                {"sede": "Madison-Valladolid", "estado": "FALLO_ACTIVO"},
+            ],
+        },
+    }
+
+    res = ev.evaluate(ticket, epsilon_data=epsilon_data)
+    assert res["es_reapertura"] is True
+    assert res["evaluacion"]["workaround"] == "Sí"
+    assert len(res["desglose_sedes"]) == 2
+    assert res["evaluacion"]["desglose_sedes"][1]["estado"] == "FALLO_ACTIVO"
+    assert res["evaluacion"]["metricas_cuantitativas"]["sedes"] == 2
