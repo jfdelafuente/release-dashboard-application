@@ -371,11 +371,13 @@ def sync_postmortem_release(
         "fechaPrevista",
     )
 
+    seen_api_ids: set[str] = set()
     for raw_rec in raw_incidencias:
         norm_rec = api_client.normalize_mon_tmc_postmortem_record(raw_rec)
         inc_id = str(norm_rec.get("ID de incidencia") or "").strip()
         if not inc_id:
             continue
+        seen_api_ids.add(inc_id)
 
         if inc_id in records_by_id:
             old_rec = records_by_id[inc_id]
@@ -391,6 +393,31 @@ def sync_postmortem_release(
             records_by_id[inc_id] = norm_rec
             new_ids.append(inc_id)
             nuevas += 1
+
+    # 3b. Reconciliar tickets locales no cerrados que ya no vienen en /api/epsilon/release
+    if hasattr(api_client, "fetch_remedy_detail"):
+        for inc_id in ordered_ids:
+            if inc_id in seen_api_ids:
+                continue
+            old_rec = records_by_id[inc_id]
+            if str(old_rec.get("Estatus") or "").strip().lower() == "cerrado":
+                continue
+            try:
+                detail = api_client.fetch_remedy_detail(inc_id)
+                remedy_node = detail.get("remedy") if isinstance(detail, dict) else None
+                if not isinstance(remedy_node, dict):
+                    continue
+                norm_detail = api_client.normalize_mon_tmc_postmortem_record(remedy_node)
+                if not remedy_node.get("fechaCreacion") and old_rec.get("Fecha de envío"):
+                    norm_detail["Fecha de envío"] = old_rec["Fecha de envío"]
+                has_changes = any(norm_detail.get(k) != old_rec.get(k) for k in compare_fields)
+                if has_changes:
+                    updated_rec = dict(old_rec)
+                    updated_rec.update(norm_detail)
+                    records_by_id[inc_id] = updated_rec
+                    actualizadas += 1
+            except Exception as err:
+                logger.debug("No se pudo reconciliar detalle Remedy para %s: %s", inc_id, err)
 
     final_data_list = [records_by_id[i] for i in new_ids] + [
         records_by_id[i] for i in ordered_ids if i not in set(new_ids)
