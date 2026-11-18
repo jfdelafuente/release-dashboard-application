@@ -192,14 +192,14 @@
         table.rd-table th {
             position: sticky;
             top: 0;
-            background: #FAF9F7;
+            background: #FFF4E8;
             text-align: left;
             padding: 8px 7px;
-            border-bottom: 1px solid var(--border-subtle);
+            border-bottom: 2px solid #FDBA74;
             font-size: 10.5px;
             text-transform: uppercase;
             letter-spacing: 0.03em;
-            color: var(--text-secondary);
+            color: #7C2D12;
             line-height: 1.25;
             z-index: 1;
         }
@@ -219,11 +219,23 @@
             cursor: pointer;
             transition: background 0.1s ease;
         }
+        table.rd-table tbody tr[data-inc-id]:nth-child(even) {
+            background: #FCFAF7;
+        }
         table.rd-table tbody tr:hover {
             background: #FFF8F2;
         }
         table.rd-table tbody tr.is-selected {
             background: #FFF1E5;
+        }
+        table.rd-table tbody tr.rd-row-critica td:first-child {
+            box-shadow: inset 3px 0 0 #DC2626;
+        }
+        table.rd-table tbody tr.rd-row-alta td:first-child {
+            box-shadow: inset 3px 0 0 #EA580C;
+        }
+        table.rd-table tbody tr.rd-row-resuelto td:first-child {
+            box-shadow: inset 3px 0 0 #16A34A;
         }
         table.rd-table tbody tr.rd-detail-row {
             background: #FAF8F5;
@@ -274,6 +286,10 @@
         .rd-badge-critica { background: #FEE2E2; color: #991B1B; }
         .rd-badge-alta { background: #FFEDD5; color: #9A3412; }
         .rd-badge-media { background: #F3F4F6; color: #374151; }
+        .rd-badge-jira { background: #EEF2FF; color: #3730A3; border: 1px solid #C7D2FE; }
+        .rd-badge-sistema { background: #F0FDFA; color: #115E59; border: 1px solid #99F6E4; max-width: 112px; overflow: hidden; text-overflow: ellipsis; }
+        .rd-badge-code { background: #F5F3EF; color: #141311; border: 1px solid #E2DDD5; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 11px; }
+        .rd-badge-fecha { background: #DCFCE7; color: #166534; border: 1px solid #BBF7D0; }
         .rd-detail-body {
             padding: 16px;
         }

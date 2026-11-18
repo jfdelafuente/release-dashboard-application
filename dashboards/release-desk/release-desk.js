@@ -309,15 +309,16 @@
         tbody.innerHTML = state.filteredIncidents.map(function (inc) {
             var id = inc['ID de incidencia'] || '-';
             var isSelected = id === state.selectedId;
-            var isSel = isSelected ? ' class="is-selected"' : '';
             var fechaApertura = inc['Fecha de envío'] || '-';
             var iaData = state.iaCache.get(id);
             var descProblema = (iaData && !iaData._error && iaData.problema) ? iaData.problema : (inc['Descripción'] || '-');
             var prioridadUrg = inc['Prioridad'] || inc['Urgencia'] || '-';
+            var prioBadgeClass = getPriorityBadgeClass(inc['Prioridad'], inc['Urgencia']);
+            var statusBadgeClass = getStatusBadgeClass(inc['Estatus']);
             var sistema = inc['producto'] || inc['Grupo Resolutor'] || inc['Grupo asignado'] || '-';
             var proj = resolveProjectInfo(inc, state.projectsCatalog, state.currentRelease);
             var jiraCell = proj
-                ? '<span class="rd-badge rd-badge-media">' + escapeHtml(proj.code) + '</span>'
+                ? '<span class="rd-badge rd-badge-jira">' + escapeHtml(proj.code) + '</span>'
                 : '<span style="color:#9CA3AF;">-</span>';
             var proyectoText = proj
                 ? (proj.summary ? (proj.code + ' — ' + proj.summary) : proj.code)
@@ -332,17 +333,31 @@
             var motivoResuelto = inc['Motivo de estado'] || inc['MotivoEstado_Anterior'] || '-';
             var peticionario = inc['Grupo Remitente'] || '-';
 
-            var rowHtml = '<tr data-inc-id="' + escapeHtml(id) + '"' + isSel + ' aria-expanded="' + (isSelected ? 'true' : 'false') + '">' +
-                '<td style="font-weight:600; white-space:nowrap; font-size:11.5px;">' + (isSelected ? '▾ ' : '▸ ') + escapeHtml(id) + '</td>' +
+            var rowClasses = [];
+            if (isSelected) rowClasses.push('is-selected');
+            if (prioBadgeClass === 'rd-badge-critica') rowClasses.push('rd-row-critica');
+            else if (prioBadgeClass === 'rd-badge-alta') rowClasses.push('rd-row-alta');
+            if (estatusLower.includes('resuelt')) rowClasses.push('rd-row-resuelto');
+            var rowClassAttr = rowClasses.length ? ' class="' + rowClasses.join(' ') + '"' : '';
+
+            var sistemaCell = sistema !== '-'
+                ? '<span class="rd-badge rd-badge-sistema" title="' + escapeHtml(sistema) + '">' + escapeHtml(sistema) + '</span>'
+                : '<span style="color:#9CA3AF;">-</span>';
+            var fechaPrevistaCell = fechaPrevista
+                ? '<span class="rd-badge rd-badge-fecha">' + escapeHtml(fechaPrevista) + '</span>'
+                : '';
+
+            var rowHtml = '<tr data-inc-id="' + escapeHtml(id) + '"' + rowClassAttr + ' aria-expanded="' + (isSelected ? 'true' : 'false') + '">' +
+                '<td style="white-space:nowrap;"><span class="rd-badge rd-badge-code">' + (isSelected ? '▾ ' : '▸ ') + escapeHtml(id) + '</span></td>' +
                 '<td style="font-size:11.5px; min-width:78px;">' + escapeHtml(fechaApertura) + '</td>' +
                 '<td style="min-width:140px; max-width:220px;" title="' + escapeHtml(descProblema) + '"><div class="rd-cell-clamp">' + escapeHtml(descProblema) + '</div></td>' +
-                '<td style="white-space:nowrap;">' + escapeHtml(prioridadUrg) + '</td>' +
-                '<td style="max-width:120px;">' + escapeHtml(sistema) + '</td>' +
+                '<td style="white-space:nowrap;"><span class="rd-badge ' + prioBadgeClass + '">' + escapeHtml(prioridadUrg) + '</span></td>' +
+                '<td style="max-width:120px;">' + sistemaCell + '</td>' +
                 '<td style="white-space:nowrap;">' + jiraCell + '</td>' +
                 '<td style="min-width:120px; max-width:190px;" title="' + escapeHtml(proyectoText) + '"><div class="rd-cell-clamp">' + escapeHtml(proyectoText) + '</div></td>' +
                 '<td style="min-width:150px; max-width:230px;" title="' + escapeHtml(acciones) + '"><div class="rd-cell-clamp">' + escapeHtml(acciones) + '</div></td>' +
-                '<td><span class="rd-badge ' + getStatusBadgeClass(inc['Estatus']) + '">' + escapeHtml(inc['Estatus'] || '-') + '</span></td>' +
-                '<td style="font-size:11.5px; min-width:78px;">' + escapeHtml(fechaPrevista) + '</td>' +
+                '<td><span class="rd-badge ' + statusBadgeClass + '">' + escapeHtml(inc['Estatus'] || '-') + '</span></td>' +
+                '<td style="font-size:11.5px; min-width:78px;">' + fechaPrevistaCell + '</td>' +
                 '<td style="max-width:130px;">' + escapeHtml(motivoResuelto) + '</td>' +
                 '<td style="max-width:120px;">' + escapeHtml(peticionario) + '</td>' +
                 '</tr>';
