@@ -217,6 +217,23 @@
             line-height: 1.25;
             z-index: 1;
         }
+        table.rd-table th.rd-sortable {
+            cursor: pointer;
+            user-select: none;
+            transition: background 0.12s ease;
+        }
+        table.rd-table th.rd-sortable:hover {
+            background: #FFEDD5;
+        }
+        table.rd-table th.rd-sortable .rd-sort-ind {
+            margin-left: 3px;
+            font-size: 9px;
+            opacity: 0.45;
+        }
+        table.rd-table th.rd-sortable.is-sorted .rd-sort-ind {
+            opacity: 1;
+            color: var(--accent-dark);
+        }
         table.rd-table td {
             padding: 7px 7px;
             border-bottom: 1px solid #F0ECE5;
@@ -513,16 +530,16 @@
                     <table class="rd-table">
                         <thead>
                             <tr>
-                                <th>Código Incidencia</th>
-                                <th>Fecha Apertura</th>
+                                <th class="rd-sortable" data-sort-key="code">Código Incidencia<span class="rd-sort-ind"></span></th>
+                                <th class="rd-sortable" data-sort-key="fecha_apertura">Fecha Apertura<span class="rd-sort-ind"></span></th>
                                 <th>Descripción problema</th>
-                                <th>Prioridad / Urg.</th>
+                                <th class="rd-sortable" data-sort-key="prioridad">Prioridad / Urg.<span class="rd-sort-ind"></span></th>
                                 <th>Sistema</th>
                                 <th>JIRA</th>
-                                <th>PROYECTO</th>
+                                <th class="rd-sortable" data-sort-key="proyecto">PROYECTO<span class="rd-sort-ind"></span></th>
                                 <th>Acciones</th>
-                                <th>Status</th>
-                                <th>Fecha Prevista</th>
+                                <th class="rd-sortable" data-sort-key="status">Status<span class="rd-sort-ind"></span></th>
+                                <th class="rd-sortable" data-sort-key="fecha_prevista">Fecha Prevista<span class="rd-sort-ind"></span></th>
                                 <th>Motivo Estado Resuelto</th>
                                 <th>Grupo Peticionario</th>
                             </tr>

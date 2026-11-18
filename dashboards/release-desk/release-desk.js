@@ -203,6 +203,65 @@
         return '\uFEFF' + lines.join('\r\n');
     }
 
+    function parseSortableDate(raw) {
+        if (!raw) return null;
+        var s = String(raw).trim();
+        if (!s || s === '-') return null;
+        var m = s.match(/^(\d{2})\/(\d{2})\/(\d{4})(?:\s+(\d{2}):(\d{2}))?/);
+        if (m) {
+            return new Date(Number(m[3]), Number(m[2]) - 1, Number(m[1]), Number(m[4] || 0), Number(m[5] || 0)).getTime();
+        }
+        var d = new Date(s);
+        return isNaN(d.getTime()) ? null : d.getTime();
+    }
+
+    function priorityRank(inc) {
+        var raw = String((inc && (inc['Prioridad'] || inc['Urgencia'])) || '').toLowerCase();
+        if (raw.includes('crít') || raw.includes('crit') || raw.includes('p1')) return 1;
+        if (raw.includes('alta') || raw.includes('p2')) return 2;
+        if (raw.includes('medi') || raw.includes('p3')) return 3;
+        if (raw.includes('baj') || raw.includes('p4')) return 4;
+        return 99;
+    }
+
+    function getSortValue(inc, sortKey, projectsCatalog, releaseName, overrides) {
+        var id = (inc && inc['ID de incidencia']) || '';
+        if (sortKey === 'code') return id;
+        if (sortKey === 'fecha_apertura') return parseSortableDate(inc && inc['Fecha de envío']);
+        if (sortKey === 'prioridad') return priorityRank(inc);
+        if (sortKey === 'proyecto') {
+            var proj = resolveProjectInfo(inc, projectsCatalog, releaseName);
+            return proj ? (proj.code + ' ' + (proj.despliegue || '') + ' ' + (proj.summary || '')) : '';
+        }
+        if (sortKey === 'status') return String((inc && inc['Estatus']) || '');
+        if (sortKey === 'fecha_prevista') {
+            var isRes = String((inc && inc['Estatus']) || '').toLowerCase().includes('resuelt');
+            var rawFecha = isRes
+                ? (inc && inc['Fecha de última resolución'])
+                : (overrides && overrides[id] && overrides[id].fecha_prevista);
+            return parseSortableDate(rawFecha);
+        }
+        return '';
+    }
+
+    function sortIncidents(incidents, sortKey, sortDir, projectsCatalog, releaseName, overrides) {
+        if (!Array.isArray(incidents) || !sortKey) return incidents ? incidents.slice() : [];
+        var dir = sortDir === 'desc' ? -1 : 1;
+        return incidents.slice().sort(function (a, b) {
+            var va = getSortValue(a, sortKey, projectsCatalog, releaseName, overrides);
+            var vb = getSortValue(b, sortKey, projectsCatalog, releaseName, overrides);
+            var aEmpty = va === null || va === undefined || va === '';
+            var bEmpty = vb === null || vb === undefined || vb === '';
+            if (aEmpty && bEmpty) return 0;
+            if (aEmpty) return 1;
+            if (bEmpty) return -1;
+            if (typeof va === 'number' && typeof vb === 'number') {
+                return (va - vb) * dir;
+            }
+            return String(va).localeCompare(String(vb), 'es', { sensitivity: 'base' }) * dir;
+        });
+    }
+
     if (typeof module !== 'undefined' && module.exports) {
         module.exports = {
             isClosedStatus: isClosedStatus,
@@ -213,7 +272,8 @@
             computeOpenAgeDays: computeOpenAgeDays,
             isIaCacheStale: isIaCacheStale,
             matchesKpiFilter: matchesKpiFilter,
-            buildExportCsv: buildExportCsv
+            buildExportCsv: buildExportCsv,
+            sortIncidents: sortIncidents
         };
     }
 
@@ -231,7 +291,9 @@
         projectsCatalog: {},
         overrides: {},
         editingFechaId: null,
-        activeKpiFilter: null
+        activeKpiFilter: null,
+        sortKey: null,
+        sortDir: 'asc'
     };
 
     async function preloadCachedIaSummaries(incidents) {
@@ -501,6 +563,17 @@
             }
             return true;
         });
+
+        if (state.sortKey) {
+            state.filteredIncidents = sortIncidents(
+                state.filteredIncidents,
+                state.sortKey,
+                state.sortDir,
+                state.projectsCatalog,
+                state.currentRelease,
+                state.overrides
+            );
+        }
 
         renderTable();
     }
@@ -1021,6 +1094,34 @@
                 notify('Exportadas ' + state.filteredIncidents.length + ' incidencias a CSV.', 'success');
             });
         }
+
+        function updateSortHeadersUI() {
+            Array.from(document.querySelectorAll('th.rd-sortable[data-sort-key]')).forEach(function (th) {
+                var key = th.getAttribute('data-sort-key');
+                var ind = th.querySelector('.rd-sort-ind');
+                if (state.sortKey === key) {
+                    th.classList.add('is-sorted');
+                    if (ind) ind.textContent = state.sortDir === 'desc' ? '▼' : '▲';
+                } else {
+                    th.classList.remove('is-sorted');
+                    if (ind) ind.textContent = '';
+                }
+            });
+        }
+
+        Array.from(document.querySelectorAll('th.rd-sortable[data-sort-key]')).forEach(function (th) {
+            th.addEventListener('click', function () {
+                var key = th.getAttribute('data-sort-key');
+                if (state.sortKey === key) {
+                    state.sortDir = state.sortDir === 'asc' ? 'desc' : 'asc';
+                } else {
+                    state.sortKey = key;
+                    state.sortDir = 'asc';
+                }
+                updateSortHeadersUI();
+                applyFilters();
+            });
+        });
 
         loadProjectsCatalog().then(function () {
             loadRelease(getUrlReleaseParam());

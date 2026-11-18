@@ -4,6 +4,7 @@ y su registro en dashboards/assets/topbar.js.
 """
 
 import json
+import re
 import shutil
 import subprocess
 from pathlib import Path
@@ -54,7 +55,9 @@ def test_release_desk_html_has_required_controls():
         "Motivo Estado Resuelto",
         "Grupo Peticionario",
     ):
-        assert f"<th>{col}</th>" in html, f"Falta columna {col} en release-desk/index.html"
+        assert re.search(rf"<th\b[^>]*>{re.escape(col)}(?:<span[^>]*></span>)?</th>", html), (
+            f"Falta columna {col} en release-desk/index.html"
+        )
 
 
 def test_release_desk_js_uses_postmortem_and_resumen_ia_only():
@@ -275,3 +278,26 @@ def test_release_desk_js_build_export_csv():
     else:
         js = RELEASE_DESK_JS.read_text(encoding="utf-8")
         assert "buildExportCsv" in js
+
+
+def test_release_desk_js_sort_incidents():
+    if shutil.which("node") is not None:
+        script = (
+            f"const rd = require({json.dumps(str(RELEASE_DESK_JS))});\n"
+            "const a = { 'ID de incidencia': 'INC2', 'Prioridad': 'Media', 'Fecha de envío': '10/11/2026 09:00', 'Estatus': 'Asignado' };\n"
+            "const b = { 'ID de incidencia': 'INC1', 'Prioridad': 'Crítica (P1)', 'Fecha de envío': '05/11/2026 08:00', 'Estatus': 'En Curso' };\n"
+            "const c = { 'ID de incidencia': 'INC3', 'Prioridad': 'Alta', 'Fecha de envío': '12/11/2026 10:00', 'Estatus': 'Resuelto', 'Fecha de última resolución': '2026-11-15' };\n"
+            "const byPrioAsc = rd.sortIncidents([a, b, c], 'prioridad', 'asc', {}, '2026R11', {}).map(x => x['ID de incidencia']);\n"
+            "const byDateDesc = rd.sortIncidents([a, b, c], 'fecha_apertura', 'desc', {}, '2026R11', {}).map(x => x['ID de incidencia']);\n"
+            "const overrides = { 'INC2': { fecha_prevista: '2026-11-20' } };\n"
+            "const byPrevAsc = rd.sortIncidents([a, b, c], 'fecha_prevista', 'asc', {}, '2026R11', overrides).map(x => x['ID de incidencia']);\n"
+            "console.log(JSON.stringify({ byPrioAsc, byDateDesc, byPrevAsc }));\n"
+        )
+        proc = subprocess.run(["node", "-e", script], capture_output=True, text=True, check=True)
+        out = json.loads(proc.stdout)
+        assert out["byPrioAsc"] == ["INC1", "INC3", "INC2"]
+        assert out["byDateDesc"] == ["INC3", "INC2", "INC1"]
+        assert out["byPrevAsc"] == ["INC3", "INC2", "INC1"]
+    else:
+        js = RELEASE_DESK_JS.read_text(encoding="utf-8")
+        assert "sortIncidents" in js
