@@ -1,6 +1,6 @@
 {
     "sourceRepository":  "C:\\Users\\jose.delafuente\\Claude\\Projects\\biblioteca-agentes",
-    "updatedAt":  "2026-11-16T16:42:00+01:00",
+    "updatedAt":  "2026-11-18T21:11:40+01:00",
     "installedAgents":  [
                             {
                                 "name":  "incident-analyzer",
@@ -60,6 +60,16 @@
                                            ]
                             },
                             {
+                                "name":  "release-opener",
+                                "domain":  "it-incidents",
+                                "version":  "1.0.0",
+                                "relPath":  "agents/it-incidents/release-opener.md",
+                                "description":  "Automatiza todas las tareas necesarias para abrir una nueva Release mensual indicando únicamente su código YYYYRMM (ej. 2026R12): alta en releases-data.js, importación opcional de proyectos PRJ-* y sincronización inicial con MonTMC.",
+                                "skills":  [
+                                               "release-opening-workflow"
+                                           ]
+                            },
+                            {
                                 "name":  "spec-build-orchestrator",
                                 "domain":  "software-engineering",
                                 "version":  "1.1.0",
@@ -80,6 +90,7 @@
                             "incident-markdown-workflow",
                             "incident-report-pipeline",
                             "incident-executive-notifications",
+                            "release-opening-workflow",
                             "spec-definition-workflow",
                             "spec-build-workflow",
                             "spec-review-workflow"
