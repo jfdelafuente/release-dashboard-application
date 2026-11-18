@@ -95,6 +95,35 @@ def test_do_post_routes_to_sync_remedy():
     assert handler.handle_sync_remedy.called
 
 
+def test_handle_sync_postmortem_success():
+    handler = MagicMock()
+    body = json.dumps({"release_name": "2026R11", "usuario": "tester"}).encode("utf-8")
+    handler.headers = {"Content-Length": str(len(body))}
+    handler.rfile = io.BytesIO(body)
+    handler.path = "/api/sync-postmortem"
+    handler._send_json = MagicMock()
+
+    mock_result = {"success": True, "release_name": "2026R11", "total_consultadas": 5, "nuevas": 3, "actualizadas": 2}
+    with patch("serve_app.sync_postmortem_release", return_value=mock_result) as mock_sync:
+        serve_app.CustomHTTPHandler.handle_sync_postmortem(handler)
+        _, kwargs = mock_sync.call_args
+        assert kwargs["release_name"] == "2026R11"
+        assert kwargs["usuario"] == "tester"
+
+    status, payload = handler._send_json.call_args[0]
+    assert status == 200
+    assert payload["success"] is True
+
+
+def test_do_post_routes_to_sync_postmortem():
+    handler = MagicMock()
+    handler.path = "/api/sync-postmortem"
+    handler.handle_sync_postmortem = MagicMock()
+
+    serve_app.CustomHTTPHandler.do_POST(handler)
+    assert handler.handle_sync_postmortem.called
+
+
 # =========================================================================
 # Tests para GET /api/remedy/detail/{idRemedy}
 # =========================================================================

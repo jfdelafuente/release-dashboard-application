@@ -383,7 +383,10 @@
                     El CSV se guardará en <code style="background: #EDEAE4; padding: 2px 4px; border-radius: 3px;">data/input/</code> y se convertirá automáticamente, asociado a esta release
                 </small>
             </p>
-            <button class="upload-btn" id="uploadBtn">Seleccionar archivo</button>
+            <div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
+                <button class="upload-btn" id="uploadBtn">Seleccionar archivo</button>
+                <button class="upload-btn" id="uploadSyncPostmortemBtn" style="background:#0C0B09;" title="Sincronizar incidencias de release desde MonTMC">⚡ Sincronizar MonTMC</button>
+            </div>
             <input type="file" id="fileInput" accept=".csv" />
         </div>
     </div>
@@ -406,6 +409,7 @@
                     <span class="live-dot"></span>
                     <span id="recordCount">0 registros</span>
                 </div>
+                <button class="reset-btn" id="syncPostmortemBtn" title="Sincronizar incidencias de release desde MonTMC">⚡ Sincronizar MonTMC</button>
                 <button class="reset-btn" id="downloadReportBtn">⬇ Descargar informe PPT</button>
                 <button class="reset-btn" id="resetBtn">↻ Cargar otro archivo</button>
             </div>
@@ -1901,6 +1905,49 @@
             const fileInput = document.getElementById('fileInput');
             const resetBtn = document.getElementById('resetBtn');
             const downloadReportBtn = document.getElementById('downloadReportBtn');
+            const syncPostmortemBtn = document.getElementById('syncPostmortemBtn');
+            const uploadSyncPostmortemBtn = document.getElementById('uploadSyncPostmortemBtn');
+
+            async function triggerPostmortemSync(triggerBtn) {
+                if (!triggerBtn || triggerBtn.disabled) return;
+                const originalText = triggerBtn.textContent;
+                triggerBtn.disabled = true;
+                triggerBtn.textContent = '⚡ Sincronizando...';
+
+                try {
+                    const targetRelease = currentReleaseName || getReleaseParam() || null;
+                    const response = await fetch('/api/sync-postmortem', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(targetRelease ? { release_name: targetRelease } : {})
+                    });
+                    const data = await response.json();
+                    if (!response.ok || !data.success) {
+                        throw new Error(data.error || 'Error al sincronizar con MonTMC');
+                    }
+                    const total = data.total_consultadas ?? 0;
+                    const nuevas = data.nuevas ?? 0;
+                    const actualizadas = data.actualizadas ?? 0;
+                    const msg = `Sincronización MonTMC OK: ${total} consultadas (+${nuevas} nuevas, ${actualizadas} actualizadas).`;
+                    if (window.Toast) Toast.success(msg);
+                    else alert(msg);
+                    await autoLoadLatestData();
+                } catch (err) {
+                    const errMsg = 'Error al sincronizar con MonTMC: ' + (err && err.message ? err.message : err);
+                    if (window.Toast) Toast.error(errMsg);
+                    else alert(errMsg);
+                } finally {
+                    triggerBtn.disabled = false;
+                    triggerBtn.textContent = originalText;
+                }
+            }
+
+            if (syncPostmortemBtn) {
+                syncPostmortemBtn.addEventListener('click', () => triggerPostmortemSync(syncPostmortemBtn));
+            }
+            if (uploadSyncPostmortemBtn) {
+                uploadSyncPostmortemBtn.addEventListener('click', () => triggerPostmortemSync(uploadSyncPostmortemBtn));
+            }
 
             downloadReportBtn.addEventListener('click', function() {
                 if (!currentReleaseName) return;

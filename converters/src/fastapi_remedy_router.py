@@ -49,6 +49,14 @@ except ImportError:
     except ImportError:
         sync_remedy_incidents = None
 
+try:
+    from converters.cli.sync_montmc_postmortem import sync_postmortem_release
+except ImportError:
+    try:
+        from sync_montmc_postmortem import sync_postmortem_release
+    except ImportError:
+        sync_postmortem_release = None
+
 logger = logging.getLogger("fastapi_remedy_router")
 
 router = APIRouter(tags=["Remedy MonTMC Integration"])
@@ -159,6 +167,55 @@ def sync_remedy(
         return JSONResponse(
             status_code=502,
             content={"success": False, "error": f"Fallo en sincronización Remedy: {e}"},
+        )
+
+
+# =============================================================================
+# POST /api/sync-postmortem
+# =============================================================================
+
+@router.post("/api/sync-postmortem")
+@router.post("/sync-postmortem")
+def sync_postmortem(
+    payload: Optional[Dict[str, Any]] = Body(default=None),
+    release_name: Optional[str] = Query(default=None, description="Nombre de la release de postmortem"),
+    usuario: Optional[str] = Query(default=None, description="Usuario de consulta MonTMC"),
+):
+    """
+    Dispara la sincronización incremental del dashboard Postmortem desde MonTMC /api/epsilon/release.
+    Realiza un upsert seguro sin destruir registros históricos ni mezclar massive/notificaciones.
+    """
+    if sync_postmortem_release is None:
+        return JSONResponse(
+            status_code=500,
+            content={"success": False, "error": "Módulo de sincronización Postmortem MonTMC no disponible"},
+        )
+
+    target_release: Optional[str] = release_name.strip() if isinstance(release_name, str) and release_name.strip() else None
+    target_user: Optional[str] = usuario.strip() if isinstance(usuario, str) and usuario.strip() else None
+
+    if isinstance(payload, dict):
+        if payload.get("release_name"):
+            target_release = str(payload["release_name"]).strip()
+        if payload.get("usuario"):
+            target_user = str(payload["usuario"]).strip()
+
+    root = _get_project_root()
+    logger.info("Iniciando sync_postmortem: release=%s, usuario=%s, root=%s", target_release, target_user, root)
+
+    try:
+        result = sync_postmortem_release(
+            release_name=target_release,
+            usuario=target_user,
+            project_root=root,
+        )
+        status_code = 200 if result.get("success") else 502
+        return JSONResponse(status_code=status_code, content=result)
+    except Exception as e:
+        logger.exception("Error inesperado ejecutando sincronización Postmortem: %s", e)
+        return JSONResponse(
+            status_code=502,
+            content={"success": False, "error": f"Fallo en sincronización Postmortem: {e}"},
         )
 
 

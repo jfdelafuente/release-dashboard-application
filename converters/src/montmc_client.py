@@ -214,6 +214,32 @@ class MonTMCClient:
 
         return data
 
+    def fetch_release(self, usuario: Optional[str] = None) -> Dict[str, Any]:
+        """
+        Consulta el listado de incidencias de release activas en MonTMC.
+
+        GET /api/epsilon/release?usuario={user}
+        """
+        user = usuario or self.default_user
+        query = urllib.parse.urlencode({"usuario": user})
+        url = f"{self.base_url}/api/epsilon/release?{query}"
+        logger.info("Consultando incidencias release MonTMC: %s", url)
+
+        raw_bytes = self._open_url(url)
+        try:
+            data = json.loads(raw_bytes.decode("utf-8"))
+        except Exception as e:
+            raise MonTMCError(f"Respuesta JSON inválida de MonTMC release: {e}") from e
+
+        if not isinstance(data, dict):
+            raise MonTMCError(f"Formato inesperado devuelto por MonTMC release (se esperaba objeto dict): {type(data)}")
+
+        if data.get("success") is False or (not data.get("success", False) and "incidencias" not in data):
+            msg = data.get("message") or data.get("error") or "Respuesta success=false"
+            raise MonTMCError(f"Error devuelto por API MonTMC release: {msg}")
+
+        return data
+
     def fetch_remedy_detail(self, id_remedy: str) -> Dict[str, Any]:
         """
         Consulta el detalle profundo, eventos y worklogs técnicos de una incidencia.
@@ -296,6 +322,61 @@ class MonTMCClient:
             normalized["fechaUltimaModificacion"] = record["fechaUltimaModificacion"]
         if record.get("solucion"):
             normalized["detalleSolucion"] = record["solucion"]
+        if record.get("producto"):
+            normalized["producto"] = record["producto"]
+
+        return normalized
+
+    def normalize_mon_tmc_postmortem_record(self, record: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Transforma un registro devuelto por MonTMC /api/epsilon/release al esquema
+        canónico de PostmortemRecord utilizado por el dashboard Postmortem.
+        """
+        if not isinstance(record, dict):
+            return {}
+
+        incident_id = str(record.get("idRemedy") or "").strip()
+        prioridad_norm = _normalize_priority(record.get("prioridadP"), record.get("prioridad"))
+
+        desc = record.get("resumen") or record.get("detalle") or ""
+        estatus = _normalize_status(record.get("estadoDesc"))
+
+        fecha_envio = _iso_to_dashboard_date(record.get("fechaCreacion"))
+        if not fecha_envio:
+            fecha_envio = datetime.now().strftime("%d/%m/%Y %H:%M")
+
+        fecha_resolucion = _iso_to_dashboard_date(record.get("fechaResolucion"))
+        grupo_asignado = (record.get("grupoAsignado") or "").strip()
+        grupo_resolutor = (record.get("grupoResolutor") or "").strip()
+        urgencia = _normalize_urgency(record.get("urgencia"))
+        impacto = (record.get("producto") or "").strip() or "Release"
+        peticionario = (record.get("peticionarioNombre") or "").strip()
+
+        normalized: Dict[str, Any] = {
+            "ID de incidencia": incident_id,
+            "Prioridad": prioridad_norm,
+            "Descripción": str(desc).strip(),
+            "Estatus": estatus,
+            "Fecha de envío": fecha_envio,
+            "Grupo asignado": grupo_asignado,
+            "Urgencia": urgencia,
+            "Impacto": impacto,
+        }
+
+        if fecha_resolucion:
+            normalized["Fecha de última resolución"] = fecha_resolucion
+
+        if grupo_resolutor:
+            normalized["Grupo Resolutor"] = grupo_resolutor
+
+        if peticionario:
+            normalized["Grupo Remitente"] = peticionario
+
+        if record.get("fechaUltimaModificacion"):
+            normalized["fechaUltimaModificacion"] = record["fechaUltimaModificacion"]
+        solucion = record.get("detalleSolucion") or record.get("solucion")
+        if solucion:
+            normalized["detalleSolucion"] = solucion
         if record.get("producto"):
             normalized["producto"] = record["producto"]
 
