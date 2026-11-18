@@ -302,7 +302,7 @@
         visibleCount.textContent = state.filteredIncidents.length;
 
         if (state.filteredIncidents.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="13" style="text-align:center; padding:24px; color:#5C5852;">No hay incidencias activas que coincidan con los filtros actuales.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="12" style="text-align:center; padding:24px; color:#5C5852;">No hay incidencias activas que coincidan con los filtros actuales.</td></tr>';
             return;
         }
 
@@ -318,8 +318,9 @@
             var jiraCell = proj
                 ? '<span class="rd-badge rd-badge-media">' + escapeHtml(proj.code) + '</span>'
                 : '<span style="color:#9CA3AF;">-</span>';
-            var deliv = inc['DELIV'] || (proj && proj.deliv) || '-';
-            var descProyecto = (proj && proj.summary) ? proj.summary : '-';
+            var proyectoText = proj
+                ? (proj.summary ? (proj.code + ' — ' + proj.summary) : proj.code)
+                : '-';
             var acciones = (iaData && !iaData._error && (iaData.siguienteAccion || iaData.siguiente_accion || iaData.solucion))
                 || inc['detalleSolucion']
                 || '-';
@@ -334,8 +335,7 @@
                 '<td>' + escapeHtml(impactoRemedy) + '</td>' +
                 '<td>' + escapeHtml(sistema) + '</td>' +
                 '<td style="white-space:nowrap;">' + jiraCell + '</td>' +
-                '<td style="white-space:nowrap;">' + escapeHtml(deliv) + '</td>' +
-                '<td style="min-width:180px;">' + escapeHtml(descProyecto) + '</td>' +
+                '<td style="min-width:200px;" title="' + escapeHtml(proyectoText) + '">' + escapeHtml(proyectoText) + '</td>' +
                 '<td style="min-width:200px;">' + escapeHtml(acciones) + '</td>' +
                 '<td><span class="rd-badge ' + getStatusBadgeClass(inc['Estatus']) + '">' + escapeHtml(inc['Estatus'] || '-') + '</span></td>' +
                 '<td style="white-space:nowrap;">' + escapeHtml(fechaPrevista) + '</td>' +
