@@ -322,10 +322,14 @@
                 ? '<span class="rd-badge rd-badge-media">' + escapeHtml(jiraBug) + '</span>'
                 : '<span style="color:#9CA3AF;">-</span>';
             var proyectoText = proj
-                ? (proj.summary ? (proj.code + ' — ' + proj.summary) : proj.code)
+                ? (proj.code + (proj.despliegue ? ' [' + proj.despliegue + ']' : '') + (proj.summary ? ' — ' + proj.summary : ''))
                 : '-';
+            var despliegueBadgeClass = (proj && proj.despliegue && String(proj.despliegue).toLowerCase().includes('pilot'))
+                ? 'rd-badge-curso'
+                : 'rd-badge-asignado';
             var proyectoCell = proj
                 ? '<div class="rd-cell-clamp"><span class="rd-badge rd-badge-jira">' + escapeHtml(proj.code) + '</span>' +
+                  (proj.despliegue ? ' <span class="rd-badge ' + despliegueBadgeClass + '">' + escapeHtml(proj.despliegue) + '</span>' : '') +
                   (proj.summary ? ' <span style="font-size:11.5px;">' + escapeHtml(proj.summary) + '</span>' : '') + '</div>'
                 : '<span style="color:#9CA3AF;">-</span>';
             var acciones = (iaData && !iaData._error && (iaData.siguienteAccion || iaData.siguiente_accion || iaData.solucion))
