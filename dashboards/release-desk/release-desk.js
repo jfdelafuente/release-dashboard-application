@@ -120,6 +120,22 @@
         return modMs > cachedMs;
     }
 
+    function isCriticalOrHighPriority(inc) {
+        if (!inc) return false;
+        var p = String(inc['Prioridad'] || inc['Urgencia'] || '').toLowerCase();
+        return p.includes('p1') || p.includes('p2') || p.includes('crít') || p.includes('crit') || p.includes('alt');
+    }
+
+    function matchesKpiFilter(inc, kpiFilter) {
+        if (!kpiFilter || kpiFilter === 'all') return true;
+        if (!inc) return false;
+        var st = String(inc['Estatus'] || '').toLowerCase();
+        if (kpiFilter === 'crit_high') return isCriticalOrHighPriority(inc);
+        if (kpiFilter === 'in_progress') return !st.includes('resuelt');
+        if (kpiFilter === 'resolved') return st.includes('resuelt');
+        return true;
+    }
+
     if (typeof module !== 'undefined' && module.exports) {
         module.exports = {
             isClosedStatus: isClosedStatus,
@@ -128,7 +144,8 @@
             resolveProjectInfo: resolveProjectInfo,
             buildFollowupText: buildFollowupText,
             computeOpenAgeDays: computeOpenAgeDays,
-            isIaCacheStale: isIaCacheStale
+            isIaCacheStale: isIaCacheStale,
+            matchesKpiFilter: matchesKpiFilter
         };
     }
 
@@ -145,7 +162,8 @@
         metadata: {},
         projectsCatalog: {},
         overrides: {},
-        editingFechaId: null
+        editingFechaId: null,
+        activeKpiFilter: null
     };
 
     async function preloadCachedIaSummaries(incidents) {
@@ -374,6 +392,15 @@
         document.getElementById('kpiResolvedPendingClose').textContent = resolvedPendingClose;
     }
 
+    function updateKpiActiveUI() {
+        Array.from(document.querySelectorAll('.rd-kpi-card[data-kpi-filter]')).forEach(function (card) {
+            var kpi = card.getAttribute('data-kpi-filter');
+            var active = Boolean(state.activeKpiFilter && state.activeKpiFilter === kpi);
+            card.classList.toggle('is-active', active);
+            card.setAttribute('aria-pressed', active ? 'true' : 'false');
+        });
+    }
+
     function applyFilters() {
         var search = (document.getElementById('filterSearch').value || '').trim().toLowerCase();
         var status = document.getElementById('filterStatus').value;
@@ -383,6 +410,7 @@
         var project = projectEl ? projectEl.value : '';
 
         state.filteredIncidents = state.activeIncidents.filter(function (inc) {
+            if (state.activeKpiFilter && !matchesKpiFilter(inc, state.activeKpiFilter)) return false;
             if (status && inc['Estatus'] !== status) return false;
             if (group && inc['Grupo asignado'] !== group && inc['Grupo Resolutor'] !== group) return false;
             if (prio) {
@@ -741,6 +769,8 @@
     async function loadRelease(releaseName) {
         state.currentRelease = releaseName;
         state.selectedId = null;
+        state.activeKpiFilter = null;
+        updateKpiActiveUI();
         updateUrlReleaseParam(releaseName);
 
         try {
@@ -860,9 +890,34 @@
                 document.getElementById('filterPriority').value = '';
                 var projEl = document.getElementById('filterProject');
                 if (projEl) projEl.value = '';
+                state.activeKpiFilter = null;
+                updateKpiActiveUI();
                 applyFilters();
             });
         }
+
+        Array.from(document.querySelectorAll('.rd-kpi-card[data-kpi-filter]')).forEach(function (card) {
+            card.addEventListener('click', function () {
+                var kpi = card.getAttribute('data-kpi-filter');
+                if (kpi === 'all') {
+                    state.activeKpiFilter = null;
+                    document.getElementById('filterStatus').value = '';
+                    document.getElementById('filterPriority').value = '';
+                } else if (state.activeKpiFilter === kpi) {
+                    state.activeKpiFilter = null;
+                } else {
+                    state.activeKpiFilter = kpi;
+                    if (kpi === 'in_progress' || kpi === 'resolved') {
+                        document.getElementById('filterStatus').value = '';
+                    }
+                    if (kpi === 'crit_high') {
+                        document.getElementById('filterPriority').value = '';
+                    }
+                }
+                updateKpiActiveUI();
+                applyFilters();
+            });
+        });
 
         loadProjectsCatalog().then(function () {
             loadRelease(getUrlReleaseParam());

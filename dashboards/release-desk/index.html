@@ -129,6 +129,20 @@
             display: flex;
             align-items: baseline;
             gap: 8px;
+            cursor: pointer;
+            text-align: left;
+            font: inherit;
+            color: inherit;
+            transition: background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+        }
+        .rd-kpi-card:hover {
+            background: #FFF8F2;
+            border-color: #FDBA74;
+        }
+        .rd-kpi-card.is-active {
+            background: #FFF4E8;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 1px var(--accent);
         }
         .rd-kpi-val {
             font-size: 18px;
@@ -440,22 +454,22 @@
         </header>
 
         <section class="rd-kpis" aria-label="Indicadores de seguimiento activo">
-            <div class="rd-kpi-card">
+            <button type="button" class="rd-kpi-card" data-kpi-filter="all" aria-pressed="false" title="Ver todas las incidencias activas">
                 <div class="rd-kpi-val" id="kpiActiveTotal">0</div>
                 <div class="rd-kpi-label">Incidencias activas (≠ Cerrado)</div>
-            </div>
-            <div class="rd-kpi-card">
+            </button>
+            <button type="button" class="rd-kpi-card" data-kpi-filter="crit_high" aria-pressed="false" title="Filtrar por Prioridad Alta / Crítica (P1–P2)">
                 <div class="rd-kpi-val" id="kpiCriticalHigh">0</div>
                 <div class="rd-kpi-label">Prioridad Alta / Crítica (P1–P2)</div>
-            </div>
-            <div class="rd-kpi-card">
+            </button>
+            <button type="button" class="rd-kpi-card" data-kpi-filter="in_progress" aria-pressed="false" title="Filtrar por Asignadas / En Curso / Pendientes">
                 <div class="rd-kpi-val" id="kpiInProgress">0</div>
                 <div class="rd-kpi-label">Asignadas / En Curso / Pendientes</div>
-            </div>
-            <div class="rd-kpi-card">
+            </button>
+            <button type="button" class="rd-kpi-card" data-kpi-filter="resolved" aria-pressed="false" title="Filtrar por Resueltas pendientes de cierre">
                 <div class="rd-kpi-val" id="kpiResolvedPendingClose">0</div>
                 <div class="rd-kpi-label">Resueltas pendientes de cierre</div>
-            </div>
+            </button>
         </section>
 
         <section class="rd-filters" aria-label="Filtros de la mesa">

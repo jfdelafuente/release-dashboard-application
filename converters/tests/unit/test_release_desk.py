@@ -218,3 +218,25 @@ def test_release_desk_js_is_ia_cache_stale():
     else:
         js = RELEASE_DESK_JS.read_text(encoding="utf-8")
         assert "isIaCacheStale" in js
+
+
+def test_release_desk_js_matches_kpi_filter():
+    if shutil.which("node") is not None:
+        script = (
+            f"const rd = require({json.dumps(str(RELEASE_DESK_JS))});\n"
+            "const p1 = { 'Prioridad': 'Crítica (P1)', 'Estatus': 'En Curso' };\n"
+            "const p3 = { 'Prioridad': 'Media', 'Estatus': 'Asignado' };\n"
+            "const res = { 'Prioridad': 'Alta', 'Estatus': 'Resuelto' };\n"
+            "console.log(JSON.stringify({\n"
+            "  crit: [rd.matchesKpiFilter(p1, 'crit_high'), rd.matchesKpiFilter(p3, 'crit_high')],\n"
+            "  prog: [rd.matchesKpiFilter(p1, 'in_progress'), rd.matchesKpiFilter(res, 'in_progress')],\n"
+            "  res: [rd.matchesKpiFilter(p1, 'resolved'), rd.matchesKpiFilter(res, 'resolved')],\n"
+            "  all: rd.matchesKpiFilter(p3, 'all')\n"
+            "}));\n"
+        )
+        proc = subprocess.run(["node", "-e", script], capture_output=True, text=True, check=True)
+        out = json.loads(proc.stdout)
+        assert out == {"crit": [True, False], "prog": [True, False], "res": [False, True], "all": True}
+    else:
+        js = RELEASE_DESK_JS.read_text(encoding="utf-8")
+        assert "matchesKpiFilter" in js
