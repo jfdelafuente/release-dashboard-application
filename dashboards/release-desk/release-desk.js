@@ -325,7 +325,10 @@
             var acciones = (iaData && !iaData._error && (iaData.siguienteAccion || iaData.siguiente_accion || iaData.solucion))
                 || inc['detalleSolucion']
                 || '-';
-            var fechaPrevista = inc['fechaPrevista'] || inc['Fecha Prevista'] || '-';
+            var estatusLower = String(inc['Estatus'] || '').toLowerCase();
+            var fechaPrevista = estatusLower.includes('resuelt')
+                ? (inc['Fecha de última resolución'] || '')
+                : '';
             var motivoResuelto = inc['Motivo de estado'] || inc['MotivoEstado_Anterior'] || '-';
             var peticionario = inc['Grupo Remitente'] || '-';
 
