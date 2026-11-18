@@ -483,15 +483,15 @@
         var isLoadingIa = state.iaInFlight.has(id);
 
         return '<div class="rd-detail-inline-card">' +
+            '<div id="detailBody" class="rd-detail-body">' +
+                renderIaSection(id, iaData, isLoadingIa) +
+            '</div>' +
             '<div class="rd-detail-inline-header">' +
                 '<span>Seguimiento · ' + escapeHtml(id) + '</span>' +
                 '<div class="rd-detail-inline-actions">' +
                     '<button id="btnCopyFollowup" class="rd-btn rd-btn-dark">📋 Copiar seguimiento</button>' +
                     '<button id="btnCloseDetail" class="rd-btn" title="Cerrar desplegable">✕ Cerrar</button>' +
                 '</div>' +
-            '</div>' +
-            '<div id="detailBody" class="rd-detail-body">' +
-                renderIaSection(id, iaData, isLoadingIa) +
             '</div>' +
         '</div>';
     }
