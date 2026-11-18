@@ -169,7 +169,7 @@
             var jiraBug = inc['JIRA'] || inc['Jira'] || inc['jira'] || '';
             var proj = resolveProjectInfo(inc, projectsCatalog, releaseName);
             var proyectoText = proj
-                ? (proj.code + (proj.despliegue ? ' [' + proj.despliegue + ']' : '') + (proj.summary ? ' — ' + proj.summary : ''))
+                ? ((proj.despliegue ? '[' + proj.despliegue + '] ' : '') + proj.code + (proj.summary ? ' — ' + proj.summary : ''))
                 : '-';
             var acciones = (iaData && !iaData._error && (iaData.siguienteAccion || iaData.siguiente_accion || iaData.solucion))
                 || inc['detalleSolucion']
@@ -534,14 +534,15 @@
                 ? '<span class="rd-badge rd-badge-media">' + escapeHtml(jiraBug) + '</span>'
                 : '<span style="color:#9CA3AF;">-</span>';
             var proyectoText = proj
-                ? (proj.code + (proj.despliegue ? ' [' + proj.despliegue + ']' : '') + (proj.summary ? ' — ' + proj.summary : ''))
+                ? ((proj.despliegue ? '[' + proj.despliegue + '] ' : '') + proj.code + (proj.summary ? ' — ' + proj.summary : ''))
                 : '-';
             var despliegueBadgeClass = (proj && proj.despliegue && String(proj.despliegue).toLowerCase().includes('pilot'))
                 ? 'rd-badge-curso'
                 : 'rd-badge-asignado';
             var proyectoCell = proj
-                ? '<div class="rd-cell-clamp"><span class="rd-badge rd-badge-jira">' + escapeHtml(proj.code) + '</span>' +
-                  (proj.despliegue ? ' <span class="rd-badge ' + despliegueBadgeClass + '">' + escapeHtml(proj.despliegue) + '</span>' : '') +
+                ? '<div class="rd-cell-clamp">' +
+                  (proj.despliegue ? '<span class="rd-badge ' + despliegueBadgeClass + '" style="margin-right:4px;">' + escapeHtml(proj.despliegue) + '</span>' : '') +
+                  '<span class="rd-badge rd-badge-jira">' + escapeHtml(proj.code) + '</span>' +
                   (proj.summary ? ' <span style="font-size:11.5px;">' + escapeHtml(proj.summary) + '</span>' : '') + '</div>'
                 : '<span style="color:#9CA3AF;">-</span>';
             var acciones = (iaData && !iaData._error && (iaData.siguienteAccion || iaData.siguiente_accion || iaData.solucion))
