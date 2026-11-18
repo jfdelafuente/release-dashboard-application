@@ -299,7 +299,7 @@ Invocada por el cliente [`dashboards/reportes-incidencias/api-client.js`](../../
   1. **Caché rápida en memoria (`MEMORY_HIT` / `HIT`)**: Si no se solicita `?force=1` / `?refresh=1` ni `Cache-Control: no-cache`, sirve desde memoria (TTL 15 min).
   2. **Lectura de detalle crudo Remedy**: Consulta `GET https://soptmc.si.orange.es/MonTMC/api/eps/remedyG/{codigo}` (con respaldo local en `data/.remedy_cache/{codigo}.json`) y normaliza marcas temporales UTC (`+00:00`/`Z`) a `Europe/Madrid`.
   3. **Smart Fingerprint Cache (`FINGERPRINT_HIT`)**: Calcula la huella del ticket (`fechaUltimaModificacion`, `estadoDesc`, `detalleSolucion`, número y último apunte de `worklog` y `paps`) junto con el `prompt_hash` de `resumen_incidencia_epsilon.md`. Si coincide con `data/.epsilon_cache/{codigo}.json`, responde al instante sin consumir tokens LLM.
-  4. **Síntesis y Autocorrección (`INTERNAL_LLM_GENERATED`)**: Si el ticket o el prompt cambiaron, sintetiza el resumen contra el Gateway LLM corporativo (`https://llm.tools.cloud.masorange.es/v1/messages`), valida las 10 reglas de `EpsilonResumenModel` (con **1 reintento autocorrectivo** si detecta incumplimiento) y guarda en caché:
+  4. **Síntesis y Autocorrección (`INTERNAL_LLM_GENERATED`)**: Si el ticket o el prompt cambiaron, sintetiza el resumen contra el Gateway LLM corporativo (`https://llm.tools.cloud.masorange.es/v1/messages`), valida las 11 comprobaciones de `EpsilonResumenModel` (10 reglas obligatorias + bloque estructurado opcional `triaje` en `EpsilonTriajeModel`, con **1 reintento autocorrectivo** si detecta incumplimiento) y guarda en caché:
 
      ```json
      {
