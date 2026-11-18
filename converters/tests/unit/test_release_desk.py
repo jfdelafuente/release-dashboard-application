@@ -31,6 +31,7 @@ def test_release_desk_html_has_required_controls():
         "releaseSelect",
         "btnSyncPostmortem",
         "btnEmptySync",
+        "btnCopyBriefing",
         "btnExportCsv",
         "filterSearch",
         "filterStatus",
@@ -301,3 +302,31 @@ def test_release_desk_js_sort_incidents():
     else:
         js = RELEASE_DESK_JS.read_text(encoding="utf-8")
         assert "sortIncidents" in js
+
+
+def test_release_desk_js_build_mesa_briefing():
+    if shutil.which("node") is not None:
+        script = (
+            f"const rd = require({json.dumps(str(RELEASE_DESK_JS))});\n"
+            "const incidents = [\n"
+            "  { 'ID de incidencia': 'INC1', 'Prioridad': 'Crítica (P1)', 'producto': 'AURORA', 'Descripción': '[2026R11] PRJ-101 Fallo login', 'Estatus': 'En Curso', 'Grupo asignado': 'SOP_A' },\n"
+            "  { 'ID de incidencia': 'INC2', 'Prioridad': 'Media', 'Descripción': 'Consulta menor', 'Estatus': 'Resuelto', 'Fecha de última resolución': '17/11/2026' }\n"
+            "];\n"
+            "const iaCache = new Map([['INC1', { problema: 'Fallo login PRO', siguienteAccion: 'Reiniciar nodo' }]]);\n"
+            "const catalog = { by_release: { '2026R11': { 'PRJ-101': { summary: 'Portal B2B', despliegue: 'Piloto' } } } };\n"
+            "const overrides = { 'INC1': { fecha_prevista: '2026-11-10' } };\n"
+            "const txt = rd.buildMesaBriefing(incidents, iaCache, catalog, '2026R11', overrides, '2026-11-18T12:00:00Z');\n"
+            "console.log(txt);\n"
+        )
+        proc = subprocess.run(["node", "-e", script], capture_output=True, text=True, check=True)
+        out = proc.stdout
+        assert "### Briefing Mesa de Release 2026R11 (2026-11-18)" in out
+        assert "**Total visibles:** 2 | **Resueltas:** 1 | **Compromisos vencidos:** 1" in out
+        assert "#### Crítica (P1) (1)" in out
+        assert "⚠️ VENCIDA 2026-11-10" in out
+        assert "[Piloto] PRJ-101 — Portal B2B" in out
+        assert "*Acción:* Reiniciar nodo" in out
+        assert "#### Media (P3) (1)" in out
+    else:
+        js = RELEASE_DESK_JS.read_text(encoding="utf-8")
+        assert "buildMesaBriefing" in js

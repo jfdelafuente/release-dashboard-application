@@ -262,6 +262,77 @@
         });
     }
 
+    function buildMesaBriefing(incidents, iaCache, projectsCatalog, releaseName, overrides, nowDate) {
+        var list = Array.isArray(incidents) ? incidents : [];
+        var today = nowDate ? new Date(nowDate) : new Date();
+        var todayYmd = today.getFullYear() + '-' +
+            String(today.getMonth() + 1).padStart(2, '0') + '-' +
+            String(today.getDate()).padStart(2, '0');
+
+        var buckets = {
+            1: { title: 'Crítica (P1)', items: [] },
+            2: { title: 'Alta (P2)', items: [] },
+            3: { title: 'Media (P3)', items: [] },
+            99: { title: 'Baja / Otras', items: [] }
+        };
+        var overdueCount = 0;
+        var resolvedCount = 0;
+
+        list.forEach(function (inc) {
+            var id = inc['ID de incidencia'] || '-';
+            var iaData = iaCache ? (typeof iaCache.get === 'function' ? iaCache.get(id) : iaCache[id]) : null;
+            var descBase = (iaData && !iaData._error && iaData.problema) ? iaData.problema : (inc['Descripción'] || '-');
+            var producto = inc['producto'] ? String(inc['producto']).trim() : '';
+            var desc = (producto ? '[' + producto + '] ' : '') + String(descBase).replace(/\r?\n/g, ' ').trim();
+            var acciones = (iaData && !iaData._error && (iaData.siguienteAccion || iaData.siguiente_accion || iaData.solucion))
+                || inc['detalleSolucion']
+                || '';
+            acciones = String(acciones).replace(/\r?\n/g, ' ').trim();
+
+            var proj = resolveProjectInfo(inc, projectsCatalog, releaseName);
+            var projLabel = proj
+                ? ((proj.despliegue ? '[' + proj.despliegue + '] ' : '') + proj.code + (proj.summary ? ' — ' + proj.summary : ''))
+                : '';
+
+            var estatus = inc['Estatus'] || '-';
+            var isResolved = String(estatus).toLowerCase().includes('resuelt');
+            if (isResolved) resolvedCount++;
+            var agreedFecha = (overrides && overrides[id] && overrides[id].fecha_prevista) ? overrides[id].fecha_prevista : '';
+            var fechaPrevista = isResolved ? (inc['Fecha de última resolución'] || '') : agreedFecha;
+            var isOverdue = !isResolved && agreedFecha && agreedFecha < todayYmd;
+            if (isOverdue) overdueCount++;
+
+            var metaParts = [estatus];
+            if (inc['Grupo asignado']) metaParts.push(inc['Grupo asignado']);
+            if (projLabel) metaParts.push(projLabel);
+            if (fechaPrevista) {
+                metaParts.push((isOverdue ? '⚠️ VENCIDA ' : 'Prev: ') + fechaPrevista);
+            } else if (!isResolved) {
+                metaParts.push('Sin fecha prevista');
+            }
+
+            var line = '- **' + id + '** (' + metaParts.join(' | ') + '): ' + desc;
+            if (acciones) line += ' — *Acción:* ' + acciones;
+
+            var rank = priorityRank(inc);
+            var bucketKey = buckets[rank] ? rank : 99;
+            buckets[bucketKey].items.push(line);
+        });
+
+        var header = '### Briefing Mesa de Release ' + (releaseName || '') + ' (' + todayYmd + ')\n' +
+            '**Total visibles:** ' + list.length +
+            ' | **Resueltas:** ' + resolvedCount +
+            ' | **Compromisos vencidos:** ' + overdueCount;
+
+        var sections = [header];
+        [1, 2, 3, 99].forEach(function (k) {
+            if (buckets[k].items.length > 0) {
+                sections.push('\n#### ' + buckets[k].title + ' (' + buckets[k].items.length + ')\n' + buckets[k].items.join('\n'));
+            }
+        });
+        return sections.join('\n');
+    }
+
     if (typeof module !== 'undefined' && module.exports) {
         module.exports = {
             isClosedStatus: isClosedStatus,
@@ -273,7 +344,8 @@
             isIaCacheStale: isIaCacheStale,
             matchesKpiFilter: matchesKpiFilter,
             buildExportCsv: buildExportCsv,
-            sortIncidents: sortIncidents
+            sortIncidents: sortIncidents,
+            buildMesaBriefing: buildMesaBriefing
         };
     }
 
@@ -1096,6 +1168,44 @@
                 document.body.removeChild(a);
                 setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
                 notify('Exportadas ' + state.filteredIncidents.length + ' incidencias a CSV.', 'success');
+            });
+        }
+
+        var btnCopyBriefing = document.getElementById('btnCopyBriefing');
+        if (btnCopyBriefing) {
+            btnCopyBriefing.addEventListener('click', function () {
+                if (!state.filteredIncidents || state.filteredIncidents.length === 0) {
+                    notify('No hay incidencias visibles para generar el briefing.', 'warning');
+                    return;
+                }
+                var text = buildMesaBriefing(
+                    state.filteredIncidents,
+                    state.iaCache,
+                    state.projectsCatalog,
+                    state.currentRelease,
+                    state.overrides
+                );
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    navigator.clipboard.writeText(text).then(function () {
+                        notify('Briefing de Mesa copiado (' + state.filteredIncidents.length + ' incidencias).', 'success');
+                    }).catch(function () {
+                        notify('No se pudo copiar al portapapeles.', 'error');
+                    });
+                } else {
+                    var ta = document.createElement('textarea');
+                    ta.value = text;
+                    ta.style.position = 'fixed';
+                    ta.style.opacity = '0';
+                    document.body.appendChild(ta);
+                    ta.select();
+                    try {
+                        document.execCommand('copy');
+                        notify('Briefing de Mesa copiado (' + state.filteredIncidents.length + ' incidencias).', 'success');
+                    } catch (err) {
+                        notify('No se pudo copiar al portapapeles.', 'error');
+                    }
+                    document.body.removeChild(ta);
+                }
             });
         }
 
