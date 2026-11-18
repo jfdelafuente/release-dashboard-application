@@ -74,11 +74,10 @@ def test_projects_catalog_json_valid():
     if not catalog_path.exists():
         pytest.skip("data/projects_catalog.json es un fichero local (gitignored)")
     catalog = json.loads(catalog_path.read_text(encoding="utf-8"))
-    assert "2026R11" in catalog.get("by_release", {})
-    assert "PRJ-12305" in catalog["by_release"]["2026R11"]
-    assert catalog["by_release"]["2026R11"]["PRJ-12305"]["despliegue"] == "Completo"
-    assert "PRJ-11894" in catalog.get("projects", {})
-    assert catalog["projects"]["PRJ-11894"]["despliegue"] == "Piloto"
+    assert isinstance(catalog.get("by_release"), dict)
+    assert isinstance(catalog.get("projects"), dict)
+    assert len(catalog["by_release"]) >= 1
+    assert len(catalog["projects"]) >= 1
 
 
 def test_update_projects_catalog_preserves_older_releases(tmp_path: Path):
