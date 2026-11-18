@@ -446,6 +446,68 @@
         return renderBriefingOutput(title, list.length, resolvedCount, overdueCount, sections);
     }
 
+    function getDespliegueBadgeClass(despliegue) {
+        var d = despliegue ? String(despliegue).toLowerCase() : '';
+        if (d.includes('complet')) return 'rd-badge-despliegue-completo';
+        if (d.includes('pilot')) return 'rd-badge-despliegue-piloto';
+        if (d.includes('ocult')) return 'rd-badge-despliegue-oculto';
+        if (d.includes('pap') || d.includes('técnic') || d.includes('tecnic')) return 'rd-badge-despliegue-pap';
+        return 'rd-badge-despliegue-otro';
+    }
+
+    function groupIncidentsByProject(incidents, projectsCatalog, releaseName, overrides, nowDate) {
+        var list = Array.isArray(incidents) ? incidents : [];
+        var map = {};
+        list.forEach(function (inc) {
+            var proj = resolveProjectInfo(inc, projectsCatalog, releaseName);
+            var key = proj ? proj.code : '__NO_PROJECT__';
+            if (!map[key]) {
+                map[key] = {
+                    code: proj ? proj.code : 'Sin proyecto',
+                    hasProject: Boolean(proj),
+                    despliegue: proj ? (proj.despliegue || '') : '',
+                    summary: proj ? (proj.summary || '') : '',
+                    total: 0,
+                    p1: 0,
+                    p2: 0,
+                    p3Other: 0,
+                    resolved: 0,
+                    overdue: 0,
+                    missingFecha: 0,
+                    health: 'ok',
+                    incidents: []
+                };
+            }
+            var grp = map[key];
+            grp.total++;
+            grp.incidents.push(inc);
+            var rank = priorityRank(inc);
+            if (rank === 1) grp.p1++;
+            else if (rank === 2) grp.p2++;
+            else grp.p3Other++;
+
+            var fst = getFechaPrevistaStatus(inc, overrides, nowDate);
+            if (fst === 'resolved') grp.resolved++;
+            else if (fst === 'overdue') grp.overdue++;
+            else if (fst === 'missing') grp.missingFecha++;
+        });
+
+        var healthOrder = { crit: 0, warn: 1, ok: 2 };
+        return Object.keys(map).map(function (k) {
+            var g = map[k];
+            if (g.p1 > 0 || g.overdue > 0) g.health = 'crit';
+            else if (g.p2 > 0 || g.missingFecha > 0) g.health = 'warn';
+            else g.health = 'ok';
+            return g;
+        }).sort(function (a, b) {
+            if (a.hasProject !== b.hasProject) return a.hasProject ? -1 : 1;
+            var ho = healthOrder[a.health] - healthOrder[b.health];
+            if (ho !== 0) return ho;
+            if (b.total !== a.total) return b.total - a.total;
+            return a.code.localeCompare(b.code, 'es', { sensitivity: 'base' });
+        });
+    }
+
     if (typeof module !== 'undefined' && module.exports) {
         module.exports = {
             isClosedStatus: isClosedStatus,
@@ -460,7 +522,8 @@
             sortIncidents: sortIncidents,
             buildMesaBriefing: buildMesaBriefing,
             buildMesaBriefingBySystem: buildMesaBriefingBySystem,
-            getFechaPrevistaStatus: getFechaPrevistaStatus
+            getFechaPrevistaStatus: getFechaPrevistaStatus,
+            groupIncidentsByProject: groupIncidentsByProject
         };
     }
 
@@ -480,7 +543,8 @@
         editingFechaId: null,
         activeKpiFilter: null,
         sortKey: null,
-        sortDir: 'asc'
+        sortDir: 'asc',
+        viewMode: 'table'
     };
 
     async function preloadCachedIaSummaries(incidents) {
@@ -776,6 +840,121 @@
         }
 
         renderTable();
+        if (state.viewMode === 'projects') {
+            renderProjectSummaryView();
+        }
+    }
+
+    function setViewMode(mode) {
+        state.viewMode = mode === 'projects' ? 'projects' : 'table';
+        var tableWrap = document.getElementById('tableViewWrap');
+        var projWrap = document.getElementById('projectSummaryView');
+        var btnTable = document.getElementById('btnViewTable');
+        var btnProj = document.getElementById('btnViewByProject');
+        var isProj = state.viewMode === 'projects';
+
+        if (tableWrap) tableWrap.classList.toggle('hidden', isProj);
+        if (projWrap) projWrap.classList.toggle('hidden', !isProj);
+        if (btnTable) {
+            btnTable.classList.toggle('is-active', !isProj);
+            btnTable.setAttribute('aria-pressed', !isProj ? 'true' : 'false');
+        }
+        if (btnProj) {
+            btnProj.classList.toggle('is-active', isProj);
+            btnProj.setAttribute('aria-pressed', isProj ? 'true' : 'false');
+        }
+        if (isProj) {
+            renderProjectSummaryView();
+        }
+    }
+
+    function renderProjectSummaryView() {
+        var container = document.getElementById('projectSummaryView');
+        if (!container) return;
+
+        if (!state.filteredIncidents || state.filteredIncidents.length === 0) {
+            container.innerHTML = '<div style="text-align:center; padding:24px; color:#5C5852;">No hay incidencias activas que coincidan con los filtros actuales.</div>';
+            return;
+        }
+
+        var groups = groupIncidentsByProject(
+            state.filteredIncidents,
+            state.projectsCatalog,
+            state.currentRelease,
+            state.overrides
+        );
+
+        var healthMeta = {
+            crit: { label: 'Riesgo alto', cls: 'rd-badge-critica' },
+            warn: { label: 'Atención', cls: 'rd-badge-alta' },
+            ok: { label: 'Controlado', cls: 'rd-badge-resuelto' }
+        };
+
+        container.innerHTML = '<div class="rd-projects-grid">' + groups.map(function (g) {
+            var hm = healthMeta[g.health] || healthMeta.ok;
+            var despliegueHtml = g.despliegue
+                ? '<span class="rd-badge ' + getDespliegueBadgeClass(g.despliegue) + '">' + escapeHtml(g.despliegue) + '</span>'
+                : '';
+            var codeBadge = g.hasProject
+                ? '<span class="rd-badge rd-badge-jira">' + escapeHtml(g.code) + '</span>'
+                : '<span class="rd-badge rd-badge-media">' + escapeHtml(g.code) + '</span>';
+
+            var metrics = [
+                '<span class="rd-badge rd-badge-code">Total: ' + g.total + '</span>'
+            ];
+            if (g.p1 > 0) metrics.push('<span class="rd-badge rd-badge-critica">P1: ' + g.p1 + '</span>');
+            if (g.p2 > 0) metrics.push('<span class="rd-badge rd-badge-alta">P2: ' + g.p2 + '</span>');
+            if (g.p3Other > 0) metrics.push('<span class="rd-badge rd-badge-media">P3/Otras: ' + g.p3Other + '</span>');
+            if (g.overdue > 0) metrics.push('<span class="rd-badge rd-badge-fecha-vencida">⚠ Vencidas: ' + g.overdue + '</span>');
+            if (g.missingFecha > 0) metrics.push('<span class="rd-badge rd-badge-curso">Sin fecha: ' + g.missingFecha + '</span>');
+            if (g.resolved > 0) metrics.push('<span class="rd-badge rd-badge-resuelto">Resueltas: ' + g.resolved + '</span>');
+
+            var incButtons = g.incidents.map(function (inc) {
+                var incId = inc['ID de incidencia'] || '-';
+                var st = inc['Estatus'] || '';
+                return '<button type="button" class="rd-project-inc-btn" data-open-inc="' + escapeHtml(incId) + '" title="' + escapeHtml((inc['Prioridad'] || inc['Urgencia'] || '') + ' · ' + st) + '">' + escapeHtml(incId) + '</button>';
+            }).join('');
+
+            var filterAction = g.hasProject
+                ? '<button type="button" class="rd-fecha-add-btn" data-filter-proj="' + escapeHtml(g.code) + '" title="Filtrar la tabla por este proyecto">Ver en tabla →</button>'
+                : '';
+
+            return '<article class="rd-project-card is-' + g.health + '">' +
+                '<div class="rd-project-head">' +
+                    '<div style="display:flex;align-items:center;gap:4px;flex-wrap:wrap;">' + despliegueHtml + codeBadge + '</div>' +
+                    '<div style="display:flex;align-items:center;gap:6px;">' +
+                        '<span class="rd-badge ' + hm.cls + '">' + hm.label + '</span>' +
+                        filterAction +
+                    '</div>' +
+                '</div>' +
+                (g.summary ? '<div class="rd-project-title">' + escapeHtml(g.summary) + '</div>' : '') +
+                '<div class="rd-project-metrics">' + metrics.join('') + '</div>' +
+                '<div class="rd-project-inc-list">' + incButtons + '</div>' +
+            '</article>';
+        }).join('') + '</div>';
+
+        Array.from(container.querySelectorAll('[data-filter-proj]')).forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                var code = btn.getAttribute('data-filter-proj');
+                var projSel = document.getElementById('filterProject');
+                if (projSel) projSel.value = code;
+                setViewMode('table');
+                applyFilters();
+            });
+        });
+
+        Array.from(container.querySelectorAll('[data-open-inc]')).forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                var incId = btn.getAttribute('data-open-inc');
+                state.selectedId = incId;
+                setViewMode('table');
+                renderTable();
+                var row = document.querySelector('#incidentsTableBody tr[data-inc-id="' + incId + '"]');
+                if (row && row.scrollIntoView) {
+                    row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            });
+        });
     }
 
     function renderTable() {
@@ -809,12 +988,7 @@
             var proyectoText = proj
                 ? ((proj.despliegue ? '[' + proj.despliegue + '] ' : '') + proj.code + (proj.summary ? ' — ' + proj.summary : ''))
                 : '-';
-            var despliegueLower = proj && proj.despliegue ? String(proj.despliegue).toLowerCase() : '';
-            var despliegueBadgeClass = 'rd-badge-despliegue-otro';
-            if (despliegueLower.includes('complet')) despliegueBadgeClass = 'rd-badge-despliegue-completo';
-            else if (despliegueLower.includes('pilot')) despliegueBadgeClass = 'rd-badge-despliegue-piloto';
-            else if (despliegueLower.includes('ocult')) despliegueBadgeClass = 'rd-badge-despliegue-oculto';
-            else if (despliegueLower.includes('pap') || despliegueLower.includes('técnic') || despliegueLower.includes('tecnic')) despliegueBadgeClass = 'rd-badge-despliegue-pap';
+            var despliegueBadgeClass = getDespliegueBadgeClass(proj && proj.despliegue);
             var proyectoCell = proj
                 ? '<div class="rd-cell-clamp">' +
                   (proj.despliegue ? '<span class="rd-badge ' + despliegueBadgeClass + '" style="margin-right:4px;">' + escapeHtml(proj.despliegue) + '</span>' : '') +
@@ -1399,6 +1573,15 @@
                 applyFilters();
             });
         });
+
+        var btnViewTable = document.getElementById('btnViewTable');
+        var btnViewByProject = document.getElementById('btnViewByProject');
+        if (btnViewTable) {
+            btnViewTable.addEventListener('click', function () { setViewMode('table'); });
+        }
+        if (btnViewByProject) {
+            btnViewByProject.addEventListener('click', function () { setViewMode('projects'); });
+        }
 
         loadProjectsCatalog().then(function () {
             loadRelease(getUrlReleaseParam());

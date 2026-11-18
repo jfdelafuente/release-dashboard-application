@@ -34,6 +34,9 @@ def test_release_desk_html_has_required_controls():
         "btnCopyBriefing",
         "btnCopyBriefingSystem",
         "btnExportCsv",
+        "btnViewTable",
+        "btnViewByProject",
+        "projectSummaryView",
         "filterSearch",
         "filterStatus",
         "filterGroup",
@@ -401,3 +404,34 @@ def test_release_desk_js_fecha_prevista_status():
     else:
         js = RELEASE_DESK_JS.read_text(encoding="utf-8")
         assert "getFechaPrevistaStatus" in js
+
+
+def test_release_desk_js_group_incidents_by_project():
+    if shutil.which("node") is not None:
+        script = (
+            f"const rd = require({json.dumps(str(RELEASE_DESK_JS))});\n"
+            "const incidents = [\n"
+            "  { 'ID de incidencia': 'INC1', 'Prioridad': 'Crítica (P1)', 'Descripción': 'PRJ-100 Fallo', 'Estatus': 'En Curso' },\n"
+            "  { 'ID de incidencia': 'INC2', 'Prioridad': 'Media', 'Descripción': 'PRJ-200 Menor', 'Estatus': 'Resuelto' },\n"
+            "  { 'ID de incidencia': 'INC3', 'Prioridad': 'Alta', 'Descripción': 'PRJ-300 Medio', 'Estatus': 'Asignado' },\n"
+            "  { 'ID de incidencia': 'INC4', 'Prioridad': 'Media', 'Descripción': 'Sin tag proyecto', 'Estatus': 'Asignado' }\n"
+            "];\n"
+            "const catalog = { by_release: { '2026R11': {\n"
+            "  'PRJ-100': { summary: 'Proyecto Critico', despliegue: 'Completo' },\n"
+            "  'PRJ-200': { summary: 'Proyecto OK', despliegue: 'Piloto' },\n"
+            "  'PRJ-300': { summary: 'Proyecto Warn', despliegue: 'Modo Oculto' }\n"
+            "} } };\n"
+            "const groups = rd.groupIncidentsByProject(incidents, catalog, '2026R11', {}, '2026-11-18T12:00:00Z');\n"
+            "console.log(JSON.stringify(groups.map(g => ({ code: g.code, health: g.health, total: g.total, p1: g.p1, p2: g.p2 }))));\n"
+        )
+        proc = subprocess.run(["node", "-e", script], capture_output=True, text=True, check=True)
+        out = json.loads(proc.stdout)
+        assert out == [
+            {"code": "PRJ-100", "health": "crit", "total": 1, "p1": 1, "p2": 0},
+            {"code": "PRJ-300", "health": "warn", "total": 1, "p1": 0, "p2": 1},
+            {"code": "PRJ-200", "health": "ok", "total": 1, "p1": 0, "p2": 0},
+            {"code": "Sin proyecto", "health": "warn", "total": 1, "p1": 0, "p2": 0},
+        ]
+    else:
+        js = RELEASE_DESK_JS.read_text(encoding="utf-8")
+        assert "groupIncidentsByProject" in js
