@@ -536,9 +536,12 @@
             var proyectoText = proj
                 ? ((proj.despliegue ? '[' + proj.despliegue + '] ' : '') + proj.code + (proj.summary ? ' — ' + proj.summary : ''))
                 : '-';
-            var despliegueBadgeClass = (proj && proj.despliegue && String(proj.despliegue).toLowerCase().includes('pilot'))
-                ? 'rd-badge-curso'
-                : 'rd-badge-asignado';
+            var despliegueLower = proj && proj.despliegue ? String(proj.despliegue).toLowerCase() : '';
+            var despliegueBadgeClass = 'rd-badge-despliegue-otro';
+            if (despliegueLower.includes('complet')) despliegueBadgeClass = 'rd-badge-despliegue-completo';
+            else if (despliegueLower.includes('pilot')) despliegueBadgeClass = 'rd-badge-despliegue-piloto';
+            else if (despliegueLower.includes('ocult')) despliegueBadgeClass = 'rd-badge-despliegue-oculto';
+            else if (despliegueLower.includes('pap') || despliegueLower.includes('técnic') || despliegueLower.includes('tecnic')) despliegueBadgeClass = 'rd-badge-despliegue-pap';
             var proyectoCell = proj
                 ? '<div class="rd-cell-clamp">' +
                   (proj.despliegue ? '<span class="rd-badge ' + despliegueBadgeClass + '" style="margin-right:4px;">' + escapeHtml(proj.despliegue) + '</span>' : '') +
