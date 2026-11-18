@@ -329,18 +329,18 @@
             var peticionario = inc['Grupo Remitente'] || '-';
 
             return '<tr data-inc-id="' + escapeHtml(id) + '"' + isSel + '>' +
-                '<td style="font-weight:600; white-space:nowrap;">' + escapeHtml(id) + '</td>' +
-                '<td style="white-space:nowrap;">' + escapeHtml(fechaApertura) + '</td>' +
-                '<td style="min-width:220px;">' + escapeHtml(descProblema) + '</td>' +
-                '<td>' + escapeHtml(prioridadUrg) + '</td>' +
-                '<td>' + escapeHtml(sistema) + '</td>' +
+                '<td style="font-weight:600; white-space:nowrap; font-size:11.5px;">' + escapeHtml(id) + '</td>' +
+                '<td style="font-size:11.5px; min-width:78px;">' + escapeHtml(fechaApertura) + '</td>' +
+                '<td style="min-width:140px; max-width:220px;" title="' + escapeHtml(descProblema) + '"><div class="rd-cell-clamp">' + escapeHtml(descProblema) + '</div></td>' +
+                '<td style="white-space:nowrap;">' + escapeHtml(prioridadUrg) + '</td>' +
+                '<td style="max-width:120px;">' + escapeHtml(sistema) + '</td>' +
                 '<td style="white-space:nowrap;">' + jiraCell + '</td>' +
-                '<td style="min-width:200px;" title="' + escapeHtml(proyectoText) + '">' + escapeHtml(proyectoText) + '</td>' +
-                '<td style="min-width:200px;">' + escapeHtml(acciones) + '</td>' +
+                '<td style="min-width:120px; max-width:190px;" title="' + escapeHtml(proyectoText) + '"><div class="rd-cell-clamp">' + escapeHtml(proyectoText) + '</div></td>' +
+                '<td style="min-width:150px; max-width:230px;" title="' + escapeHtml(acciones) + '"><div class="rd-cell-clamp">' + escapeHtml(acciones) + '</div></td>' +
                 '<td><span class="rd-badge ' + getStatusBadgeClass(inc['Estatus']) + '">' + escapeHtml(inc['Estatus'] || '-') + '</span></td>' +
-                '<td style="white-space:nowrap;">' + escapeHtml(fechaPrevista) + '</td>' +
-                '<td>' + escapeHtml(motivoResuelto) + '</td>' +
-                '<td>' + escapeHtml(peticionario) + '</td>' +
+                '<td style="font-size:11.5px; min-width:78px;">' + escapeHtml(fechaPrevista) + '</td>' +
+                '<td style="max-width:130px;">' + escapeHtml(motivoResuelto) + '</td>' +
+                '<td style="max-width:120px;">' + escapeHtml(peticionario) + '</td>' +
                 '</tr>';
         }).join('');
 

@@ -32,9 +32,9 @@
             line-height: 1.45;
         }
         .rd-container {
-            max-width: 1520px;
+            max-width: 1820px;
             margin: 0 auto;
-            padding: 20px 24px 40px;
+            padding: 18px 20px 36px;
         }
         .rd-header {
             display: flex;
@@ -181,25 +181,34 @@
         table.rd-table {
             width: 100%;
             border-collapse: collapse;
-            font-size: 13px;
+            font-size: 12px;
+            line-height: 1.35;
         }
         table.rd-table th {
             position: sticky;
             top: 0;
             background: #FAF9F7;
             text-align: left;
-            padding: 10px 12px;
+            padding: 8px 7px;
             border-bottom: 1px solid var(--border-subtle);
-            font-size: 11px;
+            font-size: 10.5px;
             text-transform: uppercase;
-            letter-spacing: 0.04em;
+            letter-spacing: 0.03em;
             color: var(--text-secondary);
+            line-height: 1.25;
             z-index: 1;
         }
         table.rd-table td {
-            padding: 10px 12px;
+            padding: 7px 7px;
             border-bottom: 1px solid #F0ECE5;
             vertical-align: top;
+            overflow-wrap: anywhere;
+        }
+        .rd-cell-clamp {
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
         }
         table.rd-table tbody tr {
             cursor: pointer;
