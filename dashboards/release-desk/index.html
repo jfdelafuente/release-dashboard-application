@@ -153,7 +153,7 @@
         }
         .rd-workspace {
             display: grid;
-            grid-template-columns: minmax(0, 1.35fr) minmax(360px, 1fr);
+            grid-template-columns: 1fr;
             gap: 16px;
             align-items: start;
         }
@@ -379,14 +379,19 @@
                     <table class="rd-table">
                         <thead>
                             <tr>
-                                <th>ID</th>
-                                <th>Proyecto</th>
-                                <th>Descripción</th>
-                                <th>Estado</th>
-                                <th>Prioridad / Urg.</th>
-                                <th>Soporte / Resolutor</th>
-                                <th>Responsable</th>
-                                <th>Envío</th>
+                                <th>Código Incidencia</th>
+                                <th>Fecha Apertura</th>
+                                <th>Descripción problema</th>
+                                <th>Impacto Remedy</th>
+                                <th>Sistema</th>
+                                <th>JIRA</th>
+                                <th>DELIV</th>
+                                <th>Descripción Proyecto</th>
+                                <th>Acciones</th>
+                                <th>Status</th>
+                                <th>Fecha Prevista</th>
+                                <th>Motivo Estado Resuelto</th>
+                                <th>Peticionario</th>
                             </tr>
                         </thead>
                         <tbody id="incidentsTableBody"></tbody>

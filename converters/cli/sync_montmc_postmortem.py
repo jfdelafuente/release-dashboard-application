@@ -368,6 +368,7 @@ def sync_postmortem_release(
         "Impacto",
         "detalleSolucion",
         "fechaUltimaModificacion",
+        "fechaPrevista",
     )
 
     for raw_rec in raw_incidencias:

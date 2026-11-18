@@ -302,32 +302,45 @@
         visibleCount.textContent = state.filteredIncidents.length;
 
         if (state.filteredIncidents.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding:24px; color:#5C5852;">No hay incidencias activas que coincidan con los filtros actuales.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="13" style="text-align:center; padding:24px; color:#5C5852;">No hay incidencias activas que coincidan con los filtros actuales.</td></tr>';
             return;
         }
 
         tbody.innerHTML = state.filteredIncidents.map(function (inc) {
             var id = inc['ID de incidencia'] || '-';
             var isSel = id === state.selectedId ? ' class="is-selected"' : '';
-            var prioLabel = inc['Prioridad'] || inc['Urgencia'] || '-';
-            var soporte = inc['Grupo Resolutor'] || inc['Grupo asignado'] || '-';
-            var resp = inc['Grupo Remitente'] || '-';
-            var fecha = inc['Fecha de envío'] || '-';
+            var fechaApertura = inc['Fecha de envío'] || '-';
+            var iaData = state.iaCache.get(id);
+            var descProblema = (iaData && !iaData._error && iaData.problema) ? iaData.problema : (inc['Descripción'] || '-');
+            var impactoRemedy = inc['Impacto'] || inc['Urgencia'] || '-';
+            var sistema = inc['producto'] || inc['Grupo Resolutor'] || inc['Grupo asignado'] || '-';
             var proj = resolveProjectInfo(inc, state.projectsCatalog, state.currentRelease);
-            var projCell = proj
-                ? '<span class="rd-badge rd-badge-media" title="' + escapeHtml(proj.summary || proj.code) + '">' + escapeHtml(proj.code) + '</span>' +
-                  (proj.summary ? '<div style="font-size:11px; color:#5C5852; margin-top:2px; max-width:190px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="' + escapeHtml(proj.summary) + '">' + escapeHtml(proj.summary) + '</div>' : '')
+            var jiraCell = proj
+                ? '<span class="rd-badge rd-badge-media">' + escapeHtml(proj.code) + '</span>'
                 : '<span style="color:#9CA3AF;">-</span>';
+            var deliv = inc['DELIV'] || (proj && proj.deliv) || '-';
+            var descProyecto = (proj && proj.summary) ? proj.summary : '-';
+            var acciones = (iaData && !iaData._error && (iaData.siguienteAccion || iaData.siguiente_accion || iaData.solucion))
+                || inc['detalleSolucion']
+                || '-';
+            var fechaPrevista = inc['fechaPrevista'] || inc['Fecha Prevista'] || '-';
+            var motivoResuelto = inc['Motivo de estado'] || inc['MotivoEstado_Anterior'] || '-';
+            var peticionario = inc['Grupo Remitente'] || '-';
 
             return '<tr data-inc-id="' + escapeHtml(id) + '"' + isSel + '>' +
                 '<td style="font-weight:600; white-space:nowrap;">' + escapeHtml(id) + '</td>' +
-                '<td>' + projCell + '</td>' +
-                '<td>' + escapeHtml(inc['Descripción'] || '') + '</td>' +
+                '<td style="white-space:nowrap;">' + escapeHtml(fechaApertura) + '</td>' +
+                '<td style="min-width:220px;">' + escapeHtml(descProblema) + '</td>' +
+                '<td>' + escapeHtml(impactoRemedy) + '</td>' +
+                '<td>' + escapeHtml(sistema) + '</td>' +
+                '<td style="white-space:nowrap;">' + jiraCell + '</td>' +
+                '<td style="white-space:nowrap;">' + escapeHtml(deliv) + '</td>' +
+                '<td style="min-width:180px;">' + escapeHtml(descProyecto) + '</td>' +
+                '<td style="min-width:200px;">' + escapeHtml(acciones) + '</td>' +
                 '<td><span class="rd-badge ' + getStatusBadgeClass(inc['Estatus']) + '">' + escapeHtml(inc['Estatus'] || '-') + '</span></td>' +
-                '<td><span class="rd-badge ' + getPriorityBadgeClass(inc['Prioridad'], inc['Urgencia']) + '">' + escapeHtml(prioLabel) + '</span></td>' +
-                '<td>' + escapeHtml(soporte) + '</td>' +
-                '<td>' + escapeHtml(resp) + '</td>' +
-                '<td style="white-space:nowrap;">' + escapeHtml(fecha) + '</td>' +
+                '<td style="white-space:nowrap;">' + escapeHtml(fechaPrevista) + '</td>' +
+                '<td>' + escapeHtml(motivoResuelto) + '</td>' +
+                '<td>' + escapeHtml(peticionario) + '</td>' +
                 '</tr>';
         }).join('');
 
@@ -474,6 +487,7 @@
             if (forceRefresh) notify('Error al refrescar Resumen IA: ' + (err.message || err), 'error');
         } finally {
             state.iaInFlight.delete(id);
+            renderTable();
             if (state.selectedId === id) renderDetail();
         }
     }

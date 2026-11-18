@@ -374,6 +374,9 @@ class MonTMCClient:
 
         if record.get("fechaUltimaModificacion"):
             normalized["fechaUltimaModificacion"] = record["fechaUltimaModificacion"]
+        fecha_prevista = _iso_to_dashboard_date(record.get("fechaPrevista"))
+        if fecha_prevista:
+            normalized["fechaPrevista"] = fecha_prevista
         solucion = record.get("detalleSolucion") or record.get("solucion")
         if solucion:
             normalized["detalleSolucion"] = solucion

@@ -41,6 +41,23 @@ def test_release_desk_html_has_required_controls():
     ):
         assert required_id in html, f"Falta {required_id} en release-desk/index.html"
 
+    for col in (
+        "Código Incidencia",
+        "Fecha Apertura",
+        "Descripción problema",
+        "Impacto Remedy",
+        "Sistema",
+        "JIRA",
+        "DELIV",
+        "Descripción Proyecto",
+        "Acciones",
+        "Status",
+        "Fecha Prevista",
+        "Motivo Estado Resuelto",
+        "Peticionario",
+    ):
+        assert f"<th>{col}</th>" in html, f"Falta columna {col} en release-desk/index.html"
+
 
 def test_release_desk_js_uses_postmortem_and_resumen_ia_only():
     js = RELEASE_DESK_JS.read_text(encoding="utf-8")
