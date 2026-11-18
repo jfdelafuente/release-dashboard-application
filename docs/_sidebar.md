@@ -46,6 +46,7 @@
 
 * **05. Postmortem y Reportes**
   * [Resumen de Sección](/05-postmortem-y-reportes/README.md)
+  * [Mesa de Release (Consola)](/05-postmortem-y-reportes/mesa-de-release.md)
   * [Informe Ejecutivo PPTX](/05-postmortem-y-reportes/informe-ejecutivo-postmortem.md)
   * [Informe Postmortem Batch](/05-postmortem-y-reportes/informe-ppt-batch.md)
 
