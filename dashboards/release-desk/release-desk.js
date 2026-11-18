@@ -491,9 +491,10 @@
             projectSel.innerHTML = '<option value="">Todos los proyectos</option>' +
                 Array.from(projectSet).sort().map(function (code) {
                     var info = resolveProjectInfo({ 'Descripción': code }, state.projectsCatalog, state.currentRelease);
-                    var label = info && info.summary ? (code + ' — ' + info.summary) : code;
-                    return '<option value="' + escapeHtml(code) + '">' + escapeHtml(label) + '</option>';
+                    var titleAttr = info && info.summary ? (' title="' + escapeHtml(info.summary) + '"') : '';
+                    return '<option value="' + escapeHtml(code) + '"' + titleAttr + '>' + escapeHtml(code) + '</option>';
                 }).join('');
+            projectSel.title = '';
         }
     }
 
@@ -538,6 +539,10 @@
         var prio = document.getElementById('filterPriority').value;
         var projectEl = document.getElementById('filterProject');
         var project = projectEl ? projectEl.value : '';
+        if (projectEl) {
+            var selectedOpt = projectEl.options && projectEl.selectedIndex >= 0 ? projectEl.options[projectEl.selectedIndex] : null;
+            projectEl.title = (project && selectedOpt && selectedOpt.title) ? selectedOpt.title : '';
+        }
 
         state.filteredIncidents = state.activeIncidents.filter(function (inc) {
             if (state.activeKpiFilter && !matchesKpiFilter(inc, state.activeKpiFilter)) return false;
