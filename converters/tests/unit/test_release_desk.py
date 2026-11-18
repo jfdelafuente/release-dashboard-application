@@ -48,6 +48,7 @@ def test_release_desk_js_uses_postmortem_and_resumen_ia_only():
     assert "/data/projects_catalog.json" in js
     assert "/api/sync-postmortem" in js
     assert "/api/epsilon/resumenIA/" in js
+    assert "Problema Detectado" in js
     assert "high_priority_notifications.json" not in js
     assert "-massive.json" not in js
 

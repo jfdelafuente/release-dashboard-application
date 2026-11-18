@@ -70,11 +70,13 @@
 
         if (iaData && !iaData._error) {
             var sintesis = iaData.resumenEjecutivo || iaData.resumen || iaData.sintesis || '';
+            var problema = iaData.problema || '';
             var impacto = iaData.impacto || '';
             var causa = iaData.causa || iaData.causaRaiz || '';
             var solucion = iaData.solucion || '';
             var siguiente = iaData.siguienteAccion || iaData.siguiente_accion || '';
             if (sintesis) lines.push('Resumen IA: ' + sintesis);
+            if (problema) lines.push('Problema Detectado: ' + problema);
             if (impacto) lines.push('Impacto: ' + impacto);
             if (causa) lines.push('Causa: ' + causa);
             if (solucion) lines.push('Solución: ' + solucion);
@@ -360,6 +362,7 @@
         }
 
         var sintesis = iaData.resumenEjecutivo || iaData.resumen || iaData.sintesis || '';
+        var problema = iaData.problema || '';
         var impacto = iaData.impacto || '';
         var causa = iaData.causa || iaData.causaRaiz || '';
         var solucion = iaData.solucion || '';
@@ -374,6 +377,7 @@
             '</div>';
 
         if (sintesis) html += '<div class="rd-ia-section"><strong>Síntesis Ejecutiva</strong>' + escapeHtml(sintesis) + '</div>';
+        if (problema) html += '<div class="rd-ia-section"><strong>Problema Detectado</strong>' + escapeHtml(problema) + '</div>';
         if (impacto) html += '<div class="rd-ia-section"><strong>Impacto</strong>' + escapeHtml(impacto) + '</div>';
         if (causa) html += '<div class="rd-ia-section"><strong>Causa</strong>' + escapeHtml(causa) + '</div>';
         if (solucion) html += '<div class="rd-ia-section"><strong>Solución / Mitigación</strong>' + escapeHtml(solucion) + '</div>';
@@ -388,7 +392,7 @@
                 hitos.map(function (h) { return '<li>' + escapeHtml(h) + '</li>'; }).join('') +
                 '</ul></div>';
         }
-        if (!sintesis && !impacto && !causa && !solucion && !siguiente) {
+        if (!sintesis && !problema && !impacto && !causa && !solucion && !siguiente) {
             html += '<p style="font-size:13px; color:#5C5852; margin:0;">Resumen IA recibido sin campos narrativos detallados.</p>';
         }
         html += '</div>';
