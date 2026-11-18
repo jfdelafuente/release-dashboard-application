@@ -8,7 +8,7 @@ Lista priorizada de evolutivos para la consola **[Mesa de Release](/05-postmorte
 
 | ID | Mejora | Categoría | Impacto | Estado |
 | :-: | :--- | :--- | :--- | :---: |
-| **M1** | Precarga pasiva de Resumen IA ya cacheado | Datos / Rendimiento | Alto | `[ ] Pendiente` |
+| **M1** | Precarga pasiva de Resumen IA ya cacheado | Datos / Rendimiento | Alto | `[x] Completada` |
 | **M2** | Extracción automática del bug de `JIRA` | Datos | Alto | `[ ] Pendiente` |
 | **M3** | KPIs clicables como filtros rápidos | UX / Operativa | Medio | `[ ] Pendiente` |
 | **M4** | Exportación de la vista filtrada (CSV / Excel) | Operativa | Alto | `[ ] Pendiente` |

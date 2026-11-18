@@ -401,6 +401,8 @@ class CustomHTTPHandler(http.server.SimpleHTTPRequestHandler):
             self.handle_teams_send()
         elif self.path.split('?')[0].rstrip('/') == '/api/release-desk/overrides':
             self.handle_release_desk_overrides_post()
+        elif self.path.split('?')[0].rstrip('/') == '/api/epsilon/resumenIA/cached':
+            self.handle_epsilon_cached_post()
         else:
             self.send_error(404, "Not Found")
 
@@ -1194,6 +1196,30 @@ class CustomHTTPHandler(http.server.SimpleHTTPRequestHandler):
         except Exception as e:
             self._send_json(500, {"success": False, "error": f"Error guardando override: {e}"})
 
+    def handle_epsilon_cached_get(self):
+        """Maneja GET /api/epsilon/resumenIA/cached?ids=INC1,INC2 (solo caché en disco)."""
+        from converters.src.release_desk_overrides import load_cached_epsilon_summaries
+
+        q_params = urllib.parse.parse_qs(self.path.split('?', 1)[1]) if '?' in self.path else {}
+        raw_ids = q_params.get('ids', [''])[0]
+        ids = [part.strip() for part in raw_ids.split(',') if part.strip()]
+        summaries = load_cached_epsilon_summaries(STORAGE_DIR, ids)
+        self._send_json(200, {"success": True, "count": len(summaries), "summaries": summaries})
+
+    def handle_epsilon_cached_post(self):
+        """Maneja POST /api/epsilon/resumenIA/cached con {ids: [...]} (solo caché en disco)."""
+        from converters.src.release_desk_overrides import load_cached_epsilon_summaries
+
+        try:
+            content_length = int(self.headers.get('Content-Length', 0))
+            raw_body = self.rfile.read(content_length) if content_length > 0 else b'{}'
+            payload = json.loads(raw_body.decode('utf-8'))
+            ids = payload.get("ids") if isinstance(payload, dict) and isinstance(payload.get("ids"), list) else []
+            summaries = load_cached_epsilon_summaries(STORAGE_DIR, [str(x) for x in ids])
+            self._send_json(200, {"success": True, "count": len(summaries), "summaries": summaries})
+        except Exception as e:
+            self._send_json(500, {"success": False, "error": f"Error leyendo caché IA: {e}"})
+
     def handle_remedy_detail(self, id_remedy):
         """Maneja GET /api/remedy/detail/{idRemedy} con soporte de caché en memoria y disco."""
         clean_id = (id_remedy or "").strip().upper()
@@ -1423,6 +1449,10 @@ class CustomHTTPHandler(http.server.SimpleHTTPRequestHandler):
                 self._send_json(200, {'status': 'ok', 'service': 'serve_app', 'timestamp': datetime.now(timezone.utc).isoformat()})
                 return
             self._send_json(502, {'success': False, 'error': f'FastAPI backend ({FASTAPI_BACKEND_URL}) no disponible'})
+            return
+
+        if self.path.split('?')[0].rstrip('/') == '/api/epsilon/resumenIA/cached':
+            self.handle_epsilon_cached_get()
             return
 
         if self.path.startswith('/api/epsilon/resumenIA/'):

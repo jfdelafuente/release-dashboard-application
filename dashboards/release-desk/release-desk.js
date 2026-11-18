@@ -109,6 +109,17 @@
         return diff < 0 ? 0 : diff;
     }
 
+    function isIaCacheStale(iaData, inc) {
+        if (!iaData || iaData._error || !inc) return false;
+        var cachedMs = Number(iaData._cached_at_ms);
+        if (!cachedMs || isNaN(cachedMs)) return false;
+        var modStr = inc['fechaUltimaModificacion'];
+        if (!modStr) return false;
+        var modMs = Date.parse(modStr);
+        if (isNaN(modMs)) return false;
+        return modMs > cachedMs;
+    }
+
     if (typeof module !== 'undefined' && module.exports) {
         module.exports = {
             isClosedStatus: isClosedStatus,
@@ -116,7 +127,8 @@
             extractProjectCode: extractProjectCode,
             resolveProjectInfo: resolveProjectInfo,
             buildFollowupText: buildFollowupText,
-            computeOpenAgeDays: computeOpenAgeDays
+            computeOpenAgeDays: computeOpenAgeDays,
+            isIaCacheStale: isIaCacheStale
         };
     }
 
@@ -135,6 +147,31 @@
         overrides: {},
         editingFechaId: null
     };
+
+    async function preloadCachedIaSummaries(incidents) {
+        if (!Array.isArray(incidents) || incidents.length === 0) return;
+        var ids = incidents
+            .map(function (r) { return r && r['ID de incidencia']; })
+            .filter(Boolean);
+        if (ids.length === 0) return;
+        try {
+            var resp = await fetch('/api/epsilon/resumenIA/cached', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                body: JSON.stringify({ ids: ids })
+            });
+            if (!resp.ok) return;
+            var json = await resp.json();
+            var summaries = (json && json.summaries) || {};
+            Object.keys(summaries).forEach(function (incId) {
+                if (summaries[incId]) {
+                    state.iaCache.set(incId, summaries[incId]);
+                }
+            });
+        } catch (_) {
+            // Silencioso si el servidor estático no expone el endpoint
+        }
+    }
 
     async function loadReleaseOverrides(releaseName) {
         state.overrides = {};
@@ -459,6 +496,11 @@
                 }
             }
 
+            var iaStale = iaData && isIaCacheStale(iaData, inc);
+            var staleBadgeHtml = iaStale
+                ? '<div><span class="rd-badge-stale" title="El ticket se actualizó en Remedy después de generar este resumen; al desplegar se refrescará automáticamente">↻ Nuevo en Remedy</span></div>'
+                : '';
+
             var rowHtml = '<tr data-inc-id="' + escapeHtml(id) + '"' + rowClassAttr + ' aria-expanded="' + (isSelected ? 'true' : 'false') + '">' +
                 '<td style="white-space:nowrap;"><span class="rd-badge rd-badge-code">' + (isSelected ? '▾ ' : '▸ ') + escapeHtml(id) + '</span></td>' +
                 '<td style="font-size:11.5px; min-width:78px;">' + escapeHtml(fechaApertura) + agingHtml + '</td>' +
@@ -467,7 +509,7 @@
                 '<td style="max-width:120px;">' + sistemaCell + '</td>' +
                 '<td style="white-space:nowrap;">' + jiraCell + '</td>' +
                 '<td style="min-width:120px; max-width:190px;" title="' + escapeHtml(proyectoText) + '">' + proyectoCell + '</td>' +
-                '<td style="min-width:150px; max-width:230px;" title="' + escapeHtml(acciones) + '"><div class="rd-cell-clamp">' + escapeHtml(acciones) + '</div></td>' +
+                '<td style="min-width:150px; max-width:230px;" title="' + escapeHtml(acciones) + '"><div class="rd-cell-clamp">' + escapeHtml(acciones) + '</div>' + staleBadgeHtml + '</td>' +
                 '<td><span class="rd-badge ' + statusBadgeClass + '">' + escapeHtml(inc['Estatus'] || '-') + '</span></td>' +
                 '<td style="font-size:11.5px; min-width:78px;">' + fechaPrevistaCell + '</td>' +
                 '<td style="max-width:130px;">' + escapeHtml(motivoResuelto) + '</td>' +
@@ -653,6 +695,7 @@
             if (!resp.ok || data.success === false) {
                 throw new Error(data.error || ('HTTP ' + resp.status));
             }
+            if (!data._cached_at_ms) data._cached_at_ms = Date.now();
             state.iaCache.set(id, data);
             if (forceRefresh) notify('Resumen IA actualizado para ' + id, 'success');
         } catch (err) {
@@ -674,6 +717,11 @@
         renderTable();
         if (id && !state.iaCache.has(id)) {
             fetchIaSummary(id, false);
+        } else if (id) {
+            var inc = state.activeIncidents.find(function (r) { return r['ID de incidencia'] === id; });
+            if (inc && isIaCacheStale(state.iaCache.get(id), inc)) {
+                fetchIaSummary(id, true);
+            }
         }
     }
 
@@ -735,7 +783,10 @@
             document.getElementById('lastSyncInfo').textContent = syncLabel;
 
             state.activeIncidents = filterNonClosedIncidents(rawRecords);
-            await loadReleaseOverrides(state.currentRelease);
+            await Promise.all([
+                loadReleaseOverrides(state.currentRelease),
+                preloadCachedIaSummaries(state.activeIncidents)
+            ]);
             updateKPIs();
             populateFilterSelects();
 

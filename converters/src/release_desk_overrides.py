@@ -10,10 +10,12 @@ from __future__ import annotations
 from datetime import datetime
 import json
 from pathlib import Path
-from typing import Any, Dict
+import re
+from typing import Any, Dict, Iterable
 
 
 OVERRIDES_FILENAME = "release_desk_overrides.json"
+_SAFE_ID_RE = re.compile(r"^[A-Za-z0-9_-]+$")
 
 
 def _load_raw(overrides_path: Path) -> Dict[str, Any]:
@@ -80,3 +82,31 @@ def set_fecha_prevista_override(
         "fecha_prevista": clean_date,
         "overrides": bucket,
     }
+
+
+def load_cached_epsilon_summaries(
+    storage_dir: Path,
+    incident_ids: Iterable[str],
+) -> Dict[str, Any]:
+    """Lee únicamente resúmenes ya cacheados en `<storage_dir>/.epsilon_cache/` (coste 0)."""
+    cache_dir = Path(storage_dir) / ".epsilon_cache"
+    summaries: Dict[str, Any] = {}
+    if not cache_dir.is_dir():
+        return summaries
+
+    for raw_id in incident_ids:
+        clean_id = (raw_id or "").strip()
+        if not clean_id or not _SAFE_ID_RE.match(clean_id):
+            continue
+        cache_file = cache_dir / f"{clean_id}.json"
+        if not cache_file.is_file():
+            continue
+        try:
+            payload = json.loads(cache_file.read_text(encoding="utf-8"))
+            if isinstance(payload, dict) and payload.get("success") is not False:
+                payload["_cached_at_ms"] = int(cache_file.stat().st_mtime * 1000)
+                payload["_from_disk_cache"] = True
+                summaries[clean_id] = payload
+        except Exception:
+            continue
+    return summaries

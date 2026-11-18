@@ -176,3 +176,45 @@ def test_release_desk_js_compute_open_age_days():
     else:
         js = RELEASE_DESK_JS.read_text(encoding="utf-8")
         assert "computeOpenAgeDays" in js
+
+
+def test_load_cached_epsilon_summaries_zero_cost(tmp_path: Path):
+    import sys
+    if str(PROJECT_ROOT) not in sys.path:
+        sys.path.insert(0, str(PROJECT_ROOT))
+    from converters.src.release_desk_overrides import load_cached_epsilon_summaries
+
+    cache_dir = tmp_path / ".epsilon_cache"
+    cache_dir.mkdir(parents=True, exist_ok=True)
+    (cache_dir / "INC000004122361.json").write_text(
+        json.dumps({"success": True, "problema": "Error test", "siguienteAccion": "Revisar logs"}),
+        encoding="utf-8",
+    )
+    (cache_dir / "INC000004999999.json").write_text(
+        json.dumps({"success": False, "error": "fallo"}),
+        encoding="utf-8",
+    )
+
+    res = load_cached_epsilon_summaries(tmp_path, ["INC000004122361", "INC000004999999", "INC000000000000"])
+    assert list(res.keys()) == ["INC000004122361"]
+    assert res["INC000004122361"]["_from_disk_cache"] is True
+    assert isinstance(res["INC000004122361"]["_cached_at_ms"], int)
+
+
+def test_release_desk_js_is_ia_cache_stale():
+    if shutil.which("node") is not None:
+        script = (
+            f"const rd = require({json.dumps(str(RELEASE_DESK_JS))});\n"
+            "const cachedMs = Date.parse('2026-11-18T10:00:00Z');\n"
+            "console.log(JSON.stringify({\n"
+            "  newer: rd.isIaCacheStale({ _cached_at_ms: cachedMs }, { fechaUltimaModificacion: '2026-11-18T12:00:00Z' }),\n"
+            "  older: rd.isIaCacheStale({ _cached_at_ms: cachedMs }, { fechaUltimaModificacion: '2026-11-18T09:00:00Z' }),\n"
+            "  missing: rd.isIaCacheStale({ _cached_at_ms: cachedMs }, {})\n"
+            "}));\n"
+        )
+        proc = subprocess.run(["node", "-e", script], capture_output=True, text=True, check=True)
+        out = json.loads(proc.stdout)
+        assert out == {"newer": True, "older": False, "missing": False}
+    else:
+        js = RELEASE_DESK_JS.read_text(encoding="utf-8")
+        assert "isIaCacheStale" in js

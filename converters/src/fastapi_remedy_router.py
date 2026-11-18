@@ -60,11 +60,13 @@ except ImportError:
 try:
     from converters.src.release_desk_overrides import (
         get_overrides_for_release,
+        load_cached_epsilon_summaries,
         set_fecha_prevista_override,
     )
 except ImportError:
     from release_desk_overrides import (
         get_overrides_for_release,
+        load_cached_epsilon_summaries,
         set_fecha_prevista_override,
     )
 
@@ -368,3 +370,21 @@ def api_set_release_desk_override(payload: Dict[str, Any] = Body(...)):
         return JSONResponse(status_code=200, content=result)
     except ValueError as exc:
         return JSONResponse(status_code=400, content={"success": False, "error": str(exc)})
+
+
+@router.get("/api/epsilon/resumenIA/cached")
+@router.get("/epsilon/resumenIA/cached")
+def api_get_cached_epsilon_summaries(ids: str = Query(default="")):
+    storage_dir = Path(os.environ.get("RELEASE_DASHBOARD_STORAGE_DIR", "").strip() or (_get_project_root() / "data"))
+    id_list = [part.strip() for part in ids.split(",") if part.strip()]
+    summaries = load_cached_epsilon_summaries(storage_dir, id_list)
+    return {"success": True, "count": len(summaries), "summaries": summaries}
+
+
+@router.post("/api/epsilon/resumenIA/cached")
+@router.post("/epsilon/resumenIA/cached")
+def api_post_cached_epsilon_summaries(payload: Dict[str, Any] = Body(...)):
+    storage_dir = Path(os.environ.get("RELEASE_DASHBOARD_STORAGE_DIR", "").strip() or (_get_project_root() / "data"))
+    raw_ids = payload.get("ids") if isinstance(payload, dict) and isinstance(payload.get("ids"), list) else []
+    summaries = load_cached_epsilon_summaries(storage_dir, [str(x) for x in raw_ids])
+    return {"success": True, "count": len(summaries), "summaries": summaries}
