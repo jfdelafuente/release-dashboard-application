@@ -110,17 +110,20 @@ except (ImportError, Exception):
 try:
     from converters.src.montmc_client import MonTMCClient, RemedyNotFoundError, MonTMCError
     from converters.cli.sync_montmc_incidents import sync_remedy_incidents
+    from converters.cli.sync_montmc_postmortem import sync_postmortem_release
 except (ImportError, Exception):
     try:
         sys.path.insert(0, str(PROJECT_ROOT / 'converters' / 'src'))
         sys.path.insert(0, str(PROJECT_ROOT / 'converters' / 'cli'))
         from montmc_client import MonTMCClient, RemedyNotFoundError, MonTMCError
         from sync_montmc_incidents import sync_remedy_incidents
+        from sync_montmc_postmortem import sync_postmortem_release
     except (ImportError, Exception):
         MonTMCClient = None
         RemedyNotFoundError = None
         MonTMCError = None
         sync_remedy_incidents = None
+        sync_postmortem_release = None
 
 # Microsoft Teams Notifier Service
 try:
@@ -390,6 +393,8 @@ class CustomHTTPHandler(http.server.SimpleHTTPRequestHandler):
             self.handle_epsilon_generate()
         elif self.path in ('/api/sync-remedy', '/api/sync-remedy/') or self.path.split('?')[0].rstrip('/') == '/api/sync-remedy':
             self.handle_sync_remedy()
+        elif self.path in ('/api/sync-postmortem', '/api/sync-postmortem/') or self.path.split('?')[0].rstrip('/') == '/api/sync-postmortem':
+            self.handle_sync_postmortem()
         elif self.path.split('?')[0].rstrip('/') == '/api/teams/channels':
             self.handle_teams_channels_post()
         elif self.path.split('?')[0].rstrip('/') == '/api/teams/send':
@@ -1107,6 +1112,56 @@ class CustomHTTPHandler(http.server.SimpleHTTPRequestHandler):
             self._send_json(status_code, result)
         except Exception as e:
             self._send_json(500, {"success": False, "error": f"Error interno en sincronización: {e}"})
+
+    def handle_sync_postmortem(self):
+        """Maneja POST /api/sync-postmortem disparando la sincronización incremental de Postmortem."""
+        if not sync_postmortem_release:
+            self._send_json(500, {"success": False, "error": "Módulo de sincronización Postmortem MonTMC no disponible"})
+            return
+
+        release_name = None
+        usuario = None
+
+        try:
+            content_length = int(self.headers.get('Content-Length', 0))
+            if content_length > 0:
+                raw_body = self.rfile.read(content_length)
+                body_json = json.loads(raw_body.decode('utf-8'))
+                if isinstance(body_json, dict):
+                    if body_json.get("release_name"):
+                        release_name = str(body_json["release_name"]).strip()
+                    if body_json.get("usuario"):
+                        usuario = str(body_json["usuario"]).strip()
+        except Exception:
+            pass
+
+        if '?' in self.path:
+            q_str = self.path.split('?', 1)[1]
+            q_params = urllib.parse.parse_qs(q_str)
+            if 'release_name' in q_params and q_params['release_name'][0].strip():
+                release_name = q_params['release_name'][0].strip()
+            if 'usuario' in q_params and q_params['usuario'][0].strip():
+                usuario = q_params['usuario'][0].strip()
+
+        try:
+            run_sync = sync_postmortem_release
+            if not hasattr(run_sync, 'mock_calls') and not getattr(run_sync, '_mock_return_value', None) is not None and not isinstance(run_sync, unittest.mock.Mock if 'unittest.mock' in sys.modules else ()):
+                import importlib
+                mod_name = 'converters.cli.sync_montmc_postmortem'
+                if mod_name in sys.modules:
+                    importlib.reload(sys.modules[mod_name])
+                    from converters.cli.sync_montmc_postmortem import sync_postmortem_release as reloaded_sync
+                    run_sync = reloaded_sync
+
+            result = run_sync(
+                release_name=release_name,
+                usuario=usuario,
+                project_root=PROJECT_ROOT,
+            )
+            status_code = 200 if result.get("success") else 502
+            self._send_json(status_code, result)
+        except Exception as e:
+            self._send_json(500, {"success": False, "error": f"Error interno en sincronización Postmortem: {e}"})
 
     def handle_remedy_detail(self, id_remedy):
         """Maneja GET /api/remedy/detail/{idRemedy} con soporte de caché en memoria y disco."""

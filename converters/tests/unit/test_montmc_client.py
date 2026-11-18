@@ -240,3 +240,82 @@ def test_helpers_normalization():
     assert _iso_to_dashboard_date("2026-07-11T16:22:43Z") == "11/07/2026 18:22"
     assert _iso_to_dashboard_date("11/11/2026 17:22") == "11/11/2026 17:22"
     assert _iso_to_dashboard_date(None) is None
+
+
+@patch("converters.src.montmc_client.urllib.request.urlopen")
+def test_fetch_release_success(mock_urlopen):
+    payload = {
+        "total": 1,
+        "success": True,
+        "usuario": "jdelat",
+        "incidencias": [
+            {
+                "idRemedy": "INC000004188718",
+                "resumen": "[Simulacro2026R11] - Orden de baja vacía",
+                "estadoDesc": "ASIGNADO",
+                "prioridadP": "P3",
+                "urgencia": "Medio",
+                "producto": "TEIDE",
+                "grupoAsignado": "SOP_SMC_TEIDE",
+                "grupoResolutor": None,
+                "fechaCreacion": "2026-11-18T11:59:30.000+00:00",
+                "fechaResolucion": None,
+            }
+        ],
+    }
+    mock_resp = MagicMock()
+    mock_resp.status = 200
+    mock_resp.read.return_value = json.dumps(payload).encode("utf-8")
+    mock_resp.__enter__.return_value = mock_resp
+    mock_urlopen.return_value = mock_resp
+
+    client = MonTMCClient(base_url="https://mock.local/MonTMC", default_user="jdelat")
+    result = client.fetch_release()
+
+    assert result["success"] is True
+    assert result["total"] == 1
+    called_req = mock_urlopen.call_args[0][0]
+    assert called_req.full_url == "https://mock.local/MonTMC/api/epsilon/release?usuario=jdelat"
+
+
+@patch("converters.src.montmc_client.urllib.request.urlopen")
+def test_fetch_release_success_false_raises_montmc_error(mock_urlopen):
+    payload = {"success": False, "incidencias": [], "error": "Error interno"}
+    mock_resp = MagicMock()
+    mock_resp.status = 200
+    mock_resp.read.return_value = json.dumps(payload).encode("utf-8")
+    mock_resp.__enter__.return_value = mock_resp
+    mock_urlopen.return_value = mock_resp
+
+    client = MonTMCClient(base_url="https://mock.local/MonTMC")
+    with pytest.raises(MonTMCError):
+        client.fetch_release()
+
+
+def test_normalize_mon_tmc_postmortem_record_handles_nulls():
+    client = MonTMCClient()
+    raw = {
+        "idRemedy": "INC000004188718",
+        "resumen": "[Simulacro2026R11] - Genera orden vacía",
+        "detalle": None,
+        "grupoAsignado": "SOP_SMC_TEIDE",
+        "producto": "TEIDE",
+        "grupoResolutor": None,
+        "prioridad": "Media",
+        "urgencia": "Medio",
+        "fechaCreacion": "2026-11-18T11:59:30.000+00:00",
+        "fechaResolucion": None,
+        "peticionarioNombre": "MIGUEL ANGEL ALONSO ORTEGA",
+        "prioridadP": "P3",
+        "estadoDesc": "ASIGNADO",
+        "masiva": None,
+    }
+    norm = client.normalize_mon_tmc_postmortem_record(raw)
+    assert norm["ID de incidencia"] == "INC000004188718"
+    assert norm["Prioridad"] == "P3"
+    assert norm["Estatus"] == "Asignado"
+    assert norm["Impacto"] == "TEIDE"
+    assert norm["Urgencia"] == "Medio"
+    assert norm["Fecha de envío"] == "18/11/2026 12:59"
+    assert "Grupo Resolutor" not in norm
+    assert "Fecha de última resolución" not in norm

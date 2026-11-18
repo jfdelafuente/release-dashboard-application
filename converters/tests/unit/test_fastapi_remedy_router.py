@@ -13,6 +13,7 @@ from fastapi import HTTPException
 
 from converters.src.fastapi_remedy_router import (
     sync_remedy,
+    sync_postmortem,
     get_remedy_detail,
     clear_fastapi_remedy_cache,
     FASTAPI_REMEDY_CACHE,
@@ -80,6 +81,33 @@ def test_fastapi_sync_remedy_exception_502():
         data = json.loads(resp.body.decode("utf-8"))
         assert data["success"] is False
         assert "Error crítico" in data["error"]
+
+
+# =============================================================================
+# Tests para POST /api/sync-postmortem
+# =============================================================================
+
+def test_fastapi_sync_postmortem_success():
+    mock_result = {"success": True, "release_name": "2026R11", "total_consultadas": 5, "nuevas": 2, "actualizadas": 1}
+    with patch("converters.src.fastapi_remedy_router.sync_postmortem_release", return_value=mock_result) as mock_sync:
+        resp = sync_postmortem(payload={"release_name": "2026R11", "usuario": "jdelat"})
+        assert resp.status_code == 200
+        data = json.loads(resp.body.decode("utf-8"))
+        assert data["success"] is True
+        assert data["release_name"] == "2026R11"
+        _, kwargs = mock_sync.call_args
+        assert kwargs["release_name"] == "2026R11"
+        assert kwargs["usuario"] == "jdelat"
+
+
+def test_fastapi_sync_postmortem_failure_502():
+    mock_result = {"success": False, "error": "Timeout MonTMC"}
+    with patch("converters.src.fastapi_remedy_router.sync_postmortem_release", return_value=mock_result):
+        resp = sync_postmortem(payload=None)
+        assert resp.status_code == 502
+        data = json.loads(resp.body.decode("utf-8"))
+        assert data["success"] is False
+        assert "Timeout MonTMC" in data["error"]
 
 
 # =============================================================================
