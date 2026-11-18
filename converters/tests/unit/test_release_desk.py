@@ -316,18 +316,20 @@ def test_release_desk_js_build_mesa_briefing():
             "const iaCache = new Map([['INC1', { problema: 'Fallo login PRO', siguienteAccion: 'Reiniciar nodo' }]]);\n"
             "const catalog = { by_release: { '2026R11': { 'PRJ-101': { summary: 'Portal B2B', despliegue: 'Piloto' } } } };\n"
             "const overrides = { 'INC1': { fecha_prevista: '2026-11-10' } };\n"
-            "const txt = rd.buildMesaBriefing(incidents, iaCache, catalog, '2026R11', overrides, '2026-11-18T12:00:00Z');\n"
-            "console.log(txt);\n"
+            "const res = rd.buildMesaBriefing(incidents, iaCache, catalog, '2026R11', overrides, '2026-11-18T12:00:00Z');\n"
+            "console.log(JSON.stringify(res));\n"
         )
         proc = subprocess.run(["node", "-e", script], capture_output=True, text=True, check=True)
-        out = proc.stdout
-        assert "### Briefing Mesa de Release 2026R11 (2026-11-18)" in out
-        assert "**Total visibles:** 2 | **Resueltas:** 1 | **Compromisos vencidos:** 1" in out
-        assert "#### Crítica (P1) (1)" in out
-        assert "⚠️ VENCIDA 2026-11-10" in out
-        assert "[Piloto] PRJ-101 — Portal B2B" in out
-        assert "*Acción:* Reiniciar nodo" in out
-        assert "#### Media (P3) (1)" in out
+        out = json.loads(proc.stdout)
+        assert "Briefing Mesa de Release 2026R11 (2026-11-18)" in out["text"]
+        assert "Total visibles: 2 | Resueltas: 1 | Compromisos vencidos: 1" in out["text"]
+        assert "[Crítica (P1)] (1)" in out["text"]
+        assert "⚠️ VENCIDA 2026-11-10" in out["text"]
+        assert "[Piloto] PRJ-101 — Portal B2B" in out["text"]
+        assert "Acción: Reiniciar nodo" in out["text"]
+        assert "[Media (P3)] (1)" in out["text"]
+        assert "<ul><li><strong>INC1</strong>" in out["html"]
+        assert "<em>Acción:</em> Reiniciar nodo" in out["html"]
     else:
         js = RELEASE_DESK_JS.read_text(encoding="utf-8")
         assert "buildMesaBriefing" in js
@@ -342,15 +344,17 @@ def test_release_desk_js_build_mesa_briefing_by_system():
             "  { 'ID de incidencia': 'INC2', 'Prioridad': 'Crítica (P1)', 'Descripción': 'Error B', 'Estatus': 'En Curso', 'Grupo asignado': 'DES_CRM4T' },\n"
             "  { 'ID de incidencia': 'INC3', 'Prioridad': 'Alta', 'Descripción': 'Error C', 'Estatus': 'Asignado', 'Grupo asignado': 'SOP_SMC_GIROS' }\n"
             "];\n"
-            "const txt = rd.buildMesaBriefingBySystem(incidents, null, {}, '2026R11', {}, '2026-11-18T12:00:00Z');\n"
-            "console.log(txt);\n"
+            "const res = rd.buildMesaBriefingBySystem(incidents, null, {}, '2026R11', {}, '2026-11-18T12:00:00Z');\n"
+            "console.log(JSON.stringify(res));\n"
         )
         proc = subprocess.run(["node", "-e", script], capture_output=True, text=True, check=True)
-        out = proc.stdout
-        assert "### Briefing Mesa de Release por Sistema 2026R11 (2026-11-18)" in out
-        assert "#### DES_CRM4T (1)" in out
-        assert "#### SOP_SMC_GIROS (2)" in out
-        assert out.index("- **INC3**") < out.index("- **INC1**")
+        out = json.loads(proc.stdout)
+        assert "Briefing Mesa de Release por Sistema 2026R11 (2026-11-18)" in out["text"]
+        assert "[DES_CRM4T] (1)" in out["text"]
+        assert "[SOP_SMC_GIROS] (2)" in out["text"]
+        assert out["text"].index("INC3") < out["text"].index("INC1")
+        assert "<strong>SOP_SMC_GIROS (2)</strong>" in out["html"]
+        assert "<li><strong>INC3</strong>" in out["html"]
     else:
         js = RELEASE_DESK_JS.read_text(encoding="utf-8")
         assert "buildMesaBriefingBySystem" in js
