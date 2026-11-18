@@ -342,6 +342,7 @@ def test_prompt_hash_change_invalidates_epsilon_cache(tmp_path, monkeypatch):
     """Modificar data/resumen_incidencia_epsilon.md cambia prompt_hash y regenera sin --force."""
     monkeypatch.setenv("EPSILON_PROVIDER_MODE", "internal")
     monkeypatch.setenv("EPSILON_MOCK", "0")
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key")
     monkeypatch.setattr("converters.src.epsilon_service.get_project_root", lambda: tmp_path)
 
     prompt_file = tmp_path / "data" / "resumen_incidencia_epsilon.md"
