@@ -51,7 +51,7 @@ def test_release_desk_html_has_required_controls():
         "Status",
         "Fecha Prevista",
         "Motivo Estado Resuelto",
-        "Peticionario",
+        "Grupo Peticionario",
     ):
         assert f"<th>{col}</th>" in html, f"Falta columna {col} en release-desk/index.html"
 

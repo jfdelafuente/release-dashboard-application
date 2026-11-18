@@ -54,7 +54,7 @@ La consola **Mesa de Release** (`/dashboards/release-desk/`) centraliza el segui
 | 9 | `Status` | `Estatus` con badge de estado (`.rd-badge-asignado`, `.rd-badge-curso`, `.rd-badge-pendiente`, `.rd-badge-resuelto`). |
 | 10 | `Fecha Prevista` | Muestra `Fecha de última resolución` con badge verde (`.rd-badge-fecha`) **solo** si el estado contiene `resuelt` (`Resuelta` / `Resuelto`); en el resto de estados queda vacía. |
 | 11 | `Motivo Estado Resuelto` | `Motivo de estado` o `MotivoEstado_Anterior`. |
-| 12 | `Peticionario` | `Grupo Remitente`. |
+| 12 | `Grupo Peticionario` | `Grupo Remitente`. |
 
 Además, las filas incorporan una barra lateral de acento en la primera celda según prioridad/estado (rojo para crítica/P1, naranja para alta/P2, verde para resuelta).
 
