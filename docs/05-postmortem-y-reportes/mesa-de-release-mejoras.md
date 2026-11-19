@@ -23,6 +23,12 @@ Lista priorizada de evolutivos para la consola **[Mesa de Release](/05-postmorte
 | **M13** | Indicador de novedades desde la última sincronización | Operativa | Medio | `[x] Completada` |
 | **M14** | Vista agrupada por Proyecto (`PRJ-*`) con semáforo de salud | Seguimiento | Medio | `[x] Completada` |
 | **M15** | Detector de tickets sin movimiento / "ping-pong" entre grupos | Operativa | Medio | `[ ] Pendiente` |
+| **M16** | Cache-busting y cabeceras `Cache-Control` en despliegue | Despliegue | Alto | `[ ] Pendiente` |
+| **M17** | Extracción de CSS y modularización de `release-desk.js` | Mantenimiento | Alto | `[ ] Pendiente` |
+| **M18** | Concurrencia segura, retención de caché y backup de `overrides` | Datos / Despliegue | Alto | `[ ] Pendiente` |
+| **M19** | Sync programada, concurrencia en `remedyG` y endpoint `/api/health/release-desk` | Operación / Despliegue | Medio | `[ ] Pendiente` |
+| **M20** | Validación CI (`node --check` + `pytest`) y smoke test post-despliegue | Despliegue | Medio | `[ ] Pendiente` |
+| **M21** | Unificación de servicios backend (`serve_app.py` y FastAPI) | Mantenimiento | Medio | `[ ] Pendiente` |
 
 ---
 
@@ -162,3 +168,51 @@ Lista priorizada de evolutivos para la consola **[Mesa de Release](/05-postmorte
 - **Propuesta:** Usar `fechaUltimaModificacion` (y opcionalmente los worklogs/eventos de `remedyG` ya cacheados) para marcar tickets abiertos sin movimiento reciente (p. ej. `> 48h`) o con múltiples reasignaciones de grupo.
 - **Componentes afectados:** `dashboards/release-desk/index.html`, `dashboards/release-desk/release-desk.js`.
 - **Criterio de aceptación:** Los tickets estancados o en "ping-pong" destacan en la tabla para que el Release Manager desbloquee su asignación.
+
+---
+
+### M16 · Cache-busting y cabeceras `Cache-Control` en despliegue
+- **Situación actual:** `dashboards/release-desk/index.html` referencia `/dashboards/release-desk/release-desk.js` y `/dashboards/assets/ui-feedback.js` sin parámetro de versión (`?v=...`), por lo que tras un despliegue en VPS los navegadores pueden conservar JS/CSS obsoletos en caché.
+- **Propuesta:** Incorporar versionado automático por hash/timestamp en los assets estáticos y configurar cabeceras `Cache-Control: no-cache` para HTML, JS/CSS de la consola y `data/output/*.json`.
+- **Componentes afectados:** `dashboards/release-desk/index.html`, servidor web / configuración de despliegue (`serve_app.py` / Nginx).
+- **Criterio de aceptación:** Tras cualquier despliegue nuevo, los usuarios reciben inmediatamente la última versión de la UI sin necesitar recarga forzada (`Ctrl+F5`).
+
+---
+
+### M17 · Extracción de CSS y modularización de `release-desk.js`
+- **Situación actual:** `index.html` supera las 650 líneas con CSS embebido y `release-desk.js` supera las 1.600 líneas en un único IIFE, dificultando el mantenimiento y la revisión de cambios.
+- **Propuesta:** Extraer los estilos a `dashboards/release-desk/release-desk.css` y dividir `release-desk.js` en módulos claros (lógica pura/dominio, cliente API/estado y renderizado DOM/eventos), manteniendo la exportabilidad para tests en Node.
+- **Componentes afectados:** `dashboards/release-desk/index.html`, `dashboards/release-desk/release-desk.css`, `dashboards/release-desk/release-desk.js`, `converters/tests/unit/test_release_desk.py`.
+- **Criterio de aceptación:** Código separado por responsabilidades, menor tamaño por fichero y 100% de tests unitarios pasando sin cambios de comportamiento.
+
+---
+
+### M18 · Concurrencia segura, retención de caché y backup de `overrides`
+- **Situación actual:** Las escrituras concurrentes en `data/release_desk_overrides.json` podrían sobrescribirse entre peticiones simultáneas, y los ficheros de caché en disco (`remedyG` / `resumenIA`) crecen sin política de limpieza ni verificación de volumen persistente en despliegues.
+- **Propuesta:** Proteger la escritura de `release_desk_overrides.json` con `threading.Lock` + escritura atómica, añadir limpieza/TTL para cachés antiguas en `data/cache/` y documentar/verificar en despliegue que `data/` reside en almacenamiento persistente con copia de seguridad.
+- **Componentes afectados:** backend API (`overrides`), gestión de `data/cache/`, scripts de mantenimiento/despliegue.
+- **Criterio de aceptación:** Sin pérdida de datos ante guardados simultáneos y tamaño acotado de la caché en disco.
+
+---
+
+### M19 · Sync programada, concurrencia en `remedyG` y endpoint `/api/health/release-desk`
+- **Situación actual:** La sincronización con MonTMC depende de acción manual desde la UI y la reconciliación de tickets faltantes (`fetch_remedy_detail`) se ejecuta secuencialmente, lo que puede alargar la respuesta si hay muchos tickets antiguos sin cerrar.
+- **Propuesta:** Permitir ejecutar `sync_montmc_postmortem.py` de forma programada (cron/scheduler), acotar/paralelizar con `ThreadPoolExecutor` y timeouts las consultas a `fetch_remedy_detail`, y exponer `/api/health/release-desk` reportando última sync, conectividad MonTMC/Epsilon y permisos de escritura en `data/`.
+- **Componentes afectados:** `converters/cli/sync_montmc_postmortem.py`, `serve_app.py`, `converters/src/fastapi_remedy_router.py`.
+- **Criterio de aceptación:** Sincronización más rápida y observable mediante healthcheck antes y después de cada despliegue.
+
+---
+
+### M20 · Validación CI (`node --check` + `pytest`) y smoke test post-despliegue
+- **Situación actual:** Los tests unitarios cubren funciones aisladas, pero no hay verificación automática previa al despliegue de sintaxis JS (`node --check`) ni un smoke test HTTP contra el servidor levantado.
+- **Propuesta:** Integrar en el flujo de despliegue la ejecución automática de `node --check dashboards/release-desk/release-desk.js`, `pytest` completo de Mesa de Release y un smoke check HTTP sobre `/dashboards/release-desk/`, `/data/output/index.json` y `/api/epsilon/resumenIA/cached`.
+- **Componentes afectados:** scripts de CI/despliegue, `converters/tests/`.
+- **Criterio de aceptación:** Ningún despliegue en producción avanza si falla la sintaxis JS, los tests unitarios o la disponibilidad de los endpoints críticos.
+
+---
+
+### M21 · Unificación de servicios backend (`serve_app.py` y FastAPI)
+- **Situación actual:** Existen rutas y lógica paralela entre `serve_app.py` y `converters/src/fastapi_remedy_router.py`, lo que obliga a duplicar cambios cuando se añade un endpoint o parámetro nuevo.
+- **Propuesta:** Extraer la lógica compartida de endpoints de Mesa de Release (`overrides`, `sync-postmortem`, `resumenIA/cached`, `remedyG`) a un módulo de servicio único invocado por ambos servidores (o migrar completamente al router FastAPI).
+- **Componentes afectados:** `serve_app.py`, `converters/src/fastapi_remedy_router.py`, `converters/src/`.
+- **Criterio de aceptación:** Un único punto de mantenimiento para cada operación backend, garantizando paridad exacta entre entorno local y producción.
