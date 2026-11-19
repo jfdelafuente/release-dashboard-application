@@ -316,9 +316,14 @@ def test_sync_postmortem_reconciles_missing_non_closed_tickets(tmp_path):
     assert res["success"] is True
     assert res["nuevas"] == 1
     assert res["actualizadas"] == 1
+    assert res["new_ids"] == ["INC_ACTIVE"]
+    assert res["updated_ids"] == ["INC_MISSING_OPEN"]
+    assert res["status_changed_ids"] == ["INC_MISSING_OPEN"]
     mock_client.fetch_remedy_detail.assert_called_once_with("INC_MISSING_OPEN")
 
     saved = json.loads(target_file.read_text(encoding="utf-8"))
+    assert saved["_metadata"]["last_sync_changes"]["new_ids"] == ["INC_ACTIVE"]
+    assert saved["_metadata"]["last_sync_changes"]["status_changed_ids"] == ["INC_MISSING_OPEN"]
     by_id = {r["ID de incidencia"]: r for r in saved["data"]}
     assert by_id["INC_MISSING_OPEN"]["Estatus"] == "Cerrado"
     assert by_id["INC_ALREADY_CLOSED"]["Estatus"] == "Cerrado"

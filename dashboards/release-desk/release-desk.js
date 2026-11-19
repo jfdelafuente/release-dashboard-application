@@ -508,6 +508,20 @@
         });
     }
 
+    function getSyncChangeBadge(incId, lastSyncChanges) {
+        if (!incId || !lastSyncChanges || typeof lastSyncChanges !== 'object') return null;
+        var hasId = function (col) {
+            if (!col) return false;
+            if (typeof col.has === 'function') return col.has(incId);
+            if (Array.isArray(col)) return col.indexOf(incId) !== -1;
+            return false;
+        };
+        if (hasId(lastSyncChanges.new_ids)) return 'new';
+        if (hasId(lastSyncChanges.status_changed_ids)) return 'status';
+        if (hasId(lastSyncChanges.updated_ids)) return 'updated';
+        return null;
+    }
+
     if (typeof module !== 'undefined' && module.exports) {
         module.exports = {
             isClosedStatus: isClosedStatus,
@@ -523,7 +537,8 @@
             buildMesaBriefing: buildMesaBriefing,
             buildMesaBriefingBySystem: buildMesaBriefingBySystem,
             getFechaPrevistaStatus: getFechaPrevistaStatus,
-            groupIncidentsByProject: groupIncidentsByProject
+            groupIncidentsByProject: groupIncidentsByProject,
+            getSyncChangeBadge: getSyncChangeBadge
         };
     }
 
@@ -1062,8 +1077,18 @@
                 ? '<div><span class="rd-badge-stale" title="El ticket se actualizó en Remedy después de generar este resumen; al desplegar se refrescará automáticamente">↻ Nuevo en Remedy</span></div>'
                 : '';
 
+            var syncBadgeKind = getSyncChangeBadge(id, state.metadata && state.metadata.last_sync_changes);
+            var syncBadgeHtml = '';
+            if (syncBadgeKind === 'new') {
+                syncBadgeHtml = '<div><span class="rd-badge-sync-new" title="Incidencia nueva en la última sincronización">Nuevo</span></div>';
+            } else if (syncBadgeKind === 'status') {
+                syncBadgeHtml = '<div><span class="rd-badge-sync-upd" title="Cambió de estado en la última sincronización">Cambió estado</span></div>';
+            } else if (syncBadgeKind === 'updated') {
+                syncBadgeHtml = '<div><span class="rd-badge-sync-upd" title="Actualizada en la última sincronización">Actualizada</span></div>';
+            }
+
             var rowHtml = '<tr data-inc-id="' + escapeHtml(id) + '"' + rowClassAttr + ' aria-expanded="' + (isSelected ? 'true' : 'false') + '">' +
-                '<td style="white-space:nowrap;"><span class="rd-badge rd-badge-code">' + (isSelected ? '▾ ' : '▸ ') + escapeHtml(id) + '</span></td>' +
+                '<td style="white-space:nowrap;"><span class="rd-badge rd-badge-code">' + (isSelected ? '▾ ' : '▸ ') + escapeHtml(id) + '</span>' + syncBadgeHtml + '</td>' +
                 '<td style="font-size:11.5px; min-width:78px;">' + escapeHtml(fechaApertura) + agingHtml + '</td>' +
                 '<td style="min-width:140px; max-width:220px;" title="' + escapeHtml(descProblema) + '"><div class="rd-cell-clamp">' + descCellHtml + '</div></td>' +
                 '<td style="white-space:nowrap;"><span class="rd-badge ' + prioBadgeClass + '">' + escapeHtml(prioridadUrg) + '</span></td>' +

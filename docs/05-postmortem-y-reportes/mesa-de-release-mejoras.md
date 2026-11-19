@@ -20,7 +20,7 @@ Lista priorizada de evolutivos para la consola **[Mesa de Release](/05-postmorte
 | **M10** | Notas rápidas de seguimiento de Mesa por incidencia | Seguimiento | Alto | `[ ] Pendiente` |
 | **M11** | Filtros por `Despliegue` y por `Producto` | UX / Operativa | Medio | `[ ] Pendiente` |
 | **M12** | Botón "Copiar briefing de Mesa" para actas y Teams | Operativa | Alto | `[x] Completada` |
-| **M13** | Indicador de novedades desde la última sincronización | Operativa | Medio | `[ ] Pendiente` |
+| **M13** | Indicador de novedades desde la última sincronización | Operativa | Medio | `[x] Completada` |
 | **M14** | Vista agrupada por Proyecto (`PRJ-*`) con semáforo de salud | Seguimiento | Medio | `[x] Completada` |
 | **M15** | Detector de tickets sin movimiento / "ping-pong" entre grupos | Operativa | Medio | `[ ] Pendiente` |
 

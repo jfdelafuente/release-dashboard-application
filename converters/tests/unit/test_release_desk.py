@@ -435,3 +435,23 @@ def test_release_desk_js_group_incidents_by_project():
     else:
         js = RELEASE_DESK_JS.read_text(encoding="utf-8")
         assert "groupIncidentsByProject" in js
+
+
+def test_release_desk_js_get_sync_change_badge():
+    if shutil.which("node") is not None:
+        script = (
+            f"const rd = require({json.dumps(str(RELEASE_DESK_JS))});\n"
+            "const changes = { new_ids: ['INC1'], status_changed_ids: ['INC2'], updated_ids: ['INC2', 'INC3'] };\n"
+            "console.log(JSON.stringify({\n"
+            "  a: rd.getSyncChangeBadge('INC1', changes),\n"
+            "  b: rd.getSyncChangeBadge('INC2', changes),\n"
+            "  c: rd.getSyncChangeBadge('INC3', changes),\n"
+            "  d: rd.getSyncChangeBadge('INC4', changes)\n"
+            "}));\n"
+        )
+        proc = subprocess.run(["node", "-e", script], capture_output=True, text=True, check=True)
+        out = json.loads(proc.stdout)
+        assert out == {"a": "new", "b": "status", "c": "updated", "d": None}
+    else:
+        js = RELEASE_DESK_JS.read_text(encoding="utf-8")
+        assert "getSyncChangeBadge" in js

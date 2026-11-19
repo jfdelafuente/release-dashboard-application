@@ -178,6 +178,7 @@ def _recalculate_postmortem_dataset(
     data_list: List[Dict[str, Any]],
     release_name: Optional[str],
     existing_metadata: Dict[str, Any],
+    last_sync_changes: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
     """Recalcula Despliegue (PAP/MESA), KPIs y metadatos del dataset postmortem."""
     records = [PostmortemRecord(dict(item)) for item in data_list]
@@ -203,6 +204,8 @@ def _recalculate_postmortem_dataset(
     metadata["record_count"] = len(enriched_data)
     metadata["release_name"] = release_name
     metadata["kpis"] = kpis.to_dict()
+    if last_sync_changes is not None:
+        metadata["last_sync_changes"] = last_sync_changes
 
     return {
         "_metadata": metadata,
@@ -357,6 +360,8 @@ def sync_postmortem_release(
     actualizadas = 0
     sin_cambios = 0
     new_ids: List[str] = []
+    updated_ids: List[str] = []
+    status_changed_ids: List[str] = []
     compare_fields = (
         "Estatus",
         "Grupo asignado",
@@ -383,6 +388,9 @@ def sync_postmortem_release(
             old_rec = records_by_id[inc_id]
             has_changes = any(norm_rec.get(k) != old_rec.get(k) for k in compare_fields)
             if has_changes:
+                if norm_rec.get("Estatus") != old_rec.get("Estatus"):
+                    status_changed_ids.append(inc_id)
+                updated_ids.append(inc_id)
                 updated_rec = dict(old_rec)
                 updated_rec.update(norm_rec)
                 records_by_id[inc_id] = updated_rec
@@ -412,6 +420,9 @@ def sync_postmortem_release(
                     norm_detail["Fecha de envío"] = old_rec["Fecha de envío"]
                 has_changes = any(norm_detail.get(k) != old_rec.get(k) for k in compare_fields)
                 if has_changes:
+                    if norm_detail.get("Estatus") != old_rec.get("Estatus"):
+                        status_changed_ids.append(inc_id)
+                    updated_ids.append(inc_id)
                     updated_rec = dict(old_rec)
                     updated_rec.update(norm_detail)
                     records_by_id[inc_id] = updated_rec
@@ -424,7 +435,18 @@ def sync_postmortem_release(
     ]
 
     # 4. Recalcular Despliegue (PAP/MESA), KPIs y Metadatos
-    final_dataset = _recalculate_postmortem_dataset(final_data_list, active_release, existing_metadata)
+    last_sync_changes = {
+        "new_ids": new_ids,
+        "updated_ids": updated_ids,
+        "status_changed_ids": status_changed_ids,
+        "timestamp": datetime.now().isoformat(),
+    }
+    final_dataset = _recalculate_postmortem_dataset(
+        final_data_list,
+        active_release,
+        existing_metadata,
+        last_sync_changes=last_sync_changes,
+    )
     total_records = len(final_dataset["data"])
     elapsed = time.time() - start_time
 
@@ -466,6 +488,9 @@ def sync_postmortem_release(
         "nuevas": nuevas,
         "actualizadas": actualizadas,
         "sin_cambios": sin_cambios,
+        "new_ids": new_ids,
+        "updated_ids": updated_ids,
+        "status_changed_ids": status_changed_ids,
         "total_dataset": total_records,
         "target_file": str(target_file),
         "dry_run": dry_run,
