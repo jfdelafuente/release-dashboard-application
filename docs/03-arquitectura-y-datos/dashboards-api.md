@@ -373,6 +373,11 @@ Invocada por el cliente [`dashboards/reportes-incidencias/api-client.js`](../../
 * **Invocado por**: [`dashboards/assets/topbar.js`](../../dashboards/assets/topbar.js) y [`api-client.js`](../../dashboards/reportes-incidencias/api-client.js).
 - **Propósito**: Valida que la API REST (FastAPI) está viva. Actualiza el indicador visual circular de la barra superior a verde (`API OK`) o rojo (`API Offline`).
 
+#### `GET /api/health/release-desk`
+
+* **Invocado por**: Sondas de despliegue, verificación operativa y soporte de **Mesa de Release** / **Consola de Triaje**.
+- **Propósito**: Devuelve un diagnóstico detallado de escritura en `STORAGE_DIR`, última sincronización de postmortem (`Mesa de Release`), disponibilidad de `high_priority_notifications.json` (`Consola de Triaje`), catálogo `projects_catalog.json` y configuración de integraciones MonTMC / Epsilon IA (`200 OK` si `status: "ok"`, `503` si `status: "degraded"`).
+
 #### `GET /healthz` y `GET /readyz`
 
 * **Invocado por**: Topbar (como fallback de salud) y sondas de infraestructura de servidor o balanceador.

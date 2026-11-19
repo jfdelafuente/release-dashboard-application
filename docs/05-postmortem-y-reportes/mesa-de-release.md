@@ -8,14 +8,16 @@ La consola **Mesa de Release** (`/dashboards/release-desk/`) centraliza el segui
 
 | Componente | Ruta | Responsabilidad |
 | :--- | :--- | :--- |
-| Interfaz web | `dashboards/release-desk/index.html` | Estructura HTML, estilos compactos, KPIs clicables, filtros, conmutador de vista y tabla de 12 columnas |
-| Lógica cliente | `dashboards/release-desk/release-desk.js` | Carga de releases, filtros, ordenación, resolución `PRJ-*`, vista por proyecto, exportación CSV, briefings Teams y Resumen IA |
+| Interfaz web | `dashboards/release-desk/index.html`, `dashboards/release-desk/release-desk.css` | Estructura HTML, estilos externos con cache-busting, KPIs clicables, filtros, conmutador de vista y tabla de 12 columnas |
+| Lógica de dominio | `dashboards/release-desk/release-desk-domain.js` | Funciones puras (filtros, aging, ordenación, resolución `PRJ-*`, vista por proyecto, exportación CSV, briefings Teams), exportables a navegador y Node |
+| Lógica UI y estado | `dashboards/release-desk/release-desk.js` | Carga de releases, estado de pantalla, eventos DOM y llamadas API |
 | Notificaciones UI | `dashboards/assets/ui-feedback.css`, `dashboards/assets/ui-feedback.js` | Sistema central de toasts (`window.Toast`) usado en avisos y confirmaciones |
 | Navegación | `dashboards/assets/topbar.js` | Registro del enlace **Mesa de Release** en la barra superior (`id: 'release-desk'`) |
-| Sincronización MonTMC | `converters/cli/sync_montmc_postmortem.py` | Sincronización incremental desde `/api/epsilon/release`, reconciliación individual vía `remedyG` y registro de novedades (`last_sync_changes`) |
+| Sincronización MonTMC | `converters/cli/sync_montmc_postmortem.py` | Sincronización incremental desde `/api/epsilon/release`, reconciliación paralela vía `remedyG` (`ThreadPoolExecutor`) y registro de novedades (`last_sync_changes`) |
+| Almacenamiento y salud | `converters/src/storage_utils.py`, `converters/src/release_desk_overrides.py` | Locks por fichero (`threading.Lock`), escritura atómica JSON con backup `.bak`, retención de caché (30d / 2000 ficheros) y diagnóstico `/api/health/release-desk` |
 | Catálogo CLI | `converters/cli/update_projects_catalog.py` | Importación incremental y no destructiva de CSVs mensuales de proyectos hacia `data/projects_catalog.json` |
 | Versionado estáticos | `converters/cli/bump_asset_versions.py` | Actualización automática de `?v=<version>` en CSS/JS locales de Mesa de Release y Consola de Triaje |
-| Tests unitarios | `converters/tests/unit/test_release_desk.py`, `converters/tests/unit/test_sync_montmc_postmortem.py` | Validación de controles HTML, reglas JS (filtros, aging, ordenación, CSV, briefings, vista por proyecto, novedades) y sincronización MonTMC |
+| Tests unitarios | `converters/tests/unit/test_release_desk.py`, `test_sync_montmc_postmortem.py`, `test_m18_storage_concurrency.py`, `test_m19_health_and_parallel_sync.py` | Validación de controles HTML, reglas JS, sincronización MonTMC, concurrencia/retención y endpoint de salud |
 
 ---
 
@@ -25,9 +27,11 @@ La consola **Mesa de Release** (`/dashboards/release-desk/`) centraliza el segui
 - **Aislamiento de datos**: **no** consume `high_priority_notifications.json` ni `*-massive.json`; opera exclusivamente sobre los datasets de seguimiento postmortem de cada release.
 - **Sincronización con MonTMC**:
   - El botón **⚡ Sincronizar MonTMC** invoca `POST /api/sync-postmortem` con `{ release_name }`.
-  - Realiza un *upsert* incremental de `/api/epsilon/release` y **reconcilia individualmente** (`GET /api/eps/remedyG/{idRemedy}`) los tickets locales no cerrados que ya no aparezcan en ese feed (detectando cierres en Remedy).
+  - Realiza un *upsert* incremental de `/api/epsilon/release` y **reconcilia en paralelo** (`ThreadPoolExecutor`, timeout `15s`, tope `MONTMC_RECONCILE_MAX=50`) vía `GET /api/eps/remedyG/{idRemedy}` los tickets locales no cerrados que ya no aparezcan en ese feed (detectando cierres en Remedy).
+  - Opcionalmente, `serve_app.py --sync-interval <minutos>` (o `SYNC_INTERVAL_MINUTES`) activa una sincronización periódica en segundo plano para Mesa de Release y Consola de Triaje.
   - Registra en `_metadata.last_sync_changes` los IDs nuevos, actualizados y con cambio de estado para mostrarlos con badges en la tabla.
-- **Persistencia auxiliar (`overrides`)**: las fechas previstas acordadas en Mesa se persisten por release en `data/release_desk_overrides.json` mediante `/api/release-desk/overrides`, sin alterar los JSON crudos de MonTMC.
+- **Persistencia auxiliar (`overrides`) y seguridad en disco**: las fechas previstas acordadas en Mesa se persisten por release en `data/release_desk_overrides.json` mediante `/api/release-desk/overrides` con `threading.Lock`, escritura atómica (`os.replace`) y backup `.bak`, sin alterar los JSON crudos de MonTMC. Al arrancar `serve_app.py`, se comprueba la escritura en `STORAGE_DIR` y se podan las cachés `.epsilon_cache` y `.remedy_cache` (30 días / máx. 2.000 ficheros).
+- **Diagnóstico de salud**: `GET /api/health/release-desk` expone el estado de escritura en `data/`, última sincronización de postmortem, disponibilidad de `high_priority_notifications.json` (Triaje), `projects_catalog.json` e integraciones MonTMC / Epsilon IA.
 - **Minimización y frescura de Resumen IA**:
   1. Al cargar una release se realiza una **precarga pasiva a coste 0** (`POST /api/epsilon/resumenIA/cached`) que recupera únicamente los resúmenes ya cacheados en disco sin invocar a Epsilon IA.
   2. La consulta en vivo `GET /api/epsilon/resumenIA/<inc_id>` se ejecuta **bajo demanda** al pulsar sobre una fila concreta (o automáticamente con `?force=1` si `fechaUltimaModificacion` de Remedy es posterior a la caché, marcado en tabla con `↻ Nuevo en Remedy`).
@@ -109,5 +113,5 @@ python converters/cli/bump_asset_versions.py
 Ejecutar la suite unitaria de Mesa de Release y sincronización MonTMC:
 
 ```bash
-python -m pytest converters/tests/unit/test_release_desk.py converters/tests/unit/test_sync_montmc_postmortem.py -v
+python -m pytest converters/tests/unit/test_release_desk.py converters/tests/unit/test_sync_montmc_postmortem.py converters/tests/unit/test_m18_storage_concurrency.py converters/tests/unit/test_m19_health_and_parallel_sync.py -v
 ```
