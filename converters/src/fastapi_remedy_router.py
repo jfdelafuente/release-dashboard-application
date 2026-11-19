@@ -388,3 +388,15 @@ def api_post_cached_epsilon_summaries(payload: Dict[str, Any] = Body(...)):
     raw_ids = payload.get("ids") if isinstance(payload, dict) and isinstance(payload.get("ids"), list) else []
     summaries = load_cached_epsilon_summaries(storage_dir, [str(x) for x in raw_ids])
     return {"success": True, "count": len(summaries), "summaries": summaries}
+
+
+@router.get("/api/health/release-desk")
+@router.get("/health/release-desk")
+def api_health_release_desk():
+    from converters.src.storage_utils import build_release_desk_health
+
+    root = _get_project_root()
+    storage_dir = Path(os.environ.get("RELEASE_DASHBOARD_STORAGE_DIR", "").strip() or (root / "data"))
+    payload = build_release_desk_health(storage_dir, root)
+    code = 200 if payload.get("status") == "ok" else 503
+    return JSONResponse(status_code=code, content=payload)

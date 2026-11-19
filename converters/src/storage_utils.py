@@ -9,6 +9,7 @@ Utilidades compartidas de almacenamiento seguro para Mesa de Release y Consola d
 
 from __future__ import annotations
 
+from datetime import datetime, timezone
 import json
 import os
 from pathlib import Path
@@ -67,7 +68,14 @@ def atomic_write_json(
             tmp_file.write(serialized)
             tmp_file.flush()
             os.fsync(tmp_file.fileno())
-        os.replace(tmp_path, target)
+        for attempt in range(5):
+            try:
+                os.replace(tmp_path, target)
+                break
+            except PermissionError:
+                if attempt == 4:
+                    raise
+                time.sleep(0.01 * (attempt + 1))
     except Exception:
         if tmp_path and os.path.exists(tmp_path):
             try:
@@ -136,3 +144,85 @@ def check_storage_writability(storage_dir: Path) -> Dict[str, Any]:
         return {"ok": True, "path": str(target), "error": None}
     except Exception as exc:
         return {"ok": False, "path": str(target), "error": str(exc)}
+
+
+def build_release_desk_health(storage_dir: Path, project_root: Path) -> Dict[str, Any]:
+    """Construye el diagnóstico de salud para Mesa de Release y Consola de Triaje."""
+    storage = Path(storage_dir)
+    root = Path(project_root)
+    storage_status = check_storage_writability(storage)
+
+    output_dir = storage / "output"
+    if not output_dir.is_dir():
+        output_dir = root / "data" / "output"
+
+    latest_pm_info: Dict[str, Any] = {"available": False, "file": None, "release": None, "last_sync": None}
+    if output_dir.is_dir():
+        pm_files = sorted(
+            output_dir.glob("*postmortem*.json"),
+            key=lambda p: p.stat().st_mtime if p.exists() else 0,
+            reverse=True,
+        )
+        if pm_files:
+            latest = pm_files[0]
+            latest_pm_info["available"] = True
+            latest_pm_info["file"] = latest.name
+            try:
+                pm_data = json.loads(latest.read_text(encoding="utf-8"))
+                meta = (
+                    (pm_data.get("_metadata") or pm_data.get("metadata"))
+                    if isinstance(pm_data, dict)
+                    else {}
+                )
+                if isinstance(meta, dict):
+                    latest_pm_info["release"] = meta.get("release_name") or meta.get("release")
+                    sync_changes = meta.get("last_sync_changes") or {}
+                    latest_pm_info["last_sync"] = (
+                        sync_changes.get("timestamp")
+                        or meta.get("ultima_actualizacion")
+                        or meta.get("last_updated")
+                    )
+            except Exception:
+                pass
+
+    triage_file = output_dir / "high_priority_notifications.json"
+    triage_info: Dict[str, Any] = {
+        "available": triage_file.is_file(),
+        "updated_at": (
+            datetime.fromtimestamp(triage_file.stat().st_mtime, tz=timezone.utc).isoformat()
+            if triage_file.is_file()
+            else None
+        ),
+    }
+
+    catalog_file = storage / "projects_catalog.json"
+    if not catalog_file.is_file():
+        catalog_file = root / "data" / "projects_catalog.json"
+    catalog_info: Dict[str, Any] = {"available": catalog_file.is_file(), "releases_count": 0}
+    if catalog_file.is_file():
+        try:
+            cat_data = json.loads(catalog_file.read_text(encoding="utf-8"))
+            releases = cat_data.get("releases") if isinstance(cat_data, dict) else {}
+            if isinstance(releases, dict):
+                catalog_info["releases_count"] = len(releases)
+        except Exception:
+            pass
+
+    montmc_url = os.environ.get("MON_TMC_BASE_URL", "https://montmc.orange.es").strip()
+    epsilon_url = os.environ.get("EPSILON_API_URL", "https://epsilon.orange.es").strip()
+    integrations = {
+        "montmc_configured": bool(montmc_url),
+        "montmc_base_url": montmc_url,
+        "epsilon_configured": bool(epsilon_url),
+        "epsilon_token_present": bool(os.environ.get("EPSILON_BEARER_TOKEN", "").strip()),
+    }
+
+    return {
+        "status": "ok" if storage_status["ok"] else "degraded",
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "storage": storage_status,
+        "postmortem": latest_pm_info,
+        "triage": triage_info,
+        "projects_catalog": catalog_info,
+        "integrations": integrations,
+    }

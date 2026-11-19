@@ -1445,6 +1445,12 @@ class CustomHTTPHandler(http.server.SimpleHTTPRequestHandler):
             self.handle_incident_manager_emergency_cockpit()
             return
 
+        if self.path.split('?')[0].rstrip('/') == '/api/health/release-desk':
+            from converters.src.storage_utils import build_release_desk_health
+            payload = build_release_desk_health(STORAGE_DIR, PROJECT_ROOT)
+            self._send_json(200 if payload.get('status') == 'ok' else 503, payload)
+            return
+
         if self.path.startswith('/api/reports') or self.path.startswith('/api/departments') or self.path in ('/healthz', '/readyz', '/api/health'):
             if self.proxy_to_fastapi_executive():
                 return
@@ -1545,6 +1551,12 @@ if __name__ == '__main__':
         default=PORT,
         help=f"Puerto del servidor HTTP estático (default: {PORT})"
     )
+    parser.add_argument(
+        "--sync-interval",
+        type=int,
+        default=int(os.environ.get("SYNC_INTERVAL_MINUTES", "0") or 0),
+        help="Intervalo en minutos para sync programada MonTMC (0 = desactivado)"
+    )
     args, _ = parser.parse_known_args()
     PORT = args.port
 
@@ -1572,6 +1584,32 @@ if __name__ == '__main__':
                 print(f"  [Cache Prune] {cache_name}: eliminados {pruned} ficheros (restantes: {stats['remaining']})")
     except Exception as m18_err:
         print(f"  [AVISO M18] Error en verificación inicial de almacenamiento/caché: {m18_err}")
+
+    if args.sync_interval > 0:
+        import threading as _threading
+
+        def _scheduled_sync_loop(interval_min: int):
+            while True:
+                time.sleep(interval_min * 60)
+                if sync_postmortem_release:
+                    try:
+                        sync_postmortem_release(project_root=PROJECT_ROOT)
+                    except Exception as sync_err:
+                        print(f"  [Sync Scheduler] Error en sync postmortem: {sync_err}")
+                if sync_remedy_incidents:
+                    try:
+                        sync_remedy_incidents(dias=3, project_root=PROJECT_ROOT)
+                    except Exception as sync_err:
+                        print(f"  [Sync Scheduler] Error en sync remedy: {sync_err}")
+
+        _sync_thread = _threading.Thread(
+            target=_scheduled_sync_loop,
+            args=(args.sync_interval,),
+            daemon=True,
+            name="montmc-sync-scheduler",
+        )
+        _sync_thread.start()
+        print(f"  [Sync Scheduler] Activo cada {args.sync_interval} min (Mesa de Release + Triaje)")
 
     print("Presiona Ctrl+C para detener el servidor\n")
 
