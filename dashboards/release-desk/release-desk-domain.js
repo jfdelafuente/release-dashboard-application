@@ -537,6 +537,7 @@
         buildMesaBriefing: buildMesaBriefing,
         buildMesaBriefingBySystem: buildMesaBriefingBySystem,
         getFechaPrevistaStatus: getFechaPrevistaStatus,
+        getDespliegueBadgeClass: getDespliegueBadgeClass,
         groupIncidentsByProject: groupIncidentsByProject,
         getSyncChangeBadge: getSyncChangeBadge
     };

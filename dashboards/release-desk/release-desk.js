@@ -25,6 +25,7 @@
     var buildMesaBriefing = Domain.buildMesaBriefing;
     var buildMesaBriefingBySystem = Domain.buildMesaBriefingBySystem;
     var getFechaPrevistaStatus = Domain.getFechaPrevistaStatus;
+    var getDespliegueBadgeClass = Domain.getDespliegueBadgeClass;
     var groupIncidentsByProject = Domain.groupIncidentsByProject;
     var getSyncChangeBadge = Domain.getSyncChangeBadge;
     var state = {

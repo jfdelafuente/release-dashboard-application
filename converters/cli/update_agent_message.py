@@ -26,6 +26,14 @@ import sys
 from pathlib import Path
 from typing import Any, Optional, Tuple
 
+try:
+    from converters.src.storage_utils import atomic_write_json, get_path_lock
+except ImportError:
+    _ROOT = str(Path(__file__).resolve().parent.parent.parent)
+    if _ROOT not in sys.path:
+        sys.path.insert(0, _ROOT)
+    from converters.src.storage_utils import atomic_write_json, get_path_lock
+
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(message)s",
@@ -125,43 +133,42 @@ def update_agent_store(
         "incidents": {}
     }
 
-    if store_path.exists():
-        try:
-            with open(store_path, "r", encoding="utf-8") as f:
-                loaded = json.load(f)
-                if isinstance(loaded, dict):
-                    data = loaded
-        except Exception as e:
-            logger.warning("No se pudo leer el archivo existente %s (%s). Se creará nuevo.", store_path, e)
+    with get_path_lock(store_path):
+        if store_path.exists():
+            try:
+                with open(store_path, "r", encoding="utf-8") as f:
+                    loaded = json.load(f)
+                    if isinstance(loaded, dict):
+                        data = loaded
+            except Exception as e:
+                logger.warning("No se pudo leer el archivo existente %s (%s). Se creará nuevo.", store_path, e)
 
-    if "_metadata" not in data or not isinstance(data["_metadata"], dict):
-        data["_metadata"] = {}
-    data["_metadata"]["updated_at"] = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+        if "_metadata" not in data or not isinstance(data["_metadata"], dict):
+            data["_metadata"] = {}
+        data["_metadata"]["updated_at"] = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
-    if "incidents" not in data or not isinstance(data["incidents"], dict):
-        data["incidents"] = {}
+        if "incidents" not in data or not isinstance(data["incidents"], dict):
+            data["incidents"] = {}
 
-    if incident_id not in data["incidents"]:
-        data["incidents"][incident_id] = {}
+        if incident_id not in data["incidents"]:
+            data["incidents"][incident_id] = {}
 
-    words_comp = len(completo.split()) if completo else 0
-    words_brev = len(breve.split()) if breve else 0
+        words_comp = len(completo.split()) if completo else 0
+        words_brev = len(breve.split()) if breve else 0
 
-    entry = {
-        "completo": completo,
-        "breve": breve,
-        "generado_por_agente": True,
-        "origen": origen,
-        "conteo_palabras_completo": words_comp,
-        "conteo_palabras_breve": words_brev
-    }
+        entry = {
+            "completo": completo,
+            "breve": breve,
+            "generado_por_agente": True,
+            "origen": origen,
+            "conteo_palabras_completo": words_comp,
+            "conteo_palabras_breve": words_brev
+        }
 
-    data["incidents"][incident_id][phase] = entry
+        data["incidents"][incident_id][phase] = entry
 
-    # Guardar atómicamente
-    store_path.parent.mkdir(parents=True, exist_ok=True)
-    with open(store_path, "w", encoding="utf-8") as f:
-        json.dump(data, f, ensure_ascii=False, indent=2)
+        # Guardar atómicamente con backup previo
+        atomic_write_json(store_path, data, create_backup=True, indent=2)
 
     return entry
 

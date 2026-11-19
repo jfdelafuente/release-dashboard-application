@@ -1048,11 +1048,12 @@ class CustomHTTPHandler(http.server.SimpleHTTPRequestHandler):
         code_str = str(code).strip().upper()
         if code_str.startswith("INC"):
             try:
+                from converters.src.storage_utils import atomic_write_json, get_path_lock
                 cache_dir = PROJECT_ROOT / "data" / ".epsilon_cache"
-                cache_dir.mkdir(parents=True, exist_ok=True)
                 cache_file = cache_dir / f"{code_str}.json"
+                with get_path_lock(cache_file):
+                    atomic_write_json(cache_file, data_or_errors, create_backup=False, indent=2)
                 cache_bytes = json.dumps(data_or_errors, ensure_ascii=False, indent=2).encode('utf-8')
-                cache_file.write_bytes(cache_bytes)
                 EPSILON_CACHE[code_str] = (time.time(), cache_bytes, 200)
             except Exception as write_err:
                 print(f"  Aviso: no se pudo persistir en .epsilon_cache: {write_err}")
@@ -1264,13 +1265,13 @@ class CustomHTTPHandler(http.server.SimpleHTTPRequestHandler):
                 }
                 REMEDY_DETAIL_CACHE[clean_id] = (now, payload, 200)
 
-                # Persistencia en disco
+                # Persistencia en disco atómica
                 try:
+                    from converters.src.storage_utils import atomic_write_json, get_path_lock
                     cache_dir = PROJECT_ROOT / "data" / ".remedy_cache"
-                    cache_dir.mkdir(parents=True, exist_ok=True)
                     disk_file = cache_dir / f"{clean_id}.json"
-                    with open(disk_file, "w", encoding="utf-8") as f:
-                        json.dump(payload, f, ensure_ascii=False)
+                    with get_path_lock(disk_file):
+                        atomic_write_json(disk_file, payload, create_backup=False, indent=None)
                 except Exception:
                     pass
 
@@ -1556,6 +1557,22 @@ if __name__ == '__main__':
     print(f"Gestión de Problemas (proxy :3001): http://localhost:{PORT}/problemas")
     print(f"Nota: API principal FastAPI disponible en http://localhost:8000/docs")
     print("==================================================\n")
+
+    try:
+        from converters.src.storage_utils import check_storage_writability, prune_cache_dir
+        storage_status = check_storage_writability(STORAGE_DIR)
+        if not storage_status["ok"]:
+            print(f"  [AVISO M18] Directorio persistente NO escribible ({storage_status['path']}): {storage_status['error']}")
+        else:
+            print(f"  [Storage OK] Directorio persistente escribible: {storage_status['path']}")
+        for cache_name in (".epsilon_cache", ".remedy_cache"):
+            stats = prune_cache_dir(PROJECT_ROOT / "data" / cache_name, max_age_days=30, max_files=2000)
+            pruned = stats["deleted_expired"] + stats["deleted_overflow"]
+            if pruned > 0:
+                print(f"  [Cache Prune] {cache_name}: eliminados {pruned} ficheros (restantes: {stats['remaining']})")
+    except Exception as m18_err:
+        print(f"  [AVISO M18] Error en verificación inicial de almacenamiento/caché: {m18_err}")
+
     print("Presiona Ctrl+C para detener el servidor\n")
 
     socketserver.ThreadingTCPServer.allow_reuse_address = True

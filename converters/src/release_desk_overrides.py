@@ -13,6 +13,8 @@ from pathlib import Path
 import re
 from typing import Any, Dict, Iterable
 
+from converters.src.storage_utils import atomic_write_json, get_path_lock
+
 
 OVERRIDES_FILENAME = "release_desk_overrides.json"
 _SAFE_ID_RE = re.compile(r"^[A-Za-z0-9_-]+$")
@@ -55,25 +57,26 @@ def set_fecha_prevista_override(
         raise ValueError("incident_id es obligatorio")
 
     overrides_path = Path(storage_dir) / OVERRIDES_FILENAME
-    raw = _load_raw(overrides_path)
-    by_release = raw.setdefault("by_release", {})
-    bucket = by_release.setdefault(rel, {})
-    if not isinstance(bucket, dict):
-        bucket = {}
-        by_release[rel] = bucket
-
     clean_date = (fecha_prevista or "").strip()
-    if clean_date:
-        bucket[inc_id] = {
-            "fecha_prevista": clean_date,
-            "updated_at": datetime.now().isoformat(timespec="seconds"),
-        }
-    else:
-        bucket.pop(inc_id, None)
 
-    raw["updated_at"] = datetime.now().isoformat(timespec="seconds")
-    overrides_path.parent.mkdir(parents=True, exist_ok=True)
-    overrides_path.write_text(json.dumps(raw, ensure_ascii=False, indent=2), encoding="utf-8")
+    with get_path_lock(overrides_path):
+        raw = _load_raw(overrides_path)
+        by_release = raw.setdefault("by_release", {})
+        bucket = by_release.setdefault(rel, {})
+        if not isinstance(bucket, dict):
+            bucket = {}
+            by_release[rel] = bucket
+
+        if clean_date:
+            bucket[inc_id] = {
+                "fecha_prevista": clean_date,
+                "updated_at": datetime.now().isoformat(timespec="seconds"),
+            }
+        else:
+            bucket.pop(inc_id, None)
+
+        raw["updated_at"] = datetime.now().isoformat(timespec="seconds")
+        atomic_write_json(overrides_path, raw, create_backup=True, indent=2)
 
     return {
         "success": True,
