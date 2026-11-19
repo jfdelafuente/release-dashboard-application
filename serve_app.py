@@ -180,7 +180,9 @@ class CustomHTTPHandler(http.server.SimpleHTTPRequestHandler):
 
     def end_headers(self):
         if getattr(self, '_no_cache_static', False):
-            self.send_header('Cache-Control', 'no-cache, must-revalidate')
+            self.send_header('Cache-Control', 'no-cache, no-store, must-revalidate')
+            self.send_header('Pragma', 'no-cache')
+            self.send_header('Expires', '0')
         super().end_headers()
 
     def _send_raw_response(self, status, content, content_type='application/json; charset=utf-8', extra_headers=None):

@@ -455,3 +455,26 @@ def test_release_desk_js_get_sync_change_badge():
     else:
         js = RELEASE_DESK_JS.read_text(encoding="utf-8")
         assert "getSyncChangeBadge" in js
+
+
+def test_bump_asset_versions_updates_both_consoles(tmp_path):
+    from converters.cli.bump_asset_versions import bump_html_content
+
+    sample = (
+        '<link rel="stylesheet" href="/dashboards/assets/topbar.css">\n'
+        '<link rel="stylesheet" href="./triage.css?v=old">\n'
+        '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter">\n'
+        '<script src="/dashboards/release-desk/release-desk.js"></script>\n'
+    )
+    out = bump_html_content(sample, "20261119_0838")
+    assert 'href="/dashboards/assets/topbar.css?v=20261119_0838"' in out
+    assert 'href="./triage.css?v=20261119_0838"' in out
+    assert 'href="https://fonts.googleapis.com/css2?family=Inter"' in out
+    assert 'src="/dashboards/release-desk/release-desk.js?v=20261119_0838"' in out
+
+    for html_path in (
+        RELEASE_DESK_HTML,
+        PROJECT_ROOT / "dashboards" / "emergency-triage-console" / "index.html",
+    ):
+        text = html_path.read_text(encoding="utf-8")
+        assert "?v=" in text
