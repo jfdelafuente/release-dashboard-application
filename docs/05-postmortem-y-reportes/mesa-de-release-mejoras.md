@@ -24,7 +24,7 @@ Lista priorizada de evolutivos para la consola **[Mesa de Release](/05-postmorte
 | **M14** | Vista agrupada por Proyecto (`PRJ-*`) con semáforo de salud | Seguimiento | Medio | `[x] Completada` |
 | **M15** | Detector de tickets sin movimiento / "ping-pong" entre grupos | Operativa | Medio | `[ ] Pendiente` |
 | **M16** | Cache-busting y cabeceras `Cache-Control` en despliegue | Despliegue | Alto | `[x] Completada` |
-| **M17** | Extracción de CSS y modularización de `release-desk.js` | Mantenimiento | Alto | `[ ] Pendiente` |
+| **M17** | Extracción de CSS y modularización de `release-desk.js` | Mantenimiento | Alto | `[x] Completada` |
 | **M18** | Concurrencia segura, retención de caché y backup de `overrides` | Datos / Despliegue | Alto | `[ ] Pendiente` |
 | **M19** | Sync programada, concurrencia en `remedyG` y endpoint `/api/health/release-desk` | Operación / Despliegue | Medio | `[ ] Pendiente` |
 | **M20** | Validación CI (`node --check` + `pytest`) y smoke test post-despliegue | Despliegue | Medio | `[ ] Pendiente` |
