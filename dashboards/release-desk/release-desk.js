@@ -1090,7 +1090,7 @@
             var rowHtml = '<tr data-inc-id="' + escapeHtml(id) + '"' + rowClassAttr + ' aria-expanded="' + (isSelected ? 'true' : 'false') + '">' +
                 '<td style="white-space:nowrap;"><span class="rd-badge rd-badge-code">' + (isSelected ? '▾ ' : '▸ ') + escapeHtml(id) + '</span>' + syncBadgeHtml + '</td>' +
                 '<td style="font-size:11.5px; min-width:78px;">' + escapeHtml(fechaApertura) + agingHtml + '</td>' +
-                '<td style="min-width:140px; max-width:220px;" title="' + escapeHtml(descProblema) + '"><div class="rd-cell-clamp">' + descCellHtml + '</div></td>' +
+                '<td style="min-width:200px; max-width:340px;" title="' + escapeHtml(descProblema) + '">' + descCellHtml + '</td>' +
                 '<td style="white-space:nowrap;"><span class="rd-badge ' + prioBadgeClass + '">' + escapeHtml(prioridadUrg) + '</span></td>' +
                 '<td style="max-width:120px;">' + sistemaCell + '</td>' +
                 '<td style="white-space:nowrap;">' + jiraCell + '</td>' +
