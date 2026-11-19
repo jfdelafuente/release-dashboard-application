@@ -27,7 +27,7 @@ Lista priorizada de evolutivos para la consola **[Mesa de Release](/05-postmorte
 | **M17** | Extracción de CSS y modularización de `release-desk.js` | Mantenimiento | Alto | `[x] Completada` |
 | **M18** | Concurrencia segura, retención de caché y backup de `overrides` | Datos / Despliegue | Alto | `[x] Completada` |
 | **M19** | Sync programada, concurrencia en `remedyG` y endpoint `/api/health/release-desk` | Operación / Despliegue | Medio | `[x] Completada` |
-| **M20** | Validación CI (`node --check` + `pytest`) y smoke test post-despliegue | Despliegue | Medio | `[ ] Pendiente` |
+| **M20** | Validación CI (`node --check` + `pytest`) y smoke test post-despliegue | Despliegue | Medio | `[x] Completada` |
 | **M21** | Unificación de servicios backend (`serve_app.py` y FastAPI) | Mantenimiento | Medio | `[ ] Pendiente` |
 
 ---

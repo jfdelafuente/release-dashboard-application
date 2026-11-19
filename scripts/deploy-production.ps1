@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Despliegue automatizado y modernizado de Release Dashboard Application en infocodes@10.132.26.96.
 
@@ -135,7 +135,7 @@ elif [ -x "$RemoteDir/scripts/status.sh" ]; then
     "$RemoteDir/scripts/status.sh"
 else
     echo "=== Sondas de Salud HTTP ==="
-    for ep in "/dashboards/portal/" "/dashboards/massive-incidents/" "/dashboards/postmortem/" "/dashboards/release-kpis/" "/dashboards/reportes-incidencias/" "/dashboards/emergency-triage-console/" "/dashboards/agents-catalog/" "/api/health"; do
+    for ep in "/dashboards/portal/" "/dashboards/massive-incidents/" "/dashboards/postmortem/" "/dashboards/release-kpis/" "/dashboards/reportes-incidencias/" "/dashboards/emergency-triage-console/" "/dashboards/release-desk/" "/dashboards/agents-catalog/" "/api/health" "/api/health/release-desk"; do
         printf "  %-35s : " "\$ep"
         curl -s -o /dev/null -w "%{http_code}\n" --noproxy '*' "http://localhost:8081\$ep"
     done
@@ -747,7 +747,7 @@ echo "=== Verificación de Sondas de Salud HTTP ==="
 if [ -x "`$REMOTE_DIR/status.sh" ]; then
     "`$REMOTE_DIR/status.sh"
 else
-    for ep in "/dashboards/portal/" "/dashboards/massive-incidents/" "/dashboards/postmortem/" "/dashboards/release-kpis/" "/dashboards/reportes-incidencias/" "/dashboards/emergency-triage-console/" "/dashboards/agents-catalog/" "/api/health"; do
+    for ep in "/dashboards/portal/" "/dashboards/massive-incidents/" "/dashboards/postmortem/" "/dashboards/release-kpis/" "/dashboards/reportes-incidencias/" "/dashboards/emergency-triage-console/" "/dashboards/release-desk/" "/dashboards/agents-catalog/" "/api/health" "/api/health/release-desk"; do
         printf "  %-35s : " "\$ep"
         curl -sf --noproxy '*' "http://localhost:8081\$ep" >/dev/null && echo "OK (200)" || echo "ERROR"
     done
