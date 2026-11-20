@@ -8,7 +8,7 @@
       "incident-reporter": "1.5.0",
       "incident-executive-notifications": "1.5.0"
     },
-    "generated_at": "2026-11-20T15:54:22.726061+00:00",
+    "generated_at": "2026-11-20T15:54:29.596568+00:00",
     "source_file": "CS-Informe incidencias P1,  P2 y P3 - 2026 - 17 Nov 2026-massive.json",
     "ingestion_delta": null,
     "audit_completeness": {
@@ -531,7 +531,7 @@
       "worklog_status": {
         "fecha_ultimo_worklog": "2026-11-20T15:40:25.000+00:00",
         "horas_sin_worklog": 0.2,
-        "minutos_sin_worklog": 13,
+        "minutos_sin_worklog": 14,
         "nivel_inactividad": "WL_OK",
         "es_inactivo_6h": false,
         "es_inactivo_12h": false,
@@ -779,9 +779,9 @@
         "prioridad_operativa_consola": "P2 Reabierta",
         "requiere_llamada_cso": true,
         "requiere_comunicado_direccion": true,
-        "alerta_worklog": "⚠️ ALERTA: Más de 6h sin notas en Work Log (6.0h).",
+        "alerta_worklog": "⚠️ ALERTA: Más de 6h sin notas en Work Log (6.1h).",
         "reclamar_worklog": true,
-        "plantilla_reclamacion_wl": "[SEGUIMIENTO DE INCIDENCIA - RECLAMACIÓN DE WORK LOG]\nINCIDENCIA: INC000004187906\nGRUPO ASIGNADO: DES_SOE_FICHA\n\nEstimado equipo,\nSe constata que la incidencia no registra actualizaciones técnicas en el Work Log desde hace 6.0h. Conforme al protocolo de seguimiento operativo de Orange Tech Operations, se solicita incorporar de inmediato un apunte técnico con el estado actual del diagnóstico, avances y siguientes acciones planificadas.\n\nAtentamente,\nMesa de Seguimiento y Triaje IT",
+        "plantilla_reclamacion_wl": "[SEGUIMIENTO DE INCIDENCIA - RECLAMACIÓN DE WORK LOG]\nINCIDENCIA: INC000004187906\nGRUPO ASIGNADO: DES_SOE_FICHA\n\nEstimado equipo,\nSe constata que la incidencia no registra actualizaciones técnicas en el Work Log desde hace 6.1h. Conforme al protocolo de seguimiento operativo de Orange Tech Operations, se solicita incorporar de inmediato un apunte técnico con el estado actual del diagnóstico, avances y siguientes acciones planificadas.\n\nAtentamente,\nMesa de Seguimiento y Triaje IT",
         "escenario_id": "escenario-8-reapertura-activa",
         "escenario_num": 8,
         "escenario_titulo": "Escenario 8: Reactivación Exprés por Reapertura / Recurrencia Activa",
@@ -794,8 +794,8 @@
       "fecha_ultima_modificacion": "2026-11-20T09:51:26.000+00:00",
       "worklog_status": {
         "fecha_ultimo_worklog": "2026-11-20T09:51:26.000+00:00",
-        "horas_sin_worklog": 6.0,
-        "minutos_sin_worklog": 362,
+        "horas_sin_worklog": 6.1,
+        "minutos_sin_worklog": 363,
         "nivel_inactividad": "WL_ALERTA_6H",
         "es_inactivo_6h": true,
         "es_inactivo_12h": false,
