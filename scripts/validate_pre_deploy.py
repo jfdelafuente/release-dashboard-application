@@ -13,10 +13,17 @@ Uso:
 from __future__ import annotations
 
 import argparse
+import os
 from pathlib import Path
 import py_compile
 import subprocess
 import sys
+
+if sys.platform == "win32":
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    if hasattr(sys.stderr, "reconfigure"):
+        sys.stderr.reconfigure(encoding="utf-8", errors="replace")
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
@@ -86,7 +93,8 @@ def run_pytest_suite() -> bool:
         "converters/tests/unit/test_serve_app_remedy.py",
     ]
     cmd = [sys.executable, "-m", "pytest"] + test_files + ["-v"]
-    res = subprocess.run(cmd, cwd=str(PROJECT_ROOT))
+    env = {**os.environ, "PYTHONUTF8": "1", "PYTHONIOENCODING": "utf-8"}
+    res = subprocess.run(cmd, cwd=str(PROJECT_ROOT), env=env)
     return res.returncode == 0
 
 

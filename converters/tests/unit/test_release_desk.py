@@ -16,6 +16,16 @@ RELEASE_DESK_HTML = PROJECT_ROOT / "dashboards" / "release-desk" / "index.html"
 RELEASE_DESK_JS = PROJECT_ROOT / "dashboards" / "release-desk" / "release-desk.js"
 
 
+def _run_node_script(script: str) -> subprocess.CompletedProcess:
+    return subprocess.run(
+        ["node", "-e", script],
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        check=True,
+    )
+
+
 def test_topbar_includes_release_desk_link():
     content = TOPBAR_JS.read_text(encoding="utf-8")
     assert "id: 'release-desk'" in content
@@ -130,7 +140,7 @@ def test_release_desk_js_excludes_only_closed_status():
             "const txt = rd.buildFollowupText(active[0], { resumenEjecutivo: 'Test IA' }, '2026R9');\n"
             "console.log(JSON.stringify({ ids: active.map(r => r['ID de incidencia']), txt }));\n"
         )
-        proc = subprocess.run(["node", "-e", script], capture_output=True, text=True, check=True)
+        proc = _run_node_script(script)
         out = json.loads(proc.stdout)
         assert out["ids"] == ["INC3", "INC4", "INC5", "INC6"]
         assert "[2026R9] INC3" in out["txt"]
@@ -176,7 +186,7 @@ def test_release_desk_js_compute_open_age_days():
             "  bad: rd.computeOpenAgeDays('-', ref)\n"
             "}));\n"
         )
-        proc = subprocess.run(["node", "-e", script], capture_output=True, text=True, check=True)
+        proc = _run_node_script(script)
         out = json.loads(proc.stdout)
         assert out["d10"] == 10
         assert out["d4"] == 4
@@ -221,7 +231,7 @@ def test_release_desk_js_is_ia_cache_stale():
             "  missing: rd.isIaCacheStale({ _cached_at_ms: cachedMs }, {})\n"
             "}));\n"
         )
-        proc = subprocess.run(["node", "-e", script], capture_output=True, text=True, check=True)
+        proc = _run_node_script(script)
         out = json.loads(proc.stdout)
         assert out == {"newer": True, "older": False, "missing": False}
     else:
@@ -243,7 +253,7 @@ def test_release_desk_js_matches_kpi_filter():
             "  all: rd.matchesKpiFilter(p3, 'all')\n"
             "}));\n"
         )
-        proc = subprocess.run(["node", "-e", script], capture_output=True, text=True, check=True)
+        proc = _run_node_script(script)
         out = json.loads(proc.stdout)
         assert out == {"crit": [True, False], "prog": [True, False], "res": [False, True], "all": True}
     else:
@@ -274,7 +284,7 @@ def test_release_desk_js_build_export_csv():
             "const csv = rd.buildExportCsv(incidents, iaCache, {}, '2026R11', overrides);\n"
             "console.log(JSON.stringify({ hasBom: csv.startsWith('\\uFEFF'), lines: csv.slice(1).split('\\r\\n') }));\n"
         )
-        proc = subprocess.run(["node", "-e", script], capture_output=True, text=True, check=True)
+        proc = _run_node_script(script)
         out = json.loads(proc.stdout)
         assert out["hasBom"] is True
         assert len(out["lines"]) == 2
@@ -298,7 +308,7 @@ def test_release_desk_js_sort_incidents():
             "const byPrevAsc = rd.sortIncidents([a, b, c], 'fecha_prevista', 'asc', {}, '2026R11', overrides).map(x => x['ID de incidencia']);\n"
             "console.log(JSON.stringify({ byPrioAsc, byDateDesc, byPrevAsc }));\n"
         )
-        proc = subprocess.run(["node", "-e", script], capture_output=True, text=True, check=True)
+        proc = _run_node_script(script)
         out = json.loads(proc.stdout)
         assert out["byPrioAsc"] == ["INC1", "INC3", "INC2"]
         assert out["byDateDesc"] == ["INC3", "INC2", "INC1"]
@@ -322,7 +332,7 @@ def test_release_desk_js_build_mesa_briefing():
             "const res = rd.buildMesaBriefing(incidents, iaCache, catalog, '2026R11', overrides, '2026-11-18T12:00:00Z');\n"
             "console.log(JSON.stringify(res));\n"
         )
-        proc = subprocess.run(["node", "-e", script], capture_output=True, text=True, check=True)
+        proc = _run_node_script(script)
         out = json.loads(proc.stdout)
         assert "Briefing Mesa de Release 2026R11 (2026-11-18)" in out["text"]
         assert "Total visibles: 2 | Resueltas: 1 | Compromisos vencidos: 1" in out["text"]
@@ -350,7 +360,7 @@ def test_release_desk_js_build_mesa_briefing_by_system():
             "const res = rd.buildMesaBriefingBySystem(incidents, null, {}, '2026R11', {}, '2026-11-18T12:00:00Z');\n"
             "console.log(JSON.stringify(res));\n"
         )
-        proc = subprocess.run(["node", "-e", script], capture_output=True, text=True, check=True)
+        proc = _run_node_script(script)
         out = json.loads(proc.stdout)
         assert "Briefing Mesa de Release por Sistema 2026R11 (2026-11-18)" in out["text"]
         assert "[DES_CRM4T] (1)" in out["text"]
@@ -389,7 +399,7 @@ def test_release_desk_js_fecha_prevista_status():
             "  f4: rd.matchesKpiFilter(inc4, 'overdue_or_missing', overrides, now)\n"
             "}));\n"
         )
-        proc = subprocess.run(["node", "-e", script], capture_output=True, text=True, check=True)
+        proc = _run_node_script(script)
         out = json.loads(proc.stdout)
         assert out == {
             "s1": "overdue",
@@ -424,7 +434,7 @@ def test_release_desk_js_group_incidents_by_project():
             "const groups = rd.groupIncidentsByProject(incidents, catalog, '2026R11', {}, '2026-11-18T12:00:00Z');\n"
             "console.log(JSON.stringify(groups.map(g => ({ code: g.code, health: g.health, total: g.total, p1: g.p1, p2: g.p2 }))));\n"
         )
-        proc = subprocess.run(["node", "-e", script], capture_output=True, text=True, check=True)
+        proc = _run_node_script(script)
         out = json.loads(proc.stdout)
         assert out == [
             {"code": "PRJ-100", "health": "crit", "total": 1, "p1": 1, "p2": 0},
@@ -449,7 +459,7 @@ def test_release_desk_js_get_sync_change_badge():
             "  d: rd.getSyncChangeBadge('INC4', changes)\n"
             "}));\n"
         )
-        proc = subprocess.run(["node", "-e", script], capture_output=True, text=True, check=True)
+        proc = _run_node_script(script)
         out = json.loads(proc.stdout)
         assert out == {"a": "new", "b": "status", "c": "updated", "d": None}
     else:
