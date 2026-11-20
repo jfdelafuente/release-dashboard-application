@@ -6,7 +6,7 @@ description: >-
   valida el código de release, la registra de forma idempotente en
   dashboards/release-kpis/releases-data.js, importa opcionalmente el catálogo
   de proyectos PRJ-* en data/projects_catalog.json y dispara o verifica la
-  sincronización con MonTMC. Úsese siempre que se invoque el agente
+  sincronización con Epsilon. Úsese siempre que se invoque el agente
   release-opener o el usuario pida abrir una release.
 ---
 
@@ -19,7 +19,7 @@ Esta skill define el procedimiento determinista para abrir una nueva Release men
 ## 1. Entrada y Validación
 
 1. **Solicitud inicial de datos (si faltan):**
-   - Antes de ejecutar `open_release.py`, solicita al usuario los datos necesarios si no los ha indicado o aclarado aún: código `YYYYRMM` (obligatorio) y, opcionalmente, fecha de PaP (acepta `DD/MM/YYYY`, `YYYY-MM-DD` o `"D-mes."`), confirmación de catálogo de proyectos candidato (`data/projects/{YYYYRMM}.csv`, etc.) y URL del servidor local para MonTMC.
+   - Antes de ejecutar `open_release.py`, solicita al usuario los datos necesarios si no los ha indicado o aclarado aún: código `YYYYRMM` (obligatorio) y, opcionalmente, fecha de PaP (acepta `DD/MM/YYYY`, `YYYY-MM-DD` o `"D-mes."`), confirmación de catálogo de proyectos candidato (`data/projects/{YYYYRMM}.csv`, etc.) y URL del servidor local para sincronizar Epsilon.
    - Si el usuario ya indicó `YYYYRMM` y dejó explícito qué parámetros opcionales no aplican, ejecuta directamente sin repreguntar.
 2. **Código obligatorio (`YYYYRMM`):**
    - Debe cumplir el patrón `^\d{4}R([1-9]|1[0-2])$` (ej. `2026R12`).

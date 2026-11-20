@@ -5,7 +5,7 @@ description: >-
   Automatiza todas las tareas necesarias para abrir una nueva Release mensual
   indicando únicamente su código YYYYRMM (ej. 2026R12): alta en
   releases-data.js, importación opcional de proyectos PRJ-* y sincronización
-  inicial con MonTMC.
+  inicial con Epsilon.
 domain: it-incidents
 version: 1.0.0
 recommended_skills:
@@ -20,7 +20,7 @@ recommended_skills:
 >    - **Código de Release (`YYYYRMM` — obligatorio):** Ej. `2026R12`.
 >    - **Fecha de PaP (opcional):** Formato libre (`DD/MM/YYYY`, `YYYY-MM-DD` o `"D-mes."`), el CLI normaliza automáticamente a `"D-mes."` (ej. `22/11/2026` -> `"22-nov."`), o confirmar si queda sin definir (`""`).
 >    - **Fichero de proyectos `PRJ-*` (opcional):** Escanea previamente `data/projects/{YYYYRMM}.csv` o `proyecto_r{num}.csv`; si existen, proponlos directamente; si no, solicita ruta o confirma si queda pendiente de carga.
->    - **Servidor local para MonTMC (opcional):** URL si está activo (ej. `http://localhost:8000`), o confirmar si se sincronizará después manualmente.
+>    - **Servidor local para sincronizar Epsilon (opcional):** URL si está activo (ej. `http://localhost:8000`), o confirmar si se sincronizará después manualmente.
 >    *(Si el usuario ya facilitó el `YYYYRMM` y aclaró explícitamente qué datos opcionales aplican o cuáles quedan pendientes, continúa directamente sin repreguntar).*
 > 2. **Formato `YYYYRMM` obligatorio:** El código de release debe cumplir `^\d{4}R([1-9]|1[0-2])$` (ej. `2026R12`).
 > 3. **Verificación de repositorio destino:** Confirma que estás operando en `release-dashboard-application` y que existe `converters/cli/open_release.py` antes de ejecutar ningún comando.
