@@ -125,6 +125,37 @@ except (ImportError, Exception):
         sync_remedy_incidents = None
         sync_postmortem_release = None
 
+# Capa de Servicio Unificada (M21)
+try:
+    from converters.src.desk_service import (
+        GLOBAL_REMEDY_CACHE,
+        clear_global_remedy_cache,
+        service_sync_remedy,
+        service_sync_postmortem,
+        service_get_overrides,
+        service_set_override,
+        service_get_cached_epsilon,
+        service_get_health,
+        service_get_remedy_detail,
+    )
+    REMEDY_DETAIL_CACHE = GLOBAL_REMEDY_CACHE
+except (ImportError, Exception):
+    try:
+        from desk_service import (
+            GLOBAL_REMEDY_CACHE,
+            clear_global_remedy_cache,
+            service_sync_remedy,
+            service_sync_postmortem,
+            service_get_overrides,
+            service_set_override,
+            service_get_cached_epsilon,
+            service_get_health,
+            service_get_remedy_detail,
+        )
+        REMEDY_DETAIL_CACHE = GLOBAL_REMEDY_CACHE
+    except (ImportError, Exception):
+        REMEDY_DETAIL_CACHE = {}
+
 # Microsoft Teams Notifier Service
 try:
     sys.path.insert(0, str(PROJECT_ROOT / 'converters' / 'src'))
@@ -139,8 +170,6 @@ except (ImportError, Exception):
     save_teams_config = None
     resolve_channel = None
     dispatch_teams_notification = None
-
-REMEDY_DETAIL_CACHE = {}  # { idRemedy: (timestamp, data_dict, status) }
 
 REPORTS_PATH_PREFIX = '/api/reports/postmortem/'
 EXECUTIVE_REPORT_PREFIX = '/api/reports/executive-incident'
@@ -1075,6 +1104,7 @@ class CustomHTTPHandler(http.server.SimpleHTTPRequestHandler):
 
         dias = 3
         usuario = None
+        body_json = None
 
         try:
             content_length = int(self.headers.get('Content-Length', 0))
@@ -1100,25 +1130,14 @@ class CustomHTTPHandler(http.server.SimpleHTTPRequestHandler):
             if 'usuario' in q_params:
                 usuario = q_params['usuario'][0].strip()
 
-        try:
-            run_sync = sync_remedy_incidents
-            if not hasattr(run_sync, 'mock_calls') and not getattr(run_sync, '_mock_return_value', None) is not None and not isinstance(run_sync, unittest.mock.Mock if 'unittest.mock' in sys.modules else ()):
-                import importlib
-                mod_name = 'converters.cli.sync_montmc_incidents'
-                if mod_name in sys.modules:
-                    importlib.reload(sys.modules[mod_name])
-                    from converters.cli.sync_montmc_incidents import sync_remedy_incidents as reloaded_sync
-                    run_sync = reloaded_sync
-
-            result = run_sync(
-                dias=dias,
-                usuario=usuario,
-                project_root=PROJECT_ROOT,
-            )
-            status_code = 200 if result.get("success") else 502
-            self._send_json(status_code, result)
-        except Exception as e:
-            self._send_json(500, {"success": False, "error": f"Error interno en sincronización: {e}"})
+        status_code, result = service_sync_remedy(
+            payload=body_json,
+            dias=dias,
+            usuario=usuario,
+            project_root=PROJECT_ROOT,
+            sync_fn=sync_remedy_incidents,
+        )
+        self._send_json(status_code, result)
 
     def handle_sync_postmortem(self):
         """Maneja POST /api/sync-postmortem disparando la sincronización incremental de Postmortem."""
@@ -1128,6 +1147,7 @@ class CustomHTTPHandler(http.server.SimpleHTTPRequestHandler):
 
         release_name = None
         usuario = None
+        body_json = None
 
         try:
             content_length = int(self.headers.get('Content-Length', 0))
@@ -1150,76 +1170,49 @@ class CustomHTTPHandler(http.server.SimpleHTTPRequestHandler):
             if 'usuario' in q_params and q_params['usuario'][0].strip():
                 usuario = q_params['usuario'][0].strip()
 
-        try:
-            run_sync = sync_postmortem_release
-            if not hasattr(run_sync, 'mock_calls') and not getattr(run_sync, '_mock_return_value', None) is not None and not isinstance(run_sync, unittest.mock.Mock if 'unittest.mock' in sys.modules else ()):
-                import importlib
-                mod_name = 'converters.cli.sync_montmc_postmortem'
-                if mod_name in sys.modules:
-                    importlib.reload(sys.modules[mod_name])
-                    from converters.cli.sync_montmc_postmortem import sync_postmortem_release as reloaded_sync
-                    run_sync = reloaded_sync
-
-            result = run_sync(
-                release_name=release_name,
-                usuario=usuario,
-                project_root=PROJECT_ROOT,
-            )
-            status_code = 200 if result.get("success") else 502
-            self._send_json(status_code, result)
-        except Exception as e:
-            self._send_json(500, {"success": False, "error": f"Error interno en sincronización Postmortem: {e}"})
+        status_code, result = service_sync_postmortem(
+            payload=body_json,
+            release_name=release_name,
+            usuario=usuario,
+            project_root=PROJECT_ROOT,
+            sync_fn=sync_postmortem_release,
+        )
+        self._send_json(status_code, result)
 
     def handle_release_desk_overrides_get(self):
         """Maneja GET /api/release-desk/overrides?release=<YYYYRMM>."""
-        from converters.src.release_desk_overrides import get_overrides_for_release
-
         q_params = urllib.parse.parse_qs(self.path.split('?', 1)[1]) if '?' in self.path else {}
         release_name = (q_params.get('release', [''])[0] or '').strip()
-        overrides = get_overrides_for_release(STORAGE_DIR, release_name)
-        self._send_json(200, {"success": True, "release_name": release_name, "overrides": overrides})
+        result = service_get_overrides(STORAGE_DIR, release_name, PROJECT_ROOT)
+        self._send_json(200, result)
 
     def handle_release_desk_overrides_post(self):
         """Maneja POST /api/release-desk/overrides para guardar Fecha Prevista acordada."""
-        from converters.src.release_desk_overrides import set_fecha_prevista_override
-
         try:
             content_length = int(self.headers.get('Content-Length', 0))
             raw_body = self.rfile.read(content_length) if content_length > 0 else b'{}'
             payload = json.loads(raw_body.decode('utf-8'))
-            result = set_fecha_prevista_override(
-                storage_dir=STORAGE_DIR,
-                release_name=str(payload.get("release_name") or ""),
-                incident_id=str(payload.get("incident_id") or ""),
-                fecha_prevista=str(payload.get("fecha_prevista") or ""),
-            )
-            self._send_json(200, result)
-        except ValueError as ve:
-            self._send_json(400, {"success": False, "error": str(ve)})
+            status_code, result = service_set_override(payload, STORAGE_DIR, PROJECT_ROOT)
+            self._send_json(status_code, result)
         except Exception as e:
             self._send_json(500, {"success": False, "error": f"Error guardando override: {e}"})
 
     def handle_epsilon_cached_get(self):
         """Maneja GET /api/epsilon/resumenIA/cached?ids=INC1,INC2 (solo caché en disco)."""
-        from converters.src.release_desk_overrides import load_cached_epsilon_summaries
-
         q_params = urllib.parse.parse_qs(self.path.split('?', 1)[1]) if '?' in self.path else {}
         raw_ids = q_params.get('ids', [''])[0]
-        ids = [part.strip() for part in raw_ids.split(',') if part.strip()]
-        summaries = load_cached_epsilon_summaries(STORAGE_DIR, ids)
-        self._send_json(200, {"success": True, "count": len(summaries), "summaries": summaries})
+        result = service_get_cached_epsilon(raw_ids, STORAGE_DIR, PROJECT_ROOT)
+        self._send_json(200, result)
 
     def handle_epsilon_cached_post(self):
         """Maneja POST /api/epsilon/resumenIA/cached con {ids: [...]} (solo caché en disco)."""
-        from converters.src.release_desk_overrides import load_cached_epsilon_summaries
-
         try:
             content_length = int(self.headers.get('Content-Length', 0))
             raw_body = self.rfile.read(content_length) if content_length > 0 else b'{}'
             payload = json.loads(raw_body.decode('utf-8'))
             ids = payload.get("ids") if isinstance(payload, dict) and isinstance(payload.get("ids"), list) else []
-            summaries = load_cached_epsilon_summaries(STORAGE_DIR, [str(x) for x in ids])
-            self._send_json(200, {"success": True, "count": len(summaries), "summaries": summaries})
+            result = service_get_cached_epsilon(ids, STORAGE_DIR, PROJECT_ROOT)
+            self._send_json(200, result)
         except Exception as e:
             self._send_json(500, {"success": False, "error": f"Error leyendo caché IA: {e}"})
 
@@ -1233,75 +1226,18 @@ class CustomHTTPHandler(http.server.SimpleHTTPRequestHandler):
         q_params = urllib.parse.parse_qs(self.path.split('?', 1)[1]) if '?' in self.path else {}
         force = 'force' in q_params or 'refresh' in q_params or (q_params.get('force', [''])[0].lower() in ('1', 'true', 'yes'))
         no_cache = force or ('no-cache' in self.headers.get('Cache-Control', ''))
-        now = time.time()
 
-        # 1. Caché en memoria (TTL 300s)
-        if not no_cache and clean_id in REMEDY_DETAIL_CACHE:
-            cached_time, cached_payload, cached_status = REMEDY_DETAIL_CACHE[clean_id]
-            if now - cached_time < 300:
-                print(f"  Proxy Remedy Detail (cache HIT memoria): {clean_id}")
-                resp_copy = dict(cached_payload)
-                resp_copy["_cached"] = True
-                self._send_json(cached_status, resp_copy)
-                return
-
-        # 2. Consulta en vivo a MonTMC
-        client = MonTMCClient() if MonTMCClient else None
-        if client:
-            try:
-                data = client.fetch_remedy_detail(clean_id)
-                remedy_node = data.get("remedy") or {}
-                worklogs = remedy_node.get("worklog") or []
-                payload = {
-                    "success": True,
-                    "idRemedy": clean_id,
-                    "remedy": remedy_node,
-                    "worklogs": worklogs,
-                    "detalle": remedy_node.get("detalle") or "",
-                    "solucion": remedy_node.get("detalleSolucion") or "",
-                    "estado": remedy_node.get("estadoDesc") or "",
-                    "paps": remedy_node.get("paps") or [],
-                    "_cached": False,
-                }
-                REMEDY_DETAIL_CACHE[clean_id] = (now, payload, 200)
-
-                # Persistencia en disco atómica
-                try:
-                    from converters.src.storage_utils import atomic_write_json, get_path_lock
-                    cache_dir = PROJECT_ROOT / "data" / ".remedy_cache"
-                    disk_file = cache_dir / f"{clean_id}.json"
-                    with get_path_lock(disk_file):
-                        atomic_write_json(disk_file, payload, create_backup=False, indent=None)
-                except Exception:
-                    pass
-
-                self._send_json(200, payload)
-                return
-            except RemedyNotFoundError as e:
-                self._send_json(404, {"success": False, "error": str(e), "idRemedy": clean_id})
-                return
-            except Exception as e:
-                print(f"  Aviso: Error consultando Remedy en MonTMC ({e}). Verificando caché en disco...")
-
-        # 3. Fallback a caché en disco
-        disk_file = PROJECT_ROOT / "data" / ".remedy_cache" / f"{clean_id}.json"
-        if not no_cache and disk_file.exists():
-            try:
-                with open(disk_file, "r", encoding="utf-8") as f:
-                    disk_payload = json.load(f)
-                disk_payload["_cached"] = True
-                disk_payload["_source"] = "disk_fallback"
-                print(f"  Fallback exitoso a caché en disco para Remedy: {clean_id}")
-                self._send_json(200, disk_payload)
-                return
-            except Exception as e:
-                print(f"  Error leyendo caché en disco para Remedy: {e}")
-
-        self._send_json(502, {
-            "success": False,
-            "error": f"No se pudo obtener detalle de Remedy para {clean_id} ni existe copia en caché local",
-            "idRemedy": clean_id,
-        })
+        cache_dir = PROJECT_ROOT / "data" / ".remedy_cache"
+        status_code, payload, _ = service_get_remedy_detail(
+            id_remedy=clean_id,
+            force=no_cache,
+            cache_dir=cache_dir,
+            memory_cache=REMEDY_DETAIL_CACHE,
+            ttl_seconds=300,
+            client_cls=MonTMCClient,
+            project_root=PROJECT_ROOT,
+        )
+        self._send_json(status_code, payload)
 
     def handle_teams_channels_get(self):
         """Maneja GET /api/teams/channels retornando la configuración de canales."""
@@ -1446,9 +1382,8 @@ class CustomHTTPHandler(http.server.SimpleHTTPRequestHandler):
             return
 
         if self.path.split('?')[0].rstrip('/') == '/api/health/release-desk':
-            from converters.src.storage_utils import build_release_desk_health
-            payload = build_release_desk_health(STORAGE_DIR, PROJECT_ROOT)
-            self._send_json(200 if payload.get('status') == 'ok' else 503, payload)
+            code, payload = service_get_health(STORAGE_DIR, PROJECT_ROOT)
+            self._send_json(code, payload)
             return
 
         if self.path.startswith('/api/reports') or self.path.startswith('/api/departments') or self.path in ('/healthz', '/readyz', '/api/health'):

@@ -31,6 +31,7 @@ PY_TARGETS = [
     PROJECT_ROOT / "serve_app.py",
     PROJECT_ROOT / "converters" / "src" / "storage_utils.py",
     PROJECT_ROOT / "converters" / "src" / "release_desk_overrides.py",
+    PROJECT_ROOT / "converters" / "src" / "desk_service.py",
     PROJECT_ROOT / "converters" / "cli" / "sync_montmc_postmortem.py",
     PROJECT_ROOT / "converters" / "cli" / "update_agent_message.py",
     PROJECT_ROOT / "converters" / "cli" / "incident_manager_service.py",
@@ -79,6 +80,10 @@ def run_pytest_suite() -> bool:
         "converters/tests/unit/test_sync_montmc_postmortem.py",
         "converters/tests/unit/test_m18_storage_concurrency.py",
         "converters/tests/unit/test_m19_health_and_parallel_sync.py",
+        "converters/tests/unit/test_m20_ci_and_smoke_tests.py",
+        "converters/tests/unit/test_m21_desk_service.py",
+        "converters/tests/unit/test_fastapi_remedy_router.py",
+        "converters/tests/unit/test_serve_app_remedy.py",
     ]
     cmd = [sys.executable, "-m", "pytest"] + test_files + ["-v"]
     res = subprocess.run(cmd, cwd=str(PROJECT_ROOT))
