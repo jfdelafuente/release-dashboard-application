@@ -520,8 +520,8 @@ if (-not $SkipBuild) {
         $BumpScript = Join-Path $ProjectRoot "converters\cli\bump_asset_versions.py"
         if (Test-Path $BumpScript) {
             $stagingHtmls = @(
-                Join-Path $StagingDir "dashboards\release-desk\index.html",
-                Join-Path $StagingDir "dashboards\emergency-triage-console\index.html"
+                (Join-Path $StagingDir "dashboards\release-desk\index.html"),
+                (Join-Path $StagingDir "dashboards\emergency-triage-console\index.html")
             )
             $existingStagingHtmls = $stagingHtmls | Where-Object { Test-Path $_ }
             if ($existingStagingHtmls.Count -gt 0 -and $PythonCmd) {
