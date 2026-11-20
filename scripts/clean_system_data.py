@@ -22,6 +22,7 @@ Acciones realizadas:
 
 Ficheros PROTEGIDOS (NUNCA se tocan):
 - data/scheduled_changes_pap.json (Catálogo de Trabajos Programados / CRQs Remedy)
+- data/projects_catalog.json (Catálogo mensual de proyectos PRJ-*)
 - data/output/agents_catalog.json (Catálogo de Agentes IA del repositorio)
 - Archivos .gitkeep y .gitignore
 
@@ -55,6 +56,8 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 # Ficheros protegidos por su nombre o ruta relativa que NUNCA se deben borrar
 PROTECTED_FILENAMES = {
     'scheduled_changes_pap.json',
+    'projects_catalog.json',
+    'release_desk_overrides.json',
     'agents_catalog.json',
     '.gitkeep',
     '.gitignore',
@@ -215,9 +218,10 @@ def collect_items_to_clean(storage_dir: Path, keep_cache: bool = False) -> Tuple
         files_to_reset.append(teams_audit_file)
 
     # 8. Ficheros protegidos en la raíz de data/
-    pap_file = storage_dir / 'scheduled_changes_pap.json'
-    if pap_file.exists():
-        files_protected.append(pap_file)
+    for protected_name in ('scheduled_changes_pap.json', 'projects_catalog.json', 'release_desk_overrides.json'):
+        protected_file = storage_dir / protected_name
+        if protected_file.exists():
+            files_protected.append(protected_file)
 
     # Eliminar duplicados manteniendo orden
     files_to_delete = sorted(list(set(files_to_delete)))

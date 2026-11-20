@@ -15,6 +15,7 @@ Uso:
 from __future__ import annotations
 
 import argparse
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 import json
 import logging
@@ -178,6 +179,7 @@ def _recalculate_postmortem_dataset(
     data_list: List[Dict[str, Any]],
     release_name: Optional[str],
     existing_metadata: Dict[str, Any],
+    last_sync_changes: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
     """Recalcula Despliegue (PAP/MESA), KPIs y metadatos del dataset postmortem."""
     records = [PostmortemRecord(dict(item)) for item in data_list]
@@ -203,6 +205,8 @@ def _recalculate_postmortem_dataset(
     metadata["record_count"] = len(enriched_data)
     metadata["release_name"] = release_name
     metadata["kpis"] = kpis.to_dict()
+    if last_sync_changes is not None:
+        metadata["last_sync_changes"] = last_sync_changes
 
     return {
         "_metadata": metadata,
@@ -357,6 +361,8 @@ def sync_postmortem_release(
     actualizadas = 0
     sin_cambios = 0
     new_ids: List[str] = []
+    updated_ids: List[str] = []
+    status_changed_ids: List[str] = []
     compare_fields = (
         "Estatus",
         "Grupo asignado",
@@ -368,18 +374,24 @@ def sync_postmortem_release(
         "Impacto",
         "detalleSolucion",
         "fechaUltimaModificacion",
+        "fechaPrevista",
     )
 
+    seen_api_ids: set[str] = set()
     for raw_rec in raw_incidencias:
         norm_rec = api_client.normalize_mon_tmc_postmortem_record(raw_rec)
         inc_id = str(norm_rec.get("ID de incidencia") or "").strip()
         if not inc_id:
             continue
+        seen_api_ids.add(inc_id)
 
         if inc_id in records_by_id:
             old_rec = records_by_id[inc_id]
             has_changes = any(norm_rec.get(k) != old_rec.get(k) for k in compare_fields)
             if has_changes:
+                if norm_rec.get("Estatus") != old_rec.get("Estatus"):
+                    status_changed_ids.append(inc_id)
+                updated_ids.append(inc_id)
                 updated_rec = dict(old_rec)
                 updated_rec.update(norm_rec)
                 records_by_id[inc_id] = updated_rec
@@ -391,12 +403,66 @@ def sync_postmortem_release(
             new_ids.append(inc_id)
             nuevas += 1
 
+    # 3b. Reconciliar en paralelo (con límite y timeout) tickets locales no cerrados que ya no vienen en /api/epsilon/release
+    if hasattr(api_client, "fetch_remedy_detail"):
+        pending_reconcile = [
+            inc_id
+            for inc_id in ordered_ids
+            if inc_id not in seen_api_ids
+            and str(records_by_id[inc_id].get("Estatus") or "").strip().lower() != "cerrado"
+        ]
+        max_reconcile = int(os.environ.get("MONTMC_RECONCILE_MAX", "50") or 50)
+        reconcile_batch = pending_reconcile[:max(0, max_reconcile)]
+        if reconcile_batch:
+            max_workers = min(5, len(reconcile_batch))
+            details_by_id: Dict[str, Any] = {}
+            with ThreadPoolExecutor(max_workers=max_workers) as pool:
+                futures = {
+                    inc_id: pool.submit(api_client.fetch_remedy_detail, inc_id)
+                    for inc_id in reconcile_batch
+                }
+                for inc_id, future in futures.items():
+                    try:
+                        details_by_id[inc_id] = future.result(timeout=15)
+                    except Exception as err:
+                        logger.debug("No se pudo reconciliar detalle Remedy para %s: %s", inc_id, err)
+
+            for inc_id in reconcile_batch:
+                detail = details_by_id.get(inc_id)
+                remedy_node = detail.get("remedy") if isinstance(detail, dict) else None
+                if not isinstance(remedy_node, dict):
+                    continue
+                old_rec = records_by_id[inc_id]
+                norm_detail = api_client.normalize_mon_tmc_postmortem_record(remedy_node)
+                if not remedy_node.get("fechaCreacion") and old_rec.get("Fecha de envío"):
+                    norm_detail["Fecha de envío"] = old_rec["Fecha de envío"]
+                has_changes = any(norm_detail.get(k) != old_rec.get(k) for k in compare_fields)
+                if has_changes:
+                    if norm_detail.get("Estatus") != old_rec.get("Estatus"):
+                        status_changed_ids.append(inc_id)
+                    updated_ids.append(inc_id)
+                    updated_rec = dict(old_rec)
+                    updated_rec.update(norm_detail)
+                    records_by_id[inc_id] = updated_rec
+                    actualizadas += 1
+
     final_data_list = [records_by_id[i] for i in new_ids] + [
         records_by_id[i] for i in ordered_ids if i not in set(new_ids)
     ]
 
     # 4. Recalcular Despliegue (PAP/MESA), KPIs y Metadatos
-    final_dataset = _recalculate_postmortem_dataset(final_data_list, active_release, existing_metadata)
+    last_sync_changes = {
+        "new_ids": new_ids,
+        "updated_ids": updated_ids,
+        "status_changed_ids": status_changed_ids,
+        "timestamp": datetime.now().isoformat(),
+    }
+    final_dataset = _recalculate_postmortem_dataset(
+        final_data_list,
+        active_release,
+        existing_metadata,
+        last_sync_changes=last_sync_changes,
+    )
     total_records = len(final_dataset["data"])
     elapsed = time.time() - start_time
 
@@ -438,6 +504,9 @@ def sync_postmortem_release(
         "nuevas": nuevas,
         "actualizadas": actualizadas,
         "sin_cambios": sin_cambios,
+        "new_ids": new_ids,
+        "updated_ids": updated_ids,
+        "status_changed_ids": status_changed_ids,
         "total_dataset": total_records,
         "target_file": str(target_file),
         "dry_run": dry_run,

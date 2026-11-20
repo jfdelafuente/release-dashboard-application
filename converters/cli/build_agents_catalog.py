@@ -28,6 +28,7 @@ DEFAULT_LIBRARY_PATH = Path(r"C:\Users\jose.delafuente\Claude\Projects\bibliotec
 DOMAIN_LABELS = {
     "brand-content": "Contenido y Marca",
     "it-incidents": "Incidencias IT",
+    "software-engineering": "Ingeniería de Software",
 }
 
 

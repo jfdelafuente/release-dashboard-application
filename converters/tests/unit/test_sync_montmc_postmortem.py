@@ -248,3 +248,82 @@ def test_sync_postmortem_filters_by_release_tag_in_descripcion(tmp_path: Path):
     saved = json.loads((output_dir / "2026R11-postmortem.json").read_text(encoding="utf-8"))
     ids = [r["ID de incidencia"] for r in saved["data"]]
     assert ids == ["INC_MATCH"]
+
+
+def test_sync_postmortem_reconciles_missing_non_closed_tickets(tmp_path):
+    output_dir = tmp_path / "data" / "output"
+    output_dir.mkdir(parents=True)
+    target_file = output_dir / "2026R9-postmortem.json"
+    target_file.write_text(
+        json.dumps(
+            {
+                "_metadata": {"type": "postmortem", "release_name": "2026R9"},
+                "data": [
+                    {
+                        "ID de incidencia": "INC_MISSING_OPEN",
+                        "Descripción": "[2026R9] Ticket antiguo",
+                        "Estatus": "Asignado",
+                        "Fecha de envío": "09/10/2026 14:03",
+                        "Grupo asignado": "DES_CRM4T",
+                    },
+                    {
+                        "ID de incidencia": "INC_ALREADY_CLOSED",
+                        "Descripción": "[2026R9] Ya cerrado",
+                        "Estatus": "Cerrado",
+                        "Fecha de envío": "08/10/2026 10:00",
+                        "Grupo asignado": "DES_CRM4T",
+                    },
+                ],
+            },
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
+
+    mock_client = MonTMCClient(default_user="jdelat")
+    mock_client.fetch_release = MagicMock(
+        return_value={
+            "incidencias": [
+                {
+                    "idRemedy": "INC_ACTIVE",
+                    "resumen": "[2026R9] Ticket activo",
+                    "estadoDesc": "EN CURSO",
+                    "prioridadP": "P3",
+                    "urgencia": "Medio",
+                    "grupoAsignado": "SOP_A",
+                    "fechaCreacion": "2026-11-18T10:00:00.000+00:00",
+                }
+            ]
+        }
+    )
+    mock_client.fetch_remedy_detail = MagicMock(
+        return_value={
+            "codigoResp": 0,
+            "remedy": {
+                "idRemedy": "INC_MISSING_OPEN",
+                "resumen": "[2026R9] Ticket antiguo",
+                "estadoDesc": "CERRADO",
+                "prioridadP": "P3",
+                "urgencia": "Medio",
+                "grupoAsignado": "DES_CRM4T",
+                "fechaCreacion": "2026-10-09T14:03:00.000+00:00",
+                "fechaResolucion": "2026-10-15T12:00:00.000+00:00",
+            },
+        }
+    )
+
+    res = sync_postmortem_release(release_name="2026R9", project_root=tmp_path, client=mock_client)
+    assert res["success"] is True
+    assert res["nuevas"] == 1
+    assert res["actualizadas"] == 1
+    assert res["new_ids"] == ["INC_ACTIVE"]
+    assert res["updated_ids"] == ["INC_MISSING_OPEN"]
+    assert res["status_changed_ids"] == ["INC_MISSING_OPEN"]
+    mock_client.fetch_remedy_detail.assert_called_once_with("INC_MISSING_OPEN")
+
+    saved = json.loads(target_file.read_text(encoding="utf-8"))
+    assert saved["_metadata"]["last_sync_changes"]["new_ids"] == ["INC_ACTIVE"]
+    assert saved["_metadata"]["last_sync_changes"]["status_changed_ids"] == ["INC_MISSING_OPEN"]
+    by_id = {r["ID de incidencia"]: r for r in saved["data"]}
+    assert by_id["INC_MISSING_OPEN"]["Estatus"] == "Cerrado"
+    assert by_id["INC_ALREADY_CLOSED"]["Estatus"] == "Cerrado"

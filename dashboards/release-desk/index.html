@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mesa de Release · Seguimiento Operativo</title>
+    <link rel="stylesheet" href="/dashboards/assets/topbar.css?v=20261119_0847">
+    <link rel="stylesheet" href="/dashboards/assets/ui-feedback.css?v=20261119_0847">
+    <script src="/dashboards/assets/ui-feedback.js?v=20261119_0847" defer></script>
+    <script src="/dashboards/release-kpis/releases-data.js?v=20261119_0847"></script>
+    <link rel="stylesheet" href="/dashboards/release-desk/release-desk.css?v=20261119_0847">
+</head>
+<body>
+    <div id="mo-topbar-root" data-active="release-desk"></div>
+
+    <main class="rd-container">
+        <header class="rd-header">
+            <div>
+                <div class="rd-eyebrow">Customer &amp; Service Operations · Mesa de Seguimiento</div>
+                <h1 class="rd-title">Mesa de Release</h1>
+            </div>
+            <div class="rd-header-actions">
+                <label for="releaseSelect" class="rd-subtitle" style="font-weight:600;">Release:</label>
+                <select id="releaseSelect" class="rd-select" aria-label="Seleccionar release"></select>
+                <button id="btnSyncPostmortem" class="rd-btn rd-btn-primary" title="Sincronizar incidencias de esta release desde MonTMC">⚡ Sincronizar MonTMC</button>
+            </div>
+        </header>
+
+        <section class="rd-kpis" aria-label="Indicadores de seguimiento activo">
+            <button type="button" class="rd-kpi-card" data-kpi-filter="all" aria-pressed="false" title="Ver todas las incidencias activas">
+                <div class="rd-kpi-val" id="kpiActiveTotal">0</div>
+                <div class="rd-kpi-label">Incidencias activas (≠ Cerrado)</div>
+            </button>
+            <button type="button" class="rd-kpi-card" data-kpi-filter="crit_high" aria-pressed="false" title="Filtrar por Prioridad Alta / Crítica (P1–P2)">
+                <div class="rd-kpi-val" id="kpiCriticalHigh">0</div>
+                <div class="rd-kpi-label">Prioridad Alta / Crítica (P1–P2)</div>
+            </button>
+            <button type="button" class="rd-kpi-card" data-kpi-filter="in_progress" aria-pressed="false" title="Filtrar por Asignadas / En Curso / Pendientes">
+                <div class="rd-kpi-val" id="kpiInProgress">0</div>
+                <div class="rd-kpi-label">Asignadas / En Curso / Pendientes</div>
+            </button>
+            <button type="button" class="rd-kpi-card" data-kpi-filter="resolved" aria-pressed="false" title="Filtrar por Resueltas pendientes de cierre">
+                <div class="rd-kpi-val" id="kpiResolvedPendingClose">0</div>
+                <div class="rd-kpi-label">Resueltas pendientes de cierre</div>
+            </button>
+            <button type="button" class="rd-kpi-card" data-kpi-filter="overdue_or_missing" aria-pressed="false" title="Filtrar incidencias abiertas con Fecha Prevista vencida o sin fecha asignada">
+                <div class="rd-kpi-val" id="kpiOverdueMissing">0</div>
+                <div class="rd-kpi-label">Vencidas / Sin fecha</div>
+            </button>
+        </section>
+
+        <section class="rd-filters" aria-label="Filtros de la mesa">
+            <input type="text" id="filterSearch" class="rd-input" placeholder="Buscar por ID, descripción o responsable..." aria-label="Buscar incidencias">
+            <select id="filterStatus" class="rd-select" aria-label="Filtrar por estado">
+                <option value="">Todos los estados activos</option>
+            </select>
+            <select id="filterGroup" class="rd-select" aria-label="Filtrar por grupo soporte">
+                <option value="">Todos los grupos soporte</option>
+            </select>
+            <select id="filterPriority" class="rd-select" aria-label="Filtrar por prioridad o urgencia">
+                <option value="">Todas las prioridades</option>
+            </select>
+            <select id="filterProject" class="rd-select" aria-label="Filtrar por proyecto">
+                <option value="">Todos los proyectos</option>
+            </select>
+            <button id="btnClearFilters" class="rd-btn">Limpiar filtros</button>
+        </section>
+
+        <div id="emptyStateBox" class="rd-empty-state hidden">
+            <h3 id="emptyStateTitle">Sin incidencias activas</h3>
+            <p id="emptyStateDesc">No hay datos cargados para esta release.</p>
+            <button id="btnEmptySync" class="rd-btn rd-btn-primary">⚡ Sincronizar MonTMC</button>
+        </div>
+
+        <section id="workspaceSection" class="rd-workspace">
+            <div class="rd-card">
+                <div class="rd-card-header">
+                    <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+                        <span>Incidencias en seguimiento (<span id="visibleCount">0</span>)</span>
+                        <div class="rd-view-toggle" role="group" aria-label="Modo de vista">
+                            <button type="button" id="btnViewTable" class="rd-view-btn is-active" aria-pressed="true">Tabla</button>
+                            <button type="button" id="btnViewByProject" class="rd-view-btn" aria-pressed="false">Por proyecto</button>
+                        </div>
+                    </div>
+                    <span id="lastSyncInfo" class="rd-subtitle"></span>
+                </div>
+                <div id="tableViewWrap" class="rd-table-wrap">
+                    <table class="rd-table">
+                        <thead>
+                            <tr>
+                                <th class="rd-sortable" data-sort-key="code">Código Incidencia<span class="rd-sort-ind"></span></th>
+                                <th class="rd-sortable" data-sort-key="fecha_apertura">Fecha Apertura<span class="rd-sort-ind"></span></th>
+                                <th>Descripción problema</th>
+                                <th class="rd-sortable" data-sort-key="prioridad">Prioridad / Urg.<span class="rd-sort-ind"></span></th>
+                                <th>Sistema</th>
+                                <th>JIRA</th>
+                                <th class="rd-sortable" data-sort-key="proyecto">PROYECTO<span class="rd-sort-ind"></span></th>
+                                <th>Acciones</th>
+                                <th class="rd-sortable" data-sort-key="status">Status<span class="rd-sort-ind"></span></th>
+                                <th class="rd-sortable" data-sort-key="fecha_prevista">Fecha Prevista<span class="rd-sort-ind"></span></th>
+                                <th>Motivo Estado Resuelto</th>
+                                <th>Grupo Peticionario</th>
+                            </tr>
+                        </thead>
+                        <tbody id="incidentsTableBody"></tbody>
+                    </table>
+                </div>
+                <div id="projectSummaryView" class="rd-projects-wrap hidden"></div>
+                <div class="rd-card-footer">
+                    <button id="btnCopyBriefing" class="rd-btn" title="Copiar resumen estructurado de la vista filtrada por prioridad para Teams o acta">📋 Copiar briefing</button>
+                    <button id="btnCopyBriefingSystem" class="rd-btn" title="Copiar resumen agrupado por Sistema (Grupo asignado) para Teams o acta">📋 Briefing por Sistema</button>
+                    <button id="btnExportCsv" class="rd-btn" title="Exportar incidencias visibles a CSV para Excel">📥 Exportar tabla</button>
+                </div>
+            </div>
+
+        </section>
+    </main>
+
+    <script src="/dashboards/release-desk/release-desk-domain.js?v=20261119_0847"></script>
+    <script src="/dashboards/release-desk/release-desk-domain.js?v=20261119_0847"></script>
+    <script src="/dashboards/release-desk/release-desk.js?v=20261119_0847"></script>
+    <script src="/dashboards/assets/topbar.js?v=20261119_0847" defer></script>
+</body>
+</html>

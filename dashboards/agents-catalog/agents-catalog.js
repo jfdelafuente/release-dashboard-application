@@ -345,17 +345,41 @@
   }
 
   function updateChipCounts() {
-    if (dom.chipCountAll) dom.chipCountAll.textContent = state.agents.length;
+    if (!dom.domainChips) return;
 
-    var brandCount = 0;
-    var itCount = 0;
-    state.agents.forEach(function (a) {
-      if (a.domain === "brand-content") brandCount++;
-      if (a.domain === "it-incidents") itCount++;
+    var domains = Array.isArray(state.domains) && state.domains.length
+      ? state.domains
+      : (function () {
+          var counts = {};
+          state.agents.forEach(function (a) {
+            var d = a.domain || "other";
+            counts[d] = (counts[d] || 0) + 1;
+          });
+          return Object.keys(counts).sort().map(function (id) {
+            return { id: id, label: id, agent_count: counts[id] };
+          });
+        })();
+
+    var html =
+      '<span class="filter-label">Dominio:</span>' +
+      '<button class="chip-btn' + (state.activeDomain === "all" ? " active" : "") + '" data-domain="all">' +
+        'Todos <span class="chip-count" id="chip-count-all">' + state.agents.length + '</span>' +
+      '</button>';
+
+    domains.forEach(function (d) {
+      var id = d.id || "";
+      var label = d.label || id;
+      var count = typeof d.agent_count === "number"
+        ? d.agent_count
+        : state.agents.filter(function (a) { return a.domain === id; }).length;
+      var isActive = state.activeDomain === id ? " active" : "";
+      html +=
+        '<button class="chip-btn' + isActive + '" data-domain="' + escapeHtml(id) + '">' +
+          escapeHtml(label) + ' <span class="chip-count">' + count + '</span>' +
+        '</button>';
     });
 
-    if (dom.chipCountBrand) dom.chipCountBrand.textContent = brandCount;
-    if (dom.chipCountIt) dom.chipCountIt.textContent = itCount;
+    dom.domainChips.innerHTML = html;
   }
 
   // ============================================================

@@ -125,6 +125,37 @@ except (ImportError, Exception):
         sync_remedy_incidents = None
         sync_postmortem_release = None
 
+# Capa de Servicio Unificada (M21)
+try:
+    from converters.src.desk_service import (
+        GLOBAL_REMEDY_CACHE,
+        clear_global_remedy_cache,
+        service_sync_remedy,
+        service_sync_postmortem,
+        service_get_overrides,
+        service_set_override,
+        service_get_cached_epsilon,
+        service_get_health,
+        service_get_remedy_detail,
+    )
+    REMEDY_DETAIL_CACHE = GLOBAL_REMEDY_CACHE
+except (ImportError, Exception):
+    try:
+        from desk_service import (
+            GLOBAL_REMEDY_CACHE,
+            clear_global_remedy_cache,
+            service_sync_remedy,
+            service_sync_postmortem,
+            service_get_overrides,
+            service_set_override,
+            service_get_cached_epsilon,
+            service_get_health,
+            service_get_remedy_detail,
+        )
+        REMEDY_DETAIL_CACHE = GLOBAL_REMEDY_CACHE
+    except (ImportError, Exception):
+        REMEDY_DETAIL_CACHE = {}
+
 # Microsoft Teams Notifier Service
 try:
     sys.path.insert(0, str(PROJECT_ROOT / 'converters' / 'src'))
@@ -139,8 +170,6 @@ except (ImportError, Exception):
     save_teams_config = None
     resolve_channel = None
     dispatch_teams_notification = None
-
-REMEDY_DETAIL_CACHE = {}  # { idRemedy: (timestamp, data_dict, status) }
 
 REPORTS_PATH_PREFIX = '/api/reports/postmortem/'
 EXECUTIVE_REPORT_PREFIX = '/api/reports/executive-incident'
@@ -180,7 +209,9 @@ class CustomHTTPHandler(http.server.SimpleHTTPRequestHandler):
 
     def end_headers(self):
         if getattr(self, '_no_cache_static', False):
-            self.send_header('Cache-Control', 'no-cache, must-revalidate')
+            self.send_header('Cache-Control', 'no-cache, no-store, must-revalidate')
+            self.send_header('Pragma', 'no-cache')
+            self.send_header('Expires', '0')
         super().end_headers()
 
     def _send_raw_response(self, status, content, content_type='application/json; charset=utf-8', extra_headers=None):
@@ -399,6 +430,10 @@ class CustomHTTPHandler(http.server.SimpleHTTPRequestHandler):
             self.handle_teams_channels_post()
         elif self.path.split('?')[0].rstrip('/') == '/api/teams/send':
             self.handle_teams_send()
+        elif self.path.split('?')[0].rstrip('/') == '/api/release-desk/overrides':
+            self.handle_release_desk_overrides_post()
+        elif self.path.split('?')[0].rstrip('/') == '/api/epsilon/resumenIA/cached':
+            self.handle_epsilon_cached_post()
         else:
             self.send_error(404, "Not Found")
 
@@ -1042,11 +1077,12 @@ class CustomHTTPHandler(http.server.SimpleHTTPRequestHandler):
         code_str = str(code).strip().upper()
         if code_str.startswith("INC"):
             try:
+                from converters.src.storage_utils import atomic_write_json, get_path_lock
                 cache_dir = PROJECT_ROOT / "data" / ".epsilon_cache"
-                cache_dir.mkdir(parents=True, exist_ok=True)
                 cache_file = cache_dir / f"{code_str}.json"
+                with get_path_lock(cache_file):
+                    atomic_write_json(cache_file, data_or_errors, create_backup=False, indent=2)
                 cache_bytes = json.dumps(data_or_errors, ensure_ascii=False, indent=2).encode('utf-8')
-                cache_file.write_bytes(cache_bytes)
                 EPSILON_CACHE[code_str] = (time.time(), cache_bytes, 200)
             except Exception as write_err:
                 print(f"  Aviso: no se pudo persistir en .epsilon_cache: {write_err}")
@@ -1068,6 +1104,7 @@ class CustomHTTPHandler(http.server.SimpleHTTPRequestHandler):
 
         dias = 3
         usuario = None
+        body_json = None
 
         try:
             content_length = int(self.headers.get('Content-Length', 0))
@@ -1093,25 +1130,14 @@ class CustomHTTPHandler(http.server.SimpleHTTPRequestHandler):
             if 'usuario' in q_params:
                 usuario = q_params['usuario'][0].strip()
 
-        try:
-            run_sync = sync_remedy_incidents
-            if not hasattr(run_sync, 'mock_calls') and not getattr(run_sync, '_mock_return_value', None) is not None and not isinstance(run_sync, unittest.mock.Mock if 'unittest.mock' in sys.modules else ()):
-                import importlib
-                mod_name = 'converters.cli.sync_montmc_incidents'
-                if mod_name in sys.modules:
-                    importlib.reload(sys.modules[mod_name])
-                    from converters.cli.sync_montmc_incidents import sync_remedy_incidents as reloaded_sync
-                    run_sync = reloaded_sync
-
-            result = run_sync(
-                dias=dias,
-                usuario=usuario,
-                project_root=PROJECT_ROOT,
-            )
-            status_code = 200 if result.get("success") else 502
-            self._send_json(status_code, result)
-        except Exception as e:
-            self._send_json(500, {"success": False, "error": f"Error interno en sincronización: {e}"})
+        status_code, result = service_sync_remedy(
+            payload=body_json,
+            dias=dias,
+            usuario=usuario,
+            project_root=PROJECT_ROOT,
+            sync_fn=sync_remedy_incidents,
+        )
+        self._send_json(status_code, result)
 
     def handle_sync_postmortem(self):
         """Maneja POST /api/sync-postmortem disparando la sincronización incremental de Postmortem."""
@@ -1121,6 +1147,7 @@ class CustomHTTPHandler(http.server.SimpleHTTPRequestHandler):
 
         release_name = None
         usuario = None
+        body_json = None
 
         try:
             content_length = int(self.headers.get('Content-Length', 0))
@@ -1143,25 +1170,51 @@ class CustomHTTPHandler(http.server.SimpleHTTPRequestHandler):
             if 'usuario' in q_params and q_params['usuario'][0].strip():
                 usuario = q_params['usuario'][0].strip()
 
-        try:
-            run_sync = sync_postmortem_release
-            if not hasattr(run_sync, 'mock_calls') and not getattr(run_sync, '_mock_return_value', None) is not None and not isinstance(run_sync, unittest.mock.Mock if 'unittest.mock' in sys.modules else ()):
-                import importlib
-                mod_name = 'converters.cli.sync_montmc_postmortem'
-                if mod_name in sys.modules:
-                    importlib.reload(sys.modules[mod_name])
-                    from converters.cli.sync_montmc_postmortem import sync_postmortem_release as reloaded_sync
-                    run_sync = reloaded_sync
+        status_code, result = service_sync_postmortem(
+            payload=body_json,
+            release_name=release_name,
+            usuario=usuario,
+            project_root=PROJECT_ROOT,
+            sync_fn=sync_postmortem_release,
+        )
+        self._send_json(status_code, result)
 
-            result = run_sync(
-                release_name=release_name,
-                usuario=usuario,
-                project_root=PROJECT_ROOT,
-            )
-            status_code = 200 if result.get("success") else 502
+    def handle_release_desk_overrides_get(self):
+        """Maneja GET /api/release-desk/overrides?release=<YYYYRMM>."""
+        q_params = urllib.parse.parse_qs(self.path.split('?', 1)[1]) if '?' in self.path else {}
+        release_name = (q_params.get('release', [''])[0] or '').strip()
+        result = service_get_overrides(STORAGE_DIR, release_name, PROJECT_ROOT)
+        self._send_json(200, result)
+
+    def handle_release_desk_overrides_post(self):
+        """Maneja POST /api/release-desk/overrides para guardar Fecha Prevista acordada."""
+        try:
+            content_length = int(self.headers.get('Content-Length', 0))
+            raw_body = self.rfile.read(content_length) if content_length > 0 else b'{}'
+            payload = json.loads(raw_body.decode('utf-8'))
+            status_code, result = service_set_override(payload, STORAGE_DIR, PROJECT_ROOT)
             self._send_json(status_code, result)
         except Exception as e:
-            self._send_json(500, {"success": False, "error": f"Error interno en sincronización Postmortem: {e}"})
+            self._send_json(500, {"success": False, "error": f"Error guardando override: {e}"})
+
+    def handle_epsilon_cached_get(self):
+        """Maneja GET /api/epsilon/resumenIA/cached?ids=INC1,INC2 (solo caché en disco)."""
+        q_params = urllib.parse.parse_qs(self.path.split('?', 1)[1]) if '?' in self.path else {}
+        raw_ids = q_params.get('ids', [''])[0]
+        result = service_get_cached_epsilon(raw_ids, STORAGE_DIR, PROJECT_ROOT)
+        self._send_json(200, result)
+
+    def handle_epsilon_cached_post(self):
+        """Maneja POST /api/epsilon/resumenIA/cached con {ids: [...]} (solo caché en disco)."""
+        try:
+            content_length = int(self.headers.get('Content-Length', 0))
+            raw_body = self.rfile.read(content_length) if content_length > 0 else b'{}'
+            payload = json.loads(raw_body.decode('utf-8'))
+            ids = payload.get("ids") if isinstance(payload, dict) and isinstance(payload.get("ids"), list) else []
+            result = service_get_cached_epsilon(ids, STORAGE_DIR, PROJECT_ROOT)
+            self._send_json(200, result)
+        except Exception as e:
+            self._send_json(500, {"success": False, "error": f"Error leyendo caché IA: {e}"})
 
     def handle_remedy_detail(self, id_remedy):
         """Maneja GET /api/remedy/detail/{idRemedy} con soporte de caché en memoria y disco."""
@@ -1173,75 +1226,18 @@ class CustomHTTPHandler(http.server.SimpleHTTPRequestHandler):
         q_params = urllib.parse.parse_qs(self.path.split('?', 1)[1]) if '?' in self.path else {}
         force = 'force' in q_params or 'refresh' in q_params or (q_params.get('force', [''])[0].lower() in ('1', 'true', 'yes'))
         no_cache = force or ('no-cache' in self.headers.get('Cache-Control', ''))
-        now = time.time()
 
-        # 1. Caché en memoria (TTL 300s)
-        if not no_cache and clean_id in REMEDY_DETAIL_CACHE:
-            cached_time, cached_payload, cached_status = REMEDY_DETAIL_CACHE[clean_id]
-            if now - cached_time < 300:
-                print(f"  Proxy Remedy Detail (cache HIT memoria): {clean_id}")
-                resp_copy = dict(cached_payload)
-                resp_copy["_cached"] = True
-                self._send_json(cached_status, resp_copy)
-                return
-
-        # 2. Consulta en vivo a MonTMC
-        client = MonTMCClient() if MonTMCClient else None
-        if client:
-            try:
-                data = client.fetch_remedy_detail(clean_id)
-                remedy_node = data.get("remedy") or {}
-                worklogs = remedy_node.get("worklog") or []
-                payload = {
-                    "success": True,
-                    "idRemedy": clean_id,
-                    "remedy": remedy_node,
-                    "worklogs": worklogs,
-                    "detalle": remedy_node.get("detalle") or "",
-                    "solucion": remedy_node.get("detalleSolucion") or "",
-                    "estado": remedy_node.get("estadoDesc") or "",
-                    "paps": remedy_node.get("paps") or [],
-                    "_cached": False,
-                }
-                REMEDY_DETAIL_CACHE[clean_id] = (now, payload, 200)
-
-                # Persistencia en disco
-                try:
-                    cache_dir = PROJECT_ROOT / "data" / ".remedy_cache"
-                    cache_dir.mkdir(parents=True, exist_ok=True)
-                    disk_file = cache_dir / f"{clean_id}.json"
-                    with open(disk_file, "w", encoding="utf-8") as f:
-                        json.dump(payload, f, ensure_ascii=False)
-                except Exception:
-                    pass
-
-                self._send_json(200, payload)
-                return
-            except RemedyNotFoundError as e:
-                self._send_json(404, {"success": False, "error": str(e), "idRemedy": clean_id})
-                return
-            except Exception as e:
-                print(f"  Aviso: Error consultando Remedy en MonTMC ({e}). Verificando caché en disco...")
-
-        # 3. Fallback a caché en disco
-        disk_file = PROJECT_ROOT / "data" / ".remedy_cache" / f"{clean_id}.json"
-        if not no_cache and disk_file.exists():
-            try:
-                with open(disk_file, "r", encoding="utf-8") as f:
-                    disk_payload = json.load(f)
-                disk_payload["_cached"] = True
-                disk_payload["_source"] = "disk_fallback"
-                print(f"  Fallback exitoso a caché en disco para Remedy: {clean_id}")
-                self._send_json(200, disk_payload)
-                return
-            except Exception as e:
-                print(f"  Error leyendo caché en disco para Remedy: {e}")
-
-        self._send_json(502, {
-            "success": False,
-            "error": f"No se pudo obtener detalle de Remedy para {clean_id} ni existe copia en caché local",
-            "idRemedy": clean_id,
-        })
+        cache_dir = PROJECT_ROOT / "data" / ".remedy_cache"
+        status_code, payload, _ = service_get_remedy_detail(
+            id_remedy=clean_id,
+            force=no_cache,
+            cache_dir=cache_dir,
+            memory_cache=REMEDY_DETAIL_CACHE,
+            ttl_seconds=300,
+            client_cls=MonTMCClient,
+            project_root=PROJECT_ROOT,
+        )
+        self._send_json(status_code, payload)
 
     def handle_teams_channels_get(self):
         """Maneja GET /api/teams/channels retornando la configuración de canales."""
@@ -1351,6 +1347,10 @@ class CustomHTTPHandler(http.server.SimpleHTTPRequestHandler):
             self.handle_teams_audit_get()
             return
 
+        if self.path.split('?')[0].rstrip('/') == '/api/release-desk/overrides':
+            self.handle_release_desk_overrides_get()
+            return
+
         if (
             self.path.startswith(f"{EXECUTIVE_REPORT_PREFIX}/")
             or self.path == EXECUTIVE_REPORT_PREFIX
@@ -1381,6 +1381,11 @@ class CustomHTTPHandler(http.server.SimpleHTTPRequestHandler):
             self.handle_incident_manager_emergency_cockpit()
             return
 
+        if self.path.split('?')[0].rstrip('/') == '/api/health/release-desk':
+            code, payload = service_get_health(STORAGE_DIR, PROJECT_ROOT)
+            self._send_json(code, payload)
+            return
+
         if self.path.startswith('/api/reports') or self.path.startswith('/api/departments') or self.path in ('/healthz', '/readyz', '/api/health'):
             if self.proxy_to_fastapi_executive():
                 return
@@ -1388,6 +1393,10 @@ class CustomHTTPHandler(http.server.SimpleHTTPRequestHandler):
                 self._send_json(200, {'status': 'ok', 'service': 'serve_app', 'timestamp': datetime.now(timezone.utc).isoformat()})
                 return
             self._send_json(502, {'success': False, 'error': f'FastAPI backend ({FASTAPI_BACKEND_URL}) no disponible'})
+            return
+
+        if self.path.split('?')[0].rstrip('/') == '/api/epsilon/resumenIA/cached':
+            self.handle_epsilon_cached_get()
             return
 
         if self.path.startswith('/api/epsilon/resumenIA/'):
@@ -1477,6 +1486,12 @@ if __name__ == '__main__':
         default=PORT,
         help=f"Puerto del servidor HTTP estático (default: {PORT})"
     )
+    parser.add_argument(
+        "--sync-interval",
+        type=int,
+        default=int(os.environ.get("SYNC_INTERVAL_MINUTES", "0") or 0),
+        help="Intervalo en minutos para sync programada MonTMC (0 = desactivado)"
+    )
     args, _ = parser.parse_known_args()
     PORT = args.port
 
@@ -1489,6 +1504,48 @@ if __name__ == '__main__':
     print(f"Gestión de Problemas (proxy :3001): http://localhost:{PORT}/problemas")
     print(f"Nota: API principal FastAPI disponible en http://localhost:8000/docs")
     print("==================================================\n")
+
+    try:
+        from converters.src.storage_utils import check_storage_writability, prune_cache_dir
+        storage_status = check_storage_writability(STORAGE_DIR)
+        if not storage_status["ok"]:
+            print(f"  [AVISO M18] Directorio persistente NO escribible ({storage_status['path']}): {storage_status['error']}")
+        else:
+            print(f"  [Storage OK] Directorio persistente escribible: {storage_status['path']}")
+        for cache_name in (".epsilon_cache", ".remedy_cache"):
+            stats = prune_cache_dir(PROJECT_ROOT / "data" / cache_name, max_age_days=30, max_files=2000)
+            pruned = stats["deleted_expired"] + stats["deleted_overflow"]
+            if pruned > 0:
+                print(f"  [Cache Prune] {cache_name}: eliminados {pruned} ficheros (restantes: {stats['remaining']})")
+    except Exception as m18_err:
+        print(f"  [AVISO M18] Error en verificación inicial de almacenamiento/caché: {m18_err}")
+
+    if args.sync_interval > 0:
+        import threading as _threading
+
+        def _scheduled_sync_loop(interval_min: int):
+            while True:
+                time.sleep(interval_min * 60)
+                if sync_postmortem_release:
+                    try:
+                        sync_postmortem_release(project_root=PROJECT_ROOT)
+                    except Exception as sync_err:
+                        print(f"  [Sync Scheduler] Error en sync postmortem: {sync_err}")
+                if sync_remedy_incidents:
+                    try:
+                        sync_remedy_incidents(dias=3, project_root=PROJECT_ROOT)
+                    except Exception as sync_err:
+                        print(f"  [Sync Scheduler] Error en sync remedy: {sync_err}")
+
+        _sync_thread = _threading.Thread(
+            target=_scheduled_sync_loop,
+            args=(args.sync_interval,),
+            daemon=True,
+            name="montmc-sync-scheduler",
+        )
+        _sync_thread.start()
+        print(f"  [Sync Scheduler] Activo cada {args.sync_interval} min (Mesa de Release + Triaje)")
+
     print("Presiona Ctrl+C para detener el servidor\n")
 
     socketserver.ThreadingTCPServer.allow_reuse_address = True

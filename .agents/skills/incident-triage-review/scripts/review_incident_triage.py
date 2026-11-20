@@ -178,9 +178,7 @@ class IncidentTriageReviewer:
             "mantenimiento programado", "ventana de intervencion", "ventana de intervención",
             "conciliacion bscs", "conciliación bscs", "proceso batch", "batch planificado", "lunes 06h"
         ]
-        text_suggests_planned = any(k in text_corpus for k in planned_keywords) or bool(
-            re.search(r"\bpap\s+\d{1,2}[/-]\d{1,2}(?:[/-]\d{2,4})?\b", text_corpus)
-        )
+        text_suggests_planned = any(k in text_corpus for k in planned_keywords)
 
         is_zombie = notif_record.get("es_zombi", False)
         zombie_detail = notif_record.get("detalle_zombi", "")
