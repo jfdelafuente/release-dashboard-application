@@ -850,7 +850,7 @@
             state.metadata = jsonData._metadata || {};
 
             var syncLabel = state.metadata.last_sync_montmc
-                ? 'Última sync MonTMC: ' + state.metadata.last_sync_montmc.replace('T', ' ').slice(0, 16)
+                ? 'Última sync Epsilon: ' + state.metadata.last_sync_montmc.replace('T', ' ').slice(0, 16)
                 : '';
             document.getElementById('lastSyncInfo').textContent = syncLabel;
 
