@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Despliegue automatizado y modernizado de Release Dashboard Application en infocodes@10.132.26.96.
 
@@ -687,7 +687,7 @@ BACKUP_ARCHIVE="`$BACKUP_BASE/backup_`$TIMESTAMP.tar.gz"
 echo "--> [Remoto] Creando backup preventivo en `$BACKUP_ARCHIVE..."
 (
     cd "`$STORAGE_BASE"
-    tar -czf "`$BACKUP_ARCHIVE" output "`$REMOTE_DIR/nginx.conf" 2>/dev/null || tar -czf "`$BACKUP_ARCHIVE" output 2>/dev/null || true
+    tar -czf "`$BACKUP_ARCHIVE" output config agents state *.json "`$REMOTE_DIR/nginx.conf" 2>/dev/null || tar -czf "`$BACKUP_ARCHIVE" output 2>/dev/null || true
     echo "--> [Remoto] Backup preventivo generado: `$(ls -lh "`$BACKUP_ARCHIVE" 2>/dev/null | awk '{print `$5}')"
 )
 
