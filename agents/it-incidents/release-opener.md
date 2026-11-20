@@ -7,7 +7,7 @@ description: >-
   releases-data.js, importación opcional de proyectos PRJ-* y sincronización
   inicial con Epsilon.
 domain: it-incidents
-version: 1.0.0
+version: 1.1.0
 recommended_skills:
   - release-opening-workflow
 ---
