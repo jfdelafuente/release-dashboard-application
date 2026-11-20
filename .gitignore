@@ -132,3 +132,7 @@ coverage.xml
 # Design source artifacts (reference only, not versioned)
 MASORANGE dashboard redesign/
 MASORANGE dashboard redesign.zip
+
+# Temporary release project notes
+Proyectos*.md
+
