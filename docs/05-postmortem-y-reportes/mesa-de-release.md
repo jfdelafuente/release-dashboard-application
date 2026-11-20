@@ -26,7 +26,7 @@ La consola **Mesa de Release** (`/dashboards/release-desk/`) centraliza el segui
 - **Índice de releases**: lee `data/output/index.json` (sección `postmortem.files`) y combina con `RAW_RELEASES` (`dashboards/release-kpis/releases-data.js`) para poblar el selector mensual (`2026R11`, `2026R10`, etc.).
 - **Aislamiento de datos**: **no** consume `high_priority_notifications.json` ni `*-massive.json`; opera exclusivamente sobre los datasets de seguimiento postmortem de cada release.
 - **Sincronización con MonTMC**:
-  - El botón **⚡ Sincronizar MonTMC** invoca `POST /api/sync-postmortem` con `{ release_name }`.
+  - El botón **⚡ Sincronizar Epsilon** invoca `POST /api/sync-postmortem` con `{ release_name }`.
   - Realiza un *upsert* incremental de `/api/epsilon/release` y **reconcilia en paralelo** (`ThreadPoolExecutor`, timeout `15s`, tope `MONTMC_RECONCILE_MAX=50`) vía `GET /api/eps/remedyG/{idRemedy}` los tickets locales no cerrados que ya no aparezcan en ese feed (detectando cierres en Remedy).
   - Opcionalmente, `serve_app.py --sync-interval <minutos>` (o `SYNC_INTERVAL_MINUTES`) activa una sincronización periódica en segundo plano para Mesa de Release y Consola de Triaje.
   - Registra en `_metadata.last_sync_changes` los IDs nuevos, actualizados y con cambio de estado para mostrarlos con badges en la tabla.
