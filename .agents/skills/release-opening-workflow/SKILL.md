@@ -19,16 +19,17 @@ Esta skill define el procedimiento determinista para abrir una nueva Release men
 ## 1. Entrada y Validación
 
 1. **Solicitud inicial de datos (si faltan):**
-   - Antes de ejecutar `open_release.py`, solicita al usuario los datos necesarios si no los ha indicado o aclarado aún: código `YYYYRMM` (obligatorio) y, opcionalmente, fecha de PaP (`"D-mes."`), ruta al catálogo de proyectos (`.csv`/`.md`) y URL del servidor local para MonTMC.
+   - Antes de ejecutar `open_release.py`, solicita al usuario los datos necesarios si no los ha indicado o aclarado aún: código `YYYYRMM` (obligatorio) y, opcionalmente, fecha de PaP (acepta `DD/MM/YYYY`, `YYYY-MM-DD` o `"D-mes."`), confirmación de catálogo de proyectos candidato (`data/projects/{YYYYRMM}.csv`, etc.) y URL del servidor local para MonTMC.
    - Si el usuario ya indicó `YYYYRMM` y dejó explícito qué parámetros opcionales no aplican, ejecuta directamente sin repreguntar.
 2. **Código obligatorio (`YYYYRMM`):**
    - Debe cumplir el patrón `^\d{4}R([1-9]|1[0-2])$` (ej. `2026R12`).
    - Si el usuario no indica `YYYYRMM` o el formato es ambiguo, detente y pregúntale el código exacto antes de modificar ficheros.
-3. **Verificación de entorno:**
+3. **Verificación de entorno y rama Git:**
    - Confirma que te encuentras en `release-dashboard-application` y que existe `converters/cli/open_release.py`. Si falta el script, detente e informa al usuario.
+   - Si la rama Git actual es `production` o `main`, crea o cambia a una rama de feature (`git checkout -b feat/release-<yyyymm>`) antes de versionar cambios en `releases-data.js`.
 4. **Parámetros opcionales (no bloqueantes si faltan):**
-   - `--fecha-pap`: fecha de PaP en formato abreviado `"D-mes."` en español (ej. `"13-dic."`, `"15-ene."`, `"10-feb."`). Si no se indica, se deja `""` y `open_release.py` infiere automáticamente el nombre del mes en español.
-   - `--projects-csv`: ruta a un CSV (`;`-separado con columnas `JIRA;Summary;Despliegue;Descripcion`). Si existe un fichero candidato evidente (p. ej. `proyecto_r12.csv` o `ProyectosR12.md`), pregunta antes si hay ambigüedad; si no hay catálogo todavía, continúa con el alta de la release e informa de que puede importarse más tarde.
+   - `--fecha-pap`: fecha de inicio PaP. Se puede proporcionar en formato abreviado `"D-mes."` (ej. `"13-dic."`, `"15-ene."`), en fecha estándar (`22/11/2026`, `2026-12-15`) o en texto libre (`"22 de noviembre"`). `open_release.py` normaliza automáticamente al estándar `"D-mes."`. Si no se indica, se deja `""` y se infiere automáticamente el mes de respaldo en español.
+   - `--projects-csv`: ruta a un CSV (`;`-separado con columnas `JIRA;Summary;Despliegue;Descripcion`). `open_release.py` busca automáticamente candidatos en `data/projects/{YYYYRMM}.csv` o `proyecto_r{num}.csv` si no se pasa explícitamente (pudiendo desactivarse con `--no-auto-projects`).
    - `--sync-url`: URL del servidor del dashboard (p. ej. `http://localhost:8000`) si está levantado para ejecutar `POST /api/sync-postmortem`.
 
 ---

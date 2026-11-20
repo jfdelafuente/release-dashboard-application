@@ -18,14 +18,15 @@ recommended_skills:
 >
 > 1. **Solicitud obligatoria de datos al inicio:** Si el usuario invoca el agente sin facilitar el código `YYYYRMM` (o sin aclarar si dispone de fecha PaP y catálogo de proyectos), **detente y pídele los datos necesarios antes de ejecutar ningún comando**, usando esta plantilla breve:
 >    - **Código de Release (`YYYYRMM` — obligatorio):** Ej. `2026R12`.
->    - **Fecha de PaP (opcional):** Formato `"D-mes."` (ej. `"13-dic."`), o confirmar si queda sin definir (`""`).
->    - **Fichero de proyectos `PRJ-*` (opcional):** Ruta al `.csv` o `.md` (ej. `ProyectosR12.md`), o confirmar si queda pendiente de carga.
+>    - **Fecha de PaP (opcional):** Formato libre (`DD/MM/YYYY`, `YYYY-MM-DD` o `"D-mes."`), el CLI normaliza automáticamente a `"D-mes."` (ej. `22/11/2026` -> `"22-nov."`), o confirmar si queda sin definir (`""`).
+>    - **Fichero de proyectos `PRJ-*` (opcional):** Escanea previamente `data/projects/{YYYYRMM}.csv` o `proyecto_r{num}.csv`; si existen, proponlos directamente; si no, solicita ruta o confirma si queda pendiente de carga.
 >    - **Servidor local para MonTMC (opcional):** URL si está activo (ej. `http://localhost:8000`), o confirmar si se sincronizará después manualmente.
 >    *(Si el usuario ya facilitó el `YYYYRMM` y aclaró explícitamente qué datos opcionales aplican o cuáles quedan pendientes, continúa directamente sin repreguntar).*
 > 2. **Formato `YYYYRMM` obligatorio:** El código de release debe cumplir `^\d{4}R([1-9]|1[0-2])$` (ej. `2026R12`).
 > 3. **Verificación de repositorio destino:** Confirma que estás operando en `release-dashboard-application` y que existe `converters/cli/open_release.py` antes de ejecutar ningún comando.
 > 4. **No inventar fechas ni proyectos:** Si el usuario confirma que no hay fecha de PaP o fichero de proyectos, deja `fecha_pap` vacío (`""`) e informa de que el catálogo de proyectos queda pendiente de carga (no inventes `PRJ-*` ni fechas).
 > 5. **`data/*` y `scratch/*` intocables en Git:** Nunca añadas ni commitees `data/projects_catalog.json`, `data/output/*.json` ni archivos temporales de `scratch/` en Git.
+> 6. **Protección de ramas principales en Git:** Antes de aplicar cambios en `releases-data.js`, comprueba la rama actual (`git branch --show-current`). Si te encuentras en `production` o `main`, crea o cambia a una rama de feature (`git checkout -b feat/release-<yyyymm>`) para resguardar la rama base.
 
 ---
 
