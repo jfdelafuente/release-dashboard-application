@@ -53,6 +53,9 @@
 .PARAMETER DryRun
     Muestra los comandos que se ejecutarían sin realizar cambios en el servidor.
 
+.PARAMETER NonInteractive
+    Ejecuta el script sin pausas interactivas (Read-Host), ideal para ejecuciones desatendidas o CI.
+
 .EXAMPLE
     .\scripts\deploy-production.ps1
     Flujo estándar: regeneración de catálogo, git push, empaquetado selectivo, subida, despliegue y verificación.
@@ -78,7 +81,8 @@ param(
     [switch]$SkipUpload,
     [switch]$VerifyOnly,
     [switch]$Rollback,
-    [switch]$DryRun
+    [switch]$DryRun,
+    [switch]$NonInteractive
 )
 
 $ErrorActionPreference = "Stop"
@@ -341,6 +345,10 @@ try {
     $currentBranch = (git branch --show-current 2>$null).Trim()
     if ($currentBranch -ne "production") {
         Write-WarnMsg "Rama actual: '$currentBranch'. La rama operativa para despliegue es 'production'."
+        if ($NonInteractive) {
+            Write-Failure "Despliegue cancelado: en modo no interactivo la rama debe ser obligatoriamente 'production'."
+            exit 1
+        }
         $confirm = Read-Host "Deseas continuar desplegando desde '$currentBranch'? (s/N)"
         if ($confirm -notmatch "^[sSyY]$") {
             Write-Failure "Despliegue cancelado por el usuario."
@@ -352,12 +360,26 @@ try {
 
     $gitStatus = git status --porcelain
     if ($gitStatus) {
+        # Si sólo son ficheros de datos generados en data/output, aseguramos commit automático
+        $uncommittedData = (git status --porcelain "data/output/" 2>$null)
+        if ($uncommittedData) {
+            git add "data/output/"
+            git commit -m "data(runtime): actualizar catalogos generados pre-deploy" | Out-Null
+            $gitStatus = git status --porcelain
+        }
+    }
+
+    if ($gitStatus) {
         Write-WarnMsg "Hay cambios locales pendientes en el repositorio:"
         git status -s
-        $confirm = Read-Host "Deseas continuar desplegando sin haber commiteado estos cambios? (s/N)"
-        if ($confirm -notmatch "^[sSyY]$") {
-            Write-Failure "Despliegue cancelado por el usuario."
-            exit 1
+        if ($NonInteractive) {
+            Write-WarnMsg "Modo no interactivo: continuando despliegue con los cambios locales actuales."
+        } else {
+            $confirm = Read-Host "Deseas continuar desplegando sin haber commiteado estos cambios? (s/N)"
+            if ($confirm -notmatch "^[sSyY]$") {
+                Write-Failure "Despliegue cancelado por el usuario."
+                exit 1
+            }
         }
     } else {
         Write-Ok "Árbol de trabajo git limpio"
