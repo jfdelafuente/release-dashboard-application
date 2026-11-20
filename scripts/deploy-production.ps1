@@ -32,6 +32,9 @@
 .PARAMETER SkipCatalogBuild
     Omite la regeneración automática de data/output/agents_catalog.json antes del despliegue.
 
+.PARAMETER SkipValidation
+    Omite la validación CI previa (sintaxis JS con node --check, compilación Python y tests pytest).
+
 .PARAMETER SkipPush
     Omite el git push local a origin/production.
 
@@ -69,6 +72,7 @@ param(
     [string]$RemoteDir = "/infocodes/project/release-dashboard-application",
     [string]$AgentsLibraryPath,
     [switch]$SkipCatalogBuild,
+    [switch]$SkipValidation,
     [switch]$SkipPush,
     [switch]$SkipBuild,
     [switch]$SkipUpload,
@@ -306,6 +310,34 @@ try {
         }
     }
 
+    # -------------------------------------------------------------------------
+    # VALIDACIÓN PREVIA DE CALIDAD (Sintaxis JS + Compilación Python + Tests M20)
+    # -------------------------------------------------------------------------
+    if (-not $SkipValidation) {
+        Write-Step "Validación CI" "Ejecutando suite pre-despliegue (node --check, py_compile, pytest)..."
+        if ($DryRun) {
+            Write-Ok "[DRY-RUN] Se ejecutaría: python scripts/validate_pre_deploy.py"
+        } else {
+            $ValidateScript = Join-Path $ProjectRoot "scripts\validate_pre_deploy.py"
+            if (Test-Path $ValidateScript) {
+                if ($PythonCmd) {
+                    & $PythonCmd $ValidateScript
+                    if ($LASTEXITCODE -ne 0) {
+                        Write-Failure "La validación pre-despliegue ha fallado (código de salida: $LASTEXITCODE). Despliegue cancelado para proteger producción."
+                        exit 1
+                    }
+                    Write-Ok "Validación pre-despliegue superada exitosamente (sintaxis JS, Python y suite de tests 100% OK)."
+                } else {
+                    Write-WarnMsg "No se encontró el ejecutable de Python para ejecutar la validación."
+                }
+            } else {
+                Write-WarnMsg "No se encontró el script de validación en: $ValidateScript"
+            }
+        }
+    } else {
+        Write-Step "Validación CI" "Omitiendo validación pre-despliegue (-SkipValidation activo)."
+    }
+
     $currentBranch = (git branch --show-current 2>$null).Trim()
     if ($currentBranch -ne "production") {
         Write-WarnMsg "Rama actual: '$currentBranch'. La rama operativa para despliegue es 'production'."
@@ -454,6 +486,26 @@ if (-not $SkipBuild) {
             $DataRootStaging = Join-Path $StagingDir "data"
             Copy-Item "$ProjectRoot\data\teams_channels_config.json" -Destination $DataRootStaging
             Write-Ok "Configuración de canales Teams (teams_channels_config.json) empaquetada"
+        }
+
+        if (Test-Path "$ProjectRoot\data\projects_catalog.json") {
+            $DataRootStaging = Join-Path $StagingDir "data"
+            Copy-Item "$ProjectRoot\data\projects_catalog.json" -Destination $DataRootStaging
+            Write-Ok "Catálogo de proyectos (projects_catalog.json) empaquetado en el artefacto runtime"
+        }
+
+        # 6b. Aplicar Cache-Busting a HTMLs en el empaquetado (M16)
+        $BumpScript = Join-Path $ProjectRoot "converters\cli\bump_asset_versions.py"
+        if (Test-Path $BumpScript) {
+            $stagingHtmls = @(
+                Join-Path $StagingDir "dashboards\release-desk\index.html",
+                Join-Path $StagingDir "dashboards\emergency-triage-console\index.html"
+            )
+            $existingStagingHtmls = $stagingHtmls | Where-Object { Test-Path $_ }
+            if ($existingStagingHtmls.Count -gt 0 -and $PythonCmd) {
+                & $PythonCmd $BumpScript @existingStagingHtmls
+                Write-Ok "Cache-busting aplicado a assets de consola en el paquete runtime"
+            }
         }
 
         # 7. Generar archivo tarball comprimido
@@ -638,6 +690,19 @@ if [ -f "`$NEW_RELEASE_DIR/data/teams_channels_config.json" ]; then
     echo "--> [Remoto] Sincronizando configuración de canales Teams a `$STORAGE_BASE/teams_channels_config.json..."
     cp -f "`$NEW_RELEASE_DIR/data/teams_channels_config.json" "`$STORAGE_BASE/teams_channels_config.json" 2>/dev/null || true
 fi
+if [ -f "`$NEW_RELEASE_DIR/data/projects_catalog.json" ]; then
+    echo "--> [Remoto] Sincronizando catálogo de proyectos a `$STORAGE_BASE/projects_catalog.json..."
+    if [ ! -f "`$STORAGE_BASE/projects_catalog.json" ]; then
+        cp -f "`$NEW_RELEASE_DIR/data/projects_catalog.json" "`$STORAGE_BASE/projects_catalog.json" 2>/dev/null || true
+    else
+        cp -u "`$NEW_RELEASE_DIR/data/projects_catalog.json" "`$STORAGE_BASE/projects_catalog.json" 2>/dev/null || cp -f "`$NEW_RELEASE_DIR/data/projects_catalog.json" "`$STORAGE_BASE/projects_catalog.json" 2>/dev/null || true
+    fi
+fi
+if [ ! -f "`$STORAGE_BASE/release_desk_overrides.json" ]; then
+    echo '{"by_release":{}}' > "`$STORAGE_BASE/release_desk_overrides.json"
+fi
+mkdir -p "`$STORAGE_BASE/.remedy_cache" "`$STORAGE_BASE/.epsilon_cache"
+chmod -R u+rwX,g+rwX "`$STORAGE_BASE" 2>/dev/null || true
 rm -rf "`$NEW_RELEASE_DIR/data"
 
 # Enlazar datos desacoplados y logs dentro de la nueva release
@@ -778,5 +843,6 @@ Write-Host "   Postmortem               : http://infocodes.si.orange.es:8081/das
 Write-Host "   Release KPIs             : http://infocodes.si.orange.es:8081/dashboards/release-kpis/" -ForegroundColor Cyan
 Write-Host "   Reportes Incidencias     : http://infocodes.si.orange.es:8081/dashboards/reportes-incidencias/" -ForegroundColor Cyan
 Write-Host "   Consola Triaje Emergencias: http://infocodes.si.orange.es:8081/dashboards/emergency-triage-console/" -ForegroundColor Cyan
+Write-Host "   Mesa de Release          : http://infocodes.si.orange.es:8081/dashboards/release-desk/" -ForegroundColor Cyan
 Write-Host "   Gestión de Problemas     : http://infocodes.si.orange.es:8081/problemas" -ForegroundColor Cyan
 Write-Host "=================================================================" -ForegroundColor DarkGreen

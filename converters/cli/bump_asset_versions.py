@@ -62,9 +62,11 @@ def bump_html_asset_versions(
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Versiona assets CSS/JS locales en HTMLs del portal.")
+    parser.add_argument("files", nargs="*", help="Archivos HTML específicos a procesar (opcional)")
     parser.add_argument("--version", help="Versión a aplicar (por defecto YYYYMMDD_HHMM)")
     args = parser.parse_args()
-    updated = bump_html_asset_versions(version=args.version)
+    targets = [Path(f) for f in args.files] if args.files else None
+    updated = bump_html_asset_versions(html_paths=targets, version=args.version)
     print(f"Actualizados {len(updated)} fichero(s): {[str(p) for p in updated]}")
     return 0
 

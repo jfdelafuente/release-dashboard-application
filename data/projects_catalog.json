@@ -1,0 +1,324 @@
+{
+  "by_release": {
+    "2026R9": {
+      "PRJ-11512": {
+        "jira": "PRJ-11512",
+        "summary": "Nuevas características porfolio SOHO 2026",
+        "despliegue": "Completo",
+        "descripcion": "Para acompañar la actualización de precios del porfolio SOHO se introducen nuevas ventajas que enriquecen la propuesta de valor para nuestros clientes: nuevo control horario multilicencia, fibra oro gratuita y packs de contenidos de Amazon y Disney."
+      },
+      "PRJ-11208": {
+        "jira": "PRJ-11208",
+        "summary": "Creación nuevas familias de descuentos móvil",
+        "despliegue": "Completo",
+        "descripcion": "Se crean nuevas familias de descuentos móvil para Residencial y SOHO OSP (solo captación) con el objetivo de compatibilizarlas con los descuentos existentes de Fidelización y Retención."
+      },
+      "PRJ-11715": {
+        "jira": "PRJ-11715",
+        "summary": "LEGO Baja Diferida en OTTs",
+        "despliegue": "Completo",
+        "descripcion": "Aplicar a las nuevas OTTs creadas en el programa LEGO un flujo de baja diferida en lugar de inmediata, alineándolo con el comportamiento de los nuevos Productos Adicionales (PAs) de deportes dentro del alcance global del portafolio convergente."
+      },
+      "PRJ-11605": {
+        "jira": "PRJ-11605",
+        "summary": "Seguro de Dispositivos para Productos La Tienda (Fase 2 Seguros MKP)",
+        "despliegue": "Completo",
+        "descripcion": "Incorporar dentro del proceso de venta de dispositivos de La Tienda la posibilidad de ofrecer, contratar y gestionar seguros asociados a los dispositivos. El cliente podrá conocer, en el momento de la compra y en días posteriores, si su dispositivo es asegurable, qué modalidades existen y contratar de manera fluida la póliza que mejor se adapte a sus necesidades con experiencia omnicanal."
+      },
+      "PRJ-11939": {
+        "jira": "PRJ-11939",
+        "summary": "Contratación de Seguros en Teide contra OMS (Fase 1)",
+        "despliegue": "Piloto",
+        "descripcion": "Modificación del flujo actual de contratación de seguros desde TEIDE para integrarlo directamente con Bolttech. El objetivo es que la comercialización de seguros sea independiente de la parte Telco, dotando a negocio y clientes de mayor agilidad y flexibilidad. Constituye la fase técnica para el inicio de piloto."
+      },
+      "PRJ-12237": {
+        "jira": "PRJ-12237",
+        "summary": "Marketplace MPV4: Carritos Mixtos en Digital (Fase 1)",
+        "despliegue": "Completo",
+        "descripcion": "Habilitación en eshop (EREBOR) del flujo comercial para la compra conjunta de productos propios (1P) y de terceros (3P, procedentes de otros *sellers* del Marketplace) en un único acto comercial unificado."
+      },
+      "PRJ-11600": {
+        "jira": "PRJ-11600",
+        "summary": "Bono compartido llamadas internacionales Big PYME",
+        "despliegue": "Completo",
+        "descripcion": "Activación de un nuevo Bono Compartido de llamadas internacionales orientado a clientes de la tipología Big PYME."
+      },
+      "PRJ-11855": {
+        "jira": "PRJ-11855",
+        "summary": "Comprobante de Venta móvil MPV2",
+        "despliegue": "Modo Oculto",
+        "descripcion": "Implementación de funcionalidades clave para móvil: validación de contrato existente, generación del Comprobante de Venta (CdV), documento de solicitud de Portabilidad y soporte de firma digital. Adicionalmente, incluye mejoras evolutivas para el servicio Fijo."
+      },
+      "PRJ-10698": {
+        "jira": "PRJ-10698",
+        "summary": "Modificaciones en CRMB2B para GED",
+        "despliegue": "Completo",
+        "descripcion": "Homogeneización del comportamiento de CRM B2B para replicar el funcionamiento de los sistemas legacy en relación con la Gestión Documental corporativa (GED)."
+      },
+      "PRJ-10167": {
+        "jira": "PRJ-10167",
+        "summary": "Redes privadas 5G MPV2",
+        "despliegue": "Completo",
+        "descripcion": "Introducción de mejoras en el proceso de estandarización técnica de *Network Slicing* y MPNS 5G Stand Alone (SA) para Grandes Empresas (GGEE)."
+      },
+      "PRJ-11438": {
+        "jira": "PRJ-11438",
+        "summary": "NMA Jazztel: Multicanalidad en CRM4T stock tienda y desde Eshop MM con stock OL",
+        "despliegue": "Piloto",
+        "descripcion": "Activación de servicios Jazztel empleando el stock en cesión en tiendas Orange y/o Neksus para posibilitar la entrega inmediata del terminal en mano. Permite contratar en CRM4T con entrega en tienda y multicanalidad con stock OL, así como la operativa desde eShop MM con stock OL. Despliegue en modo piloto con apertura gradual por flujos funcionales."
+      },
+      "PRJ-11439": {
+        "jira": "PRJ-11439",
+        "summary": "NMA Jazztel: Multicanalidad en CRM4T stock tienda y desde Eshop MM con stock OL",
+        "despliegue": "Piloto",
+        "descripcion": "Activación de servicios Jazztel empleando el stock en cesión en tiendas Orange y/o Neksus para posibilitar la entrega inmediata del terminal en mano. Permite contratar en CRM4T con entrega en tienda y multicanalidad con stock OL, así como la operativa desde eShop MM con stock OL. Despliegue en modo piloto con apertura gradual por flujos funcionales."
+      },
+      "PRJ-11538": {
+        "jira": "PRJ-11538",
+        "summary": "Gestiones Administrativas SAC en servicios de Fijo (Fase 2 Desocultación)",
+        "despliegue": "Completo",
+        "descripcion": "Habilitación en CRMB2B de la tramitación de solicitudes de cliente para cambio de cuenta bancaria, modificación de domicilio social, corrección de datos de titularidad y realización de ajustes en facturación sobre servicios de fijo."
+      },
+      "PRJ-12001": {
+        "jira": "PRJ-12001",
+        "summary": "Integración marca Jazztel en +Consents (PRJ-10957)",
+        "despliegue": "Completo",
+        "descripcion": "Integración técnica de los sistemas y frontales de la marca Jazztel con la plataforma corporativa +Consents para la recolección, actualización y almacenamiento normativo de los consentimientos LOPD del cliente."
+      },
+      "PRJ-10957": {
+        "jira": "PRJ-10957",
+        "summary": "Integración marca Jazztel en +Consents (PRJ-10957)",
+        "despliegue": "Completo",
+        "descripcion": "Integración técnica de los sistemas y frontales de la marca Jazztel con la plataforma corporativa +Consents para la recolección, actualización y almacenamiento normativo de los consentimientos LOPD del cliente."
+      },
+      "PRJ-11555": {
+        "jira": "PRJ-11555",
+        "summary": "Parada en el flujo de provisión Boreal - Excalibur",
+        "despliegue": "Completo",
+        "descripcion": "Implementación de un mecanismo de parada en Boreal ante cualquier incidencia o error detectado durante la provisión en Excalibur, reteniendo la orden en el buzón de error para su diagnóstico y gestión por parte de soporte, impidiendo avances anómalos o desincronizados."
+      },
+      "PRJ-11457": {
+        "jira": "PRJ-11457",
+        "summary": "EREBOR - SOHO PI3: Captación Convergente y Multi-sede",
+        "despliegue": "Piloto",
+        "descripcion": "Habilitación en la plataforma digital EREBOR del nuevo *Customer Journey* para empresas SOHO, cubriendo tanto la captación convergente como la funcionalidad de gestión multisede para clientes con múltiples ubicaciones geográficas."
+      },
+      "PRJ-12130": {
+        "jira": "PRJ-12130",
+        "summary": "Fase 2 - Descuentos por volumen",
+        "despliegue": "PaP Técnico",
+        "descripcion": "En ejecución de casos de prueba adicionales; pendiente de entrega de issue correctivo."
+      },
+      "PRJ-11603": {
+        "jira": "PRJ-11603",
+        "summary": "CRMB2B: Operaciones móviles en CRMB2B KRTO - MPV2",
+        "despliegue": "PaP Técnico",
+        "descripcion": "Despliegue en modo oculto; únicamente habilitados cambios de tarjeta específicos para colectivo de pruebas."
+      },
+      "PRJ-12011": {
+        "jira": "PRJ-12011",
+        "summary": "PRJ-10507 Gestión terminales Pyme en CRMB2B con OL MPV1 - PAP_2",
+        "despliegue": "PaP Técnico",
+        "descripcion": "Reprogramado para próxima ventana de despliegue (Release R11)."
+      },
+      "PRJ-10507": {
+        "jira": "PRJ-10507",
+        "summary": "PRJ-10507 Gestión terminales Pyme en CRMB2B con OL MPV1 - PAP_2",
+        "despliegue": "PaP Técnico",
+        "descripcion": "Reprogramado para próxima ventana de despliegue (Release R11)."
+      }
+    }
+  },
+  "projects": {
+    "PRJ-11603": {
+      "jira": "PRJ-11603",
+      "summary": "CRMB2B: OPERACIONES MOVILES EN CRMB2B KRTO - MPV2",
+      "despliegue": "Completo",
+      "descripcion": "Ampliación de operaciones de contratación y cambio de tarjeta móvil (SIM, eSIM) para líneas Empresa tanto principales como secundarias en CRMB2B.",
+      "releases": [
+        "2026R9"
+      ]
+    },
+    "PRJ-12011": {
+      "jira": "PRJ-12011",
+      "summary": "PRJ-10507 Gestión terminales Pyme en CRMB2B con OL MPV1 - PAP_2",
+      "despliegue": "Piloto",
+      "descripcion": "Implementar los modelos de Gestión terminales Pyme en CRMB2B para Multimarca (Orange y KRT), Modalidad OL (Operador Logístico), Modo VAP (Venta a Plazos) y Captación.",
+      "releases": [
+        "2026R9"
+      ]
+    },
+    "PRJ-11512": {
+      "jira": "PRJ-11512",
+      "summary": "Nuevas características porfolio SOHO 2026",
+      "despliegue": "Completo",
+      "descripcion": "Para acompañar la actualización de precios del porfolio SOHO se introducen nuevas ventajas que enriquecen la propuesta de valor para nuestros clientes: nuevo control horario multilicencia, fibra oro gratuita y packs de contenidos de Amazon y Disney.",
+      "releases": [
+        "2026R9"
+      ]
+    },
+    "PRJ-11208": {
+      "jira": "PRJ-11208",
+      "summary": "Creación nuevas familias de descuentos móvil",
+      "despliegue": "Completo",
+      "descripcion": "Se crean nuevas familias de descuentos móvil para Residencial y SOHO OSP (solo captación) con el objetivo de compatibilizarlas con los descuentos existentes de Fidelización y Retención.",
+      "releases": [
+        "2026R9"
+      ]
+    },
+    "PRJ-11715": {
+      "jira": "PRJ-11715",
+      "summary": "LEGO Baja Diferida en OTTs",
+      "despliegue": "Completo",
+      "descripcion": "Aplicar a las nuevas OTTs creadas en el programa LEGO un flujo de baja diferida en lugar de inmediata, alineándolo con el comportamiento de los nuevos Productos Adicionales (PAs) de deportes dentro del alcance global del portafolio convergente.",
+      "releases": [
+        "2026R9"
+      ]
+    },
+    "PRJ-11605": {
+      "jira": "PRJ-11605",
+      "summary": "Seguro de Dispositivos para Productos La Tienda (Fase 2 Seguros MKP)",
+      "despliegue": "Completo",
+      "descripcion": "Incorporar dentro del proceso de venta de dispositivos de La Tienda la posibilidad de ofrecer, contratar y gestionar seguros asociados a los dispositivos. El cliente podrá conocer, en el momento de la compra y en días posteriores, si su dispositivo es asegurable, qué modalidades existen y contratar de manera fluida la póliza que mejor se adapte a sus necesidades con experiencia omnicanal.",
+      "releases": [
+        "2026R9"
+      ]
+    },
+    "PRJ-11939": {
+      "jira": "PRJ-11939",
+      "summary": "Contratación de Seguros en Teide contra OMS (Fase 1)",
+      "despliegue": "Piloto",
+      "descripcion": "Modificación del flujo actual de contratación de seguros desde TEIDE para integrarlo directamente con Bolttech. El objetivo es que la comercialización de seguros sea independiente de la parte Telco, dotando a negocio y clientes de mayor agilidad y flexibilidad. Constituye la fase técnica para el inicio de piloto.",
+      "releases": [
+        "2026R9"
+      ]
+    },
+    "PRJ-12237": {
+      "jira": "PRJ-12237",
+      "summary": "Marketplace MPV4: Carritos Mixtos en Digital (Fase 1)",
+      "despliegue": "Completo",
+      "descripcion": "Habilitación en eshop (EREBOR) del flujo comercial para la compra conjunta de productos propios (1P) y de terceros (3P, procedentes de otros *sellers* del Marketplace) en un único acto comercial unificado.",
+      "releases": [
+        "2026R9"
+      ]
+    },
+    "PRJ-11600": {
+      "jira": "PRJ-11600",
+      "summary": "Bono compartido llamadas internacionales Big PYME",
+      "despliegue": "Completo",
+      "descripcion": "Activación de un nuevo Bono Compartido de llamadas internacionales orientado a clientes de la tipología Big PYME.",
+      "releases": [
+        "2026R9"
+      ]
+    },
+    "PRJ-11855": {
+      "jira": "PRJ-11855",
+      "summary": "Comprobante de Venta móvil MPV2",
+      "despliegue": "Modo Oculto",
+      "descripcion": "Implementación de funcionalidades clave para móvil: validación de contrato existente, generación del Comprobante de Venta (CdV), documento de solicitud de Portabilidad y soporte de firma digital. Adicionalmente, incluye mejoras evolutivas para el servicio Fijo.",
+      "releases": [
+        "2026R9"
+      ]
+    },
+    "PRJ-10698": {
+      "jira": "PRJ-10698",
+      "summary": "Modificaciones en CRMB2B para GED",
+      "despliegue": "Completo",
+      "descripcion": "Homogeneización del comportamiento de CRM B2B para replicar el funcionamiento de los sistemas legacy en relación con la Gestión Documental corporativa (GED).",
+      "releases": [
+        "2026R9"
+      ]
+    },
+    "PRJ-10167": {
+      "jira": "PRJ-10167",
+      "summary": "Redes privadas 5G MPV2",
+      "despliegue": "Completo",
+      "descripcion": "Introducción de mejoras en el proceso de estandarización técnica de *Network Slicing* y MPNS 5G Stand Alone (SA) para Grandes Empresas (GGEE).",
+      "releases": [
+        "2026R9"
+      ]
+    },
+    "PRJ-11438": {
+      "jira": "PRJ-11438",
+      "summary": "NMA Jazztel: Multicanalidad en CRM4T stock tienda y desde Eshop MM con stock OL",
+      "despliegue": "Piloto",
+      "descripcion": "Activación de servicios Jazztel empleando el stock en cesión en tiendas Orange y/o Neksus para posibilitar la entrega inmediata del terminal en mano. Permite contratar en CRM4T con entrega en tienda y multicanalidad con stock OL, así como la operativa desde eShop MM con stock OL. Despliegue en modo piloto con apertura gradual por flujos funcionales.",
+      "releases": [
+        "2026R9"
+      ]
+    },
+    "PRJ-11439": {
+      "jira": "PRJ-11439",
+      "summary": "NMA Jazztel: Multicanalidad en CRM4T stock tienda y desde Eshop MM con stock OL",
+      "despliegue": "Piloto",
+      "descripcion": "Activación de servicios Jazztel empleando el stock en cesión en tiendas Orange y/o Neksus para posibilitar la entrega inmediata del terminal en mano. Permite contratar en CRM4T con entrega en tienda y multicanalidad con stock OL, así como la operativa desde eShop MM con stock OL. Despliegue en modo piloto con apertura gradual por flujos funcionales.",
+      "releases": [
+        "2026R9"
+      ]
+    },
+    "PRJ-11538": {
+      "jira": "PRJ-11538",
+      "summary": "Gestiones Administrativas SAC en servicios de Fijo (Fase 2 Desocultación)",
+      "despliegue": "Completo",
+      "descripcion": "Habilitación en CRMB2B de la tramitación de solicitudes de cliente para cambio de cuenta bancaria, modificación de domicilio social, corrección de datos de titularidad y realización de ajustes en facturación sobre servicios de fijo.",
+      "releases": [
+        "2026R9"
+      ]
+    },
+    "PRJ-12001": {
+      "jira": "PRJ-12001",
+      "summary": "Integración marca Jazztel en +Consents (PRJ-10957)",
+      "despliegue": "Completo",
+      "descripcion": "Integración técnica de los sistemas y frontales de la marca Jazztel con la plataforma corporativa +Consents para la recolección, actualización y almacenamiento normativo de los consentimientos LOPD del cliente.",
+      "releases": [
+        "2026R9"
+      ]
+    },
+    "PRJ-10957": {
+      "jira": "PRJ-10957",
+      "summary": "Integración marca Jazztel en +Consents (PRJ-10957)",
+      "despliegue": "Completo",
+      "descripcion": "Integración técnica de los sistemas y frontales de la marca Jazztel con la plataforma corporativa +Consents para la recolección, actualización y almacenamiento normativo de los consentimientos LOPD del cliente.",
+      "releases": [
+        "2026R9"
+      ]
+    },
+    "PRJ-11555": {
+      "jira": "PRJ-11555",
+      "summary": "Parada en el flujo de provisión Boreal - Excalibur",
+      "despliegue": "Completo",
+      "descripcion": "Implementación de un mecanismo de parada en Boreal ante cualquier incidencia o error detectado durante la provisión en Excalibur, reteniendo la orden en el buzón de error para su diagnóstico y gestión por parte de soporte, impidiendo avances anómalos o desincronizados.",
+      "releases": [
+        "2026R9"
+      ]
+    },
+    "PRJ-11457": {
+      "jira": "PRJ-11457",
+      "summary": "EREBOR - SOHO PI3: Captación Convergente y Multi-sede",
+      "despliegue": "Piloto",
+      "descripcion": "Habilitación en la plataforma digital EREBOR del nuevo *Customer Journey* para empresas SOHO, cubriendo tanto la captación convergente como la funcionalidad de gestión multisede para clientes con múltiples ubicaciones geográficas.",
+      "releases": [
+        "2026R9"
+      ]
+    },
+    "PRJ-12130": {
+      "jira": "PRJ-12130",
+      "summary": "Fase 2 - Descuentos por volumen",
+      "despliegue": "PaP Técnico",
+      "descripcion": "En ejecución de casos de prueba adicionales; pendiente de entrega de issue correctivo.",
+      "releases": [
+        "2026R9"
+      ]
+    },
+    "PRJ-10507": {
+      "jira": "PRJ-10507",
+      "summary": "PRJ-10507 Gestión terminales Pyme en CRMB2B con OL MPV1 - PAP_2",
+      "despliegue": "PaP Técnico",
+      "descripcion": "Reprogramado para próxima ventana de despliegue (Release R11).",
+      "releases": [
+        "2026R9"
+      ]
+    }
+  },
+  "updated": "2026-11-18T21:15:45.111025"
+}

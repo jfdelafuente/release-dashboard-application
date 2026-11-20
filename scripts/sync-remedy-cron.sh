@@ -12,13 +12,16 @@ PROJECT_ROOT="/infocodes/project/release-dashboard-application"
 CURRENT_DIR="${PROJECT_ROOT}/current"
 
 # 1. Localizar converters y CLI de sincronización
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 if [ -f "${CURRENT_DIR}/converters/cli/sync_montmc_incidents.py" ]; then
     SYNC_CLI="${CURRENT_DIR}/converters/cli/sync_montmc_incidents.py"
+    SYNC_POSTMORTEM_CLI="${CURRENT_DIR}/converters/cli/sync_montmc_postmortem.py"
 elif [ -f "${PROJECT_ROOT}/converters/cli/sync_montmc_incidents.py" ]; then
     SYNC_CLI="${PROJECT_ROOT}/converters/cli/sync_montmc_incidents.py"
+    SYNC_POSTMORTEM_CLI="${PROJECT_ROOT}/converters/cli/sync_montmc_postmortem.py"
 else
-    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
     SYNC_CLI="$(cd "${SCRIPT_DIR}/../converters/cli" && pwd)/sync_montmc_incidents.py"
+    SYNC_POSTMORTEM_CLI="$(cd "${SCRIPT_DIR}/../converters/cli" && pwd)/sync_montmc_postmortem.py"
 fi
 
 if [ ! -f "${SYNC_CLI}" ]; then
@@ -45,10 +48,16 @@ DIAS="${1:-3}"
 
 echo "======================================================================"
 echo "[$(date '+%Y-%m-%d %H:%M:%S')] [CRON] Iniciando sincronización Remedy API (ventana: ${DIAS} días)..."
-echo "  CLI    : ${SYNC_CLI}"
-echo "  Python : ${PYTHON_CMD}"
+echo "  CLI Masivas   : ${SYNC_CLI}"
+echo "  CLI Postmortem: ${SYNC_POSTMORTEM_CLI:-no encontrado}"
+echo "  Python        : ${PYTHON_CMD}"
 
 "${PYTHON_CMD}" "${SYNC_CLI}" --dias "${DIAS}"
+
+if [ -n "${SYNC_POSTMORTEM_CLI}" ] && [ -f "${SYNC_POSTMORTEM_CLI}" ]; then
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] [CRON] Sincronizando Postmortem / Mesa de Release..."
+    "${PYTHON_CMD}" "${SYNC_POSTMORTEM_CLI}" || echo "[$(date '+%Y-%m-%d %H:%M:%S')] [WARN] Falló sync_montmc_postmortem, continuando..."
+fi
 
 echo "[$(date '+%Y-%m-%d %H:%M:%S')] [CRON] Sincronización completada con éxito."
 echo "======================================================================"

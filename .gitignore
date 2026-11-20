@@ -71,6 +71,7 @@ output/
 !data/agent_executive_messages.json
 !data/scheduled_changes_pap.json
 !data/teams_channels_config.json
+!data/projects_catalog.json
 archive/
 
 # Temporary Files
