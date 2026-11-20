@@ -63,9 +63,9 @@ Ejecuta siempre tras los cambios:
 python -m pytest converters/tests/unit/test_open_release.py converters/tests/unit/test_release_desk.py -v
 ```
 
-### Paso 4 · Sincronización MonTMC (si el servidor no estaba activo)
+### Paso 4 · Sincronización Epsilon (si el servidor no estaba activo)
 
-Si no se pudo sincronizar automáticamente porque el servidor web no estaba levantado, indícale al usuario que al abrir **Mesa de Release** (`/dashboards/release-desk/?release=<YYYYRMM>`) solo tiene que pulsar **⚡ Sincronizar MonTMC**.
+Si no se pudo sincronizar automáticamente porque el servidor web no estaba levantado, indícale al usuario que al abrir **Mesa de Release** (`/dashboards/release-desk/?release=<YYYYRMM>`) solo tiene que pulsar **⚡ Sincronizar Epsilon**.
 
 ---
 

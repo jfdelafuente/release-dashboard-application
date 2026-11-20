@@ -148,7 +148,7 @@ Lista priorizada de evolutivos para la consola **[Mesa de Release](/05-postmorte
 ---
 
 ### M13 · Indicador de novedades desde la última sincronización
-- **Situación actual:** Tras pulsar `Sincronizar MonTMC`, la tabla se refresca completa sin distinguir qué tickets son nuevos o han cambiado de estado respecto a la foto anterior.
+- **Situación actual:** Tras pulsar `Sincronizar Epsilon`, la tabla se refresca completa sin distinguir qué tickets son nuevos o han cambiado de estado respecto a la foto anterior.
 - **Propuesta:** Guardar en respuesta de `/api/postmortem/sync` (o metadatos locales) los IDs nuevos y los que cambiaron de estado en la última sincronización y mostrar un badge discreto (`Nuevo` / `Actualizada`) durante la sesión.
 - **Componentes afectados:** `converters/cli/sync_montmc_postmortem.py`, `dashboards/release-desk/index.html`, `dashboards/release-desk/release-desk.js`.
 - **Criterio de aceptación:** El Release Manager identifica inmediatamente qué tickets requieren atención nueva tras sincronizar con MonTMC.

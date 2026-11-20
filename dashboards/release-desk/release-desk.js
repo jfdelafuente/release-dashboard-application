@@ -837,7 +837,7 @@
                 document.getElementById('lastSyncInfo').textContent = '';
                 showEmptyState(
                     'Release ' + (state.currentRelease || '') + ' sin datos locales',
-                    'Aún no existe un dataset local para esta release. Pulsa "Sincronizar MonTMC" para obtener sus incidencias activas.',
+                    'Aún no existe un dataset local para esta release. Pulsa "Sincronizar Epsilon" para obtener sus incidencias activas.',
                     true
                 );
                 return;
@@ -893,12 +893,12 @@
             });
             var data = await resp.json();
             if (!resp.ok || !data.success) {
-                throw new Error(data.error || 'Error al sincronizar con MonTMC');
+                throw new Error(data.error || 'Error al sincronizar con Epsilon');
             }
             notify('Sincronización OK: ' + (data.total_consultadas || 0) + ' consultadas (+' + (data.nuevas || 0) + ' nuevas, ' + (data.actualizadas || 0) + ' actualizadas).', 'success');
             await loadRelease(state.currentRelease || data.release_name);
         } catch (err) {
-            notify('Error al sincronizar con MonTMC: ' + (err.message || err), 'error');
+            notify('Error al sincronizar con Epsilon: ' + (err.message || err), 'error');
         } finally {
             btn.disabled = false;
             btn.textContent = orig;

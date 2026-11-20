@@ -385,7 +385,7 @@
             </p>
             <div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
                 <button class="upload-btn" id="uploadBtn">Seleccionar archivo</button>
-                <button class="upload-btn" id="uploadSyncPostmortemBtn" style="background:#0C0B09;" title="Sincronizar incidencias de release desde MonTMC">⚡ Sincronizar MonTMC</button>
+                <button class="upload-btn" id="uploadSyncPostmortemBtn" style="background:#0C0B09;" title="Sincronizar incidencias de release desde Epsilon">⚡ Sincronizar Epsilon</button>
             </div>
             <input type="file" id="fileInput" accept=".csv" />
         </div>
@@ -409,7 +409,7 @@
                     <span class="live-dot"></span>
                     <span id="recordCount">0 registros</span>
                 </div>
-                <button class="reset-btn" id="syncPostmortemBtn" title="Sincronizar incidencias de release desde MonTMC">⚡ Sincronizar MonTMC</button>
+                <button class="reset-btn" id="syncPostmortemBtn" title="Sincronizar incidencias de release desde Epsilon">⚡ Sincronizar Epsilon</button>
                 <button class="reset-btn" id="downloadReportBtn">⬇ Descargar informe PPT</button>
                 <button class="reset-btn" id="resetBtn">↻ Cargar otro archivo</button>
             </div>
@@ -1923,17 +1923,17 @@
                     });
                     const data = await response.json();
                     if (!response.ok || !data.success) {
-                        throw new Error(data.error || 'Error al sincronizar con MonTMC');
+                        throw new Error(data.error || 'Error al sincronizar con Epsilon');
                     }
                     const total = data.total_consultadas ?? 0;
                     const nuevas = data.nuevas ?? 0;
                     const actualizadas = data.actualizadas ?? 0;
-                    const msg = `Sincronización MonTMC OK: ${total} consultadas (+${nuevas} nuevas, ${actualizadas} actualizadas).`;
+                    const msg = `Sincronización Epsilon OK: ${total} consultadas (+${nuevas} nuevas, ${actualizadas} actualizadas).`;
                     if (window.Toast) Toast.success(msg);
                     else alert(msg);
                     await autoLoadLatestData();
                 } catch (err) {
-                    const errMsg = 'Error al sincronizar con MonTMC: ' + (err && err.message ? err.message : err);
+                    const errMsg = 'Error al sincronizar con Epsilon: ' + (err && err.message ? err.message : err);
                     if (window.Toast) Toast.error(errMsg);
                     else alert(errMsg);
                 } finally {

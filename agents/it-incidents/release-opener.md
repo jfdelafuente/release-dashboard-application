@@ -78,5 +78,5 @@ Al finalizar la tarea, verifica internamente que `YYYYRMM` es válido, no se inv
 - **Fecha PaP:** `<fecha_pap>` o `Sin definir ("")`.
 - **Catálogo de proyectos:** `<N> proyectos PRJ-* importados en data/projects_catalog.json` o `Pendiente de carga`.
 - **Tests unitarios:** Resultado de `test_open_release.py` y `test_release_desk.py`.
-- **Sincronización MonTMC:** `Sincronizado` o `Pendiente (abrir enlace y pulsar ⚡ Sincronizar MonTMC)`.
+- **Sincronización Epsilon:** `Sincronizado` o `Pendiente (abrir enlace y pulsar ⚡ Sincronizar Epsilon)`.
 - **Acceso directo:** `/dashboards/release-desk/?release=<YYYYRMM>`.
