@@ -2,7 +2,7 @@
   "_metadata": {
     "schema_version": "1.0.0",
     "type": "agents_catalog",
-    "generated_at": "2026-11-18T20:54:52Z",
+    "generated_at": "2026-11-20T11:54:14Z",
     "source_library": "C:\\Users\\jose.delafuente\\Claude\\Projects\\biblioteca-agentes",
     "kpis": {
       "total_agents": 8,
@@ -24,7 +24,7 @@
       },
       {
         "id": "software-engineering",
-        "label": "Software Engineering",
+        "label": "Ingeniería de Software",
         "agent_count": 1
       }
     ],
@@ -170,7 +170,7 @@
         "alias": "orquestador-especificaciones",
         "version": "1.1.0",
         "domain": "software-engineering",
-        "domain_label": "Software Engineering",
+        "domain_label": "Ingeniería de Software",
         "description": "Orquesta el ciclo completo de Desarrollo Guiado por Especificación (Spec-Driven Development): entrevista al usuario una pregunta a la vez para definir la especificación formal en specs/ (/spec), construye estrictamente lo especificado sin añadir funciones extra (/build) y audita requisito por requisito contra la especificación emitiendo veredicto APROBADO o NO APROBADO (/spec-review).",
         "recommended_skills": [
           "spec-definition-workflow",
