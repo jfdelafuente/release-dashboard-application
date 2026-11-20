@@ -67,7 +67,9 @@ data/*
 !data/agents/**
 !data/reports/
 data/reports/*
-!data/reports/*.pptx
+!data/reports/pptx/
+data/reports/pptx/*
+!data/reports/pptx/*.pptx
 !data/reports/executive/
 data/reports/executive/*
 !data/reports/executive/.gitkeep
