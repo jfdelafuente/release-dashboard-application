@@ -33,6 +33,7 @@ from converters.src.storage_utils import (
     atomic_write_json,
     build_release_desk_health,
     get_path_lock,
+    resolve_cache_dir,
 )
 
 logger = logging.getLogger("release_dashboard.desk_service")
@@ -73,9 +74,9 @@ def resolve_storage_dir(provided_storage_dir: Optional[Path] = None, project_roo
 
 
 def resolve_remedy_cache_dir(project_root: Optional[Path] = None) -> Path:
-    """Resuelve y crea el directorio de caché en disco para tickets Remedy."""
+    """Resuelve y crea el directorio de caché en disco para tickets Remedy (canónico: cache/remedy, fallback: .remedy_cache)."""
     storage = resolve_storage_dir(project_root=project_root)
-    cache_dir = storage / ".remedy_cache"
+    cache_dir = resolve_cache_dir(storage, "remedy")
     cache_dir.mkdir(parents=True, exist_ok=True)
     return cache_dir
 

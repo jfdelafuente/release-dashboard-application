@@ -27,6 +27,8 @@ def build_index(output_dir='data/output'):
     Actualiza solo la sección 'massive' en index.json para Dashboard Hub.
 
     Mantiene la sección 'postmortem' sin cambios si existe.
+    Soporta la nueva estructura modular (data/storage/processed y data/storage/index.json)
+    además del fallback compatible (data/output/index.json).
 
     Args:
         output_dir: Directory path to scan for JSON files
@@ -35,6 +37,13 @@ def build_index(output_dir='data/output'):
         bool: True if successful, False otherwise
     """
     output_path = Path(output_dir)
+
+    # Si output_dir por defecto no tiene masivas pero data/storage/processed sí, o viceversa,
+    # recopilamos masivas de output_path o de storage/processed si está disponible.
+    if not output_path.exists():
+        alt_path = Path('data/storage/processed')
+        if alt_path.exists():
+            output_path = alt_path
 
     # Verify directory exists
     if not output_path.exists():
@@ -56,6 +65,12 @@ def build_index(output_dir='data/output'):
         except Exception as e:
             print(f"⚠️  Warning: Could not read existing index.json: {e}")
             existing_index = {}
+    elif Path('data/storage/index.json').exists():
+        try:
+            with open(Path('data/storage/index.json'), 'r', encoding='utf-8') as f:
+                existing_index = json.load(f)
+        except Exception:
+            pass
 
     # Find all JSON files with -massive suffix (excluding index.json)
     massive_files = sorted(
@@ -65,7 +80,7 @@ def build_index(output_dir='data/output'):
     )
 
     if not massive_files:
-        print(f"⚠️  Warning: No massive JSON files found in {output_dir}")
+        print(f"⚠️  Warning: No massive JSON files found in {output_path}")
     else:
         print(f"✓ Found {len(massive_files)} massive file(s)")
 
@@ -83,7 +98,7 @@ def build_index(output_dir='data/output'):
             'name': file_path.name,
             'size': stat.st_size,
             'modified': datetime.fromtimestamp(stat.st_mtime).isoformat(),
-            'path': f"data/output/{file_path.name}"
+            'path': f"{output_path.as_posix()}/{file_path.name}"
         }
         massive_index['files'].append(file_info)
         print(f"  • {file_path.name} ({stat.st_size:,} bytes, {file_info['modified']})")
@@ -101,16 +116,27 @@ def build_index(output_dir='data/output'):
             'files': []
         })
 
-    # Write index.json
-    try:
-        with open(index_file, 'w', encoding='utf-8') as f:
-            json.dump(full_index, f, indent=2, ensure_ascii=False)
-        print(f"\n✅ Successfully created: {index_file}")
-        return True
+    # Write index.json to scanned directory and mirror if canonical data/storage exists
+    targets = [index_file]
+    canonical_index = Path('data/storage/index.json')
+    legacy_index = Path('data/output/index.json')
+    if canonical_index.parent.exists() and canonical_index not in targets:
+        targets.append(canonical_index)
+    if legacy_index.parent.exists() and legacy_index not in targets:
+        targets.append(legacy_index)
 
-    except IOError as e:
-        print(f"❌ Error writing index.json: {e}")
-        return False
+    success = True
+    for target in targets:
+        try:
+            target.parent.mkdir(parents=True, exist_ok=True)
+            with open(target, 'w', encoding='utf-8') as f:
+                json.dump(full_index, f, indent=2, ensure_ascii=False)
+            print(f"✅ Successfully written: {target}")
+        except IOError as e:
+            print(f"❌ Error writing {target}: {e}")
+            success = False
+
+    return success
 
 
 if __name__ == '__main__':

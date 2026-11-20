@@ -465,7 +465,22 @@ if (-not $SkipBuild) {
             "0.2.0-$(Get-Date -Format 'yyyyMMdd')" | Out-File -FilePath (Join-Path $StagingDir "VERSION") -Encoding utf8
         }
 
-        # 6. Copiar catálogos regenerados al paquete runtime
+        # 6. Copiar catálogos y configuración modular al paquete runtime
+        $DataConfigStaging = Join-Path $StagingDir "data\config"
+        if (Test-Path "$ProjectRoot\data\config") {
+            New-Item -ItemType Directory -Path $DataConfigStaging -Force | Out-Null
+            robocopy "$ProjectRoot\data\config" "$DataConfigStaging" /E /XD __pycache__ /XF *.pyc *.log | Out-Null
+            Write-Ok "Configuración modular (data/config) empaquetada"
+        }
+
+        $DataAgentsStaging = Join-Path $StagingDir "data\agents"
+        if (Test-Path "$ProjectRoot\data\agents") {
+            New-Item -ItemType Directory -Path $DataAgentsStaging -Force | Out-Null
+            robocopy "$ProjectRoot\data\agents" "$DataAgentsStaging" /E /XD __pycache__ /XF *.pyc *.log | Out-Null
+            Write-Ok "Catálogos de agentes modulares (data/agents) empaquetados"
+        }
+
+        # 6b. Copiar catálogos regenerados y archivos de compatibilidad al paquete runtime
         $DataOutStaging = Join-Path $StagingDir "data\output"
         New-Item -ItemType Directory -Path $DataOutStaging -Force | Out-Null
 
@@ -616,6 +631,7 @@ fi
 echo "--> [Remoto] Asegurando estructura en /infocodes/var/storage y directorios de release..."
 mkdir -p "`$REMOTE_DIR" "`$BACKUP_BASE" "`$RELEASES_DIR" "`$SHARED_DIR" "`$NGINX_CONF_D"
 mkdir -p "`$STORAGE_BASE/input" "`$STORAGE_BASE/output" "`$STORAGE_BASE/reports" "`$STORAGE_BASE/errors" "`$STORAGE_BASE/archive" "`$STORAGE_BASE/logs"
+mkdir -p "`$STORAGE_BASE/config" "`$STORAGE_BASE/agents" "`$STORAGE_BASE/storage/raw" "`$STORAGE_BASE/storage/processed" "`$STORAGE_BASE/storage/archive" "`$STORAGE_BASE/storage/projects" "`$STORAGE_BASE/state" "`$STORAGE_BASE/cache/epsilon" "`$STORAGE_BASE/cache/remedy" "`$STORAGE_BASE/observability/logs" "`$STORAGE_BASE/observability/audits" "`$STORAGE_BASE/observability/quarantine"
 mkdir -p "`$EXECUTIVE_STORAGE" "`$LOGS_BASE"
 
 # Enlace de sinergia entre informes ejecutivos y release dashboard
@@ -683,7 +699,15 @@ echo "--> [Remoto] Extrayendo nueva release en `$NEW_RELEASE_DIR..."
 tar -xzf "`$TMP_TAR" -C "`$NEW_RELEASE_DIR"
 rm -f "`$TMP_TAR"
 
-# 4. Sincronizar catálogos en almacenamiento persistente si vienen en el paquete
+# 4. Sincronizar estructura modular y catálogos en almacenamiento persistente si vienen en el paquete
+if [ -d "`$NEW_RELEASE_DIR/data/config" ]; then
+    echo "--> [Remoto] Sincronizando configuración modular a `$STORAGE_BASE/config/..."
+    cp -rf "`$NEW_RELEASE_DIR/data/config"/* "`$STORAGE_BASE/config/" 2>/dev/null || true
+fi
+if [ -d "`$NEW_RELEASE_DIR/data/agents" ]; then
+    echo "--> [Remoto] Sincronizando catálogos de agentes a `$STORAGE_BASE/agents/..."
+    cp -rf "`$NEW_RELEASE_DIR/data/agents"/* "`$STORAGE_BASE/agents/" 2>/dev/null || true
+fi
 if [ -f "`$NEW_RELEASE_DIR/data/output/agents_catalog.json" ]; then
     echo "--> [Remoto] Sincronizando catálogo de agentes a `$STORAGE_BASE/output/agents_catalog.json..."
     cp -f "`$NEW_RELEASE_DIR/data/output/agents_catalog.json" "`$STORAGE_BASE/output/agents_catalog.json" 2>/dev/null || true
@@ -723,7 +747,10 @@ fi
 if [ ! -f "`$STORAGE_BASE/release_desk_overrides.json" ]; then
     echo '{"by_release":{}}' > "`$STORAGE_BASE/release_desk_overrides.json"
 fi
-mkdir -p "`$STORAGE_BASE/.remedy_cache" "`$STORAGE_BASE/.epsilon_cache"
+if [ ! -f "`$STORAGE_BASE/state/release_desk_overrides.json" ]; then
+    cp -f "`$STORAGE_BASE/release_desk_overrides.json" "`$STORAGE_BASE/state/release_desk_overrides.json" 2>/dev/null || echo '{"by_release":{}}' > "`$STORAGE_BASE/state/release_desk_overrides.json"
+fi
+mkdir -p "`$STORAGE_BASE/.remedy_cache" "`$STORAGE_BASE/.epsilon_cache" "`$STORAGE_BASE/cache/remedy" "`$STORAGE_BASE/cache/epsilon"
 chmod -R u+rwX,g+rwX "`$STORAGE_BASE" 2>/dev/null || true
 rm -rf "`$NEW_RELEASE_DIR/data"
 

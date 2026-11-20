@@ -92,3 +92,43 @@ def test_check_storage_writability_ok(tmp_path: Path):
     assert result["ok"] is True
     assert result["error"] is None
     assert target.is_dir()
+
+
+def test_storage_utils_path_resolvers(tmp_path: Path):
+    from converters.src.storage_utils import (
+        resolve_projects_catalog_path,
+        resolve_agents_catalog_path,
+        resolve_executive_messages_path,
+        resolve_cache_dir,
+        resolve_release_overrides_path,
+        resolve_index_path,
+    )
+    # Por defecto cuando ninguno existe, retorna canónico
+    assert resolve_projects_catalog_path(tmp_path) == tmp_path / "config" / "projects_catalog.json"
+    assert resolve_cache_dir(tmp_path, "remedy") == tmp_path / "cache" / "remedy"
+
+    # Si existe legacy y no canónico, resuelve fallback legacy
+    legacy_proj = tmp_path / "projects_catalog.json"
+    legacy_proj.touch()
+    assert resolve_projects_catalog_path(tmp_path) == legacy_proj
+
+    legacy_cache = tmp_path / ".epsilon_cache"
+    legacy_cache.mkdir()
+    assert resolve_cache_dir(tmp_path, "epsilon") == legacy_cache
+
+    # Con estructura modular creada, resuelve rutas canónicas
+    (tmp_path / "config").mkdir(parents=True, exist_ok=True)
+    canonical_proj = tmp_path / "config" / "projects_catalog.json"
+    canonical_proj.touch()
+    assert resolve_projects_catalog_path(tmp_path) == canonical_proj
+
+    (tmp_path / "state").mkdir(parents=True, exist_ok=True)
+    (tmp_path / "agents").mkdir(parents=True, exist_ok=True)
+    (tmp_path / "storage").mkdir(parents=True, exist_ok=True)
+
+    assert resolve_release_overrides_path(tmp_path) == tmp_path / "state" / "release_desk_overrides.json"
+    assert resolve_agents_catalog_path(tmp_path) == tmp_path / "agents" / "catalog.json"
+    assert resolve_executive_messages_path(tmp_path) == tmp_path / "agents" / "executive_messages.json"
+    assert resolve_index_path(tmp_path) == tmp_path / "storage" / "index.json"
+
+

@@ -1,0 +1,1164 @@
+{
+  "_metadata": {
+    "version": "1.3.0",
+    "description": "Almacén oficial de redacciones ejecutivas generadas por el Agente incident-reporter",
+    "source": "agents/it-incidents/incident-reporter.md",
+    "skills_version": {
+      "incident-reporter": "1.3.0",
+      "it-severity-matrix": "2.3.0",
+      "orange-it-emergency-management": "2.3.0",
+      "incident-executive-notifications": "1.3.0"
+    },
+    "updated_at": "2026-11-11T15:57:41Z"
+  },
+  "incidents": {
+    "INC000004065609": {
+      "apertura": {
+        "completo": "Se declara incidencia crítica P1 (INC000004065609) por fallo funcional en ALTAIR, donde la herramienta Test Cortes CPE presenta una caída anómala en la detección de cortes ópticos desde la semana 25. La anomalía compromete el diagnóstico de red en La Finca sobre un volumen de 50 operaciones por hora con un 15% de error operativo, afectando a la supervisión de clientes. Los equipos técnicos de soporte e infraestructura investigan la ingesta de eventos de ZTE y vTeMIP para restablecer la visibilidad. Próxima actualización en 30 minutos.",
+        "breve": "Apertura P1 (INC000004065609): Fallo en Test Cortes CPE de ALTAIR bloquea detección de cortes ópticos en La Finca. Diagnóstico técnico en curso con equipos de red.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 86,
+        "conteo_palabras_breve": 26
+      },
+      "seguimiento": {
+        "completo": "Continúa el seguimiento de la incidencia P1 (INC000004065609) en ALTAIR. Se ha identificado que el componente UCA no procesaba correctamente los eventos procedentes de ZTE. Los equipos de infraestructura han procedido al reinicio de UCA y al limpiado de colas operativas en vTeMIP, comenzando a recibir nuevamente flujo de eventos. Se mantienen verificaciones activas sobre la correlación de datos para confirmar que los porcentajes semanales y diarios quedan normalizados antes de dar por cerrada la actuación.",
+        "breve": "Seguimiento P1 (INC000004065609): Reiniciado componente UCA y purgadas colas vTeMIP en ALTAIR. Restablecido flujo de eventos; validando correlación de datos antes de cierre.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 76,
+        "conteo_palabras_breve": 23
+      },
+      "cierre": {
+        "completo": "Queda resuelta la incidencia crítica P1 (INC000004065609) sobre ALTAIR. La causa raíz radicó en la detención del procesado de eventos de ZTE por parte de UCA, subsanada tras reiniciar el servicio y limpiar las operaciones en vTeMIP. La herramienta Test Cortes CPE opera con normalidad, reflejando nuevamente los datos reales de red y cortes de servicio sin discrepancias. La operativa de supervisión en La Finca queda plenamente recuperada, coordinándose seguimiento preventivo con Oceane.",
+        "breve": "Cierre P1 (INC000004065609): ALTAIR normalizado tras reiniciar UCA y procesar eventos ZTE. Diagnóstico de cortes ópticos restablecido en La Finca.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 73,
+        "conteo_palabras_breve": 20
+      }
+    },
+    "INC000004103003": {
+      "apertura": {
+        "completo": "Se declara incidencia crítica P1 (INC000004103003) en Ficha Cliente Multimarca y portal web de Jazztel, donde el proceso de carga de documentación para devolución de penalizaciones no registra los archivos correctamente o duplica expedientes. La anomalía afecta al 100% de esta operativa con una tasa de 11 casos por hora y más de 13 expedientes bloqueados, impidiendo tramitar los abonos a clientes. Los equipos de soporte de Altitude, APIGEE y canal web investigan la transferencia documental. Próxima actualización en 30 minutos.",
+        "breve": "Apertura P1 (INC000004103003): Bloqueo en tramitación de devolución de penalizaciones en Ficha Multimarca Jazztel por fallo documental. Afecta 11 casos/hora. Equipos técnicos investigando.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 81,
+        "conteo_palabras_breve": 23
+      },
+      "seguimiento": {
+        "completo": "Seguimiento de la incidencia P1 (INC000004103003). Se confirma que la incidencia en la subida de justificantes de penalización de Jazztel impacta en la integración entre el frontal web y el gestor documental GED a través de APIGEE. El equipo DSI_ING_ALTITUDE se encuentra analizando la traza remitida para aislar el error de mapeo en los expedientes y definir el parche de sincronización con Soporte N1 CSO. La tramitación permanece bajo supervisión activa.",
+        "breve": "Seguimiento P1 (INC000004103003): Altitude y APIGEE analizan trazas en gestor documental para subsanar duplicidades en penalizaciones Jazztel. Soporte coordinando validación técnica.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 71,
+        "conteo_palabras_breve": 21
+      },
+      "cierre": {
+        "completo": "Queda resuelta la incidencia P1 (INC000004103003) en Ficha Cliente Multimarca. Corregida la anomalía en el microservicio de gestión documental que impedía la ingesta íntegra de justificantes de penalización desde mi.jazztel.com. Las solicitudes en curso han sido reprocesadas correctamente y los agentes de TLP Medellín pueden validar expedientes con todos los documentos adjuntos. El flujo de devoluciones opera con plena normalidad y sin duplicidades.",
+        "breve": "Cierre P1 (INC000004103003): Corregida subida de documentación en Ficha Multimarca Jazztel. Tramitación de penalizaciones y abonos normalizada en TLP Medellín.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 63,
+        "conteo_palabras_breve": 20
+      }
+    },
+    "INC000004156790": {
+      "apertura": {
+        "completo": "Se declara incidencia crítica P1 (INC000004156790) en Ficha Cliente Orange originada por un error 404 en el servicio de comprobantes de venta desde el inyector. La afectación impacta a 60 operadores en las sedes de Madison-Valladolid y Bosch-Vigo, bloqueando el cierre operativo de contrataciones de clientes sin vía alternativa en plataforma principal. Los equipos de DES_SOE_FICHA y APIGEE se encuentran interviniendo el endpoint de conexión documental para restablecer el acceso a las ventas. Próxima actualización en 30 minutos.",
+        "breve": "Apertura P1 (INC000004156790): Error 404 en Ficha Cliente Orange bloquea apertura de comprobantes de venta a 60 operadores en Valladolid y Vigo. Intervención en curso.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 78,
+        "conteo_palabras_breve": 25
+      },
+      "seguimiento": {
+        "completo": "Seguimiento de la incidencia P1 (INC000004156790). Tras corregir el direccionamiento inicial del endpoint de la XPL, se ha verificado recuperación parcial en la sede de Vigo, si bien Madison-Valladolid continúa reportando errores al recuperar datos del pedido en operaciones específicas. El equipo de DES_SOE_FICHA mantiene los ajustes de enrutamiento y validación de cabeceras en APIGEE para garantizar la apertura homogénea de comprobantes en todos los centros de atención. Se monitorizan las llamadas de contratación en tiempo real.",
+        "breve": "Seguimiento P1 (INC000004156790): Ajustado enrutamiento del endpoint de comprobantes en APIGEE; validando estabilidad en Madison-Valladolid y Vigo para restablecimiento total del servicio.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 77,
+        "conteo_palabras_breve": 22
+      }
+    },
+    "INC000004159463": {
+      "apertura": {
+        "completo": "Se ha declarado una incidencia crítica P1 (INC000004159463) provocada por una anomalía funcional en Siebel 8, donde las órdenes de alta y portabilidad de fijo no registran o truncan el campo de envío logístico. El fallo afecta a 10 operadores de Bosch-Vigo y compromete la entrega de equipamiento a clientes, sin vía alternativa disponible. Los equipos de Teide y Siebel 8 se encuentran investigando los microservicios y aguardan órdenes testigo para aislar la causa raíz. Próxima actualización en 30 minutos.",
+        "breve": "Apertura P1 (INC000004159463): Bloqueo en envíos logísticos de fijo en Siebel 8. Afecta a 10 operadores y clientes finales. Diagnóstico en curso sin alternativa operativa.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 80,
+        "conteo_palabras_breve": 25
+      },
+      "seguimiento": {
+        "completo": "Seguimiento de la incidencia P1 (INC000004159463). Los equipos de soporte de Teide y arquitectura de Siebel 8 avanzan en la comparación de órdenes con Bosch-Vigo para aislar la pérdida de datos del envío logístico de fijo. El análisis se concentra en los microservicios de cesta de compra y repositorio de pedidos en middleware para corregir la propagación hacia logística y evitar retrasos en las entregas de router a clientes. Monitorización técnica continuada.",
+        "breve": "Seguimiento P1 (INC000004159463): Análisis de integración entre Siebel 8 y microservicios de pedidos en Teide para corregir datos logísticos de fijo. Seguimiento activo con Bosch-Vigo.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 72,
+        "conteo_palabras_breve": 25
+      },
+      "cierre": {
+        "completo": "Resuelta la incidencia crítica P1 (INC000004159463) en Teide y Siebel 8. Corregida la serialización del campo de envío logístico en los microservicios de pedidos, garantizando que todas las altas y portabilidades de fijo incorporan la dirección y modalidad de entrega requerida. La plataforma de Bosch-Vigo opera con normalidad y el despacho de equipamiento a clientes finales queda totalmente restablecido sin incidencias.",
+        "breve": "Cierre P1 (INC000004159463): Subsanada omisión del campo de envío logístico en Siebel 8 y Teide. Tramitación y entrega de pedidos fijos plenamente restablecida.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 61,
+        "conteo_palabras_breve": 23
+      }
+    },
+    "INC000004159877": {
+      "apertura": {
+        "completo": "Se declara incidencia crítica P1 (INC000004159877) en Ficha Cliente Orange por bloqueo generalizado en la tramitación de renovaciones de terminales en Teleperformance-Salamanca. Un modal de rechazo erróneo impide acceder a las campañas de renove para clientes de cualquier nivel de riesgo o modalidad multidispositivo, impactando directamente en la retención comercial sin método alternativo. Los equipos de DES_SOE_FICHA y CERES investigan las reglas de validación para restaurar la operativa comercial. Próxima actualización en 30 minutos.",
+        "breve": "Apertura P1 (INC000004159877): Bloqueo en campañas de renove en Ficha Cliente Orange en Teleperformance-Salamanca por modal de rechazo indebido. Equipos técnicos interviniendo reglas comerciales.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 74,
+        "conteo_palabras_breve": 24
+      },
+      "seguimiento": {
+        "completo": "Seguimiento de la incidencia P1 (INC000004159877). Los equipos de desarrollo de Ficha Cliente y soporte de CERES han identificado una discrepancia en el motor de scoring comercial que dispara el rechazo sistemático en las solicitudes de renove. Se está desplegando una corrección en las condiciones de evaluación del frontal para reactivar las ofertas disponibles sin comprometer las políticas de riesgo. Se realizan pruebas piloto con agentes de Salamanca para confirmar el desbloqueo.",
+        "breve": "Seguimiento P1 (INC000004159877): Identificado error en motor comercial de renove en Ficha Cliente; desplegando corrección y validando pruebas piloto con agentes en Salamanca.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 72,
+        "conteo_palabras_breve": 23
+      },
+      "cierre": {
+        "completo": "Queda resuelta la incidencia P1 (INC000004159877) en Ficha Cliente Orange. Aplicada la corrección sobre el motor de reglas de CERES y el frontal de agentes, eliminando el modal de rechazo indebido en renovaciones. El canal de Teleperformance-Salamanca tramita operaciones de renove de terminales con absoluta normalidad para todas las categorías de clientes, confirmando la plena disponibilidad del catálogo comercial y la recuperación del servicio.",
+        "breve": "Cierre P1 (INC000004159877): Desbloqueado acceso a campañas de renove en Ficha Cliente Orange tras corregir reglas comerciales. Operativa de terminales restablecida en Salamanca.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 64,
+        "conteo_palabras_breve": 23
+      }
+    },
+    "INC000004162280": {
+      "apertura": {
+        "completo": "Se declara incidencia crítica P1 (INC000004162280) por desincronización funcional en Siebel 8 sobre clientes con paquetes de TV 90 canales en OEST-Oviedo. La anomalía provoca que el producto contratado no se aprovisione en el parque de sistemas, impidiendo a los clientes el acceso al servicio de televisión y generando bloqueo en la gestión postventa sin procedimiento alternativo. Los equipos de SOP_SMC_TEIDE y Siebel 8 analizan las interfaces de sincronización de catálogo y aprovisionamiento. Próxima actualización en 30 minutos.",
+        "breve": "Apertura P1 (INC000004162280): Clientes con TV 90 canales no aprovisionados en Siebel 8 en OEST-Oviedo, impidiendo consumo de televisión. Soporte técnico diagnosticando sincronización.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 78,
+        "conteo_palabras_breve": 23
+      },
+      "seguimiento": {
+        "completo": "Seguimiento de la incidencia P1 (INC000004162280). Los equipos técnicos han aislado la falta de inserción de las tarifas de TV en la réplica de productos entre Ficha de Cliente y Siebel 8. Se está ejecutando un plan de reaprovisionamiento manual para los expedientes identificados en Oviedo, al tiempo que se ajustan las rutinas de sincronización en TEIDE para evitar que nuevas contrataciones queden huérfanas de emisión. Se mantienen comprobaciones sobre la activación de parrilla.",
+        "breve": "Seguimiento P1 (INC000004162280): En curso reaprovisionamiento de TV 90 canales para clientes afectados en Oviedo y corrección de sincronización entre Ficha de Cliente y Siebel 8.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 74,
+        "conteo_palabras_breve": 26
+      },
+      "cierre": {
+        "completo": "Cerrada la incidencia P1 (INC000004162280). Restablecida la sincronización de paquetes de televisión entre Ficha de Cliente y Siebel 8. Todos los clientes afectados en OEST-Oviedo han sido reaprovisionados correctamente y disponen de acceso íntegro a su parrilla de TV de 90 canales. La emisión del servicio y los registros en el parque de productos se encuentran normalizados y auditados.",
+        "breve": "Cierre P1 (INC000004162280): Clientes de TV 90 canales en Oviedo reaprovisionados con éxito en Siebel 8. Servicio de televisión y parque normalizados.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 59,
+        "conteo_palabras_breve": 22
+      }
+    },
+    "INC000004164611": {
+      "apertura": {
+        "completo": "Se declara incidencia crítica P1 (INC000004164611) en Ficha Cliente Orange debido a un fallo en el cierre de actos comerciales en la sede de Foundever-Sevilla. Al concluir la grabación de operaciones, la plataforma devuelve error en la invocación del repositorio de acuerdos, impidiendo formalizar ventas y renovaciones de terminales con un grave impacto en tiempos de atención y experiencia de cliente. El equipo de DES_SOE_FICHA interviene de urgencia el microservicio updateCommercialActSPA. Próxima actualización en 30 minutos.",
+        "breve": "Apertura P1 (INC000004164611): Fallo en grabación y cierre de actos comerciales en Ficha Cliente Orange en Foundever-Sevilla. Equipo de desarrollo interviniendo microservicio de acuerdos.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 76,
+        "conteo_palabras_breve": 24
+      },
+      "seguimiento": {
+        "completo": "Seguimiento de la incidencia P1 (INC000004164611). El equipo de DES_SOE_FICHA ha localizado el origen de la anomalía en la transición de estados del campo agreement status en la llamada interna al repositorio comercial. Se está implementando un ajuste para asegurar que las solicitudes se consoliden en estado de contrato sin generar excepciones en el frontal de los operadores de Sevilla. Se realizan pruebas de validación sobre actos comerciales en curso.",
+        "breve": "Seguimiento P1 (INC000004164611): Ajustando transición de estado de contratos en microservicio de acuerdos para corregir excepciones en Ficha Cliente Orange. Pruebas de grabación activas.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 70,
+        "conteo_palabras_breve": 24
+      },
+      "cierre": {
+        "completo": "Resuelta la incidencia crítica P1 (INC000004164611) en Ficha Cliente Orange. Desplegada la corrección en el servicio de actualización de acuerdos comerciales, subsanando el fallo en el guardado de grabaciones y renovaciones. Los operadores de Foundever-Sevilla completan sus transacciones de forma fluida y sin interrupciones, quedando el flujo de contratación plenamente operativo y con tiempos de respuesta normalizados.",
+        "breve": "Cierre P1 (INC000004164611): Grabación de actos comerciales en Ficha Cliente Orange restablecida en Foundever-Sevilla tras parchear repositorio de acuerdos. Operativa normalizada.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 57,
+        "conteo_palabras_breve": 21
+      }
+    },
+    "INC000004166266": {
+      "apertura": {
+        "completo": "Se declara incidencia crítica P1 (INC000004166266) en los sistemas de gestión de fraude HPFMS y facturación BSCS Online, donde los desbloqueos operativos de líneas prepago confirman ejecución favorable pero no se propagan a la red. La anomalía mantiene a múltiples clientes legítimos con servicios suspendidos tras validación en ISGF-Madrid, rompiendo la cadena de recuperación del servicio. Los equipos de soporte de BSCS y HPFMS investigan la compatibilidad de identificadores tras la reciente migración OCCI. Próxima actualización en 30 minutos.",
+        "breve": "Apertura P1 (INC000004166266): Desbloqueos de líneas prepago en HPFMS no propagados a BSCS Online, manteniendo suspensiones indebidas a clientes. Investigación técnica en curso.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 79,
+        "conteo_palabras_breve": 23
+      },
+      "seguimiento": {
+        "completo": "Seguimiento de la incidencia P1 (INC000004166266). Se confirma que la anomalía en la reactivación de líneas prepago se deriva de la obligatoriedad del campo CustomerId introducida en la última actualización de conectores OCCI. Los equipos de BSCS Online y HPFMS coordinan la adaptación del payload de la operación 45002 para garantizar que las solicitudes de desbloqueo cursen sin rechazo técnico hacia la red. Se mantiene monitorización prioritaria de casos pendientes.",
+        "breve": "Seguimiento P1 (INC000004166266): Coordinando ajuste de payload en operación 45002 entre HPFMS y BSCS Online para asegurar propagación de desbloqueos prepago hacia red.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 70,
+        "conteo_palabras_breve": 23
+      },
+      "cierre": {
+        "completo": "Cerrada la incidencia crítica P1 (INC000004166266). Subsanada la propagación de la operación de desbloqueo entre HPFMS y BSCS Online, ejecutándose con éxito la reactivación en cascada sobre todas las líneas prepago afectadas. Los clientes han recuperado íntegramente sus servicios de voz y datos y la gestión antifraude en ISGF-Madrid opera con plena fiabilidad y confirmación técnica bidireccional.",
+        "breve": "Cierre P1 (INC000004166266): Restablecida reactivación de líneas prepago en HPFMS y BSCS Online. Clientes con servicios normalizados y canal antifraude operativo.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 57,
+        "conteo_palabras_breve": 21
+      }
+    },
+    "INC000004167311": {
+      "apertura": {
+        "completo": "Se declara apertura de incidencia crítica P1 (INC000004167311) por error funcional detectado en Ficha Cliente Orange en la plataforma operativa de Madison-Valladolid. El incidente genera afectación masiva en los sistemas de atención comercial del centro, limitando la gestión habitual de expedientes y consultas de clientes. El equipo de soporte de DES_SOE_FICHA ha iniciado las actuaciones de diagnóstico técnico para aislar el fallo y mitigar el impacto sobre los agentes. Próxima actualización en 30 minutos.",
+        "breve": "Apertura P1 (INC000004167311): Error funcional en Ficha Cliente Orange afecta operativas en Madison-Valladolid. Soporte DES_SOE_FICHA investigando el origen para contención.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 74,
+        "conteo_palabras_breve": 20
+      },
+      "seguimiento": {
+        "completo": "Seguimiento de la incidencia P1 (INC000004167311) en Ficha Cliente Orange. El equipo técnico de DES_SOE_FICHA prosigue con la revisión de dependencias y servicios de integración en el entorno de Madison-Valladolid. Se aplican medidas de estabilización en los puestos afectados y se supervisa el comportamiento de las consultas de clientes sin bloqueos de infraestructura adicionales. Se mantiene monitorización estrecha de la operativa comercial.",
+        "breve": "Seguimiento P1 (INC000004167311): DES_SOE_FICHA revisa integraciones en Ficha Cliente Orange en Valladolid; estabilización y monitorización operativa en curso.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 62,
+        "conteo_palabras_breve": 18
+      },
+      "cierre": {
+        "completo": "Queda resuelta la incidencia crítica P1 (INC000004167311) en Ficha Cliente Orange. Subsanada la anomalía funcional por parte del equipo resolutor, confirmándose la recuperación completa de la herramienta en Madison-Valladolid. Los operadores tramitan gestiones de clientes con normalidad y los indicadores de rendimiento del servicio permanecen plenamente estables bajo supervisión preventiva.",
+        "breve": "Cierre P1 (INC000004167311): Ficha Cliente Orange restablecida en Madison-Valladolid. Operativa de atención normalizada tras resolución técnica.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 50,
+        "conteo_palabras_breve": 16
+      }
+    },
+    "INC000004167737": {
+      "apertura": {
+        "completo": "Se declara incidencia crítica P1 (INC000004167737) por degradación funcional en la plataforma ONURIS, supervisada por Soporte N1 CSO en las instalaciones de Orange La Finca. La anomalía cuenta con una valoración de impacto masivo en los procesos de monitorización operativa, comprometiendo la visibilidad de eventos de red y servicios. Los equipos técnicos especializados se encuentran investigando los servidores y colas de procesamiento para recuperar la disponibilidad del sistema. Próxima actualización en 30 minutos.",
+        "breve": "Apertura P1 (INC000004167737): Error funcional en ONURIS en La Finca con impacto masivo en monitorización. Soporte N1 CSO interviniendo el sistema.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 73,
+        "conteo_palabras_breve": 21
+      },
+      "seguimiento": {
+        "completo": "Seguimiento de la incidencia P1 (INC000004167737) en ONURIS. Los especialistas de Soporte N1 CSO e infraestructuras avanzan en la depuración de componentes en el entorno central de La Finca. Se han reiniciado módulos auxiliares para descongestionar el flujo de datos operativos y se valida la recepción continuada de telemetría de sistemas. Las tareas de contención prosiguen activas hasta garantizar total estabilidad.",
+        "breve": "Seguimiento P1 (INC000004167737): Depuración técnica y descongestión de módulos en ONURIS en La Finca. Validación activa de telemetría de red.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 61,
+        "conteo_palabras_breve": 20
+      },
+      "cierre": {
+        "completo": "Finalizada la incidencia crítica P1 (INC000004167737) sobre la plataforma ONURIS en Orange La Finca. Restablecida la estabilidad funcional del servicio tras las intervenciones realizadas por Soporte N1 CSO. Los flujos de monitorización y gestión de eventos operan con parámetros nominales, sin pérdidas de información ni retrasos en la plataforma.",
+        "breve": "Cierre P1 (INC000004167737): Plataforma ONURIS normalizada en La Finca. Monitorización operativa y gestión de eventos totalmente restablecidas.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 49,
+        "conteo_palabras_breve": 17
+      }
+    },
+    "INC000004099148": {
+      "apertura": {
+        "completo": "Se comunica incidencia de alta prioridad P2 (INC000004099148) en el portal Erebor, donde los clientes que intentan acceder a sus ofertas comerciales personalizadas quedan atrapados en un bucle indefinido de autenticación en CLU sin completar el inicio de sesión. La anomalía bloquea el canal digital comercial e impacta en las pruebas de despliegue. Los equipos de SOP_SMC_TEIDE, CERES y canal online analizan la sincronización de tokens de sesión. Próxima actualización en 60 minutos.",
+        "breve": "Apertura P2 (INC000004099148): Bucle de login en CLU impide a clientes acceder a ofertas en Erebor. Soporte Teide y Ceres investigando tokens digitales.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 73,
+        "conteo_palabras_breve": 23
+      },
+      "seguimiento": {
+        "completo": "Seguimiento P2 (INC000004099148) en Erebor. Identificada una incoherencia en las cabeceras de redirección entre la pasarela CLU y el frontal web que impedía registrar la sesión autenticada. Se encuentra en despliegue un parche correctivo en los microservicios de seguridad para validar el acceso a las ofertas y desbloquear las pruebas de producción. Monitorización activa del tráfico de clientes.",
+        "breve": "Seguimiento P2 (INC000004099148): Localizado fallo de cabeceras en pasarela CLU; desplegando parche en microservicios para restablecer acceso a ofertas en Erebor.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 58,
+        "conteo_palabras_breve": 21
+      },
+      "cierre": {
+        "completo": "Resuelta la incidencia P2 (INC000004099148) en Erebor. Corregido el enrutamiento de autenticación entre CLU y los portales comerciales, restableciendo el acceso directo de los clientes a sus ofertas personalizadas sin redirecciones fallidas. La plataforma web y las suites de prueba operan con absoluta normalidad.",
+        "breve": "Cierre P2 (INC000004099148): Autenticación CLU restablecida en Erebor. Acceso de clientes a ofertas personalizadas y pruebas operativas normalizadas.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 44,
+        "conteo_palabras_breve": 18
+      }
+    },
+    "INC000004122710": {
+      "apertura": {
+        "completo": "Se comunica incidencia de alta prioridad P2 (INC000004122710) en Ficha de Cliente originada por la falta de propagación del teléfono de contacto en el módulo de recogida de routers y terminales fijos. Aunque el frontal confirma la modificación, los datos no se sincronizan con PeopleSoft ni Siebel 8, con riesgo de penalizaciones indebidas por comunicaciones fallidas con clientes. El equipo de FIJO APL Soporte PS diseña la interfaz de sincronización correctora. Próxima actualización en 60 minutos.",
+        "breve": "Apertura P2 (INC000004122710): Cambios de teléfono en recogidas de fijo no sincronizan con PeopleSoft ni Siebel 8, arriesgando entregas a clientes. Soporte interviniendo interfaz.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 76,
+        "conteo_palabras_breve": 24
+      },
+      "seguimiento": {
+        "completo": "Seguimiento P2 (INC000004122710). El equipo de FIJO APL Soporte PS y desarrollo de Teide ultiman la habilitación de la interfaz 92007 para asegurar que toda actualización de contacto telefónico se replique en tiempo real hacia PeopleSoft y los sistemas de logística inversa. Se valida el reprocesado de solicitudes registradas durante la ventana de fallo.",
+        "breve": "Seguimiento P2 (INC000004122710): Habilitando interfaz 92007 entre Teide y PeopleSoft para propagar teléfonos de contacto en recogidas de fijo pendientes.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 54,
+        "conteo_palabras_breve": 20
+      },
+      "cierre": {
+        "completo": "Cerrada la incidencia P2 (INC000004122710) en Ficha de Cliente. Desplegada la interfaz de sincronización con PeopleSoft y Siebel 8, garantizando que toda modificación de número de contacto en recogidas de fijo se transmite a los operadores logísticos sin incidencias. El servicio opera de forma coordinada y sin riesgo de penalizaciones a clientes.",
+        "breve": "Cierre P2 (INC000004122710): Sincronización de teléfonos en recogidas de fijo restablecida con PeopleSoft. Flujo logístico y de clientes normalizado.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 52,
+        "conteo_palabras_breve": 19
+      }
+    },
+    "INC000004152686": {
+      "apertura": {
+        "completo": "Se declara incidencia P2 (INC000004152686) en la plataforma LivePerson que afecta al módulo AP, donde no se visualiza el identificador de conversación para 10 operadores de ventas en Foundever-Sevilla. Aunque la atención a clientes se mantiene activa mediante el canal alternativo de Información del consumidor, la incidencia ralentiza el seguimiento de interacciones. El equipo de SOP_DJINGO diagnostica el componente de interfaz para recuperar los identificadores. Próxima actualización en 60 minutos.",
+        "breve": "Apertura P2 (INC000004152686): Módulo AP de LivePerson no muestra ID de conversación en Foundever-Sevilla. Atención disponible por vía alternativa; soporte investigando interfaz.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 70,
+        "conteo_palabras_breve": 22
+      },
+      "seguimiento": {
+        "completo": "Seguimiento P2 (INC000004152686) en LivePerson. Se ha verificado que la pérdida visual del identificador de chat se limita al módulo de agentes AP sin pérdida de registros en base de datos. SOP_DJINGO coordina con soporte de producto la actualización del componente web para restaurar la visualización homogénea en los puestos de Sevilla sin interrumpir las ventas.",
+        "breve": "Seguimiento P2 (INC000004152686): SOP_DJINGO gestiona corrección de componente web en LivePerson. Sin pérdida de datos y con ventas operativas vía alternativa.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 56,
+        "conteo_palabras_breve": 21
+      },
+      "cierre": {
+        "completo": "Resuelta la incidencia P2 (INC000004152686) en LivePerson. Restablecida la correcta carga de identificadores de conversación en el módulo AP, operando nuevamente de forma transparente para los operadores de Foundever-Sevilla. Todas las herramientas de gestión de ventas digitales se encuentran plenamente operativas y verificadas.",
+        "breve": "Cierre P2 (INC000004152686): Identificadores de conversación restablecidos en módulo AP de LivePerson. Operativa de ventas en Sevilla totalmente normalizada.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 43,
+        "conteo_palabras_breve": 19
+      }
+    },
+    "INC000004161012": {
+      "apertura": {
+        "completo": "Se comunica incidencia P2 (INC000004161012) por activaciones automáticas indebidas del paquete TV libre sobre líneas multisede en Jazzplat-Guadalajara. La contingencia se origina en el procesamiento de un lote manual por el batch SBL_EAI_RC62_SC14 en Siebel 8, habiéndose detectado reclamaciones de 5 clientes empresariales por altas no solicitadas. El equipo de CEP CAU AGI ha paralizado el procesamiento para contener el impacto e investiga los registros afectados. Próxima actualización en 60 minutos.",
+        "breve": "Apertura P2 (INC000004161012): Activación indebida de TV libre en clientes multisede por batch en Siebel 8 en Guadalajara. Proceso detenido y bajo revisión.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 71,
+        "conteo_palabras_breve": 23
+      },
+      "seguimiento": {
+        "completo": "Seguimiento P2 (INC000004161012). Se confirma la contención del batch para evitar nuevas altas indebidas de TV libre. Los equipos de TEIDE y Siebel 8 coordinan con negocio la depuración de las líneas involucradas en el fichero origen y ejecutan la regularización técnica de los paquetes contratados en los clientes afectados, sin impacto en la facturación.",
+        "breve": "Seguimiento P2 (INC000004161012): Batch contenido en Siebel 8; coordinando con negocio la reversión y regularización de paquetes de TV contratados.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 55,
+        "conteo_palabras_breve": 20
+      },
+      "cierre": {
+        "completo": "Cerrada la incidencia P2 (INC000004161012). Revertidas las altas indebidas de TV libre en las líneas empresariales afectadas y regularizado el procedimiento de carga en el batch de Siebel 8 para prevenir ejecuciones no supervisadas. Todos los parques de clientes se encuentran saneados y con sus tarifas contractuales conformadas.",
+        "breve": "Cierre P2 (INC000004161012): Revertidas altas indebidas de TV en Siebel 8 y saneado procedimiento batch. Parque de clientes totalmente regularizado.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 48,
+        "conteo_palabras_breve": 20
+      }
+    },
+    "INC000004163156": {
+      "apertura": {
+        "completo": "Se comunica incidencia P2 (INC000004163156) en la integración entre DJINGO y Liveperson en el centro logístico ICP. Un error de mapeo en los pedidos suministra números telefónicos erróneos, impidiendo la generación de enlaces de contacto por WhatsApp durante el proceso de provisión de Back Office para pedidos Orange y Jazztel. El equipo de SOP_DJINGO se encuentra revisando las transformaciones de datos para restablecer el canal de mensajería. Próxima actualización en 60 minutos.",
+        "breve": "Apertura P2 (INC000004163156): Mapeo erróneo de teléfonos entre DJINGO y Liveperson bloquea generación de WhatsApp para provisión en ICP. Soporte corrigiendo integración.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 72,
+        "conteo_palabras_breve": 22
+      },
+      "seguimiento": {
+        "completo": "Seguimiento P2 (INC000004163156). SOP_DJINGO ha localizado la disfunción en la extracción del teléfono de contacto del albarán hacia la API de mensajería de Liveperson. Se procede con el despliegue de una corrección en el conector de integración para asegurar que las comunicaciones de provisión incorporen el contacto fidedigno del cliente. Se auditan pedidos en cola.",
+        "breve": "Seguimiento P2 (INC000004163156): Desplegando corrección en conector DJINGO-Liveperson para mapear correctamente números de albarán en WhatsApp de provisión.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 55,
+        "conteo_palabras_breve": 18
+      },
+      "cierre": {
+        "completo": "Resuelta la incidencia P2 (INC000004163156). Corregido el mapeo telefónico en el conector de DJINGO con Liveperson, generándose con absoluta precisión las URL de mensajería de WhatsApp para los pedidos en Back Office de ICP. La provisión logística y la comunicación con clientes operan con total normalidad.",
+        "breve": "Cierre P2 (INC000004163156): Integración telefónica DJINGO-Liveperson corregida. Generación de enlaces WhatsApp para provisión en ICP totalmente restablecida.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 46,
+        "conteo_palabras_breve": 17
+      }
+    },
+    "INC000004167733": {
+      "apertura": {
+        "completo": "Se comunica incidencia P2 (INC000004167733) en Ficha Cliente Orange que impide de forma intermitente activar el ciclo de facturación para routers 5G a 15 operadores en Jazzplat-Guadalajara. La anomalía genera degradación en la tramitación y reaperturas de casos al no consolidarse la opción en el sistema de cobro OCS. El equipo de APL_MOV_SOE coordina con desarrollo de Ficha Cliente y soporte de OCS el análisis de la inconsistencia. Próxima actualización en 60 minutos.",
+        "breve": "Apertura P2 (INC000004167733): Fallo intermitente en activación de ciclo de facturación de routers 5G en Ficha Cliente en Guadalajara. Soporte coordinando con OCS.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 73,
+        "conteo_palabras_breve": 23
+      },
+      "seguimiento": {
+        "completo": "Seguimiento P2 (INC000004167733). Los equipos de APL_MOV_SOE y SOP_OCS avanzan en el diagnóstico de la llamada asíncrona que gestiona la imputación del ciclo 5G en Siebel 8. Se aplican ajustes en el refresco de componentes del frontal para estabilizar la opción y evitar intentos reiterados por parte de los operadores de Guadalajara. Supervisión técnica activa.",
+        "breve": "Seguimiento P2 (INC000004167733): Ajustando llamada asíncrona entre Ficha Cliente y OCS para estabilizar activación de ciclos en routers 5G en Guadalajara.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 55,
+        "conteo_palabras_breve": 21
+      },
+      "cierre": {
+        "completo": "Cerrada la incidencia P2 (INC000004167733) en Ficha Cliente Orange. Subsanada la intermitencia en el servicio de activación de ciclos para routers 5G y sincronizado el consumo con OCS. Los agentes de Jazzplat-Guadalajara completan los trámites de facturación al primer intento y sin anomalías, quedando el servicio plenamente recuperado.",
+        "breve": "Cierre P2 (INC000004167733): Activación de ciclos de routers 5G normalizada en Ficha Cliente Orange tras corrección con OCS.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 48,
+        "conteo_palabras_breve": 18
+      }
+    },
+    "INC000004999999": {
+      "apertura": {
+        "completo": "Se declara la apertura de una incidencia P2 (INC000004999999) por afectación en el servicio de consultas técnicas, gestionada por Sistemas Core. La anomalía impacta de manera parcial en la operativa interna sin provocar cortes generalizados de servicio. Los equipos de soporte han iniciado las labores de diagnóstico para acotar el origen del fallo y mitigar la afectación a usuarios. Se emitirá una nueva actualización de seguimiento tras el análisis inicial.",
+        "breve": "Apertura P2 (INC000004999999): Afectación técnica en servicio de consultas bajo gestión de Sistemas Core. Diagnóstico inicial en curso sin corte generalizado.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 70,
+        "conteo_palabras_breve": 21
+      },
+      "seguimiento": {
+        "completo": "Continúa el seguimiento de la incidencia P2 (INC000004999999) en Sistemas Core. Los equipos técnicos mantienen los trabajos de mitigación y comprobación en los entornos afectados, confirmando que las actuaciones avanzan sin bloqueos operativos. Se conserva la monitorización activa del servicio hasta verificar la plena estabilidad funcional.",
+        "breve": "Seguimiento P2 (INC000004999999): Mitigación y validaciones técnicas en curso en Sistemas Core. Monitorización activa sin bloqueos.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 46,
+        "conteo_palabras_breve": 16
+      },
+      "cierre": {
+        "completo": "Queda formalmente resuelta la incidencia P2 (INC000004999999) en Sistemas Core. La anomalía funcional ha sido solventada por el equipo resolutor y la operativa técnica se encuentra restablecida con parámetros nominales. El servicio permanece monitorizado preventivamente confirmando su normalización.",
+        "breve": "Cierre P2 (INC000004999999): Incidencia en servicio de consultas resuelta en Sistemas Core. Operativa técnica y disponibilidad normalizadas.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 38,
+        "conteo_palabras_breve": 17
+      }
+    },
+    "INC000003884945": {
+      "apertura": {
+        "completo": "Se declara la apertura de una incidencia crítica P1 (INC000003884945) por corte total en el concentrador de fibra de clientes empresariales, gestionada por Soporte Fibra Red en RED FTTH y Routing Core. La anomalía provoca caída generalizada del servicio sin alternativa viable, afectando a más del 50% de las sedes corporativas. Los equipos técnicos de planta e infraestructura se han desplazado al nodo central para la sustitución de la tarjeta óptica averiada. Se emitirá una nueva actualización de seguimiento tras las maniobras de sustitución.",
+        "breve": "Apertura P1 (INC000003884945): Corte total de fibra en concentrador empresarial en RED FTTH afectando a más del 50% de sedes. Técnico sustituyendo tarjeta óptica en nodo central.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 84,
+        "conteo_palabras_breve": 27
+      },
+      "seguimiento": {
+        "completo": "Continúa el seguimiento de la incidencia crítica P1 (INC000003884945). Concluidas las maniobras físicas de sustitución de la tarjeta óptica averiada en el nodo central. Los equipos de Routing Core ejecutan el reinicio y convergencia de los enlaces de fibra para restablecer el tráfico de datos en las sedes corporativas. Se mantiene la monitorización activa hasta confirmar la estabilidad y el levantamiento de interfaces en todos los clientes.",
+        "breve": "Seguimiento P1 (INC000003884945): Tarjeta óptica sustituida en nodo central; convergencia de enlaces de fibra en curso para restablecimiento de sedes corporativas.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 67,
+        "conteo_palabras_breve": 21
+      },
+      "cierre": {
+        "completo": "Queda formalmente resuelta la incidencia crítica P1 (INC000003884945) en RED FTTH y Routing Core. Subsanado el corte de servicio tras la sustitución de la tarjeta óptica dañada y la convergencia completa de los enlaces de fibra. La totalidad de las sedes corporativas y clientes empresariales disponen de conectividad plenamente restablecida y bajo supervisión preventiva de estabilidad.",
+        "breve": "Cierre P1 (INC000003884945): Conectividad de fibra restablecida tras reemplazo de tarjeta óptica en nodo central. Sedes corporativas plenamente operativas.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 56,
+        "conteo_palabras_breve": 19
+      }
+    },
+    "INC000004168038": {
+      "apertura": {
+        "completo": "Se confirma degradación crítica en la plataforma de cobros de Jazztel (SOP_BSS_JAZZTEL), tipificada como P1. El incidente impacta masivamente en los procesos de facturación y cobro. Los equipos de soporte de segundo nivel están investigando el origen del fallo y aplicando protocolos de mitigación inmediata. Se enviará actualización operativa en 30 minutos.",
+        "breve": "P1: Degradación en cobros Jazztel (SOP_BSS_JAZZTEL). Impacto masivo en facturación. Soporte SL2 investigando y mitigando. Próxima actualización en 30 min.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 52,
+        "conteo_palabras_breve": 20
+      },
+      "seguimiento": {
+        "completo": "Continúa el seguimiento de la incidencia P1 (INC000004168038) en Ficha Cliente Jazztel (ISGF - Murcia). El equipo de soporte especializado e ingeniería de BSS analizan las peticiones de cobro bloqueadas e identifican una degradación de latencia en la pasarela de servicios. Se aplican medidas de balanceo de carga para recuperar la agilidad operativa mientras se valida la estabilidad del proceso. Se facilitará nueva actualización al término de las comprobaciones.",
+        "breve": "Seguimiento P1 (INC000004168038): Soporte BSS analiza latencias en pasarela de cobros de Jazztel; aplicando balanceo para recuperar operaciones en ISGF Murcia.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 69,
+        "conteo_palabras_breve": 21
+      },
+      "cierre": {
+        "completo": "Queda formalmente resuelta la incidencia P1 (INC000004168038) en Ficha Cliente Jazztel. Subsanada la anomalía de sincronización en la plataforma de facturación y cobro por parte del equipo de soporte especializado. Los operadores en ISGF Murcia tramitan los expedientes con normalidad y los tiempos de respuesta se encuentran dentro de los parámetros de servicio establecidos, permaneciendo el canal bajo supervisión preventiva.",
+        "breve": "Cierre P1 (INC000004168038): Resuelto fallo funcional en cobros de Ficha Cliente Jazztel tras intervención técnica. Operativa normalizada en ISGF Murcia.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 60,
+        "conteo_palabras_breve": 20
+      }
+    },
+    "INC000004167753": {
+      "apertura": {
+        "completo": "Se ha identificado un error funcional en el servicio de Asistente (DES_ASISTENTE) que afecta a las operaciones del centro Konecta en Sevilla, clasificado como P2. La incidencia impide la operativa normal de los agentes de soporte. El equipo de desarrollo está analizando el aplicativo para desplegar una solución correctiva. Próxima actualización en 60 minutos.",
+        "breve": "P2: Error funcional en Asistente (DES_ASISTENTE) en Konecta Sevilla. Operativa asistida degradada. Equipo de desarrollo analizando solución. Actualización en 60 min.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 54,
+        "conteo_palabras_breve": 21
+      }
+    },
+    "INC000004167778": {
+      "apertura": {
+        "completo": "Se declara incidencia crítica P1 (INC000004167778) por un fallo funcional en el servicio DJINGO, reportado a las 09:58 por el Control Room de La Finca. La anomalía provoca un impacto masivo sobre la plataforma de asistencia y supervisión operativa sin vía de contención inmediata disponible. El equipo de desarrollo y soporte especializado DES_DJINGO se encuentra asignado e interviniendo en el aplicativo para determinar la causa y mitigar la afectación. Se emitirá una nueva actualización de seguimiento en 30 minutos.",
+        "breve": "Apertura P1 (INC000004167778): Fallo funcional en DJINGO detectado en Control Room La Finca con impacto masivo. DES_DJINGO diagnosticando. Próxima actualización en 30 minutos.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 79,
+        "conteo_palabras_breve": 23
+      },
+      "seguimiento": {
+        "completo": "Continúa el seguimiento de la incidencia P1 (INC000004167778) en el servicio DJINGO. El equipo técnico de DES_DJINGO ha localizado la disfunción en el módulo de conexión con el Control Room de La Finca y se encuentra desplegando un ajuste de configuración para restaurar el flujo de comunicaciones. La afectación en la asistencia permanece bajo monitorización activa, registrándose las primeras respuestas del entorno. Se proporcionará una nueva comunicación operativa al concluir la validación del parche.",
+        "breve": "Seguimiento P1 (INC000004167778): Localizada disfunción en módulo de enlace de DJINGO; DES_DJINGO aplicando ajuste de configuración. Monitorización activa en curso.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 74,
+        "conteo_palabras_breve": 20
+      },
+      "cierre": {
+        "completo": "Queda resuelta la incidencia crítica P1 (INC000004167778) en el servicio DJINGO. La anomalía funcional en el Control Room de La Finca ha sido solventada tras corregir el enlace de servicios por parte de DES_DJINGO. Las funcionalidades de asistencia operan con normalidad en todos los canales y la monitorización posterior confirma la estabilidad completa de la plataforma sin incidencias residuales. El servicio se mantiene bajo vigilancia preventiva.",
+        "breve": "Cierre P1 (INC000004167778): Restablecido servicio funcional de DJINGO en Control Room La Finca tras intervención técnica de DES_DJINGO. Operativa y asistencia estabilizadas.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 66,
+        "conteo_palabras_breve": 22
+      }
+    },
+    "INC000004168617": {
+      "apertura": {
+        "completo": "Se declara apertura de incidencia crítica P1 (INC000004168617) por error funcional en Ficha Cliente Orange en la sede de Marktel-Valencia, activando la Regla de Oro de Atención al Cliente (ATC). El fallo genera afectación masiva en el frontal de gestión comercial del centro, bloqueando la consulta y operativa habitual con clientes móviles sin vía alternativa disponible. El equipo de soporte APL_MOV_SOE interviene el servicio para diagnosticar el origen del error y mitigar la indisponibilidad en la plataforma. Próxima actualización en 30 minutos.",
+        "breve": "Apertura P1 (INC000004168617): Error funcional en Ficha Cliente Orange genera impacto masivo en Marktel-Valencia (proceso ATC). Soporte APL_MOV_SOE investigando; próxima actualización en 30 min.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 82,
+        "conteo_palabras_breve": 24
+      },
+      "seguimiento": {
+        "completo": "Continúa la gestión de la incidencia crítica P1 (INC000004168617) que afecta a Ficha Cliente Orange en Marktel-Valencia dentro del proceso de Atención al Cliente (ATC). El equipo de soporte APL_MOV_SOE ha aislado anomalías en las llamadas del frontal móvil hacia los servicios de consulta comercial, aplicando medidas de contención técnica en los componentes afectados. Se mantiene monitorización activa con los supervisores del centro operativo para validar la recuperación progresiva de los puestos de trabajo. Próxima actualización en 30 minutos.",
+        "breve": "Seguimiento P1 (INC000004168617): APL_MOV_SOE aplica contención técnica en Ficha Cliente Orange en Marktel-Valencia (ATC). Verificando estabilidad operativa; próxima actualización en 30 min.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 79,
+        "conteo_palabras_breve": 22
+      },
+      "cierre": {
+        "completo": "Queda resuelta la incidencia crítica P1 (INC000004168617) sobre Ficha Cliente Orange en Marktel-Valencia, restableciéndose el proceso de Atención al Cliente (ATC). La intervención técnica de APL_MOV_SOE ha estabilizado la comunicación del frontal de atención móvil, eliminando los bloqueos funcionales. Los puestos operativos del centro han reanudado la atención comercial sin incidencias, confirmándose la normalización del servicio tras pruebas de verificación satisfactorias. El análisis detallado de causa raíz continuará a través del procedimiento post-incidente habitual.",
+        "breve": "Cierre P1 (INC000004168617): Normalizada Ficha Cliente Orange en Marktel-Valencia (ATC) tras intervención de APL_MOV_SOE. Servicio y operativa comercial plenamente restablecidos.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 74,
+        "conteo_palabras_breve": 20
+      }
+    },
+    "INC000004168295": {
+      "apertura": {
+        "completo": "Se declara incidencia crítica P1 (INC000004168295) por error funcional en la plataforma de Límite de Consumos. La anomalía afecta de forma masiva a las integraciones de control de gasto y tarificación de clientes, activándose el protocolo preventivo SL1 por riesgo de impacto en sistemas core. El equipo de SOPORTE N1 CSO investiga la sincronización de las políticas de consumo para evitar cargos indebidos o bloqueos de línea. Próxima actualización en 30 minutos.",
+        "breve": "Apertura P1 (INC000004168295): Error funcional en Límite de Consumos afecta masivamente al control de gasto. SOPORTE N1 CSO investigando sincronización. Próxima actualización en 30 minutos.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 72,
+        "conteo_palabras_breve": 25
+      }
+    },
+    "INC000004169083": {
+      "apertura": {
+        "completo": "Se declara incidencia crítica P1 (INC000004169083) por fallo funcional en el frontal conversacional DJINGO en la sede de Foundever - Sevilla. La incidencia compromete la operativa de atención al cliente e interacciones guiadas en canal de soporte, generando desvíos en la atención comercial y sobrecarga en agentes. El equipo especializado de SOP_DJINGO se encuentra diagnosticando las interfaces y servicios del asistente para reanudar el flujo habitual de atención. Próxima actualización en 30 minutos.",
+        "breve": "Apertura P1 (INC000004169083): Error funcional en DJINGO bloquea atención interactiva en Foundever Sevilla. Equipo SOP_DJINGO investigando interfaces. Próxima actualización en 30 minutos.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 73,
+        "conteo_palabras_breve": 22
+      }
+    },
+    "INC000004169100": {
+      "apertura": {
+        "completo": "Se declara incidencia crítica P1 (INC000004169100) originada por un error funcional en el aplicativo Extranet reportado desde Jazzplat - Guadalajara. La anomalía repercute sobre el mantenimiento y consulta del catálogo de productos fijos, afectando la tramitación y provisión de órdenes comerciales. El grupo resolutor FIJO APL Mto. Catalogo está analizando los registros de base de datos y la coherencia de catálogo para restaurar la operatividad en el centro de atención. Próxima actualización en 30 minutos.",
+        "breve": "Apertura P1 (INC000004169100): Fallo funcional en Extranet en Jazzplat Guadalajara afecta catálogo y provisión fija. FIJO APL Mto. Catalogo diagnosticando. Próxima actualización 30 minutos.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 75,
+        "conteo_palabras_breve": 24
+      }
+    },
+    "INC000004169171": {
+      "apertura": {
+        "completo": "Se declara incidencia crítica P1 (INC000004169171) por error funcional en Ficha Cliente Orange en la plataforma de Teleperformance - Salamanca. La avería imposibilita a los operadores de atención acceder o actualizar la ficha de cliente, comprometiendo la gestión de llamadas y consultas en el frontal CRM. El equipo de SOPORTE N1 CSO interviene en la plataforma para estabilizar las sesiones y la comunicación con servicios centrales. Próxima actualización en 30 minutos.",
+        "breve": "Apertura P1 (INC000004169171): Error funcional en Ficha Cliente Orange en Teleperformance Salamanca bloquea consultas CRM. SOPORTE N1 CSO interviniendo. Próxima actualización en 30 minutos.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 71,
+        "conteo_palabras_breve": 24
+      }
+    },
+    "INC000004169652": {
+      "apertura": {
+        "completo": "Se declara incidencia crítica P1 (INC000004169652) debida a un error funcional en Siebel 8 reportado en el centro Konecta - Sevilla. El fallo afecta a la gestión de órdenes de provisión y contratación en el CRM, provocando demoras y bloqueos en las solicitudes de clientes. El equipo de soporte SOP_SMC_TEIDE se encuentra revisando los flujos de integración y servicios de backend para normalizar la tramitación en Siebel 8. Próxima actualización en 30 minutos.",
+        "breve": "Apertura P1 (INC000004169652): Error funcional en Siebel 8 en Konecta Sevilla bloquea provisión y pedidos comerciales. Soporte SOP_SMC_TEIDE investigando. Próxima actualización en 30 minutos.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 73,
+        "conteo_palabras_breve": 24
+      }
+    },
+    "INC000004169906": {
+      "apertura": {
+        "completo": "Se declara incidencia crítica P1 (INC000004169906) por degradación del servicio PALOS afectando a la sede Teleperformance Qualytel. La afectación impacta en herramientas de supervisión y gestión de tráfico operativo, aplicándose triaje preventivo SL1/P1 por criticidad de O&M y riesgo directo en la continuidad del servicio. El centro de control GNOC lidera las comprobaciones de red y servidores para mitigar la saturación y restaurar la calidad del servicio. Próxima actualización en 30 minutos.",
+        "breve": "Apertura P1 (INC000004169906): Degradación en PALOS en Teleperformance Qualytel con impacto operativo masivo. GNOC interviniendo en supervisión y red. Próxima actualización en 30 minutos.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 72,
+        "conteo_palabras_breve": 24
+      }
+    },
+    "INC000004169057": {
+      "apertura": {
+        "completo": "Se notifica incidencia de prioridad alta P2 (INC000004169057) por problema de acceso a la herramienta Asistente (PRDIA-2998) en el centro Konecta - Sevilla. La afectación causa degradación operativa local a los operadores de atención sin generar corte total en el servicio al cliente ni indisponibilidad general de sistemas. El equipo de desarrollo DES_ASISTENTE está analizando el módulo de autenticación para resolver el bloqueo de accesos. Próxima actualización en 2 horas.",
+        "breve": "Apertura P2 (INC000004169057): Incidencia de acceso en herramienta Asistente para operadores en Konecta Sevilla. DES_ASISTENTE revisando autenticación. Próxima actualización en 2 horas.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 70,
+        "conteo_palabras_breve": 22
+      }
+    },
+    "INC000004169623": {
+      "apertura": {
+        "completo": "Se notifica incidencia de prioridad alta P2 (INC000004169623) por error funcional en la plataforma ASISTENTE (PRDIA-2999) en la sede ADI - Madrid. El comportamiento anómalo genera fallos en consultas específicas de soporte en dicho centro, manteniéndose el servicio principal operativo sin afectación global en el parque de clientes. El equipo técnico de DES_ASISTENTE se encuentra verificando las trazas de aplicación para corregir la anomalía funcional. Próxima actualización en 2 horas.",
+        "breve": "Apertura P2 (INC000004169623): Error funcional en herramienta ASISTENTE en ADI Madrid con afectación local en soporte. DES_ASISTENTE analizando trazas. Próxima actualización en 2 horas.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 70,
+        "conteo_palabras_breve": 24
+      }
+    },
+    "INC000004168775": {
+      "apertura": {
+        "completo": "Se declara incidencia crítica P1 (INC000004168775) por indisponibilidad total en componentes core de middleware y almacenamiento de SPAIN ALMACENAMIENTO, clasificada en SL1 por impacto transversal en sistemas corporativos. La anomalía afecta la sincronización y persistencia de datos. Los especialistas de almacenamiento y sistemas intervienen con máxima prioridad sobre la infraestructura para aislar la causa raíz y restablecer el servicio a la mayor brevedad. Próxima actualización en 30 minutos.",
+        "breve": "Apertura P1 (INC000004168775): Indisponibilidad crítica en middleware y almacenamiento core (SL1). SPAIN ALMACENAMIENTO interviniendo infraestructura. Próxima actualización 30 min.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 69,
+        "conteo_palabras_breve": 21
+      },
+      "seguimiento": {
+        "completo": "Seguimiento de la incidencia crítica P1 (INC000004168775) en SPAIN ALMACENAMIENTO. Los grupos resolutores han identificado saturación en las controladoras de almacenamiento de middleware. Se ejecutan maniobras de rebalanceo de carga y reinicio secuencial de procesos para restablecer los accesos de datos. Se mantiene monitorización activa para asegurar la estabilidad operativa y descartar degradación en servicios dependientes. Próxima actualización en 30 minutos.",
+        "breve": "Seguimiento P1 (INC000004168775): Rebalanceo de controladoras y reinicio de procesos en SPAIN ALMACENAMIENTO; monitorizando recuperación de accesos a datos.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 62,
+        "conteo_palabras_breve": 18
+      },
+      "cierre": {
+        "completo": "Queda resuelta y cerrada la incidencia crítica P1 (INC000004168775) en SPAIN ALMACENAMIENTO. Tras las intervenciones técnicas de rebalanceo y estabilización de controladoras de almacenamiento, se confirma la recuperación íntegra de la persistencia de datos y middleware corporativo. Los sistemas dependientes operan con latencias y rendimiento nominales, verificándose la total ausencia de impacto en los servicios.",
+        "breve": "Cierre P1 (INC000004168775): Normalizado el servicio en SPAIN ALMACENAMIENTO tras estabilizar controladoras de almacenamiento; middleware operando con rendimiento nominal.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 55,
+        "conteo_palabras_breve": 19
+      }
+    },
+    "INC000004152079": {
+      "apertura": {
+        "completo": "Se declara incidencia crítica P1 (INC000004152079) por un fallo funcional en el proceso de facturación de Lego Deporte (INCIFAC-1540 Stihl). La anomalía impacta de forma masiva en la emisión y liquidación de cuotas de clientes vinculados a la promoción deportiva, bloqueando la conciliación de cargos sin procedimiento alternativo en el ciclo activo. Los equipos de SOP_TMC_EXCALIBUR y facturación intervienen las rutinas de tarificación para corregir la discrepancia y asegurar la emisión correcta de facturas. Próxima actualización en 30 minutos.",
+        "breve": "Apertura P1 (INC000004152079): Error de facturación en Lego Deporte (Stihl) bloquea liquidación de cuotas en ciclo activo. Soporte técnico interviniendo Excalibur. Próxima actualización 30 min.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 79,
+        "conteo_palabras_breve": 25
+      },
+      "seguimiento": {
+        "completo": "Seguimiento de la incidencia P1 (INC000004152079). El equipo de soporte SOP_TMC_EXCALIBUR ha aislado la regla errónea de tarificación asociada a los paquetes Lego Deporte y prepara el script de reprocesado de facturas afectadas. Se ha completado la validación en entorno de preproducción para evitar duplicidad de cobros y se inicia la ejecución controlada en producción bajo supervisión de los especialistas de facturación. Se continúa monitorizando el ciclo para confirmar la total regularización de los cargos emitidos.",
+        "breve": "Seguimiento P1 (INC000004152079): Aislada regla errónea de facturación en Lego Deporte; ejecutando script de reprocesado en Excalibur para regularizar cobros del ciclo activo.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 76,
+        "conteo_palabras_breve": 23
+      },
+      "cierre": {
+        "completo": "Cerrada la incidencia crítica P1 (INC000004152079). Concluido con éxito el reprocesamiento y ajuste de las tarifas de Lego Deporte en los sistemas de facturación de SOP_TMC_EXCALIBUR. Se ha verificado la correcta emisión y liquidación de las cuotas de todos los clientes afectados, normalizándose el ciclo comercial sin descuadres contables ni bloqueos operativos. El servicio permanece monitorizado preventivamente.",
+        "breve": "Cierre P1 (INC000004152079): Subsanado error de facturación en Lego Deporte en Excalibur; cuotas y liquidaciones de clientes regularizadas satisfactoriamente.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 57,
+        "conteo_palabras_breve": 19
+      }
+    },
+    "INC000004169386": {
+      "apertura": {
+        "completo": "Se declara incidencia crítica P1 (INC000004169386) por error funcional en Ficha Cliente Orange reportado desde la sede de ISGF en Murcia. La incidencia genera un bloqueo masivo en la consulta y gestión de clientes y pedidos, impidiendo tramitar operaciones comerciales y de provisión sin alternativa viable en el frontal de atención. Los equipos resolutores de SOP_SMC_TEIDE y soporte técnico se encuentran diagnosticando la integración de servicios y bases de datos para restablecer la funcionalidad. Próxima actualización en 30 minutos.",
+        "breve": "Apertura P1 (INC000004169386): Error funcional en Ficha Cliente Orange bloquea operativa de clientes y provisión en ISGF Murcia. Soporte técnico interviniendo. Próxima actualización 30 min.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 79,
+        "conteo_palabras_breve": 25
+      },
+      "seguimiento": {
+        "completo": "Seguimiento de la incidencia P1 (INC000004169386). Los equipos de SOP_SMC_TEIDE han identificado una latencia anómala en la conexión de Ficha Cliente Orange con los servicios de catálogo y órdenes en la sede de ISGF Murcia. Se ha procedido a reiniciar y reequilibrar los nodos de conexión afectados, observándose una disminución gradual de errores en las consultas de operadores. Se mantiene el soporte en tiempo real y la validación cruzada hasta confirmar la estabilidad integral de la plataforma.",
+        "breve": "Seguimiento P1 (INC000004169386): Reequilibrados nodos de conexión de Ficha Cliente Orange en ISGF Murcia; recuperación progresiva bajo monitorización activa de SOP_SMC_TEIDE.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 77,
+        "conteo_palabras_breve": 21
+      },
+      "cierre": {
+        "completo": "Cerrada la incidencia crítica P1 (INC000004169386) en Ficha Cliente Orange. Restablecida por completo la comunicación y carga de datos en los puestos de atención de ISGF Murcia tras normalizar los servicios de conectividad y balanceo en SOP_SMC_TEIDE. Los operadores gestionan clientes y órdenes de provisión con tiempos de respuesta óptimos y sin registrar bloqueos, quedando el servicio bajo supervisión preventiva ordinaria.",
+        "breve": "Cierre P1 (INC000004169386): Restablecido funcionamiento de Ficha Cliente Orange en ISGF Murcia; tramitación de órdenes y atención comercial totalmente normalizadas.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 61,
+        "conteo_palabras_breve": 20
+      }
+    },
+    "INC000004170183": {
+      "apertura": {
+        "completo": "Se declara incidencia crítica P1 (INC000004170183) por error funcional en la plataforma IP24 reportado desde la sede de NTTDATA en Alicante. La afectación genera un bloqueo operativo en la tramitación y provisión de órdenes comerciales sin alternativa viable en el frontal de trabajo del centro. El equipo de soporte SOP_SMC_TEIDE se encuentra interviniendo y analizando las trazas del servicio para aislar el fallo y restablecer la disponibilidad funcional. Próxima actualización en 30 minutos.",
+        "breve": "Apertura P1 (INC000004170183): Error funcional en IP24 bloquea tramitación de órdenes en NTTDATA Alicante. Soporte SOP_SMC_TEIDE diagnosticando. Próxima actualización 30 min.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 73,
+        "conteo_palabras_breve": 21
+      },
+      "seguimiento": {
+        "completo": "Seguimiento de la incidencia P1 (INC000004170183) en IP24. Los equipos resolutores de SOP_SMC_TEIDE han identificado una anomalía en las sesiones de conectividad del aplicativo hacia los servicios centrales de provisión en NTTDATA Alicante. Se han reiniciado los procesos de intermediación y se aplican acciones de purga y reconexión sobre los puestos afectados. Se monitoriza activamente la tasa de tramitación para verificar la progresiva recuperación del flujo operativo.",
+        "breve": "Seguimiento P1 (INC000004170183): SOP_SMC_TEIDE reinicia servicios de conexión de IP24 en NTTDATA Alicante; monitorizando recuperación de tramitaciones y puestos.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 67,
+        "conteo_palabras_breve": 19
+      },
+      "cierre": {
+        "completo": "Queda cerrada la incidencia crítica P1 (INC000004170183) en IP24. Restablecida plenamente la operativa de provisión y tramitación en la sede de NTTDATA Alicante tras la normalización de las sesiones y servicios de middleware por parte de SOP_SMC_TEIDE. Los puestos operan con tiempos de respuesta nominales y sin registrar fallos funcionales, confirmándose la ausencia de órdenes retenidas. El servicio queda bajo supervisión preventiva de soporte.",
+        "breve": "Cierre P1 (INC000004170183): Normalizada operativa de IP24 en NTTDATA Alicante tras estabilizar middleware por SOP_SMC_TEIDE; provisión de órdenes recuperada sin incidencias.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 64,
+        "conteo_palabras_breve": 21
+      }
+    },
+    "INC000004170500": {
+      "apertura": {
+        "completo": "Se declara incidencia crítica P1 (INC000004170500) por error funcional en Ficha Cliente Orange al abrir el desplegable de Compromisos de Permanencia y Venta a Plazos. El fallo en el backend bffclientdashboard (customerAgreement) afecta a ~1.129 operadores en cinco plataformas (Konecta Sevilla, Foundever, OEST Oviedo, Jazzplat e ISGF Murcia), bloqueando la consulta de penalizaciones sin canal alternativo. El equipo APL_MOV_SOE y DES_SOE_FICHA intervienen en el servicio backend para restablecer las consultas. Próxima actualización en 30 minutos.",
+        "breve": "Apertura P1 (INC000004170500): Fallo en consulta de Compromisos en Ficha Cliente Orange; afecta a ~1.129 operadores en 5 sedes. Diagnóstico de backend en curso.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 75,
+        "conteo_palabras_breve": 24
+      },
+      "seguimiento": {
+        "completo": "Seguimiento de la incidencia P1 (INC000004170500) en Ficha Cliente Orange. El equipo de APL_MOV_SOE ha detectado una degradación en las conexiones hacia el pool de servicios móviles que causaba timeouts en las peticiones emitidas desde Konecta Sevilla. Se ha ejecutado el reciclado de instancias de frontend y el rebalanceo de tráfico, registrándose una disminución sustancial de transacciones fallidas. Los operadores reanudan progresivamente las consultas de clientes bajo supervisión activa del equipo técnico.",
+        "breve": "Seguimiento P1 (INC000004170500): Rebalanceadas instancias y recuperada conectividad en Ficha Cliente Orange para Konecta Sevilla; agentes operando bajo supervisión técnica de APL_MOV_SOE.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 72,
+        "conteo_palabras_breve": 22
+      },
+      "cierre": {
+        "completo": "Se da por cerrada la incidencia crítica P1 (INC000004170500) en Ficha Cliente Orange. Resuelta la degradación de peticiones entre el frontal de atención y los servicios móviles tras estabilizar los servidores de aplicación en APL_MOV_SOE. La plataforma de Konecta en Sevilla opera con normalidad absoluta, tramitándose consultas comerciales y gestiones de abonados con latencias óptimas y sin errores. Se mantiene la monitorización preventiva habitual sobre el entorno.",
+        "breve": "Cierre P1 (INC000004170500): Normalizada Ficha Cliente Orange en Konecta Sevilla tras estabilizar servidores APL_MOV_SOE; consultas y gestiones comerciales operando sin incidencias.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 67,
+        "conteo_palabras_breve": 21
+      }
+    },
+    "INC000004171650": {
+      "apertura": {
+        "completo": "Se declara incidencia crítica P1 (INC000004171650) por error funcional en Ficha de Cliente Orange en la plataforma ISGF de Murcia. La anomalía en el endpoint bffclientdashboard/campaignRejection y la integración con InteractionClient bloquea el botón de rechazo de campañas, impidiendo a los operadores tipificar llamadas e informar compromisos de pago sin canal alternativo en el frontal. Los equipos técnicos diagnostican el CircuitBreaker del servicio para restablecer la validación y recuperar la operativa comercial. Próxima actualización en 30 minutos.",
+        "breve": "Apertura P1 (INC000004171650): Bloqueo en rechazo de campañas en Ficha Cliente para ISGF Murcia. Diagnóstico de validación en InteractionClient en curso.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 77,
+        "conteo_palabras_breve": 21
+      },
+      "seguimiento": {
+        "completo": "Seguimiento de la incidencia crítica P1 (INC000004171650) en Ficha de Cliente Orange. Los equipos de desarrollo de DES_SOE_FICHA han aislado el error de validación en InteractionClient asociado a la llamada campaignRejection y preparan un ajuste en el backend para restablecer el guardado de motivos de rechazo. La afectación sigue circunscrita a los 10 operadores de ISGF Murcia sin desvío alternativo. Se prevé despliegue del parche y pruebas de confirmación en 30 minutos.",
+        "breve": "Seguimiento P1 (INC000004171650): DES_SOE_FICHA prepara ajuste de validación en backend de Ficha Cliente. Impacto acotado en Murcia. Pruebas en 30 min.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 72,
+        "conteo_palabras_breve": 21
+      },
+      "cierre": {
+        "completo": "Se da por cerrada la incidencia crítica P1 (INC000004171650) en Ficha de Cliente Orange. Se ha subsanado el error de validación en el backend bffclientdashboard y restablecido el comportamiento nominal del endpoint campaignRejection, permitiendo a los operadores de ISGF Murcia tipificar el rechazo de campañas con normalidad y sin fallos de CircuitBreaker. La operativa comercial queda restablecida al 100% y el servicio estabilizado bajo supervisión rutinaria.",
+        "breve": "Cierre P1 (INC000004171650): Subsanado error en endpoint de rechazo de campañas en Ficha Cliente Orange; operativa de tipificación 100% restablecida en ISGF Murcia.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 66,
+        "conteo_palabras_breve": 23
+      }
+    },
+    "INC000004171670": {
+      "apertura": {
+        "completo": "Se declara incidencia mayor P2 (INC000004171670) por degradación funcional en CRM4TELCO dentro de Ficha Multimarca. Una anomalía de parámetros (clusterID=0) en la integración con GestorCatalogoDisponibleWS bloquea la carga del escaparate completo de terminales en el departamento Anticipación OUT, afectando a 15 operadores de la sede Andes en Medellín y limitando la oferta a modelos promocionados. El equipo DES_CRM4T trabaja en la corrección del parámetro para normalizar la operativa comercial. Próxima actualización en 60 minutos.",
+        "breve": "Apertura P2 (INC000004171670): Fallo de catálogo en CRM4TELCO impide cargar terminales en Anticipación OUT (Medellín). DES_CRM4T corrigiendo validación. Próxima actualización 60 min.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 74,
+        "conteo_palabras_breve": 22
+      },
+      "seguimiento": {
+        "completo": "Seguimiento de la incidencia mayor P2 (INC000004171670) en CRM4TELCO. El equipo de desarrollo DES_CRM4T ha localizado la causa raíz en el método getConfiguracionSeguro() de GestorCatalogoDisponibleWS y se encuentra aplicando el parche de validación para el valor de clusterID. Se mantiene la afectación restringida a los 15 puestos de Anticipación OUT en Teleperformance Medellín, sin impacto en el resto de canales comerciales. Se estima validación en entorno productivo en 45 minutos.",
+        "breve": "Seguimiento P2 (INC000004171670): DES_CRM4T parchea validación en GestorCatalogoDisponibleWS de CRM4TELCO; se mantiene seguimiento sobre la plataforma de retención en Medellín.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 70,
+        "conteo_palabras_breve": 20
+      },
+      "cierre": {
+        "completo": "Se da por cerrada la incidencia mayor P2 (INC000004171670) en CRM4TELCO. Se ha subsanado el parámetro clusterID en GestorCatalogoDisponibleWS, restableciéndose la visualización íntegra del catálogo de dispositivos no promocionados en el aplicativo de Anticipación OUT. Los 15 operadores de la sede Andes de Teleperformance Medellín operan con normalidad absoluta y sin incidencias. El servicio queda estabilizado bajo supervisión rutinaria.",
+        "breve": "Cierre P2 (INC000004171670): Normalizado escaparate en CRM4TELCO tras corregir parámetro clusterID en catálogo; operativa 100% restablecida en sede Medellín.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 59,
+        "conteo_palabras_breve": 19
+      }
+    },
+    "INC000004173009": {
+      "apertura": {
+        "completo": "Se declara incidencia crítica P1 (INC000004173009) por error funcional en la plataforma de gestión de campañas CERES en la sede OEST Oviedo. La anomalía, registrada inicialmente como P3, escala operativamente a P1 por tiempo transcurrido sin mitigación disponible, comprometiendo la operativa de los puestos de atención en dicha sede. El grupo resolutor CEP CAU AGI en coordinación con Soporte N1 CSO investiga activamente el origen del fallo funcional para restablecer el servicio a la mayor brevedad. Próxima actualización en 30 minutos.",
+        "breve": "Apertura P1 (INC000004173009): Error funcional en CERES para la sede OEST Oviedo. Sin mitigación disponible. Grupo resolutor investigando el origen. Próxima actualización en 30 minutos.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 81,
+        "conteo_palabras_breve": 25
+      }
+    },
+    "INC000004173638": {
+      "apertura": {
+        "completo": "Se declara incidencia crítica P1 (INC000004173638) por error funcional en la herramienta de campañas CERES en la sede ISGF Murcia. La incidencia, clasificada originalmente como P3, escala a P1 por superar 120 minutos en curso sin procedimiento de contención ni workaround validado, afectando la actividad de dicha sede comercial. El equipo técnico CEP CAU AGI junto al grupo especializado NEG_CAMP_CERES investiga el origen técnico de la degradación funcional para asegurar la recuperación operativa. Próxima actualización en 30 minutos.",
+        "breve": "Apertura P1 (INC000004173638): Error funcional en CERES para la sede ISGF Murcia. Escalada a P1 por tiempo transcurrido sin mitigación. Equipos resolutores investigando. Próxima actualización 30 min.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 78,
+        "conteo_palabras_breve": 27
+      }
+    },
+    "INC000004173662": {
+      "apertura": {
+        "completo": "Se declara incidencia mayor P2 (INC000004173662) por degradación funcional en el aplicativo Ficha Cliente Orange en la sede Madison Valladolid. La incidencia provoca dificultades operativas en la atención y consulta de clientes en dicha plataforma comercial, sin afectación general al resto de canales de la compañía. El grupo técnico resolutor APL_MOV_SOE realiza el análisis de la anomalía funcional para determinar su causa y aplicar las medidas correctoras necesarias. Próxima actualización en 60 minutos.",
+        "breve": "Apertura P2 (INC000004173662): Degradación funcional en Ficha Cliente Orange para la sede Madison Valladolid. Afectación local sin caída global. Grupo APL_MOV_SOE investigando. Próxima actualización en 60 minutos.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 73,
+        "conteo_palabras_breve": 27
+      }
+    },
+    "INC000004174137": {
+      "apertura": {
+        "completo": "Se declara incidencia mayor P2 (INC000004174137) por degradación funcional en el acceso y operativa de Ficha Cliente Orange en la sede OEST Oviedo. La anomalía afecta la gestión de operaciones comerciales de los agentes asignados en dicha plataforma local, manteniéndose operativo el servicio global en el resto de centros de soporte. El equipo de Soporte N1 CSO coordina el análisis técnico de los síntomas reportados para identificar el origen y restablecer el rendimiento nominal. Próxima actualización en 60 minutos.",
+        "breve": "Apertura P2 (INC000004174137): Fallo funcional en Ficha Cliente Orange en la sede OEST Oviedo. Afectación restringida a dicha sede. Soporte N1 CSO diagnosticando. Próxima actualización en 60 minutos.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 79,
+        "conteo_palabras_breve": 28
+      }
+    },
+    "INC000004174203": {
+      "apertura": {
+        "completo": "Se declara incidencia mayor P2 (INC000004174203) por anomalía funcional en el sistema CRM para los operadores de la plataforma Teleperformance en Medellín. El incidente impacta puntualmente en la tramitación comercial de dicha sede de atención al cliente, sin que se registre caída global en la plataforma central de CRM. El equipo de soporte técnico SOP_KRATOS se encuentra investigando el origen de los errores funcionales para aplicar medidas de contención técnica. Próxima actualización en 60 minutos.",
+        "breve": "Apertura P2 (INC000004174203): Incidencia funcional en CRM afectando a Teleperformance Medellín. Sin impacto en el resto de canales. SOP_KRATOS investigando causas. Próxima actualización en 60 minutos.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 75,
+        "conteo_palabras_breve": 26
+      }
+    },
+    "INC000004174206": {
+      "apertura": {
+        "completo": "Se declara incidencia mayor P2 (INC000004174206) por degradación funcional en el aplicativo Ficha Cliente Orange en el centro Madison Valladolid. La incidencia genera incidencias operativas en la interacción con clientes desde dicha sede, mientras que el resto de plataformas de atención opera con normalidad. El equipo de Soporte N1 CSO está realizando el diagnóstico técnico de los errores detectados para aislar la causa raíz y restablecer la estabilidad del servicio comercial. Próxima actualización en 60 minutos.",
+        "breve": "Apertura P2 (INC000004174206): Error funcional en Ficha Cliente Orange para Madison Valladolid. Impacto limitado a sede local. Soporte N1 CSO en diagnóstico técnico. Próxima actualización en 60 minutos.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 76,
+        "conteo_palabras_breve": 28
+      }
+    },
+    "INC000004174169": {
+      "apertura": {
+        "completo": "Se ha detectado una incidencia de prioridad Media (INC000004174169) en el canal de Atención al Cliente, originada por un error funcional en el asistente virtual de WhatsApp (YGMM) integrado con LivePerson. La anomalía provoca el envío duplicado de encuestas de satisfacción tras la atención del agente, afectando a 10 usuarios en los servicios de Atención y Cambio de Domicilio de Jazzplat Bogotá. El equipo especializado de desarrollo (DES_ASISTENTE) se encuentra analizando el flujo para corregir la duplicidad. Próxima actualización en 60 minutos.",
+        "breve": "P3: Error funcional en asistente de WhatsApp duplicando encuestas de satisfacción. Afecta a 10 usuarios en Jazzplat Bogotá. DES_ASISTENTE analizando corrección. Próxima actualización en 60 min.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 82,
+        "conteo_palabras_breve": 26
+      }
+    },
+    "INC000004173771": {
+      "apertura": {
+        "completo": "Se declara incidencia crítica P1 (INC000004173771) por bloqueo total en la operativa de contratación de CRM4TELCO debido a falta de respuesta del servicio de Scoring. La incidencia bloquea el 100% de las ventas a 11 operadores en Teleperformance Medellín en los servicios de Atención, Retención y Ventas. El equipo de DES_CRM4T ha identificado registros bloqueados en la tabla LOG_SCORING y el soporte especializado se encuentra ejecutando un plan de regularización de base de datos para restablecer las contrataciones. Próxima actualización en 30 minutos.",
+        "breve": "P1: Bloqueo total de contrataciones en CRM4TELCO por Scoring. 11 operadores afectados en Medellín. En curso regularización de base de datos. Próxima actualización en 30 min.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 83,
+        "conteo_palabras_breve": 26
+      }
+    },
+    "INC000004174655": {
+      "apertura": {
+        "completo": "Se declara incidencia crítica P1 (INC000004174655) en Ficha Cliente Orange originada por el envío erróneo del parámetro fibraOro con valor NO hacia el iframe de PROMETHEUS. La anomalía provoca diagnósticos técnicos incorrectos en la pestaña de soporte técnico para clientes con Fibra Oro activa, impidiendo la identificación precisa de averías en planta fija. El equipo de desarrollo DES_SOE_FICHA se encuentra interviniendo la lógica de invocación para corregir el mapeo del parámetro independientemente de la línea consultada. Próxima actualización en 30 minutos.",
+        "breve": "Apertura P1 (INC000004174655): Parámetro fibraOro enviado erróneamente como NO a PROMETHEUS en Ficha Cliente degrada soporte técnico de fibra fija. DES_SOE_FICHA interviniendo.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 79,
+        "conteo_palabras_breve": 23
+      },
+      "seguimiento": {
+        "completo": "Continúa el seguimiento de la incidencia P1 (INC000004174655) en Ficha Cliente Orange. El equipo de desarrollo DES_SOE_FICHA ha identificado el punto de discrepancia en el ensamblado del contexto de cliente hacia PROMETHEUS y prepara el parche de software para asegurar que el indicador fibraOro refleje el contrato real del abonado. Se realizan pruebas unitarias en entorno de preproducción antes de su despliegue para restablecer la correcta operativa en soporte técnico. Próxima actualización en 30 minutos.",
+        "breve": "Seguimiento P1 (INC000004174655): DES_SOE_FICHA prepara parche para corregir envío de fibraOro hacia PROMETHEUS. Pruebas en curso. Próxima actualización en 30 min.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 73,
+        "conteo_palabras_breve": 22
+      },
+      "cierre": {
+        "completo": "Se da por resuelta la incidencia crítica P1 (INC000004174655) tras el despliegue del parche correctivo en Ficha Cliente Orange. Se ha verificado que las consultas en el iframe de PROMETHEUS reconocen correctamente el atributo fibraOro para todos los clientes con servicio activo, normalizándose los flujos de soporte y diagnóstico en planta fija. El servicio opera con total estabilidad y sin anomalías residuales.",
+        "breve": "Cierre P1 (INC000004174655): Parche desplegado con éxito en Ficha Cliente. Normalizado el parámetro fibraOro y diagnóstico en PROMETHEUS. Incidencia resuelta.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 63,
+        "conteo_palabras_breve": 20
+      }
+    },
+    "INC000004175536": {
+      "apertura": {
+        "completo": "Se declara emergencia crítica P1 (INC000004175536) por degradación severa de conectividad en el Nodo Central de Portabilidad bajo protocolo SL1. La incidencia genera un encolamiento masivo de 603 puertos salientes en el subsistema móvil, concentrándose principalmente en intercambios hacia DIGI con 126 solicitudes, Yoigo con 125, y Vodafone y Movistar con 117 peticiones cada uno. Se ha constituido war room técnico y los especialistas de red de datos investigan los enlaces para restablecer el enrutamiento. Próxima actualización en 30 minutos.",
+        "breve": "Apertura P1 (INC000004175536): Degradación en Nodo Central Portabilidad retiene 603 solicitudes hacia DIGI, Yoigo, Vodafone y Movistar. War room y red de datos interviniendo.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 79,
+        "conteo_palabras_breve": 24
+      },
+      "seguimiento": {
+        "completo": "Prosigue el tratamiento de la emergencia P1 (INC000004175536) en el Nodo Central de Portabilidad. El equipo de red de datos ha mitigado la saturación en los enlaces de interconexión y las colas de procesamiento han comenzado a drenar progresivamente hacia los operadores receptores. Se mantiene la monitorización intensiva sobre el flujo de peticiones salientes para constatar la absorción total de los 603 puertos represados. Próxima actualización en 30 minutos.",
+        "breve": "Seguimiento P1 (INC000004175536): Mitigada saturación en enlaces del Nodo Central de Portabilidad. Drenado de colas salientes en curso bajo supervisión técnica.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 68,
+        "conteo_palabras_breve": 21
+      },
+      "cierre": {
+        "completo": "Se procede al cierre de la emergencia P1 (INC000004175536) en el Nodo Central de Portabilidad tras la estabilización definitiva de los interfaces de red. La totalidad de las 603 solicitudes de portabilidad retenidas han sido procesadas satisfactoriamente hacia las operadoras de destino sin pérdidas de información. Los canales de intercambio intercarrier operan con latencias óptimas y rendimiento normalizado.",
+        "breve": "Cierre P1 (INC000004175536): Restablecida la conectividad en Nodo Central Portabilidad. Colas de tramitación móvil drenadas al 100%. Incidencia resuelta.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 59,
+        "conteo_palabras_breve": 19
+      }
+    },
+    "INC000004174686": {
+      "apertura": {
+        "completo": "Se comunica incidencia de alta prioridad P2 (INC000004174686) en el sistema SGP por fallo funcional en el flujo de cancelación de portabilidades en la sede de ISGF Murcia. La aplicación permite completar los pasos previos pero no ejecuta la acción tras pulsar aceptar, afectando al cien por cien de las operativas con diez clientes en portabilidad entrante imposibilitados de cancelar en plazo legal. El grupo técnico de GC SGP Móvil interviene el módulo transaccional para desbloquear la tramitación. Próxima actualización en 60 minutos.",
+        "breve": "Apertura P2 (INC000004174686): Fallo en botón aceptar de SGP bloquea cancelaciones de portabilidad a 10 clientes en ISGF Murcia. GC SGP Móvil diagnosticando.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 83,
+        "conteo_palabras_breve": 23
+      },
+      "seguimiento": {
+        "completo": "Continúa la atención de la incidencia P2 (INC000004174686) en el sistema SGP. Los especialistas de GC SGP Móvil han localizado una excepción en el servicio transaccional que gestiona la confirmación de cancelación y aplican un ajuste correctivo en la capa de servicios. Se supervisa el comportamiento de las cancelaciones en cola para garantizar que los expedientes de los clientes afectados se cursen dentro del margen normativo. Próxima actualización en 60 minutos.",
+        "breve": "Seguimiento P2 (INC000004174686): Localizada excepción transaccional en confirmación de SGP. Aplicando ajuste para reactivar cancelaciones en plazo legal. Actualización en 60 min.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 72,
+        "conteo_palabras_breve": 22
+      },
+      "cierre": {
+        "completo": "Se notifica el cierre de la incidencia P2 (INC000004174686) tras solventarse la anomalía en el botón de confirmación de SGP. Se ha validado la correcta tramitación de las cancelaciones pendientes para los diez clientes afectados en la sede de ISGF Murcia, restableciendo la capacidad operativa de los gestores sin demoras administrativas. El servicio de cancelaciones de portabilidad móvil funciona con total normalidad.",
+        "breve": "Cierre P2 (INC000004174686): Resuelto el bloqueo de cancelaciones en SGP. Procesadas las solicitudes en ISGF Murcia con normalidad funcional.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 64,
+        "conteo_palabras_breve": 18
+      }
+    },
+    "INC000004175558": {
+      "apertura": {
+        "completo": "Se declara incidencia crítica P1 (INC000004175558) por caída de la red de datos de acceso en Jazzplat Guadalajara, afectando al circuito externo LAP00892819. La contingencia interrumpe los servicios de telefonía y datos con pérdida de acceso a los aplicativos Altitude y Avaya, impactando al 100% de los operadores del centro de atención al cliente. Los equipos de soporte de red, DNF y Oceane intervienen para aislar la avería en el enlace de telecomunicaciones. Próxima actualización en 30 minutos.",
+        "breve": "Apertura P1 (INC000004175558): Caída de red y circuito LAP00892819 bloquea 100% de operadores en Jazzplat Guadalajara sin telefonía ni Altitude. DNF y Oceane diagnosticando.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 75,
+        "conteo_palabras_breve": 24
+      },
+      "seguimiento": {
+        "completo": "Seguimiento de la incidencia P1 (INC000004175558) en Jazzplat Guadalajara. Las revisiones técnicas confirman inestabilidad tras registrarse cortes de conectividad adicionales. Los especialistas de red han analizado las tablas de rutas BGP en los equipos de conmutación Juniper, detectando una anomalía en el anillo de transporte de Giganet. Se ha escalado de forma prioritaria al equipo especializado de transmisión y a DNF/Oceane para restablecer la redundancia del circuito externo. Se mantiene monitorización continua de la sede.",
+        "breve": "Seguimiento P1 (INC000004175558): Identificada afectación en anillo Giganet y BGP Juniper; transmisión y DNF intervienen circuito LAP00892819 de Guadalajara.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 73,
+        "conteo_palabras_breve": 18
+      },
+      "cierre": {
+        "completo": "Queda resuelta la incidencia crítica P1 (INC000004175558) en Jazzplat Guadalajara. Restablecida la estabilidad en el anillo de transporte Giganet y normalizado el enrutamiento BGP en la electrónica de red Juniper por parte de los equipos de transmisión y DNF. El circuito LAP00892819 cursa tráfico nominal, recuperándose plenamente los servicios de datos y voz para todos los operadores de atención al cliente en la sede. Las plataformas Altitude y Avaya operan sin cortes.",
+        "breve": "Cierre P1 (INC000004175558): Normalizado circuito LAP00892819 y anillo Giganet. 100% de operadores de Jazzplat Guadalajara recuperan telefonía Altitude y Avaya.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 72,
+        "conteo_palabras_breve": 19
+      }
+    },
+    "INC000004175986": {
+      "apertura": {
+        "completo": "Se declara incidencia de alta prioridad P2 (INC000004175986) por error funcional en la plataforma TEIDE y Siebel 8 en la sede de Teleperformance Medellín. La anomalía impide la ejecución del proceso guiado de Error Cuota VAP cuando surgen incidencias previas en pedidos de clientes, bloqueando la tramitación en Atención Residencial Orange sin alternativa operativa disponible en el frontal. El grupo de soporte resolutor SOP_SMC_TEIDE se encuentra interviniendo las reglas del flujo guiado para subsanar el fallo. Próxima actualización en 60 minutos.",
+        "breve": "Apertura P2 (INC000004175986): Bloqueo en proceso guiado Cuota VAP de TEIDE y Siebel 8 impacta Atención Residencial en Teleperformance Medellín. Soporte SOP_SMC_TEIDE diagnosticando.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 80,
+        "conteo_palabras_breve": 23
+      },
+      "seguimiento": {
+        "completo": "Seguimiento de la incidencia P2 (INC000004175986). El equipo de soporte SOP_SMC_TEIDE ha aislado la inconsistencia en el tratamiento de excepciones de pedidos dentro del módulo de cuotas VAP de Siebel 8. Se ha coordinado la gestión especializada con el soporte de Epsilon para desacoplar el bloqueo de validación y permitir el procesamiento individualizado de los expedientes comerciales afectados. Se monitoriza activamente la liberación del flujo guiado con la supervisión de operaciones de Teleperformance Medellín.",
+        "breve": "Seguimiento P2 (INC000004175986): SOP_SMC_TEIDE y Epsilon coordinan corrección de validaciones de cuotas VAP en Siebel 8 para desbloquear tramitación en Teleperformance Medellín.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 72,
+        "conteo_palabras_breve": 21
+      },
+      "cierre": {
+        "completo": "Queda cerrada la incidencia P2 (INC000004175986) en TEIDE y Siebel 8. Subsanada la lógica de control del proceso guiado de Error Cuota VAP por parte de SOP_SMC_TEIDE, restableciéndose la capacidad de dar de alta cuotas comerciales sobre pedidos con incidencias asociadas. La plataforma opera de forma nominal y los agentes de Atención Residencial en Teleperformance Medellín han tramitado con éxito los casos retenidos sin registrar nuevos fallos funcionales.",
+        "breve": "Cierre P2 (INC000004175986): Corregido proceso guiado de Cuota VAP en TEIDE y Siebel 8; tramitación de Atención Residencial Orange restablecida en Teleperformance Medellín.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 70,
+        "conteo_palabras_breve": 21
+      }
+    },
+    "INC000004176719": {
+      "apertura": {
+        "completo": "Se declara incidencia de alta prioridad P2 (INC000004176719) por cancelaciones automáticas con error 51005 en Siebel IP24 durante la tramitación de pedidos de terminales de alta gama en Foundever Sevilla. La anomalía interrumpe contrataciones de nuevas captaciones VAP y renovaciones tras superar validación inicial, sin procedimiento alternativo para los agentes comerciales. Los equipos resolutores de SOP_SMC_TEIDE y el sistema de Scoring analizan la concurrencia de peticiones crediticias para evitar cancelaciones indebidas. Próxima actualización en 60 minutos.",
+        "breve": "Apertura P2 (INC000004176719): Cancelación automática de pedidos alta gama con error 51005 en Siebel IP24 en Foundever Sevilla. TEIDE y Scoring investigando concurrencia de saldos.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 74,
+        "conteo_palabras_breve": 24
+      },
+      "seguimiento": {
+        "completo": "Seguimiento de la incidencia P2 (INC000004176719). El análisis técnico conjunto entre SOP_SMC_TEIDE y el equipo de Scoring ha confirmado la emisión simultánea de peticiones duplicadas de incremento y disminución de saldo de crédito en pedidos de alta gama. Esta condición genera respuestas inconsistentes y dispara la cancelación preventiva bajo código 51005. Se trabaja en la depuración del conector de Siebel para garantizar la secuencialidad estricta de las llamadas de comprobación crediticia.",
+        "breve": "Seguimiento P2 (INC000004176719): TEIDE y Scoring corrigen peticiones duplicadas de crédito en Siebel IP24 causantes del error 51005 en compras de dispositivos de alta gama.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 71,
+        "conteo_palabras_breve": 24
+      },
+      "cierre": {
+        "completo": "Queda cerrada la incidencia P2 (INC000004176719) en Siebel IP24. Implementado el control de concurrencia en la integración con Scoring, eliminando la duplicidad de transacciones de saldo y resolviendo los falsos rechazos 51005. Los agentes de Foundever Sevilla operan con plena normalidad, completándose satisfactoriamente las contrataciones de dispositivos de alta gama tanto en nuevas captaciones como en renovaciones de clientes. No se registran cancelaciones automáticas anómalas en el canal.",
+        "breve": "Cierre P2 (INC000004176719): Resuelta integración Siebel-Scoring; cancelaciones 51005 subsanadas y venta de dispositivos de alta gama normalizada en Foundever Sevilla.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 68,
+        "conteo_palabras_breve": 20
+      }
+    },
+    "INC000004175934": {
+      "apertura": {
+        "completo": "Se declara incidencia de alta prioridad P2 (INC000004175934) por error funcional en Siebel 8 IP24 reportado desde Teleperformance Jerez. Al cancelar órdenes con servicio fijo, los puntos de instalación asociados permanecen indebidamente en estado verde sin servicio contratado, provocando fallos en el inyector de Ficha de Cliente por retención de identificadores de planta. Los equipos de soporte de Siebel y provisión aplican saneamientos manuales provisionales mientras se prepara el parche definitivo. Próxima actualización en 60 minutos.",
+        "breve": "Apertura P2 (INC000004175934): Puntos de instalación no liberados tras cancelar órdenes de fijo en Siebel 8 IP24, afectando Ficha Cliente en Jerez. Soporte aplicando saneamientos provisionales.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 74,
+        "conteo_palabras_breve": 25
+      },
+      "seguimiento": {
+        "completo": "Seguimiento de la incidencia P2 (INC000004175934). Se confirma que la anomalía en la liberación de puntos de instalación (PI) en Siebel 8 IP24 cuenta con desarrollo correctivo finalizado y empaquetado para su despliegue en la ventana técnica de PAP programada para el 11/11/2026. Conforme al protocolo IM-CSO para resoluciones planificadas, se mantiene exención de escalado por aging y el soporte N1 realiza liberaciones controladas bajo demanda sobre los pedidos afectados en Teleperformance Jerez.",
+        "breve": "Seguimiento P2 (INC000004175934): Corrección técnica de liberación de PI programada para ventana PAP del 11/11/2026; soporte aplica liberaciones manuales bajo demanda en Teleperformance Jerez.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 73,
+        "conteo_palabras_breve": 23
+      },
+      "cierre": {
+        "completo": "Queda cerrada la incidencia P2 (INC000004175934) en Siebel 8 IP24. Tras el despliegue del paquete correctivo en la ventana de producción PAP, la cancelación de órdenes fijas libera automáticamente los puntos de instalación a su estado nominal. El inyector de Ficha de Cliente procesa las peticiones sin registrar excepciones y la operativa en Teleperformance Jerez ha validado el ciclo de ventas y anulaciones sin intervención manual. La plataforma opera de forma íntegra.",
+        "breve": "Cierre P2 (INC000004175934): Desplegado correctivo en PAP; puntos de instalación de fijo se liberan automáticamente tras cancelación y Ficha Cliente opera con normalidad en Jerez.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 73,
+        "conteo_palabras_breve": 23
+      }
+    },
+    "INC000004176828": {
+      "apertura": {
+        "completo": "Se declara incidencia de alta prioridad P2 (INC000004176828) por anomalía funcional en el bot conversacional Djingo integrado con LivePerson en Teleperformance Medellín. El bot de cierre dispara indebidamente encuestas de satisfacción en tipologías no procedentes como reclamaciones, incidencias técnicas, scoring y escalados externos, distorsionando las métricas de servicio de la plataforma. La interacción con clientes se mantiene activa y los equipos resolutores de SOP_DJINGO y DES_DJINGO intervienen sobre las reglas de enrutamiento conversacional. Próxima actualización en 60 minutos.",
+        "breve": "Apertura P2 (INC000004176828): Bot Djingo en LivePerson dispara encuestas indebidas en reclamaciones y averías en Teleperformance Medellín. DES_DJINGO interviene reglas de enrutamiento conversacional.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 77,
+        "conteo_palabras_breve": 22
+      },
+      "seguimiento": {
+        "completo": "Seguimiento de la incidencia P2 (INC000004176828). El equipo de desarrollo DES_DJINGO ha localizado la condición de desvío en el árbol de decisión de LivePerson que gatillaba el formulario de cierre sin discriminar tipologías de atención restringidas. Se ha configurado una regla de exclusión provisional en la capa conversacional y se realizan pruebas sobre las interacciones activas en Teleperformance Medellín para asegurar que las encuestas se limitan a los flujos comerciales autorizados.",
+        "breve": "Seguimiento P2 (INC000004176828): DES_DJINGO aplica regla de exclusión en árbol de decisión de LivePerson; verificando supresión de encuestas improcedentes en Teleperformance Medellín.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 71,
+        "conteo_palabras_breve": 21
+      },
+      "cierre": {
+        "completo": "Queda cerrada la incidencia P2 (INC000004176828) en la plataforma Djingo y LivePerson. Ajustadas satisfactoriamente las políticas de disparo del bot de cierre por DES_DJINGO, garantizando que no se emiten encuestas de resolución en reclamaciones, averías ni escalados técnicos. Los indicadores de satisfacción y métricas de plataforma en Teleperformance Medellín operan bajo calibración nominal y sin anomalías en las conversaciones. El servicio conversacional continúa monitorizado con soporte.",
+        "breve": "Cierre P2 (INC000004176828): Normalizado bot Djingo en LivePerson; encuestas de satisfacción restringidas a flujos procedentes y métricas de plataforma estabilizadas en Medellín.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 68,
+        "conteo_palabras_breve": 20
+      }
+    },
+    "INC000004179897": {
+      "apertura": {
+        "completo": "Se registra una incidencia crítica que impide la visualización y descarga de facturas en los frontales de Ficha Cliente y CRM, afectando a 2.200 usuarios en cinco sedes operativas (Oviedo, Sevilla, Valencia y Medellín). El fallo se localiza en la llamada entre el microservicio ms-commercialbills y el gestor documental GED. Los equipos de soporte N3 y GC GED se encuentran analizando la conectividad y validación OpenAPI sin existir método alternativo disponible. Próxima actualización en 30 minutos.",
+        "breve": "P1/INC000004179897: Bloqueo en consulta de facturas para 2.200 usuarios en 5 sedes. Soporte N3 y GED investigan fallo en microservicio. Próxima actualización 30 min.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 76,
+        "conteo_palabras_breve": 24
+      }
+    },
+    "INC000004177929": {
+      "apertura": {
+        "completo": "Se mantiene seguimiento crítico sobre la degradación de conectividad en los circuitos BGP de Coslada, que provoca caídas por timeout en la gestión de TV y aprovisionamiento en Altair a 80 usuarios en más de cinco sedes operativas. Aunque se ha encauzado tráfico transitorio mediante Ulises, la infraestructura principal sigue comprometida. El equipo de Redes y Kyndryl trabaja en la recuperación del enlace Meneses-Coslada y la estabilización de la VLAN 553 para restablecer la redundancia del servicio. Próxima actualización en 60 minutos.",
+        "breve": "P1/INC000004177929: Degradación en Altair TV y aprovisionamiento por corte BGP Coslada afectando a 5 sedes. Redes y Kyndryl recuperando enlaces. Próxima actualización 60 min.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 82,
+        "conteo_palabras_breve": 24
+      }
+    },
+    "INC000004174695": {
+      "apertura": {
+        "completo": "Se gestiona una incidencia en los sistemas de facturación donde abonos web de Jazztel con justificante no actualizan el balance en CRM4T, manteniendo deuda visible incorrectamente. El diagnóstico técnico ha determinado que parte de los pagos se registraron con tipología no contemplada en el filtro batch de expedientes, mientras otros no se inyectaron desde la pasarela PSP. Tras corregirse varias cuentas de forma nocturna, los grupos resolutores continúan auditando con soporte web y pasarela los casos restantes para normalizar el ciclo. Próxima actualización en 60 minutos.",
+        "breve": "P1/INC000004174695: Descuadre de pagos web Jazztel no reflejados en balance de CRM4T. Soporte y pasarela PSP regularizando expedientes y transacciones. Próxima actualización 60 min.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 86,
+        "conteo_palabras_breve": 24
+      }
+    },
+    "INC000004177654": {
+      "apertura": {
+        "completo": "Se realiza seguimiento de la incidencia funcional en Ficha de Cliente Orange que impide visualizar plataformas de entretenimiento a 249 operadores en Foundever Sevilla. El servicio cuenta con método alternativo operativo a través de Siebel 8 para mitigar el impacto en atención. La causa raíz corresponde a una degradación de red en DNF que afecta la conectividad de los servicios web con ORCA, coordinándose las actuaciones de restablecimiento mediante GNOC. Próxima actualización en 120 minutos.",
+        "breve": "P3/INC000004177654: Error de visualización de entretenimiento en Ficha Cliente en Sevilla. Workaround operativo en Siebel 8. GNOC coordinando resolución de red. Próxima actualización 120 min.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 75,
+        "conteo_palabras_breve": 25
+      }
+    },
+    "INC000004181441": {
+      "apertura": {
+        "completo": "P1 - INC000004181441. Detectada incidencia funcional en HPFMS que impide la generación de casos en la partición POSTPAGO desde las 12:23, afectando al proceso de Fraude en ISGF-Madrid. El impacto reportado alcanza a 100 usuarios y no existe método alternativo operativo. El servicio permanece degradado en esta partición, mientras el resto funcionan con normalidad. Equipos técnicos realizan diagnóstico sobre HPFMS para validar el estado de la partición afectada y revisar aplicación, base de datos y conectividad. Estado: en curso.",
+        "breve": "P1/INC000004181441: HPFMS no genera casos en partición POSTPAGO; 100 usuarios afectados sin workaround. Diagnóstico técnico en curso. Pendiente validación de partición, aplicación y BBDD.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 79,
+        "conteo_palabras_breve": 24
+      }
+    }
+  }
+}

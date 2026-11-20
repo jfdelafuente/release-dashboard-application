@@ -241,8 +241,10 @@ def build_and_save_catalog(
         library_path = Path(env_path) if env_path else DEFAULT_LIBRARY_PATH
 
     project_root = Path(__file__).resolve().parent.parent.parent
-    if output_path is None:
-        output_path = project_root / "data" / "output" / "agents_catalog.json"
+    canonical_output = project_root / "data" / "agents" / "catalog.json"
+    legacy_output = project_root / "data" / "output" / "agents_catalog.json"
+
+    target_paths = [output_path] if output_path is not None else [canonical_output, legacy_output]
 
     print(f"[INFO] Leyendo biblioteca desde: {library_path}")
     if not library_path.exists():
@@ -252,12 +254,13 @@ def build_and_save_catalog(
     catalog_data = build_catalog_dict(library_path)
     kpis = catalog_data["_metadata"]["kpis"]
 
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-    with open(output_path, "w", encoding="utf-8") as f:
-        json.dump(catalog_data, f, ensure_ascii=False, indent=2)
+    for out in target_paths:
+        out.parent.mkdir(parents=True, exist_ok=True)
+        with open(out, "w", encoding="utf-8") as f:
+            json.dump(catalog_data, f, ensure_ascii=False, indent=2)
 
     print(f"[INFO] Procesados {kpis['total_agents']} agentes y {kpis['total_skills']} skills en {kpis['total_domains']} dominios.")
-    print(f"[SUCCESS] Catálogo generado con éxito en: {output_path}")
+    print(f"[SUCCESS] Catálogo generado con éxito en: {target_paths[0]}")
     return True
 
 

@@ -1416,10 +1416,51 @@ class CustomHTTPHandler(http.server.SimpleHTTPRequestHandler):
         # Servir archivos desde STORAGE_DIR si se solicita /data/
         if self.path.startswith('/data/'):
             clean_rel = self.path[len('/data/'):].split('?')[0].lstrip('/')
-            file_on_storage = STORAGE_DIR / clean_rel
-            if not file_on_storage.is_file():
-                file_on_storage = PROJECT_ROOT / 'data' / clean_rel
-            if file_on_storage.is_file():
+            candidates = [
+                STORAGE_DIR / clean_rel,
+                PROJECT_ROOT / 'data' / clean_rel,
+            ]
+            # Mapeos bidireccionales canónicos <-> legacy (M22)
+            rel_mappings = {
+                'projects_catalog.json': ['config/projects_catalog.json'],
+                'config/projects_catalog.json': ['projects_catalog.json'],
+                'scheduled_changes_pap.json': ['config/scheduled_changes_pap.json'],
+                'config/scheduled_changes_pap.json': ['scheduled_changes_pap.json'],
+                'teams_channels_config.json': ['config/teams_channels.json', 'config/teams_channels_config.json'],
+                'config/teams_channels.json': ['teams_channels_config.json'],
+                'agent_executive_messages.json': ['agents/executive_messages.json'],
+                'agents/executive_messages.json': ['agent_executive_messages.json'],
+                'output/agents_catalog.json': ['agents/catalog.json'],
+                'agents/catalog.json': ['output/agents_catalog.json'],
+                'output/high_priority_notifications.json': ['agents/high_priority_notifications.json'],
+                'agents/high_priority_notifications.json': ['output/high_priority_notifications.json'],
+                'output/index.json': ['storage/index.json'],
+                'storage/index.json': ['output/index.json'],
+                'release_desk_overrides.json': ['state/release_desk_overrides.json'],
+                'state/release_desk_overrides.json': ['release_desk_overrides.json'],
+                'output/ingestion_audit_summary.json': ['observability/audits/ingestion_summary.json'],
+                'observability/audits/ingestion_summary.json': ['output/ingestion_audit_summary.json'],
+            }
+            if clean_rel.startswith('output/'):
+                sub = clean_rel[len('output/'):]
+                candidates.append(STORAGE_DIR / 'storage' / 'processed' / sub)
+                candidates.append(PROJECT_ROOT / 'data' / 'storage' / 'processed' / sub)
+            elif clean_rel.startswith('storage/processed/'):
+                sub = clean_rel[len('storage/processed/'):]
+                candidates.append(STORAGE_DIR / 'output' / sub)
+                candidates.append(PROJECT_ROOT / 'data' / 'output' / sub)
+
+            for alt in rel_mappings.get(clean_rel, []):
+                candidates.append(STORAGE_DIR / alt)
+                candidates.append(PROJECT_ROOT / 'data' / alt)
+
+            file_on_storage = None
+            for cand in candidates:
+                if cand.is_file():
+                    file_on_storage = cand
+                    break
+
+            if file_on_storage and file_on_storage.is_file():
                 try:
                     content = file_on_storage.read_bytes()
                     content_type = self.guess_type(str(file_on_storage))
@@ -1441,13 +1482,19 @@ class CustomHTTPHandler(http.server.SimpleHTTPRequestHandler):
         # Si es una petición para index.json, servirlo dinámicamente
         if 'index.json' in self.path:
             try:
-                actual_path = STORAGE_DIR / 'output' / 'index.json'
-                if not actual_path.exists():
-                    actual_path = PROJECT_ROOT / 'data' / 'output' / 'index.json'
-                print(f"  Intentando servir: {actual_path}")
-                print(f"  Existe: {actual_path.exists()}")
+                candidates = [
+                    STORAGE_DIR / 'storage' / 'index.json',
+                    STORAGE_DIR / 'output' / 'index.json',
+                    PROJECT_ROOT / 'data' / 'storage' / 'index.json',
+                    PROJECT_ROOT / 'data' / 'output' / 'index.json',
+                ]
+                actual_path = None
+                for cand in candidates:
+                    if cand.is_file():
+                        actual_path = cand
+                        break
 
-                if actual_path.exists():
+                if actual_path and actual_path.exists():
                     with open(actual_path, 'r', encoding='utf-8') as f:
                         content = f.read()
 

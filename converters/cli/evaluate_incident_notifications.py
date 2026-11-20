@@ -3133,6 +3133,15 @@ def main() -> int:
         with open(out_path, "w", encoding="utf-8") as f:
             json.dump(catalog, f, ensure_ascii=False, indent=2)
         logger.info("Catálogo guardado en: %s", out_path)
+
+        # Sincronización canónica automática con data/agents/ (M22)
+        if "high_priority_notifications.json" in out_path.name:
+            canonical_path = project_root / "data" / "agents" / "high_priority_notifications.json"
+            if canonical_path.resolve() != out_path.resolve():
+                canonical_path.parent.mkdir(parents=True, exist_ok=True)
+                with open(canonical_path, "w", encoding="utf-8") as f_can:
+                    json.dump(catalog, f_can, ensure_ascii=False, indent=2)
+                logger.info("Catálogo canónico sincronizado en: %s", canonical_path)
     else:
         logger.info("[Dry Run] No se guardó ningún archivo en disco.")
 

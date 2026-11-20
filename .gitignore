@@ -52,12 +52,19 @@ venv.bak/
 !converters/cli/process_patterns.json
 !tests/test_data/**/*.csv
 !converters/tests/test_data/**/*.csv
+!tests/fixtures/**/*.json
+!data/config/*.json
+!data/agents/*.json
 
 # Data Directories
 csv/
 incidencias/
 datos/
 data/*
+!data/config/
+!data/config/**
+!data/agents/
+!data/agents/**
 !data/reports/
 data/reports/*
 !data/reports/*.pptx
@@ -73,6 +80,10 @@ output/
 !data/teams_channels_config.json
 !data/projects_catalog.json
 archive/
+data/storage/
+data/state/
+data/cache/
+data/observability/
 
 # Temporary Files
 *.tmp

@@ -98,7 +98,9 @@ def parse_agent_raw_output(raw: str) -> Tuple[str, str]:
 def resolve_default_paths() -> Tuple[Path, Path]:
     """Resuelve la ruta al almacén de mensajes y al script de evaluación."""
     root = Path(__file__).resolve().parent.parent.parent
-    store_path = root / "data" / "agent_executive_messages.json"
+    canonical_store = root / "data" / "agents" / "executive_messages.json"
+    legacy_store = root / "data" / "agent_executive_messages.json"
+    store_path = canonical_store if canonical_store.exists() else legacy_store
     eval_script = root / "converters" / "cli" / "evaluate_incident_notifications.py"
     return store_path, eval_script
 
@@ -169,6 +171,18 @@ def update_agent_store(
 
         # Guardar atómicamente con backup previo
         atomic_write_json(store_path, data, create_backup=True, indent=2)
+
+        # Sincronización canónica / legacy automática (M22)
+        try:
+            root = Path(__file__).resolve().parent.parent.parent
+            canonical = root / "data" / "agents" / "executive_messages.json"
+            legacy = root / "data" / "agent_executive_messages.json"
+            if store_path.resolve() == canonical.resolve():
+                atomic_write_json(legacy, data, create_backup=False, indent=2)
+            elif store_path.resolve() == legacy.resolve() and canonical.parent.is_dir():
+                atomic_write_json(canonical, data, create_backup=False, indent=2)
+        except Exception:
+            pass
 
     return entry
 

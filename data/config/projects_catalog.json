@@ -1,0 +1,835 @@
+{
+  "by_release": {
+    "2026R9": {
+      "PRJ-11512": {
+        "jira": "PRJ-11512",
+        "summary": "Nuevas características porfolio SOHO 2026",
+        "despliegue": "Completo",
+        "descripcion": "Para acompañar la actualización de precios del porfolio SOHO se introducen nuevas ventajas que enriquecen la propuesta de valor para nuestros clientes: nuevo control horario multilicencia, fibra oro gratuita y packs de contenidos de Amazon y Disney."
+      },
+      "PRJ-11208": {
+        "jira": "PRJ-11208",
+        "summary": "Creación nuevas familias de descuentos móvil",
+        "despliegue": "Completo",
+        "descripcion": "Se crean nuevas familias de descuentos móvil para Residencial y SOHO OSP (solo captación) con el objetivo de compatibilizarlas con los descuentos existentes de Fidelización y Retención."
+      },
+      "PRJ-11715": {
+        "jira": "PRJ-11715",
+        "summary": "LEGO Baja Diferida en OTTs",
+        "despliegue": "Completo",
+        "descripcion": "Aplicar a las nuevas OTTs creadas en el programa LEGO un flujo de baja diferida en lugar de inmediata, alineándolo con el comportamiento de los nuevos Productos Adicionales (PAs) de deportes dentro del alcance global del portafolio convergente."
+      },
+      "PRJ-11605": {
+        "jira": "PRJ-11605",
+        "summary": "Seguro de Dispositivos para Productos La Tienda (Fase 2 Seguros MKP)",
+        "despliegue": "Completo",
+        "descripcion": "Incorporar dentro del proceso de venta de dispositivos de La Tienda la posibilidad de ofrecer, contratar y gestionar seguros asociados a los dispositivos. El cliente podrá conocer, en el momento de la compra y en días posteriores, si su dispositivo es asegurable, qué modalidades existen y contratar de manera fluida la póliza que mejor se adapte a sus necesidades con experiencia omnicanal."
+      },
+      "PRJ-11939": {
+        "jira": "PRJ-11939",
+        "summary": "Contratación de Seguros en Teide contra OMS (Fase 1)",
+        "despliegue": "Piloto",
+        "descripcion": "Modificación del flujo actual de contratación de seguros desde TEIDE para integrarlo directamente con Bolttech. El objetivo es que la comercialización de seguros sea independiente de la parte Telco, dotando a negocio y clientes de mayor agilidad y flexibilidad. Constituye la fase técnica para el inicio de piloto."
+      },
+      "PRJ-12237": {
+        "jira": "PRJ-12237",
+        "summary": "Marketplace MPV4: Carritos Mixtos en Digital (Fase 1)",
+        "despliegue": "Completo",
+        "descripcion": "Habilitación en eshop (EREBOR) del flujo comercial para la compra conjunta de productos propios (1P) y de terceros (3P, procedentes de otros *sellers* del Marketplace) en un único acto comercial unificado."
+      },
+      "PRJ-11600": {
+        "jira": "PRJ-11600",
+        "summary": "Bono compartido llamadas internacionales Big PYME",
+        "despliegue": "Completo",
+        "descripcion": "Activación de un nuevo Bono Compartido de llamadas internacionales orientado a clientes de la tipología Big PYME."
+      },
+      "PRJ-11855": {
+        "jira": "PRJ-11855",
+        "summary": "Comprobante de Venta móvil MPV2",
+        "despliegue": "Modo Oculto",
+        "descripcion": "Implementación de funcionalidades clave para móvil: validación de contrato existente, generación del Comprobante de Venta (CdV), documento de solicitud de Portabilidad y soporte de firma digital. Adicionalmente, incluye mejoras evolutivas para el servicio Fijo."
+      },
+      "PRJ-10698": {
+        "jira": "PRJ-10698",
+        "summary": "Modificaciones en CRMB2B para GED",
+        "despliegue": "Completo",
+        "descripcion": "Homogeneización del comportamiento de CRM B2B para replicar el funcionamiento de los sistemas legacy en relación con la Gestión Documental corporativa (GED)."
+      },
+      "PRJ-10167": {
+        "jira": "PRJ-10167",
+        "summary": "Redes privadas 5G MPV2",
+        "despliegue": "Completo",
+        "descripcion": "Introducción de mejoras en el proceso de estandarización técnica de *Network Slicing* y MPNS 5G Stand Alone (SA) para Grandes Empresas (GGEE)."
+      },
+      "PRJ-11438": {
+        "jira": "PRJ-11438",
+        "summary": "NMA Jazztel: Multicanalidad en CRM4T stock tienda y desde Eshop MM con stock OL",
+        "despliegue": "Piloto",
+        "descripcion": "Activación de servicios Jazztel empleando el stock en cesión en tiendas Orange y/o Neksus para posibilitar la entrega inmediata del terminal en mano. Permite contratar en CRM4T con entrega en tienda y multicanalidad con stock OL, así como la operativa desde eShop MM con stock OL. Despliegue en modo piloto con apertura gradual por flujos funcionales."
+      },
+      "PRJ-11439": {
+        "jira": "PRJ-11439",
+        "summary": "NMA Jazztel: Multicanalidad en CRM4T stock tienda y desde Eshop MM con stock OL",
+        "despliegue": "Piloto",
+        "descripcion": "Activación de servicios Jazztel empleando el stock en cesión en tiendas Orange y/o Neksus para posibilitar la entrega inmediata del terminal en mano. Permite contratar en CRM4T con entrega en tienda y multicanalidad con stock OL, así como la operativa desde eShop MM con stock OL. Despliegue en modo piloto con apertura gradual por flujos funcionales."
+      },
+      "PRJ-11538": {
+        "jira": "PRJ-11538",
+        "summary": "Gestiones Administrativas SAC en servicios de Fijo (Fase 2 Desocultación)",
+        "despliegue": "Completo",
+        "descripcion": "Habilitación en CRMB2B de la tramitación de solicitudes de cliente para cambio de cuenta bancaria, modificación de domicilio social, corrección de datos de titularidad y realización de ajustes en facturación sobre servicios de fijo."
+      },
+      "PRJ-12001": {
+        "jira": "PRJ-12001",
+        "summary": "Integración marca Jazztel en +Consents (PRJ-10957)",
+        "despliegue": "Completo",
+        "descripcion": "Integración técnica de los sistemas y frontales de la marca Jazztel con la plataforma corporativa +Consents para la recolección, actualización y almacenamiento normativo de los consentimientos LOPD del cliente."
+      },
+      "PRJ-10957": {
+        "jira": "PRJ-10957",
+        "summary": "Integración marca Jazztel en +Consents (PRJ-10957)",
+        "despliegue": "Completo",
+        "descripcion": "Integración técnica de los sistemas y frontales de la marca Jazztel con la plataforma corporativa +Consents para la recolección, actualización y almacenamiento normativo de los consentimientos LOPD del cliente."
+      },
+      "PRJ-11555": {
+        "jira": "PRJ-11555",
+        "summary": "Parada en el flujo de provisión Boreal - Excalibur",
+        "despliegue": "Completo",
+        "descripcion": "Implementación de un mecanismo de parada en Boreal ante cualquier incidencia o error detectado durante la provisión en Excalibur, reteniendo la orden en el buzón de error para su diagnóstico y gestión por parte de soporte, impidiendo avances anómalos o desincronizados."
+      },
+      "PRJ-11457": {
+        "jira": "PRJ-11457",
+        "summary": "EREBOR - SOHO PI3: Captación Convergente y Multi-sede",
+        "despliegue": "Piloto",
+        "descripcion": "Habilitación en la plataforma digital EREBOR del nuevo *Customer Journey* para empresas SOHO, cubriendo tanto la captación convergente como la funcionalidad de gestión multisede para clientes con múltiples ubicaciones geográficas."
+      },
+      "PRJ-12130": {
+        "jira": "PRJ-12130",
+        "summary": "Fase 2 - Descuentos por volumen",
+        "despliegue": "PaP Técnico",
+        "descripcion": "En ejecución de casos de prueba adicionales; pendiente de entrega de issue correctivo."
+      },
+      "PRJ-11603": {
+        "jira": "PRJ-11603",
+        "summary": "CRMB2B: Operaciones móviles en CRMB2B KRTO - MPV2",
+        "despliegue": "PaP Técnico",
+        "descripcion": "Despliegue en modo oculto; únicamente habilitados cambios de tarjeta específicos para colectivo de pruebas."
+      },
+      "PRJ-12011": {
+        "jira": "PRJ-12011",
+        "summary": "PRJ-10507 Gestión terminales Pyme en CRMB2B con OL MPV1 - PAP_2",
+        "despliegue": "PaP Técnico",
+        "descripcion": "Reprogramado para próxima ventana de despliegue (Release R11)."
+      },
+      "PRJ-10507": {
+        "jira": "PRJ-10507",
+        "summary": "PRJ-10507 Gestión terminales Pyme en CRMB2B con OL MPV1 - PAP_2",
+        "despliegue": "PaP Técnico",
+        "descripcion": "Reprogramado para próxima ventana de despliegue (Release R11)."
+      }
+    },
+    "2026R11": {
+      "PRJ-12335": {
+        "jira": "PRJ-12335",
+        "summary": "PRJ-10507 Gestión terminales Pyme en CRMB2B con OL MPV1 - PAP_3",
+        "despliegue": "Piloto",
+        "descripcion": ""
+      },
+      "PRJ-12315": {
+        "jira": "PRJ-12315",
+        "summary": "Cambio arquitectura servicios Online Teide (de JMS a REST) - Cambio WS - R11",
+        "despliegue": "Completo",
+        "descripcion": ""
+      },
+      "PRJ-12305": {
+        "jira": "PRJ-12305",
+        "summary": "PRJ-12305 Tipificaciones Móviles en CRMB2B (Fase 1)",
+        "despliegue": "Completo",
+        "descripcion": "Se implementan diversas mejoras en la tipificación de interacciones y escalados de casos en CRM B2B sobre la base de lo implementado en proyectos previos."
+      },
+      "PRJ-12182": {
+        "jira": "PRJ-12182",
+        "summary": "PRJ-11956 FASE 2. ONURIS - NABOO",
+        "despliegue": "Oculto",
+        "descripcion": ""
+      },
+      "PRJ-12079": {
+        "jira": "PRJ-12079",
+        "summary": "Vista 360 para DHOs",
+        "despliegue": "Completo",
+        "descripcion": ""
+      },
+      "PRJ-12005": {
+        "jira": "PRJ-12005",
+        "summary": "Integración Marca Jazztel +Consents (PRJ-10957) - Eliminación funcionalidades obsoletas",
+        "despliegue": "Completo",
+        "descripcion": ""
+      },
+      "PRJ-11936": {
+        "jira": "PRJ-11936",
+        "summary": "Calculo penalización Big Pyme CRMB2B",
+        "despliegue": "Completo",
+        "descripcion": ""
+      },
+      "PRJ-11912": {
+        "jira": "PRJ-11912",
+        "summary": "MPV4 Lego Mejoras Portfolio",
+        "despliegue": "Completo",
+        "descripcion": "Mejoras de onboarding para plataformas de streaming en el portfolio Lego en MiOrange."
+      },
+      "PRJ-11763": {
+        "jira": "PRJ-11763",
+        "summary": "Corrección Teléfonos de Contacto TAFS Recogidas Fijo",
+        "despliegue": "Completo",
+        "descripcion": ""
+      },
+      "PRJ-11706": {
+        "jira": "PRJ-11706",
+        "summary": "Optimización consultas oferta Teide",
+        "despliegue": "Completo",
+        "descripcion": "Dentro del plan de choque IT, se mejora la forma en que Teide gestiona y consulta su catálogo de ofertas, para evitar bloqueos y errores que podían producirse por el elevado volumen de información."
+      },
+      "PRJ-11491": {
+        "jira": "PRJ-11491",
+        "summary": "Normativa Legal: Información Cargadores en Digital",
+        "despliegue": "Completo",
+        "descripcion": ""
+      },
+      "PRJ-11155": {
+        "jira": "PRJ-11155",
+        "summary": "BSCS - mejora en módulo de cambios masivos para B2B",
+        "despliegue": "Completo",
+        "descripcion": ""
+      },
+      "PRJ-10909": {
+        "jira": "PRJ-10909",
+        "summary": "Productificar Google Cloud Platform (GCP)",
+        "despliegue": "Completo",
+        "descripcion": "Se habilita para nuestros clientes de Grandes Cuentas la posibilidad de contratación a través de ORANGE y KRT el Servicio de Nube Pública de Google bajo un modelo de facturación basado en el consumo real que hace el cliente de ello."
+      },
+      "PRJ-10699": {
+        "jira": "PRJ-10699",
+        "summary": "Responsabilidades CRMB2B y Carterización",
+        "despliegue": "Completo",
+        "descripcion": ""
+      },
+      "PRJ-8802": {
+        "jira": "PRJ-8802",
+        "summary": "Atlas Jazztel",
+        "despliegue": "Oculto",
+        "descripcion": ""
+      },
+      "PRJ-11406": {
+        "jira": "PRJ-11406",
+        "summary": "FASE 2 (PRJ-8506) CdA PRJ-11407",
+        "despliegue": "Piloto",
+        "descripcion": ""
+      },
+      "PRJ-11207": {
+        "jira": "PRJ-11207",
+        "summary": "Evolución VAP en Promotarget",
+        "despliegue": "Completo",
+        "descripcion": "Incluir nuevas variables a evaluar por el PROMOTARGET asociadas a VAPs en Residencial & Soho"
+      },
+      "PRJ-11603": {
+        "jira": "PRJ-11603",
+        "summary": "CRMB2B: OPERACIONES MOVILES EN CRMB2B KRTO - MPV2",
+        "despliegue": "Completo",
+        "descripcion": "Ampliación de operaciones de contratación y cambio de tarjeta móvil (SIM, eSIM) para líneas Empresa tanto principales como secundarias en CRMB2B."
+      },
+      "PRJ-11167": {
+        "jira": "PRJ-11167",
+        "summary": "Seguro Electroplus para la Tienda",
+        "despliegue": "Completo",
+        "descripcion": "Nuevo seguro para los productos que no pueden ser asegurados con el seguro móvil global o el seguro multimedia."
+      },
+      "PRJ-10987": {
+        "jira": "PRJ-10987",
+        "summary": "Desarrollo de PA del Fijo Femtoceldas",
+        "despliegue": "Completo",
+        "descripcion": "Creación de nuevos productos de evaluación y mejora de cobertura indoor para clientes PYME en Conecta PYMES y Big PYME tanto en cadena CRMB2B como BAU."
+      },
+      "PRJ-8058": {
+        "jira": "PRJ-8058",
+        "summary": "Resolución GAPs técnicos en proceso cambio de cuenta bancaria",
+        "despliegue": "Completo",
+        "descripcion": "Resolver todos los GAPs técnicos existentes en el proceso de Cambio de Cuenta Bancaria para Clientes Convergentes, bi-equipados, Stand Alone y MO."
+      },
+      "PRJ-11283": {
+        "jira": "PRJ-11283",
+        "summary": "Migración de GED de  Cloud en AWS a Cloud de Google",
+        "despliegue": "Completo",
+        "descripcion": ""
+      },
+      "PRJ-12059": {
+        "jira": "PRJ-12059",
+        "summary": "PRJ-11469 Fase 2 Resto de impactos",
+        "despliegue": "Completo",
+        "descripcion": ""
+      },
+      "PRJ-11458": {
+        "jira": "PRJ-11458",
+        "summary": "EREBOR - SOHO PI4: Renove + Marketplace",
+        "despliegue": "Piloto",
+        "descripcion": "Habilitar en Erebor el nuevo Customer Journey para Empresas SOHO – Clientes de cartera (Renoves y MarketPlace)."
+      },
+      "PRJ-11894": {
+        "jira": "PRJ-11894",
+        "summary": "Ciber Protección Mejoras",
+        "despliegue": "Piloto",
+        "descripcion": "Integrar la funcionalidad del proveedor F-Secure, app de Ciber Protección para que esté disponible para los clientes convergentes y MO del segmento B2C. Introducimos una nueva solución de seguridad multidispositivo \"Ciberprotección Global\" a través de Orange Cyberdefense (OCD), la cual sustituye comercialmente a la antigua solución de Ciberprotección offnet de Cyan. Su despliegue para B2C incluye una modalidad de pago y otra gratuita integrada en tarifas seleccionadas."
+      },
+      "PRJ-11764": {
+        "jira": "PRJ-11764",
+        "summary": "Fase 2 Frontales 1 Linea LEGO",
+        "despliegue": "Completo",
+        "descripcion": ""
+      },
+      "PRJ-12386": {
+        "jira": "PRJ-12386",
+        "summary": "Fase Acciones de recobro (COLLECTIONS)",
+        "despliegue": "Piloto",
+        "descripcion": ""
+      },
+      "PRJ-11940": {
+        "jira": "PRJ-11940",
+        "summary": "Contratación de Seguros en S8 contra OMS - FASE 2",
+        "despliegue": "Completo",
+        "descripcion": ""
+      },
+      "PRJ-12011": {
+        "jira": "PRJ-12011",
+        "summary": "PRJ-10507 Gestión terminales Pyme en CRMB2B con OL MPV1 - PAP_2",
+        "despliegue": "Piloto",
+        "descripcion": "Implementar los modelos de Gestión terminales Pyme en CRMB2B para Multimarca (Orange y KRT), Modalidad OL (Operador Logístico), Modo VAP (Venta a Plazos) y Captación."
+      },
+      "PRJ-12415": {
+        "jira": "PRJ-12415",
+        "summary": "Envio comunicaciones Kairós (Padre: PRJ-10614)",
+        "despliegue": "Oculto",
+        "descripcion": ""
+      },
+      "PRJ-12249": {
+        "jira": "PRJ-12249",
+        "summary": "Modificación datos de incidencias-solicitudes en Teide para ATAC",
+        "despliegue": "Completo",
+        "descripcion": ""
+      },
+      "PRJ-12268": {
+        "jira": "PRJ-12268",
+        "summary": "Prunado de Catálogo - Tabla de transiciones",
+        "despliegue": "Completo",
+        "descripcion": ""
+      },
+      "PRJ-12186": {
+        "jira": "PRJ-12186",
+        "summary": "Ev CRMs - Gestión de usuarios y grupos funcionales en TEIDE",
+        "despliegue": "Completo",
+        "descripcion": ""
+      },
+      "PRJ-11963": {
+        "jira": "PRJ-11963",
+        "summary": "Fase 2 : venta de productos 3P  por  Whatsapp",
+        "despliegue": "Completo",
+        "descripcion": ""
+      },
+      "PRJ-11932": {
+        "jira": "PRJ-11932",
+        "summary": "Bono compartido llamadas internacionales Big Pyme. Necesidades de Fraude pendientes de PRJ-11600",
+        "despliegue": "Completo",
+        "descripcion": ""
+      }
+    }
+  },
+  "projects": {
+    "PRJ-11603": {
+      "jira": "PRJ-11603",
+      "summary": "CRMB2B: OPERACIONES MOVILES EN CRMB2B KRTO - MPV2",
+      "despliegue": "Completo",
+      "descripcion": "Ampliación de operaciones de contratación y cambio de tarjeta móvil (SIM, eSIM) para líneas Empresa tanto principales como secundarias en CRMB2B.",
+      "releases": [
+        "2026R9",
+        "2026R11"
+      ]
+    },
+    "PRJ-12011": {
+      "jira": "PRJ-12011",
+      "summary": "PRJ-10507 Gestión terminales Pyme en CRMB2B con OL MPV1 - PAP_2",
+      "despliegue": "Piloto",
+      "descripcion": "Implementar los modelos de Gestión terminales Pyme en CRMB2B para Multimarca (Orange y KRT), Modalidad OL (Operador Logístico), Modo VAP (Venta a Plazos) y Captación.",
+      "releases": [
+        "2026R9",
+        "2026R11"
+      ]
+    },
+    "PRJ-11512": {
+      "jira": "PRJ-11512",
+      "summary": "Nuevas características porfolio SOHO 2026",
+      "despliegue": "Completo",
+      "descripcion": "Para acompañar la actualización de precios del porfolio SOHO se introducen nuevas ventajas que enriquecen la propuesta de valor para nuestros clientes: nuevo control horario multilicencia, fibra oro gratuita y packs de contenidos de Amazon y Disney.",
+      "releases": [
+        "2026R9"
+      ]
+    },
+    "PRJ-11208": {
+      "jira": "PRJ-11208",
+      "summary": "Creación nuevas familias de descuentos móvil",
+      "despliegue": "Completo",
+      "descripcion": "Se crean nuevas familias de descuentos móvil para Residencial y SOHO OSP (solo captación) con el objetivo de compatibilizarlas con los descuentos existentes de Fidelización y Retención.",
+      "releases": [
+        "2026R9"
+      ]
+    },
+    "PRJ-11715": {
+      "jira": "PRJ-11715",
+      "summary": "LEGO Baja Diferida en OTTs",
+      "despliegue": "Completo",
+      "descripcion": "Aplicar a las nuevas OTTs creadas en el programa LEGO un flujo de baja diferida en lugar de inmediata, alineándolo con el comportamiento de los nuevos Productos Adicionales (PAs) de deportes dentro del alcance global del portafolio convergente.",
+      "releases": [
+        "2026R9"
+      ]
+    },
+    "PRJ-11605": {
+      "jira": "PRJ-11605",
+      "summary": "Seguro de Dispositivos para Productos La Tienda (Fase 2 Seguros MKP)",
+      "despliegue": "Completo",
+      "descripcion": "Incorporar dentro del proceso de venta de dispositivos de La Tienda la posibilidad de ofrecer, contratar y gestionar seguros asociados a los dispositivos. El cliente podrá conocer, en el momento de la compra y en días posteriores, si su dispositivo es asegurable, qué modalidades existen y contratar de manera fluida la póliza que mejor se adapte a sus necesidades con experiencia omnicanal.",
+      "releases": [
+        "2026R9"
+      ]
+    },
+    "PRJ-11939": {
+      "jira": "PRJ-11939",
+      "summary": "Contratación de Seguros en Teide contra OMS (Fase 1)",
+      "despliegue": "Piloto",
+      "descripcion": "Modificación del flujo actual de contratación de seguros desde TEIDE para integrarlo directamente con Bolttech. El objetivo es que la comercialización de seguros sea independiente de la parte Telco, dotando a negocio y clientes de mayor agilidad y flexibilidad. Constituye la fase técnica para el inicio de piloto.",
+      "releases": [
+        "2026R9"
+      ]
+    },
+    "PRJ-12237": {
+      "jira": "PRJ-12237",
+      "summary": "Marketplace MPV4: Carritos Mixtos en Digital (Fase 1)",
+      "despliegue": "Completo",
+      "descripcion": "Habilitación en eshop (EREBOR) del flujo comercial para la compra conjunta de productos propios (1P) y de terceros (3P, procedentes de otros *sellers* del Marketplace) en un único acto comercial unificado.",
+      "releases": [
+        "2026R9"
+      ]
+    },
+    "PRJ-11600": {
+      "jira": "PRJ-11600",
+      "summary": "Bono compartido llamadas internacionales Big PYME",
+      "despliegue": "Completo",
+      "descripcion": "Activación de un nuevo Bono Compartido de llamadas internacionales orientado a clientes de la tipología Big PYME.",
+      "releases": [
+        "2026R9"
+      ]
+    },
+    "PRJ-11855": {
+      "jira": "PRJ-11855",
+      "summary": "Comprobante de Venta móvil MPV2",
+      "despliegue": "Modo Oculto",
+      "descripcion": "Implementación de funcionalidades clave para móvil: validación de contrato existente, generación del Comprobante de Venta (CdV), documento de solicitud de Portabilidad y soporte de firma digital. Adicionalmente, incluye mejoras evolutivas para el servicio Fijo.",
+      "releases": [
+        "2026R9"
+      ]
+    },
+    "PRJ-10698": {
+      "jira": "PRJ-10698",
+      "summary": "Modificaciones en CRMB2B para GED",
+      "despliegue": "Completo",
+      "descripcion": "Homogeneización del comportamiento de CRM B2B para replicar el funcionamiento de los sistemas legacy en relación con la Gestión Documental corporativa (GED).",
+      "releases": [
+        "2026R9"
+      ]
+    },
+    "PRJ-10167": {
+      "jira": "PRJ-10167",
+      "summary": "Redes privadas 5G MPV2",
+      "despliegue": "Completo",
+      "descripcion": "Introducción de mejoras en el proceso de estandarización técnica de *Network Slicing* y MPNS 5G Stand Alone (SA) para Grandes Empresas (GGEE).",
+      "releases": [
+        "2026R9"
+      ]
+    },
+    "PRJ-11438": {
+      "jira": "PRJ-11438",
+      "summary": "NMA Jazztel: Multicanalidad en CRM4T stock tienda y desde Eshop MM con stock OL",
+      "despliegue": "Piloto",
+      "descripcion": "Activación de servicios Jazztel empleando el stock en cesión en tiendas Orange y/o Neksus para posibilitar la entrega inmediata del terminal en mano. Permite contratar en CRM4T con entrega en tienda y multicanalidad con stock OL, así como la operativa desde eShop MM con stock OL. Despliegue en modo piloto con apertura gradual por flujos funcionales.",
+      "releases": [
+        "2026R9"
+      ]
+    },
+    "PRJ-11439": {
+      "jira": "PRJ-11439",
+      "summary": "NMA Jazztel: Multicanalidad en CRM4T stock tienda y desde Eshop MM con stock OL",
+      "despliegue": "Piloto",
+      "descripcion": "Activación de servicios Jazztel empleando el stock en cesión en tiendas Orange y/o Neksus para posibilitar la entrega inmediata del terminal en mano. Permite contratar en CRM4T con entrega en tienda y multicanalidad con stock OL, así como la operativa desde eShop MM con stock OL. Despliegue en modo piloto con apertura gradual por flujos funcionales.",
+      "releases": [
+        "2026R9"
+      ]
+    },
+    "PRJ-11538": {
+      "jira": "PRJ-11538",
+      "summary": "Gestiones Administrativas SAC en servicios de Fijo (Fase 2 Desocultación)",
+      "despliegue": "Completo",
+      "descripcion": "Habilitación en CRMB2B de la tramitación de solicitudes de cliente para cambio de cuenta bancaria, modificación de domicilio social, corrección de datos de titularidad y realización de ajustes en facturación sobre servicios de fijo.",
+      "releases": [
+        "2026R9"
+      ]
+    },
+    "PRJ-12001": {
+      "jira": "PRJ-12001",
+      "summary": "Integración marca Jazztel en +Consents (PRJ-10957)",
+      "despliegue": "Completo",
+      "descripcion": "Integración técnica de los sistemas y frontales de la marca Jazztel con la plataforma corporativa +Consents para la recolección, actualización y almacenamiento normativo de los consentimientos LOPD del cliente.",
+      "releases": [
+        "2026R9"
+      ]
+    },
+    "PRJ-10957": {
+      "jira": "PRJ-10957",
+      "summary": "Integración marca Jazztel en +Consents (PRJ-10957)",
+      "despliegue": "Completo",
+      "descripcion": "Integración técnica de los sistemas y frontales de la marca Jazztel con la plataforma corporativa +Consents para la recolección, actualización y almacenamiento normativo de los consentimientos LOPD del cliente.",
+      "releases": [
+        "2026R9"
+      ]
+    },
+    "PRJ-11555": {
+      "jira": "PRJ-11555",
+      "summary": "Parada en el flujo de provisión Boreal - Excalibur",
+      "despliegue": "Completo",
+      "descripcion": "Implementación de un mecanismo de parada en Boreal ante cualquier incidencia o error detectado durante la provisión en Excalibur, reteniendo la orden en el buzón de error para su diagnóstico y gestión por parte de soporte, impidiendo avances anómalos o desincronizados.",
+      "releases": [
+        "2026R9"
+      ]
+    },
+    "PRJ-11457": {
+      "jira": "PRJ-11457",
+      "summary": "EREBOR - SOHO PI3: Captación Convergente y Multi-sede",
+      "despliegue": "Piloto",
+      "descripcion": "Habilitación en la plataforma digital EREBOR del nuevo *Customer Journey* para empresas SOHO, cubriendo tanto la captación convergente como la funcionalidad de gestión multisede para clientes con múltiples ubicaciones geográficas.",
+      "releases": [
+        "2026R9"
+      ]
+    },
+    "PRJ-12130": {
+      "jira": "PRJ-12130",
+      "summary": "Fase 2 - Descuentos por volumen",
+      "despliegue": "PaP Técnico",
+      "descripcion": "En ejecución de casos de prueba adicionales; pendiente de entrega de issue correctivo.",
+      "releases": [
+        "2026R9"
+      ]
+    },
+    "PRJ-10507": {
+      "jira": "PRJ-10507",
+      "summary": "PRJ-10507 Gestión terminales Pyme en CRMB2B con OL MPV1 - PAP_2",
+      "despliegue": "PaP Técnico",
+      "descripcion": "Reprogramado para próxima ventana de despliegue (Release R11).",
+      "releases": [
+        "2026R9"
+      ]
+    },
+    "PRJ-12335": {
+      "jira": "PRJ-12335",
+      "summary": "PRJ-10507 Gestión terminales Pyme en CRMB2B con OL MPV1 - PAP_3",
+      "despliegue": "Piloto",
+      "descripcion": "",
+      "releases": [
+        "2026R11"
+      ]
+    },
+    "PRJ-12315": {
+      "jira": "PRJ-12315",
+      "summary": "Cambio arquitectura servicios Online Teide (de JMS a REST) - Cambio WS - R11",
+      "despliegue": "Completo",
+      "descripcion": "",
+      "releases": [
+        "2026R11"
+      ]
+    },
+    "PRJ-12305": {
+      "jira": "PRJ-12305",
+      "summary": "PRJ-12305 Tipificaciones Móviles en CRMB2B (Fase 1)",
+      "despliegue": "Completo",
+      "descripcion": "Se implementan diversas mejoras en la tipificación de interacciones y escalados de casos en CRM B2B sobre la base de lo implementado en proyectos previos.",
+      "releases": [
+        "2026R11"
+      ]
+    },
+    "PRJ-12182": {
+      "jira": "PRJ-12182",
+      "summary": "PRJ-11956 FASE 2. ONURIS - NABOO",
+      "despliegue": "Oculto",
+      "descripcion": "",
+      "releases": [
+        "2026R11"
+      ]
+    },
+    "PRJ-12079": {
+      "jira": "PRJ-12079",
+      "summary": "Vista 360 para DHOs",
+      "despliegue": "Completo",
+      "descripcion": "",
+      "releases": [
+        "2026R11"
+      ]
+    },
+    "PRJ-12005": {
+      "jira": "PRJ-12005",
+      "summary": "Integración Marca Jazztel +Consents (PRJ-10957) - Eliminación funcionalidades obsoletas",
+      "despliegue": "Completo",
+      "descripcion": "",
+      "releases": [
+        "2026R11"
+      ]
+    },
+    "PRJ-11936": {
+      "jira": "PRJ-11936",
+      "summary": "Calculo penalización Big Pyme CRMB2B",
+      "despliegue": "Completo",
+      "descripcion": "",
+      "releases": [
+        "2026R11"
+      ]
+    },
+    "PRJ-11912": {
+      "jira": "PRJ-11912",
+      "summary": "MPV4 Lego Mejoras Portfolio",
+      "despliegue": "Completo",
+      "descripcion": "Mejoras de onboarding para plataformas de streaming en el portfolio Lego en MiOrange.",
+      "releases": [
+        "2026R11"
+      ]
+    },
+    "PRJ-11763": {
+      "jira": "PRJ-11763",
+      "summary": "Corrección Teléfonos de Contacto TAFS Recogidas Fijo",
+      "despliegue": "Completo",
+      "descripcion": "",
+      "releases": [
+        "2026R11"
+      ]
+    },
+    "PRJ-11706": {
+      "jira": "PRJ-11706",
+      "summary": "Optimización consultas oferta Teide",
+      "despliegue": "Completo",
+      "descripcion": "Dentro del plan de choque IT, se mejora la forma en que Teide gestiona y consulta su catálogo de ofertas, para evitar bloqueos y errores que podían producirse por el elevado volumen de información.",
+      "releases": [
+        "2026R11"
+      ]
+    },
+    "PRJ-11491": {
+      "jira": "PRJ-11491",
+      "summary": "Normativa Legal: Información Cargadores en Digital",
+      "despliegue": "Completo",
+      "descripcion": "",
+      "releases": [
+        "2026R11"
+      ]
+    },
+    "PRJ-11155": {
+      "jira": "PRJ-11155",
+      "summary": "BSCS - mejora en módulo de cambios masivos para B2B",
+      "despliegue": "Completo",
+      "descripcion": "",
+      "releases": [
+        "2026R11"
+      ]
+    },
+    "PRJ-10909": {
+      "jira": "PRJ-10909",
+      "summary": "Productificar Google Cloud Platform (GCP)",
+      "despliegue": "Completo",
+      "descripcion": "Se habilita para nuestros clientes de Grandes Cuentas la posibilidad de contratación a través de ORANGE y KRT el Servicio de Nube Pública de Google bajo un modelo de facturación basado en el consumo real que hace el cliente de ello.",
+      "releases": [
+        "2026R11"
+      ]
+    },
+    "PRJ-10699": {
+      "jira": "PRJ-10699",
+      "summary": "Responsabilidades CRMB2B y Carterización",
+      "despliegue": "Completo",
+      "descripcion": "",
+      "releases": [
+        "2026R11"
+      ]
+    },
+    "PRJ-8802": {
+      "jira": "PRJ-8802",
+      "summary": "Atlas Jazztel",
+      "despliegue": "Oculto",
+      "descripcion": "",
+      "releases": [
+        "2026R11"
+      ]
+    },
+    "PRJ-11406": {
+      "jira": "PRJ-11406",
+      "summary": "FASE 2 (PRJ-8506) CdA PRJ-11407",
+      "despliegue": "Piloto",
+      "descripcion": "",
+      "releases": [
+        "2026R11"
+      ]
+    },
+    "PRJ-11207": {
+      "jira": "PRJ-11207",
+      "summary": "Evolución VAP en Promotarget",
+      "despliegue": "Completo",
+      "descripcion": "Incluir nuevas variables a evaluar por el PROMOTARGET asociadas a VAPs en Residencial & Soho",
+      "releases": [
+        "2026R11"
+      ]
+    },
+    "PRJ-11167": {
+      "jira": "PRJ-11167",
+      "summary": "Seguro Electroplus para la Tienda",
+      "despliegue": "Completo",
+      "descripcion": "Nuevo seguro para los productos que no pueden ser asegurados con el seguro móvil global o el seguro multimedia.",
+      "releases": [
+        "2026R11"
+      ]
+    },
+    "PRJ-10987": {
+      "jira": "PRJ-10987",
+      "summary": "Desarrollo de PA del Fijo Femtoceldas",
+      "despliegue": "Completo",
+      "descripcion": "Creación de nuevos productos de evaluación y mejora de cobertura indoor para clientes PYME en Conecta PYMES y Big PYME tanto en cadena CRMB2B como BAU.",
+      "releases": [
+        "2026R11"
+      ]
+    },
+    "PRJ-8058": {
+      "jira": "PRJ-8058",
+      "summary": "Resolución GAPs técnicos en proceso cambio de cuenta bancaria",
+      "despliegue": "Completo",
+      "descripcion": "Resolver todos los GAPs técnicos existentes en el proceso de Cambio de Cuenta Bancaria para Clientes Convergentes, bi-equipados, Stand Alone y MO.",
+      "releases": [
+        "2026R11"
+      ]
+    },
+    "PRJ-11283": {
+      "jira": "PRJ-11283",
+      "summary": "Migración de GED de  Cloud en AWS a Cloud de Google",
+      "despliegue": "Completo",
+      "descripcion": "",
+      "releases": [
+        "2026R11"
+      ]
+    },
+    "PRJ-12059": {
+      "jira": "PRJ-12059",
+      "summary": "PRJ-11469 Fase 2 Resto de impactos",
+      "despliegue": "Completo",
+      "descripcion": "",
+      "releases": [
+        "2026R11"
+      ]
+    },
+    "PRJ-11458": {
+      "jira": "PRJ-11458",
+      "summary": "EREBOR - SOHO PI4: Renove + Marketplace",
+      "despliegue": "Piloto",
+      "descripcion": "Habilitar en Erebor el nuevo Customer Journey para Empresas SOHO – Clientes de cartera (Renoves y MarketPlace).",
+      "releases": [
+        "2026R11"
+      ]
+    },
+    "PRJ-11894": {
+      "jira": "PRJ-11894",
+      "summary": "Ciber Protección Mejoras",
+      "despliegue": "Piloto",
+      "descripcion": "Integrar la funcionalidad del proveedor F-Secure, app de Ciber Protección para que esté disponible para los clientes convergentes y MO del segmento B2C. Introducimos una nueva solución de seguridad multidispositivo \"Ciberprotección Global\" a través de Orange Cyberdefense (OCD), la cual sustituye comercialmente a la antigua solución de Ciberprotección offnet de Cyan. Su despliegue para B2C incluye una modalidad de pago y otra gratuita integrada en tarifas seleccionadas.",
+      "releases": [
+        "2026R11"
+      ]
+    },
+    "PRJ-11764": {
+      "jira": "PRJ-11764",
+      "summary": "Fase 2 Frontales 1 Linea LEGO",
+      "despliegue": "Completo",
+      "descripcion": "",
+      "releases": [
+        "2026R11"
+      ]
+    },
+    "PRJ-12386": {
+      "jira": "PRJ-12386",
+      "summary": "Fase Acciones de recobro (COLLECTIONS)",
+      "despliegue": "Piloto",
+      "descripcion": "",
+      "releases": [
+        "2026R11"
+      ]
+    },
+    "PRJ-11940": {
+      "jira": "PRJ-11940",
+      "summary": "Contratación de Seguros en S8 contra OMS - FASE 2",
+      "despliegue": "Completo",
+      "descripcion": "",
+      "releases": [
+        "2026R11"
+      ]
+    },
+    "PRJ-12415": {
+      "jira": "PRJ-12415",
+      "summary": "Envio comunicaciones Kairós (Padre: PRJ-10614)",
+      "despliegue": "Oculto",
+      "descripcion": "",
+      "releases": [
+        "2026R11"
+      ]
+    },
+    "PRJ-12249": {
+      "jira": "PRJ-12249",
+      "summary": "Modificación datos de incidencias-solicitudes en Teide para ATAC",
+      "despliegue": "Completo",
+      "descripcion": "",
+      "releases": [
+        "2026R11"
+      ]
+    },
+    "PRJ-12268": {
+      "jira": "PRJ-12268",
+      "summary": "Prunado de Catálogo - Tabla de transiciones",
+      "despliegue": "Completo",
+      "descripcion": "",
+      "releases": [
+        "2026R11"
+      ]
+    },
+    "PRJ-12186": {
+      "jira": "PRJ-12186",
+      "summary": "Ev CRMs - Gestión de usuarios y grupos funcionales en TEIDE",
+      "despliegue": "Completo",
+      "descripcion": "",
+      "releases": [
+        "2026R11"
+      ]
+    },
+    "PRJ-11963": {
+      "jira": "PRJ-11963",
+      "summary": "Fase 2 : venta de productos 3P  por  Whatsapp",
+      "despliegue": "Completo",
+      "descripcion": "",
+      "releases": [
+        "2026R11"
+      ]
+    },
+    "PRJ-11932": {
+      "jira": "PRJ-11932",
+      "summary": "Bono compartido llamadas internacionales Big Pyme. Necesidades de Fraude pendientes de PRJ-11600",
+      "despliegue": "Completo",
+      "descripcion": "",
+      "releases": [
+        "2026R11"
+      ]
+    }
+  },
+  "updated": "2026-11-20T13:42:50.582661"
+}

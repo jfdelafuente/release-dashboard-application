@@ -13,7 +13,12 @@ from pathlib import Path
 import re
 from typing import Any, Dict, Iterable
 
-from converters.src.storage_utils import atomic_write_json, get_path_lock
+from converters.src.storage_utils import (
+    atomic_write_json,
+    get_path_lock,
+    resolve_cache_dir,
+    resolve_release_overrides_path,
+)
 
 
 OVERRIDES_FILENAME = "release_desk_overrides.json"
@@ -37,7 +42,8 @@ def get_overrides_for_release(storage_dir: Path, release_name: str) -> Dict[str,
     rel = (release_name or "").strip()
     if not rel:
         return {}
-    raw = _load_raw(Path(storage_dir) / OVERRIDES_FILENAME)
+    overrides_path = resolve_release_overrides_path(Path(storage_dir))
+    raw = _load_raw(overrides_path)
     bucket = raw.get("by_release", {}).get(rel, {})
     return bucket if isinstance(bucket, dict) else {}
 
@@ -56,7 +62,7 @@ def set_fecha_prevista_override(
     if not inc_id:
         raise ValueError("incident_id es obligatorio")
 
-    overrides_path = Path(storage_dir) / OVERRIDES_FILENAME
+    overrides_path = resolve_release_overrides_path(Path(storage_dir))
     clean_date = (fecha_prevista or "").strip()
 
     with get_path_lock(overrides_path):
@@ -91,8 +97,8 @@ def load_cached_epsilon_summaries(
     storage_dir: Path,
     incident_ids: Iterable[str],
 ) -> Dict[str, Any]:
-    """Lee únicamente resúmenes ya cacheados en `<storage_dir>/.epsilon_cache/` (coste 0)."""
-    cache_dir = Path(storage_dir) / ".epsilon_cache"
+    """Lee únicamente resúmenes ya cacheados en `<storage_dir>/cache/epsilon/` o `.epsilon_cache/` (coste 0)."""
+    cache_dir = resolve_cache_dir(Path(storage_dir), "epsilon")
     summaries: Dict[str, Any] = {}
     if not cache_dir.is_dir():
         return summaries

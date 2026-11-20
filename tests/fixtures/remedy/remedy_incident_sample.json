@@ -1,0 +1,10 @@
+{
+  "id": "INC000004122710",
+  "resumen": "Error en propagación de teléfono de contacto en recogidas de fijo",
+  "estado": "Pendiente",
+  "urgencia": "Urgencia 2 - Alta",
+  "impacto": "Impacto 2 - Afectación Parcial",
+  "sistema": "Ficha de Cliente",
+  "grupoAsignado": "SISTEMAS-SOPORTE-N2",
+  "notas": "02/11/2026 09:15:00 - N1: Al tramitar baja de fibra en Ficha de Cliente y actualizar teléfono de contacto, el dato no llega a PS ni Siebel 8. Afecta al circuito de recogidas de router. 03/11/2026 14:00:00 - N2 Sistemas: Identificado bug en microservicio de sincronización MDG. Pendiente entrega de parche por proveedor en release semanal del 12/11/2026."
+}
