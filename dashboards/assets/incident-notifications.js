@@ -11,7 +11,7 @@
   'use strict';
 
   const STORAGE_KEY = 'hp_incident_notifications_state_v1';
-  const DATA_URL = '/data/output/high_priority_notifications.json';
+  const DATA_URL = '/data/agents/high_priority_notifications.json';
 
   // ============================================================
   // 1. Gestor de Persistencia de Estados en Cliente (US4)
@@ -138,6 +138,10 @@
 
     async loadData() {
       const candidates = [
+        '/data/agents/high_priority_notifications.json',
+        '../../data/agents/high_priority_notifications.json',
+        '../data/agents/high_priority_notifications.json',
+        './data/agents/high_priority_notifications.json',
         '/data/output/high_priority_notifications.json',
         '../../data/output/high_priority_notifications.json',
         '../data/output/high_priority_notifications.json',

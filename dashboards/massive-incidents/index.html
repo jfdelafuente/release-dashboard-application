@@ -1270,7 +1270,10 @@
             // Auto-cargar datos más recientes desde index.json
             async function autoLoadLatestData() {
                 try {
-                    const response = await fetch('/data/output/index.json?t=' + Date.now());
+                    let response = await fetch('/data/storage/index.json?t=' + Date.now());
+                    if (!response.ok) {
+                        response = await fetch('/data/output/index.json?t=' + Date.now());
+                    }
                     const indexData = await response.json();
 
                     if (indexData.massive && indexData.massive.files && indexData.massive.files.length > 0) {
@@ -1372,10 +1375,16 @@
 
                 // Capturar marca temporal actual de alertas para detectar cuándo finaliza el segundo plano
                 let currentHpTimestamp = null;
-                fetch('/data/output/high_priority_notifications.json?t=' + Date.now())
-                    .then(r => r.ok ? r.json() : null)
-                    .then(d => { currentHpTimestamp = d?._metadata?.generated_at || null; })
-                    .catch(() => {});
+                (async () => {
+                    try {
+                        let r = await fetch('/data/agents/high_priority_notifications.json?t=' + Date.now());
+                        if (!r.ok) r = await fetch('/data/output/high_priority_notifications.json?t=' + Date.now());
+                        if (r.ok) {
+                            const d = await r.json();
+                            currentHpTimestamp = d?._metadata?.generated_at || null;
+                        }
+                    } catch (_) {}
+                })();
 
                 const formData = new FormData();
                 formData.append('file', file);
@@ -1421,7 +1430,10 @@
                         return;
                     }
                     try {
-                        const res = await fetch('/data/output/high_priority_notifications.json?t=' + Date.now());
+                        let res = await fetch('/data/agents/high_priority_notifications.json?t=' + Date.now());
+                        if (!res.ok) {
+                            res = await fetch('/data/output/high_priority_notifications.json?t=' + Date.now());
+                        }
                         if (res.ok) {
                             const hpData = await res.json();
                             const newGenAt = hpData?._metadata?.generated_at;

@@ -120,7 +120,10 @@
 
     async function loadProjectsCatalog() {
         try {
-            var resp = await fetch('/data/projects_catalog.json?t=' + Date.now());
+            var resp = await fetch('/data/config/projects_catalog.json?t=' + Date.now());
+            if (!resp.ok) {
+                resp = await fetch('/data/projects_catalog.json?t=' + Date.now());
+            }
             if (resp.ok) {
                 var json = await resp.json();
                 if (json && typeof json === 'object') {
@@ -816,7 +819,10 @@
         updateUrlReleaseParam(releaseName);
 
         try {
-            var idxResp = await fetch('/data/output/index.json?t=' + Date.now());
+            var idxResp = await fetch('/data/storage/index.json?t=' + Date.now());
+            if (!idxResp.ok) {
+                idxResp = await fetch('/data/output/index.json?t=' + Date.now());
+            }
             var idxData = idxResp.ok ? await idxResp.json() : {};
             var files = (idxData.postmortem && idxData.postmortem.files) || [];
             state.postmortemFiles = files;
