@@ -1279,10 +1279,13 @@
                     if (indexData.massive && indexData.massive.files && indexData.massive.files.length > 0) {
                         // Obtener el archivo más reciente (primer archivo en la lista)
                         const latestFile = indexData.massive.files[0];
-                        let filePath = latestFile.path;
+                        let filePath = latestFile.path || '';
 
-                        // Ruta root-absoluta: filePath ya es relativo a la raíz del repo (ej. "data/output/xxx.json")
-                        if (!filePath.startsWith('http')) {
+                        // Ruta root-absoluta saneada: si incluye prefijo de disco absoluto (ej: C:/.../data/...), extraer desde data/
+                        const dataMarker = filePath.indexOf('data/');
+                        if (dataMarker !== -1) {
+                            filePath = '/' + filePath.substring(dataMarker);
+                        } else if (!filePath.startsWith('http') && !filePath.startsWith('/')) {
                             filePath = '/' + filePath;
                         }
 

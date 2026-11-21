@@ -1414,8 +1414,12 @@ class CustomHTTPHandler(http.server.SimpleHTTPRequestHandler):
             return
 
         # Servir archivos desde STORAGE_DIR si se solicita /data/
+        data_marker_idx = self.path.find('/data/')
+        if data_marker_idx > 0:
+            self.path = self.path[data_marker_idx:]
+
         if self.path.startswith('/data/'):
-            clean_rel = self.path[len('/data/'):].split('?')[0].lstrip('/')
+            clean_rel = urllib.parse.unquote(self.path[len('/data/'):].split('?')[0].lstrip('/'))
             candidates = [
                 STORAGE_DIR / clean_rel,
                 PROJECT_ROOT / 'data' / clean_rel,
