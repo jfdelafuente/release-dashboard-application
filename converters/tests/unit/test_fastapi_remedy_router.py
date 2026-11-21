@@ -17,6 +17,10 @@ from converters.src.fastapi_remedy_router import (
     get_remedy_detail,
     clear_fastapi_remedy_cache,
     FASTAPI_REMEDY_CACHE,
+    api_get_teams_channels,
+    api_post_teams_channels,
+    api_get_teams_audit,
+    api_post_teams_send,
 )
 from converters.src.montmc_client import RemedyNotFoundError, MonTMCError
 
@@ -218,3 +222,104 @@ def test_get_project_root_env_and_cache_dir(tmp_path, monkeypatch):
     assert _get_project_root() == fake_root
     cache_dir = _get_cache_dir()
     assert cache_dir.exists()
+
+
+# =============================================================================
+# Tests para endpoints Microsoft Teams
+# =============================================================================
+
+def test_fastapi_teams_channels_get():
+    resp = api_get_teams_channels()
+    assert resp.status_code == 200
+    data = json.loads(resp.body.decode("utf-8"))
+    assert data["success"] is True
+    assert "config" in data
+    assert "canales" in data["config"]
+
+
+def test_fastapi_teams_channels_post_valid(tmp_path, monkeypatch):
+    monkeypatch.setenv("RELEASE_DASHBOARD_STORAGE_DIR", str(tmp_path))
+    monkeypatch.setenv("RELEASE_DASHBOARD_ROOT", str(tmp_path))
+    fake_cfg = tmp_path / "config" / "teams_channels.json"
+    fake_cfg.parent.mkdir(parents=True, exist_ok=True)
+    fake_cfg.write_text("{}", encoding="utf-8")
+    valid_payload = {
+        "config": {
+            "canales": {
+                "masivas_it": {"id": "masivas_it", "nombre": "Masivas IT", "activo": True}
+            },
+            "rutas_acciones": {}
+        }
+    }
+    resp = api_post_teams_channels(payload=valid_payload)
+    assert resp.status_code == 200
+    data = json.loads(resp.body.decode("utf-8"))
+    assert data["success"] is True
+    assert data["config"]["canales"]["masivas_it"]["nombre"] == "Masivas IT"
+
+
+def test_fastapi_teams_channels_post_invalid():
+    resp = api_post_teams_channels(payload={"invalid_key": 123})
+    assert resp.status_code == 400
+    data = json.loads(resp.body.decode("utf-8"))
+    assert data["success"] is False
+    assert "Formato de configuración inválido" in data["error"]
+
+
+def test_fastapi_teams_audit_get():
+    resp = api_get_teams_audit()
+    assert resp.status_code == 200
+    data = json.loads(resp.body.decode("utf-8"))
+    assert data["success"] is True
+    assert isinstance(data["audit"], list)
+
+
+def test_fastapi_teams_send_missing_incident():
+    resp = api_post_teams_send(payload={"action": "reclamacion_worklog"})
+    assert resp.status_code == 400
+    data = json.loads(resp.body.decode("utf-8"))
+    assert data["success"] is False
+    assert "Se requiere objeto 'incident' o 'incident_id' válido" in data["error"]
+
+
+def test_fastapi_teams_send_success():
+    mock_dispatch = {
+        "success": True,
+        "status_code": 200,
+        "channel_id": "masivas_it",
+        "channel_name": "Masivas IT",
+        "response": "ok"
+    }
+    with patch("converters.src.desk_service.dispatch_teams_notification", return_value=mock_dispatch):
+        resp = api_post_teams_send(payload={
+            "action": "reclamacion_worklog",
+            "incident": {
+                "id": "INC000004179897",
+                "resumen": "Prueba despacho Teams",
+                "prioridad": "P2"
+            }
+        })
+        assert resp.status_code == 200
+        data = json.loads(resp.body.decode("utf-8"))
+        assert data["success"] is True
+        assert data["channel_id"] == "masivas_it"
+
+
+def test_fastapi_teams_send_failure_502():
+    mock_dispatch = {
+        "success": False,
+        "status_code": 500,
+        "error": "Error de conexión Webhook"
+    }
+    with patch("converters.src.desk_service.dispatch_teams_notification", return_value=mock_dispatch):
+        resp = api_post_teams_send(payload={
+            "action": "reclamacion_worklog",
+            "incident": {
+                "id": "INC000004179897",
+                "resumen": "Prueba error despacho"
+            }
+        })
+        assert resp.status_code == 502
+        data = json.loads(resp.body.decode("utf-8"))
+        assert data["success"] is False
+        assert "Error de conexión Webhook" in data["error"]

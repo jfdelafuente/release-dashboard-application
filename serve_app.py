@@ -137,6 +137,10 @@ try:
         service_get_cached_epsilon,
         service_get_health,
         service_get_remedy_detail,
+        service_get_teams_channels,
+        service_set_teams_channels,
+        service_get_teams_audit,
+        service_send_teams,
     )
     REMEDY_DETAIL_CACHE = GLOBAL_REMEDY_CACHE
 except (ImportError, Exception):
@@ -151,10 +155,18 @@ except (ImportError, Exception):
             service_get_cached_epsilon,
             service_get_health,
             service_get_remedy_detail,
+            service_get_teams_channels,
+            service_set_teams_channels,
+            service_get_teams_audit,
+            service_send_teams,
         )
         REMEDY_DETAIL_CACHE = GLOBAL_REMEDY_CACHE
     except (ImportError, Exception):
         REMEDY_DETAIL_CACHE = {}
+        service_get_teams_channels = None
+        service_set_teams_channels = None
+        service_get_teams_audit = None
+        service_send_teams = None
 
 try:
     from converters.src.storage_utils import resolve_cache_dir
@@ -1252,6 +1264,10 @@ class CustomHTTPHandler(http.server.SimpleHTTPRequestHandler):
 
     def handle_teams_channels_get(self):
         """Maneja GET /api/teams/channels retornando la configuración de canales."""
+        if service_get_teams_channels:
+            status_code, payload = service_get_teams_channels(project_root=PROJECT_ROOT)
+            self._send_json(status_code, payload)
+            return
         if not load_teams_config:
             self._send_json(500, {"success": False, "error": "Módulo teams_notifier no disponible"})
             return
@@ -1260,6 +1276,10 @@ class CustomHTTPHandler(http.server.SimpleHTTPRequestHandler):
 
     def handle_teams_audit_get(self):
         """Maneja GET /api/teams/audit retornando el historial de despachos a Teams."""
+        if service_get_teams_audit:
+            status_code, payload = service_get_teams_audit(project_root=PROJECT_ROOT)
+            self._send_json(status_code, payload)
+            return
         audit_file = PROJECT_ROOT / "data" / "output" / "teams_delivery_audit.json"
         if audit_file.is_file():
             try:
@@ -1274,13 +1294,17 @@ class CustomHTTPHandler(http.server.SimpleHTTPRequestHandler):
 
     def handle_teams_channels_post(self):
         """Maneja POST /api/teams/channels actualizando la configuración de canales."""
-        if not save_teams_config:
-            self._send_json(500, {"success": False, "error": "Módulo teams_notifier no disponible"})
-            return
         try:
             content_length = int(self.headers.get('Content-Length', 0))
             raw_body = self.rfile.read(content_length)
             body = json.loads(raw_body.decode('utf-8'))
+            if service_set_teams_channels:
+                status_code, payload = service_set_teams_channels(payload=body, project_root=PROJECT_ROOT)
+                self._send_json(status_code, payload)
+                return
+            if not save_teams_config:
+                self._send_json(500, {"success": False, "error": "Módulo teams_notifier no disponible"})
+                return
             cfg = body.get("config", body)
             if not isinstance(cfg, dict) or "canales" not in cfg:
                 self._send_json(400, {"success": False, "error": "Formato de configuración inválido"})
@@ -1295,13 +1319,17 @@ class CustomHTTPHandler(http.server.SimpleHTTPRequestHandler):
 
     def handle_teams_send(self):
         """Maneja POST /api/teams/send despachando una tarjeta adaptativa a Microsoft Teams."""
-        if not dispatch_teams_notification:
-            self._send_json(500, {"success": False, "error": "Módulo teams_notifier no disponible"})
-            return
         try:
             content_length = int(self.headers.get('Content-Length', 0))
             raw_body = self.rfile.read(content_length)
             body = json.loads(raw_body.decode('utf-8'))
+            if service_send_teams:
+                status_code, payload = service_send_teams(payload=body, project_root=PROJECT_ROOT)
+                self._send_json(status_code, payload)
+                return
+            if not dispatch_teams_notification:
+                self._send_json(500, {"success": False, "error": "Módulo teams_notifier no disponible"})
+                return
 
             action = body.get("action", "reclamacion_worklog")
             incident = body.get("incident")

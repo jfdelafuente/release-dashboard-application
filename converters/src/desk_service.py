@@ -34,7 +34,28 @@ from converters.src.storage_utils import (
     build_release_desk_health,
     get_path_lock,
     resolve_cache_dir,
+    resolve_high_priority_notifications_path,
+    resolve_teams_audit_path,
+    resolve_teams_channels_path,
 )
+
+try:
+    from converters.src.teams_notifier import (
+        dispatch_teams_notification,
+        load_teams_config,
+        save_teams_config,
+    )
+except ImportError:
+    try:
+        from teams_notifier import (
+            dispatch_teams_notification,
+            load_teams_config,
+            save_teams_config,
+        )
+    except ImportError:
+        dispatch_teams_notification = None
+        load_teams_config = None
+        save_teams_config = None
 
 logger = logging.getLogger("release_dashboard.desk_service")
 
@@ -349,3 +370,145 @@ def service_get_health(
     payload = build_release_desk_health(target_storage, root)
     status_code = 200 if payload.get("status") == "ok" else 503
     return status_code, payload
+
+
+# =============================================================================
+# Servicios: Microsoft Teams (Canales, Auditoría y Notificaciones)
+# =============================================================================
+
+def service_get_teams_channels(
+    storage_dir: Optional[Path] = None,
+    project_root: Optional[Path] = None,
+) -> Tuple[int, Dict[str, Any]]:
+    """Retorna la configuración actual de canales de Microsoft Teams."""
+    if not load_teams_config:
+        return 500, {"success": False, "error": "Módulo teams_notifier no disponible"}
+    root = resolve_project_root(project_root)
+    storage = resolve_storage_dir(storage_dir, root)
+    cfg_path = resolve_teams_channels_path(storage_dir=storage, project_root=root)
+    try:
+        cfg = load_teams_config(cfg_path)
+        return 200, {"success": True, "config": cfg}
+    except Exception as exc:
+        logger.exception("Error al cargar configuración de canales Teams: %s", exc)
+        return 500, {"success": False, "error": f"Error al cargar configuración: {exc}"}
+
+
+def service_set_teams_channels(
+    payload: Any,
+    storage_dir: Optional[Path] = None,
+    project_root: Optional[Path] = None,
+) -> Tuple[int, Dict[str, Any]]:
+    """Valida y guarda la configuración de canales de Microsoft Teams."""
+    if not save_teams_config:
+        return 500, {"success": False, "error": "Módulo teams_notifier no disponible"}
+    root = resolve_project_root(project_root)
+    storage = resolve_storage_dir(storage_dir, root)
+    cfg_path = resolve_teams_channels_path(storage_dir=storage, project_root=root)
+
+    if not isinstance(payload, dict):
+        return 400, {"success": False, "error": "Formato de configuración inválido"}
+
+    cfg = payload.get("config", payload)
+    if not isinstance(cfg, dict) or "canales" not in cfg:
+        return 400, {"success": False, "error": "Formato de configuración inválido: falta 'canales'"}
+
+    try:
+        saved = save_teams_config(cfg, cfg_path)
+        if saved:
+            return 200, {
+                "success": True,
+                "message": "Configuración de canales guardada con éxito",
+                "config": cfg,
+            }
+        return 500, {"success": False, "error": "Error al persistir configuración"}
+    except Exception as exc:
+        logger.exception("Error guardando configuración de Teams: %s", exc)
+        return 400, {"success": False, "error": f"Error procesando petición: {exc}"}
+
+
+def service_get_teams_audit(
+    storage_dir: Optional[Path] = None,
+    project_root: Optional[Path] = None,
+) -> Tuple[int, Dict[str, Any]]:
+    """Retorna el historial de despachos a Teams."""
+    root = resolve_project_root(project_root)
+    storage = resolve_storage_dir(storage_dir, root)
+    audit_file = resolve_teams_audit_path(storage_dir=storage, project_root=root)
+
+    if audit_file.is_file():
+        try:
+            with open(audit_file, "r", encoding="utf-8") as f:
+                data = json.load(f)
+            return 200, {"success": True, "audit": data if isinstance(data, list) else []}
+        except Exception as exc:
+            logger.exception("Error leyendo log de auditoría Teams: %s", exc)
+            return 500, {"success": False, "error": str(exc)}
+    return 200, {"success": True, "audit": []}
+
+
+def service_send_teams(
+    payload: Any,
+    storage_dir: Optional[Path] = None,
+    project_root: Optional[Path] = None,
+) -> Tuple[int, Dict[str, Any]]:
+    """Despacha una notificación adaptativa a Microsoft Teams."""
+    if not dispatch_teams_notification:
+        return 500, {"success": False, "error": "Módulo teams_notifier no disponible"}
+    root = resolve_project_root(project_root)
+    storage = resolve_storage_dir(storage_dir, root)
+
+    if not isinstance(payload, dict):
+        return 400, {"success": False, "error": "Cuerpo de solicitud inválido"}
+
+    action = payload.get("action", "reclamacion_worklog")
+    incident = payload.get("incident")
+    incident_id = payload.get("incident_id")
+    channel_id = payload.get("channel_id")
+    group = payload.get("group")
+    teams_meeting_url = payload.get("teams_meeting_url")
+    executive_text = payload.get("executive_text")
+
+    if not incident and incident_id:
+        cat_path = resolve_high_priority_notifications_path(storage_dir=storage, project_root=root)
+        if cat_path.is_file():
+            try:
+                with open(cat_path, "r", encoding="utf-8") as f:
+                    cat = json.load(f)
+                for item in cat.get("data", []):
+                    if isinstance(item, dict) and item.get("id") == incident_id:
+                        incident = item
+                        break
+            except Exception as exc:
+                logger.warning("No se pudo leer catálogo de alta prioridad: %s", exc)
+
+    if not incident:
+        if action == "traspaso_guardia":
+            incident = {
+                "id": "RELEVO-GUARDIA",
+                "report_text": payload.get("report_text") or executive_text or "",
+                "meta_summary": payload.get("meta_summary", ""),
+            }
+        else:
+            return 400, {"success": False, "error": "Se requiere objeto 'incident' o 'incident_id' válido"}
+
+    cfg_path = resolve_teams_channels_path(storage_dir=storage, project_root=root)
+    cfg = load_teams_config(cfg_path) if load_teams_config else None
+    audit_path = resolve_teams_audit_path(storage_dir=storage, project_root=root)
+
+    try:
+        result = dispatch_teams_notification(
+            action=action,
+            incident=incident,
+            group=group,
+            channel_id=channel_id,
+            config=cfg,
+            teams_meeting_url=teams_meeting_url,
+            executive_text=executive_text,
+            audit_path=audit_path,
+        )
+        status_http = 200 if result.get("success") else 502
+        return status_http, result
+    except Exception as exc:
+        logger.exception("Fallo al despachar a Teams: %s", exc)
+        return 500, {"success": False, "error": f"Fallo al despachar a Teams: {exc}"}

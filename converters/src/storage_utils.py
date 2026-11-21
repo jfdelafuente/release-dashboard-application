@@ -206,6 +206,22 @@ def resolve_teams_channels_path(
     return candidates[0] if candidates else Path("data/config/teams_channels.json")
 
 
+def resolve_teams_audit_path(
+    storage_dir: Optional[Path] = None,
+    project_root: Optional[Path] = None,
+) -> Path:
+    """Resuelve la ruta al log de auditoría de despachos Teams (canónica: output/teams_delivery_audit.json)."""
+    candidates = []
+    if storage_dir:
+        candidates.append(Path(storage_dir) / "output" / "teams_delivery_audit.json")
+    if project_root:
+        candidates.append(Path(project_root) / "data" / "output" / "teams_delivery_audit.json")
+    for cand in candidates:
+        if cand.is_file():
+            return cand
+    return candidates[0] if candidates else Path("data/output/teams_delivery_audit.json")
+
+
 def resolve_agents_catalog_path(
     storage_dir: Optional[Path] = None,
     project_root: Optional[Path] = None,

@@ -1,4 +1,4 @@
-﻿<#
+<#
 .SYNOPSIS
     Despliegue automatizado y modernizado de Release Dashboard Application en infocodes@10.132.26.96.
 

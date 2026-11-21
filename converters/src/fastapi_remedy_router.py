@@ -11,6 +11,9 @@ Rutas expuestas:
   - GET / POST /api/release-desk/overrides: reclasificaciones y fechas previstas de Mesa de Release
   - GET / POST /api/epsilon/resumenIA/cached: resúmenes de IA en caché local
   - GET /api/health/release-desk: diagnóstico de salud integral
+  - GET / POST /api/teams/channels: configuración de canales Microsoft Teams
+  - GET /api/teams/audit: historial de auditoría de notificaciones Teams
+  - POST /api/teams/send: despacho de tarjetas adaptativas a Teams
 
 Todas las operaciones de negocio delegan en la capa unificada de servicio desk_service.py (M21),
 garantizando paridad absoluta con serve_app.py.
@@ -67,7 +70,11 @@ try:
         service_get_health,
         service_get_overrides,
         service_get_remedy_detail,
+        service_get_teams_audit,
+        service_get_teams_channels,
+        service_send_teams,
         service_set_override,
+        service_set_teams_channels,
         service_sync_postmortem,
         service_sync_remedy,
     )
@@ -82,7 +89,11 @@ except ImportError:
         service_get_health,
         service_get_overrides,
         service_get_remedy_detail,
+        service_get_teams_audit,
+        service_get_teams_channels,
+        service_send_teams,
         service_set_override,
+        service_set_teams_channels,
         service_sync_postmortem,
         service_sync_remedy,
     )
@@ -287,3 +298,51 @@ def api_health_release_desk():
     storage_dir = Path(os.environ.get("RELEASE_DASHBOARD_STORAGE_DIR", "").strip() or (root / "data"))
     code, payload = service_get_health(storage_dir=storage_dir, project_root=root)
     return JSONResponse(status_code=code, content=payload)
+
+
+# =============================================================================
+# GET / POST /api/teams/channels
+# =============================================================================
+
+@router.get("/api/teams/channels")
+@router.get("/teams/channels")
+def api_get_teams_channels():
+    root = _get_project_root()
+    storage_dir = Path(os.environ.get("RELEASE_DASHBOARD_STORAGE_DIR", "").strip() or (root / "data"))
+    code, result = service_get_teams_channels(storage_dir=storage_dir, project_root=root)
+    return JSONResponse(status_code=code, content=result)
+
+
+@router.post("/api/teams/channels")
+@router.post("/teams/channels")
+def api_post_teams_channels(payload: Dict[str, Any] = Body(...)):
+    root = _get_project_root()
+    storage_dir = Path(os.environ.get("RELEASE_DASHBOARD_STORAGE_DIR", "").strip() or (root / "data"))
+    code, result = service_set_teams_channels(payload=payload, storage_dir=storage_dir, project_root=root)
+    return JSONResponse(status_code=code, content=result)
+
+
+# =============================================================================
+# GET /api/teams/audit
+# =============================================================================
+
+@router.get("/api/teams/audit")
+@router.get("/teams/audit")
+def api_get_teams_audit():
+    root = _get_project_root()
+    storage_dir = Path(os.environ.get("RELEASE_DASHBOARD_STORAGE_DIR", "").strip() or (root / "data"))
+    code, result = service_get_teams_audit(storage_dir=storage_dir, project_root=root)
+    return JSONResponse(status_code=code, content=result)
+
+
+# =============================================================================
+# POST /api/teams/send
+# =============================================================================
+
+@router.post("/api/teams/send")
+@router.post("/teams/send")
+def api_post_teams_send(payload: Dict[str, Any] = Body(...)):
+    root = _get_project_root()
+    storage_dir = Path(os.environ.get("RELEASE_DASHBOARD_STORAGE_DIR", "").strip() or (root / "data"))
+    code, result = service_send_teams(payload=payload, storage_dir=storage_dir, project_root=root)
+    return JSONResponse(status_code=code, content=result)

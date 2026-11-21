@@ -18,8 +18,14 @@ import urllib.request
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
-CONFIG_FILE_PATH = PROJECT_ROOT / "data" / "teams_channels_config.json"
-AUDIT_LOG_PATH = PROJECT_ROOT / "data" / "output" / "teams_delivery_audit.json"
+_storage_env = os.environ.get("RELEASE_DASHBOARD_STORAGE_DIR", "").strip()
+_STORAGE_BASE = Path(_storage_env) if _storage_env else (PROJECT_ROOT / "data")
+CONFIG_FILE_PATH = (
+    _STORAGE_BASE / "config" / "teams_channels.json"
+    if (_STORAGE_BASE / "config" / "teams_channels.json").is_file()
+    else (_STORAGE_BASE / "teams_channels_config.json")
+)
+AUDIT_LOG_PATH = _STORAGE_BASE / "output" / "teams_delivery_audit.json"
 DEFAULT_REMEDY_URL = (
     "https://epsilon-itsm.si.orange.es/arsys/forms/ars_front_f5.si.orange.es/"
     "SHR:LandingConsole/Default+Administrator+View/?cacheid=e870b03e"
@@ -807,14 +813,15 @@ def send_to_teams(webhook_url: str, payload: Dict[str, Any], timeout: int = 15) 
         return False, 0, str(err)
 
 
-def record_audit_entry(entry: Dict[str, Any]) -> None:
+def record_audit_entry(entry: Dict[str, Any], audit_path: Optional[Path] = None) -> None:
     """Appends delivery record to the audit log."""
+    target_path = Path(audit_path) if audit_path else AUDIT_LOG_PATH
     try:
-        AUDIT_LOG_PATH.parent.mkdir(parents=True, exist_ok=True)
+        target_path.parent.mkdir(parents=True, exist_ok=True)
         items: List[Dict[str, Any]] = []
-        if AUDIT_LOG_PATH.is_file():
+        if target_path.is_file():
             try:
-                with open(AUDIT_LOG_PATH, "r", encoding="utf-8") as f:
+                with open(target_path, "r", encoding="utf-8") as f:
                     items = json.load(f)
                     if not isinstance(items, list):
                         items = []
@@ -826,7 +833,7 @@ def record_audit_entry(entry: Dict[str, Any]) -> None:
         if len(items) > 500:
             items = items[-500:]
 
-        with open(AUDIT_LOG_PATH, "w", encoding="utf-8") as f:
+        with open(target_path, "w", encoding="utf-8") as f:
             json.dump(items, f, indent=2, ensure_ascii=False)
     except Exception as err:
         print(f"[WARN] No se pudo guardar entrada de auditoría Teams: {err}")
@@ -839,7 +846,8 @@ def dispatch_teams_notification(
     channel_id: Optional[str] = None,
     config: Optional[Dict[str, Any]] = None,
     teams_meeting_url: Optional[str] = None,
-    executive_text: Optional[str] = None
+    executive_text: Optional[str] = None,
+    audit_path: Optional[Path] = None
 ) -> Dict[str, Any]:
     """Resolves channel, creates card payload, dispatches to Teams, and records audit."""
     cfg = config or load_teams_config()
@@ -898,7 +906,7 @@ def dispatch_teams_notification(
         "status_code": code,
         "response_excerpt": body[:200] if body else ""
     }
-    record_audit_entry(audit_entry)
+    record_audit_entry(audit_entry, audit_path=audit_path)
 
     return {
         "success": success,
