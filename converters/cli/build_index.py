@@ -95,6 +95,8 @@ def build_index(output_dir='data/output'):
     for file_path in massive_files:
         stat = file_path.stat()
         posix_str = file_path.as_posix()
+        if '/infocodes/var/storage/release-dashboard/' in posix_str:
+            posix_str = posix_str.replace('/infocodes/var/storage/release-dashboard/', 'data/')
         data_marker = posix_str.find('data/')
         rel_web_path = posix_str[data_marker:] if data_marker != -1 else f"data/output/{file_path.name}"
         file_info = {

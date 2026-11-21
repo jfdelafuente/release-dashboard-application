@@ -849,8 +849,41 @@
                 return;
             }
 
-            var path = matching.path.startsWith('http') ? matching.path : '/' + matching.path;
-            var fileResp = await fetch(path + '?t=' + Date.now());
+            var rawPath = matching.path || '';
+            if (rawPath.includes('/infocodes/var/storage/release-dashboard/')) {
+                rawPath = rawPath.replace('/infocodes/var/storage/release-dashboard/', '/data/');
+            }
+            var dataMarker = rawPath.indexOf('data/');
+            if (dataMarker !== -1) {
+                rawPath = '/' + rawPath.substring(dataMarker);
+            } else if (!rawPath.startsWith('http') && !rawPath.startsWith('/')) {
+                rawPath = '/' + rawPath;
+            }
+
+            var fileName = matching.name || rawPath.split('/').pop().split('\\').pop();
+            var candidatePaths = [];
+            if (rawPath) candidatePaths.push(rawPath);
+            if (fileName) {
+                var canCand = '/data/storage/processed/' + fileName;
+                var legCand = '/data/output/' + fileName;
+                if (!candidatePaths.includes(canCand)) candidatePaths.push(canCand);
+                if (!candidatePaths.includes(legCand)) candidatePaths.push(legCand);
+            }
+
+            var fileResp = null;
+            for (var i = 0; i < candidatePaths.length; i++) {
+                try {
+                    var r = await fetch(candidatePaths[i] + '?t=' + Date.now());
+                    if (r.ok) {
+                        fileResp = r;
+                        break;
+                    }
+                } catch (e) {}
+            }
+
+            if (!fileResp) {
+                throw new Error('No se pudo cargar el archivo de release en ninguna ruta candidata: ' + candidatePaths.join(', '));
+            }
             var jsonData = await fileResp.json();
             var rawRecords = Array.isArray(jsonData) ? jsonData : (jsonData.data || []);
             state.metadata = jsonData._metadata || {};

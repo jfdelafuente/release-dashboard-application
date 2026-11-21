@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Despliegue automatizado y modernizado de Release Dashboard Application en infocodes@10.132.26.96.
 
@@ -484,6 +484,13 @@ if (-not $SkipBuild) {
         $DataOutStaging = Join-Path $StagingDir "data\output"
         New-Item -ItemType Directory -Path $DataOutStaging -Force | Out-Null
 
+        $DataStorageStaging = Join-Path $StagingDir "data\storage"
+        if (Test-Path "$ProjectRoot\data\storage\index.json") {
+            New-Item -ItemType Directory -Path $DataStorageStaging -Force | Out-Null
+            Copy-Item "$ProjectRoot\data\storage\index.json" -Destination $DataStorageStaging
+            Write-Ok "Índice canonical (data/storage/index.json) empaquetado en el artefacto runtime"
+        }
+
         if (Test-Path "$ProjectRoot\data\output\agents_catalog.json") {
             Copy-Item "$ProjectRoot\data\output\agents_catalog.json" -Destination $DataOutStaging
             Write-Ok "Catálogo de agentes empaquetado en el artefacto runtime"
@@ -751,6 +758,13 @@ if [ ! -f "`$STORAGE_BASE/state/release_desk_overrides.json" ]; then
     cp -f "`$STORAGE_BASE/release_desk_overrides.json" "`$STORAGE_BASE/state/release_desk_overrides.json" 2>/dev/null || echo '{"by_release":{}}' > "`$STORAGE_BASE/state/release_desk_overrides.json"
 fi
 mkdir -p "`$STORAGE_BASE/.remedy_cache" "`$STORAGE_BASE/.epsilon_cache" "`$STORAGE_BASE/cache/remedy" "`$STORAGE_BASE/cache/epsilon"
+# Sincronización y compatibilidad bidireccional entre output/ y storage/processed/
+if [ -d "`$STORAGE_BASE/output" ]; then
+    mkdir -p "`$STORAGE_BASE/storage/processed"
+    python3 -c "import os, glob; [os.symlink(f, os.path.join('`$STORAGE_BASE/storage/processed', os.path.basename(f))) for f in glob.glob('`$STORAGE_BASE/output/*.json') if not os.path.lexists(os.path.join('`$STORAGE_BASE/storage/processed', os.path.basename(f)))]" 2>/dev/null || true
+fi
+# Saneamiento de rutas absolutas residuales en index.json
+sed -i 's|/infocodes/var/storage/release-dashboard/|data/|g' "`$STORAGE_BASE/output/index.json" "`$STORAGE_BASE/storage/index.json" 2>/dev/null || true
 chmod -R u+rwX,g+rwX "`$STORAGE_BASE" 2>/dev/null || true
 rm -rf "`$NEW_RELEASE_DIR/data"
 

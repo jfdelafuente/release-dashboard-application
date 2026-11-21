@@ -403,6 +403,8 @@ def build_index_for_hub(output_dir=None):
             pass
 
         posix_str = file_path.as_posix()
+        if '/infocodes/var/storage/release-dashboard/' in posix_str:
+            posix_str = posix_str.replace('/infocodes/var/storage/release-dashboard/', 'data/')
         data_marker = posix_str.find('data/')
         rel_web_path = posix_str[data_marker:] if data_marker != -1 else f"data/output/{file_path.name}"
 

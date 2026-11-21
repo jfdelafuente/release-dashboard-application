@@ -2018,7 +2018,10 @@
 
                     let filePath = matchingFile.path || '';
 
-                    // Ruta root-absoluta saneada: si incluye prefijo de disco absoluto (ej: C:/.../data/...), extraer desde data/
+                    // Ruta root-absoluta saneada: soportar prefijos VPS Linux o Windows disk
+                    if (filePath.includes('/infocodes/var/storage/release-dashboard/')) {
+                        filePath = filePath.replace('/infocodes/var/storage/release-dashboard/', '/data/');
+                    }
                     const dataMarker = filePath.indexOf('data/');
                     if (dataMarker !== -1) {
                         filePath = '/' + filePath.substring(dataMarker);
@@ -2026,10 +2029,35 @@
                         filePath = '/' + filePath;
                     }
 
-                    console.log(`Auto-loading: ${filePath}`);
+                    // Candidatos de carga resiliente (canonical /data/storage/processed y fallback /data/output)
+                    const fileName = matchingFile.name || filePath.split('/').pop().split('\\').pop();
+                    const candidatePaths = [];
+                    if (filePath) candidatePaths.push(filePath);
+                    if (fileName) {
+                        const canonicalCandidate = '/data/storage/processed/' + fileName;
+                        const legacyCandidate = '/data/output/' + fileName;
+                        if (!candidatePaths.includes(canonicalCandidate)) candidatePaths.push(canonicalCandidate);
+                        if (!candidatePaths.includes(legacyCandidate)) candidatePaths.push(legacyCandidate);
+                    }
 
-                    // Cargar el archivo JSON (cache-busting para reflejar conversiones recientes)
-                    const fileResponse = await fetch(filePath + '?t=' + Date.now());
+                    let fileResponse = null;
+                    for (const pathCandidate of candidatePaths) {
+                        try {
+                            const resp = await fetch(pathCandidate + '?t=' + Date.now());
+                            if (resp.ok) {
+                                fileResponse = resp;
+                                break;
+                            }
+                        } catch (e) {
+                            // Continuar con siguiente candidato
+                        }
+                    }
+
+                    if (!fileResponse) {
+                        throw new Error('No se pudo cargar el archivo postmortem en ninguna ruta candidata: ' + candidatePaths.join(', '));
+                    }
+
+                    console.log(`Auto-loading: ${fileResponse.url}`);
                     const jsonData = await fileResponse.json();
 
                     // Procesar datos
