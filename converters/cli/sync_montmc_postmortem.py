@@ -69,6 +69,7 @@ except ImportError:
 logger = logging.getLogger("sync_montmc_postmortem")
 
 _RELEASE_TAG_RE = re.compile(r"^\s*\[([^\]]+)\]")
+_SIMULACRO_TAG_RE = re.compile(r"simulacr|drill|mock", re.IGNORECASE)
 
 
 def _sanitize_filename_part(name: str) -> str:
@@ -78,7 +79,7 @@ def _sanitize_filename_part(name: str) -> str:
 
 
 def _infer_release_from_api(raw_incidencias: List[Dict[str, Any]]) -> Optional[str]:
-    """Extrae el primer nombre de release entre corchetes del resumen si existe (ej. [Simulacro2026R11])."""
+    """Extrae el primer nombre de release entre corchetes del resumen si existe, ignorando simulacros y pruebas."""
     for rec in raw_incidencias:
         if not isinstance(rec, dict):
             continue
@@ -86,7 +87,7 @@ def _infer_release_from_api(raw_incidencias: List[Dict[str, Any]]) -> Optional[s
         match = _RELEASE_TAG_RE.match(resumen)
         if match:
             tag = match.group(1).strip()
-            if tag:
+            if tag and not _SIMULACRO_TAG_RE.search(tag):
                 return tag
     return None
 

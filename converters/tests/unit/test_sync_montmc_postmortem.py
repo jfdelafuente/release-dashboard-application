@@ -14,6 +14,7 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 from converters.cli.sync_montmc_postmortem import (
+    _infer_release_from_api,
     resolve_active_postmortem_file,
     sync_postmortem_release,
 )
@@ -327,3 +328,19 @@ def test_sync_postmortem_reconciles_missing_non_closed_tickets(tmp_path):
     by_id = {r["ID de incidencia"]: r for r in saved["data"]}
     assert by_id["INC_MISSING_OPEN"]["Estatus"] == "Cerrado"
     assert by_id["INC_ALREADY_CLOSED"]["Estatus"] == "Cerrado"
+
+
+def test_infer_release_from_api_ignores_simulacro_and_drill():
+    incidencias = [
+        {"resumen": "[Simulacro2026R11] Conversión a Convergente..."},
+        {"resumen": "[DRILL2026R11] Prueba..."},
+        {"resumen": "[2026R11] Incidencia real..."},
+    ]
+    assert _infer_release_from_api(incidencias) == "2026R11"
+
+    only_simulacro = [
+        {"resumen": "[Simulacro2026R11] Conversión a Convergente..."},
+        {"resumen": "[Mock2026R11] Prueba..."},
+    ]
+    assert _infer_release_from_api(only_simulacro) is None
+
