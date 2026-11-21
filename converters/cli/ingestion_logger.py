@@ -15,32 +15,47 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 
-LOG_RELATIVE_PATH = Path("data") / "logs" / "ingestion_audit.log"
-AUDIT_SUMMARY_RELATIVE_PATH = Path("data") / "output" / "ingestion_audit_summary.json"
+LOG_CANONICAL_PATH = Path("data") / "observability" / "logs" / "ingestion.log"
+LOG_LEGACY_PATH = Path("data") / "logs" / "ingestion_audit.log"
+AUDIT_SUMMARY_CANONICAL_PATH = Path("data") / "observability" / "audits" / "ingestion_summary.json"
+AUDIT_SUMMARY_LEGACY_PATH = Path("data") / "output" / "ingestion_audit_summary.json"
+
+LOG_RELATIVE_PATH = LOG_CANONICAL_PATH
+AUDIT_SUMMARY_RELATIVE_PATH = AUDIT_SUMMARY_CANONICAL_PATH
 
 
 def get_log_file_path(project_root: Optional[Path] = None) -> Path:
     root = Path(project_root) if project_root else Path.cwd()
-    path = root / LOG_RELATIVE_PATH
+    path = root / LOG_CANONICAL_PATH
     path.parent.mkdir(parents=True, exist_ok=True)
     return path
 
 
 def get_summary_file_path(project_root: Optional[Path] = None) -> Path:
     root = Path(project_root) if project_root else Path.cwd()
-    path = root / AUDIT_SUMMARY_RELATIVE_PATH
+    path = root / AUDIT_SUMMARY_CANONICAL_PATH
     path.parent.mkdir(parents=True, exist_ok=True)
     return path
 
 
 def append_to_log(text: str, project_root: Optional[Path] = None) -> None:
-    """Escribe o anexa texto directamente en el fichero de log de auditoría."""
-    log_file = get_log_file_path(project_root)
+    """Escribe o anexa texto en el log de auditoría canónico y espejo legacy."""
+    root = Path(project_root) if project_root else Path.cwd()
+    log_file = get_log_file_path(root)
     try:
         with open(log_file, "a", encoding="utf-8") as f:
             f.write(text.rstrip() + "\n")
     except Exception as e:
         print(f"[WARN] No se pudo escribir en log de auditoría {log_file}: {e}")
+
+    # Espejo compatible legacy siempre garantizado para tests y procesos heredados
+    try:
+        legacy_file = root / LOG_LEGACY_PATH
+        legacy_file.parent.mkdir(parents=True, exist_ok=True)
+        with open(legacy_file, "a", encoding="utf-8") as f:
+            f.write(text.rstrip() + "\n")
+    except Exception:
+        pass
 
 
 def log_upload_start(filename: str, size_bytes: int, dashboard_type: str, project_root: Optional[Path] = None) -> None:
@@ -303,5 +318,14 @@ def write_batch_audit(
             json.dump(summary_data, f, ensure_ascii=False, indent=2)
     except Exception as e:
         print(f"[WARN] No se pudo escribir resumen JSON en {summary_file}: {e}")
+
+    # Espejo compatible legacy si el directorio output existe
+    if (root / "data" / "output").is_dir():
+        try:
+            legacy_summary = root / AUDIT_SUMMARY_LEGACY_PATH
+            with open(legacy_summary, "w", encoding="utf-8") as f:
+                json.dump(summary_data, f, ensure_ascii=False, indent=2)
+        except Exception:
+            pass
 
     return summary_file

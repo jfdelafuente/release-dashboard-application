@@ -36,9 +36,9 @@ from csv_to_json import CsvToJsonConverter
 
 # Configuración de rutas por defecto
 DATA_ROOT = Path("data")
-DEFAULT_OUTPUT_DIR = DATA_ROOT / "output"
-DEFAULT_ERROR_DIR = DATA_ROOT / "errors"
-DEFAULT_ARCHIVE_DIR = DATA_ROOT / "archive"
+DEFAULT_OUTPUT_DIR = DATA_ROOT / "storage" / "processed" if (DATA_ROOT / "storage" / "processed").exists() else DATA_ROOT / "output"
+DEFAULT_ERROR_DIR = DATA_ROOT / "observability" / "quarantine" if (DATA_ROOT / "observability" / "quarantine").exists() else DATA_ROOT / "errors"
+DEFAULT_ARCHIVE_DIR = DATA_ROOT / "storage" / "archive" if (DATA_ROOT / "storage" / "archive").exists() else DATA_ROOT / "archive"
 
 # Backward compatibility fallback
 if not DEFAULT_OUTPUT_DIR.exists():

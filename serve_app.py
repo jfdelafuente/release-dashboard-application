@@ -156,6 +156,17 @@ except (ImportError, Exception):
     except (ImportError, Exception):
         REMEDY_DETAIL_CACHE = {}
 
+try:
+    from converters.src.storage_utils import resolve_cache_dir
+except (ImportError, Exception):
+    try:
+        from storage_utils import resolve_cache_dir
+    except (ImportError, Exception):
+        def resolve_cache_dir(storage_dir, name):
+            c = Path(storage_dir) / "cache" / name
+            c.mkdir(parents=True, exist_ok=True)
+            return c
+
 # Microsoft Teams Notifier Service
 try:
     sys.path.insert(0, str(PROJECT_ROOT / 'converters' / 'src'))
@@ -509,7 +520,7 @@ class CustomHTTPHandler(http.server.SimpleHTTPRequestHandler):
             self._send_json(400, {'success': False, 'error': 'El archivo debe tener extensión .csv'})
             return
 
-        input_dir = STORAGE_DIR / 'input'
+        input_dir = STORAGE_DIR / 'storage' / 'raw' if (STORAGE_DIR / 'storage' / 'raw').exists() else (STORAGE_DIR / 'input')
         input_dir.mkdir(parents=True, exist_ok=True)
         csv_path = input_dir / filename
         csv_path.write_bytes(file_bytes)
@@ -1077,15 +1088,15 @@ class CustomHTTPHandler(http.server.SimpleHTTPRequestHandler):
         code_str = str(code).strip().upper()
         if code_str.startswith("INC"):
             try:
-                from converters.src.storage_utils import atomic_write_json, get_path_lock
-                cache_dir = PROJECT_ROOT / "data" / ".epsilon_cache"
+                from converters.src.storage_utils import atomic_write_json, get_path_lock, resolve_cache_dir
+                cache_dir = resolve_cache_dir(PROJECT_ROOT / "data", "epsilon")
                 cache_file = cache_dir / f"{code_str}.json"
                 with get_path_lock(cache_file):
                     atomic_write_json(cache_file, data_or_errors, create_backup=False, indent=2)
                 cache_bytes = json.dumps(data_or_errors, ensure_ascii=False, indent=2).encode('utf-8')
                 EPSILON_CACHE[code_str] = (time.time(), cache_bytes, 200)
             except Exception as write_err:
-                print(f"  Aviso: no se pudo persistir en .epsilon_cache: {write_err}")
+                print(f"  Aviso: no se pudo persistir en cache epsilon: {write_err}")
 
         # Responder 200 OK estructurado con data y meta
         response_payload = {
@@ -1227,7 +1238,7 @@ class CustomHTTPHandler(http.server.SimpleHTTPRequestHandler):
         force = 'force' in q_params or 'refresh' in q_params or (q_params.get('force', [''])[0].lower() in ('1', 'true', 'yes'))
         no_cache = force or ('no-cache' in self.headers.get('Cache-Control', ''))
 
-        cache_dir = PROJECT_ROOT / "data" / ".remedy_cache"
+        cache_dir = resolve_cache_dir(PROJECT_ROOT / "data", "remedy")
         status_code, payload, _ = service_get_remedy_detail(
             id_remedy=clean_id,
             force=no_cache,
@@ -1563,8 +1574,9 @@ if __name__ == '__main__':
             print(f"  [AVISO M18] Directorio persistente NO escribible ({storage_status['path']}): {storage_status['error']}")
         else:
             print(f"  [Storage OK] Directorio persistente escribible: {storage_status['path']}")
-        for cache_name in (".epsilon_cache", ".remedy_cache"):
-            stats = prune_cache_dir(PROJECT_ROOT / "data" / cache_name, max_age_days=30, max_files=2000)
+        for cache_name in ("epsilon", "remedy"):
+            c_dir = resolve_cache_dir(STORAGE_DIR, cache_name)
+            stats = prune_cache_dir(c_dir, max_age_days=30, max_files=2000)
             pruned = stats["deleted_expired"] + stats["deleted_overflow"]
             if pruned > 0:
                 print(f"  [Cache Prune] {cache_name}: eliminados {pruned} ficheros (restantes: {stats['remaining']})")

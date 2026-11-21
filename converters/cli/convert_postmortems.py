@@ -45,9 +45,9 @@ from csv_to_json.postmortem_converter import PostmortemConverter
 
 # Configuración de rutas por defecto
 DATA_ROOT = Path("data")
-DEFAULT_OUTPUT_DIR = DATA_ROOT / "output"
-DEFAULT_ERROR_DIR = DATA_ROOT / "errors"
-DEFAULT_ARCHIVE_DIR = DATA_ROOT / "archive"
+DEFAULT_OUTPUT_DIR = DATA_ROOT / "storage" / "processed" if (DATA_ROOT / "storage" / "processed").exists() else DATA_ROOT / "output"
+DEFAULT_ERROR_DIR = DATA_ROOT / "observability" / "quarantine" if (DATA_ROOT / "observability" / "quarantine").exists() else DATA_ROOT / "errors"
+DEFAULT_ARCHIVE_DIR = DATA_ROOT / "storage" / "archive" if (DATA_ROOT / "storage" / "archive").exists() else DATA_ROOT / "archive"
 
 # Backward compatibility fallback
 if not DEFAULT_OUTPUT_DIR.exists():
@@ -429,16 +429,27 @@ def build_index_for_hub(output_dir=None):
             'files': []
         })
 
-    # Escribir index.json actualizado
-    try:
-        with open(index_file, 'w', encoding='utf-8') as f:
-            json.dump(full_index, f, indent=2, ensure_ascii=False)
-        print_success(f"Index actualizado: {index_file}")
-        return True
+    # Escribir index.json actualizado (con soporte de espejo canonical y legacy)
+    targets = [index_file]
+    canonical_index = Path('data/storage/index.json')
+    legacy_index = Path('data/output/index.json')
+    if canonical_index.parent.exists() and canonical_index not in targets:
+        targets.append(canonical_index)
+    if legacy_index.parent.exists() and legacy_index not in targets:
+        targets.append(legacy_index)
 
-    except IOError as e:
-        print_error(f"Error escribiendo index.json: {e}")
-        return False
+    success = True
+    for target in targets:
+        try:
+            target.parent.mkdir(parents=True, exist_ok=True)
+            with open(target, 'w', encoding='utf-8') as f:
+                json.dump(full_index, f, indent=2, ensure_ascii=False)
+            print_success(f"Index actualizado: {target}")
+        except IOError as e:
+            print_error(f"Error escribiendo {target}: {e}")
+            success = False
+
+    return success
 
 
 def main():

@@ -133,6 +133,8 @@ def find_candidate_projects_csv(release_code: str, base_dir: Optional[Path | str
     num = m.group(2) if m else ""
 
     candidates = [
+        root / "data" / "storage" / "projects" / f"{code_upper}.csv",
+        root / "data" / "storage" / "projects" / f"{code_lower}.csv",
         root / "data" / "projects" / f"{code_upper}.csv",
         root / "data" / "projects" / f"{code_lower}.csv",
         root / f"proyecto_{code_lower}.csv",
