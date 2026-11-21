@@ -729,49 +729,19 @@ if [ -f "`$NEW_RELEASE_DIR/data/output/ingestion_audit_summary.json" ]; then
     echo "--> [Remoto] Sincronizando resumen de auditoría a `$STORAGE_BASE/output/ingestion_audit_summary.json..."
     cp -f "`$NEW_RELEASE_DIR/data/output/ingestion_audit_summary.json" "`$STORAGE_BASE/output/ingestion_audit_summary.json" 2>/dev/null || true
 fi
-if [ -f "`$NEW_RELEASE_DIR/data/agent_executive_messages.json" ]; then
-    echo "--> [Remoto] Sincronizando mensajes ejecutivos a `$STORAGE_BASE/agent_executive_messages.json..."
-    cp -f "`$NEW_RELEASE_DIR/data/agent_executive_messages.json" "`$STORAGE_BASE/agent_executive_messages.json" 2>/dev/null || true
-fi
-if [ -f "`$NEW_RELEASE_DIR/data/scheduled_changes_pap.json" ]; then
-    echo "--> [Remoto] Sincronizando catálogo PaP a `$STORAGE_BASE/scheduled_changes_pap.json..."
-    cp -f "`$NEW_RELEASE_DIR/data/scheduled_changes_pap.json" "`$STORAGE_BASE/scheduled_changes_pap.json" 2>/dev/null || true
-fi
-if [ -f "`$NEW_RELEASE_DIR/data/resumen_incidencia_epsilon.md" ]; then
-    echo "--> [Remoto] Sincronizando especificación de Epsilon Prompt a `$STORAGE_BASE/resumen_incidencia_epsilon.md..."
-    cp -f "`$NEW_RELEASE_DIR/data/resumen_incidencia_epsilon.md" "`$STORAGE_BASE/resumen_incidencia_epsilon.md" 2>/dev/null || true
-fi
-if [ -f "`$NEW_RELEASE_DIR/data/teams_channels_config.json" ]; then
-    echo "--> [Remoto] Sincronizando configuración de canales Teams a `$STORAGE_BASE/teams_channels_config.json..."
-    cp -f "`$NEW_RELEASE_DIR/data/teams_channels_config.json" "`$STORAGE_BASE/teams_channels_config.json" 2>/dev/null || true
-fi
-if [ -f "`$NEW_RELEASE_DIR/data/projects_catalog.json" ]; then
-    echo "--> [Remoto] Sincronizando catálogo de proyectos a `$STORAGE_BASE/projects_catalog.json..."
-    if [ ! -f "`$STORAGE_BASE/projects_catalog.json" ]; then
-        cp -f "`$NEW_RELEASE_DIR/data/projects_catalog.json" "`$STORAGE_BASE/projects_catalog.json" 2>/dev/null || true
-    else
-        cp -u "`$NEW_RELEASE_DIR/data/projects_catalog.json" "`$STORAGE_BASE/projects_catalog.json" 2>/dev/null || cp -f "`$NEW_RELEASE_DIR/data/projects_catalog.json" "`$STORAGE_BASE/projects_catalog.json" 2>/dev/null || true
-    fi
-fi
-if [ ! -f "`$STORAGE_BASE/release_desk_overrides.json" ]; then
-    echo '{"by_release":{}}' > "`$STORAGE_BASE/release_desk_overrides.json"
-fi
-if [ ! -f "`$STORAGE_BASE/state/release_desk_overrides.json" ]; then
-    cp -f "`$STORAGE_BASE/release_desk_overrides.json" "`$STORAGE_BASE/state/release_desk_overrides.json" 2>/dev/null || echo '{"by_release":{}}' > "`$STORAGE_BASE/state/release_desk_overrides.json"
-fi
-mkdir -p "`$STORAGE_BASE/.remedy_cache" "`$STORAGE_BASE/.epsilon_cache" "`$STORAGE_BASE/cache/remedy" "`$STORAGE_BASE/cache/epsilon"
 # Sincronización y compatibilidad bidireccional entre output/ y storage/processed/
 if [ -d "`$STORAGE_BASE/output" ]; then
     mkdir -p "`$STORAGE_BASE/storage/processed"
     python3 -c "import os, glob; [os.symlink(f, os.path.join('`$STORAGE_BASE/storage/processed', os.path.basename(f))) for f in glob.glob('`$STORAGE_BASE/output/*.json') if not os.path.lexists(os.path.join('`$STORAGE_BASE/storage/processed', os.path.basename(f)))]" 2>/dev/null || true
 fi
 # Compatibilidad symlinks canónicos -> legacy para URLs que Nginx sirve directamente desde `$STORAGE_BASE
-[ -f "`$STORAGE_BASE/config/projects_catalog.json" ] && [ ! -e "`$STORAGE_BASE/projects_catalog.json" ] && ln -s "`$STORAGE_BASE/config/projects_catalog.json" "`$STORAGE_BASE/projects_catalog.json" 2>/dev/null || true
-[ -f "`$STORAGE_BASE/config/scheduled_changes_pap.json" ] && [ ! -e "`$STORAGE_BASE/scheduled_changes_pap.json" ] && ln -s "`$STORAGE_BASE/config/scheduled_changes_pap.json" "`$STORAGE_BASE/scheduled_changes_pap.json" 2>/dev/null || true
-[ -f "`$STORAGE_BASE/config/teams_channels.json" ] && [ ! -e "`$STORAGE_BASE/teams_channels_config.json" ] && ln -s "`$STORAGE_BASE/config/teams_channels.json" "`$STORAGE_BASE/teams_channels_config.json" 2>/dev/null || true
-[ -f "`$STORAGE_BASE/agents/executive_messages.json" ] && [ ! -e "`$STORAGE_BASE/agent_executive_messages.json" ] && ln -s "`$STORAGE_BASE/agents/executive_messages.json" "`$STORAGE_BASE/agent_executive_messages.json" 2>/dev/null || true
-[ -f "`$STORAGE_BASE/agents/catalog.json" ] && [ ! -e "`$STORAGE_BASE/output/agents_catalog.json" ] && ln -s "`$STORAGE_BASE/agents/catalog.json" "`$STORAGE_BASE/output/agents_catalog.json" 2>/dev/null || true
-[ -f "`$STORAGE_BASE/agents/high_priority_notifications.json" ] && [ ! -e "`$STORAGE_BASE/output/high_priority_notifications.json" ] && ln -s "`$STORAGE_BASE/agents/high_priority_notifications.json" "`$STORAGE_BASE/output/high_priority_notifications.json" 2>/dev/null || true
+[ -f "`$STORAGE_BASE/config/projects_catalog.json" ] && ln -sfn "`$STORAGE_BASE/config/projects_catalog.json" "`$STORAGE_BASE/projects_catalog.json" 2>/dev/null || true
+[ -f "`$STORAGE_BASE/config/scheduled_changes_pap.json" ] && ln -sfn "`$STORAGE_BASE/config/scheduled_changes_pap.json" "`$STORAGE_BASE/scheduled_changes_pap.json" 2>/dev/null || true
+[ -f "`$STORAGE_BASE/config/teams_channels.json" ] && ln -sfn "`$STORAGE_BASE/config/teams_channels.json" "`$STORAGE_BASE/teams_channels_config.json" 2>/dev/null || true
+[ -f "`$STORAGE_BASE/agents/executive_messages.json" ] && ln -sfn "`$STORAGE_BASE/agents/executive_messages.json" "`$STORAGE_BASE/agent_executive_messages.json" 2>/dev/null || true
+[ -f "`$STORAGE_BASE/state/release_desk_overrides.json" ] && ln -sfn "`$STORAGE_BASE/state/release_desk_overrides.json" "`$STORAGE_BASE/release_desk_overrides.json" 2>/dev/null || true
+[ -f "`$STORAGE_BASE/agents/catalog.json" ] && ln -sfn "`$STORAGE_BASE/agents/catalog.json" "`$STORAGE_BASE/output/agents_catalog.json" 2>/dev/null || true
+[ -f "`$STORAGE_BASE/agents/high_priority_notifications.json" ] && ln -sfn "`$STORAGE_BASE/agents/high_priority_notifications.json" "`$STORAGE_BASE/output/high_priority_notifications.json" 2>/dev/null || true
 # Saneamiento de rutas absolutas residuales en index.json
 sed -i 's|/infocodes/var/storage/release-dashboard/|data/|g' "`$STORAGE_BASE/output/index.json" "`$STORAGE_BASE/storage/index.json" 2>/dev/null || true
 chmod -R u+rwX,g+rwX "`$STORAGE_BASE" 2>/dev/null || true
