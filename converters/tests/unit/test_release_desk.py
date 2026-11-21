@@ -90,9 +90,11 @@ def test_release_desk_js_uses_postmortem_and_resumen_ia_only():
 
 
 def test_projects_catalog_json_valid():
-    catalog_path = PROJECT_ROOT / "data" / "projects_catalog.json"
+    catalog_path = PROJECT_ROOT / "data" / "config" / "projects_catalog.json"
     if not catalog_path.exists():
-        pytest.skip("data/projects_catalog.json es un fichero local (gitignored)")
+        catalog_path = PROJECT_ROOT / "data" / "projects_catalog.json"
+    if not catalog_path.exists():
+        pytest.skip("data/config/projects_catalog.json es un fichero local (gitignored)")
     catalog = json.loads(catalog_path.read_text(encoding="utf-8"))
     assert isinstance(catalog.get("by_release"), dict)
     assert isinstance(catalog.get("projects"), dict)

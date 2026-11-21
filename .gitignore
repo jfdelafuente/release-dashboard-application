@@ -75,12 +75,6 @@ data/reports/executive/*
 !data/reports/executive/.gitkeep
 output/
 !data/output/
-!data/output/agents_catalog.json
-!data/output/high_priority_notifications.json
-!data/agent_executive_messages.json
-!data/scheduled_changes_pap.json
-!data/teams_channels_config.json
-!data/projects_catalog.json
 archive/
 data/storage/
 data/state/

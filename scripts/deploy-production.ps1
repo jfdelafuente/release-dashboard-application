@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Despliegue automatizado y modernizado de Release Dashboard Application en infocodes@10.132.26.96.
 
@@ -242,13 +242,14 @@ try {
 
                     & $PythonCmd @catalogArgs
                     if ($LASTEXITCODE -eq 0) {
-                        Write-Ok "Catálogo de agentes generado con éxito en data/output/agents_catalog.json"
+                        Write-Ok "Catálogo de agentes generado con éxito en data/agents/catalog.json"
 
                         # Si el catálogo cambió respecto a git, registrar commit automático específico
-                        $catalogDiff = (git status --porcelain "data/output/agents_catalog.json" 2>$null)
+                        $catalogDiff = (git status --porcelain "data/agents/catalog.json" "data/output/agents_catalog.json" 2>$null)
                         if ($catalogDiff) {
-                            git add "data/output/agents_catalog.json"
-                            git commit "data/output/agents_catalog.json" -m "data(agents): regenerar catalogo de agentes pre-deploy" | Out-Null
+                            git add "data/agents/catalog.json"
+                            if (Test-Path "$ProjectRoot\data\output\agents_catalog.json") { git add "data/output/agents_catalog.json" }
+                            git commit -m "data(agents): regenerar catalogo de agentes pre-deploy" | Out-Null
                             if ($LASTEXITCODE -eq 0) {
                                 Write-Ok "Catálogo actualizado y commiteado automáticamente en git"
                             }
@@ -293,13 +294,14 @@ try {
                 if ($PythonCmd) {
                     & $PythonCmd $NotifScript
                     if ($LASTEXITCODE -eq 0) {
-                        Write-Ok "Catálogo de alta prioridad actualizado con éxito en data/output/high_priority_notifications.json"
+                        Write-Ok "Catálogo de alta prioridad actualizado con éxito en data/agents/high_priority_notifications.json"
 
                         # Si el catálogo cambió respecto a git, registrar commit automático específico
-                        $hpDiff = (git status --porcelain "data/output/high_priority_notifications.json" 2>$null)
+                        $hpDiff = (git status --porcelain "data/agents/high_priority_notifications.json" "data/output/high_priority_notifications.json" 2>$null)
                         if ($hpDiff) {
-                            git add "data/output/high_priority_notifications.json"
-                            git commit "data/output/high_priority_notifications.json" -m "data(notifications): regenerar catalogo de notificaciones pre-deploy" | Out-Null
+                            git add "data/agents/high_priority_notifications.json"
+                            if (Test-Path "$ProjectRoot\data\output\high_priority_notifications.json") { git add "data/output/high_priority_notifications.json" }
+                            git commit -m "data(notifications): regenerar catalogo de notificaciones pre-deploy" | Out-Null
                             if ($LASTEXITCODE -eq 0) {
                                 Write-Ok "Catálogo de notificaciones actualizado y commiteado automáticamente en git"
                             }
@@ -763,6 +765,13 @@ if [ -d "`$STORAGE_BASE/output" ]; then
     mkdir -p "`$STORAGE_BASE/storage/processed"
     python3 -c "import os, glob; [os.symlink(f, os.path.join('`$STORAGE_BASE/storage/processed', os.path.basename(f))) for f in glob.glob('`$STORAGE_BASE/output/*.json') if not os.path.lexists(os.path.join('`$STORAGE_BASE/storage/processed', os.path.basename(f)))]" 2>/dev/null || true
 fi
+# Compatibilidad symlinks canónicos -> legacy para URLs que Nginx sirve directamente desde `$STORAGE_BASE
+[ -f "`$STORAGE_BASE/config/projects_catalog.json" ] && [ ! -e "`$STORAGE_BASE/projects_catalog.json" ] && ln -s "`$STORAGE_BASE/config/projects_catalog.json" "`$STORAGE_BASE/projects_catalog.json" 2>/dev/null || true
+[ -f "`$STORAGE_BASE/config/scheduled_changes_pap.json" ] && [ ! -e "`$STORAGE_BASE/scheduled_changes_pap.json" ] && ln -s "`$STORAGE_BASE/config/scheduled_changes_pap.json" "`$STORAGE_BASE/scheduled_changes_pap.json" 2>/dev/null || true
+[ -f "`$STORAGE_BASE/config/teams_channels.json" ] && [ ! -e "`$STORAGE_BASE/teams_channels_config.json" ] && ln -s "`$STORAGE_BASE/config/teams_channels.json" "`$STORAGE_BASE/teams_channels_config.json" 2>/dev/null || true
+[ -f "`$STORAGE_BASE/agents/executive_messages.json" ] && [ ! -e "`$STORAGE_BASE/agent_executive_messages.json" ] && ln -s "`$STORAGE_BASE/agents/executive_messages.json" "`$STORAGE_BASE/agent_executive_messages.json" 2>/dev/null || true
+[ -f "`$STORAGE_BASE/agents/catalog.json" ] && [ ! -e "`$STORAGE_BASE/output/agents_catalog.json" ] && ln -s "`$STORAGE_BASE/agents/catalog.json" "`$STORAGE_BASE/output/agents_catalog.json" 2>/dev/null || true
+[ -f "`$STORAGE_BASE/agents/high_priority_notifications.json" ] && [ ! -e "`$STORAGE_BASE/output/high_priority_notifications.json" ] && ln -s "`$STORAGE_BASE/agents/high_priority_notifications.json" "`$STORAGE_BASE/output/high_priority_notifications.json" 2>/dev/null || true
 # Saneamiento de rutas absolutas residuales en index.json
 sed -i 's|/infocodes/var/storage/release-dashboard/|data/|g' "`$STORAGE_BASE/output/index.json" "`$STORAGE_BASE/storage/index.json" 2>/dev/null || true
 chmod -R u+rwX,g+rwX "`$STORAGE_BASE" 2>/dev/null || true
