@@ -136,15 +136,39 @@ dashboards/
 El tratamiento de los datos difiere deliberadamente entre el desarrollo local y el entorno de producción para garantizar que **ningún despliegue sobrescriba datos reales**:
 
 ```text
-Estructura de Datos:
-├── input/                      # Archivos CSV origen (subidos manualmente o por endpoint /api/upload; scheduled_changes_pap.json protegido)
-├── output/                     # JSONs convertidos (*-massive.json, index.json, high_priority_notifications.json, ingestion_audit_summary.json)
-├── reports/                    # Informes generados (presentaciones PowerPoint ejecutivas .pptx)
-├── logs/                       # Trazas de auditoría de ingesta en disco (ingestion_audit.log)
-├── errors/                     # Informes de errores y discrepancias de validación por CSV
-├── archive/                    # Archivos históricos archivados
-├── .epsilon_cache/             # Caché local en disco de respuestas semánticas de Epsilon IA
-└── agent_executive_messages.json # Almacén persistente acumulativo de redacciones del agente incident-reporter
+Estructura Modular de Datos (Arquitectura Canónica M22 / Spec 005):
+data/ (y /infocodes/var/storage/release-dashboard/)
+├── 📁 config/                       # Single Source of Truth para configuraciones del sistema
+│   ├── projects_catalog.json        # Catálogo maestro de proyectos PRJ-*
+│   ├── scheduled_changes_pap.json   # Trabajos programados y ventanas PaP
+│   └── teams_channels.json          # Mapeo y enrutamiento de webhooks Teams
+├── 📁 agents/                       # Catálogos maestros de IA y agentes operativos
+│   ├── catalog.json                 # Catálogo global de agentes y skills
+│   ├── executive_messages.json      # Mensajes ejecutivos redactados por incident-reporter
+│   └── high_priority_notifications.json # Evaluaciones de alta prioridad y triaje ITIL
+├── 📁 state/                        # Estado mutable y overrides
+│   └── release_desk_overrides.json  # Fechas previstas y acuerdos de Mesa de Release
+├── 📁 storage/                      # Persistencia y archivo por capas
+│   ├── raw/                         # Ingesta cruda (.xlsm, .xlsx, .csv)
+│   ├── processed/                   # Datasets JSON procesados canónicos
+│   ├── projects/                    # Exportaciones de proyectos por release (.csv)
+│   ├── archive/                     # Archivos históricos
+│   └── index.json                   # Índice local de releases y ficheros masivos
+├── 📁 output/                       # Publicación web servida directamente por Nginx
+│   ├── index.json                   # Índice publicado consumido por dashboards
+│   ├── agents_catalog.json          # Catálogo público de agentes
+│   └── high_priority_notifications.json # Notificaciones activas de triaje
+├── 📁 reports/                      # Informes y entregables ejecutivos
+│   ├── pptx/                        # Presentaciones PowerPoint (.pptx)
+│   └── executive/                   # Informes individuales generados por backend CSO
+├── 📁 cache/                        # Cachés locales estructuradas
+│   ├── epsilon/                     # Respuestas semánticas de Epsilon IA
+│   └── remedy/                      # Tickets individuales descargados de Remedy
+├── 📁 observability/                # Auditoría, logs y trazabilidad de ingesta
+│   ├── logs/                        # ingestion.log
+│   ├── audits/                      # ingestion_summary.json, teams_delivery.json
+│   └── quarantine/                  # Archivos con errores de validación y discrepancias
+└── 📁 logs/                         # ingestion_audit.log
 ```
 
 | Ámbito | Ubicación Física | Comportamiento |

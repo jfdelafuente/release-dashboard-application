@@ -97,13 +97,21 @@ La arquitectura desacopla estrictamente el código inmutable, los datos de negoc
 └── var/
     ├── storage/                        # Almacenamiento persistente desacoplado (Single Source of Truth)
     │   ├── release-dashboard/
-    │   │   ├── input/                  # Archivos CSV origen depositados
-    │   │   ├── output/                 # JSONs convertidos (*-massive.json, index.json)
-    │   │   ├── reports/                # Informes generados
+    │   │   ├── config/                 # Configuraciones maestras (projects_catalog, scheduled_changes_pap, teams_channels)
+    │   │   ├── agents/                 # Catálogos maestros (catalog, executive_messages, high_priority_notifications)
+    │   │   ├── state/                  # Overrides de Mesa de Release (release_desk_overrides.json)
+    │   │   ├── storage/                # Almacén persistente (raw/, processed/, projects/, archive/, index.json)
+    │   │   ├── output/                 # Salidas públicas activas para Nginx (index.json, etc.)
+    │   │   ├── reports/                # Informes generados (*.pptx)
+    │   │   │   ├── pptx ──────────────► Enlace de compatibilidad a . (/data/reports/pptx)
     │   │   │   └── executive ─────────► Enlace sinérgico a ../executive_pptx
-    │   │   ├── errors/                 # Logs de discrepancias y errores de validación
-    │   │   └── archive/                # Histórico de datasets
-    │   └── executive_pptx/             # Informes PowerPoint ejecutivos (.pptx)
+    │   │   ├── cache/                  # Cachés persistentes (epsilon/, remedy/)
+    │   │   ├── observability/          # Trazabilidad, logs y cuarentena
+    │   │   ├── input/                  # Entrada de archivos
+    │   │   ├── errors/                 # Logs de discrepancias
+    │   │   ├── archive/                # Histórico de datasets
+    │   │   └── [symlinks raíz] ───────► projects_catalog, agent_executive_messages, etc. (enlazados a sus módulos)
+    │   └── executive_pptx/             # Informes PowerPoint ejecutivos (.pptx) individuales
     │
     ├── log/
     │   ├── release-dashboard/          # Logs de cron batch y conversiones
