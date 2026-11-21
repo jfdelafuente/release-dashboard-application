@@ -645,6 +645,7 @@ mkdir -p "`$EXECUTIVE_STORAGE" "`$LOGS_BASE"
 
 # Enlace de sinergia entre informes ejecutivos y release dashboard
 ln -sfn "`$EXECUTIVE_STORAGE" "`$STORAGE_BASE/reports/executive"
+ln -sfn . "`$STORAGE_BASE/reports/pptx" 2>/dev/null || true
 
 # Asegurar ficheros base de auditoría en almacenamiento persistente si no existían
 if [ ! -f "`$STORAGE_BASE/output/ingestion_audit_summary.json" ]; then
