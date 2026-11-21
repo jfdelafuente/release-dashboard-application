@@ -561,6 +561,8 @@
 
     const timestamp = Date.now();
     const candidateUrls = [
+      '/data/agents/high_priority_notifications.json?t=' + timestamp,
+      '../../data/agents/high_priority_notifications.json?t=' + timestamp,
       '/data/output/high_priority_notifications.json?t=' + timestamp,
       '../../data/output/high_priority_notifications.json?t=' + timestamp,
       '/api/incident-manager/pending?t=' + timestamp,
@@ -745,6 +747,9 @@
 
   async function loadScheduledChangesPaP() {
     const candidateUrls = [
+      '/data/config/scheduled_changes_pap.json',
+      '../../data/config/scheduled_changes_pap.json',
+      './data/config/scheduled_changes_pap.json',
       '/data/scheduled_changes_pap.json',
       '../../data/scheduled_changes_pap.json',
       './data/scheduled_changes_pap.json'
@@ -6249,19 +6254,25 @@ Puente Teams: ${teamsUrl}
         let summaryJson = null;
 
         try {
-          const summaryResp = await fetch('/data/output/ingestion_audit_summary.json?t=' + timestamp);
+          let summaryResp = await fetch('/data/observability/audits/ingestion_summary.json?t=' + timestamp);
+          if (!summaryResp.ok) {
+            summaryResp = await fetch('/data/output/ingestion_audit_summary.json?t=' + timestamp);
+          }
           if (summaryResp.ok) {
             summaryJson = await summaryResp.json();
           } else if (summaryResp.status !== 404) {
-            console.warn(`HTTP ${summaryResp.status} al consultar ingestion_audit_summary.json`);
+            console.warn(`HTTP ${summaryResp.status} al consultar ingestion_summary.json`);
           }
         } catch (fetchErr) {
-          console.warn('Error accediendo a ingestion_audit_summary.json:', fetchErr);
+          console.warn('Error accediendo a ingestion_summary.json:', fetchErr);
         }
 
         let logTailText = 'Sin trazas de log disponibles.';
         try {
-          const logResp = await fetch('/data/logs/ingestion_audit.log?t=' + timestamp);
+          let logResp = await fetch('/data/observability/logs/ingestion.log?t=' + timestamp);
+          if (!logResp.ok) {
+            logResp = await fetch('/data/logs/ingestion_audit.log?t=' + timestamp);
+          }
           if (logResp.ok) {
             const rawLog = await logResp.text();
             const lines = rawLog.split('\n');
@@ -6723,6 +6734,8 @@ Puente Teams: ${teamsUrl}
     const timestamp = Date.now();
     const candidateUrls = [
       '/api/teams/channels?t=' + timestamp,
+      '/data/config/teams_channels.json?t=' + timestamp,
+      '../../data/config/teams_channels.json?t=' + timestamp,
       '../../data/teams_channels_config.json?t=' + timestamp,
       '/data/teams_channels_config.json?t=' + timestamp
     ];

@@ -1243,7 +1243,10 @@
         // --- 2. Carga Asíncrona de Datos de Datasets ---
         async function loadDashboardData() {
             try {
-                const response = await fetch('/data/output/index.json?t=' + Date.now());
+                let response = await fetch('/data/storage/index.json?t=' + Date.now());
+                if (!response.ok) {
+                    response = await fetch('/data/output/index.json?t=' + Date.now());
+                }
                 if (!response.ok) throw new Error('HTTP ' + response.status);
                 const data = await response.json();
 

@@ -287,7 +287,7 @@
   // ============================================================
   function fetchCatalogData() {
     var primaryUrl = "/api/agents-catalog";
-    var fallbackUrl = "/data/output/agents_catalog.json";
+    var fallbackUrls = ["/data/agents/catalog.json", "/data/output/agents_catalog.json"];
 
     fetch(primaryUrl)
       .then(function (res) {
@@ -299,18 +299,24 @@
       })
       .catch(function (err) {
         console.warn("Fallback a lectura directa de JSON estático:", err);
-        return fetch(fallbackUrl)
-          .then(function (res) {
-            if (!res.ok) throw new Error("Fallback failed with status " + res.status);
-            return res.json();
-          })
-          .then(function (json) {
-            processCatalogData(json);
-          })
-          .catch(function (fallbackErr) {
-            console.error("Error crítico cargando catálogo:", fallbackErr);
-            showLoadError(fallbackErr);
-          });
+        function tryFallback(index) {
+          if (index >= fallbackUrls.length) {
+            showLoadError(new Error("No se pudo cargar el catálogo de agentes"));
+            return;
+          }
+          fetch(fallbackUrls[index])
+            .then(function (res) {
+              if (!res.ok) throw new Error("Status " + res.status);
+              return res.json();
+            })
+            .then(function (json) {
+              processCatalogData(json);
+            })
+            .catch(function () {
+              tryFallback(index + 1);
+            });
+        }
+        tryFallback(0);
       });
   }
 

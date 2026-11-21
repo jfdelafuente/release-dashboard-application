@@ -2002,7 +2002,10 @@
                 }
 
                 try {
-                    const response = await fetch('/data/output/index.json?t=' + Date.now());
+                    let response = await fetch('/data/storage/index.json?t=' + Date.now());
+                    if (!response.ok) {
+                        response = await fetch('/data/output/index.json?t=' + Date.now());
+                    }
                     const indexData = await response.json();
 
                     const files = (indexData.postmortem && indexData.postmortem.files) || [];
@@ -2013,10 +2016,13 @@
                         return;
                     }
 
-                    let filePath = matchingFile.path;
+                    let filePath = matchingFile.path || '';
 
-                    // Ruta root-absoluta: filePath ya es relativo a la raíz del repo (ej. "data/output/xxx.json")
-                    if (!filePath.startsWith('http')) {
+                    // Ruta root-absoluta saneada: si incluye prefijo de disco absoluto (ej: C:/.../data/...), extraer desde data/
+                    const dataMarker = filePath.indexOf('data/');
+                    if (dataMarker !== -1) {
+                        filePath = '/' + filePath.substring(dataMarker);
+                    } else if (!filePath.startsWith('http') && !filePath.startsWith('/')) {
                         filePath = '/' + filePath;
                     }
 

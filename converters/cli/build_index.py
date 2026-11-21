@@ -94,11 +94,14 @@ def build_index(output_dir='data/output'):
 
     for file_path in massive_files:
         stat = file_path.stat()
+        posix_str = file_path.as_posix()
+        data_marker = posix_str.find('data/')
+        rel_web_path = posix_str[data_marker:] if data_marker != -1 else f"data/output/{file_path.name}"
         file_info = {
             'name': file_path.name,
             'size': stat.st_size,
             'modified': datetime.fromtimestamp(stat.st_mtime).isoformat(),
-            'path': f"{output_path.as_posix()}/{file_path.name}"
+            'path': rel_web_path
         }
         massive_index['files'].append(file_info)
         print(f"  • {file_path.name} ({stat.st_size:,} bytes, {file_info['modified']})")

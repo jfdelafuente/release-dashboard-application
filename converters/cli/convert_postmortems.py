@@ -402,11 +402,15 @@ def build_index_for_hub(output_dir=None):
         except (json.JSONDecodeError, IOError, OSError):
             pass
 
+        posix_str = file_path.as_posix()
+        data_marker = posix_str.find('data/')
+        rel_web_path = posix_str[data_marker:] if data_marker != -1 else f"data/output/{file_path.name}"
+
         file_info = {
             'name': file_path.name,
             'size': stat.st_size,
             'modified': datetime.fromtimestamp(stat.st_mtime).isoformat(),
-            'path': f"data/output/{file_path.name}",
+            'path': rel_web_path,
             'release_name': release_name
         }
         postmortem_index['files'].append(file_info)
