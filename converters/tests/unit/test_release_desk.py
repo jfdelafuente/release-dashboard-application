@@ -40,10 +40,13 @@ def test_release_desk_html_has_required_controls():
         'data-active="release-desk"',
         "releaseSelect",
         "btnSyncPostmortem",
+        "btnUploadArgos",
         "btnEmptySync",
         "btnCopyBriefing",
         "btnCopyBriefingSystem",
         "btnViewReportHtml",
+        "btnGenerateReportHtml",
+        "argosUploadModal",
         "btnExportCsv",
         "btnViewTable",
         "btnViewByProject",
@@ -711,4 +714,27 @@ def test_release_desk_local_overrides_helpers():
         assert "getLocalOverridesKey" in domain_js
         assert "readLocalOverrides" in domain_js
         assert "writeLocalOverrides" in domain_js
+
+
+def test_release_desk_argos_helpers():
+    if shutil.which("node") is not None:
+        csv_sample = "mv_id,prj,key_test_plan,num_test,pass\n1,PRJ-101,TP-1,10,10\n"
+        script = (
+            f"const rd = require({json.dumps(str(RELEASE_DESK_JS))});\n"
+            f"const meta = rd.parseArgosCsvMeta({json.dumps(csv_sample)}, 'avance_progresion.csv');\n"
+            f"const metaReg = rd.parseArgosCsvMeta({json.dumps(csv_sample)}, 'regresion_dominios.csv');\n"
+            "const payload = rd.buildArgosUploadPayload('2026R11', [{ name: 'f1.csv', content: 'c1' }]);\n"
+            "console.log(JSON.stringify({ meta, metaReg, payload }));\n"
+        )
+        proc = _run_node_script(script)
+        out = json.loads(proc.stdout)
+        assert out["meta"]["rowsCount"] == 1
+        assert out["meta"]["typology"] == "PROGRESION"
+        assert out["metaReg"]["typology"] == "REGRESION"
+        assert out["payload"]["release_name"] == "2026R11"
+        assert len(out["payload"]["files"]) == 1
+    else:
+        domain_js = (PROJECT_ROOT / "dashboards" / "release-desk" / "release-desk-domain.js").read_text(encoding="utf-8")
+        assert "parseArgosCsvMeta" in domain_js
+        assert "buildArgosUploadPayload" in domain_js
 

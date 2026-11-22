@@ -1426,11 +1426,259 @@
                         if (resGet.ok) {
                             window.open(url, '_blank');
                         } else {
-                            notify('El informe HTML de la release ' + rel + ' aún no ha sido generado. Puedes generarlo con el agente @release-communicator.', 'warning');
+                            notify('El informe HTML de la release ' + rel + ' aún no ha sido generado. Puedes generarlo con el botón "Actualizar Informe HTML" o con el agente @release-communicator.', 'warning');
                         }
                     }).catch(function () {
-                        notify('El informe HTML de la release ' + rel + ' aún no ha sido generado. Puedes generarlo con el agente @release-communicator.', 'warning');
+                        notify('El informe HTML de la release ' + rel + ' aún no ha sido generado. Puedes generarlo con el botón "Actualizar Informe HTML" o con el agente @release-communicator.', 'warning');
                     });
+                });
+            });
+        }
+
+        var btnGenerateReportHtml = document.getElementById('btnGenerateReportHtml');
+        if (btnGenerateReportHtml) {
+            btnGenerateReportHtml.addEventListener('click', function () {
+                var rel = (state.currentRelease || '2026R11').trim();
+                var origText = btnGenerateReportHtml.innerHTML;
+                btnGenerateReportHtml.disabled = true;
+                btnGenerateReportHtml.innerHTML = '⏳ Actualizando...';
+
+                fetch('/api/release-desk/generate-report', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ release: rel })
+                })
+                .then(function (res) { return res.json(); })
+                .then(function (data) {
+                    btnGenerateReportHtml.disabled = false;
+                    btnGenerateReportHtml.innerHTML = origText;
+                    if (data && data.success) {
+                        notify(data.message || 'Informe HTML actualizado con éxito', 'success');
+                        var reportUrl = data.report_url || ('/dashboards/informes/comunicado-release-' + encodeURIComponent(rel) + '/');
+                        window.open(reportUrl, '_blank');
+                    } else {
+                        notify('Error actualizando informe: ' + (data && data.error ? data.error : 'Fallo en el servidor'), 'error');
+                    }
+                })
+                .catch(function (err) {
+                    btnGenerateReportHtml.disabled = false;
+                    btnGenerateReportHtml.innerHTML = origText;
+                    notify('Error de red al actualizar informe: ' + err.message, 'error');
+                });
+            });
+        }
+
+        // =========================================================================
+        // Modal y Carga de Grafana Argos PaP
+        // =========================================================================
+        var btnUploadArgos = document.getElementById('btnUploadArgos');
+        var argosUploadModal = document.getElementById('argosUploadModal');
+        var argosModalBackdrop = document.getElementById('argosModalBackdrop');
+        var btnCloseArgosModal = document.getElementById('btnCloseArgosModal');
+        var btnCancelArgosUpload = document.getElementById('btnCancelArgosUpload');
+        var argosModalReleaseName = document.getElementById('argosModalReleaseName');
+        var argosDropzone = document.getElementById('argosDropzone');
+        var argosFileInput = document.getElementById('argosFileInput');
+        var argosFileList = document.getElementById('argosFileList');
+        var argosUploadStatus = document.getElementById('argosUploadStatus');
+        var btnSubmitArgosUpload = document.getElementById('btnSubmitArgosUpload');
+
+        var selectedArgosFiles = [];
+
+        function openArgosModal() {
+            if (!argosUploadModal) return;
+            var rel = (state.currentRelease || '2026R11').trim();
+            if (argosModalReleaseName) argosModalReleaseName.textContent = rel;
+            selectedArgosFiles = [];
+            renderArgosFileList();
+            if (argosUploadStatus) {
+                argosUploadStatus.className = 'rd-upload-status hidden';
+                argosUploadStatus.textContent = '';
+            }
+            if (btnSubmitArgosUpload) btnSubmitArgosUpload.disabled = true;
+            argosUploadModal.classList.remove('hidden');
+        }
+
+        function closeArgosModal() {
+            if (argosUploadModal) argosUploadModal.classList.add('hidden');
+            selectedArgosFiles = [];
+        }
+
+        function renderArgosFileList() {
+            if (!argosFileList) return;
+            if (selectedArgosFiles.length === 0) {
+                argosFileList.classList.add('hidden');
+                argosFileList.innerHTML = '';
+                if (btnSubmitArgosUpload) btnSubmitArgosUpload.disabled = true;
+                return;
+            }
+            argosFileList.classList.remove('hidden');
+            var html = selectedArgosFiles.map(function (f, idx) {
+                var badgeClass = f.typology === 'PROGRESION' ? 'rd-badge-argos-prog' : 'rd-badge-argos-reg';
+                var badgeText = f.typology === 'PROGRESION' ? 'Progresión PRJ' : 'Regresión Dominios';
+                return '<div class="rd-file-item">' +
+                    '<div class="rd-file-info">' +
+                        '<span class="rd-file-name" title="' + escapeHtml(f.name) + '">' + escapeHtml(f.name) + '</span>' +
+                        '<div class="rd-file-badges">' +
+                            '<span class="' + badgeClass + '">' + badgeText + '</span>' +
+                            '<span class="rd-badge-argos-rows">' + f.rowsCount + ' filas</span>' +
+                        '</div>' +
+                    '</div>' +
+                    '<button type="button" class="rd-file-remove" data-remove-idx="' + idx + '" title="Quitar archivo">&times;</button>' +
+                '</div>';
+            }).join('');
+            argosFileList.innerHTML = html;
+            if (btnSubmitArgosUpload) btnSubmitArgosUpload.disabled = false;
+
+            Array.from(argosFileList.querySelectorAll('.rd-file-remove')).forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    var removeIdx = parseInt(btn.getAttribute('data-remove-idx'), 10);
+                    selectedArgosFiles.splice(removeIdx, 1);
+                    renderArgosFileList();
+                });
+            });
+        }
+
+        function processIncomingFiles(fileList) {
+            if (!fileList || fileList.length === 0) return;
+            var filesArray = Array.from(fileList).filter(function (f) {
+                return f.name.toLowerCase().endsWith('.csv');
+            });
+
+            if (filesArray.length === 0) {
+                notify('Por favor, selecciona archivos con formato .csv', 'warning');
+                return;
+            }
+
+            var readPromises = filesArray.map(function (file) {
+                return new Promise(function (resolve) {
+                    var reader = new FileReader();
+                    reader.onload = function (e) {
+                        var content = e.target.result;
+                        var meta = Domain.parseArgosCsvMeta ? Domain.parseArgosCsvMeta(content, file.name) : {
+                            rowsCount: Math.max(0, content.split('\n').length - 1),
+                            typology: /regres/i.test(file.name) ? 'REGRESION' : 'PROGRESION'
+                        };
+                        resolve({
+                            name: file.name,
+                            content: content,
+                            rowsCount: meta.rowsCount,
+                            typology: meta.typology
+                        });
+                    };
+                    reader.onerror = function () { resolve(null); };
+                    reader.readAsText(file, 'utf-8');
+                });
+            });
+
+            Promise.all(readPromises).then(function (results) {
+                results.forEach(function (res) {
+                    if (res && res.content) {
+                        var existingIdx = selectedArgosFiles.findIndex(function (item) { return item.name === res.name; });
+                        if (existingIdx !== -1) {
+                            selectedArgosFiles[existingIdx] = res;
+                        } else {
+                            selectedArgosFiles.push(res);
+                        }
+                    }
+                });
+                renderArgosFileList();
+            });
+        }
+
+        if (btnUploadArgos) btnUploadArgos.addEventListener('click', openArgosModal);
+        if (btnCloseArgosModal) btnCloseArgosModal.addEventListener('click', closeArgosModal);
+        if (btnCancelArgosUpload) btnCancelArgosUpload.addEventListener('click', closeArgosModal);
+        if (argosModalBackdrop) argosModalBackdrop.addEventListener('click', closeArgosModal);
+
+        if (argosDropzone && argosFileInput) {
+            argosDropzone.addEventListener('click', function () { argosFileInput.click(); });
+            argosDropzone.addEventListener('keydown', function (e) {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    argosFileInput.click();
+                }
+            });
+
+            argosFileInput.addEventListener('change', function () {
+                processIncomingFiles(argosFileInput.files);
+                argosFileInput.value = '';
+            });
+
+            ['dragenter', 'dragover'].forEach(function (evt) {
+                argosDropzone.addEventListener(evt, function (e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    argosDropzone.classList.add('is-dragover');
+                });
+            });
+
+            ['dragleave', 'drop'].forEach(function (evt) {
+                argosDropzone.addEventListener(evt, function (e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    argosDropzone.classList.remove('is-dragover');
+                });
+            });
+
+            argosDropzone.addEventListener('drop', function (e) {
+                if (e.dataTransfer && e.dataTransfer.files) {
+                    processIncomingFiles(e.dataTransfer.files);
+                }
+            });
+        }
+
+        if (btnSubmitArgosUpload) {
+            btnSubmitArgosUpload.addEventListener('click', function () {
+                if (selectedArgosFiles.length === 0) return;
+                var rel = (state.currentRelease || '2026R11').trim();
+                btnSubmitArgosUpload.disabled = true;
+                if (btnCancelArgosUpload) btnCancelArgosUpload.disabled = true;
+
+                if (argosUploadStatus) {
+                    argosUploadStatus.className = 'rd-upload-status is-loading';
+                    argosUploadStatus.textContent = '⏳ Consolidando datos y compilando Informe Ejecutivo HTML en el servidor...';
+                }
+
+                var payload = Domain.buildArgosUploadPayload ?
+                    Domain.buildArgosUploadPayload(rel, selectedArgosFiles) :
+                    { release_name: rel, files: selectedArgosFiles.map(function(f) { return { filename: f.name, content: f.content }; }) };
+
+                fetch('/api/release-desk/upload-argos', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                })
+                .then(function (res) { return res.json(); })
+                .then(function (data) {
+                    btnSubmitArgosUpload.disabled = false;
+                    if (btnCancelArgosUpload) btnCancelArgosUpload.disabled = false;
+
+                    if (data && data.success) {
+                        if (argosUploadStatus) {
+                            argosUploadStatus.className = 'rd-upload-status is-success';
+                            argosUploadStatus.textContent = '✅ ' + (data.message || 'Carga completada.');
+                        }
+                        notify(data.message || 'Pruebas PaP actualizadas e informe HTML regenerado', 'success');
+                        setTimeout(function () {
+                            closeArgosModal();
+                            var reportUrl = data.report_url || ('/dashboards/informes/comunicado-release-' + encodeURIComponent(rel) + '/');
+                            window.open(reportUrl, '_blank');
+                        }, 800);
+                    } else {
+                        if (argosUploadStatus) {
+                            argosUploadStatus.className = 'rd-upload-status is-error';
+                            argosUploadStatus.textContent = '❌ ' + (data && data.error ? data.error : 'Error desconocido al subir archivos');
+                        }
+                    }
+                })
+                .catch(function (err) {
+                    btnSubmitArgosUpload.disabled = false;
+                    if (btnCancelArgosUpload) btnCancelArgosUpload.disabled = false;
+                    if (argosUploadStatus) {
+                        argosUploadStatus.className = 'rd-upload-status is-error';
+                        argosUploadStatus.textContent = '❌ Error de red: ' + err.message;
+                    }
                 });
             });
         }

@@ -130,17 +130,19 @@ try:
     from converters.src.desk_service import (
         GLOBAL_REMEDY_CACHE,
         clear_global_remedy_cache,
-        service_sync_remedy,
-        service_sync_postmortem,
-        service_get_overrides,
-        service_set_override,
+        service_generate_release_report,
         service_get_cached_epsilon,
         service_get_health,
+        service_get_overrides,
         service_get_remedy_detail,
-        service_get_teams_channels,
-        service_set_teams_channels,
         service_get_teams_audit,
+        service_get_teams_channels,
         service_send_teams,
+        service_set_override,
+        service_set_teams_channels,
+        service_sync_postmortem,
+        service_sync_remedy,
+        service_upload_argos_csv,
     )
     REMEDY_DETAIL_CACHE = GLOBAL_REMEDY_CACHE
 except (ImportError, Exception):
@@ -148,17 +150,19 @@ except (ImportError, Exception):
         from desk_service import (
             GLOBAL_REMEDY_CACHE,
             clear_global_remedy_cache,
-            service_sync_remedy,
-            service_sync_postmortem,
-            service_get_overrides,
-            service_set_override,
+            service_generate_release_report,
             service_get_cached_epsilon,
             service_get_health,
+            service_get_overrides,
             service_get_remedy_detail,
-            service_get_teams_channels,
-            service_set_teams_channels,
             service_get_teams_audit,
+            service_get_teams_channels,
             service_send_teams,
+            service_set_override,
+            service_set_teams_channels,
+            service_sync_postmortem,
+            service_sync_remedy,
+            service_upload_argos_csv,
         )
         REMEDY_DETAIL_CACHE = GLOBAL_REMEDY_CACHE
     except (ImportError, Exception):
@@ -167,6 +171,8 @@ except (ImportError, Exception):
         service_set_teams_channels = None
         service_get_teams_audit = None
         service_send_teams = None
+        service_upload_argos_csv = None
+        service_generate_release_report = None
 
 try:
     from converters.src.storage_utils import resolve_cache_dir
@@ -455,6 +461,10 @@ class CustomHTTPHandler(http.server.SimpleHTTPRequestHandler):
             self.handle_teams_send()
         elif self.path.split('?')[0].rstrip('/') == '/api/release-desk/overrides':
             self.handle_release_desk_overrides_post()
+        elif self.path.split('?')[0].rstrip('/') == '/api/release-desk/upload-argos':
+            self.handle_release_desk_upload_argos()
+        elif self.path.split('?')[0].rstrip('/') == '/api/release-desk/generate-report':
+            self.handle_release_desk_generate_report()
         elif self.path.split('?')[0].rstrip('/') == '/api/epsilon/resumenIA/cached':
             self.handle_epsilon_cached_post()
         else:
@@ -1219,6 +1229,34 @@ class CustomHTTPHandler(http.server.SimpleHTTPRequestHandler):
             self._send_json(status_code, result)
         except Exception as e:
             self._send_json(500, {"success": False, "error": f"Error guardando override: {e}"})
+
+    def handle_release_desk_upload_argos(self):
+        """Maneja POST /api/release-desk/upload-argos para cargar CSVs de Argos y regenerar informe."""
+        try:
+            content_length = int(self.headers.get('Content-Length', 0))
+            raw_body = self.rfile.read(content_length) if content_length > 0 else b'{}'
+            payload = json.loads(raw_body.decode('utf-8'))
+            if service_upload_argos_csv:
+                status_code, result = service_upload_argos_csv(payload, STORAGE_DIR, PROJECT_ROOT)
+            else:
+                status_code, result = 500, {"success": False, "error": "Servicio de subida Argos no disponible"}
+            self._send_json(status_code, result)
+        except Exception as e:
+            self._send_json(500, {"success": False, "error": f"Error procesando carga de Argos: {e}"})
+
+    def handle_release_desk_generate_report(self):
+        """Maneja POST /api/release-desk/generate-report para compilar informe ejecutivo HTML."""
+        try:
+            content_length = int(self.headers.get('Content-Length', 0))
+            raw_body = self.rfile.read(content_length) if content_length > 0 else b'{}'
+            payload = json.loads(raw_body.decode('utf-8'))
+            if service_generate_release_report:
+                status_code, result = service_generate_release_report(payload, STORAGE_DIR, PROJECT_ROOT)
+            else:
+                status_code, result = 500, {"success": False, "error": "Servicio de generación de reporte no disponible"}
+            self._send_json(status_code, result)
+        except Exception as e:
+            self._send_json(500, {"success": False, "error": f"Error generando informe HTML: {e}"})
 
     def handle_epsilon_cached_get(self):
         """Maneja GET /api/epsilon/resumenIA/cached?ids=INC1,INC2 (solo caché en disco)."""

@@ -21,6 +21,8 @@ from converters.src.fastapi_remedy_router import (
     api_post_teams_channels,
     api_get_teams_audit,
     api_post_teams_send,
+    api_post_release_desk_upload_argos,
+    api_post_release_desk_generate_report,
 )
 from converters.src.montmc_client import RemedyNotFoundError, MonTMCError
 
@@ -323,3 +325,56 @@ def test_fastapi_teams_send_failure_502():
         data = json.loads(resp.body.decode("utf-8"))
         assert data["success"] is False
         assert "Error de conexión Webhook" in data["error"]
+
+
+# =============================================================================
+# Tests para POST /api/release-desk/upload-argos y /generate-report
+# =============================================================================
+
+def test_fastapi_upload_argos_invalid():
+    resp = api_post_release_desk_upload_argos(payload={})
+    assert resp.status_code == 400
+    data = json.loads(resp.body.decode("utf-8"))
+    assert data["success"] is False
+
+    resp2 = api_post_release_desk_upload_argos(payload={"release": "2026R11", "files": []})
+    assert resp2.status_code == 400
+
+
+def test_fastapi_upload_argos_success(tmp_path, monkeypatch):
+    monkeypatch.setenv("RELEASE_DASHBOARD_STORAGE_DIR", str(tmp_path / "data"))
+    csv_prog = (
+        '"mv_id","prj","key_test_plan","proyecto_test","test_plan","resumen_test_plan","tipologia_prueba","num_test","pass","pending","block","verify","executing"\n'
+        '1,"PRJ-10699","TMMC-7988","TMMC","688638","PRJ-10699 TEST CRM","PROGRESION",10,8,1,1,0,0\n'
+    )
+    with patch("converters.src.desk_service.build_release_report_html", return_value=Path("/tmp/out.html")) as mock_build:
+        resp = api_post_release_desk_upload_argos(payload={
+            "release": "2026R11",
+            "files": [{"filename": "progresion.csv", "content": csv_prog}]
+        })
+        assert resp.status_code == 200
+        data = json.loads(resp.body.decode("utf-8"))
+        assert data["success"] is True
+        assert data["total_tests"] == 10
+        assert data["pass_count"] == 8
+        assert data["block_count"] == 1
+        assert data["pass_rate"] == 80.0
+        assert mock_build.called
+
+
+def test_fastapi_generate_report_missing_release():
+    resp = api_post_release_desk_generate_report(payload={})
+    assert resp.status_code == 400
+    data = json.loads(resp.body.decode("utf-8"))
+    assert data["success"] is False
+
+
+def test_fastapi_generate_report_success():
+    with patch("converters.src.desk_service.build_release_report_html", return_value=Path("/tmp/out.html")) as mock_build:
+        resp = api_post_release_desk_generate_report(payload={"release": "2026R11"})
+        assert resp.status_code == 200
+        data = json.loads(resp.body.decode("utf-8"))
+        assert data["success"] is True
+        assert data["release"] == "2026R11"
+        assert "/dashboards/informes/comunicado-release-2026R11/" in data["report_url"]
+        mock_build.assert_called_once()

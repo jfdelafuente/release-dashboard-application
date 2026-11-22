@@ -66,6 +66,7 @@ try:
         resolve_project_root,
         resolve_storage_dir,
         resolve_remedy_cache_dir,
+        service_generate_release_report,
         service_get_cached_epsilon,
         service_get_health,
         service_get_overrides,
@@ -77,6 +78,7 @@ try:
         service_set_teams_channels,
         service_sync_postmortem,
         service_sync_remedy,
+        service_upload_argos_csv,
     )
 except ImportError:
     from desk_service import (
@@ -85,6 +87,7 @@ except ImportError:
         resolve_project_root,
         resolve_storage_dir,
         resolve_remedy_cache_dir,
+        service_generate_release_report,
         service_get_cached_epsilon,
         service_get_health,
         service_get_overrides,
@@ -96,6 +99,7 @@ except ImportError:
         service_set_teams_channels,
         service_sync_postmortem,
         service_sync_remedy,
+        service_upload_argos_csv,
     )
 
 try:
@@ -345,4 +349,30 @@ def api_post_teams_send(payload: Dict[str, Any] = Body(...)):
     root = _get_project_root()
     storage_dir = Path(os.environ.get("RELEASE_DASHBOARD_STORAGE_DIR", "").strip() or (root / "data"))
     code, result = service_send_teams(payload=payload, storage_dir=storage_dir, project_root=root)
+    return JSONResponse(status_code=code, content=result)
+
+
+# =============================================================================
+# POST /api/release-desk/upload-argos
+# =============================================================================
+
+@router.post("/api/release-desk/upload-argos")
+@router.post("/release-desk/upload-argos")
+def api_post_release_desk_upload_argos(payload: Dict[str, Any] = Body(...)):
+    root = _get_project_root()
+    storage_dir = Path(os.environ.get("RELEASE_DASHBOARD_STORAGE_DIR", "").strip() or (root / "data"))
+    code, result = service_upload_argos_csv(payload=payload, storage_dir=storage_dir, project_root=root)
+    return JSONResponse(status_code=code, content=result)
+
+
+# =============================================================================
+# POST /api/release-desk/generate-report
+# =============================================================================
+
+@router.post("/api/release-desk/generate-report")
+@router.post("/release-desk/generate-report")
+def api_post_release_desk_generate_report(payload: Dict[str, Any] = Body(...)):
+    root = _get_project_root()
+    storage_dir = Path(os.environ.get("RELEASE_DASHBOARD_STORAGE_DIR", "").strip() or (root / "data"))
+    code, result = service_generate_release_report(payload=payload, storage_dir=storage_dir, project_root=root)
     return JSONResponse(status_code=code, content=result)

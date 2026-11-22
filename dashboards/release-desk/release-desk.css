@@ -761,3 +761,232 @@ table.rd-table tbody tr.rd-detail-row > td {
         min-width: 140px;
     }
 }
+
+/* =============================================================================
+   Modal de Carga de Grafana Argos PaP
+   ============================================================================= */
+
+.rd-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+}
+.rd-modal.hidden {
+    display: none !important;
+}
+.rd-modal-backdrop {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(15, 23, 42, 0.55);
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+}
+.rd-modal-card {
+    position: relative;
+    z-index: 1;
+    background: #FFFFFF;
+    border-radius: 12px;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+    border: 1px solid #E2E8F0;
+    width: 100%;
+    max-width: 620px;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    animation: rdModalFadeIn 0.15s ease-out;
+}
+@keyframes rdModalFadeIn {
+    from { opacity: 0; transform: scale(0.97) translateY(8px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
+}
+.rd-modal-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 20px 24px 16px;
+    border-bottom: 1px solid #F1F5F9;
+}
+.rd-modal-title {
+    font-size: 17px;
+    font-weight: 700;
+    color: #0F172A;
+    margin: 0 0 6px 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.rd-modal-subtitle {
+    font-size: 12.5px;
+    color: #64748B;
+    line-height: 1.45;
+    margin: 0;
+}
+.rd-modal-close {
+    background: transparent;
+    border: none;
+    font-size: 24px;
+    line-height: 1;
+    color: #94A3B8;
+    cursor: pointer;
+    padding: 2px 6px;
+    border-radius: 6px;
+    transition: color 0.15s, background 0.15s;
+}
+.rd-modal-close:hover {
+    color: #0F172A;
+    background: #F1F5F9;
+}
+.rd-modal-body {
+    padding: 20px 24px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+.rd-dropzone {
+    border: 2px dashed #CBD5E1;
+    border-radius: 10px;
+    padding: 30px 20px;
+    text-align: center;
+    background: #FAFAFA;
+    cursor: pointer;
+    transition: border-color 0.15s, background-color 0.15s;
+    outline: none;
+}
+.rd-dropzone:hover, .rd-dropzone:focus-visible {
+    border-color: #FF7900;
+    background: #FFF9F5;
+}
+.rd-dropzone.is-dragover {
+    border-color: #FF7900;
+    background: #FFF3EB;
+}
+.rd-dropzone-icon {
+    font-size: 38px;
+    margin-bottom: 8px;
+}
+.rd-dropzone-text {
+    font-size: 13.5px;
+    color: #334155;
+    margin-bottom: 4px;
+}
+.rd-dropzone-hint {
+    font-size: 11.5px;
+    color: #94A3B8;
+}
+.rd-file-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.rd-file-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    background: #F8FAFC;
+    border: 1px solid #E2E8F0;
+    border-radius: 8px;
+    font-size: 12.5px;
+}
+.rd-file-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+}
+.rd-file-name {
+    font-weight: 600;
+    color: #1E293B;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 260px;
+}
+.rd-file-badges {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.rd-badge-argos-prog {
+    background: #EFF6FF;
+    color: #1D4ED8;
+    border: 1px solid #BFDBFE;
+    font-size: 10.5px;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 999px;
+}
+.rd-badge-argos-reg {
+    background: #FAF5FF;
+    color: #7E22CE;
+    border: 1px solid #E9D5FF;
+    font-size: 10.5px;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 999px;
+}
+.rd-badge-argos-rows {
+    background: #F1F5F9;
+    color: #475569;
+    border: 1px solid #CBD5E1;
+    font-size: 10.5px;
+    font-weight: 600;
+    padding: 2px 6px;
+    border-radius: 999px;
+}
+.rd-file-remove {
+    background: transparent;
+    border: none;
+    color: #EF4444;
+    cursor: pointer;
+    font-size: 18px;
+    line-height: 1;
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+.rd-file-remove:hover {
+    background: #FEE2E2;
+}
+.rd-upload-status {
+    padding: 10px 14px;
+    border-radius: 6px;
+    font-size: 12.5px;
+    line-height: 1.4;
+}
+.rd-upload-status.is-loading {
+    background: #EFF6FF;
+    border: 1px solid #BFDBFE;
+    color: #1D4ED8;
+}
+.rd-upload-status.is-success {
+    background: #F0FDF4;
+    border: 1px solid #BBF7D0;
+    color: #15803D;
+}
+.rd-upload-status.is-error {
+    background: #FEF2F2;
+    border: 1px solid #FECACA;
+    color: #B91C1C;
+}
+.rd-modal-footer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 14px 24px;
+    border-top: 1px solid #F1F5F9;
+    background: #FAFBFD;
+}

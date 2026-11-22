@@ -820,6 +820,48 @@
         } catch (_) {}
     }
 
+    function parseArgosCsvMeta(csvText, fileName) {
+        var text = String(csvText || '');
+        var lines = text.split(/\r?\n/).filter(function (l) { return l.trim().length > 0; });
+        var rowsCount = Math.max(0, lines.length - 1);
+        var fn = String(fileName || '').toLowerCase();
+        var isRegression = /regres/i.test(fn);
+        var isProgression = /progres/i.test(fn);
+
+        if (!isRegression && !isProgression && lines.length > 1) {
+            var sample = lines.slice(1, 10).join(' ').toUpperCase();
+            if (sample.indexOf('REGRE') !== -1) {
+                isRegression = true;
+            } else if (sample.indexOf('PROGRE') !== -1 || sample.indexOf('PRJ-') !== -1) {
+                isProgression = true;
+            }
+        }
+
+        var typology = isRegression ? 'REGRESION' : (isProgression ? 'PROGRESION' : 'PROGRESION');
+        return {
+            rowsCount: rowsCount,
+            typology: typology,
+            isValid: rowsCount > 0 && lines.length > 1
+        };
+    }
+
+    function buildArgosUploadPayload(releaseName, filesList) {
+        var rel = String(releaseName || '').trim().toUpperCase();
+        var validFiles = Array.isArray(filesList) ? filesList.filter(function (f) {
+            return f && f.name && (f.content || f.text);
+        }).map(function (f) {
+            return {
+                filename: String(f.name).trim(),
+                content: String(f.content || f.text)
+            };
+        }) : [];
+
+        return {
+            release_name: rel,
+            files: validFiles
+        };
+    }
+
     var api = {
         escapeHtml: escapeHtml,
         isClosedStatus: isClosedStatus,
@@ -847,7 +889,9 @@
         detectPingPong: detectPingPong,
         getLocalOverridesKey: getLocalOverridesKey,
         readLocalOverrides: readLocalOverrides,
-        writeLocalOverrides: writeLocalOverrides
+        writeLocalOverrides: writeLocalOverrides,
+        parseArgosCsvMeta: parseArgosCsvMeta,
+        buildArgosUploadPayload: buildArgosUploadPayload
     };
     global.ReleaseDeskDomain = api;
     if (typeof module !== 'undefined' && module.exports) {
