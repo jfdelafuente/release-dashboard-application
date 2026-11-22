@@ -325,6 +325,33 @@ def extract_project_code(incident: Dict[str, Any]) -> str:
     return ""
 
 
+def normalize_system_name(name: str) -> str:
+    """Normaliza el nombre de un sistema para matching (quita sufijos OSP, JAZZTEL, corchetes, espacios)."""
+    if not name:
+        return ""
+    # Quitar sufijos comunes de operador o entorno
+    s = re.sub(r'\b(OSP|JAZZTEL|PRODUCCION|PROD)\b', '', name, flags=re.IGNORECASE)
+    # Quitar caracteres especiales y normalizar a minúsculas alfanuméricas
+    s = re.sub(r'[^a-zA-Z0-9]', '', s).lower()
+    return s
+
+
+def system_matches(inc_system: str, initiative_systems: List[str]) -> bool:
+    """Comprueba si el sistema de la incidencia coincide con alguno de los sistemas de la iniciativa."""
+    if not inc_system or not initiative_systems:
+        return False
+    norm_inc = normalize_system_name(inc_system)
+    if not norm_inc:
+        return False
+    for init_sys in initiative_systems:
+        norm_init = normalize_system_name(init_sys)
+        if not norm_init:
+            continue
+        if norm_inc == norm_init or norm_inc in norm_init or norm_init in norm_inc:
+            return True
+    return False
+
+
 def load_release_incidents(postmortem_path: Path) -> Tuple[List[Dict[str, Any]], Dict[str, Any]]:
     """Carga incidencias y metadatos del postmortem."""
     if not postmortem_path.is_file():
@@ -1062,7 +1089,19 @@ def build_release_report_html(
             p_meta = all_projects.get(p_code, {})
             p_name = p_meta.get("summary") or ("Regresión Transversal (Erebor / PYME)" if p_code == "TRANSVERSAL" else p_code)
             p_resp = p_meta.get("responsable") or "-"
-            p_incs = incidents_by_project.get(p_code, [])
+            p_incs = list(incidents_by_project.get(p_code, []))
+            seen_inc_ids = {i.get("ID de incidencia") for i in p_incs}
+            proj_systems = b_proj.get("sistemas", [])
+
+            # Asignar incidencias sin proyecto cuyo sistema coincida con 'Sistemas Impactados' de la tabla
+            for u_inc in incidents_without_project:
+                u_id = u_inc.get("ID de incidencia")
+                if u_id in seen_inc_ids:
+                    continue
+                u_sys = u_inc.get("producto") or u_inc.get("Producto") or ""
+                if system_matches(u_sys, proj_systems):
+                    p_incs.append(u_inc)
+                    seen_inc_ids.add(u_id)
 
             if p_tip == "PROGRESIÓN":
                 tip_badge = '<span class="badge" style="background:#EEF2FF; color:#4338CA; font-weight:800; font-size:11px;">PROGRESIÓN</span>'
@@ -1084,7 +1123,11 @@ def build_release_report_html(
                     inc_id_val = inc_item.get("ID de incidencia", "")
                     prio_val = inc_item.get("Prioridad", "P3")
                     cls = format_badge_priority_class(prio_val)
-                    inc_badges_list.append(f'<a href="#inc-{html.escape(inc_id_val)}" class="badge {cls}" style="margin:2px 2px 2px 0; text-decoration:none;" title="{html.escape(inc_item.get("Descripción", "")[:100])}">{html.escape(inc_id_val)} ({html.escape(prio_val)})</a>')
+                    u_prod = inc_item.get("producto") or inc_item.get("Producto") or ""
+                    is_inferred = not extract_project_code(inc_item)
+                    tip_prefix = f"[Por Sistema: {u_prod}] " if is_inferred and u_prod else ""
+                    tooltip_text = f"{tip_prefix}{inc_item.get('Descripción', '')[:100]}"
+                    inc_badges_list.append(f'<a href="#inc-{html.escape(inc_id_val)}" class="badge {cls}" style="margin:2px 2px 2px 0; text-decoration:none;" title="{html.escape(tooltip_text)}">{html.escape(inc_id_val)} ({html.escape(prio_val)})</a>')
                 inc_cell = "".join(inc_badges_list)
             else:
                 inc_cell = '<span style="color:#9CA3AF; font-size:12px;">Sin tickets Remedy</span>'

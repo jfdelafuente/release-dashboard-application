@@ -14,6 +14,8 @@ from converters.cli.generate_release_report_html import (
     load_projects_catalog,
     load_projects_csv,
     extract_project_code,
+    normalize_system_name,
+    system_matches,
     build_release_report_html,
 )
 
@@ -58,6 +60,16 @@ def test_extract_project_code():
     assert extract_project_code({"PROYECTO": "PRJ-10699"}) == "PRJ-10699"
     assert extract_project_code({"JIRA": "AB2CJ-501"}) == "AB2CJ-501"
     assert extract_project_code({"Descripción": "Error general sin código"}) == ""
+
+
+def test_system_matches():
+    initiative_systems = ["CRM B2B OSP", "ESHOP FRONTEND OSP", "TEIDE OSP"]
+    assert system_matches("CRM B2B", initiative_systems) is True
+    assert system_matches("TEIDE", initiative_systems) is True
+    assert system_matches("FICHA DE CLIENTE", initiative_systems) is False
+    assert system_matches("", initiative_systems) is False
+    assert system_matches("CRM B2B", []) is False
+    assert system_matches("XNET", initiative_systems) is False
 
 
 def test_build_release_report_html_generates_valid_file(tmp_path):

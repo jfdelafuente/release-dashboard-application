@@ -10,7 +10,7 @@ description: >-
   (con telemetría Remedy, diagnóstico Epsilon Resumen IA, criticidades P1/P2/Masivas y fechas previstas),
   manteniendo sincronizado el catálogo de proyectos y enrutando siempre a la consola de Mesa de Release (/dashboards/release-desk/).
 domain: it-releases
-version: 2.4.0
+version: 2.5.0
 language: es
 owner: Orange Tech Operations
 metadata:
@@ -358,7 +358,7 @@ Además de las plantillas de texto formateado para Microsoft Teams, el agente ge
    - Incidencias resueltas/cerradas en ventana PaP (% de éxito).
 3. **Sección de Pruebas PaP y Bloqueos (Grafana Argos)**:
    - **Discriminación Obligatoria Progresión vs Regresión:** Banner comparativo con tarjetas dedicadas para **Progresión por Proyectos (`PRJ-*`)** y **Regresión Transversal E2E (Sistemas Core)** que muestran volumen total, % de superación, bloqueos, ejecuciones en curso y pendientes.
-   - **Tabla de Resumen Agregado de Bloqueos:** Ranking consolidado con badge de tipología (`PROGRESIÓN` / `REGRESIÓN`), nombre de iniciativa, % de bloqueo relativo, desglose de pasadas/pendientes, sistemas impactados, Delivery Lead responsable y chips de incidencias Remedy asociadas enlazadas. Se suprimen desgloses técnicos individuales a nivel de plan para priorizar la síntesis ejecutiva.
+   - **Tabla de Resumen Agregado de Bloqueos:** Ranking consolidado con badge de tipología (`PROGRESIÓN` / `REGRESIÓN`), nombre de iniciativa, % de bloqueo relativo, desglose de pasadas/pendientes, sistemas impactados, Delivery Lead responsable y chips de incidencias Remedy asociadas enlazadas (incluyendo tanto las asignadas explícitamente a la iniciativa como las incidencias sin proyecto cuyo producto/sistema coincida con la columna *Sistemas Impactados* de la iniciativa). Se suprimen desgloses técnicos individuales a nivel de plan para priorizar la síntesis ejecutiva.
 4. **Tarjetas de Proyecto con Telemetría e IA**:
    - Para cada iniciativa (`PRJ-*`): resumen, alcance de despliegue, badges de decisión GO/NoGO y metodología.
    - Píldora de avance de pruebas PaP del proyecto (pasadas, pendientes, bloqueadas).
