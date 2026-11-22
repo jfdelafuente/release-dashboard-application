@@ -355,7 +355,7 @@
                 <h1 class="report-title">Informe Ejecutivo Global de Release · 2026R11</h1>
                 <div class="report-meta">
                     <span>📅 <strong>Fecha PaP:</strong> 22-nov.</span>
-                    <span>🕒 <strong>Generado:</strong> 22/11/2026 16:43</span>
+                    <span>🕒 <strong>Generado:</strong> 22/11/2026 16:50</span>
                     <span>📦 <strong>Total Proyectos:</strong> 42</span>
                 </div>
             </div>
@@ -550,7 +550,7 @@
                     <span style="color:#DC2626; font-weight:700;">⚠️ 7 Bloqueadas</span>
                 </div>
                 <div style="margin-top:14px;">
-                    <div style="font-size:12px; font-weight:700; text-transform:uppercase; color:#6B7280; margin-bottom:8px;">Incidencias Remedy (4):</div>
+                    <div style="font-size:12px; font-weight:700; text-transform:uppercase; color:#6B7280; margin-bottom:8px;">Incidencias Remedy (3):</div>
                     <div class="incident-item" id="inc-INC000004192176">
                         <div class="incident-head">
                             <div style="display:flex; align-items:center; gap:8px;">
@@ -581,25 +581,6 @@
                             <div class="ia-field" style="color:#DC2626;"><strong>⛔ Bloqueos:</strong> [Validación Negocio]: Pendiente análisis técnico del error en proceso de cambio de cuenta bancaria para desbloquear pruebas del PRJ-8058</div>
                         </div>
                     </div>
-                    <div class="incident-item" id="inc-INC000004191881">
-                        <div class="incident-head">
-                            <div style="display:flex; align-items:center; gap:8px;">
-                                <span class="incident-id">INC000004191881</span>
-                                <span class="badge badge-p3" title="Prioridad P3 - Media">P3 Media</span>
-                                <span class="badge badge-closed">Cerrado</span>
-                                <span class="badge badge-neutral">PANGEA</span>
-                            </div>
-                            <div style="font-size:12px; color:#6B7280;">📅 Prevista: <strong>Pendiente de acordar</strong></div>
-                        </div>
-                        <div class="incident-desc-raw">[2026R11] - [PRJ-8058] Error al cambiar la cuenta bancaria cliente SM Empresa en pangea</div>
-                        <div class="ia-box">
-                            <div class="ia-box-header">🤖 Diagnóstico Epsilon Resumen IA</div>
-                            <div class="ia-impact-highlight"><strong>💥 Impacto en Servicio y Negocio:</strong> Bloquea cambios de cuenta bancaria para clientes SM Empresa en Pangea durante pruebas PRJ-8058. No existe método alternativo disponible para esta operación en el sistema.</div>
-                            <div class="ia-field"><strong>🔍 Problema detectado:</strong> Error 400 &#x27;Missing body&#x27; al intentar cambiar cuenta bancaria de cliente Solo Móvil Empresa (MCFRO0252) en Pangea. La llamada al endpoint createBankAccountModification del BFF falla al invocar el microservicio accountmanagement/bankAccountChanges.</div>
-                            <div class="ia-field"><strong>🛠️ Solución / Causa raíz:</strong> Causa raíz identificada: el BFF envía &#x27;identificationType&#x27; como &#x27;PASSPORT&#x27; (mayúsculas) cuando el microservicio espera valores normalizados según IC (&#x27;NIF&#x27;, &#x27;CIF&#x27;, &#x27;Passport&#x27;, &#x27;NIE&#x27;). Requiere corrección en mapeo de tipos de documento del BFF.</div>
-                            <div class="ia-field"><strong>➡️ Próxima acción:</strong> Corregir mapeo de &#x27;identificationType&#x27; en BFF AgentsOrange para enviar valores normalizados según acuerdo IC (PRJ-8058)</div>
-                        </div>
-                    </div>
                     <div class="incident-item" id="inc-INC000004192062">
                         <div class="incident-head">
                             <div style="display:flex; align-items:center; gap:8px;">
@@ -618,159 +599,6 @@
                             <div class="ia-field"><strong>🛠️ Solución / Causa raíz:</strong> Causa raíz: Timeout aislado en capa system al invocar MDW 115005 (único evento en 6 días). Acción: Escalada a ONCONNECT para análisis de trazas. Resultado: Peticionario reportó error persistente con recurso alternativo (PRSAC6760), indicando ineficacia del diagnóstico inicial. Requiere investigación adicional.</div>
                             <div class="ia-field"><strong>➡️ Próxima acción:</strong> Reapertura y escalada técnica a ONCONNECT para investigación profunda de MDW 115005; análisis de logs backend y validación de configuración de timeout en capa system.</div>
                             <div class="ia-field" style="color:#DC2626;"><strong>⛔ Bloqueos:</strong> [Validación Negocio]: Peticionario reporta persistencia del error con recurso alternativo; solución propuesta inefectiva</div>
-                        </div>
-                    </div>
-                </div>
-            </article>
-            <article class="project-card has-crit" id="card-PRJ-10987">
-                <div class="project-header-top">
-                    <div class="project-code-title">
-                        <span class="project-code">PRJ-10987</span>
-                        <h3 class="project-title">Desarrollo de PA del Fijo Femtoceldas</h3>
-                    </div>
-                    <div style="display:flex; gap:8px; align-items:center;">
-                        <span class="badge badge-completo">Completo</span>
-                        <span class="badge" style="background:#DCFCE7; color:#166534;">GO</span>
-                        <span class="badge badge-neutral">Bimodal</span>
-                    </div>
-                </div>
-                <div class="project-desc">"Creación de nuevos productos de evaluación y mejora de cobertura indoor para clientes PYME en Conecta PYMES y Big PYME tanto en cadena CRMB2B como BAU."</div>
-                <div class="project-pap-banner">
-                    <span>🧪 <strong>Pruebas PaP:</strong> 4/6 Pasadas (66.7%)</span>
-                    <span style="color:#DC2626; font-weight:700;">⚠️ 2 Bloqueadas</span>
-                </div>
-                <div style="margin-top:14px;">
-                    <div style="font-size:12px; font-weight:700; text-transform:uppercase; color:#6B7280; margin-bottom:8px;">Incidencias Remedy (3):</div>
-                    <div class="incident-item" id="inc-INC000004192171">
-                        <div class="incident-head">
-                            <div style="display:flex; align-items:center; gap:8px;">
-                                <span class="incident-id">INC000004192171</span>
-                                <span class="badge badge-p4" title="Prioridad P4 - Baja">P4 Baja</span>
-                                <span class="badge badge-closed">Cerrado</span>
-                                <span class="badge badge-neutral">CRM B2B</span>
-                            </div>
-                            <div style="font-size:12px; color:#6B7280;">📅 Prevista: <strong>Pendiente de acordar</strong></div>
-                        </div>
-                        <div class="incident-desc-raw">[2026R11] - [PRJ-10987] - No aparece el PA de Fijo Instalacion - Obra Civil en Postventa</div>
-                        <div class="ia-box">
-                            <div class="ia-box-header">🤖 Diagnóstico Epsilon Resumen IA</div>
-                            <div class="ia-impact-highlight"><strong>💥 Impacto en Servicio y Negocio:</strong> Afecta a la contratación de servicios de obra civil en postventa para cliente corporativo específico. No se indica método alternativo disponible.</div>
-                            <div class="ia-field"><strong>🔍 Problema detectado:</strong> El producto adicional (PA) &#x27;Fijo Instalacion - Obra Civil&#x27; del proyecto PRJ-10987 no aparece disponible en postventa para contratación sobre cliente Conecta PYME MCPYM0696 (CAR-20262211-013292), impidiendo su alta.</div>
-                        </div>
-                    </div>
-                    <div class="incident-item" id="inc-INC000004192065">
-                        <div class="incident-head">
-                            <div style="display:flex; align-items:center; gap:8px;">
-                                <span class="incident-id">INC000004192065</span>
-                                <span class="badge badge-p4" title="Prioridad P4 - Baja">P4 Baja</span>
-                                <span class="badge badge-closed">Cerrado</span>
-                                <span class="badge badge-neutral">CRM B2B</span>
-                            </div>
-                            <div style="font-size:12px; color:#6B7280;">📅 Prevista: <strong>Pendiente de acordar</strong></div>
-                        </div>
-                        <div class="incident-desc-raw">[2026R11] - [PRJ-10987] CRM B2B- Al seleccionar el descuento no aparece el porcentaje correctamente</div>
-                        <div class="ia-box">
-                            <div class="ia-box-header">🤖 Diagnóstico Epsilon Resumen IA</div>
-                            <div class="ia-impact-highlight"><strong>💥 Impacto en Servicio y Negocio:</strong> Afecta gestión comercial B2B en operaciones de postventa con descuentos promocionales. Existe método alternativo: validar descuento aplicado en confirmación final del pedido.</div>
-                            <div class="ia-field"><strong>🔍 Problema detectado:</strong> En postventa B2B, al añadir descuento PA Equipo Femto 5G + DESC 100%, el sistema muestra &#x27;N%&#x27; en lugar del porcentaje seleccionado. Afecta visualización correcta de descuentos en proceso de modificación de pedido CAR-20262211-013292.</div>
-                        </div>
-                    </div>
-                    <div class="incident-item" id="inc-INC000004192167">
-                        <div class="incident-head">
-                            <div style="display:flex; align-items:center; gap:8px;">
-                                <span class="incident-id">INC000004192167</span>
-                                <span class="badge badge-p3" title="Prioridad P3 - Media">P3 Media</span>
-                                <span class="badge badge-inprogress">En Curso</span>
-                                <span class="badge badge-neutral">KENAN_FX</span>
-                            </div>
-                            <div style="font-size:12px; color:#6B7280;">📅 Prevista: <strong>Pendiente de acordar</strong></div>
-                        </div>
-                        <div class="incident-desc-raw">[2026R11] - [PRJ-10987] KENAN_FX - Error en Volcado Facturación en provision de postventa Big PYME</div>
-                        <div class="ia-box">
-                            <div class="ia-box-header">🤖 Diagnóstico Epsilon Resumen IA</div>
-                            <div class="ia-impact-highlight"><strong>💥 Impacto en Servicio y Negocio:</strong> 1 cliente BYG PYME (MCPYM0695) sin provisionar servicios contratados. Sin método alternativo disponible; requiere corrección manual o CdA.</div>
-                            <div class="ia-field"><strong>🔍 Problema detectado:</strong> Error &#x27;Call process input failed validation&#x27; en volcado AFS a KENAN_FX. Campo empresa supera 25 caracteres cuando cliente tiene &gt;10 sedes. Orden AFS 264744138 bloqueada.</div>
-                            <div class="ia-field"><strong>🛠️ Solución / Causa raíz:</strong> Causa raíz: validación KENAN_FX rechaza campo empresa &gt;25 caracteres en multiubicación. Acción: modificación manual del valor para relanzar orden. Mejora pendiente de solicitud formal (defecto recurrente desde R9, INC000004140336).</div>
-                            <div class="ia-field"><strong>➡️ Próxima acción:</strong> Apertura CdA para resolución de defecto recurrente y ampliación límite campo empresa en KENAN_FX</div>
-                            <div class="ia-field" style="color:#DC2626;"><strong>⛔ Bloqueos:</strong> [Ventana Release]: Mejora de validación KENAN_FX pendiente de solicitud formal a Orange para aumentar límite campo empresa</div>
-                        </div>
-                    </div>
-                </div>
-            </article>
-            <article class="project-card has-crit" id="card-PRJ-11894">
-                <div class="project-header-top">
-                    <div class="project-code-title">
-                        <span class="project-code">PRJ-11894</span>
-                        <h3 class="project-title">Ciber Protección Mejoras</h3>
-                    </div>
-                    <div style="display:flex; gap:8px; align-items:center;">
-                        <span class="badge badge-piloto">Piloto</span>
-                        <span class="badge" style="background:#DCFCE7; color:#166534;">GO</span>
-                        <span class="badge badge-neutral">Bimodal</span>
-                    </div>
-                </div>
-                <div class="project-desc">"Integrar la funcionalidad del proveedor F-Secure, app de Ciber Protección para que esté disponible para los clientes convergentes y MO del segmento B2C. Introducimos una nueva solución de seguridad multidispositivo &quot;Ciberprotección Global&quot; a través de Orange Cyberdefense (OCD), la cual sustituye comercialmente a la antigua solución de Ciberprotección offnet de Cyan. Su despliegue para B2C incluye una modalidad de pago y otra gratuita integrada en tarifas seleccionadas."</div>
-                <div class="project-pap-banner">
-                    <span>🧪 <strong>Pruebas PaP:</strong> 12/17 Pasadas (70.6%)</span>
-                    <span style="color:#DC2626; font-weight:700;">⚠️ 3 Bloqueadas</span>
-                </div>
-                <div style="margin-top:14px;">
-                    <div style="font-size:12px; font-weight:700; text-transform:uppercase; color:#6B7280; margin-bottom:8px;">Incidencias Remedy (3):</div>
-                    <div class="incident-item" id="inc-INC000004192181">
-                        <div class="incident-head">
-                            <div style="display:flex; align-items:center; gap:8px;">
-                                <span class="incident-id">INC000004192181</span>
-                                <span class="badge badge-p4" title="Prioridad P4 - Baja">P4 Baja</span>
-                                <span class="badge badge-inprogress">En Curso</span>
-                                <span class="badge badge-neutral">SIRES</span>
-                            </div>
-                            <div style="font-size:12px; color:#6B7280;">📅 Prevista: <strong>Pendiente de acordar</strong></div>
-                        </div>
-                        <div class="incident-desc-raw">[2026R11] - PRJ-11894 -SIRES- No detonarse el mail de las plantillas 9009684 y 9009685</div>
-                        <div class="ia-box">
-                            <div class="ia-box-header">🤖 Diagnóstico Epsilon Resumen IA</div>
-                            <div class="ia-impact-highlight"><strong>💥 Impacto en Servicio y Negocio:</strong> Un cliente convergente no recibió notificaciones de cambios en SVA. Sin método alternativo disponible para notificación de cambios contractuales.</div>
-                            <div class="ia-field"><strong>🔍 Problema detectado:</strong> Mails de plantillas 9009684 y 9009685 no se detonaron tras alta y baja de SVA Ciber Protección Global en cliente convergente. Operaciones realizadas: alta 22/11/2026 11:41:08, baja 11:50:36, nueva alta 11:53:29.</div>
-                            <div class="ia-field"><strong>🛠️ Solución / Causa raíz:</strong> Pod con configuración antigua identificado. Configuración refrescada a versión desplegada la noche anterior. Reprocesamiento de comunicaciones ejecutado. Funcionalidad validada como operativa.</div>
-                            <div class="ia-field"><strong>➡️ Próxima acción:</strong> Validación de cierre por peticionario (CARLOS GARCIA PEINADOR) y cierre formal del ticket</div>
-                        </div>
-                    </div>
-                    <div class="incident-item" id="inc-INC000004191887">
-                        <div class="incident-head">
-                            <div style="display:flex; align-items:center; gap:8px;">
-                                <span class="incident-id">INC000004191887</span>
-                                <span class="badge badge-p4" title="Prioridad P4 - Baja">P4 Baja</span>
-                                <span class="badge badge-closed">Cerrado</span>
-                                <span class="badge badge-neutral">SIRES</span>
-                            </div>
-                            <div style="font-size:12px; color:#6B7280;">📅 Prevista: <strong>Pendiente de acordar</strong></div>
-                        </div>
-                        <div class="incident-desc-raw">[2026R11] - PRJ-11894 - No llegar mail de contratación del SVA Ciberproteccion Global</div>
-                        <div class="ia-box">
-                            <div class="ia-box-header">🤖 Diagnóstico Epsilon Resumen IA</div>
-                            <div class="ia-impact-highlight"><strong>💥 Impacto en Servicio y Negocio:</strong> Afecta a cliente corporativo (carlos.garcia@mtp.es, MSISDN 651068179). El servicio está activo pero falta notificación contractual. No existe método alternativo para recibir la comunicación automática.</div>
-                            <div class="ia-field"><strong>🔍 Problema detectado:</strong> No se recibe el correo electrónico de confirmación de contratación del SVA Ciberproteccion Global tras alta de línea Go Ilimitada desde TEIDE. Debería detonar plantilla 9009684 según DPU. Otras comunicaciones sí llegan correctamente.</div>
-                            <div class="ia-field"><strong>🛠️ Solución / Causa raíz:</strong> En diagnóstico inicial. Pendiente de revisar configuración de plantilla 9009684 en SIRES y validar flujo de envío de notificaciones para SVA Ciberproteccion Global contratado desde TEIDE.</div>
-                            <div class="ia-field"><strong>➡️ Próxima acción:</strong> Revisar configuración de plantilla 9009684 en SIRES y validar reglas de detonado para SVA Ciberproteccion Global</div>
-                        </div>
-                    </div>
-                    <div class="incident-item" id="inc-INC000004192066">
-                        <div class="incident-head">
-                            <div style="display:flex; align-items:center; gap:8px;">
-                                <span class="incident-id">INC000004192066</span>
-                                <span class="badge badge-p4" title="Prioridad P4 - Baja">P4 Baja</span>
-                                <span class="badge badge-closed">Cerrado</span>
-                                <span class="badge badge-neutral">ACME WEB ORANGE</span>
-                            </div>
-                            <div style="font-size:12px; color:#6B7280;">📅 Prevista: <strong>Pendiente de acordar</strong></div>
-                        </div>
-                        <div class="incident-desc-raw">[2026R11] - [PRJ-11894] - ERROR CONTRATACION NO SALTA VALIDACION A2F</div>
-                        <div class="ia-box">
-                            <div class="ia-box-header">🤖 Diagnóstico Epsilon Resumen IA</div>
-                            <div class="ia-impact-highlight"><strong>💥 Impacto en Servicio y Negocio:</strong> Afecta a proceso de contratación de Ciberprotección en canal web. Existe método alternativo: la contratación se completa correctamente, aunque sin validación A2F requerida.</div>
-                            <div class="ia-field"><strong>🔍 Problema detectado:</strong> Al contratar Ciberprotección Global en ACME WEB para cliente residencial convergente, no se activa la validación de doble factor de autenticación (A2F), permitiendo la contratación directa sin verificación adicional.</div>
-                            <div class="ia-field"><strong>➡️ Próxima acción:</strong> Revisión por equipo micros de la configuración del doble factor 2FA para el producto Ciberprotección en ACME WEB</div>
-                            <div class="ia-field" style="color:#DC2626;"><strong>⛔ Bloqueos:</strong> [Validación Negocio]: Pendiente revisión por equipo micros sobre configuración 2FA para producto Ciberprotección</div>
                         </div>
                     </div>
                 </div>
@@ -823,6 +651,87 @@
                             <div style="font-size:12px; color:#6B7280;">📅 Prevista: <strong>Pendiente de acordar</strong></div>
                         </div>
                         <div class="incident-desc-raw">[2026R11] - [Progresion] [PRJ-11764] Captacion - Aparece VPT Pte en SIebel pero no llega Hermes</div>
+                    </div>
+                </div>
+            </article>
+            <article class="project-card has-crit" id="card-PRJ-10987">
+                <div class="project-header-top">
+                    <div class="project-code-title">
+                        <span class="project-code">PRJ-10987</span>
+                        <h3 class="project-title">Desarrollo de PA del Fijo Femtoceldas</h3>
+                    </div>
+                    <div style="display:flex; gap:8px; align-items:center;">
+                        <span class="badge badge-completo">Completo</span>
+                        <span class="badge" style="background:#DCFCE7; color:#166534;">GO</span>
+                        <span class="badge badge-neutral">Bimodal</span>
+                    </div>
+                </div>
+                <div class="project-desc">"Creación de nuevos productos de evaluación y mejora de cobertura indoor para clientes PYME en Conecta PYMES y Big PYME tanto en cadena CRMB2B como BAU."</div>
+                <div class="project-pap-banner">
+                    <span>🧪 <strong>Pruebas PaP:</strong> 4/6 Pasadas (66.7%)</span>
+                    <span style="color:#DC2626; font-weight:700;">⚠️ 2 Bloqueadas</span>
+                </div>
+                <div style="margin-top:14px;">
+                    <div style="font-size:12px; font-weight:700; text-transform:uppercase; color:#6B7280; margin-bottom:8px;">Incidencias Remedy (1):</div>
+                    <div class="incident-item" id="inc-INC000004192167">
+                        <div class="incident-head">
+                            <div style="display:flex; align-items:center; gap:8px;">
+                                <span class="incident-id">INC000004192167</span>
+                                <span class="badge badge-p3" title="Prioridad P3 - Media">P3 Media</span>
+                                <span class="badge badge-inprogress">En Curso</span>
+                                <span class="badge badge-neutral">KENAN_FX</span>
+                            </div>
+                            <div style="font-size:12px; color:#6B7280;">📅 Prevista: <strong>Pendiente de acordar</strong></div>
+                        </div>
+                        <div class="incident-desc-raw">[2026R11] - [PRJ-10987] KENAN_FX - Error en Volcado Facturación en provision de postventa Big PYME</div>
+                        <div class="ia-box">
+                            <div class="ia-box-header">🤖 Diagnóstico Epsilon Resumen IA</div>
+                            <div class="ia-impact-highlight"><strong>💥 Impacto en Servicio y Negocio:</strong> 1 cliente BYG PYME (MCPYM0695) sin provisionar servicios contratados. Sin método alternativo disponible; requiere corrección manual o CdA.</div>
+                            <div class="ia-field"><strong>🔍 Problema detectado:</strong> Error &#x27;Call process input failed validation&#x27; en volcado AFS a KENAN_FX. Campo empresa supera 25 caracteres cuando cliente tiene &gt;10 sedes. Orden AFS 264744138 bloqueada.</div>
+                            <div class="ia-field"><strong>🛠️ Solución / Causa raíz:</strong> Causa raíz: validación KENAN_FX rechaza campo empresa &gt;25 caracteres en multiubicación. Acción: modificación manual del valor para relanzar orden. Mejora pendiente de solicitud formal (defecto recurrente desde R9, INC000004140336).</div>
+                            <div class="ia-field"><strong>➡️ Próxima acción:</strong> Apertura CdA para resolución de defecto recurrente y ampliación límite campo empresa en KENAN_FX</div>
+                            <div class="ia-field" style="color:#DC2626;"><strong>⛔ Bloqueos:</strong> [Ventana Release]: Mejora de validación KENAN_FX pendiente de solicitud formal a Orange para aumentar límite campo empresa</div>
+                        </div>
+                    </div>
+                </div>
+            </article>
+            <article class="project-card has-crit" id="card-PRJ-11894">
+                <div class="project-header-top">
+                    <div class="project-code-title">
+                        <span class="project-code">PRJ-11894</span>
+                        <h3 class="project-title">Ciber Protección Mejoras</h3>
+                    </div>
+                    <div style="display:flex; gap:8px; align-items:center;">
+                        <span class="badge badge-piloto">Piloto</span>
+                        <span class="badge" style="background:#DCFCE7; color:#166534;">GO</span>
+                        <span class="badge badge-neutral">Bimodal</span>
+                    </div>
+                </div>
+                <div class="project-desc">"Integrar la funcionalidad del proveedor F-Secure, app de Ciber Protección para que esté disponible para los clientes convergentes y MO del segmento B2C. Introducimos una nueva solución de seguridad multidispositivo &quot;Ciberprotección Global&quot; a través de Orange Cyberdefense (OCD), la cual sustituye comercialmente a la antigua solución de Ciberprotección offnet de Cyan. Su despliegue para B2C incluye una modalidad de pago y otra gratuita integrada en tarifas seleccionadas."</div>
+                <div class="project-pap-banner">
+                    <span>🧪 <strong>Pruebas PaP:</strong> 12/17 Pasadas (70.6%)</span>
+                    <span style="color:#DC2626; font-weight:700;">⚠️ 3 Bloqueadas</span>
+                </div>
+                <div style="margin-top:14px;">
+                    <div style="font-size:12px; font-weight:700; text-transform:uppercase; color:#6B7280; margin-bottom:8px;">Incidencias Remedy (1):</div>
+                    <div class="incident-item" id="inc-INC000004192181">
+                        <div class="incident-head">
+                            <div style="display:flex; align-items:center; gap:8px;">
+                                <span class="incident-id">INC000004192181</span>
+                                <span class="badge badge-p4" title="Prioridad P4 - Baja">P4 Baja</span>
+                                <span class="badge badge-inprogress">En Curso</span>
+                                <span class="badge badge-neutral">SIRES</span>
+                            </div>
+                            <div style="font-size:12px; color:#6B7280;">📅 Prevista: <strong>Pendiente de acordar</strong></div>
+                        </div>
+                        <div class="incident-desc-raw">[2026R11] - PRJ-11894 -SIRES- No detonarse el mail de las plantillas 9009684 y 9009685</div>
+                        <div class="ia-box">
+                            <div class="ia-box-header">🤖 Diagnóstico Epsilon Resumen IA</div>
+                            <div class="ia-impact-highlight"><strong>💥 Impacto en Servicio y Negocio:</strong> Un cliente convergente no recibió notificaciones de cambios en SVA. Sin método alternativo disponible para notificación de cambios contractuales.</div>
+                            <div class="ia-field"><strong>🔍 Problema detectado:</strong> Mails de plantillas 9009684 y 9009685 no se detonaron tras alta y baja de SVA Ciber Protección Global en cliente convergente. Operaciones realizadas: alta 22/11/2026 11:41:08, baja 11:50:36, nueva alta 11:53:29.</div>
+                            <div class="ia-field"><strong>🛠️ Solución / Causa raíz:</strong> Pod con configuración antigua identificado. Configuración refrescada a versión desplegada la noche anterior. Reprocesamiento de comunicaciones ejecutado. Funcionalidad validada como operativa.</div>
+                            <div class="ia-field"><strong>➡️ Próxima acción:</strong> Validación de cierre por peticionario (CARLOS GARCIA PEINADOR) y cierre formal del ticket</div>
+                        </div>
                     </div>
                 </div>
             </article>
@@ -992,37 +901,6 @@
                     </div>
                 </div>
             </article>
-            <article class="project-card" id="card-PRJ-11155">
-                <div class="project-header-top">
-                    <div class="project-code-title">
-                        <span class="project-code">PRJ-11155</span>
-                        <h3 class="project-title">BSCS - mejora en módulo de cambios masivos para B2B</h3>
-                    </div>
-                    <div style="display:flex; gap:8px; align-items:center;">
-                        <span class="badge badge-completo">Completo</span>
-                        <span class="badge" style="background:#DCFCE7; color:#166534;">GO</span>
-                        <span class="badge badge-neutral">WF</span>
-                    </div>
-                </div>
-                <div class="project-pap-banner">
-                    <span>🧪 <strong>Pruebas PaP:</strong> 3/3 Pasadas (100.0%)</span>
-                </div>
-                <div style="margin-top:14px;">
-                    <div style="font-size:12px; font-weight:700; text-transform:uppercase; color:#6B7280; margin-bottom:8px;">Incidencias Remedy (1):</div>
-                    <div class="incident-item" id="inc-INC000004192177">
-                        <div class="incident-head">
-                            <div style="display:flex; align-items:center; gap:8px;">
-                                <span class="incident-id">INC000004192177</span>
-                                <span class="badge badge-p3" title="Prioridad P3 - Media">P3 Media</span>
-                                <span class="badge badge-closed">Cerrado</span>
-                                <span class="badge badge-neutral">BSCS</span>
-                            </div>
-                            <div style="font-size:12px; color:#6B7280;">📅 Prevista: <strong>Pendiente de acordar</strong></div>
-                        </div>
-                        <div class="incident-desc-raw">[2026R11] - [PRJ-11155] - BSCS - Error al acceder a la herramienta de operaciones masivas</div>
-                    </div>
-                </div>
-            </article>
             <article class="project-card" id="card-PRJ-11491">
                 <div class="project-header-top">
                     <div class="project-code-title">
@@ -1091,45 +969,6 @@
                     </div>
                 </div>
             </article>
-            <article class="project-card" id="card-PRJ-12305">
-                <div class="project-header-top">
-                    <div class="project-code-title">
-                        <span class="project-code">PRJ-12305</span>
-                        <h3 class="project-title">PRJ-12305 Tipificaciones Móviles en CRMB2B (Fase 1)</h3>
-                    </div>
-                    <div style="display:flex; gap:8px; align-items:center;">
-                        <span class="badge badge-completo">Completo</span>
-                        <span class="badge" style="background:#DCFCE7; color:#166534;">GO</span>
-                        <span class="badge badge-neutral">WF</span>
-                    </div>
-                </div>
-                <div class="project-desc">"Se implementan diversas mejoras en la tipificación de interacciones y escalados de casos en CRM B2B sobre la base de lo implementado en proyectos previos."</div>
-                <div class="project-pap-banner">
-                    <span>🧪 <strong>Pruebas PaP:</strong> 4/5 Pasadas (80.0%)</span>
-                    <span style="color:#6B7280;">⏳ 1 Pendientes</span>
-                </div>
-                <div style="margin-top:14px;">
-                    <div style="font-size:12px; font-weight:700; text-transform:uppercase; color:#6B7280; margin-bottom:8px;">Incidencias Remedy (1):</div>
-                    <div class="incident-item" id="inc-INC000004191975">
-                        <div class="incident-head">
-                            <div style="display:flex; align-items:center; gap:8px;">
-                                <span class="incident-id">INC000004191975</span>
-                                <span class="badge badge-p3" title="Prioridad P3 - Media">P3 Media</span>
-                                <span class="badge badge-closed">Cerrado</span>
-                                <span class="badge badge-neutral">CRM B2B</span>
-                            </div>
-                            <div style="font-size:12px; color:#6B7280;">📅 Prevista: <strong>Pendiente de acordar</strong></div>
-                        </div>
-                        <div class="incident-desc-raw">[2026R11] - PRJ-12305 TIPIFICACIONES MÓVILES No vuelcan los productos en Incidencia Tecnica</div>
-                        <div class="ia-box">
-                            <div class="ia-box-header">🤖 Diagnóstico Epsilon Resumen IA</div>
-                            <div class="ia-impact-highlight"><strong>💥 Impacto en Servicio y Negocio:</strong> Afecta a la creación y escalado de incidencias técnicas para clientes con productos móviles en CRMB2B. No se especifica método alternativo disponible en los datos proporcionados.</div>
-                            <div class="ia-field"><strong>🔍 Problema detectado:</strong> Al crear un caso de Incidencia Técnica en CRMB2B para clientes con productos móviles (Optima Plus Big), tras pulsar el botón Investigar no vuelcan los productos asociados, quedando la información en blanco.</div>
-                            <div class="ia-field"><strong>➡️ Próxima acción:</strong> Resolución en seguimiento a través de ticket Jira CRMBOP-3864</div>
-                        </div>
-                    </div>
-                </div>
-            </article>
             <article class="project-card" id="card-PRJ-10699">
                 <div class="project-header-top">
                     <div class="project-code-title">
@@ -1145,6 +984,23 @@
                 <div class="project-pap-banner">
                     <span>🧪 <strong>Pruebas PaP:</strong> 3/9 Pasadas (33.3%)</span>
                     <span style="color:#6B7280;">⏳ 5 Pendientes</span>
+                </div>
+                <div style="font-size:12px; color:#16A34A; margin-top:8px;">✅ Sin incidencias Remedy abiertas para este proyecto.</div>
+            </article>
+            <article class="project-card" id="card-PRJ-11155">
+                <div class="project-header-top">
+                    <div class="project-code-title">
+                        <span class="project-code">PRJ-11155</span>
+                        <h3 class="project-title">BSCS - mejora en módulo de cambios masivos para B2B</h3>
+                    </div>
+                    <div style="display:flex; gap:8px; align-items:center;">
+                        <span class="badge badge-completo">Completo</span>
+                        <span class="badge" style="background:#DCFCE7; color:#166534;">GO</span>
+                        <span class="badge badge-neutral">WF</span>
+                    </div>
+                </div>
+                <div class="project-pap-banner">
+                    <span>🧪 <strong>Pruebas PaP:</strong> 3/3 Pasadas (100.0%)</span>
                 </div>
                 <div style="font-size:12px; color:#16A34A; margin-top:8px;">✅ Sin incidencias Remedy abiertas para este proyecto.</div>
             </article>
@@ -1252,6 +1108,25 @@
                 <div class="project-pap-banner">
                     <span>🧪 <strong>Pruebas PaP:</strong> 6/10 Pasadas (60.0%)</span>
                     <span style="color:#6B7280;">⏳ 4 Pendientes</span>
+                </div>
+                <div style="font-size:12px; color:#16A34A; margin-top:8px;">✅ Sin incidencias Remedy abiertas para este proyecto.</div>
+            </article>
+            <article class="project-card" id="card-PRJ-12305">
+                <div class="project-header-top">
+                    <div class="project-code-title">
+                        <span class="project-code">PRJ-12305</span>
+                        <h3 class="project-title">PRJ-12305 Tipificaciones Móviles en CRMB2B (Fase 1)</h3>
+                    </div>
+                    <div style="display:flex; gap:8px; align-items:center;">
+                        <span class="badge badge-completo">Completo</span>
+                        <span class="badge" style="background:#DCFCE7; color:#166534;">GO</span>
+                        <span class="badge badge-neutral">WF</span>
+                    </div>
+                </div>
+                <div class="project-desc">"Se implementan diversas mejoras en la tipificación de interacciones y escalados de casos en CRM B2B sobre la base de lo implementado en proyectos previos."</div>
+                <div class="project-pap-banner">
+                    <span>🧪 <strong>Pruebas PaP:</strong> 4/5 Pasadas (80.0%)</span>
+                    <span style="color:#6B7280;">⏳ 1 Pendientes</span>
                 </div>
                 <div style="font-size:12px; color:#16A34A; margin-top:8px;">✅ Sin incidencias Remedy abiertas para este proyecto.</div>
             </article>
@@ -1562,7 +1437,7 @@
                         <span class="project-code" style="background:#4B5563;">TRANSVERSAL</span>
                         <h3 class="project-title">Incidencias Transversales / Sin Proyecto Asignado</h3>
                     </div>
-                    <span class="badge badge-neutral">10 incidencias</span>
+                    <span class="badge badge-neutral">7 incidencias</span>
                 </div>
                 <div style="margin-top:14px;">
                     <div class="incident-item">
@@ -1682,60 +1557,6 @@
                             <div class="ia-impact-highlight"><strong>💥 Impacto en Servicio y Negocio:</strong> Afecta órdenes de cambio de tarifa 2P a 3P con TV 90 canales. Sin método alternativo identificado en datos.</div>
                             <div class="ia-field"><strong>🔍 Problema detectado:</strong> Orden de cambio de tarifa 2P a 3P no incluye equipamiento decodificador. Afecta a cambios de tarifa con TV 90 canales y Netflix. Evidencia adjunta en prueba TMMC-7426.</div>
                             <div class="ia-field"><strong>🛠️ Solución / Causa raíz:</strong> Análisis SQA confirmó que el escenario de cambio de tarifa 2P a 3P con TV 90 canales y Netflix funciona correctamente. La orden genera decodificador según especificación. Incidencia cerrada como falso positivo tras validación de prueba TMMC-7426 en TEIDE.</div>
-                        </div>
-                    </div>
-                    <div class="incident-item">
-                        <div class="incident-head">
-                            <div style="display:flex; align-items:center; gap:8px;">
-                                <span class="incident-id">INC000004192168</span>
-                                <span class="badge badge-p4" title="Prioridad P4 - Baja">P4 Baja</span>
-                                <span class="badge badge-closed">Cerrado</span>
-                                <span class="badge badge-neutral">CRM B2B</span>
-                            </div>
-                            <div style="font-size:12px; color:#6B7280;">📅 Prevista: <strong>Pendiente de acordar</strong></div>
-                        </div>
-                        <div class="incident-desc-raw">[2026R11] - No aparece seccion &quot;Teminales&quot; para carga de parrilla CRMB2B</div>
-                        <div class="ia-box">
-                            <div class="ia-box-header">🤖 Diagnóstico Epsilon Resumen IA</div>
-                            <div class="ia-impact-highlight"><strong>💥 Impacto en Servicio y Negocio:</strong> Afecta a usuario corporativo de pruebas para carga masiva de terminales en CRMB2B. No existe método alternativo hasta asignación de permisos.</div>
-                            <div class="ia-field"><strong>🔍 Problema detectado:</strong> Usuario checan0 (fchecan0@loginb2b.orange.es) creado para pruebas de carga de parrilla de terminales en CRMB2B no visualiza la sección correspondiente para realizar la operación.</div>
-                            <div class="ia-field"><strong>🛠️ Solución / Causa raíz:</strong> Se asignó el permiso necesario al usuario checan0 para visualizar la tabla de terminales y ejecutar la carga de parrilla en CRMB2B.</div>
-                        </div>
-                    </div>
-                    <div class="incident-item">
-                        <div class="incident-head">
-                            <div style="display:flex; align-items:center; gap:8px;">
-                                <span class="incident-id">INC000004191879</span>
-                                <span class="badge badge-p4" title="Prioridad P4 - Baja">P4 Baja</span>
-                                <span class="badge badge-closed">Cerrado</span>
-                                <span class="badge badge-neutral">FICHA DE CLIENTE</span>
-                            </div>
-                            <div style="font-size:12px; color:#6B7280;">📅 Prevista: <strong>Pendiente de acordar</strong></div>
-                        </div>
-                        <div class="incident-desc-raw">[2026R11] - FICHA DE CLIENTE - No se visualiza la sección de compromiso de permanencia</div>
-                        <div class="ia-box">
-                            <div class="ia-box-header">🤖 Diagnóstico Epsilon Resumen IA</div>
-                            <div class="ia-impact-highlight"><strong>💥 Impacto en Servicio y Negocio:</strong> Afecta a la visualización de información contractual de permanencia para agentes en dashboard de cliente. Recurso de prueba: 53845956N. No se menciona método alternativo disponible.</div>
-                            <div class="ia-field"><strong>🔍 Problema detectado:</strong> La sección de compromiso de permanencia no se visualiza en el dashboard de cliente de Ficha de Cliente. Esta sección debería aparecer debajo de consumo de grupo según comportamiento previo. Detectado por QAs en pruebas de release 2026R11 (JIRA TMMC-7412).</div>
-                            <div class="ia-field"><strong>➡️ Próxima acción:</strong> Análisis y corrección en curso por equipo DES_SOE_FICHA mediante ticket Jira FRONTRE-45952</div>
-                        </div>
-                    </div>
-                    <div class="incident-item">
-                        <div class="incident-head">
-                            <div style="display:flex; align-items:center; gap:8px;">
-                                <span class="incident-id">INC000004191973</span>
-                                <span class="badge badge-p3" title="Prioridad P3 - Media">P3 Media</span>
-                                <span class="badge badge-closed">Cerrado</span>
-                                <span class="badge badge-neutral">TEIDE</span>
-                            </div>
-                            <div style="font-size:12px; color:#6B7280;">📅 Prevista: <strong>Pendiente de acordar</strong></div>
-                        </div>
-                        <div class="incident-desc-raw">[2026R11] - Aparecer el SVA Ciberproteccion Global. en una postventa por PDV con el SFID 49140013</div>
-                        <div class="ia-box">
-                            <div class="ia-box-header">🤖 Diagnóstico Epsilon Resumen IA</div>
-                            <div class="ia-impact-highlight"><strong>💥 Impacto en Servicio y Negocio:</strong> Afecta a personalización de carpeta móvil en apartado tranquilidad para un cliente residencial. Existe método alternativo: cancelar orden y relanzar nueva.</div>
-                            <div class="ia-field"><strong>🔍 Problema detectado:</strong> En postventa TEIDE sobre cliente pospago residencial aparece SVA Ciberprotección Global con SFID 49140013, cuando según documentación DPU solo debería permitirse SFID 49140011. Orden ID 2-1582755991018, pasaporte PRSAC7327.</div>
-                            <div class="ia-field"><strong>🛠️ Solución / Causa raíz:</strong> Verificación en base de datos revela que SFID real de la orden es 00000078 (X_FIX_SFID: 489497), autorizado en DPU para piloto de visualización. Comportamiento correcto según especificaciones. Peticionario valida cancelando orden original y lanzando nueva (ID 2-1582753201585) sin incidencia.</div>
                         </div>
                     </div>
                 </div>

@@ -95,8 +95,12 @@ def test_build_release_report_html_generates_valid_file(tmp_path):
     assert "Diagnóstico Epsilon Resumen IA" in content
     assert "Impacto en Servicio y Negocio" in content
 
-    # Verifica que en la tabla de Resumen Agregado no aparezcan incidencias Cerradas
-    # INC000004192171 y INC000004191881 son tickets en estado 'Cerrado'
-    table_match = content[content.find("Resumen Agregado por Proyecto"):content.find("Seguimiento de Proyectos")]
-    assert "INC000004192171" not in table_match
-    assert "INC000004191881" not in table_match
+    # Verifica que no aparezcan incidencias en estado 'Cerrado' en todo el informe
+    # (ni en la tabla de Resumen Agregado ni en las fichas de proyectos/transversales)
+    # Tickets cerrados en 2026R11: INC000004192171, INC000004191881, INC000004192065, etc.
+    assert "INC000004192171" not in content
+    assert "INC000004191881" not in content
+    assert "INC000004192065" not in content
+    assert "INC000004192066" not in content
+    assert "INC000004192168" not in content
+    assert "badge-status-cerrado" not in content

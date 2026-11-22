@@ -503,6 +503,10 @@ def build_release_report_html(
             else:
                 active_p4 += 1
 
+        # Omitir incidencias en estado Cerrado del seguimiento por proyecto e incidencias Remedy
+        if "cerrad" in st or "closed" in st:
+            continue
+
         prj_code = extract_project_code(inc)
         if prj_code:
             if prj_code not in incidents_by_project:
