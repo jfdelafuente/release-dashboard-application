@@ -98,24 +98,38 @@ def load_cached_epsilon_summaries(
     incident_ids: Iterable[str],
 ) -> Dict[str, Any]:
     """Lee únicamente resúmenes ya cacheados en `<storage_dir>/cache/epsilon/` o `.epsilon_cache/` (coste 0)."""
-    cache_dir = resolve_cache_dir(Path(storage_dir), "epsilon")
+    st = Path(storage_dir)
+    candidate_dirs: List[Path] = []
+    for d in [
+        resolve_cache_dir(st, "epsilon"),
+        st / ".epsilon_cache",
+        st / "data" / ".epsilon_cache",
+        st / "cache" / "epsilon",
+        Path("/infocodes/var/storage/release-dashboard/cache/epsilon"),
+        Path("/infocodes/var/storage/release-dashboard/.epsilon_cache"),
+        Path("/infocodes/var/storage/release-dashboard/data/.epsilon_cache"),
+    ]:
+        if d.is_dir() and d not in candidate_dirs:
+            candidate_dirs.append(d)
+
     summaries: Dict[str, Any] = {}
-    if not cache_dir.is_dir():
+    if not candidate_dirs:
         return summaries
 
     for raw_id in incident_ids:
         clean_id = (raw_id or "").strip()
         if not clean_id or not _SAFE_ID_RE.match(clean_id):
             continue
-        cache_file = cache_dir / f"{clean_id}.json"
-        if not cache_file.is_file():
-            continue
-        try:
-            payload = json.loads(cache_file.read_text(encoding="utf-8"))
-            if isinstance(payload, dict) and payload.get("success") is not False:
-                payload["_cached_at_ms"] = int(cache_file.stat().st_mtime * 1000)
-                payload["_from_disk_cache"] = True
-                summaries[clean_id] = payload
-        except Exception:
-            continue
+        for cdir in candidate_dirs:
+            cache_file = cdir / f"{clean_id}.json"
+            if cache_file.is_file():
+                try:
+                    payload = json.loads(cache_file.read_text(encoding="utf-8"))
+                    if isinstance(payload, dict) and payload.get("success") is not False:
+                        payload["_cached_at_ms"] = int(cache_file.stat().st_mtime * 1000)
+                        payload["_from_disk_cache"] = True
+                        summaries[clean_id] = payload
+                        break
+                except Exception:
+                    continue
     return summaries
