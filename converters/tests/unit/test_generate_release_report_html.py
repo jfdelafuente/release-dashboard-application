@@ -114,7 +114,14 @@ def test_build_release_report_html_generates_valid_file(tmp_path):
     assert "INC000004192062" in table_match
     assert "(0 iniciativas afectadas)" not in content
     assert "iniciativas en seguimiento" in table_match
-    assert "5 iniciativas en seguimiento" in table_match
+    assert "7 iniciativas en seguimiento" in table_match
+    # Iniciativas con incidencias en estado Pendiente / sin pruebas PaP deben aparecer
+    assert 'href="#card-AB2CJ-222"' in table_match
+    assert 'href="#card-PRJ-12386"' in table_match
+    assert "INC000004192079" in table_match
+    assert "INC000004192174" in table_match
+    assert "badge-pending" in table_match
+    assert "Sin pruebas PaP" in table_match
     # Iniciativas sin incidencias no deben aparecer en la tabla resumen
     assert 'href="#card-PRJ-12315"' not in table_match
     assert 'href="#card-PRJ-11155"' not in table_match
@@ -171,7 +178,7 @@ def test_build_release_report_html_renders_all_projects_when_zero_blocks(tmp_pat
     content = res_path.read_text(encoding="utf-8")
     assert "0 bloqueos" in content
     table_match = content[content.find("Resumen Agregado por Proyecto"):content.find("Seguimiento de Proyectos")]
-    assert "Resumen Agregado por Proyecto (1 iniciativas en seguimiento)" in table_match
+    assert "Resumen Agregado por Proyecto (6 iniciativas en seguimiento)" in table_match
     assert "(0 iniciativas afectadas)" not in content
     # PRJ-99001 no tiene incidencias -> NO debe mostrarse en la tabla resumen
     assert "PRJ-99001" not in table_match

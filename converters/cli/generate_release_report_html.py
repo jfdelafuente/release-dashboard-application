@@ -1113,11 +1113,14 @@ def build_release_report_html(
         html_lines.append('            </div>')
 
         # Filtrar iniciativas para la tabla de Resumen Agregado:
-        # Se muestran únicamente las iniciativas en seguimiento que tengan incidencias asignadas
+        # Se muestran todas las iniciativas en seguimiento que tengan incidencias Remedy activas/pendientes
+        # o bloqueos de pruebas PaP
         display_projects_list = []
         excluded_clean = 0
+        seen_display_prjs = set()
         for b_proj in pap_projects_list:
             p_code = b_proj["prj"]
+            seen_display_prjs.add(p_code)
             if p_code == "TRANSVERSAL":
                 p_incs = list(incidents_without_project)
             else:
@@ -1127,6 +1130,47 @@ def build_release_report_html(
                 display_projects_list.append((b_proj, p_incs))
             else:
                 excluded_clean += 1
+
+        # Incorporar iniciativas que tengan incidencias activas/pendientes en Remedy pero no dispongan de pruebas en Grafana Argos
+        for p_code, p_incs in incidents_by_project.items():
+            if p_code not in seen_display_prjs and len(p_incs) > 0:
+                p_systems = set()
+                for inc_item in p_incs:
+                    sys_item = inc_item.get("Sistema") or inc_item.get("sistema") or inc_item.get("producto") or inc_item.get("Producto") or ""
+                    if sys_item:
+                        p_systems.add(str(sys_item).strip())
+                is_prog = p_code.startswith("PRJ-") or p_code.startswith("AB2CJ-") or p_code.startswith("OCA-")
+                b_proj = {
+                    "prj": p_code,
+                    "tipologia": "PROGRESIÓN" if is_prog else "REGRESIÓN",
+                    "block_count": 0,
+                    "total_tests": 0,
+                    "pass_count": 0,
+                    "pending_count": 0,
+                    "executing_count": 0,
+                    "verify_count": 0,
+                    "sistemas": sorted(list(p_systems)),
+                    "pass_rate": 0.0,
+                    "block_rate": 0.0,
+                }
+                display_projects_list.append((b_proj, p_incs))
+
+        def _display_proj_sort_key(item):
+            bp, inc_list = item
+            has_blk = 0 if bp.get("block_count", 0) > 0 else 1
+            has_crit = 0 if any((i.get("Prioridad") or "").upper() in ("P1", "P2", "CRÍTICA", "ALTA") for i in inc_list) else 1
+            is_prog = 0 if bp.get("tipologia") == "PROGRESIÓN" else 1
+            return (
+                has_blk,
+                has_crit,
+                -len(inc_list),
+                is_prog,
+                -bp.get("block_count", 0),
+                bp.get("pass_rate", 0.0),
+                bp.get("prj", ""),
+            )
+
+        display_projects_list.sort(key=_display_proj_sort_key)
 
         # Tabla de Resumen Agregado con Columna de Tipología
         html_lines.append('            <div class="data-table-wrap" style="margin-bottom: 24px;">')
@@ -1205,9 +1249,17 @@ def build_release_report_html(
                 if b_proj.get("block_count", 0) > 0:
                     td_block = f'<td style="text-align:center;"><span class="badge badge-p1" style="font-size:12px; font-weight:800;">{b_proj["block_count"]}</span></td>'
                     td_block_rate = f'<td style="text-align:center;"><strong style="color:var(--color-p1);">{b_proj["block_rate"]}%</strong></td>'
+                elif b_proj.get("total_tests", 0) == 0:
+                    td_block = '<td style="text-align:center;"><span class="badge" style="background:#F3F4F6; color:#9CA3AF; font-size:11px; font-weight:700;">-</span></td>'
+                    td_block_rate = '<td style="text-align:center;"><span style="color:#9CA3AF; font-size:12px; font-weight:600;">-</span></td>'
                 else:
                     td_block = '<td style="text-align:center;"><span class="badge" style="background:#DCFCE7; color:#166534; font-size:11px; font-weight:700;">0</span></td>'
                     td_block_rate = '<td style="text-align:center;"><span style="color:#166534; font-size:12px; font-weight:600;">0%</span></td>'
+
+                if b_proj.get("total_tests", 0) > 0:
+                    td_tests = f'<td style="text-align:center;"><span style="color:#166534; font-weight:700;">{b_proj["pass_count"]}</span> / <span style="color:#6B7280;">{b_proj["pending_count"]}</span></td>'
+                else:
+                    td_tests = '<td style="text-align:center;"><span style="color:#9CA3AF; font-size:12px;">Sin pruebas PaP</span></td>'
 
                 html_lines.append('                        <tr>')
                 html_lines.append(f'                            <td>{tip_badge}</td>')
@@ -1215,7 +1267,7 @@ def build_release_report_html(
                 html_lines.append(f'                            <td><strong>{html.escape(p_name)}</strong></td>')
                 html_lines.append(f'                            {td_block}')
                 html_lines.append(f'                            {td_block_rate}')
-                html_lines.append(f'                            <td style="text-align:center;"><span style="color:#166534; font-weight:700;">{b_proj["pass_count"]}</span> / <span style="color:#6B7280;">{b_proj["pending_count"]}</span></td>')
+                html_lines.append(f'                            {td_tests}')
                 html_lines.append(f'                            <td>{sys_badges}</td>')
                 html_lines.append(f'                            <td>{inc_cell}</td>')
                 html_lines.append('                        </tr>')
