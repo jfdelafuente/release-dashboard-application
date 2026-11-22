@@ -227,3 +227,14 @@ Lista priorizada de evolutivos para la consola **[Mesa de Release](/05-postmorte
 - **Propuesta:** Extraer la lógica compartida de endpoints de Mesa de Release (`overrides`, `sync-postmortem`, `resumenIA/cached`, `remedyG`) a un módulo de servicio único invocado por ambos servidores (o migrar completamente al router FastAPI).
 - **Componentes afectados:** `serve_app.py`, `converters/src/fastapi_remedy_router.py`, `converters/src/`.
 - **Criterio de aceptación:** Un único punto de mantenimiento para cada operación backend, garantizando paridad exacta entre entorno local y producción.
+
+---
+
+### M22 · Enriquecimiento de Motivo de Estado Resuelto y Detalle Técnico de Resolución
+- **Situación actual:** La columna 11 de la tabla de Mesa de Release mostraba `-` para todas las incidencias sincronizadas vía API MonTMC (`GET /api/epsilon/release`), dado que el endpoint de lista devuelve `detalleSolucion: null` y no expone el desplegable legado de Remedy `MotivoEstado_Anterior` (usado históricamente en los Excels).
+- **Implementación realizada:**
+  1. **Enriquecimiento en sincronización backend (`sync_montmc_postmortem.py`):** Paso 3c que identifica incidencias en estado `Resuelto` o `Cerrado` devueltas por la API y consulta en paralelo (`fetch_remedy_detail`) para extraer `detalleSolucion` técnico y `Fecha de última resolución` oficial de Remedy.
+  2. **Renderizado resiliente y fallback en frontend (`release-desk.js` y `release-desk-domain.js`):** Soporta cascada de resolución con `Motivo de estado` -> `MotivoEstado_Anterior` -> `motivoEstado` -> `motivoResolucion` -> `detalleSolucion` de Remedy -> `iaData.solucion` de Resumen IA -> `-` (para tickets abiertos).
+  3. **Visualización y exportación CSV:** Celda con clamp (`rd-cell-clamp`) y tooltip `title` para lecturas largas, e inclusión fiel en la columna "Motivo Estado Resuelto" del CSV de exportación.
+- **Componentes afectados:** `converters/cli/sync_montmc_postmortem.py`, `dashboards/release-desk/release-desk.js`, `dashboards/release-desk/release-desk-domain.js`.
+- **Criterio de aceptación:** Las incidencias resueltas o cerradas muestran la justificación/detalle técnico de la solución de forma verificada sin romper la retrocompatibilidad con Excels antiguos.
