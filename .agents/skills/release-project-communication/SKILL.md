@@ -376,11 +376,12 @@ Además de las plantillas de texto formateado para Microsoft Teams, el agente ge
   ```html
   <button id="btnCopyBriefing" class="rd-btn" title="Copiar resumen estructurado de la vista filtrada por prioridad para Teams o acta">📋 Copiar briefing</button>
   <button id="btnCopyBriefingSystem" class="rd-btn" title="Copiar resumen agrupado por Sistema (Grupo asignado) para Teams o acta">📋 Briefing por Sistema</button>
-  <button id="btnGenerateReportHtml" class="rd-btn rd-btn-primary" title="Generar, actualizar y abrir el informe ejecutivo HTML 360° en una nueva pestaña">🌐 Informe Ejecutivo HTML</button>
+  <button id="btnGenerateReportHtml" class="rd-btn rd-btn-primary hidden" title="Generar, actualizar y abrir el informe ejecutivo PaP en una nueva pestaña">🌐 Informe Ejecutivo PaP</button>
   <button id="btnExportCsv" class="rd-btn" title="Exportar incidencias visibles a CSV para Excel">📥 Exportar tabla</button>
   ```
 - **Comportamiento interactivo (`release-desk.js`)**:
-  - **`btnGenerateReportHtml` (`🌐 Informe Ejecutivo HTML`):**
+  - **`btnGenerateReportHtml` (`🌐 Informe Ejecutivo PaP`):**
+    - **Visibilidad condicional:** El botón se muestra exclusivamente el mismo día de la fecha de PaP (`Fecha PaP`) y al día siguiente (día PaP + 1) según el calendario oficial de `dashboards/release-kpis/releases-data.js`. Permanece oculto (`.hidden`) durante el resto de fechas.
     - Envía una petición `POST /api/release-desk/generate-report` con payload `{"release": "{release}"}`.
     - El backend (FastAPI en VPS o `serve_app.py` en local a través de `converters/src/desk_service.py`) compila en caliente el informe HTML corporativo consolidando telemetría de Argos, catálogo de proyectos e incidencias de Remedy y Epsilon IA.
     - Muestra toast informativo de éxito y **abre inmediatamente el informe generado en una pestaña nueva** del navegador (`window.open(reportUrl, '_blank')`).

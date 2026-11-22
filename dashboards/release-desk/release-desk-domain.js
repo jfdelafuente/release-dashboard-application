@@ -862,6 +862,61 @@
         };
     }
 
+    var SPANISH_MONTHS = {
+        'ene': 0, 'enero': 0,
+        'feb': 1, 'febrero': 1,
+        'mar': 2, 'marzo': 2,
+        'abr': 3, 'abril': 3,
+        'may': 4, 'mayo': 4,
+        'jun': 5, 'junio': 5,
+        'jul': 6, 'julio': 6,
+        'ago': 7, 'agosto': 7,
+        'sep': 8, 'sept': 8, 'set': 8, 'septiembre': 8,
+        'oct': 9, 'octubre': 9,
+        'nov': 10, 'noviembre': 10,
+        'dic': 11, 'diciembre': 11
+    };
+
+    function getReleasePapDate(releaseName, rawReleases) {
+        if (!releaseName || !Array.isArray(rawReleases)) return null;
+        var normName = String(releaseName).trim().toUpperCase();
+        var found = null;
+        for (var i = 0; i < rawReleases.length; i++) {
+            var row = rawReleases[i];
+            if (row && String(row[0]).trim().toUpperCase() === normName) {
+                found = row;
+                break;
+            }
+        }
+        if (!found) return null;
+        var year = parseInt(found[1], 10);
+        var fechaStr = String(found[2] || '').trim();
+        if (!fechaStr || isNaN(year)) return null;
+
+        var m = fechaStr.match(/^(\d{1,2})\s*-\s*([a-zñáéíóú]+)\.?$/i);
+        if (!m) return null;
+        var day = parseInt(m[1], 10);
+        var mStr = m[2].toLowerCase().replace(/\.$/, '');
+        var monthIdx = SPANISH_MONTHS[mStr];
+        if (monthIdx === undefined || isNaN(day)) return null;
+
+        return new Date(year, monthIdx, day, 0, 0, 0, 0);
+    }
+
+    function isPapReportVisible(releaseName, rawReleases, now) {
+        if (!releaseName) return false;
+        var papDate = getReleasePapDate(releaseName, rawReleases);
+        if (!papDate || isNaN(papDate.getTime())) return false;
+
+        var cur = (now instanceof Date) ? now : new Date();
+        var curUtc = Date.UTC(cur.getFullYear(), cur.getMonth(), cur.getDate());
+        var papUtc = Date.UTC(papDate.getFullYear(), papDate.getMonth(), papDate.getDate());
+        var diffDays = Math.round((curUtc - papUtc) / 86400000);
+
+        // Solo visible el mismo día de la fecha de PaP (0) y al día siguiente (1)
+        return diffDays === 0 || diffDays === 1;
+    }
+
     var api = {
         escapeHtml: escapeHtml,
         isClosedStatus: isClosedStatus,
@@ -891,7 +946,9 @@
         readLocalOverrides: readLocalOverrides,
         writeLocalOverrides: writeLocalOverrides,
         parseArgosCsvMeta: parseArgosCsvMeta,
-        buildArgosUploadPayload: buildArgosUploadPayload
+        buildArgosUploadPayload: buildArgosUploadPayload,
+        getReleasePapDate: getReleasePapDate,
+        isPapReportVisible: isPapReportVisible
     };
     global.ReleaseDeskDomain = api;
     if (typeof module !== 'undefined' && module.exports) {

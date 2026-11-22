@@ -22,8 +22,9 @@ y este proyecto se adhiere a [Semantic Versioning](https://semver.org/lang/es/).
   - Soportados con idéntico comportamiento en `serve_app.py` (servidor local) y `fastapi_remedy_router.py` (FastAPI en producción VPS).
 - **Controles interactivos en Mesa de Release**:
   - Botón `📊 Cargar Argos PaP` (`#btnUploadArgos`): Apertura del modal interactivo de carga en cabecera.
-  - Botón unificado `🌐 Informe Ejecutivo HTML` (`#btnGenerateReportHtml`): Compilación en caliente bajo demanda y apertura automática del informe corporativo 360° en una nueva pestaña.
-  - Barra inferior simplificada: 4 acciones esenciales y no redundantes (`Copiar briefing`, `Briefing por Sistema`, `Informe Ejecutivo HTML`, `Exportar tabla`).
+  - Botón unificado `🌐 Informe Ejecutivo PaP` (`#btnGenerateReportHtml`): Compilación en caliente bajo demanda y apertura automática del informe corporativo en una nueva pestaña.
+  - **Visibilidad condicional por fecha PaP**: `#btnGenerateReportHtml` se muestra de manera condicional exclusivamente el día de la fecha de PaP (`Fecha PaP` en `releases-data.js`) y al día siguiente (día PaP + 1), manteniéndose oculto durante el resto del ciclo para focalizar la operativa.
+  - Barra inferior simplificada: 4 acciones esenciales y no redundantes (`Copiar briefing`, `Briefing por Sistema`, `Informe Ejecutivo PaP`, `Exportar tabla`).
 - **Persistencia de fechas de compromiso acordadas en la Mesa**:
   - Edición en caliente del campo `fecha_prevista` en el seguimiento operativo de Mesa de Release con sincronización local y en servidor.
   - Indicador visual `(Acordada Mesa)` tanto en la consola interactiva como en las tarjetas ejecutivas de proyecto del informe HTML.

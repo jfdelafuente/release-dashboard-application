@@ -1040,9 +1040,22 @@
         document.getElementById('workspaceSection').classList.add('hidden');
     }
 
+    function updatePapReportButtonVisibility() {
+        var btn = document.getElementById('btnGenerateReportHtml');
+        if (!btn) return;
+        var rawReleases = typeof RAW_RELEASES !== 'undefined'
+            ? RAW_RELEASES
+            : (typeof global !== 'undefined' && global.RAW_RELEASES ? global.RAW_RELEASES : []);
+        var isVisible = (Domain && typeof Domain.isPapReportVisible === 'function')
+            ? Domain.isPapReportVisible(state.currentRelease, rawReleases)
+            : false;
+        btn.classList.toggle('hidden', !isVisible);
+    }
+
     function showWorkspace() {
         document.getElementById('emptyStateBox').classList.add('hidden');
         document.getElementById('workspaceSection').classList.remove('hidden');
+        updatePapReportButtonVisibility();
     }
 
     async function loadRelease(releaseName) {
@@ -1420,7 +1433,7 @@
                     btnGenerateReportHtml.disabled = false;
                     btnGenerateReportHtml.innerHTML = origText;
                     if (data && data.success) {
-                        notify(data.message || 'Informe HTML actualizado con éxito', 'success');
+                        notify(data.message || 'Informe Ejecutivo PaP actualizado con éxito', 'success');
                         var reportUrl = data.report_url || ('/dashboards/informes/comunicado-release-' + encodeURIComponent(rel) + '/');
                         window.open(reportUrl, '_blank');
                     } else {

@@ -28,13 +28,14 @@ Esta función incorpora una consola dedicada en el portal (**Mesa de Release**) 
    - Botón **"⚡ Sincronizar Epsilon"** que invoque `POST /api/sync-postmortem` para la release seleccionada y recargue automáticamente los datos de la consola al completar.
    - Botón **"Copiar seguimiento"** en la ficha de detalle que copie al portapapeles un texto estructurado listo para pegar en Teams o correo (incluyendo ID, release, estado, grupo soporte/resolutor, responsable y Resumen IA).
 
-6. **Carga Web de Pruebas PaP de Grafana Argos y Regeneración Bajo Demanda del Informe Ejecutivo HTML 360°:**
+6. **Carga Web de Pruebas PaP de Grafana Argos y Regeneración Bajo Demanda del Informe Ejecutivo PaP:**
    - Botón **"📊 Cargar Argos PaP"** (`#btnUploadArgos`) en la barra de acciones superior que despliega un modal web interactivo (`#argosUploadModal`) con zonas de arrastre (drag-and-drop) y selectores de archivo para los CSVs de Progresión (`PRJ-*`) y Regresión Transversal E2E.
    - Endpoint unificado `POST /api/release-desk/upload-argos` (implementado en `desk_service.py` y soportado tanto en `serve_app.py` en local como en `fastapi_remedy_router.py` en VPS) que:
      - Detecta automáticamente la tipología de cada fichero.
      - Realiza una fusión inteligente y atómica en `data/storage/projects/{release}_grafana_pap.csv`, preservando las filas existentes de la otra tipología si solo se sube una de ellas.
-     - Compila y publica automáticamente el Informe Ejecutivo Global de Release en HTML (`dashboards/informes/comunicado-release-{release}/index.html`) y lo abre en una nueva pestaña.
-   - Botón unificado **"🌐 Informe Ejecutivo HTML"** (`#btnGenerateReportHtml`) en la barra inferior que invoca `POST /api/release-desk/generate-report` para compilar en caliente y abrir inmediatamente el informe HTML corporativo consolidado en una nueva pestaña del navegador.
+     - Compila y publica automáticamente el Informe Ejecutivo PaP en HTML (`dashboards/informes/comunicado-release-{release}/index.html`) y lo abre en una nueva pestaña.
+   - Botón unificado **"🌐 Informe Ejecutivo PaP"** (`#btnGenerateReportHtml`) en la barra inferior que invoca `POST /api/release-desk/generate-report` para compilar en caliente y abrir inmediatamente el informe HTML corporativo consolidado en una nueva pestaña del navegador.
+     - **Regla de visibilidad condicional:** El botón `#btnGenerateReportHtml` permanece oculto por defecto y únicamente se muestra de forma condicional el mismo día de la fecha de PaP (`Fecha PaP` en `dashboards/release-kpis/releases-data.js`) y al día siguiente (día PaP + 1), manteniendo la consola limpia y focalizada durante el resto del ciclo mensual.
    - Persistencia de fechas acordadas (`fecha_prevista`) editadas en la mesa, visibles con el distintivo `(Acordada Mesa)` tanto en la consola como en el informe ejecutivo generado.
 
 ### Opcionales / Fuera de alcance (Fase 2)
@@ -64,5 +65,5 @@ Esta función incorpora una consola dedicada en el portal (**Mesa de Release**) 
 - Al seleccionar una incidencia se muestra su ficha de seguimiento con los datos de Resumen IA, el botón **"Generar / Refrescar Resumen IA"** invoca `/api/epsilon/resumen` y **"Copiar seguimiento"** copia el texto formateado al portapapeles.
 - Al pulsar **"⚡ Sincronizar Epsilon"** se invoca `POST /api/sync-postmortem` con la release activa y se recarga la consola sin modificar `massive-incidents` ni `high_priority_notifications.json`.
 - El modal **"📊 Cargar Argos PaP"** permite arrastrar o seleccionar archivos CSV de Grafana, llama a `POST /api/release-desk/upload-argos`, consolida los datos y genera el informe HTML corporativo.
-- El botón unificado **"🌐 Informe Ejecutivo HTML"** llama a `POST /api/release-desk/generate-report`, compila el informe en tiempo real tanto en local como en producción VPS y lo abre en una nueva pestaña del navegador.
+- El botón unificado **"🌐 Informe Ejecutivo PaP"** llama a `POST /api/release-desk/generate-report`, compila el informe en tiempo real tanto en local como en producción VPS y lo abre en una nueva pestaña del navegador, mostrándose condicionalmente solo el día de la fecha de PaP y al día siguiente.
 - Existen pruebas automatizadas que cubren los endpoints de subida, generación y los componentes de UI, con la suite completa aprobada al 100%.

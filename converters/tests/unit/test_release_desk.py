@@ -59,6 +59,7 @@ def test_release_desk_html_has_required_controls():
     ):
         assert required_id in html, f"Falta {required_id} en release-desk/index.html"
 
+    assert "Informe Ejecutivo PaP" in html
     assert 'aria-label="Filtrar por sistema"' in html
     assert "Todos los sistemas" in html
 
@@ -736,4 +737,46 @@ def test_release_desk_argos_helpers():
         domain_js = (PROJECT_ROOT / "dashboards" / "release-desk" / "release-desk-domain.js").read_text(encoding="utf-8")
         assert "parseArgosCsvMeta" in domain_js
         assert "buildArgosUploadPayload" in domain_js
+
+
+def test_release_desk_pap_report_visibility():
+    if shutil.which("node") is not None:
+        script = (
+            f"const rd = require({json.dumps(str(RELEASE_DESK_JS))});\n"
+            "const raw = [\n"
+            "  ['2026R11', 2026, '22-nov.', 'Noviembre', 0, 0, 0, 0],\n"
+            "  ['2026R9', 2026, '27-sept.', 'Septiembre', 0, 0, 0, 0]\n"
+            "];\n"
+            "const dPap = rd.getReleasePapDate('2026R11', raw);\n"
+            "const day0 = new Date(2026, 10, 22, 10, 0, 0);\n"
+            "const day1 = new Date(2026, 10, 23, 23, 59, 0);\n"
+            "const dayBefore = new Date(2026, 10, 21, 20, 0, 0);\n"
+            "const dayAfter2 = new Date(2026, 10, 24, 8, 0, 0);\n"
+            "console.log(JSON.stringify({\n"
+            "  papYear: dPap.getFullYear(),\n"
+            "  papMonth: dPap.getMonth(),\n"
+            "  papDate: dPap.getDate(),\n"
+            "  visDay0: rd.isPapReportVisible('2026R11', raw, day0),\n"
+            "  visDay1: rd.isPapReportVisible('2026R11', raw, day1),\n"
+            "  visBefore: rd.isPapReportVisible('2026R11', raw, dayBefore),\n"
+            "  visDay2: rd.isPapReportVisible('2026R11', raw, dayAfter2),\n"
+            "  visOldRel: rd.isPapReportVisible('2026R9', raw, day0),\n"
+            "  visUnknown: rd.isPapReportVisible('2099R1', raw, day0)\n"
+            "}));\n"
+        )
+        proc = _run_node_script(script)
+        out = json.loads(proc.stdout)
+        assert out["papYear"] == 2026
+        assert out["papMonth"] == 10  # Noviembre (0-indexed)
+        assert out["papDate"] == 22
+        assert out["visDay0"] is True
+        assert out["visDay1"] is True
+        assert out["visBefore"] is False
+        assert out["visDay2"] is False
+        assert out["visOldRel"] is False
+        assert out["visUnknown"] is False
+    else:
+        domain_js = (PROJECT_ROOT / "dashboards" / "release-desk" / "release-desk-domain.js").read_text(encoding="utf-8")
+        assert "getReleasePapDate" in domain_js
+        assert "isPapReportVisible" in domain_js
 
