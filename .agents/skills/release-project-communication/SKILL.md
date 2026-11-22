@@ -10,7 +10,7 @@ description: >-
   (con telemetría Remedy, diagnóstico Epsilon Resumen IA, criticidades P1/P2/Masivas y fechas previstas),
   manteniendo sincronizado el catálogo de proyectos y enrutando siempre a la consola de Mesa de Release (/dashboards/release-desk/).
 domain: it-releases
-version: 2.3.0
+version: 2.4.0
 language: es
 owner: Orange Tech Operations
 metadata:
@@ -356,9 +356,9 @@ Además de las plantillas de texto formateado para Microsoft Teams, el agente ge
    - Pruebas bloqueadas (destacado con alerta crítica si > 0).
    - Incidencias Remedy activas en seguimiento (con desglose P1/P2/P3/P4).
    - Incidencias resueltas/cerradas en ventana PaP (% de éxito).
-3. **Sección de Pruebas Bloqueadas en PaP (Grafana Argos)**:
-   - **Tabla de Resumen Agregado por Proyecto:** Ranking de iniciativas afectadas ordenadas por volumen de bloqueo, % de bloqueo relativo al proyecto, desglose de pasadas/pendientes, badges de sistemas impactados, Delivery Lead responsable y chips de incidencias Remedy asociadas enlazadas.
-   - **Detalle Desglosado por Plan de Prueba y Causa de Bloqueo:** Tabla interactiva desglosable con ID de plan, resumen funcional, sistema, prioridad y tipificación/motivo de bloqueo (Incidencia, Bug Interno, Bug Otro Sistema, etc.).
+3. **Sección de Pruebas PaP y Bloqueos (Grafana Argos)**:
+   - **Discriminación Obligatoria Progresión vs Regresión:** Banner comparativo con tarjetas dedicadas para **Progresión por Proyectos (`PRJ-*`)** y **Regresión Transversal E2E (Sistemas Core)** que muestran volumen total, % de superación, bloqueos, ejecuciones en curso y pendientes.
+   - **Tabla de Resumen Agregado de Bloqueos:** Ranking consolidado con badge de tipología (`PROGRESIÓN` / `REGRESIÓN`), nombre de iniciativa, % de bloqueo relativo, desglose de pasadas/pendientes, sistemas impactados, Delivery Lead responsable y chips de incidencias Remedy asociadas enlazadas. Se suprimen desgloses técnicos individuales a nivel de plan para priorizar la síntesis ejecutiva.
 4. **Tarjetas de Proyecto con Telemetría e IA**:
    - Para cada iniciativa (`PRJ-*`): resumen, alcance de despliegue, badges de decisión GO/NoGO y metodología.
    - Píldora de avance de pruebas PaP del proyecto (pasadas, pendientes, bloqueadas).

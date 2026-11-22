@@ -8,7 +8,7 @@ description: >-
   ejecutivo por proyecto, generando tanto el comunicado para Teams como el informe
   HTML interactivo enlazable desde Mesa de Release.
 domain: it-releases
-version: 1.2.0
+version: 1.3.0
 recommended_skills:
   - release-project-communication
 ---
@@ -34,9 +34,9 @@ recommended_skills:
 >    - Además del formato para Microsoft Teams, genera siempre el informe en HTML corporativo ejecutando:
 >      `python converters/cli/generate_release_report_html.py --release {YYYYRMM} --force`
 >    - Dicho informe queda disponible en `/dashboards/informes/comunicado-release-{YYYYRMM}/index.html` y es accesible desde el botón `🌐 Ver informe HTML` en la consola de Mesa de Release.
->    - **Estructura Obligatoria de Pruebas Bloqueadas PaP en HTML:** El informe HTML debe incluir imperativamente la sección de bloqueos estructurada en:
->      (a) **Tabla de Resumen Agregado por Proyecto** (iniciativa, % de bloqueo relativo, pasadas/pendientes, sistemas impactados, responsable y badges de incidencias Remedy asociadas).
->      (b) **Detalle Desglosado por Test Plan** (ID de plan, sistema, prioridad, conteo y causa/comentario tipificado).
+>    - **Estructura Obligatoria de Pruebas PaP y Bloqueos en HTML:**
+>      (a) **Discriminación Explícita Progresión vs Regresión:** Banner comparativo con tarjetas diferenciadas para **Progresión por Proyectos (`PRJ-*`)** y **Regresión Transversal E2E (Sistemas Core)** con sus métricas de total, pasadas (%), bloqueadas (%), en curso y pendientes.
+>      (b) **Tabla de Resumen Agregado de Bloqueos:** Ranking consolidado con columna de tipología (`PROGRESIÓN` / `REGRESIÓN`), iniciativa, % de bloqueo relativo, pasadas/pendientes, sistemas impactados, responsable y badges de incidencias Remedy enlazadas. (Nota: Se descartan desgloses de bajo nivel por plan individual para preservar la concisión ejecutiva).
 
 ---
 
@@ -129,6 +129,6 @@ python converters/cli/generate_release_report_html.py --release {YYYYRMM} --forc
 - **Botón en Mesa de Release:** En `dashboards/release-desk/`, en la barra inferior `.rd-card-footer`, junto a *Copiar briefing*, el botón **`🌐 Ver informe HTML`** verifica si existe el informe HTML generado:
   - Si está disponible, lo abre en una nueva pestaña.
   - Si aún no se ha generado para esa release, muestra un aviso elegante en pantalla informando de que puede generarse invocando al agente `@release-communicator`.
-- **Estructura Requerida en HTML para Bloqueos PaP:**
-  - **Resumen Agregado por Proyecto:** Ranking de iniciativas afectadas con % de bloqueo respecto al total de pruebas del proyecto, pasadas/pendientes, sistemas con fallos, Delivery Lead asignado y enlaces a tickets Remedy cruzados.
-  - **Detalle por Plan de Pruebas:** Tabla desglosable de cada Test Plan individual indicando resumen, ámbito funcional, criticidad y motivo exacto de bloqueo (Incidencia, Bug Interno, Bug Otro Sistema, etc.).
+- **Estructura Requerida en HTML para Pruebas PaP y Bloqueos:**
+  - **Discriminación Progresión vs Regresión:** Banner comparativo con tarjetas dedicadas para Progresión (`PRJ-*`) y Regresión Transversal E2E (Sistemas Core), reflejando métricas globales, % de éxito y ratios de bloqueo.
+  - **Resumen Agregado de Bloqueos por Iniciativa:** Ranking ordenado con badge de tipología (`PROGRESIÓN` / `REGRESIÓN`), % de bloqueo relativo, pasadas/pendientes, sistemas con fallos, Delivery Lead asignado y enlaces a tickets Remedy cruzados. Se omite el listado de planes individuales a bajo nivel para mantener un enfoque puramente ejecutivo.

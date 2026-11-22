@@ -77,7 +77,8 @@ def test_build_release_report_html_generates_valid_file(tmp_path):
     assert "Avance Pruebas PaP" in content
     assert "Pruebas Bloqueadas" in content
     assert "Resumen Agregado por Proyecto" in content
-    assert "Detalle Desglosado por Plan de Prueba y Causa de Bloqueo" in content
+    assert "Progresión por Proyectos" in content
+    assert "Regresión Transversal E2E" in content
     assert "Incidencias Activas" in content
     assert "Diagnóstico Epsilon Resumen IA" in content
     assert "Impacto en Servicio y Negocio" in content
