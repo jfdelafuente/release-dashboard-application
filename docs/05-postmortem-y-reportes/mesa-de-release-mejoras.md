@@ -12,14 +12,14 @@ Lista priorizada de evolutivos para la consola **[Mesa de Release](/05-postmorte
 | **M2** | Extracción automática del bug de `JIRA` | Datos | Alto | `[ ] Pendiente` |
 | **M3** | KPIs clicables como filtros rápidos | UX / Operativa | Medio | `[x] Completada` |
 | **M4** | Exportación de la vista filtrada (CSV / Excel) | Operativa | Alto | `[x] Completada` |
-| **M5** | Ordenación por cabeceras de columna | UX / Operativa | Medio | `[x] Completada` |
+| **M5** | Ordenación por cabeceras de columna (incluye `Sistema`) | UX / Operativa | Medio | `[x] Completada` |
 | **M6** | Importación de CSV de proyectos desde la UI | Mantenimiento | Medio | `[ ] Pendiente` |
 | **M7** | Indicador de antigüedad (Aging) en `Fecha Apertura` | Operativa | Medio | `[x] Completada` |
 | **M8** | Edición y persistencia de `Fecha Prevista` acordada | Seguimiento | Alto | `[x] Completada` |
 | **M9** | Semáforo de `Fecha Prevista` vencida / sin compromiso | Seguimiento | Alto | `[x] Completada` |
 | **M10** | Notas rápidas de seguimiento de Mesa por incidencia | Seguimiento | Alto | `[ ] Pendiente` |
-| **M11** | Filtros por `Despliegue` y por `Producto` | UX / Operativa | Medio | `[ ] Pendiente` |
-| **M12** | Botón "Copiar briefing de Mesa" para actas y Teams | Operativa | Alto | `[x] Completada` |
+| **M11** | Filtros por `Sistema` (unificado), `Despliegue` y `Producto` | UX / Operativa | Medio | `[~] Parcial` |
+| **M12** | Botón "Copiar briefing" (Prioridad/Sistema, Resumen IA y clipboard seguro) | Operativa | Alto | `[x] Completada` |
 | **M13** | Indicador de novedades desde la última sincronización | Operativa | Medio | `[x] Completada` |
 | **M14** | Vista agrupada por Proyecto (`PRJ-*`) con semáforo de salud | Seguimiento | Medio | `[x] Completada` |
 | **M15** | Detector de tickets sin movimiento / "ping-pong" entre grupos | Operativa | Medio | `[ ] Pendiente` |
@@ -70,10 +70,11 @@ Lista priorizada de evolutivos para la consola **[Mesa de Release](/05-postmorte
 
 ---
 
-### M5 · Ordenación por cabeceras de columna
-- **Situación actual:** La tabla mantiene el orden de llegada del JSON de postmortem.
-- **Propuesta:** Permitir ordenar ascendente/descendente al pulsar en cabeceras clave (`Código Incidencia`, `Fecha Apertura`, `Prioridad / Urg.`, `PROYECTO`, `Status`, `Fecha Prevista`) manteniendo la fila desplegada si sigue visible.
-- **Componentes afectados:** `dashboards/release-desk/index.html`, `dashboards/release-desk/release-desk.js`.
+### M5 · Ordenación por cabeceras de columna (incluye `Sistema`)
+- **Estado:** `[x] Completada`
+- **Situación previa:** La tabla mantenía el orden de llegada del JSON de postmortem.
+- **Implementación realizada:** Permite ordenar ascendente/descendente al pulsar en cabeceras clave (`Código Incidencia`, `Fecha Apertura`, `Prioridad / Urg.`, `Sistema`, `PROYECTO`, `Status`, `Fecha Prevista`). La ordenación por `Sistema` resuelve la extracción normalizada del sistema o grupo de soporte técnico y aplica orden alfabético sensible al idioma español (`localeCompare`), mostrando el indicador visual interactivo (`▲` / `▼`).
+- **Componentes afectados:** `dashboards/release-desk/index.html`, `dashboards/release-desk/release-desk-domain.js`, `dashboards/release-desk/release-desk.js`, `converters/tests/unit/test_release_desk.py`.
 - **Criterio de aceptación:** Clicar una cabecera ordena la tabla mostrando indicador visual (`▲` / `▼`) y un segundo clic invierte el orden.
 
 ---
@@ -131,19 +132,27 @@ Lista priorizada de evolutivos para la consola **[Mesa de Release](/05-postmorte
 
 ---
 
-### M11 · Filtros por `Despliegue` y por `Producto`
-- **Situación actual:** Se puede filtrar por proyecto (`PRJ-*`), estado, prioridad y grupo, pero no directamente por fase de `Despliegue` (`Completo`, `Piloto`, `Modo Oculto`, `PaP Técnico`) ni por `Producto` (`AURORA`, etc.).
-- **Propuesta:** Añadir selectores de `Despliegue` y `Producto` en la barra de filtros (`.rd-filters`) poblados dinámicamente con los valores presentes en la release activa.
-- **Componentes afectados:** `dashboards/release-desk/index.html`, `dashboards/release-desk/release-desk.js`.
-- **Criterio de aceptación:** Permite priorizar en segundos la revisión de incidencias en `Completo` o `Piloto`, o acotar por un producto concreto.
+### M11 · Filtros por `Sistema` (unificado), `Despliegue` y `Producto`
+- **Estado:** `[~] Parcial (Filtro por Sistema completado)`
+- **Situación actual:** La barra de filtros incorpora búsqueda libre (`filterSearch`), estado (`filterStatus`), sistema (`filterGroup`), prioridad/urgencia (`filterPriority`) y proyecto (`filterProject`). El filtro por **Sistema** se ha unificado completamente con la columna `Sistema` de la tabla, alimentándose dinámicamente de grupos asignados/resolutores y productos técnicos (`#filterGroup` con etiqueta «Todos los sistemas» y búsqueda contextual ampliada).
+- **Pendiente:** Añadir el filtro directo por fase de `Despliegue` (`Completo`, `Piloto`, `Modo Oculto`, `PaP Técnico`) en la barra de filtros (`.rd-filters`).
+- **Componentes afectados:** `dashboards/release-desk/index.html`, `dashboards/release-desk/release-desk.js`, `dashboards/release-desk/release-desk-domain.js`.
+- **Criterio de aceptación:** El selector de Sistema filtra inmediatamente las incidencias del sistema seleccionado; pendiente incorporar el selector de Despliegue.
 
 ---
 
-### M12 · Botón "Copiar briefing de Mesa" para actas y Teams
-- **Situación actual:** Tras el comité hay que redactar manualmente el resumen de seguimiento o copiar ticket a ticket.
-- **Propuesta:** Añadir un botón en la consola que genere en el portapapeles un resumen en texto/Markdown de la vista filtrada (agrupado por prioridad o proyecto, destacando P1/P2, compromisos vencidos y próximas fechas previstas).
-- **Componentes afectados:** `dashboards/release-desk/index.html`, `dashboards/release-desk/release-desk.js`.
-- **Criterio de aceptación:** Con un clic se obtiene un resumen estructurado listo para pegar en Teams o correo corporativo respetando los filtros activos.
+### M12 · Botón "Copiar briefing de Mesa" (Prioridad/Sistema, Resumen IA y portapapeles seguro)
+- **Estado:** `[x] Completada`
+- **Situación previa:** Tras el comité había que redactar manualmente el resumen de seguimiento o copiar ticket a ticket.
+- **Implementación realizada:**
+  - **Dos modalidades de briefing** con botones dedicados en el pie de la consola:
+    - `📋 Copiar briefing`: estructurado por nivel de prioridad (`P1`, `P2`, `P3/Otras`) con estado, proyecto, fecha prevista y resumen.
+    - `📋 Briefing por Sistema`: agrupado por sistema o grupo soporte técnico resolutor.
+  - **Enriquecimiento con Resumen IA**: se incluyen obligatoriamente los campos explícitos **"Problema Detectado"** (con prefijo de producto) e **"IMPACTO"** provenientes de `iaData.problema` e `iaData.impacto`.
+  - **Soporte de copia en texto plano y HTML enriquecido**: texto estructurado para Teams y HTML formateado (listas y negritas) para clientes de correo como Outlook.
+  - **Mecanismo resiliente de portapapeles**: uso de `navigator.clipboard.writeText` con fallback automático mediante `<textarea>` oculto y `document.execCommand('copy')` para entornos HTTP / IP no seguros (resolviendo el fallo de permisos `"No se pudo acceder al portapapeles"`).
+- **Componentes afectados:** `dashboards/release-desk/index.html`, `dashboards/release-desk/release-desk-domain.js`, `dashboards/release-desk/release-desk.js`, `converters/tests/unit/test_release_desk.py`.
+- **Criterio de aceptación:** Con un clic se obtiene el resumen estructurado en el portapapeles respetando los filtros activos y sin fallos por permisos en entornos HTTP.
 
 ---
 
