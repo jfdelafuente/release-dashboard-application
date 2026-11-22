@@ -21,6 +21,7 @@
     var isIaCacheStale = Domain.isIaCacheStale;
     var matchesKpiFilter = Domain.matchesKpiFilter;
     var buildExportCsv = Domain.buildExportCsv;
+    var buildExportFilename = Domain.buildExportFilename;
     var sortIncidents = Domain.sortIncidents;
     var buildMesaBriefing = Domain.buildMesaBriefing;
     var buildMesaBriefingBySystem = Domain.buildMesaBriefingBySystem;
@@ -1192,14 +1193,16 @@
                 var blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
                 var url = URL.createObjectURL(blob);
                 var a = document.createElement('a');
-                var safeRel = (state.currentRelease || 'release').replace(/[^a-zA-Z0-9_-]/g, '_');
+                var filename = buildExportFilename
+                    ? buildExportFilename(state.currentRelease)
+                    : ('mesa-release-' + (state.currentRelease || 'release').replace(/[^a-zA-Z0-9_-]/g, '_') + '.csv');
                 a.href = url;
-                a.download = 'mesa-release-' + safeRel + '.csv';
+                a.download = filename;
                 document.body.appendChild(a);
                 a.click();
                 document.body.removeChild(a);
                 setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
-                notify('Exportadas ' + state.filteredIncidents.length + ' incidencias a CSV.', 'success');
+                notify('Exportadas ' + state.filteredIncidents.length + ' incidencias a CSV (' + filename + ').', 'success');
             });
         }
 

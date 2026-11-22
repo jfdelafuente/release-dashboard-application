@@ -301,6 +301,25 @@ def test_release_desk_js_build_export_csv():
         assert "buildExportCsv" in js
 
 
+def test_release_desk_js_build_export_filename():
+    if shutil.which("node") is not None:
+        script = (
+            f"const rd = require({json.dumps(str(RELEASE_DESK_JS))});\n"
+            "const fixedDate = new Date(2026, 10, 22, 12, 47, 30);\n"
+            "const fn1 = rd.buildExportFilename('2026R11', fixedDate);\n"
+            "const fn2 = rd.buildExportFilename();\n"
+            "console.log(JSON.stringify({ fn1, fn2 }));\n"
+        )
+        proc = _run_node_script(script)
+        out = json.loads(proc.stdout)
+        assert out["fn1"] == "mesa-release-2026R11_20261122_124730.csv"
+        assert out["fn2"].startswith("mesa-release-release_")
+        assert out["fn2"].endswith(".csv")
+    else:
+        js = RELEASE_DESK_JS.read_text(encoding="utf-8")
+        assert "buildExportFilename" in js
+
+
 def test_release_desk_js_sort_incidents():
     if shutil.which("node") is not None:
         script = (

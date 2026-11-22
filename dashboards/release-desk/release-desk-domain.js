@@ -246,6 +246,19 @@
         return '\uFEFF' + lines.join('\r\n');
     }
 
+    function buildExportFilename(releaseName, date) {
+        var safeRel = (releaseName || 'release').replace(/[^a-zA-Z0-9_-]/g, '_');
+        var d = (date instanceof Date && !isNaN(date.getTime())) ? date : new Date();
+        var pad = function (n) { return String(n).padStart(2, '0'); };
+        var yyyy = d.getFullYear();
+        var mm = pad(d.getMonth() + 1);
+        var dd = pad(d.getDate());
+        var hh = pad(d.getHours());
+        var min = pad(d.getMinutes());
+        var ss = pad(d.getSeconds());
+        return 'mesa-release-' + safeRel + '_' + yyyy + mm + dd + '_' + hh + min + ss + '.csv';
+    }
+
     function parseSortableDate(raw) {
         if (!raw) return null;
         var s = String(raw).trim();
@@ -586,6 +599,7 @@
         isIaCacheStale: isIaCacheStale,
         matchesKpiFilter: matchesKpiFilter,
         buildExportCsv: buildExportCsv,
+        buildExportFilename: buildExportFilename,
         sortIncidents: sortIncidents,
         buildMesaBriefing: buildMesaBriefing,
         buildMesaBriefingBySystem: buildMesaBriefingBySystem,
