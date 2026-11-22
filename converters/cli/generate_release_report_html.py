@@ -1110,19 +1110,46 @@ def build_release_report_html(
         html_lines.append('                </div>')
         html_lines.append('            </div>')
 
+        # Filtrar iniciativas para la tabla de Resumen Agregado:
+        # No se muestran los proyectos que no tengan incidencias asignadas Y que tengan las pruebas completadas
+        display_projects_list = []
+        excluded_completed_clean = 0
+        for b_proj in pap_projects_list:
+            p_code = b_proj["prj"]
+            if p_code == "TRANSVERSAL":
+                p_incs = list(incidents_without_project)
+            else:
+                p_incs = list(incidents_by_project.get(p_code, []))
+
+            tot_t = b_proj.get("total_tests", 0)
+            pass_t = b_proj.get("pass_count", 0)
+            blk_t = b_proj.get("block_count", 0)
+            pend_t = b_proj.get("pending_count", 0)
+            exec_t = b_proj.get("executing_count", 0)
+
+            is_tests_completed = (tot_t > 0) and (pass_t >= tot_t) and (blk_t == 0) and (pend_t == 0) and (exec_t == 0)
+            has_no_incidents = (len(p_incs) == 0)
+
+            if is_tests_completed and has_no_incidents:
+                excluded_completed_clean += 1
+            else:
+                display_projects_list.append((b_proj, p_incs))
+
         # Tabla de Resumen Agregado con Columna de Tipología
         html_lines.append('            <div class="data-table-wrap" style="margin-bottom: 24px;">')
         if total_blocked_tests > 0:
-            header_title = f'📊 Resumen Agregado por Proyecto ({len(pap_projects_list)} iniciativas · {blocked_count_projects} con bloqueos)'
+            header_title = f'📊 Resumen Agregado por Proyecto ({len(display_projects_list)} iniciativas con seguimiento · {blocked_count_projects} con bloqueos)'
+            sub_info = f' · {excluded_completed_clean} completadas sin incidencias ocultadas' if excluded_completed_clean > 0 else ''
             html_lines.append('                <div style="padding: 12px 16px; background: #FFF7ED; border-bottom: 1px solid #FED7AA; display: flex; align-items: center; justify-content: space-between;">')
             html_lines.append(f'                    <div style="font-size: 13px; font-weight: 800; color: #9A3412;">{header_title}</div>')
-            html_lines.append('                    <div style="font-size: 11.5px; color: #C2410C; font-weight: 600;">Discriminación por Tipología (Progresión vs Regresión)</div>')
+            html_lines.append(f'                    <div style="font-size: 11.5px; color: #C2410C; font-weight: 600;">Discriminación por Tipología (Progresión vs Regresión){sub_info}</div>')
             html_lines.append('                </div>')
         else:
-            header_title = f'📊 Resumen Agregado por Proyecto ({len(pap_projects_list)} iniciativas con pruebas)'
+            header_title = f'📊 Resumen Agregado por Proyecto ({len(display_projects_list)} iniciativas en seguimiento)'
+            sub_info = f' · {excluded_completed_clean} completadas sin incidencias ocultadas' if excluded_completed_clean > 0 else ''
             html_lines.append('                <div style="padding: 12px 16px; background: #F8FAFC; border-bottom: 1px solid #E2E8F0; display: flex; align-items: center; justify-content: space-between;">')
             html_lines.append(f'                    <div style="font-size: 13px; font-weight: 800; color: #0F172A;">{header_title}</div>')
-            html_lines.append('                    <div style="font-size: 11.5px; color: #64748B; font-weight: 600;">Discriminación por Tipología (Progresión vs Regresión)</div>')
+            html_lines.append(f'                    <div style="font-size: 11.5px; color: #64748B; font-weight: 600;">Discriminación por Tipología (Progresión vs Regresión){sub_info}</div>')
             html_lines.append('                </div>')
 
         html_lines.append('                <table class="data-table">')
@@ -1141,66 +1168,65 @@ def build_release_report_html(
         html_lines.append('                    </thead>')
         html_lines.append('                    <tbody>')
 
-        for b_proj in pap_projects_list:
-            p_code = b_proj["prj"]
-            p_tip = b_proj.get("tipologia", "PROGRESIÓN")
-            p_meta = all_projects.get(p_code, {})
-            p_name = p_meta.get("summary") or ("Regresión Transversal (Erebor / PYME)" if p_code == "TRANSVERSAL" else p_code)
-            p_resp = p_meta.get("responsable") or "-"
-
-            # Incidencias asignadas directamente al proyecto o a TRANSVERSAL (excluyendo "Cerrado")
-            if p_code == "TRANSVERSAL":
-                p_incs = list(incidents_without_project)
-            else:
-                p_incs = list(incidents_by_project.get(p_code, []))
-
-            if p_tip == "PROGRESIÓN":
-                tip_badge = '<span class="badge" style="background:#EEF2FF; color:#4338CA; font-weight:800; font-size:11px;">PROGRESIÓN</span>'
-            else:
-                tip_badge = '<span class="badge" style="background:#ECFDF5; color:#047857; font-weight:800; font-size:11px;">REGRESIÓN</span>'
-
-            if p_code == "TRANSVERSAL":
-                prj_cell = '<a href="#card-transversales" style="color:var(--mo-black); font-weight:800; text-decoration:underline;">TRANSVERSAL</a>'
-            else:
-                prj_cell = f'<a href="#card-{html.escape(p_code)}" style="color:var(--mo-black); font-weight:800; text-decoration:underline;">{html.escape(p_code)}</a>'
-
-            sys_badges = "".join(f'<span class="badge badge-neutral" style="margin:2px 2px 2px 0;">{html.escape(s)}</span>' for s in b_proj.get("sistemas", []))
-            if not sys_badges:
-                sys_badges = '<span style="color:#9CA3AF; font-size:12px;">-</span>'
-
-            if p_incs:
-                inc_badges_list = []
-                for inc_item in p_incs:
-                    inc_id_val = inc_item.get("ID de incidencia", "")
-                    prio_val = inc_item.get("Prioridad", "P3")
-                    cls = format_badge_priority_class(prio_val)
-                    u_prod = inc_item.get("producto") or inc_item.get("Producto") or ""
-                    is_inferred = not extract_project_code(inc_item)
-                    tip_prefix = f"[Por Sistema: {u_prod}] " if is_inferred and u_prod else ""
-                    tooltip_text = f"{tip_prefix}{inc_item.get('Descripción', '')[:100]}"
-                    inc_badges_list.append(f'<a href="#inc-{html.escape(inc_id_val)}" class="badge {cls}" style="margin:2px 2px 2px 0; text-decoration:none;" title="{html.escape(tooltip_text)}">{html.escape(inc_id_val)} ({html.escape(prio_val)})</a>')
-                inc_cell = "".join(inc_badges_list)
-            else:
-                inc_cell = '<span style="color:#9CA3AF; font-size:12px;">Sin tickets Remedy</span>'
-
-            if b_proj.get("block_count", 0) > 0:
-                td_block = f'<td style="text-align:center;"><span class="badge badge-p1" style="font-size:12px; font-weight:800;">{b_proj["block_count"]}</span></td>'
-                td_block_rate = f'<td style="text-align:center;"><strong style="color:var(--color-p1);">{b_proj["block_rate"]}%</strong></td>'
-            else:
-                td_block = '<td style="text-align:center;"><span class="badge" style="background:#DCFCE7; color:#166534; font-size:11px; font-weight:700;">0</span></td>'
-                td_block_rate = '<td style="text-align:center;"><span style="color:#166534; font-size:12px; font-weight:600;">0%</span></td>'
-
+        if not display_projects_list:
             html_lines.append('                        <tr>')
-            html_lines.append(f'                            <td>{tip_badge}</td>')
-            html_lines.append(f'                            <td>{prj_cell}</td>')
-            html_lines.append(f'                            <td><strong>{html.escape(p_name)}</strong></td>')
-            html_lines.append(f'                            {td_block}')
-            html_lines.append(f'                            {td_block_rate}')
-            html_lines.append(f'                            <td style="text-align:center;"><span style="color:#166534; font-weight:700;">{b_proj["pass_count"]}</span> / <span style="color:#6B7280;">{b_proj["pending_count"]}</span></td>')
-            html_lines.append(f'                            <td>{sys_badges}</td>')
-            html_lines.append(f'                            <td>{html.escape(p_resp)}</td>')
-            html_lines.append(f'                            <td>{inc_cell}</td>')
+            html_lines.append(f'                            <td colspan="9" style="text-align:center; padding:18px; color:#166534; font-weight:600; font-size:13px;">✅ Todas las iniciativas con pruebas ({len(pap_projects_list)}) han completado su ejecución sin incidencias abiertas asociadas.</td>')
             html_lines.append('                        </tr>')
+        else:
+            for b_proj, p_incs in display_projects_list:
+                p_code = b_proj["prj"]
+                p_tip = b_proj.get("tipologia", "PROGRESIÓN")
+                p_meta = all_projects.get(p_code, {})
+                p_name = p_meta.get("summary") or ("Regresión Transversal (Erebor / PYME)" if p_code == "TRANSVERSAL" else p_code)
+                p_resp = p_meta.get("responsable") or "-"
+
+                if p_tip == "PROGRESIÓN":
+                    tip_badge = '<span class="badge" style="background:#EEF2FF; color:#4338CA; font-weight:800; font-size:11px;">PROGRESIÓN</span>'
+                else:
+                    tip_badge = '<span class="badge" style="background:#ECFDF5; color:#047857; font-weight:800; font-size:11px;">REGRESIÓN</span>'
+
+                if p_code == "TRANSVERSAL":
+                    prj_cell = '<a href="#card-transversales" style="color:var(--mo-black); font-weight:800; text-decoration:underline;">TRANSVERSAL</a>'
+                else:
+                    prj_cell = f'<a href="#card-{html.escape(p_code)}" style="color:var(--mo-black); font-weight:800; text-decoration:underline;">{html.escape(p_code)}</a>'
+
+                sys_badges = "".join(f'<span class="badge badge-neutral" style="margin:2px 2px 2px 0;">{html.escape(s)}</span>' for s in b_proj.get("sistemas", []))
+                if not sys_badges:
+                    sys_badges = '<span style="color:#9CA3AF; font-size:12px;">-</span>'
+
+                if p_incs:
+                    inc_badges_list = []
+                    for inc_item in p_incs:
+                        inc_id_val = inc_item.get("ID de incidencia", "")
+                        prio_val = inc_item.get("Prioridad", "P3")
+                        cls = format_badge_priority_class(prio_val)
+                        u_prod = inc_item.get("producto") or inc_item.get("Producto") or ""
+                        is_inferred = not extract_project_code(inc_item)
+                        tip_prefix = f"[Por Sistema: {u_prod}] " if is_inferred and u_prod else ""
+                        tooltip_text = f"{tip_prefix}{inc_item.get('Descripción', '')[:100]}"
+                        inc_badges_list.append(f'<a href="#inc-{html.escape(inc_id_val)}" class="badge {cls}" style="margin:2px 2px 2px 0; text-decoration:none;" title="{html.escape(tooltip_text)}">{html.escape(inc_id_val)} ({html.escape(prio_val)})</a>')
+                    inc_cell = "".join(inc_badges_list)
+                else:
+                    inc_cell = '<span style="color:#9CA3AF; font-size:12px;">Sin tickets Remedy</span>'
+
+                if b_proj.get("block_count", 0) > 0:
+                    td_block = f'<td style="text-align:center;"><span class="badge badge-p1" style="font-size:12px; font-weight:800;">{b_proj["block_count"]}</span></td>'
+                    td_block_rate = f'<td style="text-align:center;"><strong style="color:var(--color-p1);">{b_proj["block_rate"]}%</strong></td>'
+                else:
+                    td_block = '<td style="text-align:center;"><span class="badge" style="background:#DCFCE7; color:#166534; font-size:11px; font-weight:700;">0</span></td>'
+                    td_block_rate = '<td style="text-align:center;"><span style="color:#166534; font-size:12px; font-weight:600;">0%</span></td>'
+
+                html_lines.append('                        <tr>')
+                html_lines.append(f'                            <td>{tip_badge}</td>')
+                html_lines.append(f'                            <td>{prj_cell}</td>')
+                html_lines.append(f'                            <td><strong>{html.escape(p_name)}</strong></td>')
+                html_lines.append(f'                            {td_block}')
+                html_lines.append(f'                            {td_block_rate}')
+                html_lines.append(f'                            <td style="text-align:center;"><span style="color:#166534; font-weight:700;">{b_proj["pass_count"]}</span> / <span style="color:#6B7280;">{b_proj["pending_count"]}</span></td>')
+                html_lines.append(f'                            <td>{sys_badges}</td>')
+                html_lines.append(f'                            <td>{html.escape(p_resp)}</td>')
+                html_lines.append(f'                            <td>{inc_cell}</td>')
+                html_lines.append('                        </tr>')
 
         html_lines.append('                    </tbody>')
         html_lines.append('                </table>')

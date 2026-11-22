@@ -113,7 +113,12 @@ def test_build_release_report_html_generates_valid_file(tmp_path):
     assert "INC000004192176" in table_match
     assert "INC000004192062" in table_match
     assert "(0 iniciativas afectadas)" not in content
-    assert "iniciativas" in table_match
+    assert "iniciativas con seguimiento" in table_match
+    # Iniciativas con 100% pruebas completadas y sin incidencias no deben aparecer en la tabla resumen
+    assert 'href="#card-PRJ-12315"' not in table_match
+    assert 'href="#card-PRJ-11155"' not in table_match
+    # Iniciativa con 100% pruebas pero con incidencia abierta sí debe aparecer
+    assert 'href="#card-PRJ-11763"' in table_match
 
 
 def test_load_grafana_pap_csv_no_blocks(tmp_path):
@@ -142,11 +147,12 @@ def test_load_grafana_pap_csv_no_blocks(tmp_path):
 
 
 def test_build_release_report_html_renders_all_projects_when_zero_blocks(tmp_path):
-    """Verifica que con 0 bloqueos el Resumen Agregado muestre todas las iniciativas y 0 bloqueos."""
+    """Verifica que con 0 bloqueos el Resumen Agregado excluya proyectos completados sin incidencias y mantenga los incompletos."""
     grafana_csv = tmp_path / "pap_zero_blocks.csv"
     grafana_csv.write_text(
         '"mv_id","prj","key_test_plan","proyecto_test","test_plan","tribu_id","resumen_test_plan","sistema_test","release_planificada_test_plan","test_environment_test_plan","test_layer_test_plan","fix_versions_test_plan","prioridad_test_plan","tipologia_prueba","agrupacion_funcional","blocking_comment","num_test","pass","pending","block","verify","executing"\n'
-        '1,PRJ-99001,TMMC-9001,TMMC,900001,,PRJ-99001 OK,"{""SISTEMA X""}",R2026-11,{PRODUCCION},E2E,{R2026-11},High,PROGRESION,CANAL,,6,6,0,0,0,0\n',
+        '1,PRJ-99001,TMMC-9001,TMMC,900001,,PRJ-99001 OK,"{""SISTEMA X""}",R2026-11,{PRODUCCION},E2E,{R2026-11},High,PROGRESION,CANAL,,6,6,0,0,0,0\n'
+        '2,PRJ-99002,TMMC-9002,TMMC,900002,,PRJ-99002 INCOMPLETE,"{""SISTEMA Y""}",R2026-11,{PRODUCCION},E2E,{R2026-11},Medium,PROGRESION,POSTVENTA,,6,4,2,0,0,0\n',
         encoding="utf-8",
     )
     output_html = tmp_path / "comunicado-zero-blocks" / "index.html"
@@ -158,9 +164,13 @@ def test_build_release_report_html_renders_all_projects_when_zero_blocks(tmp_pat
     assert res_path.is_file()
     content = res_path.read_text(encoding="utf-8")
     assert "0 bloqueos" in content
-    assert "Resumen Agregado por Proyecto (1 iniciativas con pruebas)" in content
+    table_match = content[content.find("Resumen Agregado por Proyecto"):content.find("Seguimiento de Proyectos")]
+    assert "Resumen Agregado por Proyecto (1 iniciativas en seguimiento)" in table_match
     assert "(0 iniciativas afectadas)" not in content
-    assert "PRJ-99001" in content
+    # PRJ-99001 está 100% completado sin incidencias -> NO debe mostrarse en la tabla resumen
+    assert "PRJ-99001" not in table_match
+    # PRJ-99002 tiene pruebas pendientes -> SÍ debe mostrarse en la tabla resumen
+    assert "PRJ-99002" in table_match
 
 
 
