@@ -422,6 +422,12 @@ table.rd-table tbody tr.rd-detail-row > td {
     text-decoration: underline;
     color: #CC6000;
 }
+.rd-proj-badges {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+}
 .rd-badge-fecha { background: #DCFCE7; color: #166534; border: 1px solid #BBF7D0; }
 .rd-badge-fecha-acordada { background: #FEF3C7; color: #92400E; border: 1px solid #FDE68A; cursor: pointer; }
 .rd-badge-fecha-vencida { background: #FEE2E2; color: #991B1B; border: 1px solid #FECACA; cursor: pointer; }
