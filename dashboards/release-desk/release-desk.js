@@ -533,10 +533,12 @@
             var isSelected = id === state.selectedId;
             var fechaApertura = inc['Fecha de envío'] || '-';
             var iaData = state.iaCache.get(id);
-            var descBase = (iaData && !iaData._error && iaData.problema) ? iaData.problema : (inc['Descripción'] || '-');
+            var descOriginal = inc['Descripción'] || '-';
             var producto = inc['producto'] ? String(inc['producto']).trim() : '';
-            var descProblema = producto ? ('[' + producto + '] ' + descBase) : descBase;
-            var descCellHtml = (producto ? '<span class="rd-badge rd-badge-sistema" style="margin-right:4px;">' + escapeHtml(producto) + '</span>' : '') + escapeHtml(descBase);
+            var descCellHtml = '<div class="rd-cell-clamp">' +
+                (producto ? '<span class="rd-badge rd-badge-sistema" style="margin-right:4px;">' + escapeHtml(producto) + '</span>' : '') +
+                escapeHtml(descOriginal) +
+                '</div>';
             var prioridadUrg = inc['Prioridad'] || inc['Urgencia'] || '-';
             var prioBadgeClass = getPriorityBadgeClass(inc['Prioridad'], inc['Urgencia']);
             var statusBadgeClass = getStatusBadgeClass(inc['Estatus']);
@@ -642,9 +644,13 @@
                 syncBadgeHtml = '<div><span class="rd-badge-sync-upd" title="Actualizada en la última sincronización">Actualizada</span></div>';
             }
 
-            var descTooltipAttr = (descProblema && descProblema !== '-')
-                ? ' data-tooltip="' + escapeHtml(descProblema) + '" data-tooltip-title="Problema Detectado"'
-                : '';
+            var iaProblema = (iaData && !iaData._error && iaData.problema) ? String(iaData.problema).trim() : '';
+            var descTooltipAttr = '';
+            if (iaProblema) {
+                descTooltipAttr = ' data-tooltip="' + escapeHtml(iaProblema) + '" data-tooltip-title="Problema Detectado (Resumen IA)"';
+            } else if (descOriginal && descOriginal !== '-') {
+                descTooltipAttr = ' data-tooltip="' + escapeHtml(descOriginal) + '" data-tooltip-title="Descripción"';
+            }
             var projTooltipAttr = (proj && proyectoText !== '-')
                 ? ' data-tooltip="' + escapeHtml(proyectoText) + '" data-tooltip-title="Proyecto Asociado"'
                 : '';
