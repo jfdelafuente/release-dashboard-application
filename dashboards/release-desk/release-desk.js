@@ -771,7 +771,7 @@
 
             var codeLinkHtml = '<a href="javascript:void(0)" class="rd-inc-link" data-open-resumen="' + escapeHtml(id) + '" title="Abrir ventana Resumen IA" onclick="if(window.openResumenIA){event.stopPropagation();window.openResumenIA(\'' + escapeHtml(id) + '\');}return false;">' + escapeHtml(id) + '</a>';
 
-            var rowHtml = '<tr data-inc-id="' + escapeHtml(id) + '"' + rowClassAttr + ' aria-expanded="' + (isSelected ? 'true' : 'false') + '">' +
+            var rowHtml = '<tr data-inc-id="' + escapeHtml(id) + '"' + rowClassAttr + ' tabindex="0" role="button" aria-expanded="' + (isSelected ? 'true' : 'false') + '">' +
                 '<td style="white-space:nowrap;"><span class="rd-badge rd-badge-code">' + (isSelected ? '▾ ' : '▸ ') + codeLinkHtml + '</span>' + syncBadgeHtml + '</td>' +
                 '<td style="font-size:11.5px; min-width:78px;">' + escapeHtml(fechaApertura) + agingHtml + inactHtml + '</td>' +
                 '<td style="min-width:200px; max-width:340px;"' + descTooltipAttr + '>' + descCellHtml + '</td>' +
@@ -797,6 +797,14 @@
         Array.from(tbody.querySelectorAll('tr[data-inc-id]')).forEach(function (row) {
             row.addEventListener('click', function () {
                 selectIncident(row.getAttribute('data-inc-id'));
+            });
+            row.addEventListener('keydown', function (ev) {
+                if (ev.key === 'Enter' || ev.key === ' ') {
+                    if (ev.target === row) {
+                        ev.preventDefault();
+                        selectIncident(row.getAttribute('data-inc-id'));
+                    }
+                }
             });
         });
 

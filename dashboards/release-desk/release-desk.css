@@ -355,12 +355,43 @@ table.rd-table tbody tr[data-inc-id] td:first-child {
 table.rd-table tbody tr[data-inc-id] td:last-child {
     border-right: 1px solid #EBE5DC;
 }
-table.rd-table tbody tr[data-inc-id]:hover td {
-    background: #FFF8F2;
+/* Foco y hover oscurecidos */
+table.rd-table tbody tr[data-inc-id]:hover td,
+table.rd-table tbody tr[data-inc-id]:focus td,
+table.rd-table tbody tr[data-inc-id]:focus-within td {
+    background: #EDE6DB;
+    box-shadow: inset 0 1px 0 #DDD5C7;
 }
+table.rd-table tbody tr[data-inc-id]:hover td:first-child,
+table.rd-table tbody tr[data-inc-id]:focus td:first-child,
+table.rd-table tbody tr[data-inc-id]:focus-within td:first-child {
+    border-left-color: #DDD5C7;
+}
+table.rd-table tbody tr[data-inc-id]:hover td:last-child,
+table.rd-table tbody tr[data-inc-id]:focus td:last-child,
+table.rd-table tbody tr[data-inc-id]:focus-within td:last-child {
+    border-right-color: #DDD5C7;
+}
+table.rd-table tbody tr[data-inc-id]:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: -2px;
+}
+/* Fila de incidencia desplegada (seleccionada) oscurecida */
 table.rd-table tbody tr[data-inc-id].is-selected td {
-    background: #FFF1E5;
+    background: #E5D5C0;
+    box-shadow: inset 0 1px 0 #D5C2AA;
     border-bottom: none;
+}
+table.rd-table tbody tr[data-inc-id].is-selected td:first-child {
+    border-left-color: #D5C2AA;
+}
+table.rd-table tbody tr[data-inc-id].is-selected td:last-child {
+    border-right-color: #D5C2AA;
+}
+table.rd-table tbody tr[data-inc-id].is-selected:hover td,
+table.rd-table tbody tr[data-inc-id].is-selected:focus td,
+table.rd-table tbody tr[data-inc-id].is-selected:focus-within td {
+    background: #DECBB6;
 }
 table.rd-table tbody tr.rd-row-critica td:first-child {
     border-left: 4px solid #DC2626 !important;
@@ -371,19 +402,20 @@ table.rd-table tbody tr.rd-row-alta td:first-child {
 table.rd-table tbody tr.rd-row-resuelto td:first-child {
     border-left: 4px solid #16A34A !important;
 }
+/* Fila del detalle desplegable coordinada en tono oscuro cálido */
 table.rd-table tbody tr.rd-detail-row {
-    background: #FAF8F5;
+    background: #EDE6DC;
     cursor: default;
 }
 table.rd-table tbody tr.rd-detail-row:hover {
-    background: #FAF8F5;
+    background: #EDE6DC;
 }
 table.rd-table tbody tr.rd-detail-row > td {
     padding: 10px 14px 14px;
-    background: #FAF8F5;
+    background: #EDE6DC;
     border-bottom: 5px solid var(--bg-page);
-    border-left: 1px solid #EBE5DC;
-    border-right: 1px solid #EBE5DC;
+    border-left: 1px solid #D5CEC2;
+    border-right: 1px solid #D5CEC2;
 }
 .rd-detail-inline-card {
     background: var(--bg-card);
