@@ -44,7 +44,6 @@ def test_release_desk_html_has_required_controls():
         "btnEmptySync",
         "btnCopyBriefing",
         "btnCopyBriefingSystem",
-        "btnViewReportHtml",
         "btnGenerateReportHtml",
         "argosUploadModal",
         "btnExportCsv",

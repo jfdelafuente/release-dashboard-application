@@ -372,22 +372,19 @@ Además de las plantillas de texto formateado para Microsoft Teams, el agente ge
    - Para cada incidencia mostrada: ID enlazado, prioridad, estado operativo, sistema, fecha prevista y bloque completo de diagnóstico de **Epsilon Resumen IA** (*Impacto en Servicio y Negocio*, *Problema detectado*, *Causa raíz / Solución*, *Próxima acción* y *Bloqueos*).
 
 ### 7.3. Integración en la Consola Mesa de Release
-- En `dashboards/release-desk/index.html` (barra inferior `.rd-card-footer` junto a `btnCopyBriefing`):
+- En `dashboards/release-desk/index.html` (barra inferior `.rd-card-footer`):
   ```html
-  <button id="btnViewReportHtml" class="rd-btn" title="Ver el informe ejecutivo HTML de la release seleccionada">🌐 Ver informe HTML</button>
-  <button id="btnGenerateReportHtml" class="rd-btn" title="Regenerar el informe ejecutivo HTML con los datos más recientes">🔄 Actualizar Informe HTML</button>
-  <button id="btnUploadArgos" class="rd-btn rd-btn-secondary" title="Cargar ficheros CSV de Grafana Argos (Progresión y Regresión)">📊 Cargar Argos PaP</button>
+  <button id="btnCopyBriefing" class="rd-btn" title="Copiar resumen estructurado de la vista filtrada por prioridad para Teams o acta">📋 Copiar briefing</button>
+  <button id="btnCopyBriefingSystem" class="rd-btn" title="Copiar resumen agrupado por Sistema (Grupo asignado) para Teams o acta">📋 Briefing por Sistema</button>
+  <button id="btnGenerateReportHtml" class="rd-btn rd-btn-primary" title="Generar, actualizar y abrir el informe ejecutivo HTML 360° en una nueva pestaña">🌐 Informe Ejecutivo HTML</button>
+  <button id="btnExportCsv" class="rd-btn" title="Exportar incidencias visibles a CSV para Excel">📥 Exportar tabla</button>
   ```
 - **Comportamiento interactivo (`release-desk.js`)**:
-  - **`btnViewReportHtml`:**
-    - Realiza una comprobación previa (`HEAD`/`GET`) a la ruta `/dashboards/informes/comunicado-release-{release}/`.
-    - Si el informe ya existe, lo abre inmediatamente en una pestaña nueva del navegador (`window.open(url, '_blank')`).
-    - Si aún no se ha generado, emite un aviso elegante mediante toast informativo (`UIFeedback.toast` / `Toast.warning`) indicando cómo generarlo.
-  - **`btnGenerateReportHtml`:**
+  - **`btnGenerateReportHtml` (`🌐 Informe Ejecutivo HTML`):**
     - Envía una petición `POST /api/release-desk/generate-report` con payload `{"release": "{release}"}`.
-    - El backend (FastAPI en VPS o `serve_app.py` en local a través de `converters/src/desk_service.py`) compila en caliente el informe HTML corporativo.
-    - Muestra toast de éxito y actualiza el enlace directo para visualización instantánea.
-  - **`btnUploadArgos`:**
+    - El backend (FastAPI en VPS o `serve_app.py` en local a través de `converters/src/desk_service.py`) compila en caliente el informe HTML corporativo consolidando telemetría de Argos, catálogo de proyectos e incidencias de Remedy y Epsilon IA.
+    - Muestra toast informativo de éxito y **abre inmediatamente el informe generado en una pestaña nueva** del navegador (`window.open(reportUrl, '_blank')`).
+  - **`btnUploadArgos` (`📊 Cargar Argos PaP` en cabecera):**
     - Despliega el modal `#argosUploadModal` con soporte interactivo para arrastrar o examinar archivos de Progresión (`PRJ-*`) y Regresión E2E.
     - Envía los ficheros a `POST /api/release-desk/upload-argos` como `multipart/form-data`.
-    - El backend consolida los datos en `data/storage/projects/{release}_grafana_pap.csv`, recompila el informe HTML y devuelve el recuento de filas y métricas actualizadas.
+    - El backend consolida los datos en `data/storage/projects/{release}_grafana_pap.csv`, recompila el informe HTML y abre automáticamente la versión actualizada.

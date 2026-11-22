@@ -29,13 +29,12 @@ Esta función incorpora una consola dedicada en el portal (**Mesa de Release**) 
    - Botón **"Copiar seguimiento"** en la ficha de detalle que copie al portapapeles un texto estructurado listo para pegar en Teams o correo (incluyendo ID, release, estado, grupo soporte/resolutor, responsable y Resumen IA).
 
 6. **Carga Web de Pruebas PaP de Grafana Argos y Regeneración Bajo Demanda del Informe Ejecutivo HTML 360°:**
-   - Botón **"📊 Cargar Argos PaP"** (`#btnUploadArgos`) en `.rd-card-footer` que despliega un modal web interactivo (`#argosUploadModal`) con zonas de arrastre (drag-and-drop) y selectores de archivo para los CSVs de Progresión (`PRJ-*`) y Regresión Transversal E2E.
+   - Botón **"📊 Cargar Argos PaP"** (`#btnUploadArgos`) en la barra de acciones superior que despliega un modal web interactivo (`#argosUploadModal`) con zonas de arrastre (drag-and-drop) y selectores de archivo para los CSVs de Progresión (`PRJ-*`) y Regresión Transversal E2E.
    - Endpoint unificado `POST /api/release-desk/upload-argos` (implementado en `desk_service.py` y soportado tanto en `serve_app.py` en local como en `fastapi_remedy_router.py` en VPS) que:
      - Detecta automáticamente la tipología de cada fichero.
      - Realiza una fusión inteligente y atómica en `data/storage/projects/{release}_grafana_pap.csv`, preservando las filas existentes de la otra tipología si solo se sube una de ellas.
-     - Compila y publica automáticamente el Informe Ejecutivo Global de Release en HTML (`dashboards/informes/comunicado-release-{release}/index.html`).
-   - Botón **"🔄 Actualizar Informe HTML"** (`#btnGenerateReportHtml`) que invoca `POST /api/release-desk/generate-report` para regenerar bajo demanda el informe HTML sin necesidad de volver a subir archivos ni acceder vía consola/SSH.
-   - Botón **"🌐 Ver informe HTML"** (`#btnViewReportHtml`) que verifica la existencia del informe y lo abre en una nueva pestaña del navegador.
+     - Compila y publica automáticamente el Informe Ejecutivo Global de Release en HTML (`dashboards/informes/comunicado-release-{release}/index.html`) y lo abre en una nueva pestaña.
+   - Botón unificado **"🌐 Informe Ejecutivo HTML"** (`#btnGenerateReportHtml`) en la barra inferior que invoca `POST /api/release-desk/generate-report` para compilar en caliente y abrir inmediatamente el informe HTML corporativo consolidado en una nueva pestaña del navegador.
    - Persistencia de fechas acordadas (`fecha_prevista`) editadas en la mesa, visibles con el distintivo `(Acordada Mesa)` tanto en la consola como en el informe ejecutivo generado.
 
 ### Opcionales / Fuera de alcance (Fase 2)
@@ -65,6 +64,5 @@ Esta función incorpora una consola dedicada en el portal (**Mesa de Release**) 
 - Al seleccionar una incidencia se muestra su ficha de seguimiento con los datos de Resumen IA, el botón **"Generar / Refrescar Resumen IA"** invoca `/api/epsilon/resumen` y **"Copiar seguimiento"** copia el texto formateado al portapapeles.
 - Al pulsar **"⚡ Sincronizar Epsilon"** se invoca `POST /api/sync-postmortem` con la release activa y se recarga la consola sin modificar `massive-incidents` ni `high_priority_notifications.json`.
 - El modal **"📊 Cargar Argos PaP"** permite arrastrar o seleccionar archivos CSV de Grafana, llama a `POST /api/release-desk/upload-argos`, consolida los datos y genera el informe HTML corporativo.
-- El botón **"🔄 Actualizar Informe HTML"** llama a `POST /api/release-desk/generate-report` y compila el informe en tiempo real tanto en local como en producción VPS.
-- El botón **"🌐 Ver informe HTML"** abre el informe generado en una nueva pestaña.
+- El botón unificado **"🌐 Informe Ejecutivo HTML"** llama a `POST /api/release-desk/generate-report`, compila el informe en tiempo real tanto en local como en producción VPS y lo abre en una nueva pestaña del navegador.
 - Existen pruebas automatizadas que cubren los endpoints de subida, generación y los componentes de UI, con la suite completa aprobada al 100%.

@@ -1402,46 +1402,13 @@
         bindBriefingButton('btnCopyBriefing', buildMesaBriefing, 'Briefing de Mesa');
         bindBriefingButton('btnCopyBriefingSystem', buildMesaBriefingBySystem, 'Briefing por Sistema');
 
-        var btnViewReportHtml = document.getElementById('btnViewReportHtml');
-        if (btnViewReportHtml) {
-            btnViewReportHtml.addEventListener('click', function () {
-                var rel = (state.currentRelease || '2026R11').trim();
-                var url = '/dashboards/informes/comunicado-release-' + encodeURIComponent(rel) + '/';
-                fetch(url, { method: 'HEAD' }).then(function (res) {
-                    if (res.ok) {
-                        window.open(url, '_blank');
-                    } else {
-                        fetch(url, { method: 'GET' }).then(function (resGet) {
-                            if (resGet.ok) {
-                                window.open(url, '_blank');
-                            } else {
-                                notify('El informe HTML de la release ' + rel + ' aún no ha sido generado. Puedes generarlo con el agente @release-communicator.', 'warning');
-                            }
-                        }).catch(function () {
-                            notify('El informe HTML de la release ' + rel + ' aún no ha sido generado. Puedes generarlo con el agente @release-communicator.', 'warning');
-                        });
-                    }
-                }).catch(function () {
-                    fetch(url, { method: 'GET' }).then(function (resGet) {
-                        if (resGet.ok) {
-                            window.open(url, '_blank');
-                        } else {
-                            notify('El informe HTML de la release ' + rel + ' aún no ha sido generado. Puedes generarlo con el botón "Actualizar Informe HTML" o con el agente @release-communicator.', 'warning');
-                        }
-                    }).catch(function () {
-                        notify('El informe HTML de la release ' + rel + ' aún no ha sido generado. Puedes generarlo con el botón "Actualizar Informe HTML" o con el agente @release-communicator.', 'warning');
-                    });
-                });
-            });
-        }
-
         var btnGenerateReportHtml = document.getElementById('btnGenerateReportHtml');
         if (btnGenerateReportHtml) {
             btnGenerateReportHtml.addEventListener('click', function () {
                 var rel = (state.currentRelease || '2026R11').trim();
                 var origText = btnGenerateReportHtml.innerHTML;
                 btnGenerateReportHtml.disabled = true;
-                btnGenerateReportHtml.innerHTML = '⏳ Actualizando...';
+                btnGenerateReportHtml.innerHTML = '⏳ Generando informe...';
 
                 fetch('/api/release-desk/generate-report', {
                     method: 'POST',

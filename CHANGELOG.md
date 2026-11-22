@@ -21,9 +21,9 @@ y este proyecto se adhiere a [Semantic Versioning](https://semver.org/lang/es/).
   - `POST /api/release-desk/generate-report`: Compilación del informe HTML bajo demanda sin re-subir archivos.
   - Soportados con idéntico comportamiento en `serve_app.py` (servidor local) y `fastapi_remedy_router.py` (FastAPI en producción VPS).
 - **Controles interactivos en Mesa de Release**:
-  - Botón `📊 Cargar Argos PaP` (`#btnUploadArgos`): Apertura del modal interactivo de carga.
-  - Botón `🔄 Actualizar Informe HTML` (`#btnGenerateReportHtml`): Regeneración bajo demanda con feedback en pantalla.
-  - Botón `🌐 Ver informe HTML` (`#btnViewReportHtml`): Apertura directa del informe corporativo generado en una nueva pestaña.
+  - Botón `📊 Cargar Argos PaP` (`#btnUploadArgos`): Apertura del modal interactivo de carga en cabecera.
+  - Botón unificado `🌐 Informe Ejecutivo HTML` (`#btnGenerateReportHtml`): Compilación en caliente bajo demanda y apertura automática del informe corporativo 360° en una nueva pestaña.
+  - Barra inferior simplificada: 4 acciones esenciales y no redundantes (`Copiar briefing`, `Briefing por Sistema`, `Informe Ejecutivo HTML`, `Exportar tabla`).
 - **Persistencia de fechas de compromiso acordadas en la Mesa**:
   - Edición en caliente del campo `fecha_prevista` en el seguimiento operativo de Mesa de Release con sincronización local y en servidor.
   - Indicador visual `(Acordada Mesa)` tanto en la consola interactiva como en las tarjetas ejecutivas de proyecto del informe HTML.
