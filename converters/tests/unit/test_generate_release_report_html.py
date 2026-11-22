@@ -112,3 +112,29 @@ def test_build_release_report_html_generates_valid_file(tmp_path):
     assert "INC000004192176" in table_match
     assert "INC000004192073" in table_match
     assert "INC000004192062" in table_match
+
+
+def test_build_release_report_html_applies_mesa_overrides(tmp_path, monkeypatch):
+    import converters.cli.generate_release_report_html as rep_module
+
+    # Simulamos que en Mesa de Release se acordó una fecha prevista para INC000004192176
+    mock_overrides = {
+        "INC000004192176": {
+            "fecha_prevista": "2026-11-30",
+            "updated_at": "2026-11-22T17:00:00"
+        }
+    }
+    monkeypatch.setattr(rep_module, "get_overrides_for_release", lambda storage_dir, rel: mock_overrides)
+
+    output_html = tmp_path / "comunicado-release-2026R11-overrides" / "index.html"
+    res_path = rep_module.build_release_report_html(
+        release="2026R11",
+        output_path=output_html,
+    )
+    assert res_path.is_file()
+    content = res_path.read_text(encoding="utf-8")
+
+    # Verifica que la fecha acordada en Mesa de Release se refleje con su distintivo
+    assert "2026-11-30" in content
+    assert "Acordada Mesa" in content
+

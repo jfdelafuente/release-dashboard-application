@@ -688,3 +688,27 @@ def test_bump_asset_versions_updates_both_consoles(tmp_path):
     ):
         text = html_path.read_text(encoding="utf-8")
         assert "?v=" in text
+
+
+def test_release_desk_local_overrides_helpers():
+    if shutil.which("node") is not None:
+        script = (
+            f"const rd = require({json.dumps(str(RELEASE_DESK_JS))});\n"
+            "const mockStorage = { store: {}, getItem(k) { return this.store[k] || null; }, setItem(k, v) { this.store[k] = String(v); } };\n"
+            "const key = rd.getLocalOverridesKey('2026R11');\n"
+            "const initial = rd.readLocalOverrides('2026R11', mockStorage);\n"
+            "rd.writeLocalOverrides('2026R11', { INC1: { fecha_prevista: '2026-11-25' } }, mockStorage);\n"
+            "const saved = rd.readLocalOverrides('2026R11', mockStorage);\n"
+            "console.log(JSON.stringify({ key, initial, saved }));\n"
+        )
+        proc = _run_node_script(script)
+        out = json.loads(proc.stdout)
+        assert out["key"] == "rd_overrides_2026R11"
+        assert out["initial"] == {}
+        assert out["saved"]["INC1"]["fecha_prevista"] == "2026-11-25"
+    else:
+        domain_js = (PROJECT_ROOT / "dashboards" / "release-desk" / "release-desk-domain.js").read_text(encoding="utf-8")
+        assert "getLocalOverridesKey" in domain_js
+        assert "readLocalOverrides" in domain_js
+        assert "writeLocalOverrides" in domain_js
+

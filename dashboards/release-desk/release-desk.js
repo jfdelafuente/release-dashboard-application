@@ -79,49 +79,95 @@
     }
 
     async function loadReleaseOverrides(releaseName) {
-        state.overrides = {};
+        var localData = Domain.readLocalOverrides(releaseName);
+        state.overrides = Object.assign({}, localData);
         if (!releaseName) return;
         try {
             var resp = await fetch('/api/release-desk/overrides?release=' + encodeURIComponent(releaseName) + '&t=' + Date.now());
             if (resp.ok) {
                 var json = await resp.json();
                 if (json && json.overrides && typeof json.overrides === 'object') {
-                    state.overrides = json.overrides;
+                    var merged = Object.assign({}, json.overrides);
+                    for (var k in localData) {
+                        if (Object.prototype.hasOwnProperty.call(localData, k)) {
+                            if (!merged[k] || !merged[k].fecha_prevista) {
+                                merged[k] = localData[k];
+                            }
+                        }
+                    }
+                    state.overrides = merged;
+                    Domain.writeLocalOverrides(releaseName, state.overrides);
                 }
             }
         } catch (_) {
-            state.overrides = {};
+            // Servidor offline o servidor estático: mantenemos lo recuperado de localStorage
         }
     }
 
     async function saveFechaPrevistaOverride(incidentId, fechaPrevista) {
         if (!state.currentRelease || !incidentId) return;
+        var rel = state.currentRelease;
+        var cleanFecha = (fechaPrevista || '').trim();
+
+        // 1. Persistencia inmediata local en localStorage y memoria (cero pérdida de datos ante recargas)
+        var currentLocal = Domain.readLocalOverrides(rel);
+        if (cleanFecha) {
+            currentLocal[incidentId] = {
+                fecha_prevista: cleanFecha,
+                updated_at: new Date().toISOString()
+            };
+        } else {
+            delete currentLocal[incidentId];
+        }
+        Domain.writeLocalOverrides(rel, currentLocal);
+        state.overrides = Object.assign({}, currentLocal);
+        state.editingFechaId = null;
+        updateKPIs();
+        applyFilters();
+
+        // 2. Persistencia en backend (/api/release-desk/overrides) para sincronización con informes
         try {
             var resp = await fetch('/api/release-desk/overrides', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    release_name: state.currentRelease,
+                    release_name: rel,
                     incident_id: incidentId,
-                    fecha_prevista: fechaPrevista || ''
+                    fecha_prevista: cleanFecha
                 })
             });
-            var data = await resp.json();
-            if (!resp.ok || !data.success) {
-                throw new Error(data.error || ('HTTP ' + resp.status));
+            var data = null;
+            try {
+                data = await resp.json();
+            } catch (_) {}
+
+            if (resp.ok && data && data.success) {
+                var serverOverrides = (data && data.overrides && typeof data.overrides === 'object') ? data.overrides : currentLocal;
+                state.overrides = Object.assign({}, serverOverrides, currentLocal);
+                Domain.writeLocalOverrides(rel, state.overrides);
+                updateKPIs();
+                applyFilters();
+                notify(
+                    cleanFecha
+                        ? 'Fecha prevista acordada guardada (' + incidentId + ' ➔ ' + cleanFecha + ')'
+                        : 'Fecha prevista eliminada para ' + incidentId,
+                    'success'
+                );
+            } else {
+                notify(
+                    cleanFecha
+                        ? 'Fecha guardada localmente en navegador para ' + incidentId + ' (' + cleanFecha + '). Servidor en modo estático.'
+                        : 'Fecha eliminada localmente para ' + incidentId + '.',
+                    'info'
+                );
             }
-            state.overrides = data.overrides || {};
-            state.editingFechaId = null;
-            updateKPIs();
-            applyFilters();
-            notify(
-                fechaPrevista
-                    ? 'Fecha prevista guardada para ' + incidentId + ' (' + fechaPrevista + ')'
-                    : 'Fecha prevista eliminada para ' + incidentId,
-                'success'
-            );
         } catch (err) {
-            notify('Error guardando fecha prevista: ' + (err.message || err), 'error');
+            notify(
+                cleanFecha
+                    ? 'Fecha guardada en navegador (modo local) para ' + incidentId + ' (' + cleanFecha + ').'
+                    : 'Fecha eliminada en navegador para ' + incidentId + '.',
+                'info'
+            );
         }
     }
 

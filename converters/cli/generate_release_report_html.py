@@ -32,10 +32,14 @@ PROJECT_ROOT = Path(__file__).resolve().parents[2]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-# Intento de reutilizar cargador de caché de Epsilon si está disponible
+# Intento de reutilizar cargador de caché de Epsilon y overrides si están disponibles
 try:
-    from converters.src.release_desk_overrides import load_cached_epsilon_summaries
+    from converters.src.release_desk_overrides import (
+        get_overrides_for_release,
+        load_cached_epsilon_summaries,
+    )
 except ImportError:
+    get_overrides_for_release = None
     load_cached_epsilon_summaries = None
 
 
@@ -473,6 +477,14 @@ def build_release_report_html(
     # Cargar Epsilon IA para todas las incidencias
     inc_ids = [inc.get("ID de incidencia") for inc in incidents if inc.get("ID de incidencia")]
     ia_summaries = load_local_epsilon_cache(inc_ids)
+
+    # Cargar Overrides acordados en Mesa de Release (p. ej. Fecha Prevista)
+    overrides_map: Dict[str, Any] = {}
+    if get_overrides_for_release is not None:
+        try:
+            overrides_map = get_overrides_for_release(storage_dir, rel)
+        except Exception:
+            overrides_map = {}
 
     # 3. Categorizar incidencias y cruzarlas con proyectos
     incidents_by_project: Dict[str, List[Dict[str, Any]]] = {}
@@ -1215,7 +1227,23 @@ def build_release_report_html(
                 status = inc.get("Estatus") or "Asignado"
                 desc = inc.get("Descripción") or inc.get("descripcion") or ""
                 sistema = inc.get("Impacto") or inc.get("producto") or inc.get("Grupo asignado") or "Tecnología"
-                fecha_prev = inc.get("Fecha Prevista") or inc.get("fecha_prevista") or "Pendiente de acordar"
+                override_entry = overrides_map.get(inc_id, {})
+                agreed_fecha = (
+                    override_entry.get("fecha_prevista")
+                    if isinstance(override_entry, dict)
+                    else None
+                )
+                fecha_prev = (
+                    agreed_fecha
+                    or inc.get("Fecha Prevista")
+                    or inc.get("fecha_prevista")
+                    or "Pendiente de acordar"
+                )
+                mesa_badge = (
+                    ' <span class="badge badge-info" style="font-size:10px; padding:2px 6px;">Acordada Mesa</span>'
+                    if agreed_fecha
+                    else ''
+                )
 
                 ia_data = ia_summaries.get(inc_id, {})
 
@@ -1227,7 +1255,7 @@ def build_release_report_html(
                 html_lines.append(f'                                {format_badge_status(status)}')
                 html_lines.append(f'                                <span class="badge badge-neutral">{html.escape(sistema)}</span>')
                 html_lines.append('                            </div>')
-                html_lines.append(f'                            <div style="font-size:12px; color:#6B7280;">📅 Prevista: <strong>{html.escape(fecha_prev)}</strong></div>')
+                html_lines.append(f'                            <div style="font-size:12px; color:#6B7280;">📅 Prevista: <strong>{html.escape(fecha_prev)}</strong>{mesa_badge}</div>')
                 html_lines.append('                        </div>')
                 html_lines.append(f'                        <div class="incident-desc-raw">{html.escape(desc)}</div>')
 
@@ -1273,7 +1301,23 @@ def build_release_report_html(
             status = inc.get("Estatus") or "Asignado"
             desc = inc.get("Descripción") or inc.get("descripcion") or ""
             sistema = inc.get("Impacto") or inc.get("producto") or inc.get("Grupo asignado") or "Tecnología"
-            fecha_prev = inc.get("Fecha Prevista") or inc.get("fecha_prevista") or "Pendiente de acordar"
+            override_entry = overrides_map.get(inc_id, {})
+            agreed_fecha = (
+                override_entry.get("fecha_prevista")
+                if isinstance(override_entry, dict)
+                else None
+            )
+            fecha_prev = (
+                agreed_fecha
+                or inc.get("Fecha Prevista")
+                or inc.get("fecha_prevista")
+                or "Pendiente de acordar"
+            )
+            mesa_badge = (
+                ' <span class="badge badge-info" style="font-size:10px; padding:2px 6px;">Acordada Mesa</span>'
+                if agreed_fecha
+                else ''
+            )
             ia_data = ia_summaries.get(inc_id, {})
 
             html_lines.append('                    <div class="incident-item">')
@@ -1284,7 +1328,7 @@ def build_release_report_html(
             html_lines.append(f'                                {format_badge_status(status)}')
             html_lines.append(f'                                <span class="badge badge-neutral">{html.escape(sistema)}</span>')
             html_lines.append('                            </div>')
-            html_lines.append(f'                            <div style="font-size:12px; color:#6B7280;">📅 Prevista: <strong>{html.escape(fecha_prev)}</strong></div>')
+            html_lines.append(f'                            <div style="font-size:12px; color:#6B7280;">📅 Prevista: <strong>{html.escape(fecha_prev)}</strong>{mesa_badge}</div>')
             html_lines.append('                        </div>')
             html_lines.append(f'                        <div class="incident-desc-raw">{html.escape(desc)}</div>')
             if ia_data and (ia_data.get("problema") or ia_data.get("impacto") or ia_data.get("solucion")):

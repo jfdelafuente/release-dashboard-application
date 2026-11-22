@@ -793,6 +793,33 @@
         return null;
     }
 
+    function getLocalOverridesKey(releaseName) {
+        return 'rd_overrides_' + String(releaseName || '').trim();
+    }
+
+    function readLocalOverrides(releaseName, storage) {
+        if (!releaseName) return {};
+        var s = storage || (typeof localStorage !== 'undefined' ? localStorage : null);
+        if (!s) return {};
+        try {
+            var raw = s.getItem(getLocalOverridesKey(releaseName));
+            if (raw) {
+                var parsed = JSON.parse(raw);
+                if (parsed && typeof parsed === 'object') return parsed;
+            }
+        } catch (_) {}
+        return {};
+    }
+
+    function writeLocalOverrides(releaseName, overridesObj, storage) {
+        if (!releaseName) return;
+        var s = storage || (typeof localStorage !== 'undefined' ? localStorage : null);
+        if (!s) return;
+        try {
+            s.setItem(getLocalOverridesKey(releaseName), JSON.stringify(overridesObj || {}));
+        } catch (_) {}
+    }
+
     var api = {
         escapeHtml: escapeHtml,
         isClosedStatus: isClosedStatus,
@@ -817,7 +844,10 @@
         getPriorityTooltip: getPriorityTooltip,
         parseDateRobust: parseDateRobust,
         computeInactivityStatus: computeInactivityStatus,
-        detectPingPong: detectPingPong
+        detectPingPong: detectPingPong,
+        getLocalOverridesKey: getLocalOverridesKey,
+        readLocalOverrides: readLocalOverrides,
+        writeLocalOverrides: writeLocalOverrides
     };
     global.ReleaseDeskDomain = api;
     if (typeof module !== 'undefined' && module.exports) {
