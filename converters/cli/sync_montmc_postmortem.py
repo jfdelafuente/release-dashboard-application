@@ -437,6 +437,23 @@ def sync_postmortem_release(
                 norm_detail = api_client.normalize_mon_tmc_postmortem_record(remedy_node)
                 if not remedy_node.get("fechaCreacion") and old_rec.get("Fecha de envío"):
                     norm_detail["Fecha de envío"] = old_rec["Fecha de envío"]
+
+                # Si el ticket ha sido desvinculado de la release en Remedy (se eliminó el tag de la release)
+                if active_release:
+                    rel_pattern = re.compile(rf"\[{re.escape(str(active_release).strip())}\]", re.IGNORECASE)
+                    text_check = f"{norm_detail.get('resumen') or ''} {norm_detail.get('detalle') or ''} {norm_detail.get('Descripción') or ''}"
+                    if not rel_pattern.search(text_check):
+                        logger.info(
+                            "Incidencia %s ya no contiene el tag [%s] en Remedy tras modificación. Desvinculando del postmortem de %s.",
+                            inc_id,
+                            active_release,
+                            active_release,
+                        )
+                        records_by_id.pop(inc_id, None)
+                        if inc_id in ordered_ids:
+                            ordered_ids.remove(inc_id)
+                        continue
+
                 has_changes = any(norm_detail.get(k) != old_rec.get(k) for k in compare_fields)
                 if has_changes:
                     if norm_detail.get("Estatus") != old_rec.get("Estatus"):
@@ -447,8 +464,26 @@ def sync_postmortem_release(
                     records_by_id[inc_id] = updated_rec
                     actualizadas += 1
 
-    final_data_list = [records_by_id[i] for i in new_ids] + [
-        records_by_id[i] for i in ordered_ids if i not in set(new_ids)
+    # Filtrar en la lista final cualquier ticket que ya no esté en records_by_id o que en caso de active_release
+    # no contenga el tag de la release si no fue devuelto por la API
+    final_ordered_ids = [i for i in ordered_ids if i in records_by_id]
+    if active_release:
+        rel_pattern = re.compile(rf"\[{re.escape(str(active_release).strip())}\]", re.IGNORECASE)
+        valid_ordered_ids = []
+        for i in final_ordered_ids:
+            if i in seen_api_ids:
+                valid_ordered_ids.append(i)
+            else:
+                rec = records_by_id[i]
+                text_check = f"{rec.get('resumen') or ''} {rec.get('detalle') or ''} {rec.get('Descripción') or ''}"
+                if rel_pattern.search(text_check):
+                    valid_ordered_ids.append(i)
+                else:
+                    logger.info("Incidencia %s descartada por no pertenecer a la release [%s].", i, active_release)
+        final_ordered_ids = valid_ordered_ids
+
+    final_data_list = [records_by_id[i] for i in new_ids if i in records_by_id] + [
+        records_by_id[i] for i in final_ordered_ids if i not in set(new_ids) and i in records_by_id
     ]
 
     # 4. Recalcular Despliegue (PAP/MESA), KPIs y Metadatos

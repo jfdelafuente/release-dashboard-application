@@ -344,3 +344,76 @@ def test_infer_release_from_api_ignores_simulacro_and_drill():
     ]
     assert _infer_release_from_api(only_simulacro) is None
 
+
+def test_sync_postmortem_prunes_untagged_or_dissociated_tickets(tmp_path: Path):
+    """
+    Verifica que si una incidencia previamente guardada pierde el tag de la release
+    en Remedy (p. ej. corregida a [QuotaApigee] sin [2026R11]), se desvincula y purga
+    del dataset postmortem de esa release.
+    """
+    output_dir = _setup_workspace(tmp_path)
+    target_file = output_dir / "2026R11-postmortem.json"
+    initial_data = {
+        "_metadata": {"type": "postmortem", "release_name": "2026R11", "record_count": 2},
+        "data": [
+            {
+                "ID de incidencia": "INC_VALID",
+                "Descripción": "[2026R11] Ticket válido",
+                "Estatus": "Asignado",
+                "Fecha de envío": "22/11/2026 01:00",
+                "Grupo asignado": "SOP_A",
+                "Prioridad": "P3",
+            },
+            {
+                "ID de incidencia": "INC_UNTAGGED",
+                "Descripción": "[QuotaApigee] Alarma externa",
+                "Estatus": "Asignado",
+                "Fecha de envío": "22/11/2026 01:20",
+                "Grupo asignado": "SOP_TMC",
+                "Prioridad": "P2",
+            },
+        ],
+    }
+    target_file.write_text(json.dumps(initial_data), encoding="utf-8")
+
+    real_client = MonTMCClient()
+    mock_client = MagicMock(spec=MonTMCClient)
+    mock_client.default_user = "jdelat"
+    mock_client.normalize_mon_tmc_postmortem_record.side_effect = real_client.normalize_mon_tmc_postmortem_record
+    mock_client.fetch_release.return_value = {
+        "success": True,
+        "incidencias": [
+            {
+                "idRemedy": "INC_VALID",
+                "resumen": "[2026R11] Ticket válido",
+                "estadoDesc": "ASIGNADO",
+                "prioridadP": "P3",
+                "urgencia": "Medio",
+                "grupoAsignado": "SOP_A",
+                "fechaCreacion": "2026-11-22T01:00:00.000+00:00",
+            }
+        ],
+    }
+    mock_client.fetch_remedy_detail.return_value = {
+        "codigoResp": 0,
+        "remedy": {
+            "idRemedy": "INC_UNTAGGED",
+            "resumen": "[QuotaApigee] Alarma externa sin tag",
+            "estadoDesc": "ASIGNADO",
+            "prioridadP": "P2",
+            "urgencia": "Medio",
+            "grupoAsignado": "SOP_TMC",
+            "fechaCreacion": "2026-11-22T01:20:00.000+00:00",
+        },
+    }
+
+    res = sync_postmortem_release(release_name="2026R11", project_root=tmp_path, client=mock_client)
+    assert res["success"] is True
+    assert res["total_dataset"] == 1
+
+    saved = json.loads(target_file.read_text(encoding="utf-8"))
+    ids = [r["ID de incidencia"] for r in saved["data"]]
+    assert "INC_VALID" in ids
+    assert "INC_UNTAGGED" not in ids
+
+
