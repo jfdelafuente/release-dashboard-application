@@ -5,12 +5,12 @@ description: >-
   Especialista en comunicación global y ejecutiva de Releases mensuales IT en MasOrange /
   Orange Tech Operations. Orquesta la redacción, síntesis y difusión en Microsoft Teams y canales
   de Dirección del estado integral de la release en todas sus fases: cierre de instalaciones,
-  balance oficial GO/NoGO, inicio y avance de pruebas, avisos operativos de bloqueo y el
-  Reporte Ejecutivo Global de Incidencias agrupadas por Proyecto (con diagnóstico de problemas
-  detectados vía Epsilon Resumen IA, criticidades P1/P2/Masivas y fechas previstas), manteniendo
-  sincronizado el catálogo de proyectos y enrutando siempre a la consola de Mesa de Release (/dashboards/release-desk/).
+  balance oficial GO/NoGO, avance y ejecución de pruebas PaP en producción (Grafana Argos),
+  avisos operativos de bloqueo y el Reporte Ejecutivo Global de Incidencias agrupadas por Proyecto
+  (con telemetría Remedy, diagnóstico Epsilon Resumen IA, criticidades P1/P2/Masivas y fechas previstas),
+  manteniendo sincronizado el catálogo de proyectos y enrutando siempre a la consola de Mesa de Release (/dashboards/release-desk/).
 domain: it-releases
-version: 2.0.0
+version: 2.1.0
 language: es
 owner: Orange Tech Operations
 metadata:
@@ -25,11 +25,11 @@ metadata:
     - release-opening-workflow
 ---
 
-# Comunicación Global de Releases e Incidencias por Proyecto (`release-project-communication`) — v2.0.0
+# Comunicación Global de Releases e Incidencias por Proyecto (`release-project-communication`) — v2.1.0
 
-Esta skill define las directrices maestras, formatos corporativos, modelos de datos y heurísticas de redacción para elaborar **comunicaciones ejecutivas y operativas sobre las Releases Mensuales IT** de MasOrange / Orange Tech Operations.
+Esta skill define las directrices maestras, fuentes de datos requeridas, formatos corporativos, modelos de datos y heurísticas de redacción para elaborar **comunicaciones ejecutivas y operativas sobre las Releases Mensuales IT** de MasOrange / Orange Tech Operations.
 
-Cubre todo el ciclo de vida de la Release: desde el **cierre de instalaciones y balance GO/NoGO**, pasando por los **flashes operativos en caliente**, hasta el **Reporte Ejecutivo Global de Incidencias agrupadas por Proyecto** respaldado por la telemetría de Remedy y el análisis de **Epsilon Resumen IA**, garantizando trazabilidad y visibilidad en **Microsoft Teams** y comités de Dirección.
+Cubre todo el ciclo de vida de la Release: desde el **cierre de instalaciones y balance GO/NoGO**, pasando por los **flashes operativos en caliente**, el **seguimiento de ejecución de pruebas PaP en Producción (Grafana Argos)**, hasta el **Reporte Ejecutivo Global 360° de Incidencias agrupadas por Proyecto** respaldado por la telemetría de Remedy y el análisis de **Epsilon Resumen IA**, garantizando trazabilidad y visibilidad en **Microsoft Teams** y comités de Dirección.
 
 ---
 
@@ -40,7 +40,7 @@ Cubre todo el ciclo de vida de la Release: desde el **cierre de instalaciones y 
    - **Regla Estricta**: Queda prohibido referenciar genéricamente "el dashboard" o enlazar a consolas descontextualizadas (como `release-kpis`). El centro de mando operativo del seguimiento de la ventana y post-release es exclusivamente **Mesa de Release**.
 
 2. **Regla Anti-Alucinación (Cero Tolerancia)**:
-   - Prohibido conjeturar o inventar fechas de resolución, causas técnicas, grupos asignados, proyectos o afectaciones no respaldadas expresamente por la evidencia de los ficheros de datos (`projects_catalog.json`, `*-postmortem.json`, `*-massive.json` o Epsilon IA).
+   - Prohibido conjeturar o inventar fechas de resolución, causas técnicas, grupos asignados, proyectos o afectaciones no respaldadas expresamente por la evidencia de los ficheros de datos (`projects_catalog.json`, `*-postmortem.json`, `*_grafana_pap.csv`, `*-massive.json` o Epsilon IA).
    - Todo dato ausente o pendiente de acuerdo debe marcarse explícitamente como `Pendiente de acordar` o `En análisis`.
 
 3. **Cuadre Numérico y Estadístico Estricto (100%)**:
@@ -48,10 +48,11 @@ Cubre todo el ciclo de vida de la Release: desde el **cierre de instalaciones y 
      $$\text{Total Proyectos} = \text{GO} (\text{Completo} + \text{Piloto} + \text{Modo Oculto}) + \text{PAP Técnico} + \text{Replanificados/NoGO}$$
    - Las métricas de incidencias deben totalizar con precisión:
      $$\text{Total Incidencias} = \text{Activas} (\text{P1} + \text{P2} + \text{P3 Masivas} + \text{P3} + \text{P4}) + \text{Resueltas/Cerradas}$$
-     $$\text{Total Proyectos} = \text{Proyectos Limpios (Sin Incidencias)} + \text{Proyectos con Incidencias}$$
+   - Las métricas de pruebas en Grafana deben cuadrar:
+     $$\text{Total Pruebas} = \text{Pass} + \text{Pending} + \text{Block} + \text{Executing} + \text{Verify}$$
 
 4. **Aislamiento de Avisos Operativos (Blindaje de Confianza)**:
-   - Cuando se reporte un retraso o anomalía que impacte a un subsistema (ej. refresco de KRATOS, incidencia en Ficha Cliente):
+   - Cuando se reporte un retraso o anomalía que impacte a un subsistema (ej. refresco de KRATOS, incidencia en Ficha Cliente, pruebas bloqueadas en un proyecto):
      - Destacarlo claramente en un bloque de advertencia (`> ⚠️`).
      - Indicar de inmediato que **el resto de sistemas, proyectos y servicios continúan operando con normalidad** (🟢 *"El resto de aplicaciones y sistemas están OK e inician pruebas con normalidad"*).
 
@@ -61,19 +62,86 @@ Cubre todo el ciclo de vida de la Release: desde el **cierre de instalaciones y 
 
 ---
 
-## 2. Mapa del Ciclo de Vida de Comunicaciones de Release
+## 2. Requisitos y Fuentes de Datos para Generar el Informe
+
+Para elaborar el **Informe Global 360°**, el sistema cruza datos preexistentes en el repositorio con datos de ejecución aportados por el usuario:
+
+```
+  ┌────────────────────────────────────────────────────────┐
+  │     FUENTES PREEXISTENTES (AUTÓNOMAS EN REPOSITORIO)   │
+  │  • Catálogo de Proyectos: data/config/projects_catalog.json │
+  │  • Histórico CSV: data/storage/projects/{YYYYRMM}.csv  │
+  │  • Incidencias Remedy: data/output/{YYYYRMM}-postmortem.json│
+  │  • Incidencias Masivas: data/output/*-massive.json     │
+  │  • Diagnóstico IA: data/.epsilon_cache/INC*.json       │
+  │  • Trabajos PaP: data/config/scheduled_changes_pap.json│
+  └────────────────────────────────────────────────────────┘
+                              ▲
+                              │ Cruce Relacional
+                              ▼
+  ┌────────────────────────────────────────────────────────┐
+  │         DATOS QUE DEBE APORTAR EL USUARIO              │
+  │  • Export Grafana PaP:                                 │
+  │    data/storage/projects/{YYYYRMM}_grafana_pap.csv     │
+  │    (o pegado del texto CSV directo en el chat)         │
+  │  • Acuerdos Verbales / War Room (Opcional)             │
+  └────────────────────────────────────────────────────────┘
+```
+
+### 2.1. Datos Disponibles en el Repositorio (No requieren aporte del usuario)
+El agente/skill lee de manera inmediata y sin intervención del usuario:
+1. **Catálogo Oficial de Proyectos**: [projects_catalog.json](file:///c:/Users/jose.delafuente/proyectos/release-dashboard-application/data/config/projects_catalog.json) y `data/storage/projects/{YYYYRMM}.csv`. Contiene códigos JIRA (`PRJ-*`, `AB2CJ-*`, `OCA-*`), nombres oficiales, metodologías (`Fast Track`, `Agile E2E`, `Bimodal`, `OCA`, `WF`), decisiones (GO/NoGO/PaP) y alcance de despliegue.
+2. **Telemetría e Incidencias en Caliente (Remedy / Montmc)**: `data/output/{YYYYRMM}-postmortem.json`. Contiene todos los tickets de la release con ID, estado (`Asignado`, `Pendiente`, `Resuelto`, `Cerrado`), severidad, urgencia, impacto/sistema y fechas.
+3. **Diagnósticos de Epsilon Resumen IA**: `data/.epsilon_cache/INC*.json`. Síntesis estructurada del problema, causa raíz preliminar y afectación a clientes.
+4. **Acuerdos y Overrides Locales**: `data/storage/state.overrides` (compromisos de fecha prevista acordados en la Mesa).
+5. **Replanificaciones y Cambios PaP**: `data/config/scheduled_changes_pap.json`.
+
+### 2.2. Datos que Debe Aportar el Usuario
+1. **Export de Ejecución de Pruebas PaP (Grafana Argos)**:
+   * **Fichero destino:** `data/storage/projects/{YYYYRMM}_grafana_pap.csv` (o copiar y pegar el contenido CSV en el mensaje).
+   * **¿Por qué se aporta?** El servidor corporativo `https://grafana.tools.cloud.orange.es` está protegido tras la autenticación federada de **Google OAuth / SSO de Orange**. Al no poder un agente de consola interactuar con la pantalla de login del navegador web de Google, el usuario obtiene el export fácilmente:
+     > **Pasos para exportar desde Grafana:**
+     > 1. Acceder al dashboard de Seguimiento PaP de la release.
+     > 2. En el panel de ejecución de pruebas, hacer clic en el menú del panel (tres puntos $\rightarrow$ *Inspect* $\rightarrow$ *Data*).
+     > 3. Pulsar *Download CSV* o copiar la tabla de datos y pegarla en el chat.
+   * **Columnas esperadas en el CSV:** `num_test`, `pass`, `pending`, `block`, `verify`, `executing`, `prj`, `resumen_test_plan`, `sistema_test`, `tipologia_prueba`, `agrupacion_funcional`, `blocking_comment`.
+
+---
+
+## 3. Formas de Invocación y Parámetros
+
+### 3.1. Invocación mediante el Agente Especialista (`release-communicator`)
+El agente dedicado [`release-communicator`](../../agents/it-releases/release-communicator.md) es el orquestador principal:
+* `@release-communicator dame los avances de 2026R11`
+* `@release-communicator genera el informe global de release 2026R11`
+* `@release-communicator balance de pruebas e incidencias 2026R11`
+
+### 3.2. Invocación Contextual Directa (Vía Skill)
+Puedes invocar la skill directamente en cualquier conversación con Antigravity mediante frases clave:
+* *"dame los avances de 2026R11"*
+* *"informe global de release 2026R11"*
+* *"estado de pruebas e incidencias de la release"*
+* Comando / alias: `/comunicacion-global-release`
+
+### 3.3. Comportamiento Inteligente ante Parámetros Faltantes
+* **Si no se indica la Release (`YYYYRMM`):** El sistema detecta automáticamente la release activa más reciente buscando en `data/output/*-postmortem.json` y `data/config/projects_catalog.json`.
+* **Si no se dispone del CSV de Grafana:** El sistema genera de forma transparente el **Informe de Incidencias y Salud de Proyectos (Remedy)** y añade un recordatorio amable indicando los pasos para aportar el CSV de Grafana y obtener el informe completo 360°.
+
+---
+
+## 4. Mapa del Ciclo de Vida y Plantillas Oficiales
 
 ```mermaid
 flowchart TD
     A["Fase 1: Cierre Instalaciones & GO/NoGO"] --> B["Fase 2: Avance de Pruebas & Flashes Operativos"]
-    B --> C["Fase 3: Reporte Ejecutivo Global (Incidencias por Proyecto)"]
+    B --> C["Fase 3: Reporte 360° (Pruebas PaP + Incidencias por Proyecto)"]
     C --> D["Fase 4: Balance Definitivo Post-Release & Cierre de Ventana"]
 
     subgraph Fuentes ["Fuentes de Datos Oficiales"]
         P["Catálogo Proyectos<br/>projects_catalog.json"]
         I["Remedy Postmortem<br/>{YYYYRMM}-postmortem.json"]
-        M["Remedy Masivas<br/>*-massive.json"]
-        IA["Epsilon Resumen IA<br/>ia_summaries_cache.json"]
+        G["Grafana PaP Argos<br/>{YYYYRMM}_grafana_pap.csv"]
+        IA["Epsilon Resumen IA<br/>.epsilon_cache/"]
     end
 
     Fuentes --> A
@@ -82,42 +150,9 @@ flowchart TD
     Fuentes --> D
 ```
 
-| Fase | Momento / Disparador | Audiencia Principal | Enfoque Central |
-|---|---|---|---|
-| **Fase 1: Cierre de Instalaciones** | Fin de instalaciones de la release (sábado/domingo madrugada) | Dirección IT, Negocio, Teams Release | Balance GO/NoGO, proyectos con pruebas activas, avisos de pruebas, hitos desplegados |
-| **Fase 2: Flash Operativo** | Detección de bloqueo o ticket crítico durante pruebas | War Room, Incident Managers, Teams | Aislamiento de impacto, tiempo estimado de corrección, estabilidad del resto |
-| **Fase 3: Reporte Global de Incidencias/Proyecto** | Domingo tarde / Lunes mañana / Seguimiento post-release | Dirección Operaciones, CIO, Jefes de Proyecto | Matriz de proyectos afectados vs limpios, P1/P2/Masivas, diagnósticos IA, fechas previstas |
-| **Fase 4: Balance Final de Release** | Cierre de ventana / Fin de soporte reforzado | Dirección, Comités de Calidad | Estabilidad global, balance definitivo de tickets, plan de fijación PaP |
-
 ---
-
-## 3. Heurística de Cruce: Proyectos vs Incidencias
-
-Para generar el **Reporte Ejecutivo Global**, se realiza un cruce relacional entre el catálogo de proyectos y las incidencias activas:
-
-### 3.1. Extracción y Normalización de Proyecto
-1. Se extrae la clave del proyecto a partir del campo `prj` o buscando patrones en la descripción: `PRJ-\d+`, `AB2CJ-\d+`, `OCA-\d+`.
-2. Se resuelve la información en `projects_catalog.json` (`by_release[YYYYRMM]`):
-   - `summary`: Título oficial de la iniciativa.
-   - `despliegue`: `Completo`, `Piloto`, `Modo Oculto` o `PAP Técnico`.
-   - `metodologia`: `Fast Track`, `Agile E2E`, `Bimodal`, `OCA`, `WF`.
-   - `responsable`: Lead técnico / Delivery Manager.
-3. Si una incidencia no contiene código de proyecto, se cataloga bajo **"Incidencias Transversales de Release / Sin Proyecto Asociado"**.
-
-### 3.2. Clasificación de Salud del Proyecto (`Health Score`)
-
-| Estado de Salud | Criterio de Clasificación | Icono / Etiqueta | Acción Requerida |
-|---|---|:---:|---|
-| **🔴 Crítico** | Tiene al menos 1 incidencia activa **P1 / Crítica** o catalogada como **Masiva** (`rd-badge-masiva`). | 🔴 **CRÍTICO** | War Room activa, seguimiento horario, escalado telefónico IM-CSO. |
-| **🟡 En Alerta** | Tiene al menos 1 incidencia **P2 / Alta**, o incidencias con fecha prevista vencida (`overdue`), o más de 2 incidencias P3 activas. | 🟡 **ALERTA** | Seguimiento continuo de fecha prevista, mitigación mediante workaround validado. |
-| **🟢 Estable / OK** | No tiene incidencias activas, o todas sus incidencias están en estado **Resuelto** o **Cerrado**. | 🟢 **ESTABLE** | Monitoreo estándar post-despliegue. |
-
----
-
-## 4. Plantillas Oficiales de Comunicación
 
 ### 4.1. Plantilla A: Cierre de Instalaciones e Inicio de Pruebas
-
 Uso: Al finalizar los despliegues técnicos en la ventana de release.
 
 ```markdown
@@ -138,115 +173,102 @@ Se comunica que han **finalizado con éxito las instalaciones de los proyectos d
 * 🟢 **GO: {N_GO} proyectos ({%_GO}%)**
   * **{N_Comp} en Despliegue Completo** (Operativos para el 100% de canales)
   * **{N_Pil} en Piloto** (Apertura progresiva y controlada)
-  * **{N_Ocult} en Modo Oculto** (Capacidad técnica preparatoria)
-* ⚙️ **PAP Técnico: {N_PAP} proyectos ({%_PAP}%)**
-  * `{JIRA}` – *{Título}* ({Responsable} / {Metodología})
-* 🔄 **Replanificación PaP (si aplica):**
-  * `{JIRA}` – *{Título}*: Replanificado PAP para el **{Día DD/MM a las HH:MMh}** ({Motivo resumido}).
+  * **{N_Ocu} en Modo Oculto** (Desplegados técnicamente con visibilidad desactivada)
+* ⚙️ **Trabajos Programados (PaP): {N_PAP} proyectos ({%_PAP}%)**
+  * Despliegue replanificado para ventana técnica autorizada (con CRQ asociada).
+* 🛑 **NoGO: {N_NoGO} proyectos**
 
 ---
 
-### 🚀 Principales Hitos Desplegados
+### 📋 Proyectos con Pruebas Activas en Ventana
+| JIRA | Iniciativa | Despliegue | Metodología | Responsable |
+|---|---|---|---|---|
+| {JIRA} | {Summary} | {Despliegue} | {Metodologia} | {Responsable} |
 
-* ☁️ **Cloud, Core & Arquitectura:**
-  * [Proyectos GCP, AWS, modernización arquitectura, optimizaciones de red/core]
-* 🏢 **Empresas, B2B & Wholesale:**
-  * [Operaciones corporativas, terminales, coberturas, flujos comerciales]
-* 📱 **Residencial, Canales Digitales & Seguridad:**
-  * [Ciberprotección, plataformas streaming, autogestión app, promociones]
-
----
-🔍 *El seguimiento operativo y la evolución de las pruebas pueden consultarse en directo en la [Mesa de Release](http://10.132.26.96:8081/dashboards/release-desk/?release={YYYYRMM}).*
+🔍 *El seguimiento operativo y de incidencias se realiza en la [Mesa de Release](http://10.132.26.96:8081/dashboards/release-desk/?release={YYYYRMM}).*
 ```
 
 ---
 
-### 4.2. Plantilla B: Flash Operativo / Incidencia Crítica en Ventana
-
-Uso: Notificación urgente ante una incidencia que degrade un servicio o bloquee pruebas de un proyecto.
+### 4.2. Plantilla B: Flash Operativo / Alerta de Bloqueo
+Uso: Ante un bloqueo durante las pruebas o detección de ticket crítico.
 
 ```markdown
-🚨 **FLASH OPERATIVO – Incidencia en Pruebas / Release {YYYYRMM}**
+⚠️ **[FLASH OPERATIVO] Incidencia en Pruebas – Release {YYYYRMM}**
 
-* **Proyecto / Sistema afectado:** {PRJ-XXXXX} – *{Nombre Proyecto}* | Sistema: `{SISTEMA}`
-* **Incidencia:** `{INCXXXXXXX}` ({Prioridad/Urgencia} | {Estatus})
-* **Problema Detectado (Epsilon IA):** {Problema conciso extraído de la IA o descripción funcional}.
-* **Impacto en Pruebas/Negocio:** {Canal o sede afectada, usuarios o transacciones impactadas}.
-* **Plan de Acción / Siguiente Paso:** {Equipo asignado analizando componente; despliegue de fix o workaround previsto para HH:MMh}.
-* **Fecha Prevista Acordada:** {Fecha o "En curso de valoración"}.
+* **Componente / Sistema afectado:** {Sistema} (Proyecto: {JIRA} - {Summary})
+* **Incidencia Remedy:** [{INC_ID}](http://10.132.26.96:8081/dashboards/release-desk/?release={YYYYRMM}&search={INC_ID}) | Prioridad: **{Prioridad}**
+* **Impacto Detectado:** {Breve resumen del problema, ej. Error en volcado de facturación en pedidos de migración}.
+* **Acción en Curso:** El equipo {Grupo_Asignado} se encuentra analizando trazas / aplicando hotfix.
+* **Tiempo Estimado de Resolución:** {ETA / Pendiente de diagnóstico}.
 
-> 🟢 **Aviso de Continuidad:**
-> Esta afectación se encuentra circunscrita al componente `{SISTEMA}`. **El resto de proyectos y flujos de la release continúan operando con normalidad.**
+> 🟢 **Aislamiento Operativo:** El resto de pruebas y aplicaciones ({Sistemas_OK}) continúan ejecutándose con normalidad y sin afectación.
 
-🔍 *Detalle y seguimiento en tiempo real en la [Mesa de Release](http://10.132.26.96:8081/dashboards/release-desk/?release={YYYYRMM}).*
+🔍 *Evolución en vivo disponible en la [Mesa de Release](http://10.132.26.96:8081/dashboards/release-desk/?release={YYYYRMM}).*
 ```
 
 ---
 
-### 4.3. Plantilla C: Reporte Ejecutivo Global de Release (Incidencias por Proyecto)
-
-Uso: Informe consolidado para Dirección, Comités de Seguimiento y canales ejecutivos. Presenta la salud de los proyectos y la radiografía completa de incidencias.
+### 4.3. Plantilla C: Informe Global 360° (Pruebas PaP Grafana + Incidencias Remedy)
+Uso: Seguimiento integral de la ventana (domingo tarde / avances de release).
 
 ```markdown
-📢 **Informe Ejecutivo de Estado – Release {YYYYRMM}**  
-*Fecha de corte: {DD/MM/YYYY HH:MMh}*
+# 📢 [RELEASE {YYYYRMM}] INFORME GLOBAL DE AVANCE EN PRODUCCIÓN
+### *Cruce Unificado: Ejecución PaP (Grafana Argos) $\times$ Telemetría de Incidencias (Remedy)*
+
+> 📅 **Fecha y hora de corte:** {DD/MM/YYYY – HH:mm}h | **Entorno:** Producción E2E (`{PRODUCCION}`)  
+> 🔗 **Consola Oficial de Seguimiento:** [Mesa de Release {YYYYRMM}](http://10.132.26.96:8081/dashboards/release-desk/?release={YYYYRMM})
 
 ---
 
-### 1️⃣ Resumen Global de Despliegue y Estabilidad
+### 1. Resumen Ejecutivo Global
 
-* 📦 **Proyectos Desplegados:** **{Total_Proyectos} proyectos** ({N_GO} GO [{%_GO}%] | {N_PAP} PAP Técnico).
-* 🛡️ **Salud de Proyectos:** **{N_Limpios} proyectos estables (sin incidencias)** ({%_Limpios}%) | **{N_Afectados} proyectos en seguimiento** ({%_Afectados}%).
-* 🎫 **Incidencias Post-Release Activas:** **{Total_Activas} incidencias abiertas** ({N_Criticas} Críticas/P1 | {N_Altas} Altas/P2 | {N_Masivas} Masivas | {N_Medias} P3/P4).
-* ✅ **Incidencias Resueltas:** **{N_Resueltas} incidencias solucionadas** durante la ventana.
+  ┌────────────────────────────────────────────────────────────────────────┐
+  │                        PRUEBAS PAP (GRAFANA ARGOS)                     │
+  │  Total Planificadas: {Total_Pruebas} │ Superadas (Pass):  {Pass} ({%_Pass}%) 🟢   │
+  │  En Curso (Run):      {Run}          │ Bloqueadas (Block): {Block} ({%_Block}%) 🔴 │
+  │  Pendientes (Wait):   {Pend}         │ Avance Ejecución:  {Avance} ({%_Avance}%)🚀│
+  ├────────────────────────────────────────────────────────────────────────┤
+  │                       INCIDENCIAS EN VENTANA (REMEDY)                  │
+  │  Total Registradas:   {Total_Inc}    │ Resueltas/Cerradas: {Res} ({%_Res}%) 🟢     │
+  │  P1 (Críticas / Caída): {N_P1}       │ Activas en Curso:   {Act} ({%_Act}%) 🟡     │
+  │  P2 (Alta severidad):  {N_P2}        │ P3/P4 Funcionales:  {N_P3} / {N_P4}        │
+  └────────────────────────────────────────────────────────────────────────┘
 
----
-
-### 2️⃣ Radiografía de Proyectos en Seguimiento e Incidencias Clave
-
-#### 🔴 Proyectos Críticos / En Alerta (Requieren Atención Dirección)
-
-* **{CODIGO_PROYECTO}** – *{Título del Proyecto}*  
-  * **Metodología:** `{Metodologia}` | **Despliegue:** `{Despliegue}` | **Resp.:** {Responsable}  
-  * **Incidencias Asociadas:** `{INCXXXXXXX}` ({Prioridad/Urgencia})  
-  * ⚠️ **Problema Detectado (Resumen IA):** {Síntesis clara del fallo funcional o técnico detectado}.  
-  * 🩺 **Impacto:** {Afectación operativa o canales sin servicio}.  
-  * 🔧 **Solución / Siguiente Paso:** {Acción en curso por grupo resolutor}.  
-  * 🗓️ **Fecha Prevista:** **{FechaPrevistaAcordada}** {EstadoFecha: En plazo / ⚠ Vencida}.  
-
-*(Repetir bloque para cada proyecto crítico o en alerta)*
+* 🚀 **Ritmo de Ejecución:** El {%_Avance}% del plan de pruebas ya ha sido abordado.
+* 🛡️ **Estabilidad Global:** {N_P1} incidencias P1 y {N_P2} P2. {Comentario_Estabilidad_Core}.
+* ⚠️ **Foco Crítico:** {Resumen_Foco_Critico}.
 
 ---
 
-#### 🟡 Incidencias Transversales de Release / Soporte General (Sin Proyecto Directo)
+### 2. Progresión de Proyectos (`PRJ-*`): Salud y Bloqueos
 
-* `{INCYYYYYYY}` ({Prioridad/Urgencia} | `{Sistema}`): *{Problema Detectado / Descripción}*.  
-  * **Estado:** {Estatus} | **Resolutor:** `{GrupoResolutor}` | **Acción:** {Solución o siguiente paso} | **Prevista:** {Fecha}.
-
----
-
-### 3️⃣ Proyectos Desplegados 100% Estables (Sin Incidencias Activas)
-
-> 🟢 **{N_Limpios} proyectos sin incidencias reportadas**, operando en producción de forma conforme:
-> * `{PRJ-1}` ({Summary1}), `{PRJ-2}` ({Summary2}), `{PRJ-3}` ({Summary3}), ...
+| Proyecto / Iniciativa | Total | Pass | Block | Run | Pend | Estado / Fricción Detectada |
+|---|:---:|:---:|:---:|:---:|:---:|---|
+| **🔴 {PRJ}** ({Summary}) | {T} | {P} | **{B}** | {R} | {Pd} | **{Diagnostico}**. Correlaciona con tickets Remedy: {INC_IDs}. |
+| **🟢 {PRJ}** ({Summary}) | {T} | {P} | 0 | {R} | {Pd} | **{Diagnostico}**. |
 
 ---
 
-### 4️⃣ Próximos Pasos y Acuerdos de Estabilización
+### 3. Regresión General por Sistemas ({Total_Regresion} pruebas)
 
-1. **Revisión de Workarounds y PaP:** Verificación técnica de los cambios planificados ({N_PAP} proyectos) previstos para ejecución entre el {FechaInicioPaP} y {FechaFinPaP}.
-2. **Cierre de Incidencias en Curso:** Seguimiento focalizado en los tickets con fecha comprometida para hoy.
-3. **Mesa de Seguimiento:** Próxima sincronización operativa a las **{HH:MMh}**.
+* 🟢 **Canales de Ventas y Provisión:** {%_Pass_Canales}% de pruebas superadas ({Pass}/{Total}).
+* 🟢 **Sistemas Core / Backend:** Sistemas al 100% (OCS, SIRES, ALTAMIRA, SIEBEL M2M).
+* 🟡 **Sistemas en Validación Activa:** Detalle de frontales (TEIDE, CRM B2B, PANGEA) y pruebas en ejecución activa.
 
 ---
-🔍 *Consola interactiva, filtros por sistema y actualización en vivo en la [Mesa de Release](http://10.132.26.96:8081/dashboards/release-desk/?release={YYYYRMM}).*
+
+### 4. Plan de Acción y Próximos Pasos en Mesa de Release
+
+1. **Foco en Desbloqueos Críticos:** [Acción concreta con equipos resolutores].
+2. **Retest de Incidencias Cerradas:** [Pruebas bloqueadas cuyos tickets ya están cerrados].
+3. **Cierre de Pruebas en Ejecución:** [Seguimiento de pruebas activas].
 ```
 
 ---
 
-### 4.4. Plantilla D: Balance Definitivo de Release & Cierre de Ventana
-
-Uso: Al dar por concluida la ventana de despliegue o la fase de soporte reforzado.
+### 4.4. Plantilla D: Balance Definitivo y Cierre de Ventana
+Uso: Fin de la ventana intensiva / paso a régimen BAU.
 
 ```markdown
 🏁 **Balance Definitivo y Cierre de Ventana – Release {YYYYRMM}**
@@ -301,9 +323,8 @@ Para mantener el ecosistema completamente sincronizado con las comunicaciones em
 3. **Registrar Trabajos Programados (`data/config/scheduled_changes_pap.json`)**:
    - Si un proyecto se replanifica a ventana PaP, dar de alta la entrada con `crq: "PAP-{JIRA}"`, fecha y hora pactada.
 
-4. **Verificación de Incidencias en Mesa de Release**:
-   - Comprobar que las incidencias asociadas a proyectos reflejan su badge correspondiente (`.rd-badge-masiva` si es masiva, `.rd-badge-critica` para P1, `.rd-badge-alta` para P2).
-   - Validar que las fechas comprometidas se guardan como acuerdos en `state.overrides` o fecha prevista acordada.
+4. **Almacenar Datos de Pruebas Grafana (`data/storage/projects/{YYYYRMM}_grafana_pap.csv`)**:
+   - Al recibir datos de Grafana, persistirlos con el prefijo `{YYYYRMM}_grafana_pap.csv` para análisis recurrentes e históricos.
 
 5. **Sincronización con Servidor Central (VPS `10.132.26.96`)**:
    - Si el usuario autoriza la subida, sincronizar catálogos hacia `/infocodes/var/storage/release-dashboard/config/`.
