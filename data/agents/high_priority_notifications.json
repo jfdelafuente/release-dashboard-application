@@ -8,7 +8,7 @@
       "incident-reporter": "1.5.0",
       "incident-executive-notifications": "1.5.0"
     },
-    "generated_at": "2026-11-22T12:31:40.987131+00:00",
+    "generated_at": "2026-11-22T12:31:49.006954+00:00",
     "source_file": "CS-Informe incidencias P1,  P2 y P3 - 2026S2 - 22 Nov 2026-massive.json",
     "ingestion_delta": null,
     "audit_completeness": {
@@ -1677,7 +1677,7 @@
       "worklog_status": {
         "fecha_ultimo_worklog": "2026-11-20T20:45:47.000+00:00",
         "horas_sin_worklog": 39.8,
-        "minutos_sin_worklog": 2385,
+        "minutos_sin_worklog": 2386,
         "nivel_inactividad": "WL_BLOQUEO_24H",
         "es_inactivo_6h": true,
         "es_inactivo_12h": true,
@@ -1822,7 +1822,7 @@
       "worklog_status": {
         "fecha_ultimo_worklog": "2026-11-19T14:02:40.000+00:00",
         "horas_sin_worklog": 70.5,
-        "minutos_sin_worklog": 4228,
+        "minutos_sin_worklog": 4229,
         "nivel_inactividad": "WL_BLOQUEO_24H",
         "es_inactivo_6h": true,
         "es_inactivo_12h": true,
@@ -3115,7 +3115,7 @@
       "worklog_status": {
         "fecha_ultimo_worklog": "2026-11-20T20:33:41.000+00:00",
         "horas_sin_worklog": 40.0,
-        "minutos_sin_worklog": 2397,
+        "minutos_sin_worklog": 2398,
         "nivel_inactividad": "WL_PLANIFICADA",
         "es_inactivo_6h": false,
         "es_inactivo_12h": false,
@@ -3261,7 +3261,7 @@
       "worklog_status": {
         "fecha_ultimo_worklog": "2026-11-16T06:10:48.000+00:00",
         "horas_sin_worklog": 150.3,
-        "minutos_sin_worklog": 9020,
+        "minutos_sin_worklog": 9021,
         "nivel_inactividad": "WL_PLANIFICADA",
         "es_inactivo_6h": false,
         "es_inactivo_12h": false,
