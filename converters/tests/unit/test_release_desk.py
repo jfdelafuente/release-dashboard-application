@@ -588,15 +588,15 @@ def test_release_desk_priority_tooltip_resumen_ia():
         proc = _run_node_script(script)
         out = json.loads(proc.stdout)
         assert out["tip1"] == {
-            "title": "Impacto (Resumen IA)",
+            "title": "Impacto en Servicio y Negocio",
             "text": "Afectación a contratación en canal presencial"
         }
         assert out["tip2"] == {
-            "title": "Impacto",
+            "title": "Impacto en Servicio y Negocio",
             "text": "Incidencia con afectación masiva de servicio."
         }
         assert out["tip3"] == {
-            "title": "Impacto",
+            "title": "Impacto en Servicio y Negocio",
             "text": "Degradación parcial"
         }
         assert out["tip4"] is None

@@ -833,7 +833,7 @@
 
         var sintesis = iaData.resumenEjecutivo || iaData.resumen || iaData.sintesis || '';
         var problema = iaData.problema || '';
-        var impacto = iaData.impacto || '';
+        var impacto = iaData.impacto || iaData.impactoNegocio || iaData.impacto_negocio || '';
         var causa = iaData.causa || iaData.causaRaiz || '';
         var solucion = iaData.solucion || '';
         var siguiente = iaData.siguienteAccion || iaData.siguiente_accion || '';
@@ -848,7 +848,7 @@
 
         if (sintesis) html += '<div class="rd-ia-section"><strong>Síntesis Ejecutiva</strong>' + escapeHtml(sintesis) + '</div>';
         if (problema) html += '<div class="rd-ia-section"><strong>Problema Detectado</strong>' + escapeHtml(problema) + '</div>';
-        if (impacto) html += '<div class="rd-ia-section"><strong>Impacto</strong>' + escapeHtml(impacto) + '</div>';
+        if (impacto) html += '<div class="rd-ia-section"><strong>Impacto en Servicio y Negocio</strong>' + escapeHtml(impacto) + '</div>';
         if (causa) html += '<div class="rd-ia-section"><strong>Causa</strong>' + escapeHtml(causa) + '</div>';
         if (solucion) html += '<div class="rd-ia-section"><strong>Solución / Mitigación</strong>' + escapeHtml(solucion) + '</div>';
         if (siguiente) html += '<div class="rd-ia-section"><strong>Siguiente Acción Recomendada</strong>' + escapeHtml(siguiente) + '</div>';

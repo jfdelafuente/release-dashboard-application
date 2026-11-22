@@ -627,25 +627,25 @@
     }
 
     function getPriorityTooltip(incident, iaData, isMasiva) {
-        var iaImpacto = (iaData && !iaData._error && (iaData.impacto || iaData.impacto_justificacion))
-            ? String(iaData.impacto || iaData.impacto_justificacion).trim()
+        var iaImpacto = (iaData && !iaData._error && (iaData.impacto || iaData.impactoNegocio || iaData.impacto_negocio || iaData.impacto_justificacion))
+            ? String(iaData.impacto || iaData.impactoNegocio || iaData.impacto_negocio || iaData.impacto_justificacion).trim()
             : '';
         if (iaImpacto && iaImpacto !== '-') {
             return {
-                title: 'Impacto (Resumen IA)',
+                title: 'Impacto en Servicio y Negocio',
                 text: iaImpacto
             };
         }
         if (isMasiva) {
             return {
-                title: 'Impacto',
+                title: 'Impacto en Servicio y Negocio',
                 text: 'Incidencia con afectación masiva de servicio.'
             };
         }
         var incImpacto = incident && (incident['Impacto'] || incident['impacto']);
         if (incImpacto && typeof incImpacto === 'string' && incImpacto.trim() && incImpacto.trim() !== '-') {
             return {
-                title: 'Impacto',
+                title: 'Impacto en Servicio y Negocio',
                 text: incImpacto.trim()
             };
         }
