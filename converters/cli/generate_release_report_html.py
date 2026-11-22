@@ -1089,12 +1089,19 @@ def build_release_report_html(
             p_meta = all_projects.get(p_code, {})
             p_name = p_meta.get("summary") or ("Regresión Transversal (Erebor / PYME)" if p_code == "TRANSVERSAL" else p_code)
             p_resp = p_meta.get("responsable") or "-"
-            p_incs = list(incidents_by_project.get(p_code, []))
+            # Excluir incidencias en estado "Cerrado"
+            p_incs = [
+                i for i in incidents_by_project.get(p_code, [])
+                if "cerrad" not in (i.get("Estatus") or "").lower() and "closed" not in (i.get("Estatus") or "").lower()
+            ]
             seen_inc_ids = {i.get("ID de incidencia") for i in p_incs}
             proj_systems = b_proj.get("sistemas", [])
 
-            # Asignar incidencias sin proyecto cuyo sistema coincida con 'Sistemas Impactados' de la tabla
+            # Asignar incidencias sin proyecto cuyo sistema coincida con 'Sistemas Impactados' de la tabla (excluyendo "Cerrado")
             for u_inc in incidents_without_project:
+                u_st = (u_inc.get("Estatus") or "").lower()
+                if "cerrad" in u_st or "closed" in u_st:
+                    continue
                 u_id = u_inc.get("ID de incidencia")
                 if u_id in seen_inc_ids:
                     continue

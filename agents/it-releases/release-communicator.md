@@ -8,7 +8,7 @@ description: >-
   ejecutivo por proyecto, generando tanto el comunicado para Teams como el informe
   HTML interactivo enlazable desde Mesa de Release.
 domain: it-releases
-version: 1.4.0
+version: 1.5.0
 recommended_skills:
   - release-project-communication
 ---
@@ -36,7 +36,7 @@ recommended_skills:
 >    - Dicho informe queda disponible en `/dashboards/informes/comunicado-release-{YYYYRMM}/index.html` y es accesible desde el botón `🌐 Ver informe HTML` en la consola de Mesa de Release.
 >    - **Estructura Obligatoria de Pruebas PaP y Bloqueos en HTML:**
 >      (a) **Discriminación Explícita Progresión vs Regresión:** Banner comparativo con tarjetas diferenciadas para **Progresión por Proyectos (`PRJ-*`)** y **Regresión Transversal E2E (Sistemas Core)** con sus métricas de total, pasadas (%), bloqueadas (%), en curso y pendientes.
->      (b) **Tabla de Resumen Agregado de Bloqueos:** Ranking consolidado con columna de tipología (`PROGRESIÓN` / `REGRESIÓN`), iniciativa, % de bloqueo relativo, pasadas/pendientes, sistemas impactados, responsable y badges de incidencias Remedy enlazadas (incluyendo tanto las asignadas explícitamente a la iniciativa como las incidencias sin proyecto cuyo producto o sistema coincida con la columna *Sistemas Impactados* de la iniciativa). (Nota: Se descartan desgloses de bajo nivel por plan individual para preservar la concisión ejecutiva).
+>      (b) **Tabla de Resumen Agregado de Bloqueos:** Ranking consolidado con columna de tipología (`PROGRESIÓN` / `REGRESIÓN`), iniciativa, % de bloqueo relativo, pasadas/pendientes, sistemas impactados, responsable y badges de incidencias Remedy enlazadas (incluyendo tanto las asignadas explícitamente a la iniciativa como las incidencias sin proyecto cuyo producto o sistema coincida con la columna *Sistemas Impactados* de la iniciativa, excluyendo en todos los casos las incidencias en estado «Cerrado»). (Nota: Se descartan desgloses de bajo nivel por plan individual para preservar la concisión ejecutiva).
 
 ---
 
