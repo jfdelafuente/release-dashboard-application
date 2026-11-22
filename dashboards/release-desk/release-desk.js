@@ -230,9 +230,10 @@
             }
         }
         (files || []).forEach(function (f) {
-            if (f && f.release_name && !seen.has(f.release_name)) {
-                seen.add(f.release_name);
-                ordered.unshift(f.release_name);
+            var cleanName = (f && f.release_name ? String(f.release_name).trim() : '');
+            if (cleanName && !seen.has(cleanName)) {
+                seen.add(cleanName);
+                ordered.unshift(cleanName);
             }
         });
         return ordered;
@@ -891,7 +892,11 @@
             }
             populateReleaseSelect(allReleases, state.currentRelease);
 
-            var matching = files.find(function (f) { return f.release_name === state.currentRelease; });
+            var matching = files.find(function (f) {
+                var fRel = f && f.release_name ? String(f.release_name).trim() : '';
+                var curRel = state.currentRelease ? String(state.currentRelease).trim() : '';
+                return fRel === curRel;
+            });
             if (!matching) {
                 state.activeIncidents = [];
                 state.filteredIncidents = [];

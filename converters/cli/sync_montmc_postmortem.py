@@ -263,6 +263,8 @@ def sync_postmortem_release(
     """
     start_time = time.time()
     root = Path(project_root) if project_root else PROJECT_ROOT
+    if isinstance(release_name, str):
+        release_name = release_name.strip() or None
     api_client = client or MonTMCClient(default_user=usuario)
     active_user = usuario or api_client.default_user
 
