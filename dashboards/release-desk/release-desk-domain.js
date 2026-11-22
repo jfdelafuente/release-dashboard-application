@@ -592,6 +592,40 @@
         return null;
     }
 
+    function isMassiveIncident(inc, massiveIds) {
+        if (!inc || typeof inc !== 'object') return false;
+        if (inc.masiva === true || inc.esMasiva === true) return true;
+        var m = inc.masiva !== undefined ? inc.masiva : (inc.esMasiva !== undefined ? inc.esMasiva : (inc['Es Masiva'] !== undefined ? inc['Es Masiva'] : inc['Masiva']));
+        if (typeof m === 'string') {
+            var ms = m.trim().toLowerCase();
+            if (ms === 's' || ms === 'si' || ms === 'sí' || ms === 'true' || ms === 'masiva' || ms === '1') return true;
+        }
+        if (m === 1) return true;
+        var impacto = inc['Impacto'] || inc['impacto'];
+        if (typeof impacto === 'string' && impacto.trim().toLowerCase() === 'masiva') return true;
+        var id = inc['ID de incidencia'] || inc['id'] || inc['idRemedy'];
+        if (id && massiveIds) {
+            var cleanId = String(id).trim();
+            if (typeof massiveIds.has === 'function' && massiveIds.has(cleanId)) return true;
+            if (Array.isArray(massiveIds) && massiveIds.indexOf(cleanId) !== -1) return true;
+        }
+        return false;
+    }
+
+    function getPriorityBadgeClass(prio, urg, isMasiva) {
+        var p = String(prio || urg || '').toLowerCase();
+        if (p.includes('p1') || p.includes('crít') || p.includes('crit')) {
+            return isMasiva ? 'rd-badge-critica rd-badge-masiva' : 'rd-badge-critica';
+        }
+        if (p.includes('p2') || p.includes('alt')) {
+            return isMasiva ? 'rd-badge-alta rd-badge-masiva' : 'rd-badge-alta';
+        }
+        if (isMasiva) {
+            return 'rd-badge-masiva';
+        }
+        return 'rd-badge-media';
+    }
+
     var api = {
         escapeHtml: escapeHtml,
         isClosedStatus: isClosedStatus,
@@ -610,7 +644,9 @@
         getFechaPrevistaStatus: getFechaPrevistaStatus,
         getDespliegueBadgeClass: getDespliegueBadgeClass,
         groupIncidentsByProject: groupIncidentsByProject,
-        getSyncChangeBadge: getSyncChangeBadge
+        getSyncChangeBadge: getSyncChangeBadge,
+        isMassiveIncident: isMassiveIncident,
+        getPriorityBadgeClass: getPriorityBadgeClass
     };
     global.ReleaseDeskDomain = api;
     if (typeof module !== 'undefined' && module.exports) {

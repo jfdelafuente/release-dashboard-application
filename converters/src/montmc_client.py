@@ -325,6 +325,12 @@ class MonTMCClient:
         if record.get("producto"):
             normalized["producto"] = record["producto"]
 
+        masiva_val = record.get("masiva") if record.get("masiva") is not None else record.get("esMasiva")
+        if masiva_val is None and record.get("Impacto") and str(record.get("Impacto")).strip().lower() == "masiva":
+            masiva_val = True
+        if masiva_val is not None:
+            normalized["masiva"] = bool(masiva_val)
+
         return normalized
 
     def normalize_mon_tmc_postmortem_record(self, record: Dict[str, Any]) -> Dict[str, Any]:
@@ -382,5 +388,11 @@ class MonTMCClient:
             normalized["detalleSolucion"] = solucion
         if record.get("producto"):
             normalized["producto"] = record["producto"]
+
+        masiva_val = record.get("masiva") if record.get("masiva") is not None else record.get("esMasiva")
+        if masiva_val is None and record.get("Impacto") and str(record.get("Impacto")).strip().lower() == "masiva":
+            masiva_val = True
+        if masiva_val is not None:
+            normalized["masiva"] = bool(masiva_val)
 
         return normalized

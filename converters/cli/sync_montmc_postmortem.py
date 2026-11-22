@@ -378,6 +378,7 @@ def sync_postmortem_release(
         "detalleSolucion",
         "fechaUltimaModificacion",
         "fechaPrevista",
+        "masiva",
     )
 
     seen_api_ids: set[str] = set()
@@ -390,6 +391,8 @@ def sync_postmortem_release(
 
         if inc_id in records_by_id:
             old_rec = records_by_id[inc_id]
+            if "masiva" in old_rec and "masiva" not in norm_rec:
+                norm_rec["masiva"] = old_rec["masiva"]
             has_changes = any(norm_rec.get(k) != old_rec.get(k) for k in compare_fields)
             if has_changes:
                 if norm_rec.get("Estatus") != old_rec.get("Estatus"):

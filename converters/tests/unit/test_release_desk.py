@@ -509,6 +509,63 @@ def test_release_desk_js_get_sync_change_badge():
         assert "getSyncChangeBadge" in js
 
 
+def test_release_desk_massive_incident_badge():
+    if shutil.which("node") is not None:
+        script = (
+            f"const rd = require({json.dumps(str(RELEASE_DESK_JS))});\n"
+            "console.log(JSON.stringify({\n"
+            "  p1_normal: rd.getPriorityBadgeClass('P1', 'Crítica', false),\n"
+            "  p1_masiva: rd.getPriorityBadgeClass('P1', 'Crítica', true),\n"
+            "  p2_normal: rd.getPriorityBadgeClass('P2', 'Alta', false),\n"
+            "  p2_masiva: rd.getPriorityBadgeClass('P2', 'Alta', true),\n"
+            "  p3_normal: rd.getPriorityBadgeClass('P3', 'Medio', false),\n"
+            "  p3_masiva: rd.getPriorityBadgeClass('P3', 'Medio', true)\n"
+            "}));\n"
+        )
+        proc = _run_node_script(script)
+        out = json.loads(proc.stdout)
+        assert out == {
+            "p1_normal": "rd-badge-critica",
+            "p1_masiva": "rd-badge-critica rd-badge-masiva",
+            "p2_normal": "rd-badge-alta",
+            "p2_masiva": "rd-badge-alta rd-badge-masiva",
+            "p3_normal": "rd-badge-media",
+            "p3_masiva": "rd-badge-masiva",
+        }
+    else:
+        js = RELEASE_DESK_JS.read_text(encoding="utf-8")
+        assert "rd-badge-masiva" in js
+
+
+def test_release_desk_is_massive_incident():
+    if shutil.which("node") is not None:
+        script = (
+            f"const rd = require({json.dumps(str(RELEASE_DESK_JS))});\n"
+            "const inc1 = { 'ID de incidencia': 'INC1', masiva: true };\n"
+            "const inc2 = { 'ID de incidencia': 'INC2', 'Impacto': 'Masiva' };\n"
+            "const inc3 = { 'ID de incidencia': 'INC3', 'Prioridad': 'P3' };\n"
+            "const massiveIds = new Set(['INC3']);\n"
+            "const inc4 = { 'ID de incidencia': 'INC4', 'Prioridad': 'P3' };\n"
+            "console.log(JSON.stringify({\n"
+            "  m1: rd.isMassiveIncident(inc1),\n"
+            "  m2: rd.isMassiveIncident(inc2),\n"
+            "  m3: rd.isMassiveIncident(inc3, massiveIds),\n"
+            "  m4: rd.isMassiveIncident(inc4, massiveIds)\n"
+            "}));\n"
+        )
+        proc = _run_node_script(script)
+        out = json.loads(proc.stdout)
+        assert out == {
+            "m1": True,
+            "m2": True,
+            "m3": True,
+            "m4": False,
+        }
+    else:
+        js = RELEASE_DESK_JS.read_text(encoding="utf-8")
+        assert "isMassiveIncident" in js
+
+
 def test_bump_asset_versions_updates_both_consoles(tmp_path):
     from converters.cli.bump_asset_versions import bump_html_content
 

@@ -29,6 +29,8 @@
     var getDespliegueBadgeClass = Domain.getDespliegueBadgeClass;
     var groupIncidentsByProject = Domain.groupIncidentsByProject;
     var getSyncChangeBadge = Domain.getSyncChangeBadge;
+    var isMassiveIncident = Domain.isMassiveIncident;
+    var getPriorityBadgeClassDomain = Domain.getPriorityBadgeClass;
     var state = {
         currentRelease: null,
         postmortemFiles: [],
@@ -37,6 +39,7 @@
         selectedId: null,
         iaCache: new Map(),
         iaInFlight: new Set(),
+        massiveIds: new Set(),
         metadata: {},
         projectsCatalog: {},
         overrides: {},
@@ -197,11 +200,14 @@
         return 'rd-badge-asignado';
     }
 
-    function getPriorityBadgeClass(prio, urg) {
+    function getPriorityBadgeClass(prio, urg, isMasiva) {
+        if (typeof getPriorityBadgeClassDomain === 'function') {
+            return getPriorityBadgeClassDomain(prio, urg, isMasiva);
+        }
         var p = String(prio || urg || '').toLowerCase();
-        if (p.includes('p1') || p.includes('crít') || p.includes('crit')) return 'rd-badge-critica';
-        if (p.includes('p2') || p.includes('alt')) return 'rd-badge-alta';
-        return 'rd-badge-media';
+        if (p.includes('p1') || p.includes('crít') || p.includes('crit')) return isMasiva ? 'rd-badge-critica rd-badge-masiva' : 'rd-badge-critica';
+        if (p.includes('p2') || p.includes('alt')) return isMasiva ? 'rd-badge-alta rd-badge-masiva' : 'rd-badge-alta';
+        return isMasiva ? 'rd-badge-masiva' : 'rd-badge-media';
     }
 
     function getUrlReleaseParam() {
@@ -254,6 +260,7 @@
         var groupSet = new Set();
         var prioSet = new Set();
         var projectSet = new Set();
+        var hasMasiva = false;
 
         state.activeIncidents.forEach(function (inc) {
             if (inc['Estatus']) statusSet.add(inc['Estatus']);
@@ -265,6 +272,7 @@
             if (sys) groupSet.add(sys);
             if (inc['Prioridad']) prioSet.add(inc['Prioridad']);
             if (inc['Urgencia']) prioSet.add(inc['Urgencia']);
+            if (isMassiveIncident && isMassiveIncident(inc, state.massiveIds)) hasMasiva = true;
             var projCode = extractProjectCode(inc);
             if (projCode) projectSet.add(projCode);
         });
@@ -287,10 +295,14 @@
                 }).join('');
         }
         if (prioSel) {
+            var prioOptions = Array.from(prioSet).sort().map(function (p) {
+                return '<option value="' + escapeHtml(p) + '">' + escapeHtml(p) + '</option>';
+            });
+            if (hasMasiva) {
+                prioOptions.unshift('<option value="Masiva">⚡ Masivas</option>');
+            }
             prioSel.innerHTML = '<option value="">Todas las prioridades</option>' +
-                Array.from(prioSet).sort().map(function (p) {
-                    return '<option value="' + escapeHtml(p) + '">' + escapeHtml(p) + '</option>';
-                }).join('');
+                prioOptions.join('');
         }
         if (projectSel) {
             projectSel.innerHTML = '<option value="">Todos los proyectos</option>' +
@@ -368,9 +380,13 @@
                 if (incSys !== group && inc['Grupo asignado'] !== group && inc['Grupo Resolutor'] !== group) return false;
             }
             if (prio) {
-                var incPrio = (inc['Prioridad'] && String(inc['Prioridad']).trim()) || '';
-                var incUrg = (inc['Urgencia'] && String(inc['Urgencia']).trim()) || '';
-                if (incPrio !== prio && incUrg !== prio) return false;
+                if (prio === 'Masiva') {
+                    if (!isMassiveIncident || !isMassiveIncident(inc, state.massiveIds)) return false;
+                } else {
+                    var incPrio = (inc['Prioridad'] && String(inc['Prioridad']).trim()) || '';
+                    var incUrg = (inc['Urgencia'] && String(inc['Urgencia']).trim()) || '';
+                    if (incPrio !== prio && incUrg !== prio) return false;
+                }
             }
             var proj = resolveProjectInfo(inc, state.projectsCatalog, state.currentRelease);
             if (project && (!proj || proj.code !== project)) return false;
@@ -554,7 +570,9 @@
             } else {
                 prioBadgeHtml = escapeHtml(prioVal || urgVal || '-');
             }
-            var prioBadgeClass = getPriorityBadgeClass(inc['Prioridad'], inc['Urgencia']);
+            var isMasiva = isMassiveIncident ? isMassiveIncident(inc, state.massiveIds) : false;
+            var prioBadgeClass = getPriorityBadgeClass(inc['Prioridad'], inc['Urgencia'], isMasiva);
+            var masivaTitleAttr = isMasiva ? ' title="Incidencia masiva"' : '';
             var statusBadgeClass = getStatusBadgeClass(inc['Estatus']);
             var sistema = (inc['Grupo asignado'] && String(inc['Grupo asignado']).trim()) ||
                           (inc['Grupo Resolutor'] && String(inc['Grupo Resolutor']).trim()) ||
@@ -595,8 +613,8 @@
 
             var rowClasses = [];
             if (isSelected) rowClasses.push('is-selected');
-            if (prioBadgeClass === 'rd-badge-critica') rowClasses.push('rd-row-critica');
-            else if (prioBadgeClass === 'rd-badge-alta') rowClasses.push('rd-row-alta');
+            if (prioBadgeClass.indexOf('rd-badge-critica') !== -1) rowClasses.push('rd-row-critica');
+            else if (prioBadgeClass.indexOf('rd-badge-alta') !== -1 || prioBadgeClass.indexOf('rd-badge-masiva') !== -1) rowClasses.push('rd-row-alta');
             if (isResolved) rowClasses.push('rd-row-resuelto');
             var rowClassAttr = rowClasses.length ? ' class="' + rowClasses.join(' ') + '"' : '';
 
@@ -681,7 +699,7 @@
                 '<td style="white-space:nowrap;"><span class="rd-badge rd-badge-code">' + (isSelected ? '▾ ' : '▸ ') + codeLinkHtml + '</span>' + syncBadgeHtml + '</td>' +
                 '<td style="font-size:11.5px; min-width:78px;">' + escapeHtml(fechaApertura) + agingHtml + '</td>' +
                 '<td style="min-width:200px; max-width:340px;"' + descTooltipAttr + '>' + descCellHtml + '</td>' +
-                '<td style="white-space:nowrap;"><span class="rd-badge ' + prioBadgeClass + '">' + prioBadgeHtml + '</span></td>' +
+                '<td style="white-space:nowrap;"><span class="rd-badge ' + prioBadgeClass + '"' + masivaTitleAttr + '>' + prioBadgeHtml + '</span></td>' +
                 '<td style="max-width:120px;">' + sistemaCell + '</td>' +
                 '<td style="white-space:nowrap;">' + jiraCell + '</td>' +
                 '<td style="min-width:120px; max-width:190px;"' + projTooltipAttr + '>' + proyectoCell + '</td>' +
@@ -950,6 +968,36 @@
             var idxData = idxResp.ok ? await idxResp.json() : {};
             var files = (idxData.postmortem && idxData.postmortem.files) || [];
             state.postmortemFiles = files;
+
+            state.massiveIds = new Set();
+            if (idxData.massive && Array.isArray(idxData.massive.files)) {
+                for (var mi = 0; mi < idxData.massive.files.length; mi++) {
+                    var mFile = idxData.massive.files[mi];
+                    var mPath = mFile.path || ('/data/output/' + mFile.name);
+                    if (mPath.indexOf('/infocodes/var/storage/release-dashboard/') !== -1) {
+                        mPath = mPath.replace('/infocodes/var/storage/release-dashboard/', '/data/');
+                    }
+                    var mDataMarker = mPath.indexOf('data/');
+                    if (mDataMarker !== -1) {
+                        mPath = '/' + mPath.substring(mDataMarker);
+                    } else if (!mPath.startsWith('http') && !mPath.startsWith('/')) {
+                        mPath = '/' + mPath;
+                    }
+                    try {
+                        var mResp = await fetch(mPath + '?t=' + Date.now());
+                        if (mResp.ok) {
+                            var mJson = await mResp.json();
+                            var mRecs = Array.isArray(mJson) ? mJson : (mJson.data || []);
+                            mRecs.forEach(function (mRec) {
+                                var mid = mRec['ID de incidencia'] || mRec['id'] || mRec['idRemedy'];
+                                if (mid) state.massiveIds.add(String(mid).trim());
+                            });
+                        }
+                    } catch (mErr) {
+                        console.warn('No se pudo cargar fichero masivo para verificación de tickets:', mPath, mErr);
+                    }
+                }
+            }
 
             var allReleases = collectAvailableReleases(files);
             if (!state.currentRelease && allReleases.length > 0) {
