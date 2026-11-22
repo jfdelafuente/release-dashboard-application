@@ -29,7 +29,7 @@
             return prjField.toUpperCase();
         }
         var raw = prjField + ' ' + String(incident['Descripción'] || '');
-        var match = raw.match(/\b((?:PRJ|AB2CJ)-\d+)\b/i);
+        var match = raw.match(/\b((?:PRJ|AB2CJ|OCA)-\d+)\b/i);
         return match ? match[1].toUpperCase() : null;
     }
 

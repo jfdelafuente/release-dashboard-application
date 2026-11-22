@@ -528,6 +528,16 @@
         "responsable": "",
         "metodologia": "Fast Track",
         "decision": "GO"
+      },
+      "OCA-418": {
+        "jira": "OCA-418",
+        "summary": "Modificar las cuotas de Argo cuando hay hotline, impacta en BSCS exclusivamente.",
+        "despliegue": "Completo",
+        "descripcion": "",
+        "pruebas": "Si",
+        "responsable": "",
+        "metodologia": "OCA",
+        "decision": "GO"
       }
     }
   },
@@ -1069,7 +1079,17 @@
         "2026R11"
       ],
       "metodologia": "Fast Track"
+    },
+    "OCA-418": {
+      "jira": "OCA-418",
+      "summary": "Modificar las cuotas de Argo cuando hay hotline, impacta en BSCS exclusivamente.",
+      "despliegue": "Completo",
+      "descripcion": "",
+      "releases": [
+        "2026R11"
+      ],
+      "metodologia": "OCA"
     }
   },
-  "updated": "2026-11-22T12:30:24.215327"
+  "updated": "2026-11-22T12:32:53.328615"
 }
