@@ -27,6 +27,7 @@ y este proyecto se adhiere a [Semantic Versioning](https://semver.org/lang/es/).
   - Barra inferior simplificada: 4 acciones esenciales y no redundantes (`Copiar briefing`, `Briefing por Sistema`, `Informe Ejecutivo PaP`, `Exportar tabla`).
 - **Diseño visual y ergonomía**:
   - Ajuste del fondo de página de la **Mesa de Release** (`--bg-page: #EBE8E2`) y del **Informe Ejecutivo PaP** (`--mo-bg: #EBE8E2`) a un tono sutilmente más oscuro, cálido y equilibrado, mejorando la elevación y el contraste de las tarjetas blancas (`#FFFFFF`), reduciendo la fatiga visual y unificando la identidad estética entre ambas vistas.
+  - **Separación visual de bloques de incidencia en la tabla**: Cada fila de incidencia se presenta ahora como un bloque/tarjeta independiente elevado sobre el fondo cálido (`#EBE8E2`), con separación vertical de 5px, bordes de contorno sutiles, acolchado ampliado (`9px 8px`) y acento de criticidad lateral continuo, eliminando la sensación de bloque monolítico pegado y facilitando la lectura individualizada.
 - **Persistencia de fechas de compromiso acordadas en la Mesa**:
   - Edición en caliente del campo `fecha_prevista` en el seguimiento operativo de Mesa de Release con sincronización local y en servidor.
   - Indicador visual `(Acordada Mesa)` tanto en la consola interactiva como en las tarjetas ejecutivas de proyecto del informe HTML.

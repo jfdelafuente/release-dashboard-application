@@ -287,6 +287,9 @@ body {
     overflow-x: auto;
     max-height: 80vh;
     overflow-y: auto;
+    background: var(--bg-page);
+    padding: 2px;
+    border-radius: 8px;
 }
 table.rd-table {
     width: 100%;
@@ -299,14 +302,14 @@ table.rd-table th {
     top: 0;
     background: #FFF4E8;
     text-align: left;
-    padding: 8px 7px;
+    padding: 9px 8px;
     border-bottom: 2px solid #FDBA74;
     font-size: 10.5px;
     text-transform: uppercase;
     letter-spacing: 0.03em;
     color: #7C2D12;
     line-height: 1.25;
-    z-index: 1;
+    z-index: 2;
 }
 table.rd-table th.rd-sortable {
     cursor: pointer;
@@ -326,8 +329,7 @@ table.rd-table th.rd-sortable.is-sorted .rd-sort-ind {
     color: var(--accent-dark);
 }
 table.rd-table td {
-    padding: 7px 7px;
-    border-bottom: 1px solid #F0ECE5;
+    padding: 9px 8px;
     vertical-align: top;
     overflow-wrap: anywhere;
 }
@@ -341,23 +343,33 @@ table.rd-table tbody tr {
     cursor: pointer;
     transition: background 0.1s ease;
 }
-table.rd-table tbody tr[data-inc-id]:nth-child(even) {
-    background: #FCFAF7;
+/* Cada bloque de incidencia como una tarjeta/fila separada con fondo y separación */
+table.rd-table tbody tr[data-inc-id] td {
+    background: #FFFFFF;
+    border-bottom: 5px solid var(--bg-page);
+    box-shadow: inset 0 1px 0 #EBE5DC;
 }
-table.rd-table tbody tr:hover {
+table.rd-table tbody tr[data-inc-id] td:first-child {
+    border-left: 1px solid #EBE5DC;
+}
+table.rd-table tbody tr[data-inc-id] td:last-child {
+    border-right: 1px solid #EBE5DC;
+}
+table.rd-table tbody tr[data-inc-id]:hover td {
     background: #FFF8F2;
 }
-table.rd-table tbody tr.is-selected {
+table.rd-table tbody tr[data-inc-id].is-selected td {
     background: #FFF1E5;
+    border-bottom: none;
 }
 table.rd-table tbody tr.rd-row-critica td:first-child {
-    box-shadow: inset 3px 0 0 #DC2626;
+    border-left: 4px solid #DC2626 !important;
 }
 table.rd-table tbody tr.rd-row-alta td:first-child {
-    box-shadow: inset 3px 0 0 #EA580C;
+    border-left: 4px solid #EA580C !important;
 }
 table.rd-table tbody tr.rd-row-resuelto td:first-child {
-    box-shadow: inset 3px 0 0 #16A34A;
+    border-left: 4px solid #16A34A !important;
 }
 table.rd-table tbody tr.rd-detail-row {
     background: #FAF8F5;
@@ -367,8 +379,11 @@ table.rd-table tbody tr.rd-detail-row:hover {
     background: #FAF8F5;
 }
 table.rd-table tbody tr.rd-detail-row > td {
-    padding: 12px 14px;
-    border-bottom: 2px solid var(--accent);
+    padding: 10px 14px 14px;
+    background: #FAF8F5;
+    border-bottom: 5px solid var(--bg-page);
+    border-left: 1px solid #EBE5DC;
+    border-right: 1px solid #EBE5DC;
 }
 .rd-detail-inline-card {
     background: var(--bg-card);
