@@ -264,7 +264,7 @@
                       (inc['producto'] && String(inc['producto']).trim());
             if (sys) groupSet.add(sys);
             if (inc['Prioridad']) prioSet.add(inc['Prioridad']);
-            else if (inc['Urgencia']) prioSet.add(inc['Urgencia']);
+            if (inc['Urgencia']) prioSet.add(inc['Urgencia']);
             var projCode = extractProjectCode(inc);
             if (projCode) projectSet.add(projCode);
         });
@@ -368,8 +368,9 @@
                 if (incSys !== group && inc['Grupo asignado'] !== group && inc['Grupo Resolutor'] !== group) return false;
             }
             if (prio) {
-                var incPrio = inc['Prioridad'] || inc['Urgencia'] || '';
-                if (incPrio !== prio) return false;
+                var incPrio = (inc['Prioridad'] && String(inc['Prioridad']).trim()) || '';
+                var incUrg = (inc['Urgencia'] && String(inc['Urgencia']).trim()) || '';
+                if (incPrio !== prio && incUrg !== prio) return false;
             }
             var proj = resolveProjectInfo(inc, state.projectsCatalog, state.currentRelease);
             if (project && (!proj || proj.code !== project)) return false;
@@ -474,7 +475,12 @@
             var incButtons = g.incidents.map(function (inc) {
                 var incId = inc['ID de incidencia'] || '-';
                 var st = inc['Estatus'] || '';
-                return '<button type="button" class="rd-project-inc-btn" data-open-inc="' + escapeHtml(incId) + '" title="' + escapeHtml((inc['Prioridad'] || inc['Urgencia'] || '') + ' · ' + st) + '">' + escapeHtml(incId) + '</button>';
+                var pVal = (inc['Prioridad'] && String(inc['Prioridad']).trim()) || '';
+                var uVal = (inc['Urgencia'] && String(inc['Urgencia']).trim()) || '';
+                var pLabel = (pVal && uVal && pVal.toLowerCase() !== uVal.toLowerCase())
+                    ? (pVal + ' / ' + uVal)
+                    : (pVal || uVal || '');
+                return '<button type="button" class="rd-project-inc-btn" data-open-inc="' + escapeHtml(incId) + '" title="' + escapeHtml((pLabel ? pLabel + ' · ' : '') + st) + '">' + escapeHtml(incId) + '</button>';
             }).join('');
 
             var filterAction = g.hasProject
@@ -540,7 +546,14 @@
                 (producto ? '<span class="rd-badge rd-badge-sistema" style="margin-right:4px;">' + escapeHtml(producto) + '</span>' : '') +
                 escapeHtml(descOriginal) +
                 '</div>';
-            var prioridadUrg = inc['Prioridad'] || inc['Urgencia'] || '-';
+            var prioVal = (inc['Prioridad'] && String(inc['Prioridad']).trim()) || '';
+            var urgVal = (inc['Urgencia'] && String(inc['Urgencia']).trim()) || '';
+            var prioBadgeHtml = '';
+            if (prioVal && urgVal && prioVal.toLowerCase() !== urgVal.toLowerCase()) {
+                prioBadgeHtml = escapeHtml(prioVal) + '<span class="rd-badge-sep">/</span><span class="rd-badge-urg">' + escapeHtml(urgVal) + '</span>';
+            } else {
+                prioBadgeHtml = escapeHtml(prioVal || urgVal || '-');
+            }
             var prioBadgeClass = getPriorityBadgeClass(inc['Prioridad'], inc['Urgencia']);
             var statusBadgeClass = getStatusBadgeClass(inc['Estatus']);
             var sistema = (inc['Grupo asignado'] && String(inc['Grupo asignado']).trim()) ||
@@ -668,7 +681,7 @@
                 '<td style="white-space:nowrap;"><span class="rd-badge rd-badge-code">' + (isSelected ? '▾ ' : '▸ ') + codeLinkHtml + '</span>' + syncBadgeHtml + '</td>' +
                 '<td style="font-size:11.5px; min-width:78px;">' + escapeHtml(fechaApertura) + agingHtml + '</td>' +
                 '<td style="min-width:200px; max-width:340px;"' + descTooltipAttr + '>' + descCellHtml + '</td>' +
-                '<td style="white-space:nowrap;"><span class="rd-badge ' + prioBadgeClass + '">' + escapeHtml(prioridadUrg) + '</span></td>' +
+                '<td style="white-space:nowrap;"><span class="rd-badge ' + prioBadgeClass + '">' + prioBadgeHtml + '</span></td>' +
                 '<td style="max-width:120px;">' + sistemaCell + '</td>' +
                 '<td style="white-space:nowrap;">' + jiraCell + '</td>' +
                 '<td style="min-width:120px; max-width:190px;"' + projTooltipAttr + '>' + proyectoCell + '</td>' +

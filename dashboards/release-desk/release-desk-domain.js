@@ -198,7 +198,11 @@
             var descBase = (iaData && !iaData._error && iaData.problema) ? iaData.problema : (inc['Descripción'] || '-');
             var producto = inc['producto'] ? String(inc['producto']).trim() : '';
             var descProblema = producto ? ('[' + producto + '] ' + descBase) : descBase;
-            var prioridadUrg = inc['Prioridad'] || inc['Urgencia'] || '-';
+            var prioVal = (inc['Prioridad'] && String(inc['Prioridad']).trim()) || '';
+            var urgVal = (inc['Urgencia'] && String(inc['Urgencia']).trim()) || '';
+            var prioridadUrg = (prioVal && urgVal && prioVal.toLowerCase() !== urgVal.toLowerCase())
+                ? (prioVal + ' / ' + urgVal)
+                : (prioVal || urgVal || '-');
             var sistema = (inc['Grupo asignado'] && String(inc['Grupo asignado']).trim()) ||
                           (inc['Grupo Resolutor'] && String(inc['Grupo Resolutor']).trim()) ||
                           (inc['Sistema'] && String(inc['Sistema']).trim()) ||

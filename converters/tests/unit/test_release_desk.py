@@ -283,6 +283,14 @@ def test_release_desk_js_build_export_csv():
             "    'Estatus': 'En Curso',\n"
             "    'Grupo Remitente': 'N1 Soporte',\n"
             "    'Motivo de estado': ''\n"
+            "  },\n"
+            "  {\n"
+            "    'ID de incidencia': 'INC000002',\n"
+            "    'Fecha de envío': '2026-11-11 10:00',\n"
+            "    'Descripción': 'Otro problema',\n"
+            "    'Prioridad': 'P3',\n"
+            "    'Urgencia': 'Medio',\n"
+            "    'Estatus': 'Asignado'\n"
             "  }\n"
             "];\n"
             "const iaCache = new Map([['INC000001', { problema: 'Resumen IA problema', siguienteAccion: 'Reiniciar servicio' }]]);\n"
@@ -293,9 +301,10 @@ def test_release_desk_js_build_export_csv():
         proc = _run_node_script(script)
         out = json.loads(proc.stdout)
         assert out["hasBom"] is True
-        assert len(out["lines"]) == 2
+        assert len(out["lines"]) == 3
         assert out["lines"][0].startswith('"Código Incidencia";"Fecha Apertura";"Descripción problema"')
         assert '"INC000001";"2026-11-10 09:00";"[AURORA] Resumen IA problema";"Alta";"PORTAL";"JIRA-123";"-";"Reiniciar servicio";"En Curso";"2026-11-25";"-";"N1 Soporte"' == out["lines"][1]
+        assert '"INC000002";"2026-11-11 10:00";"Otro problema";"P3 / Medio";"-";"";"-";"-";"Asignado";"";"-";"-"' == out["lines"][2]
     else:
         js = RELEASE_DESK_JS.read_text(encoding="utf-8")
         assert "buildExportCsv" in js
