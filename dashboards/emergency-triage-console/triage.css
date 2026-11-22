@@ -6,14 +6,14 @@
 
 :root {
   /* Tokens Oficiales del Portal Orange */
-  --triage-bg: #F5F3F0;               /* Fondo cálido unificado del portal */
+  --triage-bg: #EBE8E2;               /* Fondo cálido unificado del portal */
   --triage-surface: #FFFFFF;          /* Superficie blanca limpia */
   --triage-surface-subtle: #FBF9F7;   /* Superficie interior secundaria */
   --triage-surface-elevated: #FFFFFF;
   --triage-surface-hover: #FFF4E8;
 
-  --triage-border: #DEDAD3;           /* Borde neutro del portal */
-  --triage-border-light: #EAE6DF;
+  --triage-border: #D5CEC2;           /* Borde neutro del portal */
+  --triage-border-light: #E2DDD5;
   --triage-border-strong: #0C0B09;
 
   --triage-text-main: #0C0B09;        /* Texto principal alta legibilidad */
@@ -805,7 +805,8 @@ body {
 }
 
 .triage-table-wrapper {
-  background: var(--triage-surface);
+  background: var(--triage-bg);
+  padding: 2px;
   border: 1px solid var(--triage-border);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-card);
@@ -841,33 +842,80 @@ body {
   transition: background-color 0.15s ease;
 }
 
+/* Cada bloque de incidencia como una tarjeta/fila separada con fondo y separación */
 .triage-row-main td {
-  padding: 13px 14px;
+  padding: 12px 14px;
   vertical-align: middle;
-  border-bottom: 1px solid var(--triage-border-light);
   background: var(--triage-surface);
+  border-bottom: 5px solid var(--triage-bg);
+  box-shadow: inset 0 1px 0 #EBE5DC;
 }
 
-.triage-row-main:hover td {
-  background-color: #FFF9F2;
+.triage-row-main td:first-child {
+  border-left: 1px solid #EBE5DC;
 }
 
+.triage-row-main td:last-child {
+  border-right: 1px solid #EBE5DC;
+}
+
+/* Foco y hover oscurecidos */
+.triage-row-main:hover td,
+.triage-row-main:focus td,
+.triage-row-main:focus-within td {
+  background-color: #EDE6DB;
+  box-shadow: inset 0 1px 0 #DDD5C7;
+}
+
+.triage-row-main:hover td:first-child,
+.triage-row-main:focus td:first-child,
+.triage-row-main:focus-within td:first-child {
+  border-left-color: #DDD5C7;
+}
+
+.triage-row-main:hover td:last-child,
+.triage-row-main:focus td:last-child,
+.triage-row-main:focus-within td:last-child {
+  border-right-color: #DDD5C7;
+}
+
+.triage-row-main:focus-visible {
+  outline: 2px solid var(--triage-orange);
+  outline-offset: -2px;
+}
+
+/* Fila de incidencia desplegada oscurecida */
 .triage-row-main.is-expanded td {
-  background-color: #FFF4E8;
-  border-bottom-color: transparent;
+  background-color: #E5D5C0;
+  box-shadow: inset 0 1px 0 #D5C2AA;
+  border-bottom: none;
+}
+
+.triage-row-main.is-expanded td:first-child {
+  border-left-color: #D5C2AA;
+}
+
+.triage-row-main.is-expanded td:last-child {
+  border-right-color: #D5C2AA;
+}
+
+.triage-row-main.is-expanded:hover td,
+.triage-row-main.is-expanded:focus td,
+.triage-row-main.is-expanded:focus-within td {
+  background-color: #DECBB6;
 }
 
 /* Bordes identificadores a la izquierda */
 .triage-row-main.is-discrepancy-delta2 td:first-child {
-  border-left: 4px solid var(--triage-red-p1);
+  border-left: 4px solid var(--triage-red-p1) !important;
 }
 
 .triage-row-main.is-discrepancy-delta1 td:first-child {
-  border-left: 4px solid var(--triage-amber-p2);
+  border-left: 4px solid var(--triage-amber-p2) !important;
 }
 
 .triage-row-main.is-correct td:first-child {
-  border-left: 4px solid var(--triage-green-ok);
+  border-left: 4px solid var(--triage-green-ok) !important;
 }
 
 /* Botón interactivo chevron */
@@ -1401,7 +1449,7 @@ body {
   transform: translateY(-1px);
 }
 
-/* Fila Plegable / Desplegable de Detalle */
+/* Fila Plegable / Desplegable de Detalle coordinada en tono oscuro cálido */
 .triage-row-detail {
   display: none;
 }
@@ -1412,8 +1460,10 @@ body {
 
 .triage-row-detail td {
   padding: 0;
-  background: #FAF9F7;
-  border-bottom: 2px solid var(--triage-border);
+  background: #EDE6DC;
+  border-bottom: 5px solid var(--triage-bg);
+  border-left: 1px solid #D5CEC2;
+  border-right: 1px solid #D5CEC2;
 }
 
 .triage-detail-wrapper {
