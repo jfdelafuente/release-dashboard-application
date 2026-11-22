@@ -486,7 +486,7 @@
         "descripcion": "",
         "pruebas": "Si",
         "responsable": "",
-        "metodologia": "Agile E2E",
+        "metodologia": "Fast Track",
         "decision": "GO"
       },
       "AB2CJ-169": {
@@ -496,7 +496,7 @@
         "descripcion": "",
         "pruebas": "Si",
         "responsable": "",
-        "metodologia": "Agile E2E",
+        "metodologia": "Fast Track",
         "decision": "GO"
       },
       "AB2CJ-91": {
@@ -506,7 +506,7 @@
         "descripcion": "",
         "pruebas": "Si",
         "responsable": "",
-        "metodologia": "Agile E2E",
+        "metodologia": "Fast Track",
         "decision": "GO"
       },
       "AB2CJ-241": {
@@ -516,7 +516,7 @@
         "descripcion": "",
         "pruebas": "Si",
         "responsable": "",
-        "metodologia": "Agile E2E",
+        "metodologia": "Fast Track",
         "decision": "GO"
       },
       "AB2CJ-222": {
@@ -526,7 +526,7 @@
         "descripcion": "",
         "pruebas": "Si",
         "responsable": "",
-        "metodologia": "Agile E2E",
+        "metodologia": "Fast Track",
         "decision": "GO"
       }
     }
@@ -1027,7 +1027,8 @@
       "descripcion": "",
       "releases": [
         "2026R11"
-      ]
+      ],
+      "metodologia": "Fast Track"
     },
     "AB2CJ-169": {
       "jira": "AB2CJ-169",
@@ -1036,7 +1037,8 @@
       "descripcion": "",
       "releases": [
         "2026R11"
-      ]
+      ],
+      "metodologia": "Fast Track"
     },
     "AB2CJ-91": {
       "jira": "AB2CJ-91",
@@ -1045,7 +1047,8 @@
       "descripcion": "",
       "releases": [
         "2026R11"
-      ]
+      ],
+      "metodologia": "Fast Track"
     },
     "AB2CJ-241": {
       "jira": "AB2CJ-241",
@@ -1054,7 +1057,8 @@
       "descripcion": "",
       "releases": [
         "2026R11"
-      ]
+      ],
+      "metodologia": "Fast Track"
     },
     "AB2CJ-222": {
       "jira": "AB2CJ-222",
@@ -1063,8 +1067,9 @@
       "descripcion": "",
       "releases": [
         "2026R11"
-      ]
+      ],
+      "metodologia": "Fast Track"
     }
   },
-  "updated": "2026-11-22T12:24:44.062865"
+  "updated": "2026-11-22T12:30:24.215327"
 }
