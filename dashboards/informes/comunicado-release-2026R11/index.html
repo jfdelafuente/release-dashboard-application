@@ -11,9 +11,9 @@
             --mo-orange: #FF7900;
             --mo-black: #000000;
             --mo-white: #FFFFFF;
-            --mo-bg: #F8F9FA;
+            --mo-bg: #EBE8E2;
             --mo-card-bg: #FFFFFF;
-            --mo-border: #E5E7EB;
+            --mo-border: #D5CEC2;
             --mo-text-main: #1F2937;
             --mo-text-muted: #6B7280;
             --color-p1: #DC2626;
@@ -355,7 +355,7 @@
                 <h1 class="report-title">Informe Ejecutivo Global de Release · 2026R11</h1>
                 <div class="report-meta">
                     <span>📅 <strong>Fecha PaP:</strong> 22-nov.</span>
-                    <span>🕒 <strong>Generado:</strong> 22/11/2026 17:53</span>
+                    <span>🕒 <strong>Generado:</strong> 22/11/2026 19:33</span>
                     <span>📦 <strong>Total Proyectos:</strong> 42</span>
                 </div>
             </div>
@@ -727,10 +727,9 @@
                         <div class="incident-desc-raw">[2026R11] - PRJ-11894 -SIRES- No detonarse el mail de las plantillas 9009684 y 9009685</div>
                         <div class="ia-box">
                             <div class="ia-box-header">🤖 Diagnóstico Epsilon Resumen IA</div>
-                            <div class="ia-impact-highlight"><strong>💥 Impacto en Servicio y Negocio:</strong> Un cliente convergente no recibió notificaciones de cambios en SVA. Sin método alternativo disponible para notificación de cambios contractuales.</div>
-                            <div class="ia-field"><strong>🔍 Problema detectado:</strong> Mails de plantillas 9009684 y 9009685 no se detonaron tras alta y baja de SVA Ciber Protección Global en cliente convergente. Operaciones realizadas: alta 22/11/2026 11:41:08, baja 11:50:36, nueva alta 11:53:29.</div>
-                            <div class="ia-field"><strong>🛠️ Solución / Causa raíz:</strong> Pod con configuración antigua identificado. Configuración refrescada a versión desplegada la noche anterior. Reprocesamiento de comunicaciones ejecutado. Funcionalidad validada como operativa.</div>
-                            <div class="ia-field"><strong>➡️ Próxima acción:</strong> Validación de cierre por peticionario (CARLOS GARCIA PEINADOR) y cierre formal del ticket</div>
+                            <div class="ia-impact-highlight"><strong>💥 Impacto en Servicio y Negocio:</strong> 1 cliente afectado. Sin notificación de alta/baja SVA. No existe método alternativo de notificación transaccional.</div>
+                            <div class="ia-field"><strong>🔍 Problema detectado:</strong> Mails de plantillas 9009684 y 9009685 no detonados tras alta y baja de SVA Ciber Protección Global en cliente convergente. Evento registrado en plataforma pero no procesado.</div>
+                            <div class="ia-field"><strong>🛠️ Solución / Causa raíz:</strong> Causa raíz: cuello de botella en procesamiento de eventos por campañas masivas FEW que saturaron la plataforma de comunicaciones transaccionales. Evento presente en plataforma pero bloqueado hasta liberación de cola de eventos. Validación: resolución confirmada tras procesamiento de eventos pendientes.</div>
                         </div>
                     </div>
                 </div>

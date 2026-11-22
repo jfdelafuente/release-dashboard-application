@@ -25,6 +25,8 @@ y este proyecto se adhiere a [Semantic Versioning](https://semver.org/lang/es/).
   - Botón unificado `🌐 Informe Ejecutivo PaP` (`#btnGenerateReportHtml`): Compilación en caliente bajo demanda y apertura automática del informe corporativo en una nueva pestaña.
   - **Visibilidad condicional por fecha PaP**: `#btnGenerateReportHtml` se muestra de manera condicional exclusivamente el día de la fecha de PaP (`Fecha PaP` en `releases-data.js`) y al día siguiente (día PaP + 1), manteniéndose oculto durante el resto del ciclo para focalizar la operativa.
   - Barra inferior simplificada: 4 acciones esenciales y no redundantes (`Copiar briefing`, `Briefing por Sistema`, `Informe Ejecutivo PaP`, `Exportar tabla`).
+- **Diseño visual y ergonomía**:
+  - Ajuste del fondo de página de la **Mesa de Release** (`--bg-page: #EBE8E2`) y del **Informe Ejecutivo PaP** (`--mo-bg: #EBE8E2`) a un tono sutilmente más oscuro, cálido y equilibrado, mejorando la elevación y el contraste de las tarjetas blancas (`#FFFFFF`), reduciendo la fatiga visual y unificando la identidad estética entre ambas vistas.
 - **Persistencia de fechas de compromiso acordadas en la Mesa**:
   - Edición en caliente del campo `fecha_prevista` en el seguimiento operativo de Mesa de Release con sincronización local y en servidor.
   - Indicador visual `(Acordada Mesa)` tanto en la consola interactiva como en las tarjetas ejecutivas de proyecto del informe HTML.
