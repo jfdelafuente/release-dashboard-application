@@ -563,13 +563,18 @@
                 || inc['detalleSolucion']
                 || '-';
             var estatusLower = String(inc['Estatus'] || '').toLowerCase();
-            var isResolved = estatusLower.includes('resuelt');
+            var isResolved = estatusLower.includes('resuelt') || estatusLower.includes('cerrad');
             var overrideEntry = state.overrides && state.overrides[id];
             var agreedFecha = (overrideEntry && overrideEntry.fecha_prevista) ? overrideEntry.fecha_prevista : '';
             var fechaPrevista = isResolved
                 ? (inc['Fecha de última resolución'] || '')
                 : agreedFecha;
-            var motivoResuelto = inc['Motivo de estado'] || inc['MotivoEstado_Anterior'] || '-';
+            var motivoResuelto = inc['Motivo de estado'] ||
+                inc['MotivoEstado_Anterior'] ||
+                inc['motivoEstado'] ||
+                inc['motivoResolucion'] ||
+                (isResolved ? (inc['detalleSolucion'] || (iaData && !iaData._error && iaData.solucion ? iaData.solucion : '') || '') : '') ||
+                '-';
             var peticionario = inc['Grupo Remitente'] || '-';
 
             var rowClasses = [];
@@ -648,7 +653,7 @@
                 '<td style="min-width:150px; max-width:230px;" title="' + escapeHtml(acciones) + '"><div class="rd-cell-clamp">' + escapeHtml(acciones) + '</div>' + staleBadgeHtml + '</td>' +
                 '<td><span class="rd-badge ' + statusBadgeClass + '">' + escapeHtml(inc['Estatus'] || '-') + '</span></td>' +
                 '<td style="font-size:11.5px; min-width:78px;">' + fechaPrevistaCell + '</td>' +
-                '<td style="max-width:130px;">' + escapeHtml(motivoResuelto) + '</td>' +
+                '<td style="min-width:140px; max-width:220px;" title="' + escapeHtml(motivoResuelto) + '"><div class="rd-cell-clamp">' + escapeHtml(motivoResuelto) + '</div></td>' +
                 '<td style="max-width:120px;">' + escapeHtml(peticionario) + '</td>' +
                 '</tr>';
 

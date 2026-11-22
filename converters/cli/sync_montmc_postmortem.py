@@ -466,6 +466,44 @@ def sync_postmortem_release(
                     records_by_id[inc_id] = updated_rec
                     actualizadas += 1
 
+    # 3c. Enriquecer tickets de la API en estado Resuelto o Cerrado que carecen de detalleSolucion
+    if hasattr(api_client, "fetch_remedy_detail"):
+        resolved_needing_detail = [
+            inc_id
+            for inc_id in seen_api_ids
+            if inc_id in records_by_id
+            and str(records_by_id[inc_id].get("Estatus") or "").strip().lower() in ("resuelto", "cerrado")
+            and not records_by_id[inc_id].get("detalleSolucion")
+        ]
+        if resolved_needing_detail:
+            max_workers = min(5, len(resolved_needing_detail))
+            details_sol_by_id: Dict[str, Any] = {}
+            with ThreadPoolExecutor(max_workers=max_workers) as pool:
+                futures = {
+                    inc_id: pool.submit(api_client.fetch_remedy_detail, inc_id)
+                    for inc_id in resolved_needing_detail
+                }
+                for inc_id, future in futures.items():
+                    try:
+                        details_sol_by_id[inc_id] = future.result(timeout=15)
+                    except Exception as err:
+                        logger.debug("No se pudo obtener detalle de resolución para %s: %s", inc_id, err)
+
+            for inc_id in resolved_needing_detail:
+                detail = details_sol_by_id.get(inc_id)
+                remedy_node = detail.get("remedy") if isinstance(detail, dict) else None
+                if not isinstance(remedy_node, dict):
+                    continue
+                sol = remedy_node.get("detalleSolucion") or remedy_node.get("solucion")
+                if sol:
+                    records_by_id[inc_id]["detalleSolucion"] = str(sol).strip()
+                    if inc_id not in updated_ids and inc_id not in new_ids:
+                        updated_ids.append(inc_id)
+                        actualizadas += 1
+                norm_detail = api_client.normalize_mon_tmc_postmortem_record(remedy_node)
+                if norm_detail.get("Fecha de última resolución") and not records_by_id[inc_id].get("Fecha de última resolución"):
+                    records_by_id[inc_id]["Fecha de última resolución"] = norm_detail["Fecha de última resolución"]
+
     # Filtrar en la lista final cualquier ticket que ya no esté en records_by_id o que en caso de active_release
     # no contenga el tag de la release si no fue devuelto por la API
     final_ordered_ids = [i for i in ordered_ids if i in records_by_id]

@@ -203,13 +203,18 @@
                 || inc['detalleSolucion']
                 || '-';
             var estatusLower = String(inc['Estatus'] || '').toLowerCase();
-            var isResolved = estatusLower.includes('resuelt');
+            var isResolved = estatusLower.includes('resuelt') || estatusLower.includes('cerrad');
             var overrideEntry = overrides && overrides[id];
             var agreedFecha = (overrideEntry && overrideEntry.fecha_prevista) ? overrideEntry.fecha_prevista : '';
             var fechaPrevista = isResolved
                 ? (inc['Fecha de última resolución'] || '')
                 : agreedFecha;
-            var motivoResuelto = inc['Motivo de estado'] || inc['MotivoEstado_Anterior'] || '-';
+            var motivoResuelto = inc['Motivo de estado'] ||
+                inc['MotivoEstado_Anterior'] ||
+                inc['motivoEstado'] ||
+                inc['motivoResolucion'] ||
+                (isResolved ? (inc['detalleSolucion'] || (iaData && !iaData._error && iaData.solucion ? iaData.solucion : '') || '') : '') ||
+                '-';
             var peticionario = inc['Grupo Remitente'] || '-';
 
             var row = [
