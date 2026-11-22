@@ -566,6 +566,45 @@ def test_release_desk_is_massive_incident():
         assert "isMassiveIncident" in js
 
 
+def test_release_desk_priority_tooltip_resumen_ia():
+    if shutil.which("node") is not None:
+        script = (
+            f"const rd = require({json.dumps(str(RELEASE_DESK_JS))});\n"
+            "const inc1 = { 'ID de incidencia': 'INC1', Prioridad: 'P1', Urgencia: 'Crítica' };\n"
+            "const ia1 = { impacto: 'Afectación a contratación en canal presencial' };\n"
+            "const tip1 = rd.getPriorityTooltip(inc1, ia1, false);\n"
+            "const tip2 = rd.getPriorityTooltip(inc1, null, true);\n"
+            "const inc3 = { 'ID de incidencia': 'INC3', Impacto: 'Degradación parcial' };\n"
+            "const tip3 = rd.getPriorityTooltip(inc3, null, false);\n"
+            "const inc4 = { 'ID de incidencia': 'INC4' };\n"
+            "const tip4 = rd.getPriorityTooltip(inc4, null, false);\n"
+            "console.log(JSON.stringify({\n"
+            "  tip1: tip1,\n"
+            "  tip2: tip2,\n"
+            "  tip3: tip3,\n"
+            "  tip4: tip4\n"
+            "}));\n"
+        )
+        proc = _run_node_script(script)
+        out = json.loads(proc.stdout)
+        assert out["tip1"] == {
+            "title": "Impacto (Resumen IA)",
+            "text": "Afectación a contratación en canal presencial"
+        }
+        assert out["tip2"] == {
+            "title": "Impacto",
+            "text": "Incidencia con afectación masiva de servicio."
+        }
+        assert out["tip3"] == {
+            "title": "Impacto",
+            "text": "Degradación parcial"
+        }
+        assert out["tip4"] is None
+    else:
+        js = RELEASE_DESK_JS.read_text(encoding="utf-8")
+        assert "getPriorityTooltip" in js
+
+
 def test_bump_asset_versions_updates_both_consoles(tmp_path):
     from converters.cli.bump_asset_versions import bump_html_content
 

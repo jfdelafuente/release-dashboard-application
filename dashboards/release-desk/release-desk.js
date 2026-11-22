@@ -31,6 +31,7 @@
     var getSyncChangeBadge = Domain.getSyncChangeBadge;
     var isMassiveIncident = Domain.isMassiveIncident;
     var getPriorityBadgeClassDomain = Domain.getPriorityBadgeClass;
+    var getPriorityTooltip = Domain.getPriorityTooltip;
     var state = {
         currentRelease: null,
         postmortemFiles: [],
@@ -572,7 +573,12 @@
             }
             var isMasiva = isMassiveIncident ? isMassiveIncident(inc, state.massiveIds) : false;
             var prioBadgeClass = getPriorityBadgeClass(inc['Prioridad'], inc['Urgencia'], isMasiva);
-            var masivaTitleAttr = isMasiva ? ' title="Incidencia masiva"' : '';
+            var prioTip = (typeof getPriorityTooltip === 'function')
+                ? getPriorityTooltip(inc, iaData, isMasiva)
+                : null;
+            var prioTooltipAttr = (prioTip && prioTip.text)
+                ? ' data-tooltip="' + escapeHtml(prioTip.text) + '" data-tooltip-title="' + escapeHtml(prioTip.title) + '"'
+                : '';
             var statusBadgeClass = getStatusBadgeClass(inc['Estatus']);
             var sistema = (inc['Grupo asignado'] && String(inc['Grupo asignado']).trim()) ||
                           (inc['Grupo Resolutor'] && String(inc['Grupo Resolutor']).trim()) ||
@@ -699,7 +705,7 @@
                 '<td style="white-space:nowrap;"><span class="rd-badge rd-badge-code">' + (isSelected ? '▾ ' : '▸ ') + codeLinkHtml + '</span>' + syncBadgeHtml + '</td>' +
                 '<td style="font-size:11.5px; min-width:78px;">' + escapeHtml(fechaApertura) + agingHtml + '</td>' +
                 '<td style="min-width:200px; max-width:340px;"' + descTooltipAttr + '>' + descCellHtml + '</td>' +
-                '<td style="white-space:nowrap;"><span class="rd-badge ' + prioBadgeClass + '"' + masivaTitleAttr + '>' + prioBadgeHtml + '</span></td>' +
+                '<td style="white-space:nowrap;"' + prioTooltipAttr + '><span class="rd-badge ' + prioBadgeClass + '">' + prioBadgeHtml + '</span></td>' +
                 '<td style="max-width:120px;">' + sistemaCell + '</td>' +
                 '<td style="white-space:nowrap;">' + jiraCell + '</td>' +
                 '<td style="min-width:120px; max-width:190px;"' + projTooltipAttr + '>' + proyectoCell + '</td>' +

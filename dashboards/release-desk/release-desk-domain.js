@@ -626,6 +626,32 @@
         return 'rd-badge-media';
     }
 
+    function getPriorityTooltip(incident, iaData, isMasiva) {
+        var iaImpacto = (iaData && !iaData._error && (iaData.impacto || iaData.impacto_justificacion))
+            ? String(iaData.impacto || iaData.impacto_justificacion).trim()
+            : '';
+        if (iaImpacto && iaImpacto !== '-') {
+            return {
+                title: 'Impacto (Resumen IA)',
+                text: iaImpacto
+            };
+        }
+        if (isMasiva) {
+            return {
+                title: 'Impacto',
+                text: 'Incidencia con afectación masiva de servicio.'
+            };
+        }
+        var incImpacto = incident && (incident['Impacto'] || incident['impacto']);
+        if (incImpacto && typeof incImpacto === 'string' && incImpacto.trim() && incImpacto.trim() !== '-') {
+            return {
+                title: 'Impacto',
+                text: incImpacto.trim()
+            };
+        }
+        return null;
+    }
+
     var api = {
         escapeHtml: escapeHtml,
         isClosedStatus: isClosedStatus,
@@ -646,7 +672,8 @@
         groupIncidentsByProject: groupIncidentsByProject,
         getSyncChangeBadge: getSyncChangeBadge,
         isMassiveIncident: isMassiveIncident,
-        getPriorityBadgeClass: getPriorityBadgeClass
+        getPriorityBadgeClass: getPriorityBadgeClass,
+        getPriorityTooltip: getPriorityTooltip
     };
     global.ReleaseDeskDomain = api;
     if (typeof module !== 'undefined' && module.exports) {
