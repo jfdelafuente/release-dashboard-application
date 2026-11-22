@@ -56,6 +56,9 @@ def test_release_desk_html_has_required_controls():
     ):
         assert required_id in html, f"Falta {required_id} en release-desk/index.html"
 
+    assert 'aria-label="Filtrar por sistema"' in html
+    assert "Todos los sistemas" in html
+
     for col in (
         "Código Incidencia",
         "Fecha Apertura",
@@ -85,6 +88,7 @@ def test_release_desk_js_uses_postmortem_and_resumen_ia_only():
     assert "rd-detail-row" in js
     assert "btnCopyFollowup" in js
     assert "/api/release-desk/overrides" in js
+    assert "Todos los sistemas" in js
     assert "high_priority_notifications.json" not in js
     assert "-massive.json" not in js
 

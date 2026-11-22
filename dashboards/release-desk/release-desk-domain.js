@@ -189,7 +189,11 @@
             var producto = inc['producto'] ? String(inc['producto']).trim() : '';
             var descProblema = producto ? ('[' + producto + '] ' + descBase) : descBase;
             var prioridadUrg = inc['Prioridad'] || inc['Urgencia'] || '-';
-            var sistema = inc['Grupo asignado'] || '-';
+            var sistema = (inc['Grupo asignado'] && String(inc['Grupo asignado']).trim()) ||
+                          (inc['Grupo Resolutor'] && String(inc['Grupo Resolutor']).trim()) ||
+                          (inc['Sistema'] && String(inc['Sistema']).trim()) ||
+                          (inc['sistema'] && String(inc['sistema']).trim()) ||
+                          (inc['producto'] && String(inc['producto']).trim()) || '-';
             var jiraBug = inc['JIRA'] || inc['Jira'] || inc['jira'] || '';
             var proj = resolveProjectInfo(inc, projectsCatalog, releaseName);
             var proyectoText = proj
@@ -378,7 +382,11 @@
             htmlLine: htmlLine,
             isResolved: isResolved,
             isOverdue: isOverdue,
-            sistema: (inc['Grupo asignado'] && String(inc['Grupo asignado']).trim()) || 'Sin asignar',
+            sistema: (inc['Grupo asignado'] && String(inc['Grupo asignado']).trim()) ||
+                     (inc['Grupo Resolutor'] && String(inc['Grupo Resolutor']).trim()) ||
+                     (inc['Sistema'] && String(inc['Sistema']).trim()) ||
+                     (inc['sistema'] && String(inc['sistema']).trim()) ||
+                     (inc['producto'] && String(inc['producto']).trim()) || 'Sin asignar',
             rank: priorityRank(inc)
         };
     }

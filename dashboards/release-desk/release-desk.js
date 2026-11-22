@@ -255,8 +255,12 @@
 
         state.activeIncidents.forEach(function (inc) {
             if (inc['Estatus']) statusSet.add(inc['Estatus']);
-            if (inc['Grupo asignado']) groupSet.add(inc['Grupo asignado']);
-            if (inc['Grupo Resolutor']) groupSet.add(inc['Grupo Resolutor']);
+            var sys = (inc['Grupo asignado'] && String(inc['Grupo asignado']).trim()) ||
+                      (inc['Grupo Resolutor'] && String(inc['Grupo Resolutor']).trim()) ||
+                      (inc['Sistema'] && String(inc['Sistema']).trim()) ||
+                      (inc['sistema'] && String(inc['sistema']).trim()) ||
+                      (inc['producto'] && String(inc['producto']).trim());
+            if (sys) groupSet.add(sys);
             if (inc['Prioridad']) prioSet.add(inc['Prioridad']);
             else if (inc['Urgencia']) prioSet.add(inc['Urgencia']);
             var projCode = extractProjectCode(inc);
@@ -275,7 +279,7 @@
                 }).join('');
         }
         if (groupSel) {
-            groupSel.innerHTML = '<option value="">Todos los grupos soporte</option>' +
+            groupSel.innerHTML = '<option value="">Todos los sistemas</option>' +
                 Array.from(groupSet).sort().map(function (g) {
                     return '<option value="' + escapeHtml(g) + '">' + escapeHtml(g) + '</option>';
                 }).join('');
@@ -353,7 +357,14 @@
         state.filteredIncidents = state.activeIncidents.filter(function (inc) {
             if (state.activeKpiFilter && !matchesKpiFilter(inc, state.activeKpiFilter, state.overrides)) return false;
             if (status && inc['Estatus'] !== status) return false;
-            if (group && inc['Grupo asignado'] !== group && inc['Grupo Resolutor'] !== group) return false;
+            if (group) {
+                var incSys = (inc['Grupo asignado'] && String(inc['Grupo asignado']).trim()) ||
+                             (inc['Grupo Resolutor'] && String(inc['Grupo Resolutor']).trim()) ||
+                             (inc['Sistema'] && String(inc['Sistema']).trim()) ||
+                             (inc['sistema'] && String(inc['sistema']).trim()) ||
+                             (inc['producto'] && String(inc['producto']).trim()) || '';
+                if (incSys !== group && inc['Grupo asignado'] !== group && inc['Grupo Resolutor'] !== group) return false;
+            }
             if (prio) {
                 var incPrio = inc['Prioridad'] || inc['Urgencia'] || '';
                 if (incPrio !== prio) return false;
@@ -367,6 +378,8 @@
                     inc['Grupo Remitente'],
                     inc['Grupo asignado'],
                     inc['Grupo Resolutor'],
+                    inc['producto'],
+                    inc['Sistema'],
                     proj ? proj.code : '',
                     proj ? proj.summary : ''
                 ].join(' ').toLowerCase();
@@ -526,7 +539,11 @@
             var prioridadUrg = inc['Prioridad'] || inc['Urgencia'] || '-';
             var prioBadgeClass = getPriorityBadgeClass(inc['Prioridad'], inc['Urgencia']);
             var statusBadgeClass = getStatusBadgeClass(inc['Estatus']);
-            var sistema = inc['Grupo asignado'] || '-';
+            var sistema = (inc['Grupo asignado'] && String(inc['Grupo asignado']).trim()) ||
+                          (inc['Grupo Resolutor'] && String(inc['Grupo Resolutor']).trim()) ||
+                          (inc['Sistema'] && String(inc['Sistema']).trim()) ||
+                          (inc['sistema'] && String(inc['sistema']).trim()) ||
+                          (inc['producto'] && String(inc['producto']).trim()) || '-';
             var proj = resolveProjectInfo(inc, state.projectsCatalog, state.currentRelease);
             var jiraBug = inc['JIRA'] || inc['Jira'] || inc['jira'] || '';
             var jiraCell = jiraBug

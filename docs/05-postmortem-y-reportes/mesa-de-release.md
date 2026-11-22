@@ -49,7 +49,7 @@ La consola **Mesa de Release** (`/dashboards/release-desk/`) centraliza el segui
   - `Asignadas / En Curso / Pendientes`
   - `Resueltas pendientes de cierre`
   - `Vencidas / Sin fecha` *(abiertas con `Fecha Prevista` vencida o sin fecha acordada)*
-- **Filtros combinables**: búsqueda libre (`filterSearch`), estado (`filterStatus`), grupo (`filterGroup`), prioridad/urgencia (`filterPriority`) y proyecto (`filterProject`, mostrando solo el código `PRJ-*` con `summary` en tooltip).
+- **Filtros combinables**: búsqueda libre (`filterSearch`), estado (`filterStatus`), sistema (`filterGroup`), prioridad/urgencia (`filterPriority`) y proyecto (`filterProject`, mostrando solo el código `PRJ-*` con `summary` en tooltip).
 
 ### 3.2. Conmutador de Vista (`Tabla` / `Por proyecto`)
 - **Tabla**: vista operativa detallada con **ordenación por cabeceras** (`▲` / `▼`) en `Código Incidencia`, `Fecha Apertura`, `Prioridad / Urg.`, `PROYECTO`, `Status` y `Fecha Prevista`.
