@@ -1,10 +1,10 @@
 {
   "_metadata": {
     "version": "1.0.0",
-    "updated_at": "2026-10-30T19:30:00+01:00",
+    "updated_at": "2026-11-22T07:47:00+01:00",
     "source": "Remedy Change Management (CMDB / PaP Hub)",
     "description": "Catálogo de Trabajos Programados (PaP) y Cambios Recientes (CRQ) ejecutados en los entornos de producción de Orange Tech Operations",
-    "total_changes": 7,
+    "total_changes": 9,
     "filter_window_hours": 6,
     "is_mock": true,
     "data_source_mode": "SIMULATED_MOCK_DATA",
@@ -14,9 +14,57 @@
   },
   "changes": [
     {
+      "crq": "PAP-PRJ-12249",
+      "titulo": "PRJ-12249: Modificación datos de incidencias-solicitudes en Teide para ATAC",
+      "sistemas": [
+        "TEIDE",
+        "ATAC"
+      ],
+      "proceso_relacionado": "Atención al Cliente (ATC)",
+      "fecha_ejecucion": "2026-11-22T23:00:00+01:00",
+      "ventana": "PAP Técnico Post-Release",
+      "horas_desde_ejecucion": null,
+      "estado": "Programado PAP Técnico",
+      "responsable": "Equipo TEIDE ATAC",
+      "equipo": "Sistemas de Atención y TEIDE",
+      "riesgo": "Bajo",
+      "rollback_plan": "Revertir modelo de datos de incidencias/solicitudes en TEIDE a versión previa.",
+      "tiempo_rollback_estimado": "10 minutos",
+      "contacto_guardia": "Guardia TEIDE (+34 91 222 3406)",
+      "is_mock": false,
+      "data_source": "RELEASE_2026R11_GONOGO",
+      "mock_tag": ""
+    },
+    {
+      "crq": "PAP-PRJ-11283",
+      "titulo": "PRJ-11283: Migración de GED de Cloud en AWS a Cloud de Google",
+      "sistemas": [
+        "GED",
+        "AWS",
+        "Google Cloud Platform (GCP)"
+      ],
+      "proceso_relacionado": "Gestión Documental Corporativa",
+      "fecha_ejecucion": "2026-12-11T23:00:00+01:00",
+      "ventana": "Noche del viernes 11/12 a las 23:00h",
+      "horas_desde_ejecucion": null,
+      "estado": "Replanificado / Programado",
+      "responsable": "Equipo GED & Cloud",
+      "equipo": "Arquitectura Cloud & GED",
+      "riesgo": "Medio",
+      "rollback_plan": "Mantener servicio GED en AWS sin conmutar a GCP.",
+      "tiempo_rollback_estimado": "15 minutos",
+      "contacto_guardia": "Guardia GED (+34 91 222 3400)",
+      "is_mock": false,
+      "data_source": "RELEASE_2026R11_GONOGO",
+      "mock_tag": ""
+    },
+    {
       "crq": "CRQ000000190422",
       "titulo": "Despliegue parche v24.8 catálogo terminales y microservicios CRM4TELCO",
-      "sistemas": ["CRM4TELCO", "Ficha multimarca"],
+      "sistemas": [
+        "CRM4TELCO",
+        "Ficha multimarca"
+      ],
       "proceso_relacionado": "Atención al Cliente (ATC)",
       "fecha_ejecucion": "2026-10-30T17:15:00+01:00",
       "ventana": "Ventana Ordinaria (17:00 - 18:00)",
@@ -35,7 +83,11 @@
     {
       "crq": "CRQ000000190311",
       "titulo": "Actualización release bffclientdashboard v3.12 y cache customerAgreement",
-      "sistemas": ["bffclientdashboard", "Ficha Cliente Orange", "InteractionClient"],
+      "sistemas": [
+        "bffclientdashboard",
+        "Ficha Cliente Orange",
+        "InteractionClient"
+      ],
       "proceso_relacionado": "Atención al Cliente (ATC)",
       "fecha_ejecucion": "2026-10-30T16:45:00+01:00",
       "ventana": "Ventana de Tarde (16:30 - 17:30)",
@@ -54,7 +106,13 @@
     {
       "crq": "CRQ000000189914",
       "titulo": "Parche hotfix adaptadores JMS TIBCO BusinessWorks hacia Siebel IP24",
-      "sistemas": ["TIBCO", "BW", "Siebel IP24", "Siebel 8", "CRM"],
+      "sistemas": [
+        "TIBCO",
+        "BW",
+        "Siebel IP24",
+        "Siebel 8",
+        "CRM"
+      ],
       "proceso_relacionado": "Middleware Transversal",
       "fecha_ejecucion": "2026-10-30T15:30:00+01:00",
       "ventana": "Ventana de Mantenimiento Middleware (15:00 - 16:30)",
@@ -73,7 +131,10 @@
     {
       "crq": "CRQ000000188550",
       "titulo": "Migración endpoint xpldocumentlist en API Gateway Apigee y balanceo Ficha",
-      "sistemas": ["xpldocumentlist API", "Ficha Cliente Orange"],
+      "sistemas": [
+        "xpldocumentlist API",
+        "Ficha Cliente Orange"
+      ],
       "proceso_relacionado": "Atención al Cliente (ATC)",
       "fecha_ejecucion": "2026-10-30T18:00:00+01:00",
       "ventana": "Ventana Express (18:00 - 18:30)",
@@ -92,7 +153,14 @@
     {
       "crq": "CRQ000000187640",
       "titulo": "Recarga de parámetros de tarificación CAS e interfaces de mediación HPFMS",
-      "sistemas": ["HPFMS", "CAS", "BSCS", "SEDNA_PREPAGO", "HPSPI", "Middleware"],
+      "sistemas": [
+        "HPFMS",
+        "CAS",
+        "BSCS",
+        "SEDNA_PREPAGO",
+        "HPSPI",
+        "Middleware"
+      ],
       "proceso_relacionado": "Facturación, Mediación y Cobros",
       "fecha_ejecucion": "2026-10-30T14:00:00+01:00",
       "ventana": "Ventana Batch (14:00 - 15:30)",
@@ -111,7 +179,11 @@
     {
       "crq": "CRQ000000186900",
       "titulo": "Actualización de tablas de enrutado de órdenes fijas en TEIDE y SGA",
-      "sistemas": ["TEIDE", "SGA", "PeopleSoft"],
+      "sistemas": [
+        "TEIDE",
+        "SGA",
+        "PeopleSoft"
+      ],
       "proceso_relacionado": "Provisión y Activación",
       "fecha_ejecucion": "2026-10-30T16:00:00+01:00",
       "ventana": "Ventana Ordinaria (16:00 - 17:00)",
@@ -130,7 +202,10 @@
     {
       "crq": "CRQ000000185120",
       "titulo": "Mantenimiento preventivo cluster bases de datos OCS Prepago",
-      "sistemas": ["OCS", "SEDNA_PREPAGO"],
+      "sistemas": [
+        "OCS",
+        "SEDNA_PREPAGO"
+      ],
       "proceso_relacionado": "Prepago",
       "fecha_ejecucion": "2026-10-30T13:30:00+01:00",
       "ventana": "Ventana Preventiva (13:30 - 14:30)",

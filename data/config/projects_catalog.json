@@ -258,8 +258,8 @@
       "PRJ-11283": {
         "jira": "PRJ-11283",
         "summary": "Migración de GED de  Cloud en AWS a Cloud de Google",
-        "despliegue": "Completo",
-        "descripcion": ""
+        "despliegue": "PAP Técnico",
+        "descripcion": "Replanificado PAP a la noche del viernes 11/12 a las 23:00h. Migración de GED de Cloud en AWS a Cloud de Google."
       },
       "PRJ-12059": {
         "jira": "PRJ-12059",
@@ -312,8 +312,8 @@
       "PRJ-12249": {
         "jira": "PRJ-12249",
         "summary": "Modificación datos de incidencias-solicitudes en Teide para ATAC",
-        "despliegue": "Completo",
-        "descripcion": ""
+        "despliegue": "PAP Técnico",
+        "descripcion": "PAP Técnico: Modificación datos de incidencias-solicitudes en Teide para ATAC."
       },
       "PRJ-12268": {
         "jira": "PRJ-12268",
