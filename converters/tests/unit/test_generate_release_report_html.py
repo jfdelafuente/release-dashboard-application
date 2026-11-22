@@ -103,15 +103,65 @@ def test_build_release_report_html_generates_valid_file(tmp_path):
     assert "INC000004192065" not in content
     assert "INC000004192066" not in content
     assert "INC000004192168" not in content
+    assert "INC000004192073" not in content
     assert "badge-status-cerrado" not in content
 
-    # Verifica coherencia 1:1 en PRJ-8058 (3 incidencias directas) y TRANSVERSAL (sin proyecto)
+    # Verifica coherencia 1:1 en PRJ-8058 (incidencias directas no cerradas) y TRANSVERSAL (sin proyecto)
     table_match = content[content.find("Resumen Agregado por Proyecto"):content.find("Seguimiento de Proyectos")]
     assert 'href="#card-PRJ-8058"' in table_match
     assert 'href="#card-transversales"' in table_match
     assert "INC000004192176" in table_match
-    assert "INC000004192073" in table_match
     assert "INC000004192062" in table_match
+    assert "(0 iniciativas afectadas)" not in content
+    assert "iniciativas" in table_match
+
+
+def test_load_grafana_pap_csv_no_blocks(tmp_path):
+    """Verifica que un CSV con 0 bloqueos cargue todas las iniciativas en pap_projects."""
+    csv_file = tmp_path / "sample_grafana_no_blocks.csv"
+    csv_file.write_text(
+        '"mv_id","prj","key_test_plan","proyecto_test","test_plan","tribu_id","resumen_test_plan","sistema_test","release_planificada_test_plan","test_environment_test_plan","test_layer_test_plan","fix_versions_test_plan","prioridad_test_plan","tipologia_prueba","agrupacion_funcional","blocking_comment","num_test","pass","pending","block","verify","executing"\n'
+        '1,PRJ-20001,TMMC-1001,TMMC,100001,,PRJ-20001 TESTS,"{""SISTEMA A""}",R2026-11,{PRODUCCION},E2E,{R2026-11},High,PROGRESION,CANAL,,5,5,0,0,0,0\n'
+        '2,PRJ-20002,TMMC-1002,TMMC,100002,,PRJ-20002 TESTS,"{""SISTEMA B""}",R2026-11,{PRODUCCION},E2E,{R2026-11},Medium,PROGRESION,POSTVENTA,,8,4,4,0,0,0\n'
+        '3,,TMMC-1003,TMMC,100003,,REGRESION TRANSVERSAL,"{""CORE""}",R2026-11,{PRODUCCION},E2E,{R2026-11},High,REGRESION,CORE,,10,8,2,0,0,0\n',
+        encoding="utf-8",
+    )
+    res = load_grafana_pap_csv(csv_file)
+    assert res["available"] is True
+    assert res["total_tests"] == 23
+    assert res["pass_count"] == 17
+    assert res["block_count"] == 0
+    assert res["pending_count"] == 6
+    assert res["blocked_projects"] == []
+    # Todas las iniciativas deben estar en pap_projects
+    assert len(res["pap_projects"]) == 3
+    prjs = [p["prj"] for p in res["pap_projects"]]
+    assert "PRJ-20001" in prjs
+    assert "PRJ-20002" in prjs
+    assert "TRANSVERSAL" in prjs
+
+
+def test_build_release_report_html_renders_all_projects_when_zero_blocks(tmp_path):
+    """Verifica que con 0 bloqueos el Resumen Agregado muestre todas las iniciativas y 0 bloqueos."""
+    grafana_csv = tmp_path / "pap_zero_blocks.csv"
+    grafana_csv.write_text(
+        '"mv_id","prj","key_test_plan","proyecto_test","test_plan","tribu_id","resumen_test_plan","sistema_test","release_planificada_test_plan","test_environment_test_plan","test_layer_test_plan","fix_versions_test_plan","prioridad_test_plan","tipologia_prueba","agrupacion_funcional","blocking_comment","num_test","pass","pending","block","verify","executing"\n'
+        '1,PRJ-99001,TMMC-9001,TMMC,900001,,PRJ-99001 OK,"{""SISTEMA X""}",R2026-11,{PRODUCCION},E2E,{R2026-11},High,PROGRESION,CANAL,,6,6,0,0,0,0\n',
+        encoding="utf-8",
+    )
+    output_html = tmp_path / "comunicado-zero-blocks" / "index.html"
+    res_path = build_release_report_html(
+        release="2026R11",
+        output_path=output_html,
+        grafana_csv=grafana_csv,
+    )
+    assert res_path.is_file()
+    content = res_path.read_text(encoding="utf-8")
+    assert "0 bloqueos" in content
+    assert "Resumen Agregado por Proyecto (1 iniciativas con pruebas)" in content
+    assert "(0 iniciativas afectadas)" not in content
+    assert "PRJ-99001" in content
+
 
 
 def test_build_release_report_html_applies_mesa_overrides(tmp_path, monkeypatch):

@@ -135,6 +135,8 @@ def load_grafana_pap_csv(csv_path: Path) -> Dict[str, Any]:
         "verify_count": 0,
         "executing_count": 0,
         "pass_rate": 0.0,
+        "pap_projects": [],
+        "blocked_projects": [],
         "by_typology": {
             "REGRESION": {
                 "total_tests": 0,
@@ -267,22 +269,45 @@ def load_grafana_pap_csv(csv_path: Path) -> Dict[str, Any]:
                 typ_v["pass_rate"] = round((typ_v["pass_count"] / typ_v["total_tests"]) * 100, 1)
                 typ_v["block_rate"] = round((typ_v["block_count"] / typ_v["total_tests"]) * 100, 1)
 
-        result["blocked_projects"] = []
+        result["pap_projects"] = []
         for p_key, p_data in result["by_project"].items():
-            if p_data["block_count"] > 0:
+            if p_data["total_tests"] > 0:
                 is_prog = p_key.startswith("PRJ-")
                 tipologia_lbl = "PROGRESIÓN" if is_prog else "REGRESIÓN"
-                result["blocked_projects"].append({
+                tot_c = p_data["total_tests"]
+                pass_c = p_data["pass_count"]
+                blk_c = p_data["block_count"]
+                result["pap_projects"].append({
                     "prj": p_key,
                     "tipologia": tipologia_lbl,
-                    "block_count": p_data["block_count"],
-                    "total_tests": p_data["total_tests"],
-                    "pass_count": p_data["pass_count"],
+                    "block_count": blk_c,
+                    "total_tests": tot_c,
+                    "pass_count": pass_c,
                     "pending_count": p_data["pending_count"],
+                    "executing_count": p_data.get("executing_count", 0),
+                    "verify_count": p_data.get("verify_count", 0),
                     "sistemas": sorted(list(p_data.get("sistemas", set()))),
-                    "block_rate": round((p_data["block_count"] / p_data["total_tests"] * 100), 1) if p_data["total_tests"] > 0 else 0.0,
+                    "pass_rate": round((pass_c / tot_c * 100), 1) if tot_c > 0 else 0.0,
+                    "block_rate": round((blk_c / tot_c * 100), 1) if tot_c > 0 else 0.0,
                 })
-        result["blocked_projects"].sort(key=lambda x: (0 if x["tipologia"] == "PROGRESIÓN" else 1, -x["block_count"], -x["block_rate"]))
+
+        # Ordenar: primero iniciativas con bloqueos (mayor block_count desc, mayor block_rate desc),
+        # luego iniciativas sin bloqueos (progresión primero, menor pass_rate asc para ver antes las incompletas, mayor total_tests desc)
+        def _pap_sort_key(x: Dict[str, Any]):
+            has_blocks = 0 if x["block_count"] > 0 else 1
+            is_prog = 0 if x["tipologia"] == "PROGRESIÓN" else 1
+            return (
+                has_blocks,
+                -x["block_count"],
+                -x["block_rate"],
+                is_prog,
+                x["pass_rate"],
+                -x["total_tests"],
+                x["prj"],
+            )
+
+        result["pap_projects"].sort(key=_pap_sort_key)
+        result["blocked_projects"] = [p for p in result["pap_projects"] if p["block_count"] > 0]
 
     except Exception as exc:
         print(f"[WARN] Error leyendo Grafana PaP CSV {csv_path}: {exc}", file=sys.stderr)
@@ -1009,17 +1034,25 @@ def build_release_report_html(
     html_lines.append('            </div>')
     html_lines.append('        </section>')
 
-    # SECCIÓN 1: Bloqueos de Pruebas PaP (Grafana Argos) con discriminación Progresión vs Regresión
-    if grafana_data.get("available") and grafana_data.get("blocked_items"):
-        blocked_projects_list = grafana_data.get("blocked_projects", [])
+    # SECCIÓN 1: Bloqueos y Avance de Pruebas PaP (Grafana Argos) con discriminación Progresión vs Regresión
+    pap_projects_list = grafana_data.get("pap_projects", [])
+    if not pap_projects_list and grafana_data.get("blocked_projects"):
+        pap_projects_list = grafana_data.get("blocked_projects", [])
+
+    if grafana_data.get("available") and pap_projects_list:
         total_blocked_tests = grafana_data.get("block_count", 0)
+        total_pap_tests = grafana_data.get("total_tests", 0)
+        blocked_count_projects = sum(1 for p in pap_projects_list if p.get("block_count", 0) > 0)
         by_typ = grafana_data.get("by_typology", {})
         prog_info = by_typ.get("PROGRESION", {})
         reg_info = by_typ.get("REGRESION", {})
 
         html_lines.append('        <section id="sec-pap-blocked">')
         html_lines.append('            <div class="section-heading">')
-        html_lines.append(f'                <h2>⚠️ Pruebas PaP y Bloqueos en Producción (Grafana Argos) <span class="badge-count">{total_blocked_tests} pruebas bloqueadas ({len(blocked_projects_list)} iniciativas)</span></h2>')
+        if total_blocked_tests > 0:
+            html_lines.append(f'                <h2>⚠️ Pruebas PaP y Bloqueos en Producción (Grafana Argos) <span class="badge-count">{total_blocked_tests} pruebas bloqueadas ({blocked_count_projects} iniciativas)</span></h2>')
+        else:
+            html_lines.append(f'                <h2>🧪 Pruebas PaP en Producción (Grafana Argos) <span class="badge" style="background:#DCFCE7; color:#166534; font-weight:700; padding:4px 10px; border-radius:12px; font-size:13px;">0 bloqueos · {total_pap_tests} pruebas ({len(pap_projects_list)} iniciativas)</span></h2>')
         html_lines.append('            </div>')
         html_lines.append('            <p style="margin: -6px 0 16px; font-size: 13px; color: var(--mo-text-muted);">Telemetría de validación PaP en producción (Grafana Argos) con discriminación explícita entre Progresión de Proyectos e iniciativas de Regresión Transversal Core.</p>')
 
@@ -1079,10 +1112,19 @@ def build_release_report_html(
 
         # Tabla de Resumen Agregado con Columna de Tipología
         html_lines.append('            <div class="data-table-wrap" style="margin-bottom: 24px;">')
-        html_lines.append('                <div style="padding: 12px 16px; background: #FFF7ED; border-bottom: 1px solid #FED7AA; display: flex; align-items: center; justify-content: space-between;">')
-        html_lines.append(f'                    <div style="font-size: 13px; font-weight: 800; color: #9A3412;">📊 Resumen Agregado por Proyecto ({len(blocked_projects_list)} iniciativas afectadas)</div>')
-        html_lines.append('                    <div style="font-size: 11.5px; color: #C2410C; font-weight: 600;">Discriminación por Tipología (Progresión vs Regresión)</div>')
-        html_lines.append('                </div>')
+        if total_blocked_tests > 0:
+            header_title = f'📊 Resumen Agregado por Proyecto ({len(pap_projects_list)} iniciativas · {blocked_count_projects} con bloqueos)'
+            html_lines.append('                <div style="padding: 12px 16px; background: #FFF7ED; border-bottom: 1px solid #FED7AA; display: flex; align-items: center; justify-content: space-between;">')
+            html_lines.append(f'                    <div style="font-size: 13px; font-weight: 800; color: #9A3412;">{header_title}</div>')
+            html_lines.append('                    <div style="font-size: 11.5px; color: #C2410C; font-weight: 600;">Discriminación por Tipología (Progresión vs Regresión)</div>')
+            html_lines.append('                </div>')
+        else:
+            header_title = f'📊 Resumen Agregado por Proyecto ({len(pap_projects_list)} iniciativas con pruebas)'
+            html_lines.append('                <div style="padding: 12px 16px; background: #F8FAFC; border-bottom: 1px solid #E2E8F0; display: flex; align-items: center; justify-content: space-between;">')
+            html_lines.append(f'                    <div style="font-size: 13px; font-weight: 800; color: #0F172A;">{header_title}</div>')
+            html_lines.append('                    <div style="font-size: 11.5px; color: #64748B; font-weight: 600;">Discriminación por Tipología (Progresión vs Regresión)</div>')
+            html_lines.append('                </div>')
+
         html_lines.append('                <table class="data-table">')
         html_lines.append('                    <thead>')
         html_lines.append('                        <tr>')
@@ -1099,7 +1141,7 @@ def build_release_report_html(
         html_lines.append('                    </thead>')
         html_lines.append('                    <tbody>')
 
-        for b_proj in blocked_projects_list:
+        for b_proj in pap_projects_list:
             p_code = b_proj["prj"]
             p_tip = b_proj.get("tipologia", "PROGRESIÓN")
             p_meta = all_projects.get(p_code, {})
@@ -1141,12 +1183,19 @@ def build_release_report_html(
             else:
                 inc_cell = '<span style="color:#9CA3AF; font-size:12px;">Sin tickets Remedy</span>'
 
+            if b_proj.get("block_count", 0) > 0:
+                td_block = f'<td style="text-align:center;"><span class="badge badge-p1" style="font-size:12px; font-weight:800;">{b_proj["block_count"]}</span></td>'
+                td_block_rate = f'<td style="text-align:center;"><strong style="color:var(--color-p1);">{b_proj["block_rate"]}%</strong></td>'
+            else:
+                td_block = '<td style="text-align:center;"><span class="badge" style="background:#DCFCE7; color:#166534; font-size:11px; font-weight:700;">0</span></td>'
+                td_block_rate = '<td style="text-align:center;"><span style="color:#166534; font-size:12px; font-weight:600;">0%</span></td>'
+
             html_lines.append('                        <tr>')
             html_lines.append(f'                            <td>{tip_badge}</td>')
             html_lines.append(f'                            <td>{prj_cell}</td>')
             html_lines.append(f'                            <td><strong>{html.escape(p_name)}</strong></td>')
-            html_lines.append(f'                            <td style="text-align:center;"><span class="badge badge-p1" style="font-size:12px; font-weight:800;">{b_proj["block_count"]}</span></td>')
-            html_lines.append(f'                            <td style="text-align:center;"><strong style="color:var(--color-p1);">{b_proj["block_rate"]}%</strong></td>')
+            html_lines.append(f'                            {td_block}')
+            html_lines.append(f'                            {td_block_rate}')
             html_lines.append(f'                            <td style="text-align:center;"><span style="color:#166534; font-weight:700;">{b_proj["pass_count"]}</span> / <span style="color:#6B7280;">{b_proj["pending_count"]}</span></td>')
             html_lines.append(f'                            <td>{sys_badges}</td>')
             html_lines.append(f'                            <td>{html.escape(p_resp)}</td>')
