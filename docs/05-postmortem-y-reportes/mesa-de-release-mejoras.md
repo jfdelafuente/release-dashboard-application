@@ -141,18 +141,20 @@ Lista priorizada de evolutivos para la consola **[Mesa de Release](/05-postmorte
 
 ---
 
-### M12 · Botón "Copiar briefing de Mesa" (Prioridad/Sistema, Resumen IA y portapapeles seguro)
+### M12 · Botón "Copiar briefing de Mesa" (Prioridad/Sistema, Resumen IA, portapapeles seguro y formato enriquecido multilínea)
 - **Estado:** `[x] Completada`
-- **Situación previa:** Tras el comité había que redactar manualmente el resumen de seguimiento o copiar ticket a ticket.
+- **Situación previa:** Tras el comité había que redactar manualmente el resumen de seguimiento o copiar ticket a ticket; además, la versión inicial comprimía todo en una única línea kilométrica por ticket separada por guiones (`—`), dificultando la lectura en Teams y Outlook.
 - **Implementación realizada:**
   - **Dos modalidades de briefing** con botones dedicados en el pie de la consola:
     - `📋 Copiar briefing`: estructurado por nivel de prioridad (`P1`, `P2`, `P3/Otras`) con estado, proyecto, fecha prevista y resumen.
     - `📋 Briefing por Sistema`: agrupado por sistema o grupo soporte técnico resolutor.
   - **Enriquecimiento con Resumen IA**: se incluyen obligatoriamente los campos explícitos **"Problema Detectado"** (con prefijo de producto) e **"IMPACTO"** provenientes de `iaData.problema` e `iaData.impacto`.
-  - **Soporte de copia en texto plano y HTML enriquecido**: texto estructurado para Teams y HTML formateado (listas y negritas) para clientes de correo como Outlook.
-  - **Mecanismo resiliente de portapapeles**: uso de `navigator.clipboard.writeText` con fallback automático mediante `<textarea>` oculto y `document.execCommand('copy')` para entornos HTTP / IP no seguros (resolviendo el fallo de permisos `"No se pudo acceder al portapapeles"`).
+  - **Formato ejecutivo estructurado multilínea**:
+    - **Texto plano (Teams / chat):** Cada incidencia se desglosa en viñeta principal (`• INC...`) seguida de sub-viñetas indentadas (`- Problema Detectado: ...`, `- IMPACTO: ...`, `- Acción: ...`), con separación en blanco entre tickets para máxima legibilidad.
+    - **HTML enriquecido (Outlook / Word):** Estructura en bloque con sangría, tipografía normalizada y separación visual, facilitando el pegado directo como minuta ejecutiva o correo de seguimiento sin pérdida de formato.
+  - **Mecanismo resiliente de portapapeles**: uso de `ClipboardItem` para copiar simultáneamente `text/html` y `text/plain`, con fallback automático mediante `<textarea>` oculto y `document.execCommand('copy')` para entornos HTTP / IP no seguros (resolviendo el fallo de permisos `"No se pudo acceder al portapapeles"`).
 - **Componentes afectados:** `dashboards/release-desk/index.html`, `dashboards/release-desk/release-desk-domain.js`, `dashboards/release-desk/release-desk.js`, `converters/tests/unit/test_release_desk.py`.
-- **Criterio de aceptación:** Con un clic se obtiene el resumen estructurado en el portapapeles respetando los filtros activos y sin fallos por permisos en entornos HTTP.
+- **Criterio de aceptación:** Con un clic se obtiene el resumen estructurado en el portapapeles respetando los filtros activos, con diseño multilínea limpio y sin fallos por permisos en entornos HTTP.
 
 ---
 
