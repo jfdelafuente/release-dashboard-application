@@ -296,10 +296,21 @@
     function formatBriefingIncidentInfo(inc, iaCache, projectsCatalog, releaseName, overrides, todayYmd, includePriority) {
         var id = inc['ID de incidencia'] || '-';
         var iaData = iaCache ? (typeof iaCache.get === 'function' ? iaCache.get(id) : iaCache[id]) : null;
-        var descBase = (iaData && !iaData._error && iaData.problema) ? iaData.problema : (inc['Descripción'] || '-');
+        var hasIa = Boolean(iaData && !iaData._error);
+
+        var problemaBase = (hasIa && (iaData.problema || iaData.problemaDetectado))
+            ? (iaData.problema || iaData.problemaDetectado)
+            : (inc['Descripción'] || '-');
         var producto = inc['producto'] ? String(inc['producto']).trim() : '';
-        var desc = (producto ? '[' + producto + '] ' : '') + String(descBase).replace(/\r?\n/g, ' ').trim();
-        var acciones = (iaData && !iaData._error && (iaData.siguienteAccion || iaData.siguiente_accion || iaData.solucion))
+        var problema = (producto ? '[' + producto + '] ' : '') + String(problemaBase).replace(/\r?\n/g, ' ').trim();
+
+        var impactoRaw = (hasIa && (iaData.impacto || iaData.impactoNegocio || iaData.impacto_negocio))
+            || inc['Impacto']
+            || inc['impacto']
+            || '';
+        var impacto = String(impactoRaw).replace(/\r?\n/g, ' ').trim();
+
+        var acciones = (hasIa && (iaData.siguienteAccion || iaData.siguiente_accion || iaData.solucion))
             || inc['detalleSolucion']
             || '';
         acciones = String(acciones).replace(/\r?\n/g, ' ').trim();
@@ -343,10 +354,22 @@
             metaHtml.push('Sin fecha prevista');
         }
 
-        var textLine = '• ' + id + ' (' + metaText.join(' | ') + '): ' + desc;
+        var textLine = '• ' + id + ' (' + metaText.join(' | ') + '): ' +
+            'Problema Detectado: ' + problema;
+        if (impacto) {
+            textLine += ' — IMPACTO: ' + impacto;
+        } else {
+            textLine += ' — IMPACTO: ' + (isResolved ? 'Subsanado' : 'Sin impacto reseñado');
+        }
         if (acciones) textLine += ' — Acción: ' + acciones;
 
-        var htmlLine = '<li><strong>' + escapeHtml(id) + '</strong> (' + metaHtml.join(' | ') + '): ' + escapeHtml(desc);
+        var htmlLine = '<li><strong>' + escapeHtml(id) + '</strong> (' + metaHtml.join(' | ') + '): ' +
+            '<strong>Problema Detectado:</strong> ' + escapeHtml(problema);
+        if (impacto) {
+            htmlLine += ' — <strong>IMPACTO:</strong> ' + escapeHtml(impacto);
+        } else {
+            htmlLine += ' — <strong>IMPACTO:</strong> ' + escapeHtml(isResolved ? 'Subsanado' : 'Sin impacto reseñado');
+        }
         if (acciones) htmlLine += ' — <em>Acción:</em> ' + escapeHtml(acciones);
         htmlLine += '</li>';
 

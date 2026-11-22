@@ -328,7 +328,7 @@ def test_release_desk_js_build_mesa_briefing():
             "  { 'ID de incidencia': 'INC1', 'Prioridad': 'Crítica (P1)', 'producto': 'AURORA', 'Descripción': '[2026R11] PRJ-101 Fallo login', 'Estatus': 'En Curso', 'Grupo asignado': 'SOP_A' },\n"
             "  { 'ID de incidencia': 'INC2', 'Prioridad': 'Media', 'Descripción': 'Consulta menor', 'Estatus': 'Resuelto', 'Fecha de última resolución': '17/11/2026' }\n"
             "];\n"
-            "const iaCache = new Map([['INC1', { problema: 'Fallo login PRO', siguienteAccion: 'Reiniciar nodo' }]]);\n"
+            "const iaCache = new Map([['INC1', { problema: 'Fallo login PRO', impacto: 'Afectación login B2B', siguienteAccion: 'Reiniciar nodo' }]]);\n"
             "const catalog = { by_release: { '2026R11': { 'PRJ-101': { summary: 'Portal B2B', despliegue: 'Piloto' } } } };\n"
             "const overrides = { 'INC1': { fecha_prevista: '2026-11-10' } };\n"
             "const res = rd.buildMesaBriefing(incidents, iaCache, catalog, '2026R11', overrides, '2026-11-18T12:00:00Z');\n"
@@ -341,9 +341,15 @@ def test_release_desk_js_build_mesa_briefing():
         assert "[Crítica (P1)] (1)" in out["text"]
         assert "⚠️ VENCIDA 2026-11-10" in out["text"]
         assert "[Piloto] PRJ-101 — Portal B2B" in out["text"]
+        assert "Problema Detectado: [AURORA] Fallo login PRO" in out["text"]
+        assert "IMPACTO: Afectación login B2B" in out["text"]
         assert "Acción: Reiniciar nodo" in out["text"]
         assert "[Media (P3)] (1)" in out["text"]
+        assert "Problema Detectado: Consulta menor" in out["text"]
+        assert "IMPACTO: Subsanado" in out["text"]
         assert "<ul><li><strong>INC1</strong>" in out["html"]
+        assert "<strong>Problema Detectado:</strong> [AURORA] Fallo login PRO" in out["html"]
+        assert "<strong>IMPACTO:</strong> Afectación login B2B" in out["html"]
         assert "<em>Acción:</em> Reiniciar nodo" in out["html"]
     else:
         js = RELEASE_DESK_JS.read_text(encoding="utf-8")
