@@ -1093,26 +1093,12 @@ def build_release_report_html(
             p_meta = all_projects.get(p_code, {})
             p_name = p_meta.get("summary") or ("Regresión Transversal (Erebor / PYME)" if p_code == "TRANSVERSAL" else p_code)
             p_resp = p_meta.get("responsable") or "-"
-            # Excluir incidencias en estado "Cerrado"
-            p_incs = [
-                i for i in incidents_by_project.get(p_code, [])
-                if "cerrad" not in (i.get("Estatus") or "").lower() and "closed" not in (i.get("Estatus") or "").lower()
-            ]
-            seen_inc_ids = {i.get("ID de incidencia") for i in p_incs}
-            proj_systems = b_proj.get("sistemas", [])
 
-            # Asignar incidencias sin proyecto cuyo sistema coincida con 'Sistemas Impactados' de la tabla (excluyendo "Cerrado")
-            for u_inc in incidents_without_project:
-                u_st = (u_inc.get("Estatus") or "").lower()
-                if "cerrad" in u_st or "closed" in u_st:
-                    continue
-                u_id = u_inc.get("ID de incidencia")
-                if u_id in seen_inc_ids:
-                    continue
-                u_sys = u_inc.get("producto") or u_inc.get("Producto") or ""
-                if system_matches(u_sys, proj_systems):
-                    p_incs.append(u_inc)
-                    seen_inc_ids.add(u_id)
+            # Incidencias asignadas directamente al proyecto o a TRANSVERSAL (excluyendo "Cerrado")
+            if p_code == "TRANSVERSAL":
+                p_incs = list(incidents_without_project)
+            else:
+                p_incs = list(incidents_by_project.get(p_code, []))
 
             if p_tip == "PROGRESIÓN":
                 tip_badge = '<span class="badge" style="background:#EEF2FF; color:#4338CA; font-weight:800; font-size:11px;">PROGRESIÓN</span>'
@@ -1120,7 +1106,7 @@ def build_release_report_html(
                 tip_badge = '<span class="badge" style="background:#ECFDF5; color:#047857; font-weight:800; font-size:11px;">REGRESIÓN</span>'
 
             if p_code == "TRANSVERSAL":
-                prj_cell = '<strong>TRANSVERSAL</strong>'
+                prj_cell = '<a href="#card-transversales" style="color:var(--mo-black); font-weight:800; text-decoration:underline;">TRANSVERSAL</a>'
             else:
                 prj_cell = f'<a href="#card-{html.escape(p_code)}" style="color:var(--mo-black); font-weight:800; text-decoration:underline;">{html.escape(p_code)}</a>'
 

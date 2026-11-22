@@ -104,3 +104,11 @@ def test_build_release_report_html_generates_valid_file(tmp_path):
     assert "INC000004192066" not in content
     assert "INC000004192168" not in content
     assert "badge-status-cerrado" not in content
+
+    # Verifica coherencia 1:1 en PRJ-8058 (3 incidencias directas) y TRANSVERSAL (sin proyecto)
+    table_match = content[content.find("Resumen Agregado por Proyecto"):content.find("Seguimiento de Proyectos")]
+    assert 'href="#card-PRJ-8058"' in table_match
+    assert 'href="#card-transversales"' in table_match
+    assert "INC000004192176" in table_match
+    assert "INC000004192073" in table_match
+    assert "INC000004192062" in table_match
