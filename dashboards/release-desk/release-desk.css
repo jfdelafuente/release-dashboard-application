@@ -411,6 +411,17 @@ table.rd-table tbody tr.rd-detail-row > td {
 .rd-badge-jira { background: #EEF2FF; color: #3730A3; border: 1px solid #C7D2FE; }
 .rd-badge-sistema { background: #F0FDFA; color: #115E59; border: 1px solid #99F6E4; max-width: 112px; overflow: hidden; text-overflow: ellipsis; }
 .rd-badge-code { background: #F5F3EF; color: #141311; border: 1px solid #E2DDD5; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 11px; }
+.rd-inc-link {
+    color: #FF7900;
+    text-decoration: none;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+.rd-inc-link:hover {
+    text-decoration: underline;
+    color: #CC6000;
+}
 .rd-badge-fecha { background: #DCFCE7; color: #166534; border: 1px solid #BBF7D0; }
 .rd-badge-fecha-acordada { background: #FEF3C7; color: #92400E; border: 1px solid #FDE68A; cursor: pointer; }
 .rd-badge-fecha-vencida { background: #FEE2E2; color: #991B1B; border: 1px solid #FECACA; cursor: pointer; }

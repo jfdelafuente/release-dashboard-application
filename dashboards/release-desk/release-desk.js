@@ -661,8 +661,10 @@
                 ? ' data-tooltip="' + escapeHtml(motivoResuelto) + '" data-tooltip-title="Motivo / Detalle de Resolución"'
                 : '';
 
+            var codeLinkHtml = '<a href="javascript:void(0)" class="rd-inc-link" data-open-resumen="' + escapeHtml(id) + '" title="Abrir ventana Resumen IA" onclick="if(window.openResumenIA){event.stopPropagation();window.openResumenIA(\'' + escapeHtml(id) + '\');}return false;">' + escapeHtml(id) + '</a>';
+
             var rowHtml = '<tr data-inc-id="' + escapeHtml(id) + '"' + rowClassAttr + ' aria-expanded="' + (isSelected ? 'true' : 'false') + '">' +
-                '<td style="white-space:nowrap;"><span class="rd-badge rd-badge-code">' + (isSelected ? '▾ ' : '▸ ') + escapeHtml(id) + '</span>' + syncBadgeHtml + '</td>' +
+                '<td style="white-space:nowrap;"><span class="rd-badge rd-badge-code">' + (isSelected ? '▾ ' : '▸ ') + codeLinkHtml + '</span>' + syncBadgeHtml + '</td>' +
                 '<td style="font-size:11.5px; min-width:78px;">' + escapeHtml(fechaApertura) + agingHtml + '</td>' +
                 '<td style="min-width:200px; max-width:340px;"' + descTooltipAttr + '>' + descCellHtml + '</td>' +
                 '<td style="white-space:nowrap;"><span class="rd-badge ' + prioBadgeClass + '">' + escapeHtml(prioridadUrg) + '</span></td>' +
@@ -687,6 +689,16 @@
         Array.from(tbody.querySelectorAll('tr[data-inc-id]')).forEach(function (row) {
             row.addEventListener('click', function () {
                 selectIncident(row.getAttribute('data-inc-id'));
+            });
+        });
+
+        Array.from(tbody.querySelectorAll('[data-open-resumen]')).forEach(function (link) {
+            link.addEventListener('click', function (ev) {
+                ev.stopPropagation();
+                var incId = link.getAttribute('data-open-resumen');
+                if (window.openResumenIA && incId) {
+                    window.openResumenIA(incId);
+                }
             });
         });
 
@@ -845,7 +857,7 @@
                 resolutionBox +
             '</div>' +
             '<div class="rd-detail-inline-header">' +
-                '<span>Seguimiento · ' + escapeHtml(id) + '</span>' +
+                '<span>Seguimiento · <a href="javascript:void(0)" class="rd-inc-link" title="Abrir ventana Resumen IA" onclick="if(window.openResumenIA){window.openResumenIA(\'' + escapeHtml(id) + '\');}return false;">' + escapeHtml(id) + '</a></span>' +
                 '<div class="rd-detail-inline-actions">' +
                     '<button id="btnCopyFollowup" class="rd-btn rd-btn-dark">📋 Copiar seguimiento</button>' +
                     '<button id="btnCloseDetail" class="rd-btn" title="Cerrar desplegable">✕ Cerrar</button>' +
