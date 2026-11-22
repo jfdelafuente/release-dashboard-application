@@ -143,6 +143,51 @@
         }
     }
 
+    function execCommandFallback(text, successMsg) {
+        var ta = document.createElement('textarea');
+        ta.value = text;
+        ta.setAttribute('readonly', '');
+        ta.style.position = 'fixed';
+        ta.style.top = '0';
+        ta.style.left = '-9999px';
+        ta.style.width = '2em';
+        ta.style.height = '2em';
+        ta.style.padding = '0';
+        ta.style.border = 'none';
+        ta.style.outline = 'none';
+        ta.style.boxShadow = 'none';
+        ta.style.background = 'transparent';
+        document.body.appendChild(ta);
+        ta.focus();
+        ta.select();
+        var successful = false;
+        try {
+            successful = document.execCommand('copy');
+        } catch (err) {
+            successful = false;
+        }
+        document.body.removeChild(ta);
+        if (successful) {
+            notify(successMsg || 'Copiado al portapapeles.', 'success');
+        } else {
+            notify('No se pudo acceder al portapapeles. Copia el texto manualmente.', 'error');
+        }
+    }
+
+    function copyTextToClipboard(text, successMsg) {
+        if (!text) return;
+        if (window.isSecureContext && navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+            navigator.clipboard.writeText(text).then(function () {
+                notify(successMsg || 'Copiado al portapapeles.', 'success');
+            }).catch(function (err) {
+                console.warn('Fallo navigator.clipboard.writeText, usando fallback textarea:', err);
+                execCommandFallback(text, successMsg);
+            });
+            return;
+        }
+        execCommandFallback(text, successMsg);
+    }
+
     function getStatusBadgeClass(estatus) {
         var s = String(estatus || '').toLowerCase();
         if (s.includes('resuelt')) return 'rd-badge-resuelto';
@@ -645,17 +690,12 @@
         if (selectedId) {
             var copyBtn = document.getElementById('btnCopyFollowup');
             if (copyBtn) {
-                copyBtn.addEventListener('click', async function (ev) {
+                copyBtn.addEventListener('click', function (ev) {
                     ev.stopPropagation();
                     var inc = state.activeIncidents.find(function (r) { return r['ID de incidencia'] === selectedId; });
                     if (!inc) return;
                     var text = buildFollowupText(inc, state.iaCache.get(selectedId), state.currentRelease, state.projectsCatalog);
-                    try {
-                        await navigator.clipboard.writeText(text);
-                        notify('Seguimiento de ' + selectedId + ' copiado al portapapeles.', 'success');
-                    } catch (_) {
-                        notify('No se pudo acceder al portapapeles.', 'warning');
-                    }
+                    copyTextToClipboard(text, 'Seguimiento de ' + selectedId + ' copiado al portapapeles.');
                 });
             }
             var closeBtn = document.getElementById('btnCloseDetail');
@@ -1028,32 +1068,8 @@
             });
         }
 
-        function fallbackCopyText(text, successMsg) {
-            if (navigator.clipboard && navigator.clipboard.writeText) {
-                navigator.clipboard.writeText(text).then(function () {
-                    notify(successMsg, 'success');
-                }).catch(function () {
-                    notify('No se pudo copiar al portapapeles.', 'error');
-                });
-                return;
-            }
-            var ta = document.createElement('textarea');
-            ta.value = text;
-            ta.style.position = 'fixed';
-            ta.style.opacity = '0';
-            document.body.appendChild(ta);
-            ta.select();
-            try {
-                document.execCommand('copy');
-                notify(successMsg, 'success');
-            } catch (err) {
-                notify('No se pudo copiar al portapapeles.', 'error');
-            }
-            document.body.removeChild(ta);
-        }
-
         function copyBriefingToClipboard(payload, successMsg) {
-            if (navigator.clipboard && navigator.clipboard.write && typeof ClipboardItem !== 'undefined' && payload.html) {
+            if (window.isSecureContext && navigator.clipboard && navigator.clipboard.write && typeof ClipboardItem !== 'undefined' && payload.html) {
                 try {
                     var item = new ClipboardItem({
                         'text/html': new Blob([payload.html], { type: 'text/html' }),
@@ -1061,15 +1077,16 @@
                     });
                     navigator.clipboard.write([item]).then(function () {
                         notify(successMsg, 'success');
-                    }).catch(function () {
-                        fallbackCopyText(payload.text, successMsg);
+                    }).catch(function (err) {
+                        console.warn('Fallo navigator.clipboard.write con ClipboardItem, usando fallback:', err);
+                        copyTextToClipboard(payload.text, successMsg);
                     });
                     return;
                 } catch (err) {
                     // Fallback a texto plano
                 }
             }
-            fallbackCopyText(payload.text, successMsg);
+            copyTextToClipboard(payload.text, successMsg);
         }
 
         function bindBriefingButton(btnId, builderFn, label) {
