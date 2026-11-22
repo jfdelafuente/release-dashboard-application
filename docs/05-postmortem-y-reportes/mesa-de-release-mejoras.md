@@ -230,11 +230,13 @@ Lista priorizada de evolutivos para la consola **[Mesa de Release](/05-postmorte
 
 ---
 
-### M22 · Enriquecimiento de Motivo de Estado Resuelto y Detalle Técnico de Resolución
-- **Situación actual:** La columna 11 de la tabla de Mesa de Release mostraba `-` para todas las incidencias sincronizadas vía API MonTMC (`GET /api/epsilon/release`), dado que el endpoint de lista devuelve `detalleSolucion: null` y no expone el desplegable legado de Remedy `MotivoEstado_Anterior` (usado históricamente en los Excels).
+### M22 · Enriquecimiento de Motivo de Estado Resuelto, Tooltip Flotante y Detalle Técnico
+- **Situación actual:** La columna 11 de la tabla de Mesa de Release mostraba `-` para todas las incidencias sincronizadas vía API MonTMC (`GET /api/epsilon/release`), dado que el endpoint de lista devuelve `detalleSolucion: null` y no expone el desplegable legado de Remedy `MotivoEstado_Anterior` (usado históricamente en los Excels). Además, el atributo `title` nativo del navegador producía retrasos y una experiencia de usuario deficiente.
 - **Implementación realizada:**
-  1. **Enriquecimiento en sincronización backend (`sync_montmc_postmortem.py`):** Paso 3c que identifica incidencias en estado `Resuelto` o `Cerrado` devueltas por la API y consulta en paralelo (`fetch_remedy_detail`) para extraer `detalleSolucion` técnico y `Fecha de última resolución` oficial de Remedy.
+  1. **Enriquecimiento en sincronización backend (`sync_montmc_postmortem.py`):** Paso 3c que identifica incidencias en estado `Resuelto` o `Cerrado` devueltas por la API y consulta (`fetch_remedy_detail`) para extraer `detalleSolucion` técnico y `Fecha de última resolución` oficial de Remedy.
   2. **Renderizado resiliente y fallback en frontend (`release-desk.js` y `release-desk-domain.js`):** Soporta cascada de resolución con `Motivo de estado` -> `MotivoEstado_Anterior` -> `motivoEstado` -> `motivoResolucion` -> `detalleSolucion` de Remedy -> `iaData.solucion` de Resumen IA -> `-` (para tickets abiertos).
-  3. **Visualización y exportación CSV:** Celda con clamp (`rd-cell-clamp`) y tooltip `title` para lecturas largas, e inclusión fiel en la columna "Motivo Estado Resuelto" del CSV de exportación.
-- **Componentes afectados:** `converters/cli/sync_montmc_postmortem.py`, `dashboards/release-desk/release-desk.js`, `dashboards/release-desk/release-desk-domain.js`.
-- **Criterio de aceptación:** Las incidencias resueltas o cerradas muestran la justificación/detalle técnico de la solución de forma verificada sin romper la retrocompatibilidad con Excels antiguos.
+  3. **Tooltip flotante instantáneo y estilizado (`.rd-floating-tooltip`):** Tooltip con diseño UI moderno (fondo oscuro, cabecera ambar según columna, responsive y con prevención de desborde de viewport), activado mediante `data-tooltip` y `data-tooltip-title` en `Motivo Estado Resuelto`, `Acciones`, `Problema Detectado` y `Proyecto`.
+  4. **Caja de resolución en el detalle desplegable (`.rd-detail-resolution-box`):** Al pulsar sobre cualquier fila de incidencia resuelta o con solución, se despliega una sección dedicada y formateada con el texto íntegro de la solución y badge del motivo.
+  5. **Inclusión en portapapeles y CSV:** El botón "Copiar seguimiento" y la exportación a CSV integran fielmente la solución técnica y motivo.
+- **Componentes afectados:** `converters/cli/sync_montmc_postmortem.py`, `dashboards/release-desk/release-desk.js`, `dashboards/release-desk/release-desk.css`, `dashboards/release-desk/release-desk-domain.js`.
+- **Criterio de aceptación:** Las incidencias resueltas o cerradas muestran la justificación/detalle técnico de la solución con tooltip flotante instantáneo en tabla y caja legible en el detalle de fila.
