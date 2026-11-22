@@ -367,24 +367,22 @@
             metaHtml.push('Sin fecha prevista');
         }
 
-        var textLine = '• ' + id + ' (' + metaText.join(' | ') + '): ' +
-            'Problema Detectado: ' + problema;
-        if (impacto) {
-            textLine += ' — IMPACTO: ' + impacto;
-        } else {
-            textLine += ' — IMPACTO: ' + (isResolved ? 'Subsanado' : 'Sin impacto reseñado');
+        var textLines = [
+            '• ' + id + ' (' + metaText.join(' | ') + ')',
+            '  - Problema Detectado: ' + problema,
+            '  - IMPACTO: ' + (impacto || (isResolved ? 'Subsanado' : 'Sin impacto reseñado'))
+        ];
+        if (acciones) {
+            textLines.push('  - Acción: ' + acciones);
         }
-        if (acciones) textLine += ' — Acción: ' + acciones;
+        var textLine = textLines.join('\n');
 
-        var htmlLine = '<li><strong>' + escapeHtml(id) + '</strong> (' + metaHtml.join(' | ') + '): ' +
-            '<strong>Problema Detectado:</strong> ' + escapeHtml(problema);
-        if (impacto) {
-            htmlLine += ' — <strong>IMPACTO:</strong> ' + escapeHtml(impacto);
-        } else {
-            htmlLine += ' — <strong>IMPACTO:</strong> ' + escapeHtml(isResolved ? 'Subsanado' : 'Sin impacto reseñado');
-        }
-        if (acciones) htmlLine += ' — <em>Acción:</em> ' + escapeHtml(acciones);
-        htmlLine += '</li>';
+        var htmlLine = '<li><strong>' + escapeHtml(id) + '</strong> (' + metaHtml.join(' | ') + ')' +
+            '<div style="margin-left: 18px; margin-top: 3px; margin-bottom: 8px; font-size: 13px; line-height: 1.45;">' +
+            '<div><strong>Problema Detectado:</strong> ' + escapeHtml(problema) + '</div>' +
+            '<div><strong>IMPACTO:</strong> ' + escapeHtml(impacto || (isResolved ? 'Subsanado' : 'Sin impacto reseñado')) + '</div>' +
+            (acciones ? '<div><em>Acción:</em> ' + escapeHtml(acciones) + '</div>' : '') +
+            '</div></li>';
 
         return {
             textLine: textLine,
@@ -413,7 +411,7 @@
         ];
 
         sections.forEach(function (sec) {
-            textParts.push('\n[' + sec.heading + '] (' + sec.items.length + ')\n' + sec.items.map(function (x) { return x.textLine; }).join('\n'));
+            textParts.push('\n[' + sec.heading + '] (' + sec.items.length + ')\n' + sec.items.map(function (x) { return x.textLine; }).join('\n\n'));
             htmlParts.push('<p><strong>' + escapeHtml(sec.heading) + ' (' + sec.items.length + ')</strong></p><ul>' +
                 sec.items.map(function (x) { return x.htmlLine; }).join('') + '</ul>');
         });
