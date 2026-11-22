@@ -4,7 +4,7 @@
     "updated_at": "2026-11-22T07:47:00+01:00",
     "source": "Remedy Change Management (CMDB / PaP Hub)",
     "description": "Catálogo de Trabajos Programados (PaP) y Cambios Recientes (CRQ) ejecutados en los entornos de producción de Orange Tech Operations",
-    "total_changes": 9,
+    "total_changes": 11,
     "filter_window_hours": 6,
     "is_mock": true,
     "data_source_mode": "SIMULATED_MOCK_DATA",
@@ -13,6 +13,50 @@
     "target_api_endpoint": "GET /api/v1/cmdb/scheduled-changes"
   },
   "changes": [
+    {
+      "crq": "PAP-PRJ-12415",
+      "titulo": "PRJ-12415: Envio comunicaciones Kairós (Padre: PRJ-10614)",
+      "sistemas": [
+        "Kairós",
+        "Comunicaciones"
+      ],
+      "proceso_relacionado": "Notificaciones y Comunicaciones",
+      "fecha_ejecucion": "2026-11-22T23:45:00+01:00",
+      "ventana": "PAP Técnico Post-Release",
+      "horas_desde_ejecucion": null,
+      "estado": "Programado PAP Técnico",
+      "responsable": "MONICA CORONADO GARRIDO",
+      "equipo": "Agile E2E Kairós",
+      "riesgo": "Bajo",
+      "rollback_plan": "Deshabilitar disparador de comunicaciones en Kairós.",
+      "tiempo_rollback_estimado": "10 minutos",
+      "contacto_guardia": "Guardia Kairós",
+      "is_mock": false,
+      "data_source": "RELEASE_2026R11_GONOGO",
+      "mock_tag": ""
+    },
+    {
+      "crq": "PAP-PRJ-8802",
+      "titulo": "PRJ-8802: Atlas Jazztel",
+      "sistemas": [
+        "Atlas",
+        "Jazztel"
+      ],
+      "proceso_relacionado": "Frontales y Marca Jazztel",
+      "fecha_ejecucion": "2026-11-22T23:30:00+01:00",
+      "ventana": "PAP Técnico Post-Release",
+      "horas_desde_ejecucion": null,
+      "estado": "Programado PAP Técnico",
+      "responsable": "Marta Alonso Diaz",
+      "equipo": "Bimodal Jazztel",
+      "riesgo": "Medio",
+      "rollback_plan": "Revertir componentes de Atlas Jazztel a versión estable.",
+      "tiempo_rollback_estimado": "15 minutos",
+      "contacto_guardia": "Guardia Jazztel Frontales",
+      "is_mock": false,
+      "data_source": "RELEASE_2026R11_GONOGO",
+      "mock_tag": ""
+    },
     {
       "crq": "PAP-PRJ-12249",
       "titulo": "PRJ-12249: Modificación datos de incidencias-solicitudes en Teide para ATAC",

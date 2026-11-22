@@ -133,211 +133,351 @@
         "jira": "PRJ-12335",
         "summary": "PRJ-10507 Gestión terminales Pyme en CRMB2B con OL MPV1 - PAP_3",
         "despliegue": "Piloto",
-        "descripcion": ""
+        "descripcion": "",
+        "pruebas": "Si",
+        "responsable": "ENRIQUE ZAMORA MATUTE",
+        "metodologia": "WF",
+        "decision": "GO"
       },
       "PRJ-12315": {
         "jira": "PRJ-12315",
         "summary": "Cambio arquitectura servicios Online Teide (de JMS a REST) - Cambio WS - R11",
         "despliegue": "Completo",
-        "descripcion": ""
+        "descripcion": "",
+        "pruebas": "Si",
+        "responsable": "ENRIQUE MARTINEZ SENDINO",
+        "metodologia": "Agile E2E",
+        "decision": "GO"
       },
       "PRJ-12305": {
         "jira": "PRJ-12305",
         "summary": "PRJ-12305 Tipificaciones Móviles en CRMB2B (Fase 1)",
         "despliegue": "Completo",
-        "descripcion": "Se implementan diversas mejoras en la tipificación de interacciones y escalados de casos en CRM B2B sobre la base de lo implementado en proyectos previos."
+        "descripcion": "Se implementan diversas mejoras en la tipificación de interacciones y escalados de casos en CRM B2B sobre la base de lo implementado en proyectos previos.",
+        "pruebas": "Si",
+        "responsable": "Elena Ciruelos Gil",
+        "metodologia": "WF",
+        "decision": "GO"
       },
       "PRJ-12182": {
         "jira": "PRJ-12182",
         "summary": "PRJ-11956 FASE 2. ONURIS - NABOO",
         "despliegue": "Oculto",
-        "descripcion": ""
+        "descripcion": "",
+        "pruebas": "Si",
+        "responsable": "ALVARO PORCA GRANDAL",
+        "metodologia": "WF",
+        "decision": "GO"
       },
       "PRJ-12079": {
         "jira": "PRJ-12079",
         "summary": "Vista 360 para DHOs",
         "despliegue": "Completo",
-        "descripcion": ""
+        "descripcion": "",
+        "pruebas": "Si",
+        "responsable": "Maria teresa De paz San antonio",
+        "metodologia": "WF",
+        "decision": "GO"
       },
       "PRJ-12005": {
         "jira": "PRJ-12005",
         "summary": "Integración Marca Jazztel +Consents (PRJ-10957) - Eliminación funcionalidades obsoletas",
         "despliegue": "Completo",
-        "descripcion": ""
+        "descripcion": "",
+        "pruebas": "No",
+        "responsable": "FRANCISCO JAVIER PEREZ PAREJO",
+        "metodologia": "Agile E2E",
+        "decision": "GO"
       },
       "PRJ-11936": {
         "jira": "PRJ-11936",
         "summary": "Calculo penalización Big Pyme CRMB2B",
         "despliegue": "Completo",
-        "descripcion": ""
+        "descripcion": "",
+        "pruebas": "Si",
+        "responsable": "GLORIA VILA FERNANDEZ",
+        "metodologia": "WF",
+        "decision": "GO"
       },
       "PRJ-11912": {
         "jira": "PRJ-11912",
         "summary": "MPV4 Lego Mejoras Portfolio",
         "despliegue": "Completo",
-        "descripcion": "Mejoras de onboarding para plataformas de streaming en el portfolio Lego en MiOrange."
+        "descripcion": "Mejoras de onboarding para plataformas de streaming en el portfolio Lego en MiOrange.",
+        "pruebas": "Si",
+        "responsable": "Arantzazu Marcos Diaz",
+        "metodologia": "Agile E2E",
+        "decision": "GO"
       },
       "PRJ-11763": {
         "jira": "PRJ-11763",
         "summary": "Corrección Teléfonos de Contacto TAFS Recogidas Fijo",
         "despliegue": "Completo",
-        "descripcion": ""
+        "descripcion": "",
+        "pruebas": "Si",
+        "responsable": "IGNACIO MUÑOZ ESPI",
+        "metodologia": "WF",
+        "decision": "GO"
       },
       "PRJ-11706": {
         "jira": "PRJ-11706",
         "summary": "Optimización consultas oferta Teide",
         "despliegue": "Completo",
-        "descripcion": "Dentro del plan de choque IT, se mejora la forma en que Teide gestiona y consulta su catálogo de ofertas, para evitar bloqueos y errores que podían producirse por el elevado volumen de información."
+        "descripcion": "Dentro del plan de choque IT, se mejora la forma en que Teide gestiona y consulta su catálogo de ofertas, para evitar bloqueos y errores que podían producirse por el elevado volumen de información.",
+        "pruebas": "Si",
+        "responsable": "MONICA CORONADO GARRIDO",
+        "metodologia": "WF",
+        "decision": "GO"
       },
       "PRJ-11491": {
         "jira": "PRJ-11491",
         "summary": "Normativa Legal: Información Cargadores en Digital",
         "despliegue": "Completo",
-        "descripcion": ""
+        "descripcion": "",
+        "pruebas": "Si",
+        "responsable": "JAVIER VENTAS GARZON",
+        "metodologia": "Bimodal",
+        "decision": "GO"
       },
       "PRJ-11155": {
         "jira": "PRJ-11155",
         "summary": "BSCS - mejora en módulo de cambios masivos para B2B",
         "despliegue": "Completo",
-        "descripcion": ""
+        "descripcion": "",
+        "pruebas": "Si",
+        "responsable": "RAUL MARCOS GARCIA",
+        "metodologia": "WF",
+        "decision": "GO"
       },
       "PRJ-10909": {
         "jira": "PRJ-10909",
         "summary": "Productificar Google Cloud Platform (GCP)",
         "despliegue": "Completo",
-        "descripcion": "Se habilita para nuestros clientes de Grandes Cuentas la posibilidad de contratación a través de ORANGE y KRT el Servicio de Nube Pública de Google bajo un modelo de facturación basado en el consumo real que hace el cliente de ello."
+        "descripcion": "Se habilita para nuestros clientes de Grandes Cuentas la posibilidad de contratación a través de ORANGE y KRT el Servicio de Nube Pública de Google bajo un modelo de facturación basado en el consumo real que hace el cliente de ello.",
+        "pruebas": "Si",
+        "responsable": "Maria luisa Santiago Chiquero",
+        "metodologia": "Bimodal",
+        "decision": "GO"
       },
       "PRJ-10699": {
         "jira": "PRJ-10699",
         "summary": "Responsabilidades CRMB2B y Carterización",
         "despliegue": "Completo",
-        "descripcion": ""
+        "descripcion": "",
+        "pruebas": "Si",
+        "responsable": "Elena Ciruelos Gil",
+        "metodologia": "WF",
+        "decision": "GO"
       },
       "PRJ-8802": {
         "jira": "PRJ-8802",
         "summary": "Atlas Jazztel",
-        "despliegue": "Oculto",
-        "descripcion": ""
+        "despliegue": "PAP Técnico",
+        "descripcion": "",
+        "pruebas": "Si",
+        "responsable": "Marta Alonso Diaz",
+        "metodologia": "Bimodal",
+        "decision": "PaP Tecnico"
       },
       "PRJ-11406": {
         "jira": "PRJ-11406",
         "summary": "FASE 2 (PRJ-8506) CdA PRJ-11407",
         "despliegue": "Piloto",
-        "descripcion": ""
+        "descripcion": "",
+        "pruebas": "Si",
+        "responsable": "JAVIER CALLE HERNANDEZ",
+        "metodologia": "Agile E2E",
+        "decision": "GO"
       },
       "PRJ-11207": {
         "jira": "PRJ-11207",
         "summary": "Evolución VAP en Promotarget",
         "despliegue": "Completo",
-        "descripcion": "Incluir nuevas variables a evaluar por el PROMOTARGET asociadas a VAPs en Residencial & Soho"
+        "descripcion": "Incluir nuevas variables a evaluar por el PROMOTARGET asociadas a VAPs en Residencial & Soho",
+        "pruebas": "Si",
+        "responsable": "Encarnacion Sanchez Rozalen",
+        "metodologia": "Bimodal",
+        "decision": "GO"
       },
       "PRJ-11603": {
         "jira": "PRJ-11603",
         "summary": "CRMB2B: OPERACIONES MOVILES EN CRMB2B KRTO - MPV2",
         "despliegue": "Completo",
-        "descripcion": "Ampliación de operaciones de contratación y cambio de tarjeta móvil (SIM, eSIM) para líneas Empresa tanto principales como secundarias en CRMB2B."
+        "descripcion": "Ampliación de operaciones de contratación y cambio de tarjeta móvil (SIM, eSIM) para líneas Empresa tanto principales como secundarias en CRMB2B.",
+        "pruebas": "Si",
+        "responsable": "EDUARDO PASCUAL ALCALDE",
+        "metodologia": "Bimodal",
+        "decision": "GO"
       },
       "PRJ-11167": {
         "jira": "PRJ-11167",
         "summary": "Seguro Electroplus para la Tienda",
         "despliegue": "Completo",
-        "descripcion": "Nuevo seguro para los productos que no pueden ser asegurados con el seguro móvil global o el seguro multimedia."
+        "descripcion": "Nuevo seguro para los productos que no pueden ser asegurados con el seguro móvil global o el seguro multimedia.",
+        "pruebas": "Si",
+        "responsable": "CLAUDIA CALVACHE BARBOSA",
+        "metodologia": "Bimodal",
+        "decision": "GO"
       },
       "PRJ-10987": {
         "jira": "PRJ-10987",
         "summary": "Desarrollo de PA del Fijo Femtoceldas",
         "despliegue": "Completo",
-        "descripcion": "Creación de nuevos productos de evaluación y mejora de cobertura indoor para clientes PYME en Conecta PYMES y Big PYME tanto en cadena CRMB2B como BAU."
+        "descripcion": "Creación de nuevos productos de evaluación y mejora de cobertura indoor para clientes PYME en Conecta PYMES y Big PYME tanto en cadena CRMB2B como BAU.",
+        "pruebas": "Si",
+        "responsable": "EDUARDO PASCUAL ALCALDE",
+        "metodologia": "Bimodal",
+        "decision": "GO"
       },
       "PRJ-8058": {
         "jira": "PRJ-8058",
         "summary": "Resolución GAPs técnicos en proceso cambio de cuenta bancaria",
         "despliegue": "Completo",
-        "descripcion": "Resolver todos los GAPs técnicos existentes en el proceso de Cambio de Cuenta Bancaria para Clientes Convergentes, bi-equipados, Stand Alone y MO."
+        "descripcion": "Resolver todos los GAPs técnicos existentes en el proceso de Cambio de Cuenta Bancaria para Clientes Convergentes, bi-equipados, Stand Alone y MO.",
+        "pruebas": "Si",
+        "responsable": "DAVID MENDOZA POMAR",
+        "metodologia": "Bimodal",
+        "decision": "GO"
       },
       "PRJ-11283": {
         "jira": "PRJ-11283",
         "summary": "Migración de GED de  Cloud en AWS a Cloud de Google",
         "despliegue": "PAP Técnico",
-        "descripcion": "Replanificado PAP a la noche del viernes 11/12 a las 23:00h. Migración de GED de Cloud en AWS a Cloud de Google."
+        "descripcion": "Replanificado PAP a la noche del viernes 11/12 a las 23:00h.",
+        "pruebas": "Si",
+        "responsable": "Jose antonio Lopez Esteban",
+        "metodologia": "Bimodal",
+        "decision": "GO"
       },
       "PRJ-12059": {
         "jira": "PRJ-12059",
         "summary": "PRJ-11469 Fase 2 Resto de impactos",
         "despliegue": "Completo",
-        "descripcion": ""
+        "descripcion": "",
+        "pruebas": "Si",
+        "responsable": "ISABEL DIAZ AMOROS",
+        "metodologia": "Bimodal",
+        "decision": "GO"
       },
       "PRJ-11458": {
         "jira": "PRJ-11458",
         "summary": "EREBOR - SOHO PI4: Renove + Marketplace",
         "despliegue": "Piloto",
-        "descripcion": "Habilitar en Erebor el nuevo Customer Journey para Empresas SOHO – Clientes de cartera (Renoves y MarketPlace)."
+        "descripcion": "Habilitar en Erebor el nuevo Customer Journey para Empresas SOHO – Clientes de cartera (Renoves y MarketPlace).",
+        "pruebas": "Si",
+        "responsable": "Fernando Calderon Estevez",
+        "metodologia": "Agile E2E",
+        "decision": "GO"
       },
       "PRJ-11894": {
         "jira": "PRJ-11894",
         "summary": "Ciber Protección Mejoras",
         "despliegue": "Piloto",
-        "descripcion": "Integrar la funcionalidad del proveedor F-Secure, app de Ciber Protección para que esté disponible para los clientes convergentes y MO del segmento B2C. Introducimos una nueva solución de seguridad multidispositivo \"Ciberprotección Global\" a través de Orange Cyberdefense (OCD), la cual sustituye comercialmente a la antigua solución de Ciberprotección offnet de Cyan. Su despliegue para B2C incluye una modalidad de pago y otra gratuita integrada en tarifas seleccionadas."
+        "descripcion": "Integrar la funcionalidad del proveedor F-Secure, app de Ciber Protección para que esté disponible para los clientes convergentes y MO del segmento B2C. Introducimos una nueva solución de seguridad multidispositivo \"Ciberprotección Global\" a través de Orange Cyberdefense (OCD), la cual sustituye comercialmente a la antigua solución de Ciberprotección offnet de Cyan. Su despliegue para B2C incluye una modalidad de pago y otra gratuita integrada en tarifas seleccionadas.",
+        "pruebas": "Si",
+        "responsable": "AITOR JOSE MARTIN DIAZ",
+        "metodologia": "Bimodal",
+        "decision": "GO"
       },
       "PRJ-11764": {
         "jira": "PRJ-11764",
         "summary": "Fase 2 Frontales 1 Linea LEGO",
         "despliegue": "Completo",
-        "descripcion": ""
+        "descripcion": "",
+        "pruebas": "Si",
+        "responsable": "Beatriz Cazallas Saiz",
+        "metodologia": "Agile E2E",
+        "decision": "GO"
       },
       "PRJ-12386": {
         "jira": "PRJ-12386",
         "summary": "Fase Acciones de recobro (COLLECTIONS)",
         "despliegue": "Piloto",
-        "descripcion": ""
+        "descripcion": "",
+        "pruebas": "Si",
+        "responsable": "Victor manuel Prada Rodriguez",
+        "metodologia": "Bimodal",
+        "decision": "GO"
       },
       "PRJ-11940": {
         "jira": "PRJ-11940",
         "summary": "Contratación de Seguros en S8 contra OMS - FASE 2",
         "despliegue": "Completo",
-        "descripcion": ""
+        "descripcion": "",
+        "pruebas": "Si",
+        "responsable": "CLAUDIA CALVACHE BARBOSA",
+        "metodologia": "WF",
+        "decision": "GO"
       },
       "PRJ-12011": {
         "jira": "PRJ-12011",
         "summary": "PRJ-10507 Gestión terminales Pyme en CRMB2B con OL MPV1 - PAP_2",
         "despliegue": "Piloto",
-        "descripcion": "Implementar los modelos de Gestión terminales Pyme en CRMB2B para Multimarca (Orange y KRT), Modalidad OL (Operador Logístico), Modo VAP (Venta a Plazos) y Captación."
+        "descripcion": "Implementar los modelos de Gestión terminales Pyme en CRMB2B para Multimarca (Orange y KRT), Modalidad OL (Operador Logístico), Modo VAP (Venta a Plazos) y Captación.",
+        "pruebas": "Si",
+        "responsable": "ENRIQUE ZAMORA MATUTE",
+        "metodologia": "WF",
+        "decision": "GO"
       },
       "PRJ-12415": {
         "jira": "PRJ-12415",
         "summary": "Envio comunicaciones Kairós (Padre: PRJ-10614)",
-        "despliegue": "Oculto",
-        "descripcion": ""
+        "despliegue": "PAP Técnico",
+        "descripcion": "",
+        "pruebas": "No",
+        "responsable": "MONICA CORONADO GARRIDO",
+        "metodologia": "Agile E2E",
+        "decision": "PaP Tecnico"
       },
       "PRJ-12249": {
         "jira": "PRJ-12249",
         "summary": "Modificación datos de incidencias-solicitudes en Teide para ATAC",
         "despliegue": "PAP Técnico",
-        "descripcion": "PAP Técnico: Modificación datos de incidencias-solicitudes en Teide para ATAC."
+        "descripcion": "PAP Técnico: Modificación datos de incidencias-solicitudes en Teide para ATAC.",
+        "pruebas": "Si",
+        "responsable": "DAVID MENDOZA POMAR",
+        "metodologia": "Agile E2E",
+        "decision": "PaP Tecnico"
       },
       "PRJ-12268": {
         "jira": "PRJ-12268",
         "summary": "Prunado de Catálogo - Tabla de transiciones",
         "despliegue": "Completo",
-        "descripcion": ""
+        "descripcion": "",
+        "pruebas": "No",
+        "responsable": "ALICIA PORTILLO SEGOVIA",
+        "metodologia": "",
+        "decision": "GO"
       },
       "PRJ-12186": {
         "jira": "PRJ-12186",
         "summary": "Ev CRMs - Gestión de usuarios y grupos funcionales en TEIDE",
         "despliegue": "Completo",
-        "descripcion": ""
+        "descripcion": "",
+        "pruebas": "No",
+        "responsable": "ENRIQUE MARTINEZ SENDINO",
+        "metodologia": "",
+        "decision": "GO"
       },
       "PRJ-11963": {
         "jira": "PRJ-11963",
         "summary": "Fase 2 : venta de productos 3P  por  Whatsapp",
         "despliegue": "Completo",
-        "descripcion": ""
+        "descripcion": "",
+        "pruebas": "No",
+        "responsable": "Jose antonio Lopez Esteban",
+        "metodologia": "",
+        "decision": "GO"
       },
       "PRJ-11932": {
         "jira": "PRJ-11932",
         "summary": "Bono compartido llamadas internacionales Big Pyme. Necesidades de Fraude pendientes de PRJ-11600",
         "despliegue": "Completo",
-        "descripcion": ""
+        "descripcion": "",
+        "pruebas": "No",
+        "responsable": "JOSE DANIEL PEREZ",
+        "metodologia": "",
+        "decision": "GO"
       }
     }
   },
