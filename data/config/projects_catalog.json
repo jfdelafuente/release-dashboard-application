@@ -478,6 +478,56 @@
         "responsable": "JOSE DANIEL PEREZ",
         "metodologia": "",
         "decision": "GO"
+      },
+      "AB2CJ-173": {
+        "jira": "AB2CJ-173",
+        "summary": "OT visible con el pedido en vuelo",
+        "despliegue": "Completo",
+        "descripcion": "",
+        "pruebas": "Si",
+        "responsable": "",
+        "metodologia": "Agile E2E",
+        "decision": "GO"
+      },
+      "AB2CJ-169": {
+        "jira": "AB2CJ-169",
+        "summary": "Incluir la URL de Manual de Instalación en todos los expedientes de Modificación de CRM4T",
+        "despliegue": "Completo",
+        "descripcion": "",
+        "pruebas": "Si",
+        "responsable": "",
+        "metodologia": "Agile E2E",
+        "decision": "GO"
+      },
+      "AB2CJ-91": {
+        "jira": "AB2CJ-91",
+        "summary": "Personalizar promociones de Fallback con las tarifas destino",
+        "despliegue": "Completo",
+        "descripcion": "",
+        "pruebas": "Si",
+        "responsable": "",
+        "metodologia": "Agile E2E",
+        "decision": "GO"
+      },
+      "AB2CJ-241": {
+        "jira": "AB2CJ-241",
+        "summary": "Baja de Jazztel TV en downsell desde Ilimitada",
+        "despliegue": "Completo",
+        "descripcion": "",
+        "pruebas": "Si",
+        "responsable": "",
+        "metodologia": "Agile E2E",
+        "decision": "GO"
+      },
+      "AB2CJ-222": {
+        "jira": "AB2CJ-222",
+        "summary": "Entrega de pedidos exprés( Renoves)",
+        "despliegue": "Completo",
+        "descripcion": "",
+        "pruebas": "Si",
+        "responsable": "",
+        "metodologia": "Agile E2E",
+        "decision": "GO"
       }
     }
   },
@@ -969,7 +1019,52 @@
       "releases": [
         "2026R11"
       ]
+    },
+    "AB2CJ-173": {
+      "jira": "AB2CJ-173",
+      "summary": "OT visible con el pedido en vuelo",
+      "despliegue": "Completo",
+      "descripcion": "",
+      "releases": [
+        "2026R11"
+      ]
+    },
+    "AB2CJ-169": {
+      "jira": "AB2CJ-169",
+      "summary": "Incluir la URL de Manual de Instalación en todos los expedientes de Modificación de CRM4T",
+      "despliegue": "Completo",
+      "descripcion": "",
+      "releases": [
+        "2026R11"
+      ]
+    },
+    "AB2CJ-91": {
+      "jira": "AB2CJ-91",
+      "summary": "Personalizar promociones de Fallback con las tarifas destino",
+      "despliegue": "Completo",
+      "descripcion": "",
+      "releases": [
+        "2026R11"
+      ]
+    },
+    "AB2CJ-241": {
+      "jira": "AB2CJ-241",
+      "summary": "Baja de Jazztel TV en downsell desde Ilimitada",
+      "despliegue": "Completo",
+      "descripcion": "",
+      "releases": [
+        "2026R11"
+      ]
+    },
+    "AB2CJ-222": {
+      "jira": "AB2CJ-222",
+      "summary": "Entrega de pedidos exprés( Renoves)",
+      "despliegue": "Completo",
+      "descripcion": "",
+      "releases": [
+        "2026R11"
+      ]
     }
   },
-  "updated": "2026-11-20T13:42:50.582661"
+  "updated": "2026-11-22T12:24:44.062865"
 }

@@ -24,8 +24,12 @@
 
     function extractProjectCode(incident) {
         if (!incident || typeof incident !== 'object') return null;
-        var raw = String(incident['prj'] || '') + ' ' + String(incident['Descripción'] || '');
-        var match = raw.match(/\b(PRJ-\d+)\b/i);
+        var prjField = String(incident['prj'] || '').trim();
+        if (prjField && /^[A-Z0-9]+-\d+$/i.test(prjField)) {
+            return prjField.toUpperCase();
+        }
+        var raw = prjField + ' ' + String(incident['Descripción'] || '');
+        var match = raw.match(/\b((?:PRJ|AB2CJ)-\d+)\b/i);
         return match ? match[1].toUpperCase() : null;
     }
 
