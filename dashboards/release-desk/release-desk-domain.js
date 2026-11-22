@@ -82,6 +82,12 @@
             if (solucion) lines.push('Solución: ' + solucion);
             if (siguiente) lines.push('Siguiente acción: ' + siguiente);
         }
+
+        var motivo = incident['Motivo de estado'] || incident['MotivoEstado_Anterior'] || incident['motivoEstado'] || '';
+        if (motivo) lines.push('Motivo estado: ' + motivo);
+        if (incident['detalleSolucion'] && (!iaData || !iaData.solucion)) {
+            lines.push('Solución Remedy: ' + incident['detalleSolucion']);
+        }
         return lines.join('\n');
     }
 

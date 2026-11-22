@@ -642,18 +642,31 @@
                 syncBadgeHtml = '<div><span class="rd-badge-sync-upd" title="Actualizada en la última sincronización">Actualizada</span></div>';
             }
 
+            var descTooltipAttr = (descProblema && descProblema !== '-')
+                ? ' data-tooltip="' + escapeHtml(descProblema) + '" data-tooltip-title="Problema Detectado"'
+                : '';
+            var projTooltipAttr = (proj && proyectoText !== '-')
+                ? ' data-tooltip="' + escapeHtml(proyectoText) + '" data-tooltip-title="Proyecto Asociado"'
+                : '';
+            var accionesTooltipAttr = (acciones && acciones !== '-')
+                ? ' data-tooltip="' + escapeHtml(acciones) + '" data-tooltip-title="Acciones / Siguiente Paso"'
+                : '';
+            var motivoTooltipAttr = (motivoResuelto && motivoResuelto !== '-')
+                ? ' data-tooltip="' + escapeHtml(motivoResuelto) + '" data-tooltip-title="Motivo / Detalle de Resolución"'
+                : '';
+
             var rowHtml = '<tr data-inc-id="' + escapeHtml(id) + '"' + rowClassAttr + ' aria-expanded="' + (isSelected ? 'true' : 'false') + '">' +
                 '<td style="white-space:nowrap;"><span class="rd-badge rd-badge-code">' + (isSelected ? '▾ ' : '▸ ') + escapeHtml(id) + '</span>' + syncBadgeHtml + '</td>' +
                 '<td style="font-size:11.5px; min-width:78px;">' + escapeHtml(fechaApertura) + agingHtml + '</td>' +
-                '<td style="min-width:200px; max-width:340px;" title="' + escapeHtml(descProblema) + '">' + descCellHtml + '</td>' +
+                '<td style="min-width:200px; max-width:340px;"' + descTooltipAttr + '>' + descCellHtml + '</td>' +
                 '<td style="white-space:nowrap;"><span class="rd-badge ' + prioBadgeClass + '">' + escapeHtml(prioridadUrg) + '</span></td>' +
                 '<td style="max-width:120px;">' + sistemaCell + '</td>' +
                 '<td style="white-space:nowrap;">' + jiraCell + '</td>' +
-                '<td style="min-width:120px; max-width:190px;" title="' + escapeHtml(proyectoText) + '">' + proyectoCell + '</td>' +
-                '<td style="min-width:150px; max-width:230px;" title="' + escapeHtml(acciones) + '"><div class="rd-cell-clamp">' + escapeHtml(acciones) + '</div>' + staleBadgeHtml + '</td>' +
+                '<td style="min-width:120px; max-width:190px;"' + projTooltipAttr + '>' + proyectoCell + '</td>' +
+                '<td style="min-width:150px; max-width:230px;"' + accionesTooltipAttr + '><div class="rd-cell-clamp">' + escapeHtml(acciones) + '</div>' + staleBadgeHtml + '</td>' +
                 '<td><span class="rd-badge ' + statusBadgeClass + '">' + escapeHtml(inc['Estatus'] || '-') + '</span></td>' +
                 '<td style="font-size:11.5px; min-width:78px;">' + fechaPrevistaCell + '</td>' +
-                '<td style="min-width:140px; max-width:220px;" title="' + escapeHtml(motivoResuelto) + '"><div class="rd-cell-clamp">' + escapeHtml(motivoResuelto) + '</div></td>' +
+                '<td style="min-width:140px; max-width:220px;"' + motivoTooltipAttr + '><div class="rd-cell-clamp">' + escapeHtml(motivoResuelto) + '</div></td>' +
                 '<td style="max-width:120px;">' + escapeHtml(peticionario) + '</td>' +
                 '</tr>';
 
@@ -804,10 +817,26 @@
         var id = inc['ID de incidencia'];
         var iaData = state.iaCache.get(id) || null;
         var isLoadingIa = state.iaInFlight.has(id);
+        var estatusLower = String(inc['Estatus'] || '').toLowerCase();
+        var isResolved = estatusLower.includes('resuelt') || estatusLower.includes('cerrad');
+        var motivo = inc['Motivo de estado'] || inc['MotivoEstado_Anterior'] || inc['motivoEstado'] || '';
+        var solucion = inc['detalleSolucion'] || (iaData && !iaData._error && iaData.solucion ? iaData.solucion : '') || '';
+
+        var resolutionBox = '';
+        if (isResolved || motivo || solucion) {
+            resolutionBox = '<div class="rd-detail-resolution-box">' +
+                '<div class="rd-detail-resolution-title">' +
+                    '<span>✓ Detalle de Resolución / Motivo</span>' +
+                    (motivo ? '<span class="rd-badge rd-badge-resuelto">' + escapeHtml(motivo) + '</span>' : '') +
+                '</div>' +
+                '<div class="rd-detail-resolution-content">' + escapeHtml(solucion || motivo || 'Sin detalle de solución registrado en Remedy.') + '</div>' +
+            '</div>';
+        }
 
         return '<div class="rd-detail-inline-card">' +
             '<div id="detailBody" class="rd-detail-body">' +
                 renderIaSection(id, iaData, isLoadingIa) +
+                resolutionBox +
             '</div>' +
             '<div class="rd-detail-inline-header">' +
                 '<span>Seguimiento · ' + escapeHtml(id) + '</span>' +
@@ -1011,7 +1040,68 @@
         }
     }
 
+    function initFloatingTooltip() {
+        var tip = document.getElementById('rdFloatingTooltip');
+        if (!tip) {
+            tip = document.createElement('div');
+            tip.id = 'rdFloatingTooltip';
+            tip.className = 'rd-floating-tooltip';
+            document.body.appendChild(tip);
+        }
+
+        function positionTooltip(e) {
+            var offset = 14;
+            var x = e.clientX + offset;
+            var y = e.clientY + offset;
+            var rect = tip.getBoundingClientRect();
+            var winW = window.innerWidth;
+            var winH = window.innerHeight;
+
+            if (x + rect.width > winW - 12) {
+                x = e.clientX - rect.width - offset;
+            }
+            if (y + rect.height > winH - 12) {
+                y = e.clientY - rect.height - offset;
+            }
+            if (x < 12) x = 12;
+            if (y < 12) y = 12;
+
+            tip.style.left = x + 'px';
+            tip.style.top = y + 'px';
+        }
+
+        document.addEventListener('mouseover', function (e) {
+            var target = e.target.closest('[data-tooltip]');
+            if (!target) return;
+            var text = target.getAttribute('data-tooltip');
+            if (!text || text.trim() === '' || text.trim() === '-') return;
+
+            var title = target.getAttribute('data-tooltip-title') || '';
+            var html = '';
+            if (title) {
+                html += '<div class="rd-floating-tooltip-title">' + escapeHtml(title) + '</div>';
+            }
+            html += escapeHtml(text);
+            tip.innerHTML = html;
+            tip.classList.add('is-visible');
+            positionTooltip(e);
+        });
+
+        document.addEventListener('mousemove', function (e) {
+            if (!tip.classList.contains('is-visible')) return;
+            positionTooltip(e);
+        });
+
+        document.addEventListener('mouseout', function (e) {
+            var target = e.target.closest('[data-tooltip]');
+            if (!target) return;
+            if (e.relatedTarget && target.contains(e.relatedTarget)) return;
+            tip.classList.remove('is-visible');
+        });
+    }
+
     document.addEventListener('DOMContentLoaded', function () {
+        initFloatingTooltip();
         var releaseSelect = document.getElementById('releaseSelect');
         var btnSync = document.getElementById('btnSyncPostmortem');
         var btnEmptySync = document.getElementById('btnEmptySync');
