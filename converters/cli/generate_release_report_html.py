@@ -171,9 +171,11 @@ def load_grafana_pap_csv(csv_path: Path) -> Dict[str, Any]:
             result["verify_count"] += verify_val
             result["executing_count"] += executing_val
 
+            prj_key = prj if prj else "TRANSVERSAL"
+
             if block_val > 0 or blocking_comment:
                 result["blocked_items"].append({
-                    "prj": prj,
+                    "prj": prj_key,
                     "test_plan": test_plan,
                     "resumen": resumen,
                     "sistema": sistema,
@@ -182,38 +184,54 @@ def load_grafana_pap_csv(csv_path: Path) -> Dict[str, Any]:
                     "comment": blocking_comment or "Bloqueado en ejecución",
                 })
 
-            if prj:
-                if prj not in result["by_project"]:
-                    result["by_project"][prj] = {
-                        "total_tests": 0,
-                        "pass_count": 0,
-                        "pending_count": 0,
-                        "block_count": 0,
-                        "verify_count": 0,
-                        "executing_count": 0,
-                        "test_plans": [],
-                    }
-                p = result["by_project"][prj]
-                p["total_tests"] += num_test
-                p["pass_count"] += pass_val
-                p["pending_count"] += pending_val
-                p["block_count"] += block_val
-                p["verify_count"] += verify_val
-                p["executing_count"] += executing_val
-                p["test_plans"].append({
-                    "test_plan": test_plan,
-                    "resumen": resumen,
-                    "sistema": sistema,
-                    "prioridad": prioridad,
-                    "pass": pass_val,
-                    "pending": pending_val,
-                    "block": block_val,
-                    "blocking_comment": blocking_comment,
-                })
+            if prj_key not in result["by_project"]:
+                result["by_project"][prj_key] = {
+                    "total_tests": 0,
+                    "pass_count": 0,
+                    "pending_count": 0,
+                    "block_count": 0,
+                    "verify_count": 0,
+                    "executing_count": 0,
+                    "test_plans": [],
+                    "sistemas": set(),
+                }
+            p = result["by_project"][prj_key]
+            p["total_tests"] += num_test
+            p["pass_count"] += pass_val
+            p["pending_count"] += pending_val
+            p["block_count"] += block_val
+            p["verify_count"] += verify_val
+            p["executing_count"] += executing_val
+            if sistema:
+                p["sistemas"].add(sistema)
+            p["test_plans"].append({
+                "test_plan": test_plan,
+                "resumen": resumen,
+                "sistema": sistema,
+                "prioridad": prioridad,
+                "pass": pass_val,
+                "pending": pending_val,
+                "block": block_val,
+                "blocking_comment": blocking_comment,
+            })
 
         result["available"] = result["total_tests"] > 0
         if result["total_tests"] > 0:
             result["pass_rate"] = round((result["pass_count"] / result["total_tests"]) * 100, 1)
+
+        result["blocked_projects"] = []
+        for p_key, p_data in result["by_project"].items():
+            if p_data["block_count"] > 0:
+                result["blocked_projects"].append({
+                    "prj": p_key,
+                    "block_count": p_data["block_count"],
+                    "total_tests": p_data["total_tests"],
+                    "pass_count": p_data["pass_count"],
+                    "pending_count": p_data["pending_count"],
+                    "sistemas": sorted(list(p_data.get("sistemas", set()))),
+                    "block_rate": round((p_data["block_count"] / p_data["total_tests"] * 100), 1) if p_data["total_tests"] > 0 else 0.0,
+                })
+        result["blocked_projects"].sort(key=lambda x: (x["block_count"], x["block_rate"]), reverse=True)
 
     except Exception as exc:
         print(f"[WARN] Error leyendo Grafana PaP CSV {csv_path}: {exc}", file=sys.stderr)
@@ -285,6 +303,18 @@ def format_badge_priority(prio: str) -> str:
         return '<span class="badge badge-p3" title="Prioridad P3 - Media">P3 Media</span>'
     else:
         return '<span class="badge badge-p4" title="Prioridad P4 - Baja">P4 Baja</span>'
+
+
+def format_badge_priority_class(prio: str) -> str:
+    p = (prio or "").upper()
+    if p in ("P1", "CRÍTICA", "CRITICA"):
+        return "badge-p1"
+    elif p in ("P2", "ALTA"):
+        return "badge-p2"
+    elif p in ("P3", "MEDIA", "MEDIO"):
+        return "badge-p3"
+    else:
+        return "badge-p4"
 
 
 def format_badge_status(status: str) -> str:
@@ -891,37 +921,109 @@ def build_release_report_html(
 
     # SECCIÓN 1: Bloqueos de Pruebas PaP (Grafana Argos)
     if grafana_data.get("available") and grafana_data.get("blocked_items"):
-        html_lines.append('        <section>')
+        blocked_projects_list = grafana_data.get("blocked_projects", [])
+        total_blocked_tests = grafana_data.get("block_count", 0)
+
+        html_lines.append('        <section id="sec-pap-blocked">')
         html_lines.append('            <div class="section-heading">')
-        html_lines.append(f'                <h2>⚠️ Pruebas Bloqueadas en PaP (Grafana Argos) <span class="badge-count">{len(grafana_data["blocked_items"])}</span></h2>')
+        html_lines.append(f'                <h2>⚠️ Pruebas Bloqueadas en PaP (Grafana Argos) <span class="badge-count">{total_blocked_tests} pruebas ({len(blocked_projects_list)} iniciativas)</span></h2>')
         html_lines.append('            </div>')
-        html_lines.append('            <div class="data-table-wrap">')
+        html_lines.append('            <p style="margin: -6px 0 16px; font-size: 13px; color: var(--mo-text-muted);">Visión consolidada de pruebas bloqueadas durante la validación en producción (Grafana Argos), agregada por iniciativa y cruzada con incidencias Remedy.</p>')
+
+        # 1. Tabla de Resumen Agregado por Proyecto
+        html_lines.append('            <div class="data-table-wrap" style="margin-bottom: 24px;">')
+        html_lines.append('                <div style="padding: 12px 16px; background: #FFF7ED; border-bottom: 1px solid #FED7AA; display: flex; align-items: center; justify-content: space-between;">')
+        html_lines.append(f'                    <div style="font-size: 13px; font-weight: 800; color: #9A3412;">📊 Resumen Agregado por Proyecto ({len(blocked_projects_list)} iniciativas afectadas)</div>')
+        html_lines.append('                    <div style="font-size: 11.5px; color: #C2410C; font-weight: 600;">Ordenado por volumen de pruebas bloqueadas</div>')
+        html_lines.append('                </div>')
         html_lines.append('                <table class="data-table">')
         html_lines.append('                    <thead>')
         html_lines.append('                        <tr>')
-        html_lines.append('                            <th>Proyecto</th>')
-        html_lines.append('                            <th>Test Plan</th>')
-        html_lines.append('                            <th>Resumen Test Plan</th>')
-        html_lines.append('                            <th>Sistema</th>')
-        html_lines.append('                            <th>Prioridad</th>')
-        html_lines.append('                            <th>Bloqueadas</th>')
-        html_lines.append('                            <th>Comentario / Causa Bloqueo</th>')
+        html_lines.append('                            <th style="min-width: 110px;">Proyecto</th>')
+        html_lines.append('                            <th style="min-width: 220px;">Nombre / Alcance</th>')
+        html_lines.append('                            <th style="text-align: center; min-width: 100px;">Bloqueadas</th>')
+        html_lines.append('                            <th style="text-align: center; min-width: 90px;">% Bloqueo</th>')
+        html_lines.append('                            <th style="text-align: center; min-width: 120px;">Pasadas / Pend.</th>')
+        html_lines.append('                            <th style="min-width: 180px;">Sistemas Impactados</th>')
+        html_lines.append('                            <th style="min-width: 140px;">Responsable</th>')
+        html_lines.append('                            <th style="min-width: 180px;">Incidencias Remedy</th>')
         html_lines.append('                        </tr>')
         html_lines.append('                    </thead>')
         html_lines.append('                    <tbody>')
-        for b_item in grafana_data["blocked_items"]:
+
+        for b_proj in blocked_projects_list:
+            p_code = b_proj["prj"]
+            p_meta = all_projects.get(p_code, {})
+            p_name = p_meta.get("summary") or ("Regresión Transversal (Erebor / PYME)" if p_code == "TRANSVERSAL" else p_code)
+            p_resp = p_meta.get("responsable") or "-"
+            p_incs = incidents_by_project.get(p_code, [])
+
+            if p_code == "TRANSVERSAL":
+                prj_cell = '<strong>TRANSVERSAL</strong>'
+            else:
+                prj_cell = f'<a href="#card-{html.escape(p_code)}" style="color:var(--mo-black); font-weight:800; text-decoration:underline;">{html.escape(p_code)}</a>'
+
+            sys_badges = "".join(f'<span class="badge badge-neutral" style="margin:2px 2px 2px 0;">{html.escape(s)}</span>' for s in b_proj.get("sistemas", []))
+            if not sys_badges:
+                sys_badges = '<span style="color:#9CA3AF; font-size:12px;">-</span>'
+
+            if p_incs:
+                inc_badges_list = []
+                for inc_item in p_incs:
+                    inc_id_val = inc_item.get("ID de incidencia", "")
+                    prio_val = inc_item.get("Prioridad", "P3")
+                    cls = format_badge_priority_class(prio_val)
+                    inc_badges_list.append(f'<a href="#inc-{html.escape(inc_id_val)}" class="badge {cls}" style="margin:2px 2px 2px 0; text-decoration:none;" title="{html.escape(inc_item.get("Descripción", "")[:100])}">{html.escape(inc_id_val)} ({html.escape(prio_val)})</a>')
+                inc_cell = "".join(inc_badges_list)
+            else:
+                inc_cell = '<span style="color:#9CA3AF; font-size:12px;">Sin tickets Remedy</span>'
+
             html_lines.append('                        <tr>')
-            html_lines.append(f'                            <td><strong>{html.escape(b_item["prj"])}</strong></td>')
-            html_lines.append(f'                            <td><code>{html.escape(b_item["test_plan"])}</code></td>')
-            html_lines.append(f'                            <td>{html.escape(b_item["resumen"])}</td>')
-            html_lines.append(f'                            <td>{html.escape(b_item["sistema"])}</td>')
-            html_lines.append(f'                            <td>{html.escape(b_item["prioridad"])}</td>')
-            html_lines.append(f'                            <td><span class="badge badge-p1">{b_item["block_count"]}</span></td>')
-            html_lines.append(f'                            <td><span class="badge badge-p2">{html.escape(b_item["comment"])}</span></td>')
+            html_lines.append(f'                            <td>{prj_cell}</td>')
+            html_lines.append(f'                            <td><strong>{html.escape(p_name)}</strong></td>')
+            html_lines.append(f'                            <td style="text-align:center;"><span class="badge badge-p1" style="font-size:12px; font-weight:800;">{b_proj["block_count"]}</span></td>')
+            html_lines.append(f'                            <td style="text-align:center;"><strong style="color:var(--color-p1);">{b_proj["block_rate"]}%</strong></td>')
+            html_lines.append(f'                            <td style="text-align:center;"><span style="color:#166534; font-weight:700;">{b_proj["pass_count"]}</span> / <span style="color:#6B7280;">{b_proj["pending_count"]}</span></td>')
+            html_lines.append(f'                            <td>{sys_badges}</td>')
+            html_lines.append(f'                            <td>{html.escape(p_resp)}</td>')
+            html_lines.append(f'                            <td>{inc_cell}</td>')
             html_lines.append('                        </tr>')
+
         html_lines.append('                    </tbody>')
         html_lines.append('                </table>')
         html_lines.append('            </div>')
+
+        # 2. Detalle Desglosado por Test Plan y Causa de Bloqueo
+        html_lines.append('            <details open style="margin-bottom: 28px;">')
+        html_lines.append(f'                <summary style="cursor: pointer; font-size: 13.5px; font-weight: 800; color: #374151; padding: 8px 0; user-select: none;">🔍 Detalle Desglosado por Plan de Prueba y Causa de Bloqueo ({len(grafana_data["blocked_items"])} planes)</summary>')
+        html_lines.append('                <div class="data-table-wrap" style="margin-top: 10px;">')
+        html_lines.append('                    <table class="data-table">')
+        html_lines.append('                        <thead>')
+        html_lines.append('                            <tr>')
+        html_lines.append('                                <th>Proyecto</th>')
+        html_lines.append('                                <th>Test Plan</th>')
+        html_lines.append('                                <th>Resumen Test Plan</th>')
+        html_lines.append('                                <th>Sistema</th>')
+        html_lines.append('                                <th>Prioridad</th>')
+        html_lines.append('                                <th style="text-align:center;">Bloqueadas</th>')
+        html_lines.append('                                <th>Causa / Comentario</th>')
+        html_lines.append('                            </tr>')
+        html_lines.append('                        </thead>')
+        html_lines.append('                        <tbody>')
+        for b_item in grafana_data["blocked_items"]:
+            html_lines.append('                            <tr>')
+            html_lines.append(f'                                <td><strong>{html.escape(b_item["prj"])}</strong></td>')
+            html_lines.append(f'                                <td><code>{html.escape(b_item["test_plan"])}</code></td>')
+            html_lines.append(f'                                <td>{html.escape(b_item["resumen"])}</td>')
+            html_lines.append(f'                                <td>{html.escape(b_item["sistema"])}</td>')
+            html_lines.append(f'                                <td>{html.escape(b_item["prioridad"])}</td>')
+            html_lines.append(f'                                <td style="text-align:center;"><span class="badge badge-p1">{b_item["block_count"]}</span></td>')
+            html_lines.append(f'                                <td><span class="badge badge-p2">{html.escape(b_item["comment"])}</span></td>')
+            html_lines.append('                            </tr>')
+        html_lines.append('                        </tbody>')
+        html_lines.append('                    </table>')
+        html_lines.append('                </div>')
+        html_lines.append('            </details>')
         html_lines.append('        </section>')
 
     # SECCIÓN 2: Detalle de Proyectos e Incidencias con Diagnóstico IA
@@ -997,7 +1099,7 @@ def build_release_report_html(
 
                 ia_data = ia_summaries.get(inc_id, {})
 
-                html_lines.append('                    <div class="incident-item">')
+                html_lines.append(f'                    <div class="incident-item" id="inc-{html.escape(inc_id)}">')
                 html_lines.append('                        <div class="incident-head">')
                 html_lines.append('                            <div style="display:flex; align-items:center; gap:8px;">')
                 html_lines.append(f'                                <span class="incident-id">{html.escape(inc_id)}</span>')

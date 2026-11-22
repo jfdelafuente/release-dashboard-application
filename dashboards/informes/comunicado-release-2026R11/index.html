@@ -355,8 +355,8 @@
                 <h1 class="report-title">Informe Ejecutivo Global de Release · 2026R11</h1>
                 <div class="report-meta">
                     <span>📅 <strong>Fecha PaP:</strong> 22-nov.</span>
-                    <span>🕒 <strong>Generado:</strong> 22/11/2026 15:24</span>
-                    <span>📦 <strong>Total Proyectos:</strong> 41</span>
+                    <span>🕒 <strong>Generado:</strong> 22/11/2026 15:49</span>
+                    <span>📦 <strong>Total Proyectos:</strong> 42</span>
                 </div>
             </div>
             <div>
@@ -365,9 +365,9 @@
         </header>
         <section class="kpi-grid">
             <div class="kpi-card">
-                <div class="kpi-value">41</div>
+                <div class="kpi-value">42</div>
                 <div class="kpi-label">Proyectos en Release</div>
-                <div class="kpi-subtext">🟢 38 GO | 🔧 4 PaP Técnico</div>
+                <div class="kpi-subtext">🟢 39 GO | 🔧 4 PaP Técnico</div>
             </div>
             <div class="kpi-card">
                 <div class="kpi-value">72.6%</div>
@@ -390,328 +390,444 @@
                 <div class="kpi-subtext">✨ 50.0% del total de tickets Remedy</div>
             </div>
         </section>
-        <section>
+        <section id="sec-pap-blocked">
             <div class="section-heading">
-                <h2>⚠️ Pruebas Bloqueadas en PaP (Grafana Argos) <span class="badge-count">33</span></h2>
+                <h2>⚠️ Pruebas Bloqueadas en PaP (Grafana Argos) <span class="badge-count">25 pruebas (9 iniciativas)</span></h2>
             </div>
-            <div class="data-table-wrap">
+            <p style="margin: -6px 0 16px; font-size: 13px; color: var(--mo-text-muted);">Visión consolidada de pruebas bloqueadas durante la validación en producción (Grafana Argos), agregada por iniciativa y cruzada con incidencias Remedy.</p>
+            <div class="data-table-wrap" style="margin-bottom: 24px;">
+                <div style="padding: 12px 16px; background: #FFF7ED; border-bottom: 1px solid #FED7AA; display: flex; align-items: center; justify-content: space-between;">
+                    <div style="font-size: 13px; font-weight: 800; color: #9A3412;">📊 Resumen Agregado por Proyecto (9 iniciativas afectadas)</div>
+                    <div style="font-size: 11.5px; color: #C2410C; font-weight: 600;">Ordenado por volumen de pruebas bloqueadas</div>
+                </div>
                 <table class="data-table">
                     <thead>
                         <tr>
-                            <th>Proyecto</th>
-                            <th>Test Plan</th>
-                            <th>Resumen Test Plan</th>
-                            <th>Sistema</th>
-                            <th>Prioridad</th>
-                            <th>Bloqueadas</th>
-                            <th>Comentario / Causa Bloqueo</th>
+                            <th style="min-width: 110px;">Proyecto</th>
+                            <th style="min-width: 220px;">Nombre / Alcance</th>
+                            <th style="text-align: center; min-width: 100px;">Bloqueadas</th>
+                            <th style="text-align: center; min-width: 90px;">% Bloqueo</th>
+                            <th style="text-align: center; min-width: 120px;">Pasadas / Pend.</th>
+                            <th style="min-width: 180px;">Sistemas Impactados</th>
+                            <th style="min-width: 140px;">Responsable</th>
+                            <th style="min-width: 180px;">Incidencias Remedy</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr>
-                            <td><strong>PRJ-10987</strong></td>
-                            <td><code>TMMC-7872</code></td>
-                            <td>PRJ-10987 DESARROLLO DE PA DEL FIJO FEMTOCELDAS -- PYME</td>
-                            <td>CRM B2B OSP</td>
-                            <td>High</td>
-                            <td><span class="badge badge-p1">1</span></td>
-                            <td><span class="badge badge-p2">Incidencia</span></td>
+                            <td><a href="#card-PRJ-8058" style="color:var(--mo-black); font-weight:800; text-decoration:underline;">PRJ-8058</a></td>
+                            <td><strong>Resolución GAPs técnicos en proceso cambio de cuenta bancaria</strong></td>
+                            <td style="text-align:center;"><span class="badge badge-p1" style="font-size:12px; font-weight:800;">7</span></td>
+                            <td style="text-align:center;"><strong style="color:var(--color-p1);">87.5%</strong></td>
+                            <td style="text-align:center;"><span style="color:#166534; font-weight:700;">1</span> / <span style="color:#6B7280;">0</span></td>
+                            <td><span class="badge badge-neutral" style="margin:2px 2px 2px 0;">ACME APP ORANGE OSP</span><span class="badge badge-neutral" style="margin:2px 2px 2px 0;">ACME WEB ORANGE OSP</span><span class="badge badge-neutral" style="margin:2px 2px 2px 0;">FICHA DE CLIENTE OSP</span><span class="badge badge-neutral" style="margin:2px 2px 2px 0;">PANGEA OSP</span><span class="badge badge-neutral" style="margin:2px 2px 2px 0;">TEIDE OSP</span></td>
+                            <td>DAVID MENDOZA POMAR</td>
+                            <td><a href="#inc-INC000004192176" class="badge badge-p3" style="margin:2px 2px 2px 0; text-decoration:none;" title="[2026R11] - [PRJ-8058] Error AccountManagement al intentar hacer un cambio de cuenta en Pangea">INC000004192176 (P3)</a><a href="#inc-INC000004192073" class="badge badge-p4" style="margin:2px 2px 2px 0; text-decoration:none;" title="[2026R11] - PRJ-8058 [ACME APP] Error al cambiar la cuenta bancaria.">INC000004192073 (P4)</a><a href="#inc-INC000004191881" class="badge badge-p3" style="margin:2px 2px 2px 0; text-decoration:none;" title="[2026R11] - [PRJ-8058] Error al cambiar la cuenta bancaria cliente SM Empresa en pangea">INC000004191881 (P3)</a><a href="#inc-INC000004192062" class="badge badge-p3" style="margin:2px 2px 2px 0; text-decoration:none;" title="[2026R11] - PRJ-8058 - ERROR EN CAMBIO DE CUENTA TEIDE">INC000004192062 (P3)</a></td>
                         </tr>
                         <tr>
-                            <td><strong>PRJ-10987</strong></td>
-                            <td><code>TMMC-7872</code></td>
-                            <td>PRJ-10987 DESARROLLO DE PA DEL FIJO FEMTOCELDAS -- PYME</td>
-                            <td>CRM B2B OSP</td>
-                            <td>High</td>
-                            <td><span class="badge badge-p1">1</span></td>
-                            <td><span class="badge badge-p2">Incidencia</span></td>
+                            <td><a href="#card-PRJ-11894" style="color:var(--mo-black); font-weight:800; text-decoration:underline;">PRJ-11894</a></td>
+                            <td><strong>Ciber Protección Mejoras</strong></td>
+                            <td style="text-align:center;"><span class="badge badge-p1" style="font-size:12px; font-weight:800;">5</span></td>
+                            <td style="text-align:center;"><strong style="color:var(--color-p1);">29.4%</strong></td>
+                            <td style="text-align:center;"><span style="color:#166534; font-weight:700;">11</span> / <span style="color:#6B7280;">0</span></td>
+                            <td><span class="badge badge-neutral" style="margin:2px 2px 2px 0;">ACME WEB ORANGE OSP</span><span class="badge badge-neutral" style="margin:2px 2px 2px 0;">FICHA DE CLIENTE OSP</span><span class="badge badge-neutral" style="margin:2px 2px 2px 0;">PANGEA OSP</span><span class="badge badge-neutral" style="margin:2px 2px 2px 0;">TEIDE OSP</span></td>
+                            <td>AITOR JOSE MARTIN DIAZ</td>
+                            <td><a href="#inc-INC000004192181" class="badge badge-p4" style="margin:2px 2px 2px 0; text-decoration:none;" title="[2026R11] - PRJ-11894 -SIRES- No detonarse el mail de las plantillas 9009684 y 9009685">INC000004192181 (P4)</a><a href="#inc-INC000004191887" class="badge badge-p4" style="margin:2px 2px 2px 0; text-decoration:none;" title="[2026R11] - PRJ-11894 - No llegar mail de contratación del SVA Ciberproteccion Global">INC000004191887 (P4)</a><a href="#inc-INC000004192066" class="badge badge-p4" style="margin:2px 2px 2px 0; text-decoration:none;" title="[2026R11] - [PRJ-11894] - ERROR CONTRATACION NO SALTA VALIDACION A2F">INC000004192066 (P4)</a></td>
                         </tr>
                         <tr>
-                            <td><strong>PRJ-11155</strong></td>
-                            <td><code>TMMC-7902</code></td>
-                            <td>PRJ-11155 BSCS - MEJORA EN MÓDULO DE CAMBIOS MASIVOS PARA B2B -- PYME</td>
-                            <td>BSCS OSP</td>
-                            <td>High</td>
-                            <td><span class="badge badge-p1">3</span></td>
-                            <td><span class="badge badge-p2">Incidencia</span></td>
+                            <td><a href="#card-PRJ-11155" style="color:var(--mo-black); font-weight:800; text-decoration:underline;">PRJ-11155</a></td>
+                            <td><strong>BSCS - mejora en módulo de cambios masivos para B2B</strong></td>
+                            <td style="text-align:center;"><span class="badge badge-p1" style="font-size:12px; font-weight:800;">3</span></td>
+                            <td style="text-align:center;"><strong style="color:var(--color-p1);">100.0%</strong></td>
+                            <td style="text-align:center;"><span style="color:#166534; font-weight:700;">0</span> / <span style="color:#6B7280;">0</span></td>
+                            <td><span class="badge badge-neutral" style="margin:2px 2px 2px 0;">BSCS OSP</span></td>
+                            <td>RAUL MARCOS GARCIA</td>
+                            <td><a href="#inc-INC000004192177" class="badge badge-p3" style="margin:2px 2px 2px 0; text-decoration:none;" title="[2026R11] - [PRJ-11155] - BSCS - Error al acceder a la herramienta de operaciones masivas">INC000004192177 (P3)</a></td>
                         </tr>
                         <tr>
-                            <td><strong>PRJ-11491</strong></td>
-                            <td><code>TMMC-7780</code></td>
-                            <td>PRJ-11491 Normativa legal: Información Cargadores en digital - F1L</td>
-                            <td>PANGEA OSP</td>
-                            <td>Medium</td>
-                            <td><span class="badge badge-p1">0</span></td>
-                            <td><span class="badge badge-p2">Bug Otro Sistema</span></td>
+                            <td><strong>TRANSVERSAL</strong></td>
+                            <td><strong>Proyecto TRANSVERSAL</strong></td>
+                            <td style="text-align:center;"><span class="badge badge-p1" style="font-size:12px; font-weight:800;">3</span></td>
+                            <td style="text-align:center;"><strong style="color:var(--color-p1);">0.8%</strong></td>
+                            <td style="text-align:center;"><span style="color:#166534; font-weight:700;">282</span> / <span style="color:#6B7280;">46</span></td>
+                            <td><span class="badge badge-neutral" style="margin:2px 2px 2px 0;">ACME APP ORANGE OSP</span><span class="badge badge-neutral" style="margin:2px 2px 2px 0;">ACME WEB ORANGE OSP</span><span class="badge badge-neutral" style="margin:2px 2px 2px 0;">ALTAMIRA OSP</span><span class="badge badge-neutral" style="margin:2px 2px 2px 0;">ARPA OSP</span><span class="badge badge-neutral" style="margin:2px 2px 2px 0;">BSCS OSP</span><span class="badge badge-neutral" style="margin:2px 2px 2px 0;">CLU OSP</span><span class="badge badge-neutral" style="margin:2px 2px 2px 0;">CRM B2B OSP</span><span class="badge badge-neutral" style="margin:2px 2px 2px 0;">CRM4TELCO OSP - JAZZTEL</span><span class="badge badge-neutral" style="margin:2px 2px 2px 0;">ESHOP FRONTEND OSP</span><span class="badge badge-neutral" style="margin:2px 2px 2px 0;">FICHA CLIENTE OSP - JAZZTEL</span><span class="badge badge-neutral" style="margin:2px 2px 2px 0;">FICHA DE CLIENTE OSP</span><span class="badge badge-neutral" style="margin:2px 2px 2px 0;">OCS OSP</span><span class="badge badge-neutral" style="margin:2px 2px 2px 0;">PAE OSP</span><span class="badge badge-neutral" style="margin:2px 2px 2px 0;">PANGEA OSP</span><span class="badge badge-neutral" style="margin:2px 2px 2px 0;">PORTAL AUTOGESTION CENTRALITA OSP</span><span class="badge badge-neutral" style="margin:2px 2px 2px 0;">SEDNA OSP</span><span class="badge badge-neutral" style="margin:2px 2px 2px 0;">SIEBEL M2M OSP</span><span class="badge badge-neutral" style="margin:2px 2px 2px 0;">SIRES OSP</span><span class="badge badge-neutral" style="margin:2px 2px 2px 0;">TEIDE OSP</span><span class="badge badge-neutral" style="margin:2px 2px 2px 0;">{.N/A}</span><span class="badge badge-neutral" style="margin:2px 2px 2px 0;">{EXTRANET}</span><span class="badge badge-neutral" style="margin:2px 2px 2px 0;">{GUIS}</span><span class="badge badge-neutral" style="margin:2px 2px 2px 0;">{PEOPLESOFT}</span></td>
+                            <td>-</td>
+                            <td><span style="color:#9CA3AF; font-size:12px;">Sin tickets Remedy</span></td>
                         </tr>
                         <tr>
-                            <td><strong>PRJ-11603</strong></td>
-                            <td><code>TMMC-7925</code></td>
-                            <td>PRJ-11603 CRMB2B OPERACIONES MOVILES EN CRMB2B KRTO - MPV2 -- PYME</td>
-                            <td>CRM B2B OSP</td>
-                            <td>High</td>
-                            <td><span class="badge badge-p1">1</span></td>
-                            <td><span class="badge badge-p2">Incidencia</span></td>
+                            <td><a href="#card-PRJ-11912" style="color:var(--mo-black); font-weight:800; text-decoration:underline;">PRJ-11912</a></td>
+                            <td><strong>MPV4 Lego Mejoras Portfolio</strong></td>
+                            <td style="text-align:center;"><span class="badge badge-p1" style="font-size:12px; font-weight:800;">2</span></td>
+                            <td style="text-align:center;"><strong style="color:var(--color-p1);">50.0%</strong></td>
+                            <td style="text-align:center;"><span style="color:#166534; font-weight:700;">2</span> / <span style="color:#6B7280;">0</span></td>
+                            <td><span class="badge badge-neutral" style="margin:2px 2px 2px 0;">ACME APP ORANGE OSP</span><span class="badge badge-neutral" style="margin:2px 2px 2px 0;">ACME WEB ORANGE OSP</span></td>
+                            <td>Arantzazu Marcos Diaz</td>
+                            <td><a href="#inc-INC000004191897" class="badge badge-p4" style="margin:2px 2px 2px 0; text-decoration:none;" title="[2026R11] - [PRJ-11912] - ACME - NO APARECE LA INFORMACION DE COMO ACTIVAR NETFLIX CORRECTAMENTE">INC000004191897 (P4)</a></td>
                         </tr>
                         <tr>
-                            <td><strong>PRJ-11764</strong></td>
-                            <td><code>TMMC-7712</code></td>
-                            <td>PRJ-11764 Fase 2 Frontales 1 Linea LEGO -- F1L</td>
-                            <td>FICHA DE CLIENTE OSP</td>
-                            <td>Medium</td>
-                            <td><span class="badge badge-p1">0</span></td>
-                            <td><span class="badge badge-p2">Bug Otro Sistema</span></td>
+                            <td><a href="#card-PRJ-10987" style="color:var(--mo-black); font-weight:800; text-decoration:underline;">PRJ-10987</a></td>
+                            <td><strong>Desarrollo de PA del Fijo Femtoceldas</strong></td>
+                            <td style="text-align:center;"><span class="badge badge-p1" style="font-size:12px; font-weight:800;">2</span></td>
+                            <td style="text-align:center;"><strong style="color:var(--color-p1);">33.3%</strong></td>
+                            <td style="text-align:center;"><span style="color:#166534; font-weight:700;">4</span> / <span style="color:#6B7280;">0</span></td>
+                            <td><span class="badge badge-neutral" style="margin:2px 2px 2px 0;">CRM B2B OSP</span><span class="badge badge-neutral" style="margin:2px 2px 2px 0;">{GUIS}</span></td>
+                            <td>EDUARDO PASCUAL ALCALDE</td>
+                            <td><a href="#inc-INC000004192171" class="badge badge-p4" style="margin:2px 2px 2px 0; text-decoration:none;" title="[2026R11] - [PRJ-10987] - No aparece el PA de Fijo Instalacion - Obra Civil en Postventa">INC000004192171 (P4)</a><a href="#inc-INC000004192065" class="badge badge-p4" style="margin:2px 2px 2px 0; text-decoration:none;" title="[2026R11] - [PRJ-10987] CRM B2B- Al seleccionar el descuento no aparece el porcentaje correctamente">INC000004192065 (P4)</a><a href="#inc-INC000004192167" class="badge badge-p3" style="margin:2px 2px 2px 0; text-decoration:none;" title="[2026R11] - [PRJ-10987] KENAN_FX - Error en Volcado Facturación en provision de postventa Big PYME">INC000004192167 (P3)</a></td>
                         </tr>
                         <tr>
-                            <td><strong>PRJ-11764</strong></td>
-                            <td><code>TMMC-7712</code></td>
-                            <td>PRJ-11764 Fase 2 Frontales 1 Linea LEGO -- F1L</td>
-                            <td>PANGEA OSP</td>
-                            <td>Medium</td>
-                            <td><span class="badge badge-p1">1</span></td>
-                            <td><span class="badge badge-p2">Bug Otro Sistema</span></td>
+                            <td><a href="#card-PRJ-11764" style="color:var(--mo-black); font-weight:800; text-decoration:underline;">PRJ-11764</a></td>
+                            <td><strong>Fase 2 Frontales 1 Linea LEGO</strong></td>
+                            <td style="text-align:center;"><span class="badge badge-p1" style="font-size:12px; font-weight:800;">1</span></td>
+                            <td style="text-align:center;"><strong style="color:var(--color-p1);">50.0%</strong></td>
+                            <td style="text-align:center;"><span style="color:#166534; font-weight:700;">0</span> / <span style="color:#6B7280;">0</span></td>
+                            <td><span class="badge badge-neutral" style="margin:2px 2px 2px 0;">FICHA DE CLIENTE OSP</span><span class="badge badge-neutral" style="margin:2px 2px 2px 0;">PANGEA OSP</span></td>
+                            <td>Beatriz Cazallas Saiz</td>
+                            <td><a href="#inc-INC000004192085" class="badge badge-p4" style="margin:2px 2px 2px 0; text-decoration:none;" title="[2026R11][PRJ-11764] Mosaico tarifas - No salta POPUP ¿Desea eliminar la tarifa ...?">INC000004192085 (P4)</a><a href="#inc-INC000004192173" class="badge badge-p3" style="margin:2px 2px 2px 0; text-decoration:none;" title="[2026R11] - [Progresion] [PRJ-11764] Captacion - Aparece VPT Pte en SIebel pero no llega Hermes">INC000004192173 (P3)</a></td>
                         </tr>
                         <tr>
-                            <td><strong>PRJ-11894</strong></td>
-                            <td><code>TMMC-7656</code></td>
-                            <td>PRJ-11894 Ciber Protección Mejoras -- DPA</td>
-                            <td>ACME WEB ORANGE OSP</td>
-                            <td>High</td>
-                            <td><span class="badge badge-p1">0</span></td>
-                            <td><span class="badge badge-p2">Incidencia</span></td>
+                            <td><a href="#card-PRJ-11603" style="color:var(--mo-black); font-weight:800; text-decoration:underline;">PRJ-11603</a></td>
+                            <td><strong>CRMB2B: OPERACIONES MOVILES EN CRMB2B KRTO - MPV2</strong></td>
+                            <td style="text-align:center;"><span class="badge badge-p1" style="font-size:12px; font-weight:800;">1</span></td>
+                            <td style="text-align:center;"><strong style="color:var(--color-p1);">20.0%</strong></td>
+                            <td style="text-align:center;"><span style="color:#166534; font-weight:700;">1</span> / <span style="color:#6B7280;">1</span></td>
+                            <td><span class="badge badge-neutral" style="margin:2px 2px 2px 0;">CRM B2B OSP</span></td>
+                            <td>EDUARDO PASCUAL ALCALDE</td>
+                            <td><span style="color:#9CA3AF; font-size:12px;">Sin tickets Remedy</span></td>
                         </tr>
                         <tr>
-                            <td><strong>PRJ-11894</strong></td>
-                            <td><code>TMMC-7725</code></td>
-                            <td>PRJ-11894 CIBER PROTECCION MEJORAS_BKD</td>
-                            <td>TEIDE OSP</td>
-                            <td>Medium</td>
-                            <td><span class="badge badge-p1">2</span></td>
-                            <td><span class="badge badge-p2">Bloqueado en ejecución</span></td>
-                        </tr>
-                        <tr>
-                            <td><strong>PRJ-11894</strong></td>
-                            <td><code>TMMC-7725</code></td>
-                            <td>PRJ-11894 CIBER PROTECCION MEJORAS_BKD</td>
-                            <td>TEIDE OSP</td>
-                            <td>Medium</td>
-                            <td><span class="badge badge-p1">2</span></td>
-                            <td><span class="badge badge-p2">Bloqueado en ejecución</span></td>
-                        </tr>
-                        <tr>
-                            <td><strong>PRJ-11894</strong></td>
-                            <td><code>TMMC-7996</code></td>
-                            <td>PRJ-11894 Ciber Protección Mejoras -- F1L</td>
-                            <td>FICHA DE CLIENTE OSP</td>
-                            <td>Medium</td>
-                            <td><span class="badge badge-p1">1</span></td>
-                            <td><span class="badge badge-p2">Bug Otro Sistema</span></td>
-                        </tr>
-                        <tr>
-                            <td><strong>PRJ-11894</strong></td>
-                            <td><code>TMMC-7996</code></td>
-                            <td>PRJ-11894 Ciber Protección Mejoras -- F1L</td>
-                            <td>PANGEA OSP</td>
-                            <td>Medium</td>
-                            <td><span class="badge badge-p1">0</span></td>
-                            <td><span class="badge badge-p2">Bug Interno</span></td>
-                        </tr>
-                        <tr>
-                            <td><strong>PRJ-11912</strong></td>
-                            <td><code>TMMC-7754</code></td>
-                            <td>PRJ-11912 MPV4 Lego Mejoras Portfolio -- DPA</td>
-                            <td>ACME APP ORANGE OSP</td>
-                            <td>High</td>
-                            <td><span class="badge badge-p1">1</span></td>
-                            <td><span class="badge badge-p2">Incidencia</span></td>
-                        </tr>
-                        <tr>
-                            <td><strong>PRJ-11912</strong></td>
-                            <td><code>TMMC-7754</code></td>
-                            <td>PRJ-11912 MPV4 Lego Mejoras Portfolio -- DPA</td>
-                            <td>ACME WEB ORANGE OSP</td>
-                            <td>High</td>
-                            <td><span class="badge badge-p1">1</span></td>
-                            <td><span class="badge badge-p2">Incidencia</span></td>
-                        </tr>
-                        <tr>
-                            <td><strong>PRJ-11940</strong></td>
-                            <td><code>TMMC-7665</code></td>
-                            <td>PRJ-11940 CONTRATACION DE SEGUROS EN S8 CONTRA OMS - FASE 2_BKD</td>
-                            <td>TEIDE OSP</td>
-                            <td>Medium</td>
-                            <td><span class="badge badge-p1">0</span></td>
-                            <td><span class="badge badge-p2">Incidencia</span></td>
-                        </tr>
-                        <tr>
-                            <td><strong>PRJ-12011</strong></td>
-                            <td><code>TMMC-7943</code></td>
-                            <td>PRJ-12011 Fase II: Gestión terminales Pyme en CRMB2B con OL MPV1 - PAP_2 -- PYME</td>
-                            <td>CRM B2B OSP</td>
-                            <td>High</td>
-                            <td><span class="badge badge-p1">0</span></td>
-                            <td><span class="badge badge-p2">Incidencia</span></td>
-                        </tr>
-                        <tr>
-                            <td><strong>PRJ-12059</strong></td>
-                            <td><code>TMMC-7756</code></td>
-                            <td>PRJ-12059 Fase 2 Resto de impactos (Multidispositivo VAP) - CRM4TELCO F1L</td>
-                            <td>CRM4TELCO OSP - JAZZTEL</td>
-                            <td>Medium</td>
-                            <td><span class="badge badge-p1">1</span></td>
-                            <td><span class="badge badge-p2">Incidencia</span></td>
-                        </tr>
-                        <tr>
-                            <td><strong>PRJ-12305</strong></td>
-                            <td><code>TMMC-7956</code></td>
-                            <td>PRJ-12305 TIPIFICACIONES MÓVILES EN CRMB2B -- PYME</td>
-                            <td>CRM B2B OSP</td>
-                            <td>High</td>
-                            <td><span class="badge badge-p1">0</span></td>
-                            <td><span class="badge badge-p2">Incidencia</span></td>
-                        </tr>
-                        <tr>
-                            <td><strong>PRJ-8058</strong></td>
-                            <td><code>TMMC-7645</code></td>
-                            <td>PRJ-8058 RESOLUCION GAPs TECNICOS EN PROCESO CAMBIO CUENTA BANCARIA_BKD</td>
-                            <td>TEIDE OSP</td>
-                            <td>Medium</td>
-                            <td><span class="badge badge-p1">2</span></td>
-                            <td><span class="badge badge-p2">Incidencia</span></td>
-                        </tr>
-                        <tr>
-                            <td><strong>PRJ-8058</strong></td>
-                            <td><code>TMMC-7763</code></td>
-                            <td>PRJ-8058 Resolucion GAPs técnicos en proceso de cambio de cuenta bancaria -- DPA</td>
-                            <td>ACME APP ORANGE OSP</td>
-                            <td>High</td>
-                            <td><span class="badge badge-p1">2</span></td>
-                            <td><span class="badge badge-p2">Incidencia</span></td>
-                        </tr>
-                        <tr>
-                            <td><strong>PRJ-8058</strong></td>
-                            <td><code>TMMC-7763</code></td>
-                            <td>PRJ-8058 Resolucion GAPs técnicos en proceso de cambio de cuenta bancaria -- DPA</td>
-                            <td>ACME WEB ORANGE OSP</td>
-                            <td>High</td>
-                            <td><span class="badge badge-p1">1</span></td>
-                            <td><span class="badge badge-p2">Incidencia</span></td>
-                        </tr>
-                        <tr>
-                            <td><strong>PRJ-8058</strong></td>
-                            <td><code>TMMC-7789</code></td>
-                            <td>PRJ-8058 Resolución GAPs técnicos en proceso cambio de cuenta bancaria - F1L</td>
-                            <td>FICHA DE CLIENTE OSP</td>
-                            <td>Medium</td>
-                            <td><span class="badge badge-p1">1</span></td>
-                            <td><span class="badge badge-p2">Bug Interno</span></td>
-                        </tr>
-                        <tr>
-                            <td><strong>PRJ-8058</strong></td>
-                            <td><code>TMMC-7789</code></td>
-                            <td>PRJ-8058 Resolución GAPs técnicos en proceso cambio de cuenta bancaria - F1L</td>
-                            <td>PANGEA OSP</td>
-                            <td>Medium</td>
-                            <td><span class="badge badge-p1">1</span></td>
-                            <td><span class="badge badge-p2">Bug Interno</span></td>
-                        </tr>
-                        <tr>
-                            <td><strong></strong></td>
-                            <td><code>TMMC-7423</code></td>
-                            <td>Regresión Ficha PaP R11</td>
-                            <td>FICHA DE CLIENTE OSP</td>
-                            <td>Medium</td>
-                            <td><span class="badge badge-p1">0</span></td>
-                            <td><span class="badge badge-p2">Incidencia</span></td>
-                        </tr>
-                        <tr>
-                            <td><strong></strong></td>
-                            <td><code>TMMC-7423</code></td>
-                            <td>Regresión Ficha PaP R11</td>
-                            <td>FICHA DE CLIENTE OSP</td>
-                            <td>Medium</td>
-                            <td><span class="badge badge-p1">0</span></td>
-                            <td><span class="badge badge-p2">Incidencia</span></td>
-                        </tr>
-                        <tr>
-                            <td><strong></strong></td>
-                            <td><code>TMMC-7423</code></td>
-                            <td>Regresión Ficha PaP R11</td>
-                            <td>FICHA DE CLIENTE OSP</td>
-                            <td>Medium</td>
-                            <td><span class="badge badge-p1">0</span></td>
-                            <td><span class="badge badge-p2">Incidencia</span></td>
-                        </tr>
-                        <tr>
-                            <td><strong></strong></td>
-                            <td><code>TMMC-7434</code></td>
-                            <td>Regresion Pangea PaP R11</td>
-                            <td>PANGEA OSP</td>
-                            <td>Medium</td>
-                            <td><span class="badge badge-p1">0</span></td>
-                            <td><span class="badge badge-p2">Bug Interno</span></td>
-                        </tr>
-                        <tr>
-                            <td><strong></strong></td>
-                            <td><code>TMMC-7434</code></td>
-                            <td>Regresion Pangea PaP R11</td>
-                            <td>PANGEA OSP</td>
-                            <td>Medium</td>
-                            <td><span class="badge badge-p1">0</span></td>
-                            <td><span class="badge badge-p2">Bug Interno</span></td>
-                        </tr>
-                        <tr>
-                            <td><strong></strong></td>
-                            <td><code>TMMC-7434</code></td>
-                            <td>Regresion Pangea PaP R11</td>
-                            <td>PANGEA OSP</td>
-                            <td>Medium</td>
-                            <td><span class="badge badge-p1">0</span></td>
-                            <td><span class="badge badge-p2">Bug Interno</span></td>
-                        </tr>
-                        <tr>
-                            <td><strong></strong></td>
-                            <td><code>TMMC-7434</code></td>
-                            <td>Regresion Pangea PaP R11</td>
-                            <td>PANGEA OSP</td>
-                            <td>Medium</td>
-                            <td><span class="badge badge-p1">0</span></td>
-                            <td><span class="badge badge-p2">Pdte Datos</span></td>
-                        </tr>
-                        <tr>
-                            <td><strong></strong></td>
-                            <td><code>TMMC-7897</code></td>
-                            <td>REGRESION PYME R2026-11</td>
-                            <td>CRM B2B OSP</td>
-                            <td>High</td>
-                            <td><span class="badge badge-p1">1</span></td>
-                            <td><span class="badge badge-p2">Bloqueado en ejecución</span></td>
-                        </tr>
-                        <tr>
-                            <td><strong></strong></td>
-                            <td><code>TMMC-7897</code></td>
-                            <td>REGRESION PYME R2026-11</td>
-                            <td>CRM B2B OSP</td>
-                            <td>High</td>
-                            <td><span class="badge badge-p1">1</span></td>
-                            <td><span class="badge badge-p2">Incidencia</span></td>
-                        </tr>
-                        <tr>
-                            <td><strong></strong></td>
-                            <td><code>TMMC-7967</code></td>
-                            <td>REGRESION EREBOR R2026-11 -- DPA</td>
-                            <td>ESHOP FRONTEND OSP</td>
-                            <td>High</td>
-                            <td><span class="badge badge-p1">1</span></td>
-                            <td><span class="badge badge-p2">Incidencia</span></td>
+                            <td><a href="#card-PRJ-12059" style="color:var(--mo-black); font-weight:800; text-decoration:underline;">PRJ-12059</a></td>
+                            <td><strong>PRJ-11469 Fase 2 Resto de impactos</strong></td>
+                            <td style="text-align:center;"><span class="badge badge-p1" style="font-size:12px; font-weight:800;">1</span></td>
+                            <td style="text-align:center;"><strong style="color:var(--color-p1);">10.0%</strong></td>
+                            <td style="text-align:center;"><span style="color:#166534; font-weight:700;">3</span> / <span style="color:#6B7280;">6</span></td>
+                            <td><span class="badge badge-neutral" style="margin:2px 2px 2px 0;">CRM4TELCO OSP - JAZZTEL</span><span class="badge badge-neutral" style="margin:2px 2px 2px 0;">PANGEA OSP</span></td>
+                            <td>ISABEL DIAZ AMOROS</td>
+                            <td><a href="#inc-INC000004191979" class="badge badge-p3" style="margin:2px 2px 2px 0; text-decoration:none;" title="[2026R11] [PRJ-12059] [PROGRESION] Se muestra pago correcto y no se registra en PSP">INC000004191979 (P3)</a></td>
                         </tr>
                     </tbody>
                 </table>
             </div>
+            <details open style="margin-bottom: 28px;">
+                <summary style="cursor: pointer; font-size: 13.5px; font-weight: 800; color: #374151; padding: 8px 0; user-select: none;">🔍 Detalle Desglosado por Plan de Prueba y Causa de Bloqueo (33 planes)</summary>
+                <div class="data-table-wrap" style="margin-top: 10px;">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Proyecto</th>
+                                <th>Test Plan</th>
+                                <th>Resumen Test Plan</th>
+                                <th>Sistema</th>
+                                <th>Prioridad</th>
+                                <th style="text-align:center;">Bloqueadas</th>
+                                <th>Causa / Comentario</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>PRJ-10987</strong></td>
+                                <td><code>TMMC-7872</code></td>
+                                <td>PRJ-10987 DESARROLLO DE PA DEL FIJO FEMTOCELDAS -- PYME</td>
+                                <td>CRM B2B OSP</td>
+                                <td>High</td>
+                                <td style="text-align:center;"><span class="badge badge-p1">1</span></td>
+                                <td><span class="badge badge-p2">Incidencia</span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>PRJ-10987</strong></td>
+                                <td><code>TMMC-7872</code></td>
+                                <td>PRJ-10987 DESARROLLO DE PA DEL FIJO FEMTOCELDAS -- PYME</td>
+                                <td>CRM B2B OSP</td>
+                                <td>High</td>
+                                <td style="text-align:center;"><span class="badge badge-p1">1</span></td>
+                                <td><span class="badge badge-p2">Incidencia</span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>PRJ-11155</strong></td>
+                                <td><code>TMMC-7902</code></td>
+                                <td>PRJ-11155 BSCS - MEJORA EN MÓDULO DE CAMBIOS MASIVOS PARA B2B -- PYME</td>
+                                <td>BSCS OSP</td>
+                                <td>High</td>
+                                <td style="text-align:center;"><span class="badge badge-p1">3</span></td>
+                                <td><span class="badge badge-p2">Incidencia</span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>PRJ-11491</strong></td>
+                                <td><code>TMMC-7780</code></td>
+                                <td>PRJ-11491 Normativa legal: Información Cargadores en digital - F1L</td>
+                                <td>PANGEA OSP</td>
+                                <td>Medium</td>
+                                <td style="text-align:center;"><span class="badge badge-p1">0</span></td>
+                                <td><span class="badge badge-p2">Bug Otro Sistema</span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>PRJ-11603</strong></td>
+                                <td><code>TMMC-7925</code></td>
+                                <td>PRJ-11603 CRMB2B OPERACIONES MOVILES EN CRMB2B KRTO - MPV2 -- PYME</td>
+                                <td>CRM B2B OSP</td>
+                                <td>High</td>
+                                <td style="text-align:center;"><span class="badge badge-p1">1</span></td>
+                                <td><span class="badge badge-p2">Incidencia</span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>PRJ-11764</strong></td>
+                                <td><code>TMMC-7712</code></td>
+                                <td>PRJ-11764 Fase 2 Frontales 1 Linea LEGO -- F1L</td>
+                                <td>FICHA DE CLIENTE OSP</td>
+                                <td>Medium</td>
+                                <td style="text-align:center;"><span class="badge badge-p1">0</span></td>
+                                <td><span class="badge badge-p2">Bug Otro Sistema</span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>PRJ-11764</strong></td>
+                                <td><code>TMMC-7712</code></td>
+                                <td>PRJ-11764 Fase 2 Frontales 1 Linea LEGO -- F1L</td>
+                                <td>PANGEA OSP</td>
+                                <td>Medium</td>
+                                <td style="text-align:center;"><span class="badge badge-p1">1</span></td>
+                                <td><span class="badge badge-p2">Bug Otro Sistema</span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>PRJ-11894</strong></td>
+                                <td><code>TMMC-7656</code></td>
+                                <td>PRJ-11894 Ciber Protección Mejoras -- DPA</td>
+                                <td>ACME WEB ORANGE OSP</td>
+                                <td>High</td>
+                                <td style="text-align:center;"><span class="badge badge-p1">0</span></td>
+                                <td><span class="badge badge-p2">Incidencia</span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>PRJ-11894</strong></td>
+                                <td><code>TMMC-7725</code></td>
+                                <td>PRJ-11894 CIBER PROTECCION MEJORAS_BKD</td>
+                                <td>TEIDE OSP</td>
+                                <td>Medium</td>
+                                <td style="text-align:center;"><span class="badge badge-p1">2</span></td>
+                                <td><span class="badge badge-p2">Bloqueado en ejecución</span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>PRJ-11894</strong></td>
+                                <td><code>TMMC-7725</code></td>
+                                <td>PRJ-11894 CIBER PROTECCION MEJORAS_BKD</td>
+                                <td>TEIDE OSP</td>
+                                <td>Medium</td>
+                                <td style="text-align:center;"><span class="badge badge-p1">2</span></td>
+                                <td><span class="badge badge-p2">Bloqueado en ejecución</span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>PRJ-11894</strong></td>
+                                <td><code>TMMC-7996</code></td>
+                                <td>PRJ-11894 Ciber Protección Mejoras -- F1L</td>
+                                <td>FICHA DE CLIENTE OSP</td>
+                                <td>Medium</td>
+                                <td style="text-align:center;"><span class="badge badge-p1">1</span></td>
+                                <td><span class="badge badge-p2">Bug Otro Sistema</span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>PRJ-11894</strong></td>
+                                <td><code>TMMC-7996</code></td>
+                                <td>PRJ-11894 Ciber Protección Mejoras -- F1L</td>
+                                <td>PANGEA OSP</td>
+                                <td>Medium</td>
+                                <td style="text-align:center;"><span class="badge badge-p1">0</span></td>
+                                <td><span class="badge badge-p2">Bug Interno</span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>PRJ-11912</strong></td>
+                                <td><code>TMMC-7754</code></td>
+                                <td>PRJ-11912 MPV4 Lego Mejoras Portfolio -- DPA</td>
+                                <td>ACME APP ORANGE OSP</td>
+                                <td>High</td>
+                                <td style="text-align:center;"><span class="badge badge-p1">1</span></td>
+                                <td><span class="badge badge-p2">Incidencia</span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>PRJ-11912</strong></td>
+                                <td><code>TMMC-7754</code></td>
+                                <td>PRJ-11912 MPV4 Lego Mejoras Portfolio -- DPA</td>
+                                <td>ACME WEB ORANGE OSP</td>
+                                <td>High</td>
+                                <td style="text-align:center;"><span class="badge badge-p1">1</span></td>
+                                <td><span class="badge badge-p2">Incidencia</span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>PRJ-11940</strong></td>
+                                <td><code>TMMC-7665</code></td>
+                                <td>PRJ-11940 CONTRATACION DE SEGUROS EN S8 CONTRA OMS - FASE 2_BKD</td>
+                                <td>TEIDE OSP</td>
+                                <td>Medium</td>
+                                <td style="text-align:center;"><span class="badge badge-p1">0</span></td>
+                                <td><span class="badge badge-p2">Incidencia</span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>PRJ-12011</strong></td>
+                                <td><code>TMMC-7943</code></td>
+                                <td>PRJ-12011 Fase II: Gestión terminales Pyme en CRMB2B con OL MPV1 - PAP_2 -- PYME</td>
+                                <td>CRM B2B OSP</td>
+                                <td>High</td>
+                                <td style="text-align:center;"><span class="badge badge-p1">0</span></td>
+                                <td><span class="badge badge-p2">Incidencia</span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>PRJ-12059</strong></td>
+                                <td><code>TMMC-7756</code></td>
+                                <td>PRJ-12059 Fase 2 Resto de impactos (Multidispositivo VAP) - CRM4TELCO F1L</td>
+                                <td>CRM4TELCO OSP - JAZZTEL</td>
+                                <td>Medium</td>
+                                <td style="text-align:center;"><span class="badge badge-p1">1</span></td>
+                                <td><span class="badge badge-p2">Incidencia</span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>PRJ-12305</strong></td>
+                                <td><code>TMMC-7956</code></td>
+                                <td>PRJ-12305 TIPIFICACIONES MÓVILES EN CRMB2B -- PYME</td>
+                                <td>CRM B2B OSP</td>
+                                <td>High</td>
+                                <td style="text-align:center;"><span class="badge badge-p1">0</span></td>
+                                <td><span class="badge badge-p2">Incidencia</span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>PRJ-8058</strong></td>
+                                <td><code>TMMC-7645</code></td>
+                                <td>PRJ-8058 RESOLUCION GAPs TECNICOS EN PROCESO CAMBIO CUENTA BANCARIA_BKD</td>
+                                <td>TEIDE OSP</td>
+                                <td>Medium</td>
+                                <td style="text-align:center;"><span class="badge badge-p1">2</span></td>
+                                <td><span class="badge badge-p2">Incidencia</span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>PRJ-8058</strong></td>
+                                <td><code>TMMC-7763</code></td>
+                                <td>PRJ-8058 Resolucion GAPs técnicos en proceso de cambio de cuenta bancaria -- DPA</td>
+                                <td>ACME APP ORANGE OSP</td>
+                                <td>High</td>
+                                <td style="text-align:center;"><span class="badge badge-p1">2</span></td>
+                                <td><span class="badge badge-p2">Incidencia</span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>PRJ-8058</strong></td>
+                                <td><code>TMMC-7763</code></td>
+                                <td>PRJ-8058 Resolucion GAPs técnicos en proceso de cambio de cuenta bancaria -- DPA</td>
+                                <td>ACME WEB ORANGE OSP</td>
+                                <td>High</td>
+                                <td style="text-align:center;"><span class="badge badge-p1">1</span></td>
+                                <td><span class="badge badge-p2">Incidencia</span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>PRJ-8058</strong></td>
+                                <td><code>TMMC-7789</code></td>
+                                <td>PRJ-8058 Resolución GAPs técnicos en proceso cambio de cuenta bancaria - F1L</td>
+                                <td>FICHA DE CLIENTE OSP</td>
+                                <td>Medium</td>
+                                <td style="text-align:center;"><span class="badge badge-p1">1</span></td>
+                                <td><span class="badge badge-p2">Bug Interno</span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>PRJ-8058</strong></td>
+                                <td><code>TMMC-7789</code></td>
+                                <td>PRJ-8058 Resolución GAPs técnicos en proceso cambio de cuenta bancaria - F1L</td>
+                                <td>PANGEA OSP</td>
+                                <td>Medium</td>
+                                <td style="text-align:center;"><span class="badge badge-p1">1</span></td>
+                                <td><span class="badge badge-p2">Bug Interno</span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>TRANSVERSAL</strong></td>
+                                <td><code>TMMC-7423</code></td>
+                                <td>Regresión Ficha PaP R11</td>
+                                <td>FICHA DE CLIENTE OSP</td>
+                                <td>Medium</td>
+                                <td style="text-align:center;"><span class="badge badge-p1">0</span></td>
+                                <td><span class="badge badge-p2">Incidencia</span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>TRANSVERSAL</strong></td>
+                                <td><code>TMMC-7423</code></td>
+                                <td>Regresión Ficha PaP R11</td>
+                                <td>FICHA DE CLIENTE OSP</td>
+                                <td>Medium</td>
+                                <td style="text-align:center;"><span class="badge badge-p1">0</span></td>
+                                <td><span class="badge badge-p2">Incidencia</span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>TRANSVERSAL</strong></td>
+                                <td><code>TMMC-7423</code></td>
+                                <td>Regresión Ficha PaP R11</td>
+                                <td>FICHA DE CLIENTE OSP</td>
+                                <td>Medium</td>
+                                <td style="text-align:center;"><span class="badge badge-p1">0</span></td>
+                                <td><span class="badge badge-p2">Incidencia</span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>TRANSVERSAL</strong></td>
+                                <td><code>TMMC-7434</code></td>
+                                <td>Regresion Pangea PaP R11</td>
+                                <td>PANGEA OSP</td>
+                                <td>Medium</td>
+                                <td style="text-align:center;"><span class="badge badge-p1">0</span></td>
+                                <td><span class="badge badge-p2">Bug Interno</span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>TRANSVERSAL</strong></td>
+                                <td><code>TMMC-7434</code></td>
+                                <td>Regresion Pangea PaP R11</td>
+                                <td>PANGEA OSP</td>
+                                <td>Medium</td>
+                                <td style="text-align:center;"><span class="badge badge-p1">0</span></td>
+                                <td><span class="badge badge-p2">Bug Interno</span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>TRANSVERSAL</strong></td>
+                                <td><code>TMMC-7434</code></td>
+                                <td>Regresion Pangea PaP R11</td>
+                                <td>PANGEA OSP</td>
+                                <td>Medium</td>
+                                <td style="text-align:center;"><span class="badge badge-p1">0</span></td>
+                                <td><span class="badge badge-p2">Bug Interno</span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>TRANSVERSAL</strong></td>
+                                <td><code>TMMC-7434</code></td>
+                                <td>Regresion Pangea PaP R11</td>
+                                <td>PANGEA OSP</td>
+                                <td>Medium</td>
+                                <td style="text-align:center;"><span class="badge badge-p1">0</span></td>
+                                <td><span class="badge badge-p2">Pdte Datos</span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>TRANSVERSAL</strong></td>
+                                <td><code>TMMC-7897</code></td>
+                                <td>REGRESION PYME R2026-11</td>
+                                <td>CRM B2B OSP</td>
+                                <td>High</td>
+                                <td style="text-align:center;"><span class="badge badge-p1">1</span></td>
+                                <td><span class="badge badge-p2">Bloqueado en ejecución</span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>TRANSVERSAL</strong></td>
+                                <td><code>TMMC-7897</code></td>
+                                <td>REGRESION PYME R2026-11</td>
+                                <td>CRM B2B OSP</td>
+                                <td>High</td>
+                                <td style="text-align:center;"><span class="badge badge-p1">1</span></td>
+                                <td><span class="badge badge-p2">Incidencia</span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>TRANSVERSAL</strong></td>
+                                <td><code>TMMC-7967</code></td>
+                                <td>REGRESION EREBOR R2026-11 -- DPA</td>
+                                <td>ESHOP FRONTEND OSP</td>
+                                <td>High</td>
+                                <td style="text-align:center;"><span class="badge badge-p1">1</span></td>
+                                <td><span class="badge badge-p2">Incidencia</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </details>
         </section>
         <section>
             <div class="section-heading">
-                <h2>Seguimiento de Proyectos e Incidencias Remedy <span class="badge-count">41 proyectos</span></h2>
+                <h2>Seguimiento de Proyectos e Incidencias Remedy <span class="badge-count">42 proyectos</span></h2>
             </div>
             <article class="project-card has-crit" id="card-PRJ-8058">
                 <div class="project-header-top">
@@ -732,7 +848,7 @@
                 </div>
                 <div style="margin-top:14px;">
                     <div style="font-size:12px; font-weight:700; text-transform:uppercase; color:#6B7280; margin-bottom:8px;">Incidencias Remedy (4):</div>
-                    <div class="incident-item">
+                    <div class="incident-item" id="inc-INC000004192176">
                         <div class="incident-head">
                             <div style="display:flex; align-items:center; gap:8px;">
                                 <span class="incident-id">INC000004192176</span>
@@ -744,7 +860,7 @@
                         </div>
                         <div class="incident-desc-raw">[2026R11] - [PRJ-8058] Error AccountManagement al intentar hacer un cambio de cuenta en Pangea</div>
                     </div>
-                    <div class="incident-item">
+                    <div class="incident-item" id="inc-INC000004192073">
                         <div class="incident-head">
                             <div style="display:flex; align-items:center; gap:8px;">
                                 <span class="incident-id">INC000004192073</span>
@@ -762,7 +878,7 @@
                             <div class="ia-field" style="color:#DC2626;"><strong>⛔ Bloqueos:</strong> [Validación Negocio]: Pendiente análisis técnico del error en proceso de cambio de cuenta bancaria para desbloquear pruebas del PRJ-8058</div>
                         </div>
                     </div>
-                    <div class="incident-item">
+                    <div class="incident-item" id="inc-INC000004191881">
                         <div class="incident-head">
                             <div style="display:flex; align-items:center; gap:8px;">
                                 <span class="incident-id">INC000004191881</span>
@@ -781,7 +897,7 @@
                             <div class="ia-field"><strong>➡️ Próxima acción:</strong> Corregir mapeo de &#x27;identificationType&#x27; en BFF AgentsOrange para enviar valores normalizados según acuerdo IC (PRJ-8058)</div>
                         </div>
                     </div>
-                    <div class="incident-item">
+                    <div class="incident-item" id="inc-INC000004192062">
                         <div class="incident-head">
                             <div style="display:flex; align-items:center; gap:8px;">
                                 <span class="incident-id">INC000004192062</span>
@@ -822,7 +938,7 @@
                 </div>
                 <div style="margin-top:14px;">
                     <div style="font-size:12px; font-weight:700; text-transform:uppercase; color:#6B7280; margin-bottom:8px;">Incidencias Remedy (3):</div>
-                    <div class="incident-item">
+                    <div class="incident-item" id="inc-INC000004192171">
                         <div class="incident-head">
                             <div style="display:flex; align-items:center; gap:8px;">
                                 <span class="incident-id">INC000004192171</span>
@@ -839,7 +955,7 @@
                             <div class="ia-field"><strong>🔍 Problema detectado:</strong> El producto adicional (PA) &#x27;Fijo Instalacion - Obra Civil&#x27; del proyecto PRJ-10987 no aparece disponible en postventa para contratación sobre cliente Conecta PYME MCPYM0696 (CAR-20262211-013292), impidiendo su alta.</div>
                         </div>
                     </div>
-                    <div class="incident-item">
+                    <div class="incident-item" id="inc-INC000004192065">
                         <div class="incident-head">
                             <div style="display:flex; align-items:center; gap:8px;">
                                 <span class="incident-id">INC000004192065</span>
@@ -856,7 +972,7 @@
                             <div class="ia-field"><strong>🔍 Problema detectado:</strong> En postventa B2B, al añadir descuento PA Equipo Femto 5G + DESC 100%, el sistema muestra &#x27;N%&#x27; en lugar del porcentaje seleccionado. Afecta visualización correcta de descuentos en proceso de modificación de pedido CAR-20262211-013292.</div>
                         </div>
                     </div>
-                    <div class="incident-item">
+                    <div class="incident-item" id="inc-INC000004192167">
                         <div class="incident-head">
                             <div style="display:flex; align-items:center; gap:8px;">
                                 <span class="incident-id">INC000004192167</span>
@@ -897,7 +1013,7 @@
                 </div>
                 <div style="margin-top:14px;">
                     <div style="font-size:12px; font-weight:700; text-transform:uppercase; color:#6B7280; margin-bottom:8px;">Incidencias Remedy (3):</div>
-                    <div class="incident-item">
+                    <div class="incident-item" id="inc-INC000004192181">
                         <div class="incident-head">
                             <div style="display:flex; align-items:center; gap:8px;">
                                 <span class="incident-id">INC000004192181</span>
@@ -916,7 +1032,7 @@
                             <div class="ia-field"><strong>➡️ Próxima acción:</strong> Validación de cierre por peticionario (CARLOS GARCIA PEINADOR) y cierre formal del ticket</div>
                         </div>
                     </div>
-                    <div class="incident-item">
+                    <div class="incident-item" id="inc-INC000004191887">
                         <div class="incident-head">
                             <div style="display:flex; align-items:center; gap:8px;">
                                 <span class="incident-id">INC000004191887</span>
@@ -935,7 +1051,7 @@
                             <div class="ia-field"><strong>➡️ Próxima acción:</strong> Revisar configuración de plantilla 9009684 en SIRES y validar reglas de detonado para SVA Ciberproteccion Global</div>
                         </div>
                     </div>
-                    <div class="incident-item">
+                    <div class="incident-item" id="inc-INC000004192066">
                         <div class="incident-head">
                             <div style="display:flex; align-items:center; gap:8px;">
                                 <span class="incident-id">INC000004192066</span>
@@ -974,7 +1090,7 @@
                 </div>
                 <div style="margin-top:14px;">
                     <div style="font-size:12px; font-weight:700; text-transform:uppercase; color:#6B7280; margin-bottom:8px;">Incidencias Remedy (2):</div>
-                    <div class="incident-item">
+                    <div class="incident-item" id="inc-INC000004192085">
                         <div class="incident-head">
                             <div style="display:flex; align-items:center; gap:8px;">
                                 <span class="incident-id">INC000004192085</span>
@@ -993,7 +1109,7 @@
                             <div class="ia-field" style="color:#DC2626;"><strong>⛔ Bloqueos:</strong> [Validación Negocio]: Pendiente diagnóstico técnico y análisis de causa raíz en lógica de POPUP del comparador.</div>
                         </div>
                     </div>
-                    <div class="incident-item">
+                    <div class="incident-item" id="inc-INC000004192173">
                         <div class="incident-head">
                             <div style="display:flex; align-items:center; gap:8px;">
                                 <span class="incident-id">INC000004192173</span>
@@ -1025,7 +1141,7 @@
                 </div>
                 <div style="margin-top:14px;">
                     <div style="font-size:12px; font-weight:700; text-transform:uppercase; color:#6B7280; margin-bottom:8px;">Incidencias Remedy (1):</div>
-                    <div class="incident-item">
+                    <div class="incident-item" id="inc-INC000004192177">
                         <div class="incident-head">
                             <div style="display:flex; align-items:center; gap:8px;">
                                 <span class="incident-id">INC000004192177</span>
@@ -1058,7 +1174,7 @@
                 </div>
                 <div style="margin-top:14px;">
                     <div style="font-size:12px; font-weight:700; text-transform:uppercase; color:#6B7280; margin-bottom:8px;">Incidencias Remedy (1):</div>
-                    <div class="incident-item">
+                    <div class="incident-item" id="inc-INC000004191897">
                         <div class="incident-head">
                             <div style="display:flex; align-items:center; gap:8px;">
                                 <span class="incident-id">INC000004191897</span>
@@ -1091,7 +1207,7 @@
                 </div>
                 <div style="margin-top:14px;">
                     <div style="font-size:12px; font-weight:700; text-transform:uppercase; color:#6B7280; margin-bottom:8px;">Incidencias Remedy (1):</div>
-                    <div class="incident-item">
+                    <div class="incident-item" id="inc-INC000004191979">
                         <div class="incident-head">
                             <div style="display:flex; align-items:center; gap:8px;">
                                 <span class="incident-id">INC000004191979</span>
@@ -1125,6 +1241,24 @@
                 </div>
                 <div style="font-size:12px; color:#16A34A; margin-top:8px;">✅ Sin incidencias Remedy abiertas para este proyecto.</div>
             </article>
+            <article class="project-card has-crit" id="card-TRANSVERSAL">
+                <div class="project-header-top">
+                    <div class="project-code-title">
+                        <span class="project-code">TRANSVERSAL</span>
+                        <h3 class="project-title">Proyecto TRANSVERSAL</h3>
+                    </div>
+                    <div style="display:flex; gap:8px; align-items:center;">
+                        <span class="badge badge-completo">Completo</span>
+                        <span class="badge" style="background:#DCFCE7; color:#166534;">GO</span>
+                    </div>
+                </div>
+                <div class="project-pap-banner">
+                    <span>🧪 <strong>Pruebas PaP:</strong> 282/358 Pasadas (78.8%)</span>
+                    <span style="color:#DC2626; font-weight:700;">⚠️ 3 Bloqueadas</span>
+                    <span style="color:#6B7280;">⏳ 46 Pendientes</span>
+                </div>
+                <div style="font-size:12px; color:#16A34A; margin-top:8px;">✅ Sin incidencias Remedy abiertas para este proyecto.</div>
+            </article>
             <article class="project-card" id="card-AB2CJ-222">
                 <div class="project-header-top">
                     <div class="project-code-title">
@@ -1139,7 +1273,7 @@
                 </div>
                 <div style="margin-top:14px;">
                     <div style="font-size:12px; font-weight:700; text-transform:uppercase; color:#6B7280; margin-bottom:8px;">Incidencias Remedy (1):</div>
-                    <div class="incident-item">
+                    <div class="incident-item" id="inc-INC000004192079">
                         <div class="incident-head">
                             <div style="display:flex; align-items:center; gap:8px;">
                                 <span class="incident-id">INC000004192079</span>
@@ -1167,7 +1301,7 @@
                 </div>
                 <div style="margin-top:14px;">
                     <div style="font-size:12px; font-weight:700; text-transform:uppercase; color:#6B7280; margin-bottom:8px;">Incidencias Remedy (1):</div>
-                    <div class="incident-item">
+                    <div class="incident-item" id="inc-INC000004192174">
                         <div class="incident-head">
                             <div style="display:flex; align-items:center; gap:8px;">
                                 <span class="incident-id">INC000004192174</span>
@@ -1206,7 +1340,7 @@
                 </div>
                 <div style="margin-top:14px;">
                     <div style="font-size:12px; font-weight:700; text-transform:uppercase; color:#6B7280; margin-bottom:8px;">Incidencias Remedy (1):</div>
-                    <div class="incident-item">
+                    <div class="incident-item" id="inc-INC000004191890">
                         <div class="incident-head">
                             <div style="display:flex; align-items:center; gap:8px;">
                                 <span class="incident-id">INC000004191890</span>
@@ -1237,7 +1371,7 @@
                 </div>
                 <div style="margin-top:14px;">
                     <div style="font-size:12px; font-weight:700; text-transform:uppercase; color:#6B7280; margin-bottom:8px;">Incidencias Remedy (1):</div>
-                    <div class="incident-item">
+                    <div class="incident-item" id="inc-INC000004192068">
                         <div class="incident-head">
                             <div style="display:flex; align-items:center; gap:8px;">
                                 <span class="incident-id">INC000004192068</span>
@@ -1276,7 +1410,7 @@
                 </div>
                 <div style="margin-top:14px;">
                     <div style="font-size:12px; font-weight:700; text-transform:uppercase; color:#6B7280; margin-bottom:8px;">Incidencias Remedy (1):</div>
-                    <div class="incident-item">
+                    <div class="incident-item" id="inc-INC000004191975">
                         <div class="incident-head">
                             <div style="display:flex; align-items:center; gap:8px;">
                                 <span class="incident-id">INC000004191975</span>

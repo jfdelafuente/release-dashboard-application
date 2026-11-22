@@ -45,6 +45,12 @@ def test_load_grafana_pap_csv(tmp_path):
     assert len(res["blocked_items"]) == 2
     assert "PRJ-10699" in res["by_project"]
     assert "PRJ-10987" in res["by_project"]
+    assert len(res["blocked_projects"]) == 2
+    # Ordenado por bloqueos descendente: PRJ-10987 (2 bloq) va antes de PRJ-10699 (1 bloq)
+    assert res["blocked_projects"][0]["prj"] == "PRJ-10987"
+    assert res["blocked_projects"][0]["block_count"] == 2
+    assert res["blocked_projects"][1]["prj"] == "PRJ-10699"
+    assert res["blocked_projects"][1]["block_count"] == 1
 
 
 def test_extract_project_code():
@@ -70,6 +76,8 @@ def test_build_release_report_html_generates_valid_file(tmp_path):
     assert "Proyectos en Release" in content
     assert "Avance Pruebas PaP" in content
     assert "Pruebas Bloqueadas" in content
+    assert "Resumen Agregado por Proyecto" in content
+    assert "Detalle Desglosado por Plan de Prueba y Causa de Bloqueo" in content
     assert "Incidencias Activas" in content
     assert "Diagnóstico Epsilon Resumen IA" in content
     assert "Impacto en Servicio y Negocio" in content
