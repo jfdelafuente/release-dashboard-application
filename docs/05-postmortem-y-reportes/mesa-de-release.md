@@ -52,7 +52,7 @@ La consola **Mesa de Release** (`/dashboards/release-desk/`) centraliza el segui
 - **Filtros combinables**: búsqueda libre (`filterSearch`), estado (`filterStatus`), sistema (`filterGroup`), prioridad/urgencia (`filterPriority`) y proyecto (`filterProject`, mostrando solo el código `PRJ-*` con `summary` en tooltip).
 
 ### 3.2. Conmutador de Vista (`Tabla` / `Por proyecto`)
-- **Tabla**: vista operativa detallada con **ordenación por cabeceras** (`▲` / `▼`) en `Código Incidencia`, `Fecha Apertura`, `Prioridad / Urg.`, `PROYECTO`, `Status` y `Fecha Prevista`.
+- **Tabla**: vista operativa detallada con **ordenación por cabeceras** (`▲` / `▼`) en `Código Incidencia`, `Fecha Apertura`, `Prioridad / Urg.`, `Sistema`, `PROYECTO`, `Status` y `Fecha Prevista`.
 - **Por proyecto**: agrupa las incidencias visibles por `PRJ-*` mostrando `Despliegue`, `summary`, conteo por prioridad (`P1`, `P2`, `P3/Otras`), resueltas, vencidas/sin fecha y un **semáforo de salud** (`Riesgo alto`, `Atención`, `Controlado`), con botones directos para filtrar en tabla o abrir cada incidencia.
 
 ### 3.3. Tabla «Incidencias en seguimiento» (12 columnas)

@@ -257,6 +257,15 @@
         if (sortKey === 'code') return id;
         if (sortKey === 'fecha_apertura') return parseSortableDate(inc && inc['Fecha de envío']);
         if (sortKey === 'prioridad') return priorityRank(inc);
+        if (sortKey === 'sistema') {
+            return (inc && (
+                (inc['Grupo asignado'] && String(inc['Grupo asignado']).trim()) ||
+                (inc['Grupo Resolutor'] && String(inc['Grupo Resolutor']).trim()) ||
+                (inc['Sistema'] && String(inc['Sistema']).trim()) ||
+                (inc['sistema'] && String(inc['sistema']).trim()) ||
+                (inc['producto'] && String(inc['producto']).trim())
+            )) || '';
+        }
         if (sortKey === 'proyecto') {
             var proj = resolveProjectInfo(inc, projectsCatalog, releaseName);
             return proj ? (proj.code + ' ' + (proj.despliegue || '') + ' ' + (proj.summary || '')) : '';
