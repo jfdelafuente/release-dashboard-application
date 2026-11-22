@@ -10,7 +10,7 @@ description: >-
   (con telemetría Remedy, diagnóstico Epsilon Resumen IA, criticidades P1/P2/Masivas y fechas previstas),
   manteniendo sincronizado el catálogo de proyectos y enrutando siempre a la consola de Mesa de Release (/dashboards/release-desk/).
 domain: it-releases
-version: 2.6.0
+version: 2.7.0
 language: es
 owner: Orange Tech Operations
 metadata:
@@ -25,7 +25,7 @@ metadata:
     - release-opening-workflow
 ---
 
-# Comunicación Global de Releases e Incidencias por Proyecto (`release-project-communication`) — v2.2.0
+# Comunicación Global de Releases e Incidencias por Proyecto (`release-project-communication`) — v2.7.0
 
 Esta skill define las directrices maestras, fuentes de datos requeridas, formatos corporativos, modelos de datos y heurísticas de redacción para elaborar **comunicaciones ejecutivas y operativas sobre las Releases Mensuales IT** de MasOrange / Orange Tech Operations.
 
@@ -362,7 +362,8 @@ Además de las plantillas de texto formateado para Microsoft Teams, el agente ge
 4. **Tarjetas de Proyecto con Telemetría e IA**:
    - Para cada iniciativa (`PRJ-*`): resumen, alcance de despliegue, badges de decisión GO/NoGO y metodología.
    - Píldora de avance de pruebas PaP del proyecto (pasadas, pendientes, bloqueadas).
-   - Lista de incidencias Remedy asociadas con su estado, prioridad, fecha prevista y el bloque completo de diagnóstico de **Epsilon Resumen IA** (*Impacto en Servicio y Negocio*, *Problema detectado*, *Causa raíz / Solución*, *Próxima acción* y *Bloqueos*).
+   - Lista de incidencias Remedy abiertas o en resolución (excluyendo estrictamente las incidencias en estado «Cerrado» o «Closed», tanto de las tarjetas de proyecto como de la tarjeta transversal; los tickets cerrados se computan solo en el KPI general *Resueltas / Cerradas*). Si un proyecto no tiene incidencias abiertas (o todas se han cerrado), se muestra: `✅ Sin incidencias Remedy abiertas para este proyecto.`
+   - Para cada incidencia mostrada: ID enlazado, prioridad, estado operativo, sistema, fecha prevista y bloque completo de diagnóstico de **Epsilon Resumen IA** (*Impacto en Servicio y Negocio*, *Problema detectado*, *Causa raíz / Solución*, *Próxima acción* y *Bloqueos*).
 
 ### 7.3. Integración en la Consola Mesa de Release
 - En `dashboards/release-desk/index.html` (barra inferior `.rd-card-footer` junto a `btnCopyBriefing`):

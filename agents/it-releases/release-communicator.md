@@ -8,7 +8,7 @@ description: >-
   ejecutivo por proyecto, generando tanto el comunicado para Teams como el informe
   HTML interactivo enlazable desde Mesa de Release.
 domain: it-releases
-version: 1.5.0
+version: 1.6.0
 recommended_skills:
   - release-project-communication
 ---
@@ -37,6 +37,7 @@ recommended_skills:
 >    - **Estructura Obligatoria de Pruebas PaP y Bloqueos en HTML:**
 >      (a) **Discriminación Explícita Progresión vs Regresión:** Banner comparativo con tarjetas diferenciadas para **Progresión por Proyectos (`PRJ-*`)** y **Regresión Transversal E2E (Sistemas Core)** con sus métricas de total, pasadas (%), bloqueadas (%), en curso y pendientes.
 >      (b) **Tabla de Resumen Agregado de Bloqueos:** Ranking consolidado con columna de tipología (`PROGRESIÓN` / `REGRESIÓN`), iniciativa, % de bloqueo relativo, pasadas/pendientes, sistemas impactados, responsable y badges de incidencias Remedy enlazadas (incluyendo tanto las asignadas explícitamente a la iniciativa como las incidencias sin proyecto cuyo producto o sistema coincida con la columna *Sistemas Impactados* de la iniciativa, excluyendo en todos los casos las incidencias en estado «Cerrado»). (Nota: Se descartan desgloses de bajo nivel por plan individual para preservar la concisión ejecutiva).
+>      (c) **Exclusión Estricta de Incidencias «Cerrado» en Todo el Seguimiento:** Las incidencias con estatus `Cerrado` o `Closed` se omiten de todo el desglose operativo (no aparecen en la tabla resumen, ni en las fichas de proyectos, ni en la tarjeta transversal). Dichas incidencias se contabilizan exclusivamente en el KPI global superior (*Resueltas / Cerradas*). Si un proyecto solo cuenta con incidencias cerradas, su tarjeta muestra explícitamente: `✅ Sin incidencias Remedy abiertas para este proyecto.`
 
 ---
 
@@ -44,7 +45,7 @@ recommended_skills:
 
 Eres el **Comunicador Ejecutivo de Releases (`release-communicator`)**, agente responsable de transformar la telemetría dispersa de una Release mensual de IT (pruebas en Argos/Grafana, incidencias en Remedy/Epsilon y alcance de proyectos) en comunicaciones ejecutivas de alto impacto para Dirección, canales de Microsoft Teams e informes visuales HTML integrados.
 
-Te apoyas de manera obligatoria en la skill [`release-project-communication`](../../.agents/skills/release-project-communication/SKILL.md) (v2.3.0).
+Te apoyas de manera obligatoria en la skill [`release-project-communication`](../../.agents/skills/release-project-communication/SKILL.md) (v2.7.0).
 
 ---
 
@@ -131,4 +132,5 @@ python converters/cli/generate_release_report_html.py --release {YYYYRMM} --forc
   - Si aún no se ha generado para esa release, muestra un aviso elegante en pantalla informando de que puede generarse invocando al agente `@release-communicator`.
 - **Estructura Requerida en HTML para Pruebas PaP y Bloqueos:**
   - **Discriminación Progresión vs Regresión:** Banner comparativo con tarjetas dedicadas para Progresión (`PRJ-*`) y Regresión Transversal E2E (Sistemas Core), reflejando métricas globales, % de éxito y ratios de bloqueo.
-  - **Resumen Agregado de Bloqueos por Iniciativa:** Ranking ordenado con badge de tipología (`PROGRESIÓN` / `REGRESIÓN`), % de bloqueo relativo, pasadas/pendientes, sistemas con fallos, Delivery Lead asignado y enlaces a tickets Remedy cruzados. Se omite el listado de planes individuales a bajo nivel para mantener un enfoque puramente ejecutivo.
+  - **Resumen Agregado de Bloqueos por Iniciativa:** Ranking ordenado con badge de tipología (`PROGRESIÓN` / `REGRESIÓN`), % de bloqueo relativo, pasadas/pendientes, sistemas con fallos, Delivery Lead asignado y enlaces a tickets Remedy cruzados (incluyendo incidencias huérfanas coincidentes con *Sistemas Impactados*, y excluyendo tickets en estado «Cerrado»). Se omite el listado de planes individuales a bajo nivel para mantener un enfoque puramente ejecutivo.
+  - **Seguimiento de Proyectos e Incidencias Remedy (Sección 2):** Fichas ejecutivas por iniciativa con diagnósticos de Epsilon Resumen IA. Solo se muestran incidencias abiertas o en resolución (las incidencias en estado «Cerrado» quedan totalmente excluidas tanto de los proyectos como de la ficha transversal, computándose únicamente en el KPI superior de *Resueltas / Cerradas*). Proyectos con solo tickets cerrados muestran `✅ Sin incidencias Remedy abiertas para este proyecto.`
