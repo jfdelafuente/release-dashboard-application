@@ -43,6 +43,7 @@ def test_release_desk_html_has_required_controls():
         "btnEmptySync",
         "btnCopyBriefing",
         "btnCopyBriefingSystem",
+        "btnViewReportHtml",
         "btnExportCsv",
         "btnViewTable",
         "btnViewByProject",

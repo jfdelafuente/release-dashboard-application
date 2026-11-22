@@ -10,7 +10,7 @@ description: >-
   (con telemetría Remedy, diagnóstico Epsilon Resumen IA, criticidades P1/P2/Masivas y fechas previstas),
   manteniendo sincronizado el catálogo de proyectos y enrutando siempre a la consola de Mesa de Release (/dashboards/release-desk/).
 domain: it-releases
-version: 2.1.0
+version: 2.2.0
 language: es
 owner: Orange Tech Operations
 metadata:
@@ -25,7 +25,7 @@ metadata:
     - release-opening-workflow
 ---
 
-# Comunicación Global de Releases e Incidencias por Proyecto (`release-project-communication`) — v2.1.0
+# Comunicación Global de Releases e Incidencias por Proyecto (`release-project-communication`) — v2.2.0
 
 Esta skill define las directrices maestras, fuentes de datos requeridas, formatos corporativos, modelos de datos y heurísticas de redacción para elaborar **comunicaciones ejecutivas y operativas sobre las Releases Mensuales IT** de MasOrange / Orange Tech Operations.
 
@@ -329,3 +329,47 @@ Para mantener el ecosistema completamente sincronizado con las comunicaciones em
 5. **Sincronización con Servidor Central (VPS `10.132.26.96`)**:
    - Si el usuario autoriza la subida, sincronizar catálogos hacia `/infocodes/var/storage/release-dashboard/config/`.
    - Cuando el usuario indique *"hago yo la subida cuando esté preparada"*, limitar la acción a commits limpios en Git y tests unitarios aprobados.
+
+---
+
+## 7. Generación de Informes Ejecutivos HTML e Integración en Mesa de Release
+
+Además de las plantillas de texto formateado para Microsoft Teams, el agente genera automáticamente una página HTML autocontenida y enlazable para la navegación de Dirección y comités de seguimiento.
+
+### 7.1. Script Generador y Rutas Canónicas
+- **Script oficial:** `converters/cli/generate_release_report_html.py`
+- **Invocación:**
+  ```bash
+  python converters/cli/generate_release_report_html.py --release {YYYYRMM} --force
+  ```
+- **Ruta de salida:** `dashboards/informes/comunicado-release-{YYYYRMM}/index.html`
+- **URL canónica:** `/dashboards/informes/comunicado-release-{YYYYRMM}/`
+
+### 7.2. Contenido y Secciones del Informe HTML
+1. **Cabecera Oficial y Enrutamiento**:
+   - Topbar corporativo (`mo-topbar-root` con `data-active="informes"`).
+   - Metadatos: Fecha PaP, Fecha/Hora de generación, Total de proyectos en release.
+   - Botón CTA directo a la consola interactiva: `📊 Abrir en Mesa de Release ↗`.
+2. **Banner de 5 KPIs Clave**:
+   - Total de Proyectos (con balance de GO / PaP Técnico / NoGO).
+   - Avance global de pruebas PaP (% Pasadas y conteo).
+   - Pruebas bloqueadas (destacado con alerta crítica si > 0).
+   - Incidencias Remedy activas en seguimiento (con desglose P1/P2/P3/P4).
+   - Incidencias resueltas/cerradas en ventana PaP (% de éxito).
+3. **Tabla de Bloqueos de Pruebas PaP (Grafana Argos)**:
+   - Resumen de planes de prueba bloqueados con sistema, prioridad y motivo/comentario exacto de bloqueo.
+4. **Tarjetas de Proyecto con Telemetría e IA**:
+   - Para cada iniciativa (`PRJ-*`): resumen, alcance de despliegue, badges de decisión GO/NoGO y metodología.
+   - Píldora de avance de pruebas PaP del proyecto (pasadas, pendientes, bloqueadas).
+   - Lista de incidencias Remedy asociadas con su estado, prioridad, fecha prevista y el bloque completo de diagnóstico de **Epsilon Resumen IA** (*Impacto en Servicio y Negocio*, *Problema detectado*, *Causa raíz / Solución*, *Próxima acción* y *Bloqueos*).
+
+### 7.3. Integración en la Consola Mesa de Release
+- En `dashboards/release-desk/index.html` (barra inferior `.rd-card-footer` junto a `btnCopyBriefing`):
+  ```html
+  <button id="btnViewReportHtml" class="rd-btn" title="Ver el informe ejecutivo HTML de la release seleccionada">🌐 Ver informe HTML</button>
+  ```
+- **Comportamiento interactivo (`release-desk.js`)**:
+  - Al pulsar, realiza una comprobación previa (`HEAD`/`GET`) a la ruta `/dashboards/informes/comunicado-release-{release}/`.
+  - Si el informe ya existe, lo abre inmediatamente en una pestaña nueva del navegador (`window.open(url, '_blank')`).
+  - Si aún no se ha generado, emite un aviso elegante mediante toast informativo (`UIFeedback.toast` / `Toast.warning`) indicando:
+    *"El informe HTML de la release {release} aún no ha sido generado. Puedes generarlo con el agente @release-communicator."*
