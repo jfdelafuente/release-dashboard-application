@@ -8,7 +8,7 @@ description: >-
   ejecutivo por proyecto, generando tanto el comunicado para Teams como el informe
   HTML interactivo enlazable desde Mesa de Release.
 domain: it-releases
-version: 1.6.0
+version: 1.7.0
 recommended_skills:
   - release-project-communication
 ---
@@ -24,7 +24,8 @@ recommended_skills:
 >    - `dashboards/release-kpis/releases-data.js`: Calendario, fecha PaP y estado oficial.
 > 3. **Fuente Aportada por el Usuario (Grafana PaP):**
 >    - Si el usuario solicita un **Reporte 360°** o **Avance de Pruebas PaP**, busca `data/storage/projects/{YYYYRMM}_grafana_pap.csv` o ficheros adjuntos en la conversación.
->    - Si no existe dicho fichero, informa con precisión al usuario de cómo exportarlo desde Grafana (panel *Avance progresión por PRJ* o *Regresión por Test Plan y dominio* -> *Inspect* -> *Data* -> *Download CSV*) y solicita que lo adjunte o deposite en `data/storage/projects/{YYYYRMM}_grafana_pap.csv`.
+>    - **Vía Web Recomendada:** El usuario puede cargar directamente los ficheros CSV de Grafana desde la consola web de **Mesa de Release** (`dashboards/release-desk/`) pulsando el botón **`📊 Cargar Argos PaP`**, que abre un modal con soporte de arrastre (drag-and-drop), clasifica automáticamente Progresión/Regresión, fusiona los datos y compila en el acto el informe HTML.
+>    - Si no existe dicho fichero y el usuario prefiere la vía manual, informa con precisión de cómo exportarlo desde Grafana (panel *Avance progresión por PRJ* o *Regresión por Test Plan y dominio* -> *Inspect* -> *Data* -> *Download CSV*) y solicita que lo adjunte, lo cargue vía web en Mesa de Release o lo deposite en `data/storage/projects/{YYYYRMM}_grafana_pap.csv`.
 > 4. **Anti-Alucinación Estricta:**
 >    - Las cifras de pruebas (Passed, Blocked, Run, Pending) e incidencias (P1, P2, P3, P4) deben coincidir al 100% con los datos analizados. Si un proyecto no tiene pruebas o incidencias, se explicita claramente.
 > 5. **Enlace Operativo Obligatorio:**
@@ -33,6 +34,7 @@ recommended_skills:
 > 6. **Publicación y Enlace en HTML:**
 >    - Además del formato para Microsoft Teams, genera siempre el informe en HTML corporativo ejecutando:
 >      `python converters/cli/generate_release_report_html.py --release {YYYYRMM} --force`
+>      (o mediante el botón **`🔄 Actualizar Informe HTML`** / endpoint `POST /api/release-desk/generate-report` en la Mesa de Release).
 >    - Dicho informe queda disponible en `/dashboards/informes/comunicado-release-{YYYYRMM}/index.html` y es accesible desde el botón `🌐 Ver informe HTML` en la consola de Mesa de Release.
 >    - **Estructura Obligatoria de Pruebas PaP y Bloqueos en HTML:**
 >      (a) **Discriminación Explícita Progresión vs Regresión:** Banner comparativo con tarjetas diferenciadas para **Progresión por Proyectos (`PRJ-*`)** y **Regresión Transversal E2E (Sistemas Core)** con sus métricas de total, pasadas (%), bloqueadas (%), en curso y pendientes.
@@ -127,9 +129,12 @@ python converters/cli/generate_release_report_html.py --release {YYYYRMM} --forc
 ```
 
 - **Ruta de salida:** `dashboards/informes/comunicado-release-{YYYYRMM}/index.html` (URL: `/dashboards/informes/comunicado-release-{YYYYRMM}/`).
-- **Botón en Mesa de Release:** En `dashboards/release-desk/`, en la barra inferior `.rd-card-footer`, junto a *Copiar briefing*, el botón **`🌐 Ver informe HTML`** verifica si existe el informe HTML generado:
-  - Si está disponible, lo abre en una nueva pestaña.
-  - Si aún no se ha generado para esa release, muestra un aviso elegante en pantalla informando de que puede generarse invocando al agente `@release-communicator`.
+- **Botones Integrados en Mesa de Release:** En `dashboards/release-desk/`, la barra inferior `.rd-card-footer` cuenta con tres controles de reporting y telemetría:
+  - **`🌐 Ver informe HTML` (`#btnViewReportHtml`):** Comprueba si existe el informe HTML generado:
+    - Si está disponible, lo abre en una nueva pestaña.
+    - Si aún no se ha generado, avisa de que puede generarse invocando a `@release-communicator` o pulsando *Actualizar Informe HTML*.
+  - **`🔄 Actualizar Informe HTML` (`#btnGenerateReportHtml`):** Invoca el endpoint `POST /api/release-desk/generate-report`, compilando de forma instantánea el HTML en caliente (soportado tanto en servidor local como en VPS de producción) sin requerir acceso SSH ni ejecución manual de scripts.
+  - **`📊 Cargar Argos PaP` (`#btnUploadArgos`):** Abre el modal web interactivo (`#argosUploadModal`) para cargar mediante arrastre o selección los ficheros CSV de Grafana (*Progresión por PRJ* y *Regresión por Test Plan*). El endpoint `POST /api/release-desk/upload-argos` consolida atómicamente la información en `data/storage/projects/{YYYYRMM}_grafana_pap.csv` (preservando tipologías previas si se sube solo una de ellas) y regenera automáticamente el informe HTML corporativo.
 - **Estructura Requerida en HTML para Pruebas PaP y Bloqueos:**
   - **Discriminación Progresión vs Regresión:** Banner comparativo con tarjetas dedicadas para Progresión (`PRJ-*`) y Regresión Transversal E2E (Sistemas Core), reflejando métricas globales, % de éxito y ratios de bloqueo.
   - **Resumen Agregado de Bloqueos por Iniciativa:** Ranking ordenado con badge de tipología (`PROGRESIÓN` / `REGRESIÓN`), % de bloqueo relativo, pasadas/pendientes, sistemas con fallos, Delivery Lead asignado y enlaces a tickets Remedy cruzados (asignados directamente a cada proyecto, y en TRANSVERSAL las incidencias sin proyecto, con correspondencia 1:1 con la Sección 2 y excluyendo tickets en estado «Cerrado»). Se omite el listado de planes individuales a bajo nivel para mantener un enfoque puramente ejecutivo.

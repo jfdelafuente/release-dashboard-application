@@ -28,6 +28,16 @@ Esta función incorpora una consola dedicada en el portal (**Mesa de Release**) 
    - Botón **"⚡ Sincronizar Epsilon"** que invoque `POST /api/sync-postmortem` para la release seleccionada y recargue automáticamente los datos de la consola al completar.
    - Botón **"Copiar seguimiento"** en la ficha de detalle que copie al portapapeles un texto estructurado listo para pegar en Teams o correo (incluyendo ID, release, estado, grupo soporte/resolutor, responsable y Resumen IA).
 
+6. **Carga Web de Pruebas PaP de Grafana Argos y Regeneración Bajo Demanda del Informe Ejecutivo HTML 360°:**
+   - Botón **"📊 Cargar Argos PaP"** (`#btnUploadArgos`) en `.rd-card-footer` que despliega un modal web interactivo (`#argosUploadModal`) con zonas de arrastre (drag-and-drop) y selectores de archivo para los CSVs de Progresión (`PRJ-*`) y Regresión Transversal E2E.
+   - Endpoint unificado `POST /api/release-desk/upload-argos` (implementado en `desk_service.py` y soportado tanto en `serve_app.py` en local como en `fastapi_remedy_router.py` en VPS) que:
+     - Detecta automáticamente la tipología de cada fichero.
+     - Realiza una fusión inteligente y atómica en `data/storage/projects/{release}_grafana_pap.csv`, preservando las filas existentes de la otra tipología si solo se sube una de ellas.
+     - Compila y publica automáticamente el Informe Ejecutivo Global de Release en HTML (`dashboards/informes/comunicado-release-{release}/index.html`).
+   - Botón **"🔄 Actualizar Informe HTML"** (`#btnGenerateReportHtml`) que invoca `POST /api/release-desk/generate-report` para regenerar bajo demanda el informe HTML sin necesidad de volver a subir archivos ni acceder vía consola/SSH.
+   - Botón **"🌐 Ver informe HTML"** (`#btnViewReportHtml`) que verifica la existencia del informe y lo abre en una nueva pestaña del navegador.
+   - Persistencia de fechas acordadas (`fecha_prevista`) editadas en la mesa, visibles con el distintivo `(Acordada Mesa)` tanto en la consola como en el informe ejecutivo generado.
+
 ### Opcionales / Fuera de alcance (Fase 2)
 
 - Envío directo de mensajes a canales de Microsoft Teams desde la propia consola.
@@ -35,8 +45,8 @@ Esta función incorpora una consola dedicada en el portal (**Mesa de Release**) 
 
 ## Restricciones
 
-- Implementación en HTML, CSS y JavaScript vanilla estático integrado con `dashboards/assets/topbar.js`, sin añadir frameworks ni dependencias externas nuevas.
-- Reutilizar exclusivamente los endpoints existentes (`/data/output/index.json`, `POST /api/sync-postmortem` y `POST /api/epsilon/resumen`), sin modificar los datasets de `massive-incidents` ni `data/output/high_priority_notifications.json`.
+- Implementación en HTML, CSS y JavaScript vanilla estático integrado con `dashboards/assets/topbar.js`, sin añadir frameworks ni dependencias externas pesadas.
+- Reutilizar la capa de servicio común `converters/src/desk_service.py` para garantizar total paridad funcional entre el servidor local (`serve_app.py`) y el servicio de producción (`fastapi_remedy_router.py`).
 - Excluir estrictamente únicamente el estado `Cerrado` en la vista activa de la Mesa de Release.
 - Mantener el 100 % de compatibilidad y cero regresiones en la suite de tests existente del repositorio.
 
@@ -44,8 +54,9 @@ Esta función incorpora una consola dedicada en el portal (**Mesa de Release**) 
 
 - **Cuando la release seleccionada no tiene fichero JSON en `index.json`:** la consola debe mostrar un estado vacío claro indicando que la release no tiene datos locales todavía y ofrecer el botón directo **"⚡ Sincronizar Epsilon"** para inicializarla.
 - **Cuando todas las incidencias de la release están en estado `Cerrado` (0 activas):** la consola debe mostrar `0` en los contadores activos y un mensaje informativo indicando que no hay incidencias pendientes de seguimiento en esa release.
+- **Cuando se sube únicamente un CSV de Progresión o Regresión:** el backend debe conservar las pruebas existentes de la otra tipología en `{release}_grafana_pap.csv`, evitando el borrado accidental de métricas previamente consolidadas.
 - **Cuando una incidencia no tiene Resumen IA en caché o falla la llamada a `/api/epsilon/resumen`:** la consola debe mostrar igualmente todos los datos base de la incidencia, informar del estado/error de forma clara y mantener disponible el botón de reintento sin bloquear el resto de la interfaz.
-- **Cuando hay una petición en curso ("Sincronizar Epsilon" o "Generar / Refrescar Resumen IA"):** el botón pulsado debe deshabilitarse mostrando estado de carga hasta finalizar la operación, evitando peticiones duplicadas concurrentes.
+- **Cuando hay una petición en curso ("Sincronizar Epsilon", "Cargar Argos" o "Actualizar Informe HTML"):** los botones correspondientes deben deshabilitarse mostrando estado de carga hasta finalizar la operación, evitando peticiones duplicadas concurrentes.
 
 ## Definición de terminado
 
@@ -53,4 +64,7 @@ Esta función incorpora una consola dedicada en el portal (**Mesa de Release**) 
 - Ninguna incidencia con `Estatus` igual a `Cerrado` aparece en la tabla ni en los contadores activos de la consola.
 - Al seleccionar una incidencia se muestra su ficha de seguimiento con los datos de Resumen IA, el botón **"Generar / Refrescar Resumen IA"** invoca `/api/epsilon/resumen` y **"Copiar seguimiento"** copia el texto formateado al portapapeles.
 - Al pulsar **"⚡ Sincronizar Epsilon"** se invoca `POST /api/sync-postmortem` con la release activa y se recarga la consola sin modificar `massive-incidents` ni `high_priority_notifications.json`.
-- Existen pruebas automatizadas que verifican el nuevo enlace en `topbar.js`, el filtrado estricto (`!= Cerrado`) y la estructura de la nueva consola, y toda la suite existente del repositorio pasa sin regresiones.
+- El modal **"📊 Cargar Argos PaP"** permite arrastrar o seleccionar archivos CSV de Grafana, llama a `POST /api/release-desk/upload-argos`, consolida los datos y genera el informe HTML corporativo.
+- El botón **"🔄 Actualizar Informe HTML"** llama a `POST /api/release-desk/generate-report` y compila el informe en tiempo real tanto en local como en producción VPS.
+- El botón **"🌐 Ver informe HTML"** abre el informe generado en una nueva pestaña.
+- Existen pruebas automatizadas que cubren los endpoints de subida, generación y los componentes de UI, con la suite completa aprobada al 100%.

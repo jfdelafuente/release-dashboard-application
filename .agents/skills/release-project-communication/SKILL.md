@@ -10,7 +10,7 @@ description: >-
   (con telemetría Remedy, diagnóstico Epsilon Resumen IA, criticidades P1/P2/Masivas y fechas previstas),
   manteniendo sincronizado el catálogo de proyectos y enrutando siempre a la consola de Mesa de Release (/dashboards/release-desk/).
 domain: it-releases
-version: 2.7.0
+version: 2.8.0
 language: es
 owner: Orange Tech Operations
 metadata:
@@ -25,7 +25,7 @@ metadata:
     - release-opening-workflow
 ---
 
-# Comunicación Global de Releases e Incidencias por Proyecto (`release-project-communication`) — v2.7.0
+# Comunicación Global de Releases e Incidencias por Proyecto (`release-project-communication`) — v2.8.0
 
 Esta skill define las directrices maestras, fuentes de datos requeridas, formatos corporativos, modelos de datos y heurísticas de redacción para elaborar **comunicaciones ejecutivas y operativas sobre las Releases Mensuales IT** de MasOrange / Orange Tech Operations.
 
@@ -98,12 +98,18 @@ El agente/skill lee de manera inmediata y sin intervención del usuario:
 
 ### 2.2. Datos que Debe Aportar el Usuario
 1. **Export de Ejecución de Pruebas PaP (Grafana Argos)**:
-   * **Fichero destino:** `data/storage/projects/{YYYYRMM}_grafana_pap.csv` (o copiar y pegar el contenido CSV en el mensaje).
+   * **Vía Principal (Recomendada) — Carga Web en Mesa de Release:**
+     - El usuario puede subir directamente los archivos CSV exportados desde Grafana mediante el botón **`📊 Cargar Argos PaP`** (`#btnUploadArgos`) en la barra inferior de **Mesa de Release** (`/dashboards/release-desk/`).
+     - El modal interactivo (`#argosUploadModal`) permite arrastrar o seleccionar los dos reportes clave (*Avance progresión por PRJ* y *Regresión por Test Plan y dominio*).
+     - La petición se envía a `POST /api/release-desk/upload-argos`, el cual detecta la tipología automáticamente, actualiza de forma atómica e inteligente `data/storage/projects/{YYYYRMM}_grafana_pap.csv` (preservando las pruebas existentes de la otra tipología si solo se sube una) y recompila de inmediato el Informe Ejecutivo HTML corporativo.
+   * **Vías Alternativas (Manuales):**
+     - Depositar el archivo en `data/storage/projects/{YYYYRMM}_grafana_pap.csv`.
+     - Copiar y pegar el contenido CSV directamente en el chat con Antigravity o `@release-communicator`.
    * **¿Por qué se aporta?** El servidor corporativo `https://grafana.tools.cloud.orange.es` está protegido tras la autenticación federada de **Google OAuth / SSO de Orange**. Al no poder un agente de consola interactuar con la pantalla de login del navegador web de Google, el usuario obtiene el export fácilmente:
      > **Pasos para exportar desde Grafana:**
      > 1. Acceder al dashboard de Seguimiento PaP de la release.
-     > 2. En el panel de ejecución de pruebas, hacer clic en el menú del panel (tres puntos $\rightarrow$ *Inspect* $\rightarrow$ *Data*).
-     > 3. Pulsar *Download CSV* o copiar la tabla de datos y pegarla en el chat.
+     > 2. En el panel de ejecución de pruebas (*Avance progresión por PRJ* o *Regresión por Test Plan y dominio*), hacer clic en el menú del panel (tres puntos $\rightarrow$ *Inspect* $\rightarrow$ *Data*).
+     > 3. Pulsar *Download CSV* o copiar la tabla de datos y subirla al modal web o pegarla en el chat.
    * **Columnas esperadas en el CSV:** `num_test`, `pass`, `pending`, `block`, `verify`, `executing`, `prj`, `resumen_test_plan`, `sistema_test`, `tipologia_prueba`, `agrupacion_funcional`, `blocking_comment`.
 
 ---
@@ -369,9 +375,19 @@ Además de las plantillas de texto formateado para Microsoft Teams, el agente ge
 - En `dashboards/release-desk/index.html` (barra inferior `.rd-card-footer` junto a `btnCopyBriefing`):
   ```html
   <button id="btnViewReportHtml" class="rd-btn" title="Ver el informe ejecutivo HTML de la release seleccionada">🌐 Ver informe HTML</button>
+  <button id="btnGenerateReportHtml" class="rd-btn" title="Regenerar el informe ejecutivo HTML con los datos más recientes">🔄 Actualizar Informe HTML</button>
+  <button id="btnUploadArgos" class="rd-btn rd-btn-secondary" title="Cargar ficheros CSV de Grafana Argos (Progresión y Regresión)">📊 Cargar Argos PaP</button>
   ```
 - **Comportamiento interactivo (`release-desk.js`)**:
-  - Al pulsar, realiza una comprobación previa (`HEAD`/`GET`) a la ruta `/dashboards/informes/comunicado-release-{release}/`.
-  - Si el informe ya existe, lo abre inmediatamente en una pestaña nueva del navegador (`window.open(url, '_blank')`).
-  - Si aún no se ha generado, emite un aviso elegante mediante toast informativo (`UIFeedback.toast` / `Toast.warning`) indicando:
-    *"El informe HTML de la release {release} aún no ha sido generado. Puedes generarlo con el agente @release-communicator."*
+  - **`btnViewReportHtml`:**
+    - Realiza una comprobación previa (`HEAD`/`GET`) a la ruta `/dashboards/informes/comunicado-release-{release}/`.
+    - Si el informe ya existe, lo abre inmediatamente en una pestaña nueva del navegador (`window.open(url, '_blank')`).
+    - Si aún no se ha generado, emite un aviso elegante mediante toast informativo (`UIFeedback.toast` / `Toast.warning`) indicando cómo generarlo.
+  - **`btnGenerateReportHtml`:**
+    - Envía una petición `POST /api/release-desk/generate-report` con payload `{"release": "{release}"}`.
+    - El backend (FastAPI en VPS o `serve_app.py` en local a través de `converters/src/desk_service.py`) compila en caliente el informe HTML corporativo.
+    - Muestra toast de éxito y actualiza el enlace directo para visualización instantánea.
+  - **`btnUploadArgos`:**
+    - Despliega el modal `#argosUploadModal` con soporte interactivo para arrastrar o examinar archivos de Progresión (`PRJ-*`) y Regresión E2E.
+    - Envía los ficheros a `POST /api/release-desk/upload-argos` como `multipart/form-data`.
+    - El backend consolida los datos en `data/storage/projects/{release}_grafana_pap.csv`, recompila el informe HTML y devuelve el recuento de filas y métricas actualizadas.

@@ -7,6 +7,31 @@ y este proyecto se adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
 ---
 
+## [0.5.0] - 2026-11-22
+
+### Añadido (Nuevas Funcionalidades y Ecosistema)
+
+#### Carga Web de Argos PaP y Generación Bajo Demanda en Mesa de Release (Feature 017)
+- **Modal web de subida de pruebas PaP (`#argosUploadModal`)**: Integrado en la consola de Mesa de Release (`dashboards/release-desk/`) con soporte de arrastre (drag-and-drop) o selector de archivos para los CSVs de Grafana Argos (*Avance progresión por PRJ* y *Regresión por Test Plan y dominio*).
+- **Capa unificada de servicios (`converters/src/desk_service.py`)**:
+  - `handle_argos_upload()`: Ingesta, detección automática de tipología y fusión atómica e inteligente en `data/storage/projects/{release}_grafana_pap.csv`, preservando las pruebas existentes de la otra tipología si solo se sube una.
+  - `generate_release_report()`: Generación programática del Informe Ejecutivo Global 360° en HTML (`dashboards/informes/comunicado-release-{release}/index.html`).
+- **Endpoints de backend en local y producción VPS**:
+  - `POST /api/release-desk/upload-argos`: Recepción multipart de ficheros CSV, consolidación de dataset y compilación automática del informe.
+  - `POST /api/release-desk/generate-report`: Compilación del informe HTML bajo demanda sin re-subir archivos.
+  - Soportados con idéntico comportamiento en `serve_app.py` (servidor local) y `fastapi_remedy_router.py` (FastAPI en producción VPS).
+- **Controles interactivos en Mesa de Release**:
+  - Botón `📊 Cargar Argos PaP` (`#btnUploadArgos`): Apertura del modal interactivo de carga.
+  - Botón `🔄 Actualizar Informe HTML` (`#btnGenerateReportHtml`): Regeneración bajo demanda con feedback en pantalla.
+  - Botón `🌐 Ver informe HTML` (`#btnViewReportHtml`): Apertura directa del informe corporativo generado en una nueva pestaña.
+- **Persistencia de fechas de compromiso acordadas en la Mesa**:
+  - Edición en caliente del campo `fecha_prevista` en el seguimiento operativo de Mesa de Release con sincronización local y en servidor.
+  - Indicador visual `(Acordada Mesa)` tanto en la consola interactiva como en las tarjetas ejecutivas de proyecto del informe HTML.
+- **Exclusión estricta de incidencias «Cerrado»**:
+  - Depuración y alineación matemática estricta: las incidencias con estatus `Cerrado` o `Closed` se omiten por completo de la tabla resumen de bloqueos y de las fichas de seguimiento por proyecto y transversal, contabilizándose exclusivamente en el KPI superior general (*Resueltas / Cerradas*).
+
+---
+
 ## [0.4.0] - 2026-10-22
 
 ### Añadido (Nuevas Funcionalidades y Ecosistema)
@@ -115,5 +140,5 @@ y este proyecto se adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
 ---
 
-**Versión actual**: v0.3.0  
-**Última actualización**: 2026-10-21
+**Versión actual**: v0.5.0  
+**Última actualización**: 2026-11-22
