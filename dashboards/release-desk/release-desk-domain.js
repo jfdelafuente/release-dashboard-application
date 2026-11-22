@@ -72,6 +72,15 @@
         }
         lines.push('Grupo soporte/resolutor: ' + grupo + ' | Responsable: ' + resp);
 
+        var inact = computeInactivityStatus(incident);
+        if (inact) {
+            lines.push('Alerta inactividad: ⏸ ' + inact.label + ' (' + inact.tooltip + ')');
+        }
+        var pp = detectPingPong(incident, null, iaData);
+        if (pp) {
+            lines.push('Alerta reasignación: 🏓 ' + pp.label + ' (' + pp.tooltip + ')');
+        }
+
         if (iaData && !iaData._error) {
             var sintesis = iaData.resumenEjecutivo || iaData.resumen || iaData.sintesis || '';
             var problema = iaData.problema || '';
@@ -95,13 +104,13 @@
         return lines.join('\n');
     }
 
-    function computeOpenAgeDays(fechaEnvio, nowDate) {
-        if (!fechaEnvio) return null;
-        var s = String(fechaEnvio).trim();
-        var dt = null;
+    function parseDateRobust(dateStr) {
+        if (!dateStr) return null;
+        var s = String(dateStr).trim();
+        if (!s || s === '-') return null;
         var m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:\s+(\d{1,2}):(\d{2})(?::(\d{2}))?)?$/);
         if (m) {
-            dt = new Date(
+            var dt = new Date(
                 parseInt(m[3], 10),
                 parseInt(m[2], 10) - 1,
                 parseInt(m[1], 10),
@@ -109,14 +118,126 @@
                 m[5] ? parseInt(m[5], 10) : 0,
                 m[6] ? parseInt(m[6], 10) : 0
             );
-        } else {
-            var parsed = new Date(s);
-            if (!isNaN(parsed.getTime())) dt = parsed;
+            if (!isNaN(dt.getTime())) return dt;
         }
-        if (!dt || isNaN(dt.getTime())) return null;
+        var parsedMs = Date.parse(s);
+        if (!isNaN(parsedMs)) return new Date(parsedMs);
+        var parsed = new Date(s);
+        if (!isNaN(parsed.getTime())) return parsed;
+        return null;
+    }
+
+    function computeOpenAgeDays(fechaEnvio, nowDate) {
+        var dt = parseDateRobust(fechaEnvio);
+        if (!dt) return null;
         var ref = nowDate instanceof Date ? nowDate : new Date();
         var diff = Math.floor((ref.getTime() - dt.getTime()) / 86400000);
         return diff < 0 ? 0 : diff;
+    }
+
+    function computeInactivityStatus(incident, nowDate) {
+        if (!incident || typeof incident !== 'object') return null;
+        var st = String(incident['Estatus'] || '').toLowerCase();
+        if (st.includes('resuelt') || st.includes('cerrad')) return null;
+
+        var modStr = incident['fechaUltimaModificacion'] ||
+                     incident['Fecha de última modificación'] ||
+                     incident['fechaModificacion'] ||
+                     incident['last_modified'] ||
+                     incident['Fecha de envío'];
+        if (!modStr) return null;
+
+        var dt = parseDateRobust(modStr);
+        if (!dt) return null;
+
+        var ref = nowDate instanceof Date ? nowDate : new Date();
+        var diffMs = ref.getTime() - dt.getTime();
+        if (diffMs < 0) diffMs = 0;
+        var diffHours = Math.floor(diffMs / 3600000);
+        var diffDays = Math.floor(diffMs / 86400000);
+
+        if (diffHours < 48) return null;
+
+        var isCrit = diffHours >= 72;
+        var level = isCrit ? 'crit' : 'warn';
+        var label = diffDays >= 2 ? (diffDays + 'd sin mov.') : (diffHours + 'h sin mov.');
+        var tooltip = 'Sin actividad registrada en Remedy desde hace ' + (diffDays >= 1 ? (diffDays + ' días (' + diffHours + 'h)') : (diffHours + ' horas')) + ' (última mod.: ' + modStr + ').';
+
+        return {
+            hours: diffHours,
+            days: diffDays,
+            level: level,
+            label: label,
+            tooltip: tooltip
+        };
+    }
+
+    function detectPingPong(incident, remedyCacheItem, iaData) {
+        if (!incident || typeof incident !== 'object') return null;
+
+        var gAsignado = String(incident['Grupo asignado'] || incident['grupoAsignado'] || '').trim();
+        var gResolutor = String(incident['Grupo Resolutor'] || incident['grupoResolutor'] || '').trim();
+        var gRemitente = String(incident['Grupo Remitente'] || incident['grupoRemitente'] || '').trim();
+
+        var groups = [];
+        if (gRemitente && gRemitente !== '-') groups.push(gRemitente);
+        if (gResolutor && gResolutor !== '-' && groups.indexOf(gResolutor) === -1) groups.push(gResolutor);
+        if (gAsignado && gAsignado !== '-' && groups.indexOf(gAsignado) === -1) groups.push(gAsignado);
+
+        if (incident['pingPong'] === true || incident['ping_pong'] === true || Number(incident['reasignaciones'] || 0) > 1 || Number(incident['numReasignaciones'] || 0) > 1) {
+            return {
+                isPingPong: true,
+                count: Number(incident['reasignaciones'] || incident['numReasignaciones'] || 2),
+                label: 'Ping-pong',
+                groups: groups,
+                tooltip: 'Ticket reasignado múltiples veces entre grupos (' + groups.join(' ↔ ') + ').'
+            };
+        }
+
+        if (gAsignado && gResolutor && gAsignado !== '-' && gResolutor !== '-' && gAsignado.toLowerCase() !== gResolutor.toLowerCase()) {
+            return {
+                isPingPong: true,
+                count: 2,
+                label: 'Ping-pong',
+                groups: groups,
+                tooltip: 'Posible discrepancia/rebote: Grupo asignado (' + gAsignado + ') difiere del Grupo Resolutor (' + gResolutor + ').'
+            };
+        }
+
+        if (remedyCacheItem && Array.isArray(remedyCacheItem.worklogs) && remedyCacheItem.worklogs.length > 0) {
+            var transferCount = 0;
+            var transferRegex = /\b(?:reasigna\w*|transfer\w*|devuelt\w*|derivad\w*|cambio de grupo|cambio asignaci[oó]n)\b/i;
+            remedyCacheItem.worklogs.forEach(function (wl) {
+                var txt = typeof wl === 'string' ? wl : (wl && (wl.texto || wl.text || wl.descripcion || ''));
+                if (transferRegex.test(txt)) {
+                    transferCount++;
+                }
+            });
+            if (transferCount >= 2) {
+                return {
+                    isPingPong: true,
+                    count: transferCount,
+                    label: 'Ping-pong',
+                    groups: groups,
+                    tooltip: 'Detectadas ' + transferCount + ' transferencias/devoluciones de grupo en el historial de Remedy.'
+                };
+            }
+        }
+
+        if (iaData && !iaData._error) {
+            var iaText = (iaData.problema || '') + ' ' + (iaData.siguienteAccion || '') + ' ' + (Array.isArray(iaData.bloqueos) ? iaData.bloqueos.join(' ') : '');
+            if (/\b(?:ping-pong|ping pong|reasignado entre|rebote entre grupos|devuelto al grupo)\b/i.test(iaText)) {
+                return {
+                    isPingPong: true,
+                    count: 2,
+                    label: 'Ping-pong',
+                    groups: groups,
+                    tooltip: 'Resumen IA alerta de bloqueo por transferencias o ping-pong entre grupos.'
+                };
+            }
+        }
+
+        return null;
     }
 
     function isIaCacheStale(iaData, inc) {
@@ -399,6 +520,19 @@
             metaHtml.push('Sin fecha prevista');
         }
 
+        var inact = computeInactivityStatus(inc, null);
+        if (inact) {
+            metaText.push('⏸ ' + inact.label);
+            var inactColor = inact.level === 'crit' ? '#DC2626' : '#D97706';
+            metaHtml.push('<span style="color:' + inactColor + '; font-weight:600;">⏸ ' + escapeHtml(inact.label) + '</span>');
+        }
+
+        var pp = detectPingPong(inc, null, iaData);
+        if (pp) {
+            metaText.push('🏓 ' + pp.label);
+            metaHtml.push('<span style="color:#7C3AED; font-weight:600;">🏓 ' + escapeHtml(pp.label) + '</span>');
+        }
+
         var textLines = [
             '• ' + id + ' (' + metaText.join(' | ') + ')',
             '  - Problema Detectado: ' + problema,
@@ -544,6 +678,8 @@
                     resolved: 0,
                     overdue: 0,
                     missingFecha: 0,
+                    stalled: 0,
+                    pingPong: 0,
                     health: 'ok',
                     incidents: []
                 };
@@ -560,13 +696,18 @@
             if (fst === 'resolved') grp.resolved++;
             else if (fst === 'overdue') grp.overdue++;
             else if (fst === 'missing') grp.missingFecha++;
+
+            var inact = computeInactivityStatus(inc, nowDate);
+            if (inact) grp.stalled++;
+            var pp = detectPingPong(inc, null, null);
+            if (pp) grp.pingPong++;
         });
 
         var healthOrder = { crit: 0, warn: 1, ok: 2 };
         return Object.keys(map).map(function (k) {
             var g = map[k];
             if (g.p1 > 0 || g.overdue > 0) g.health = 'crit';
-            else if (g.p2 > 0 || g.missingFecha > 0) g.health = 'warn';
+            else if (g.p2 > 0 || g.missingFecha > 0 || g.stalled > 0 || g.pingPong > 0) g.health = 'warn';
             else g.health = 'ok';
             return g;
         }).sort(function (a, b) {
@@ -673,7 +814,10 @@
         getSyncChangeBadge: getSyncChangeBadge,
         isMassiveIncident: isMassiveIncident,
         getPriorityBadgeClass: getPriorityBadgeClass,
-        getPriorityTooltip: getPriorityTooltip
+        getPriorityTooltip: getPriorityTooltip,
+        parseDateRobust: parseDateRobust,
+        computeInactivityStatus: computeInactivityStatus,
+        detectPingPong: detectPingPong
     };
     global.ReleaseDeskDomain = api;
     if (typeof module !== 'undefined' && module.exports) {

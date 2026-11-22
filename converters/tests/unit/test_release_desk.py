@@ -474,15 +474,15 @@ def test_release_desk_js_group_incidents_by_project():
             "  'PRJ-300': { summary: 'Proyecto Warn', despliegue: 'Modo Oculto' }\n"
             "} } };\n"
             "const groups = rd.groupIncidentsByProject(incidents, catalog, '2026R11', {}, '2026-11-18T12:00:00Z');\n"
-            "console.log(JSON.stringify(groups.map(g => ({ code: g.code, health: g.health, total: g.total, p1: g.p1, p2: g.p2 }))));\n"
+            "console.log(JSON.stringify(groups.map(g => ({ code: g.code, health: g.health, total: g.total, p1: g.p1, p2: g.p2, stalled: g.stalled, pingPong: g.pingPong }))));\n"
         )
         proc = _run_node_script(script)
         out = json.loads(proc.stdout)
         assert out == [
-            {"code": "PRJ-100", "health": "crit", "total": 1, "p1": 1, "p2": 0},
-            {"code": "PRJ-300", "health": "warn", "total": 1, "p1": 0, "p2": 1},
-            {"code": "PRJ-200", "health": "ok", "total": 1, "p1": 0, "p2": 0},
-            {"code": "Sin proyecto", "health": "warn", "total": 1, "p1": 0, "p2": 0},
+            {"code": "PRJ-100", "health": "crit", "total": 1, "p1": 1, "p2": 0, "stalled": 0, "pingPong": 0},
+            {"code": "PRJ-300", "health": "warn", "total": 1, "p1": 0, "p2": 1, "stalled": 0, "pingPong": 0},
+            {"code": "PRJ-200", "health": "ok", "total": 1, "p1": 0, "p2": 0, "stalled": 0, "pingPong": 0},
+            {"code": "Sin proyecto", "health": "warn", "total": 1, "p1": 0, "p2": 0, "stalled": 0, "pingPong": 0},
         ]
     else:
         js = RELEASE_DESK_JS.read_text(encoding="utf-8")
@@ -603,6 +603,67 @@ def test_release_desk_priority_tooltip_resumen_ia():
     else:
         js = RELEASE_DESK_JS.read_text(encoding="utf-8")
         assert "getPriorityTooltip" in js
+
+
+def test_release_desk_inactivity_status():
+    if shutil.which("node") is not None:
+        script = (
+            f"const rd = require({json.dumps(str(RELEASE_DESK_JS))});\n"
+            "const now = new Date('2026-11-22T12:00:00Z');\n"
+            "const incRecent = { 'ID de incidencia': 'INC1', Estatus: 'Asignado', fechaUltimaModificacion: '2026-11-22T08:00:00Z' };\n"
+            "const incWarn = { 'ID de incidencia': 'INC2', Estatus: 'En Curso', fechaUltimaModificacion: '2026-11-20T10:00:00Z' };\n"
+            "const incCrit = { 'ID de incidencia': 'INC3', Estatus: 'Pendiente', 'Fecha de envío': '18/11/2026 12:00' };\n"
+            "const incResolved = { 'ID de incidencia': 'INC4', Estatus: 'Resuelto', fechaUltimaModificacion: '2026-11-15T10:00:00Z' };\n"
+            "console.log(JSON.stringify({\n"
+            "  recent: rd.computeInactivityStatus(incRecent, now),\n"
+            "  warn: rd.computeInactivityStatus(incWarn, now),\n"
+            "  crit: rd.computeInactivityStatus(incCrit, now),\n"
+            "  resolved: rd.computeInactivityStatus(incResolved, now)\n"
+            "}));\n"
+        )
+        proc = _run_node_script(script)
+        out = json.loads(proc.stdout)
+        assert out["recent"] is None
+        assert out["resolved"] is None
+        assert out["warn"]["level"] == "warn"
+        assert out["warn"]["days"] == 2
+        assert "2d sin mov." in out["warn"]["label"]
+        assert out["crit"]["level"] == "crit"
+        assert out["crit"]["days"] >= 3
+        assert "3d sin mov." in out["crit"]["label"] or "4d sin mov." in out["crit"]["label"]
+    else:
+        js = RELEASE_DESK_JS.read_text(encoding="utf-8")
+        assert "computeInactivityStatus" in js
+
+
+def test_release_desk_detect_ping_pong():
+    if shutil.which("node") is not None:
+        script = (
+            f"const rd = require({json.dumps(str(RELEASE_DESK_JS))});\n"
+            "const incMismatch = { 'ID de incidencia': 'INC1', 'Grupo asignado': 'SOPORTE_A', 'Grupo Resolutor': 'DESARROLLO_B' };\n"
+            "const incSameGroup = { 'ID de incidencia': 'INC2', 'Grupo asignado': 'SOPORTE_A', 'Grupo Resolutor': 'SOPORTE_A' };\n"
+            "const incFlag = { 'ID de incidencia': 'INC3', 'Grupo asignado': 'SOPORTE_A', 'Grupo Resolutor': 'SOPORTE_A', pingPong: true };\n"
+            "const wlItem = { worklogs: ['Ticket asignado inicialmente', 'Devuelto a grupo remitente por falta de info', 'Reasignado a grupo segundo nivel'] };\n"
+            "const incWl = { 'ID de incidencia': 'INC4', 'Grupo asignado': 'SOPORTE_A', 'Grupo Resolutor': 'SOPORTE_A' };\n"
+            "const iaData = { problema: 'Bloqueado por ping-pong entre grupos de operaciones y desarrollo' };\n"
+            "console.log(JSON.stringify({\n"
+            "  mismatch: rd.detectPingPong(incMismatch, null, null),\n"
+            "  same: rd.detectPingPong(incSameGroup, null, null),\n"
+            "  flag: rd.detectPingPong(incFlag, null, null),\n"
+            "  wl: rd.detectPingPong(incWl, wlItem, null),\n"
+            "  ia: rd.detectPingPong(incSameGroup, null, iaData)\n"
+            "}));\n"
+        )
+        proc = _run_node_script(script)
+        out = json.loads(proc.stdout)
+        assert out["mismatch"] is not None and out["mismatch"]["isPingPong"] is True
+        assert out["same"] is None
+        assert out["flag"] is not None and out["flag"]["isPingPong"] is True
+        assert out["wl"] is not None and out["wl"]["isPingPong"] is True
+        assert out["ia"] is not None and out["ia"]["isPingPong"] is True
+    else:
+        js = RELEASE_DESK_JS.read_text(encoding="utf-8")
+        assert "detectPingPong" in js
 
 
 def test_bump_asset_versions_updates_both_consoles(tmp_path):

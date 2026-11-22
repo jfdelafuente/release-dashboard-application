@@ -22,7 +22,7 @@ Lista priorizada de evolutivos para la consola **[Mesa de Release](/05-postmorte
 | **M12** | Botón "Copiar briefing" (Prioridad/Sistema, Resumen IA y clipboard seguro) | Operativa | Alto | `[x] Completada` |
 | **M13** | Indicador de novedades desde la última sincronización | Operativa | Medio | `[x] Completada` |
 | **M14** | Vista agrupada por Proyecto (`PRJ-*`) con semáforo de salud | Seguimiento | Medio | `[x] Completada` |
-| **M15** | Detector de tickets sin movimiento / "ping-pong" entre grupos | Operativa | Medio | `[ ] Pendiente` |
+| **M15** | Detector de tickets sin movimiento / "ping-pong" entre grupos | Operativa | Medio | `[x] Completada` |
 | **M16** | Cache-busting y cabeceras `Cache-Control` en despliegue | Despliegue | Alto | `[x] Completada` |
 | **M17** | Extracción de CSS y modularización de `release-desk.js` | Mantenimiento | Alto | `[x] Completada` |
 | **M18** | Concurrencia segura, retención de caché y backup de `overrides` | Datos / Despliegue | Alto | `[x] Completada` |
@@ -175,10 +175,22 @@ Lista priorizada de evolutivos para la consola **[Mesa de Release](/05-postmorte
 ---
 
 ### M15 · Detector de tickets sin movimiento / "ping-pong" entre grupos
-- **Situación actual:** El indicador de `Aging` (`M7`) mide la antigüedad total desde apertura, pero no detecta si un ticket lleva días sin actividad reciente en worklogs o si ha rebotado entre varios grupos.
-- **Propuesta:** Usar `fechaUltimaModificacion` (y opcionalmente los worklogs/eventos de `remedyG` ya cacheados) para marcar tickets abiertos sin movimiento reciente (p. ej. `> 48h`) o con múltiples reasignaciones de grupo.
-- **Componentes afectados:** `dashboards/release-desk/index.html`, `dashboards/release-desk/release-desk.js`.
-- **Criterio de aceptación:** Los tickets estancados o en "ping-pong" destacan en la tabla para que el Release Manager desbloquee su asignación.
+- **Estado:** `[x] Completada`
+- **Situación previa:** El indicador de `Aging` (`M7`) medía la antigüedad total desde apertura, pero no detectaba si un ticket llevaba días sin actividad reciente en worklogs o si existían discrepancias/rebotes de asignación entre grupos resolutores.
+- **Implementación realizada:**
+  1. **Detección de inactividad (`computeInactivityStatus`):** Para incidencias abiertas (no resueltas/cerradas), analiza la fecha de última modificación (`fechaUltimaModificacion`, `Fecha de última modificación`, `Fecha de envío`). Si la inactividad supera 48h, genera alerta moderada (`⏸ 2d sin mov.`, `.rd-badge-stalled-warn`); si supera 72h, genera alerta crítica (`⏸ 3d sin mov.`, `.rd-badge-stalled-crit`) con tooltip flotante detallado indicando horas y fecha exacta.
+  2. **Detección de "ping-pong" / reasignaciones (`detectPingPong`):**
+     - Discrepancia directa entre `Grupo asignado` y `Grupo Resolutor` (cuando ambos están informados y no coinciden).
+     - Flags explícitos de rebote (`pingPong: true` o `reasignaciones > 1`).
+     - Análisis de transferencias en worklogs de Remedy (`remedyCacheItem`) con expresiones regulares de devolución/reasignación.
+     - Diagnóstico de transferencias o bloqueos en `Resumen IA` (`iaData.problema` / `iaData.bloqueos`).
+  3. **Visualización en tabla y tooltips flotantes:** Badge `⏸ Xd sin mov.` en la columna `Fecha Apertura` y badge `🏓 Ping-pong` en la columna `Sistema`, ambos con tooltip flotante explicativo interactivo (`.rd-floating-tooltip`).
+  4. **Caja de alertas en el detalle inline (`.rd-detail-alert-box`):** Al desplegar la fila del ticket, se muestra un panel superior con advertencias destacadas de inactividad y ping-pong antes del Resumen IA.
+  5. **Búsqueda y filtrado:** El buscador de texto rápido soporta términos como `sin mov`, `inactivo`, `estancado`, `ping-pong`, `pingpong` y `rebote`.
+  6. **Integración en vista por Proyecto (`M14`):** Cada tarjeta de proyecto contabiliza `⏸ Sin mov` y `🏓 Ping-pong`, degradando la salud del proyecto a estado de atención (`warn`) si no hay criticidad P1 previa.
+  7. **Briefings y seguimiento:** Tanto `buildMesaBriefing` (por prioridad y por sistema) como `buildFollowupText` incorporan los indicadores de inactividad y ping-pong para difusión ejecutiva.
+- **Componentes afectados:** `dashboards/release-desk/release-desk-domain.js`, `dashboards/release-desk/release-desk.js`, `dashboards/release-desk/release-desk.css`, `dashboards/release-desk/index.html`, `converters/tests/unit/test_release_desk.py`, `docs/05-postmortem-y-reportes/mesa-de-release-mejoras.md`.
+- **Criterio de aceptación:** Los tickets estancados (>48h) o en ping-pong entre grupos destacan visiblemente en tabla, detalle, vista por proyecto y briefings.
 
 ---
 

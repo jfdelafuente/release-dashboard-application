@@ -32,6 +32,8 @@
     var isMassiveIncident = Domain.isMassiveIncident;
     var getPriorityBadgeClassDomain = Domain.getPriorityBadgeClass;
     var getPriorityTooltip = Domain.getPriorityTooltip;
+    var computeInactivityStatus = Domain.computeInactivityStatus;
+    var detectPingPong = Domain.detectPingPong;
     var state = {
         currentRelease: null,
         postmortemFiles: [],
@@ -392,6 +394,12 @@
             var proj = resolveProjectInfo(inc, state.projectsCatalog, state.currentRelease);
             if (project && (!proj || proj.code !== project)) return false;
             if (search) {
+                var inact = computeInactivityStatus ? computeInactivityStatus(inc) : null;
+                var pp = detectPingPong ? detectPingPong(inc, null, state.iaCache.get(inc['ID de incidencia'])) : null;
+                var extraTerms = [];
+                if (inact) extraTerms.push('sin mov', 'inactivo', 'estancado');
+                if (pp) extraTerms.push('ping-pong', 'pingpong', 'rebote');
+
                 var hay = [
                     inc['ID de incidencia'],
                     inc['Descripción'],
@@ -401,7 +409,8 @@
                     inc['producto'],
                     inc['Sistema'],
                     proj ? proj.code : '',
-                    proj ? proj.summary : ''
+                    proj ? proj.summary : '',
+                    extraTerms.join(' ')
                 ].join(' ').toLowerCase();
                 if (!hay.includes(search)) return false;
             }
@@ -487,6 +496,8 @@
             if (g.p3Other > 0) metrics.push('<span class="rd-badge rd-badge-media">P3/Otras: ' + g.p3Other + '</span>');
             if (g.overdue > 0) metrics.push('<span class="rd-badge rd-badge-fecha-vencida">⚠ Vencidas: ' + g.overdue + '</span>');
             if (g.missingFecha > 0) metrics.push('<span class="rd-badge rd-badge-curso">Sin fecha: ' + g.missingFecha + '</span>');
+            if (g.stalled > 0) metrics.push('<span class="rd-badge rd-badge-stalled-warn" title="Tickets sin movimiento > 48h">⏸ Sin mov: ' + g.stalled + '</span>');
+            if (g.pingPong > 0) metrics.push('<span class="rd-badge rd-badge-pingpong" title="Tickets con reasignaciones / ping-pong">🏓 Ping-pong: ' + g.pingPong + '</span>');
             if (g.resolved > 0) metrics.push('<span class="rd-badge rd-badge-resuelto">Resueltas: ' + g.resolved + '</span>');
 
             var incButtons = g.incidents.map(function (inc) {
@@ -667,6 +678,19 @@
                 }
             }
 
+            var inact = computeInactivityStatus ? computeInactivityStatus(inc) : null;
+            var inactHtml = '';
+            if (inact) {
+                var inactCls = inact.level === 'crit' ? 'rd-badge-stalled-crit' : 'rd-badge-stalled-warn';
+                inactHtml = '<div><span class="rd-badge ' + inactCls + '" data-tooltip="' + escapeHtml(inact.tooltip) + '" data-tooltip-title="Ticket sin movimiento">⏸ ' + escapeHtml(inact.label) + '</span></div>';
+            }
+
+            var pp = detectPingPong ? detectPingPong(inc, null, iaData) : null;
+            var pingPongHtml = '';
+            if (pp) {
+                pingPongHtml = '<div><span class="rd-badge rd-badge-pingpong" data-tooltip="' + escapeHtml(pp.tooltip) + '" data-tooltip-title="Alerta Reasignación">🏓 Ping-pong</span></div>';
+            }
+
             var iaStale = iaData && isIaCacheStale(iaData, inc);
             var staleBadgeHtml = iaStale
                 ? '<div><span class="rd-badge-stale" title="El ticket se actualizó en Remedy después de generar este resumen; al desplegar se refrescará automáticamente">↻ Nuevo en Remedy</span></div>'
@@ -703,10 +727,10 @@
 
             var rowHtml = '<tr data-inc-id="' + escapeHtml(id) + '"' + rowClassAttr + ' aria-expanded="' + (isSelected ? 'true' : 'false') + '">' +
                 '<td style="white-space:nowrap;"><span class="rd-badge rd-badge-code">' + (isSelected ? '▾ ' : '▸ ') + codeLinkHtml + '</span>' + syncBadgeHtml + '</td>' +
-                '<td style="font-size:11.5px; min-width:78px;">' + escapeHtml(fechaApertura) + agingHtml + '</td>' +
+                '<td style="font-size:11.5px; min-width:78px;">' + escapeHtml(fechaApertura) + agingHtml + inactHtml + '</td>' +
                 '<td style="min-width:200px; max-width:340px;"' + descTooltipAttr + '>' + descCellHtml + '</td>' +
                 '<td style="white-space:nowrap;"' + prioTooltipAttr + '><span class="rd-badge ' + prioBadgeClass + '">' + prioBadgeHtml + '</span></td>' +
-                '<td style="max-width:120px;">' + sistemaCell + '</td>' +
+                '<td style="max-width:120px;">' + sistemaCell + pingPongHtml + '</td>' +
                 '<td style="white-space:nowrap;">' + jiraCell + '</td>' +
                 '<td style="min-width:120px; max-width:190px;"' + projTooltipAttr + '>' + proyectoCell + '</td>' +
                 '<td style="min-width:150px; max-width:230px;"' + accionesTooltipAttr + '><div class="rd-cell-clamp">' + escapeHtml(acciones) + '</div>' + staleBadgeHtml + '</td>' +
@@ -889,8 +913,24 @@
             '</div>';
         }
 
+        var inact = computeInactivityStatus ? computeInactivityStatus(inc) : null;
+        var pp = detectPingPong ? detectPingPong(inc, null, iaData) : null;
+        var alertsHtml = '';
+        if (inact || pp) {
+            var alertItems = [];
+            if (inact) {
+                var inactCls = inact.level === 'crit' ? 'is-crit' : 'is-warn';
+                alertItems.push('<div class="rd-detail-alert-item rd-alert-stalled ' + inactCls + '"><strong>⏸ Ticket sin movimiento (' + escapeHtml(inact.label) + '):</strong> ' + escapeHtml(inact.tooltip) + '</div>');
+            }
+            if (pp) {
+                alertItems.push('<div class="rd-detail-alert-item rd-alert-pingpong"><strong>🏓 Alerta Ping-pong / Reasignaciones:</strong> ' + escapeHtml(pp.tooltip) + '</div>');
+            }
+            alertsHtml = '<div class="rd-detail-alert-box">' + alertItems.join('') + '</div>';
+        }
+
         return '<div class="rd-detail-inline-card">' +
             '<div id="detailBody" class="rd-detail-body">' +
+                alertsHtml +
                 renderIaSection(id, iaData, isLoadingIa) +
                 resolutionBox +
             '</div>' +
