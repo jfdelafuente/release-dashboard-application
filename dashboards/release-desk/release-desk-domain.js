@@ -479,6 +479,7 @@
 
     function formatBriefingIncidentInfo(inc, iaCache, projectsCatalog, releaseName, overrides, todayYmd, includePriority) {
         var id = inc['ID de incidencia'] || '-';
+        var rank = priorityRank(inc);
         var iaData = iaCache ? (typeof iaCache.get === 'function' ? iaCache.get(id) : iaCache[id]) : null;
         var hasIa = Boolean(iaData && !iaData._error);
 
@@ -515,27 +516,32 @@
         if (includePriority) {
             var prioLabel = inc['Prioridad'] || inc['Urgencia'] || '-';
             metaText.push(prioLabel);
-            metaHtml.push(escapeHtml(prioLabel));
+            var prioColor = '#475569';
+            if (rank === 1) prioColor = '#DC2626';
+            else if (rank === 2) prioColor = '#EA580C';
+            else if (rank === 3) prioColor = '#2563EB';
+            metaHtml.push('<span style="color:' + prioColor + '; font-weight:600;">' + escapeHtml(prioLabel) + '</span>');
         }
         metaText.push(estatus);
-        metaHtml.push(escapeHtml(estatus));
+        var estatusColor = isResolved ? '#16A34A' : (String(estatus).toLowerCase().includes('curso') ? '#2563EB' : '#D97706');
+        metaHtml.push('<span style="color:' + estatusColor + '; font-weight:600;">' + escapeHtml(estatus) + '</span>');
         if (!includePriority && inc['Grupo asignado']) {
             metaText.push(inc['Grupo asignado']);
-            metaHtml.push(escapeHtml(inc['Grupo asignado']));
+            metaHtml.push('<span style="color:#475569;">' + escapeHtml(inc['Grupo asignado']) + '</span>');
         }
         if (projLabel) {
             metaText.push(projLabel);
-            metaHtml.push(escapeHtml(projLabel));
+            metaHtml.push('<span style="color:#4F46E5;">' + escapeHtml(projLabel) + '</span>');
         }
         if (fechaPrevista) {
             var fechaTag = (isOverdue ? '⚠️ VENCIDA ' : 'Prev: ') + fechaPrevista;
             metaText.push(fechaTag);
             metaHtml.push(isOverdue
                 ? '<strong style="color:#B91C1C;">' + escapeHtml(fechaTag) + '</strong>'
-                : escapeHtml(fechaTag));
+                : '<span style="color:#0284C7; font-weight:600;">' + escapeHtml(fechaTag) + '</span>');
         } else if (!isResolved) {
             metaText.push('Sin fecha prevista');
-            metaHtml.push('Sin fecha prevista');
+            metaHtml.push('<span style="color:#94A3B8;">Sin fecha prevista</span>');
         }
 
         var inact = computeInactivityStatus(inc, null);
@@ -569,18 +575,23 @@
         }
         var textLine = textLines.join('\n');
 
+        var cardBg = isResolved ? '#F0FDF4' : (rank === 1 ? '#FEF2F2' : (rank === 2 ? '#FFF7ED' : '#F8FAFC'));
+        var cardBorder = isResolved ? '#86EFAC' : (rank === 1 ? '#FCA5A5' : (rank === 2 ? '#FDBA74' : '#CBD5E1'));
+        var impactoTextColor = isResolved ? '#15803D' : (rank === 1 ? '#991B1B' : '#334155');
+
         var notaHtml = (latestNota && latestNota.texto)
-            ? '<div><strong>Nota Mesa:</strong> <span style="color:#C2410C;">' +
+            ? '<div style="margin-top:4px; margin-bottom:2px; padding:3px 8px; background:#FEF3C7; border-left:3px solid #F59E0B; border-radius:2px;">' +
+              '<strong style="color:#92400E;">Nota Mesa:</strong> <span style="color:#B45309; font-weight:500;">' +
               (latestNota.fecha ? '[' + escapeHtml(latestNota.fecha.replace('T', ' ').slice(0, 16)) + '] ' : '') +
               escapeHtml(latestNota.texto) + '</span></div>'
             : '';
 
         var htmlLine = '<li><strong>' + escapeHtml(id) + '</strong> (' + metaHtml.join(' | ') + ')' +
-            '<div style="margin-left: 18px; margin-top: 3px; margin-bottom: 8px; font-size: 13px; line-height: 1.45;">' +
-            '<div><strong>Problema Detectado:</strong> ' + escapeHtml(problema) + '</div>' +
-            '<div><strong>IMPACTO:</strong> ' + escapeHtml(impacto || (isResolved ? 'Subsanado' : 'Sin impacto reseñado')) + '</div>' +
+            '<div style="margin-left: 12px; margin-top: 4px; margin-bottom: 10px; padding: 6px 10px; font-size: 13px; line-height: 1.45; background: ' + cardBg + '; border-left: 3px solid ' + cardBorder + '; border-radius: 0 4px 4px 0;">' +
+            '<div style="color:#1E293B; margin-bottom:2px;"><strong>Problema Detectado:</strong> ' + escapeHtml(problema) + '</div>' +
+            '<div style="color:' + impactoTextColor + '; margin-bottom:2px;"><strong>IMPACTO:</strong> ' + escapeHtml(impacto || (isResolved ? 'Subsanado' : 'Sin impacto reseñado')) + '</div>' +
             notaHtml +
-            (acciones ? '<div><em>Acción:</em> ' + escapeHtml(acciones) + '</div>' : '') +
+            (acciones ? '<div style="color:#1D4ED8; margin-top:2px;"><em>Acción:</em> ' + escapeHtml(acciones) + '</div>' : '') +
             '</div></li>';
 
         return {
@@ -593,7 +604,7 @@
                      (inc['Sistema'] && String(inc['Sistema']).trim()) ||
                      (inc['sistema'] && String(inc['sistema']).trim()) ||
                      (inc['producto'] && String(inc['producto']).trim()) || 'Sin asignar',
-            rank: priorityRank(inc)
+            rank: rank
         };
     }
 
@@ -603,15 +614,38 @@
         ];
         var overdueHtml = overdueCount > 0
             ? '<strong style="color:#B91C1C;">' + overdueCount + '</strong>'
-            : '<strong>0</strong>';
+            : '<strong style="color:#334155;">0</strong>';
         var htmlParts = [
-            '<div><p><strong>' + escapeHtml(titleText) + '</strong><br>' +
-            'Total visibles: <strong>' + totalCount + '</strong> | Resueltas: <strong>' + resolvedCount + '</strong> | Compromisos vencidos: ' + overdueHtml + '</p>'
+            '<div style="font-family: -apple-system, BlinkMacSystemFont, \'Segoe UI\', Roboto, Helvetica, Arial, sans-serif; font-size: 13px; color: #1E293B; line-height: 1.5;">' +
+            '<p style="margin: 0 0 12px 0;"><strong style="font-size: 15px; color: #0F172A;">' + escapeHtml(titleText) + '</strong><br>' +
+            'Total visibles: <strong style="color: #334155;">' + totalCount + '</strong> | Resueltas: <strong style="color: #16A34A;">' + resolvedCount + '</strong> | Compromisos vencidos: ' + overdueHtml + '</p>'
         ];
 
         sections.forEach(function (sec) {
             textParts.push('\n[' + sec.heading + '] (' + sec.items.length + ')\n' + sec.items.map(function (x) { return x.textLine; }).join('\n\n'));
-            htmlParts.push('<p><strong>' + escapeHtml(sec.heading) + ' (' + sec.items.length + ')</strong></p><ul>' +
+
+            var headingColor = '#0284C7';
+            var headingBg = '#F0F9FF';
+            var headingBorder = '#0284C7';
+            if (sec.heading.indexOf('P1') !== -1 || sec.heading.indexOf('Crítica') !== -1) {
+                headingColor = '#991B1B';
+                headingBg = '#FEF2F2';
+                headingBorder = '#DC2626';
+            } else if (sec.heading.indexOf('P2') !== -1 || sec.heading.indexOf('Alta') !== -1) {
+                headingColor = '#9A3412';
+                headingBg = '#FFF7ED';
+                headingBorder = '#EA580C';
+            } else if (sec.heading.indexOf('P3') !== -1 || sec.heading.indexOf('Media') !== -1) {
+                headingColor = '#1E40AF';
+                headingBg = '#EFF6FF';
+                headingBorder = '#3B82F6';
+            } else if (sec.heading.indexOf('Baja') !== -1 || sec.heading.indexOf('Otras') !== -1) {
+                headingColor = '#475569';
+                headingBg = '#F8FAFC';
+                headingBorder = '#94A3B8';
+            }
+
+            htmlParts.push('<p style="margin: 14px 0 6px 0; padding: 4px 10px; background: ' + headingBg + '; border-left: 4px solid ' + headingBorder + '; border-radius: 0 4px 4px 0; color: ' + headingColor + ';"><strong>' + escapeHtml(sec.heading) + ' (' + sec.items.length + ')</strong></p><ul>' +
                 sec.items.map(function (x) { return x.htmlLine; }).join('') + '</ul>');
         });
         htmlParts.push('</div>');
