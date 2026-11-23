@@ -1566,6 +1566,30 @@
             });
         }
 
+        function copyHtmlFallback(html, text, successMsg) {
+            var listener = function (e) {
+                if (e.clipboardData) {
+                    e.clipboardData.setData('text/html', html || text);
+                    e.clipboardData.setData('text/plain', text);
+                    e.preventDefault();
+                }
+            };
+            document.addEventListener('copy', listener);
+            try {
+                var ok = document.execCommand('copy');
+                if (ok) {
+                    notify(successMsg, 'success');
+                    return true;
+                }
+            } catch (err) {
+                console.warn('execCommand copy html falló:', err);
+            } finally {
+                document.removeEventListener('copy', listener);
+            }
+            copyTextToClipboard(text, successMsg);
+            return false;
+        }
+
         function copyBriefingToClipboard(payload, successMsg) {
             if (window.isSecureContext && navigator.clipboard && navigator.clipboard.write && typeof ClipboardItem !== 'undefined' && payload.html) {
                 try {
@@ -1577,14 +1601,49 @@
                         notify(successMsg, 'success');
                     }).catch(function (err) {
                         console.warn('Fallo navigator.clipboard.write con ClipboardItem, usando fallback:', err);
-                        copyTextToClipboard(payload.text, successMsg);
+                        copyHtmlFallback(payload.html, payload.text, successMsg);
                     });
                     return;
                 } catch (err) {
-                    // Fallback a texto plano
+                    // Fallback a copyHtmlFallback
                 }
             }
-            copyTextToClipboard(payload.text, successMsg);
+            copyHtmlFallback(payload.html, payload.text, successMsg);
+        }
+
+        var lastBriefingPayload = null;
+
+        function showBriefingPreview(payload, title) {
+            lastBriefingPayload = payload;
+            var modal = document.getElementById('briefingPreviewModal');
+            var content = document.getElementById('briefingPreviewContent');
+            var modalTitle = document.getElementById('briefingModalTitle');
+            if (modal && content) {
+                if (modalTitle) modalTitle.textContent = '📋 ' + (title || 'Vista Previa del Briefing');
+                content.innerHTML = payload.html;
+                modal.classList.remove('hidden');
+            }
+        }
+
+        function hideBriefingModal() {
+            var modal = document.getElementById('briefingPreviewModal');
+            if (modal) modal.classList.add('hidden');
+        }
+
+        var btnCloseBriefingModal = document.getElementById('btnCloseBriefingModal');
+        var btnDismissBriefingModal = document.getElementById('btnDismissBriefingModal');
+        var briefingModalBackdrop = document.getElementById('briefingModalBackdrop');
+        var btnRecopyBriefing = document.getElementById('btnRecopyBriefing');
+
+        if (btnCloseBriefingModal) btnCloseBriefingModal.addEventListener('click', hideBriefingModal);
+        if (btnDismissBriefingModal) btnDismissBriefingModal.addEventListener('click', hideBriefingModal);
+        if (briefingModalBackdrop) briefingModalBackdrop.addEventListener('click', hideBriefingModal);
+        if (btnRecopyBriefing) {
+            btnRecopyBriefing.addEventListener('click', function () {
+                if (lastBriefingPayload) {
+                    copyBriefingToClipboard(lastBriefingPayload, 'Briefing copiado nuevamente al portapapeles.');
+                }
+            });
         }
 
         function bindBriefingButton(btnId, builderFn, label) {
@@ -1603,6 +1662,7 @@
                     state.overrides
                 );
                 copyBriefingToClipboard(payload, label + ' copiado para Teams (' + state.filteredIncidents.length + ' incidencias).');
+                showBriefingPreview(payload, label);
             });
         }
 
