@@ -1232,18 +1232,26 @@
         document.getElementById('btnEmptySync').classList.toggle('hidden', !showSyncBtn);
         document.getElementById('emptyStateBox').classList.remove('hidden');
         document.getElementById('workspaceSection').classList.add('hidden');
+        updatePapReportButtonVisibility();
     }
 
     function updatePapReportButtonVisibility() {
-        var btn = document.getElementById('btnGenerateReportHtml');
-        if (!btn) return;
         var rawReleases = typeof RAW_RELEASES !== 'undefined'
             ? RAW_RELEASES
             : (typeof global !== 'undefined' && global.RAW_RELEASES ? global.RAW_RELEASES : []);
         var isVisible = (Domain && typeof Domain.isPapReportVisible === 'function')
             ? Domain.isPapReportVisible(state.currentRelease, rawReleases)
             : false;
-        btn.classList.toggle('hidden', !isVisible);
+
+        var btnReport = document.getElementById('btnGenerateReportHtml');
+        if (btnReport) {
+            btnReport.classList.toggle('hidden', !isVisible);
+        }
+
+        var btnArgos = document.getElementById('btnUploadArgos');
+        if (btnArgos) {
+            btnArgos.classList.toggle('hidden', !isVisible);
+        }
     }
 
     function showWorkspace() {
@@ -1258,6 +1266,7 @@
         state.activeKpiFilter = null;
         updateKpiActiveUI();
         updateUrlReleaseParam(releaseName);
+        updatePapReportButtonVisibility();
 
         try {
             var idxResp = await fetch('/data/storage/index.json?t=' + Date.now());

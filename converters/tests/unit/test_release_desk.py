@@ -776,10 +776,11 @@ def test_release_desk_pap_report_visibility():
         assert out["visDay2"] is False
         assert out["visOldRel"] is False
         assert out["visUnknown"] is False
-    else:
-        domain_js = (PROJECT_ROOT / "dashboards" / "release-desk" / "release-desk-domain.js").read_text(encoding="utf-8")
-        assert "getReleasePapDate" in domain_js
-        assert "isPapReportVisible" in domain_js
+
+    app_js = (PROJECT_ROOT / "dashboards" / "release-desk" / "release-desk.js").read_text(encoding="utf-8")
+    assert "btnUploadArgos" in app_js
+    assert "btnGenerateReportHtml" in app_js
+    assert "updatePapReportButtonVisibility" in app_js
 
 
 def test_release_desk_overrides_notes_crud(tmp_path):
