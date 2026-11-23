@@ -307,8 +307,9 @@ def test_release_desk_js_build_export_csv():
         assert out["hasBom"] is True
         assert len(out["lines"]) == 3
         assert out["lines"][0].startswith('"Código Incidencia";"Fecha Apertura";"Descripción problema"')
-        assert '"INC000001";"2026-11-10 09:00";"[AURORA] Resumen IA problema";"Alta";"PORTAL";"JIRA-123";"-";"Reiniciar servicio";"En Curso";"2026-11-25";"-";"N1 Soporte"' == out["lines"][1]
-        assert '"INC000002";"2026-11-11 10:00";"Otro problema";"P3 / Medio";"-";"";"-";"-";"Asignado";"";"-";"-"' == out["lines"][2]
+        assert out["lines"][0].endswith(';"Notas Seguimiento Mesa"')
+        assert '"INC000001";"2026-11-10 09:00";"[AURORA] Resumen IA problema";"Alta";"PORTAL";"JIRA-123";"-";"Reiniciar servicio";"En Curso";"2026-11-25";"-";"N1 Soporte";"-"' == out["lines"][1]
+        assert '"INC000002";"2026-11-11 10:00";"Otro problema";"P3 / Medio";"-";"";"-";"-";"Asignado";"";"-";"-";"-"' == out["lines"][2]
     else:
         js = RELEASE_DESK_JS.read_text(encoding="utf-8")
         assert "buildExportCsv" in js
@@ -779,4 +780,129 @@ def test_release_desk_pap_report_visibility():
         domain_js = (PROJECT_ROOT / "dashboards" / "release-desk" / "release-desk-domain.js").read_text(encoding="utf-8")
         assert "getReleasePapDate" in domain_js
         assert "isPapReportVisible" in domain_js
+
+
+def test_release_desk_overrides_notes_crud(tmp_path):
+    from converters.src.release_desk_overrides import (
+        add_nota_override,
+        delete_nota_override,
+        get_overrides_for_release,
+        set_fecha_prevista_override,
+    )
+
+    storage_dir = tmp_path
+
+    # 1. Agregar fecha prevista
+    set_fecha_prevista_override(storage_dir, "2026R11", "INC001", "2026-11-25")
+    ov = get_overrides_for_release(storage_dir, "2026R11")
+    assert ov["INC001"]["fecha_prevista"] == "2026-11-25"
+
+    # 2. Agregar nota de seguimiento
+    n1 = add_nota_override(storage_dir, "2026R11", "INC001", "Acordado despliegue urgente con equipo Core")
+    assert n1["nota"]["id"] is not None
+    assert n1["nota"]["texto"] == "Acordado despliegue urgente con equipo Core"
+
+    ov = get_overrides_for_release(storage_dir, "2026R11")
+    assert ov["INC001"]["fecha_prevista"] == "2026-11-25"
+    assert len(ov["INC001"]["notas"]) == 1
+    assert ov["INC001"]["notas"][0]["texto"] == "Acordado despliegue urgente con equipo Core"
+
+    # 3. Agregar segunda nota (debe insertarse al inicio)
+    n2 = add_nota_override(storage_dir, "2026R11", "INC001", "Validado workaround en preproducción")
+    ov = get_overrides_for_release(storage_dir, "2026R11")
+    assert len(ov["INC001"]["notas"]) == 2
+    assert ov["INC001"]["notas"][0]["texto"] == "Validado workaround en preproducción"
+    assert ov["INC001"]["notas"][1]["texto"] == "Acordado despliegue urgente con equipo Core"
+
+    # 4. Cambiar fecha prevista (las notas deben preservarse intactas)
+    set_fecha_prevista_override(storage_dir, "2026R11", "INC001", "2026-11-28")
+    ov = get_overrides_for_release(storage_dir, "2026R11")
+    assert ov["INC001"]["fecha_prevista"] == "2026-11-28"
+    assert len(ov["INC001"]["notas"]) == 2
+
+    # 5. Borrar la primera nota
+    deleted = delete_nota_override(storage_dir, "2026R11", "INC001", n2["nota"]["id"])
+    assert deleted["success"] is True
+    ov = get_overrides_for_release(storage_dir, "2026R11")
+    assert len(ov["INC001"]["notas"]) == 1
+    assert ov["INC001"]["notas"][0]["texto"] == "Acordado despliegue urgente con equipo Core"
+
+    # 6. Borrar la fecha prevista (la nota restante debe mantenerse)
+    set_fecha_prevista_override(storage_dir, "2026R11", "INC001", "")
+    ov = get_overrides_for_release(storage_dir, "2026R11")
+    assert "INC001" in ov
+    assert "fecha_prevista" not in ov["INC001"]
+    assert len(ov["INC001"]["notas"]) == 1
+
+    # 7. Borrar la última nota (el registro debe eliminarse al quedar vacío)
+    delete_nota_override(storage_dir, "2026R11", "INC001", n1["nota"]["id"])
+    ov = get_overrides_for_release(storage_dir, "2026R11")
+    assert "INC001" not in ov
+
+
+def test_desk_service_notes_actions(tmp_path):
+    from converters.src.desk_service import service_set_override
+    from converters.src.release_desk_overrides import get_overrides_for_release
+
+    # Añadir nota vía service
+    code_add, res_add = service_set_override(
+        payload={
+            "release_name": "2026R11",
+            "incident_id": "INC100",
+            "action": "add_nota",
+            "texto": "Nota comite 1",
+        },
+        storage_dir=tmp_path,
+    )
+    assert code_add == 200
+    assert res_add["success"] is True
+    assert "INC100" in res_add["overrides"]
+    assert len(res_add["overrides"]["INC100"]["notas"]) == 1
+    nota_id = res_add["overrides"]["INC100"]["notas"][0]["id"]
+
+    # Eliminar nota vía service
+    code_del, res_del = service_set_override(
+        payload={
+            "release_name": "2026R11",
+            "incident_id": "INC100",
+            "action": "delete_nota",
+            "nota_id": nota_id,
+        },
+        storage_dir=tmp_path,
+    )
+    assert code_del == 200
+    assert res_del["success"] is True
+    assert "INC100" not in res_del["overrides"]
+
+
+def test_release_desk_js_notes_in_export_and_briefing():
+    if shutil.which("node") is not None:
+        script = (
+            f"const rd = require({json.dumps(str(RELEASE_DESK_JS))});\n"
+            "const incidents = [\n"
+            "  { 'ID de incidencia': 'INC-NOTE-1', 'Prioridad': 'Alta', 'Descripción': 'Caída pasarela', 'Estatus': 'En Curso', 'Grupo asignado': 'NET_OP' }\n"
+            "];\n"
+            "const overrides = {\n"
+            "  'INC-NOTE-1': {\n"
+            "    fecha_prevista: '2026-11-24',\n"
+            "    notas: [{ id: 'n1', fecha: '2026-11-22T15:30:00Z', texto: 'Pendiente reiniciar switch principal' }]\n"
+            "  }\n"
+            "};\n"
+            "const csv = rd.buildExportCsv(incidents, new Map(), {}, '2026R11', overrides);\n"
+            "const briefing = rd.buildMesaBriefing(incidents, new Map(), {}, '2026R11', overrides, '2026-11-22T16:00:00Z');\n"
+            "console.log(JSON.stringify({ csv, briefingText: briefing.text, briefingHtml: briefing.html }));\n"
+        )
+        proc = _run_node_script(script)
+        out = json.loads(proc.stdout)
+        # CSV header includes 13 columns with Notas Seguimiento Mesa
+        assert "Notas Seguimiento Mesa" in out["csv"]
+        assert "Pendiente reiniciar switch principal" in out["csv"]
+        # Briefing includes note
+        assert "Nota Mesa [2026-11-22 15:30]: Pendiente reiniciar switch principal" in out["briefingText"]
+        assert "Nota Mesa" in out["briefingHtml"]
+        assert "Pendiente reiniciar switch principal" in out["briefingHtml"]
+    else:
+        domain_js = (PROJECT_ROOT / "dashboards" / "release-desk" / "release-desk-domain.js").read_text(encoding="utf-8")
+        assert "Notas Seguimiento Mesa" in domain_js
+
 

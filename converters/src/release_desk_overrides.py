@@ -21,6 +21,9 @@ from converters.src.storage_utils import (
 )
 
 
+import time
+import uuid
+
 OVERRIDES_FILENAME = "release_desk_overrides.json"
 _SAFE_ID_RE = re.compile(r"^[A-Za-z0-9_-]+$")
 
@@ -38,7 +41,7 @@ def _load_raw(overrides_path: Path) -> Dict[str, Any]:
 
 
 def get_overrides_for_release(storage_dir: Path, release_name: str) -> Dict[str, Any]:
-    """Devuelve el mapa `{incident_id: {fecha_prevista, updated_at}}` para una release."""
+    """Devuelve el mapa `{incident_id: {fecha_prevista, notas, updated_at}}` para una release."""
     rel = (release_name or "").strip()
     if not rel:
         return {}
@@ -54,7 +57,7 @@ def set_fecha_prevista_override(
     incident_id: str,
     fecha_prevista: str,
 ) -> Dict[str, Any]:
-    """Guarda o limpia la fecha prevista acordada de `incident_id` en `release_name`."""
+    """Guarda o limpia la fecha prevista acordada de `incident_id` en `release_name`, preservando notas."""
     rel = (release_name or "").strip()
     inc_id = (incident_id or "").strip()
     if not rel:
@@ -73,15 +76,23 @@ def set_fecha_prevista_override(
             bucket = {}
             by_release[rel] = bucket
 
-        if clean_date:
-            bucket[inc_id] = {
-                "fecha_prevista": clean_date,
-                "updated_at": datetime.now().isoformat(timespec="seconds"),
-            }
-        else:
-            bucket.pop(inc_id, None)
+        now_iso = datetime.now().isoformat(timespec="seconds")
+        existing_entry = bucket.get(inc_id)
+        entry = dict(existing_entry) if isinstance(existing_entry, dict) else {}
 
-        raw["updated_at"] = datetime.now().isoformat(timespec="seconds")
+        if clean_date:
+            entry["fecha_prevista"] = clean_date
+            entry["updated_at"] = now_iso
+            bucket[inc_id] = entry
+        else:
+            entry.pop("fecha_prevista", None)
+            if entry.get("notas"):
+                entry["updated_at"] = now_iso
+                bucket[inc_id] = entry
+            else:
+                bucket.pop(inc_id, None)
+
+        raw["updated_at"] = now_iso
         atomic_write_json(overrides_path, raw, create_backup=True, indent=2)
 
     return {
@@ -89,6 +100,127 @@ def set_fecha_prevista_override(
         "release_name": rel,
         "incident_id": inc_id,
         "fecha_prevista": clean_date,
+        "overrides": bucket,
+    }
+
+
+def add_nota_override(
+    storage_dir: Path,
+    release_name: str,
+    incident_id: str,
+    texto: str,
+    fecha: Optional[str] = None,
+) -> Dict[str, Any]:
+    """Añade una nota con marca de tiempo al historial cronológico de `incident_id` en `release_name`."""
+    rel = (release_name or "").strip()
+    inc_id = (incident_id or "").strip()
+    clean_text = (texto or "").strip()
+    if not rel:
+        raise ValueError("release_name es obligatorio")
+    if not inc_id:
+        raise ValueError("incident_id es obligatorio")
+    if not clean_text:
+        raise ValueError("El texto de la nota no puede estar vacío")
+
+    overrides_path = resolve_release_overrides_path(Path(storage_dir))
+    now_iso = datetime.now().isoformat(timespec="seconds")
+    note_date = (fecha or "").strip() or now_iso
+    note_id = f"{int(time.time() * 1000)}_{uuid.uuid4().hex[:6]}"
+
+    note_obj = {
+        "id": note_id,
+        "fecha": note_date,
+        "texto": clean_text,
+    }
+
+    with get_path_lock(overrides_path):
+        raw = _load_raw(overrides_path)
+        by_release = raw.setdefault("by_release", {})
+        bucket = by_release.setdefault(rel, {})
+        if not isinstance(bucket, dict):
+            bucket = {}
+            by_release[rel] = bucket
+
+        existing_entry = bucket.get(inc_id)
+        entry = dict(existing_entry) if isinstance(existing_entry, dict) else {}
+        notas_list = list(entry.get("notas", [])) if isinstance(entry.get("notas"), list) else []
+
+        # Insertar la nota más reciente al principio
+        notas_list.insert(0, note_obj)
+        entry["notas"] = notas_list
+        entry["updated_at"] = now_iso
+        bucket[inc_id] = entry
+
+        raw["updated_at"] = now_iso
+        atomic_write_json(overrides_path, raw, create_backup=True, indent=2)
+
+    return {
+        "success": True,
+        "release_name": rel,
+        "incident_id": inc_id,
+        "nota": note_obj,
+        "notas": bucket[inc_id]["notas"],
+        "overrides": bucket,
+    }
+
+
+def delete_nota_override(
+    storage_dir: Path,
+    release_name: str,
+    incident_id: str,
+    nota_id: str,
+) -> Dict[str, Any]:
+    """Elimina una nota específica del historial de `incident_id` en `release_name`."""
+    rel = (release_name or "").strip()
+    inc_id = (incident_id or "").strip()
+    clean_nota_id = (nota_id or "").strip()
+    if not rel:
+        raise ValueError("release_name es obligatorio")
+    if not inc_id:
+        raise ValueError("incident_id es obligatorio")
+    if not clean_nota_id:
+        raise ValueError("nota_id es obligatorio")
+
+    overrides_path = resolve_release_overrides_path(Path(storage_dir))
+    now_iso = datetime.now().isoformat(timespec="seconds")
+
+    with get_path_lock(overrides_path):
+        raw = _load_raw(overrides_path)
+        by_release = raw.setdefault("by_release", {})
+        bucket = by_release.setdefault(rel, {})
+        if not isinstance(bucket, dict):
+            bucket = {}
+            by_release[rel] = bucket
+
+        existing_entry = bucket.get(inc_id)
+        if isinstance(existing_entry, dict):
+            entry = dict(existing_entry)
+            notas_list = [
+                n for n in entry.get("notas", [])
+                if isinstance(n, dict) and str(n.get("id")) != clean_nota_id
+            ]
+            if notas_list:
+                entry["notas"] = notas_list
+                entry["updated_at"] = now_iso
+                bucket[inc_id] = entry
+            else:
+                entry.pop("notas", None)
+                if entry.get("fecha_prevista"):
+                    entry["updated_at"] = now_iso
+                    bucket[inc_id] = entry
+                else:
+                    bucket.pop(inc_id, None)
+
+        raw["updated_at"] = now_iso
+        atomic_write_json(overrides_path, raw, create_backup=True, indent=2)
+
+    current_entry = bucket.get(inc_id, {})
+    return {
+        "success": True,
+        "release_name": rel,
+        "incident_id": inc_id,
+        "nota_id": clean_nota_id,
+        "notas": current_entry.get("notas", []) if isinstance(current_entry, dict) else [],
         "overrides": bucket,
     }
 

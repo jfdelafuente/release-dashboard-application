@@ -1363,6 +1363,16 @@ def build_release_report_html(
                     if agreed_fecha
                     else ''
                 )
+                notas_list = (
+                    override_entry.get("notas", [])
+                    if isinstance(override_entry, dict)
+                    else []
+                )
+                notas_badge = (
+                    f' <span class="badge badge-neutral" style="font-size:10px; padding:2px 6px;">📝 {len(notas_list)} nota{"s" if len(notas_list) > 1 else ""}</span>'
+                    if notas_list
+                    else ''
+                )
 
                 ia_data = ia_summaries.get(inc_id, {})
 
@@ -1374,9 +1384,16 @@ def build_release_report_html(
                 html_lines.append(f'                                {format_badge_status(status)}')
                 html_lines.append(f'                                <span class="badge badge-neutral">{html.escape(sistema)}</span>')
                 html_lines.append('                            </div>')
-                html_lines.append(f'                            <div style="font-size:12px; color:#6B7280;">📅 Prevista: <strong>{html.escape(fecha_prev)}</strong>{mesa_badge}</div>')
+                html_lines.append(f'                            <div style="font-size:12px; color:#6B7280;">📅 Prevista: <strong>{html.escape(fecha_prev)}</strong>{mesa_badge}{notas_badge}</div>')
                 html_lines.append('                        </div>')
                 html_lines.append(f'                        <div class="incident-desc-raw">{html.escape(desc)}</div>')
+
+                if notas_list:
+                    latest_nota = notas_list[0]
+                    dt_str = (latest_nota.get("fecha") or "").replace("T", " ")[:16]
+                    html_lines.append('                        <div style="margin-top:6px; font-size:12px; background:#F8FAFC; border-left:3px solid #6366F1; padding:6px 10px; border-radius:4px; color:#334155;">')
+                    html_lines.append(f'                            <strong>📝 Nota de Mesa ({html.escape(dt_str)}):</strong> {html.escape(latest_nota.get("texto", ""))}')
+                    html_lines.append('                        </div>')
 
                 # Resumen IA
                 if ia_data and (ia_data.get("problema") or ia_data.get("impacto") or ia_data.get("solucion")):
@@ -1437,6 +1454,16 @@ def build_release_report_html(
                 if agreed_fecha
                 else ''
             )
+            notas_list = (
+                override_entry.get("notas", [])
+                if isinstance(override_entry, dict)
+                else []
+            )
+            notas_badge = (
+                f' <span class="badge badge-neutral" style="font-size:10px; padding:2px 6px;">📝 {len(notas_list)} nota{"s" if len(notas_list) > 1 else ""}</span>'
+                if notas_list
+                else ''
+            )
             ia_data = ia_summaries.get(inc_id, {})
 
             html_lines.append('                    <div class="incident-item">')
@@ -1447,9 +1474,15 @@ def build_release_report_html(
             html_lines.append(f'                                {format_badge_status(status)}')
             html_lines.append(f'                                <span class="badge badge-neutral">{html.escape(sistema)}</span>')
             html_lines.append('                            </div>')
-            html_lines.append(f'                            <div style="font-size:12px; color:#6B7280;">📅 Prevista: <strong>{html.escape(fecha_prev)}</strong>{mesa_badge}</div>')
+            html_lines.append(f'                            <div style="font-size:12px; color:#6B7280;">📅 Prevista: <strong>{html.escape(fecha_prev)}</strong>{mesa_badge}{notas_badge}</div>')
             html_lines.append('                        </div>')
             html_lines.append(f'                        <div class="incident-desc-raw">{html.escape(desc)}</div>')
+            if notas_list:
+                latest_nota = notas_list[0]
+                dt_str = (latest_nota.get("fecha") or "").replace("T", " ")[:16]
+                html_lines.append('                        <div style="margin-top:6px; font-size:12px; background:#F8FAFC; border-left:3px solid #6366F1; padding:6px 10px; border-radius:4px; color:#334155;">')
+                html_lines.append(f'                            <strong>📝 Nota de Mesa ({html.escape(dt_str)}):</strong> {html.escape(latest_nota.get("texto", ""))}')
+                html_lines.append('                        </div>')
             if ia_data and (ia_data.get("problema") or ia_data.get("impacto") or ia_data.get("solucion")):
                 html_lines.append('                        <div class="ia-box">')
                 html_lines.append('                            <div class="ia-box-header">🤖 Diagnóstico Epsilon Resumen IA</div>')

@@ -54,7 +54,7 @@
         };
     }
 
-    function buildFollowupText(incident, iaData, releaseName, catalog) {
+    function buildFollowupText(incident, iaData, releaseName, catalog, overrides) {
         var id = incident['ID de incidencia'] || '-';
         var estatus = incident['Estatus'] || '-';
         var prio = incident['Prioridad'] || incident['Urgencia'] || '-';
@@ -79,6 +79,16 @@
         var pp = detectPingPong(incident, null, iaData);
         if (pp) {
             lines.push('Alerta reasignación: 🏓 ' + pp.label + ' (' + pp.tooltip + ')');
+        }
+
+        var overrideEntry = overrides ? (overrides[id] || (overrides.notas ? overrides : null)) : null;
+        var notasList = (overrideEntry && Array.isArray(overrideEntry.notas)) ? overrideEntry.notas : [];
+        if (notasList.length > 0) {
+            lines.push('Notas Seguimiento Mesa (' + notasList.length + '):');
+            notasList.forEach(function (n) {
+                var dt = (n.fecha || '').replace('T', ' ').slice(0, 16);
+                lines.push('  • ' + (dt ? '[' + dt + '] ' : '') + (n.texto || ''));
+            });
         }
 
         if (iaData && !iaData._error) {
@@ -310,7 +320,8 @@
             'Status',
             'Fecha Prevista',
             'Motivo Estado Resuelto',
-            'Grupo Peticionario'
+            'Grupo Peticionario',
+            'Notas Seguimiento Mesa'
         ];
         var lines = [headers.map(escapeCsvCell).join(';')];
         (incidents || []).forEach(function (inc) {
@@ -352,6 +363,12 @@
                 '-';
             var peticionario = inc['Grupo Remitente'] || '-';
 
+            var notasList = (overrideEntry && Array.isArray(overrideEntry.notas)) ? overrideEntry.notas : [];
+            var notasText = notasList.map(function (n) {
+                var dt = (n.fecha || '').replace('T', ' ').slice(0, 16);
+                return (dt ? '[' + dt + '] ' : '') + (n.texto || '');
+            }).join(' | ');
+
             var row = [
                 id,
                 inc['Fecha de envío'] || '-',
@@ -364,7 +381,8 @@
                 inc['Estatus'] || '-',
                 fechaPrevista,
                 motivoResuelto,
-                peticionario
+                peticionario,
+                notasText || '-'
             ];
             lines.push(row.map(escapeCsvCell).join(';'));
         });
@@ -533,20 +551,35 @@
             metaHtml.push('<span style="color:#7C3AED; font-weight:600;">🏓 ' + escapeHtml(pp.label) + '</span>');
         }
 
+        var overrideEntry = overrides && overrides[id];
+        var notasList = (overrideEntry && Array.isArray(overrideEntry.notas)) ? overrideEntry.notas : [];
+        var latestNota = notasList.length ? notasList[0] : null;
+
         var textLines = [
             '• ' + id + ' (' + metaText.join(' | ') + ')',
             '  - Problema Detectado: ' + problema,
             '  - IMPACTO: ' + (impacto || (isResolved ? 'Subsanado' : 'Sin impacto reseñado'))
         ];
+        if (latestNota && latestNota.texto) {
+            var dtStr = (latestNota.fecha || '').replace('T', ' ').slice(0, 16);
+            textLines.push('  - Nota Mesa' + (dtStr ? ' [' + dtStr + ']' : '') + ': ' + latestNota.texto);
+        }
         if (acciones) {
             textLines.push('  - Acción: ' + acciones);
         }
         var textLine = textLines.join('\n');
 
+        var notaHtml = (latestNota && latestNota.texto)
+            ? '<div><strong>Nota Mesa:</strong> <span style="color:#C2410C;">' +
+              (latestNota.fecha ? '[' + escapeHtml(latestNota.fecha.replace('T', ' ').slice(0, 16)) + '] ' : '') +
+              escapeHtml(latestNota.texto) + '</span></div>'
+            : '';
+
         var htmlLine = '<li><strong>' + escapeHtml(id) + '</strong> (' + metaHtml.join(' | ') + ')' +
             '<div style="margin-left: 18px; margin-top: 3px; margin-bottom: 8px; font-size: 13px; line-height: 1.45;">' +
             '<div><strong>Problema Detectado:</strong> ' + escapeHtml(problema) + '</div>' +
             '<div><strong>IMPACTO:</strong> ' + escapeHtml(impacto || (isResolved ? 'Subsanado' : 'Sin impacto reseñado')) + '</div>' +
+            notaHtml +
             (acciones ? '<div><em>Acción:</em> ' + escapeHtml(acciones) + '</div>' : '') +
             '</div></li>';
 
@@ -917,6 +950,12 @@
         return diffDays === 0 || diffDays === 1;
     }
 
+    function getIncidentNotes(incidentId, overrides) {
+        if (!overrides || !incidentId) return [];
+        var entry = overrides[incidentId];
+        return (entry && Array.isArray(entry.notas)) ? entry.notas : [];
+    }
+
     var api = {
         escapeHtml: escapeHtml,
         isClosedStatus: isClosedStatus,
@@ -945,6 +984,7 @@
         getLocalOverridesKey: getLocalOverridesKey,
         readLocalOverrides: readLocalOverrides,
         writeLocalOverrides: writeLocalOverrides,
+        getIncidentNotes: getIncidentNotes,
         parseArgosCsvMeta: parseArgosCsvMeta,
         buildArgosUploadPayload: buildArgosUploadPayload,
         getReleasePapDate: getReleasePapDate,

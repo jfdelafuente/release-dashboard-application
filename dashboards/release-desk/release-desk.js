@@ -111,13 +111,19 @@
 
         // 1. Persistencia inmediata local en localStorage y memoria (cero pérdida de datos ante recargas)
         var currentLocal = Domain.readLocalOverrides(rel);
+        var existingEntry = currentLocal[incidentId] ? Object.assign({}, currentLocal[incidentId]) : {};
         if (cleanFecha) {
-            currentLocal[incidentId] = {
-                fecha_prevista: cleanFecha,
-                updated_at: new Date().toISOString()
-            };
+            existingEntry.fecha_prevista = cleanFecha;
+            existingEntry.updated_at = new Date().toISOString();
+            currentLocal[incidentId] = existingEntry;
         } else {
-            delete currentLocal[incidentId];
+            delete existingEntry.fecha_prevista;
+            if (existingEntry.notas && existingEntry.notas.length > 0) {
+                existingEntry.updated_at = new Date().toISOString();
+                currentLocal[incidentId] = existingEntry;
+            } else {
+                delete currentLocal[incidentId];
+            }
         }
         Domain.writeLocalOverrides(rel, currentLocal);
         state.overrides = Object.assign({}, currentLocal);
@@ -164,10 +170,112 @@
         } catch (err) {
             notify(
                 cleanFecha
-                    ? 'Fecha guardada en navegador (modo local) para ' + incidentId + ' (' + cleanFecha + ').'
-                    : 'Fecha eliminada en navegador para ' + incidentId + '.',
+                    ? 'Fecha guardada localmente para ' + incidentId + '. No se pudo contactar con el backend.'
+                    : 'Fecha eliminada localmente para ' + incidentId + '.',
                 'info'
             );
+        }
+    }
+
+    async function saveNotaOverride(incidentId, texto) {
+        if (!state.currentRelease || !incidentId) return;
+        var rel = state.currentRelease;
+        var cleanText = String(texto || '').trim();
+        if (!cleanText) return;
+
+        var noteObj = {
+            id: String(Date.now()) + '_' + Math.random().toString(36).substr(2, 5),
+            fecha: new Date().toISOString(),
+            texto: cleanText
+        };
+
+        // 1. Persistencia local inmediata
+        var currentLocal = Domain.readLocalOverrides(rel);
+        var existingEntry = currentLocal[incidentId] ? Object.assign({}, currentLocal[incidentId]) : {};
+        var currentNotas = Array.isArray(existingEntry.notas) ? existingEntry.notas.slice() : [];
+        currentNotas.unshift(noteObj);
+        existingEntry.notas = currentNotas;
+        existingEntry.updated_at = noteObj.fecha;
+        currentLocal[incidentId] = existingEntry;
+
+        Domain.writeLocalOverrides(rel, currentLocal);
+        state.overrides = Object.assign({}, currentLocal);
+        renderTable();
+        notify('Nota de seguimiento guardada.', 'success');
+
+        // 2. Persistencia en backend
+        try {
+            var resp = await fetch('/api/release-desk/overrides', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    release_name: rel,
+                    incident_id: incidentId,
+                    action: 'add_nota',
+                    texto: cleanText,
+                    fecha: noteObj.fecha
+                })
+            });
+            if (resp.ok) {
+                var data = null;
+                try { data = await resp.json(); } catch (_) {}
+                if (data && data.overrides && typeof data.overrides === 'object') {
+                    state.overrides = Object.assign({}, data.overrides, currentLocal);
+                    Domain.writeLocalOverrides(rel, state.overrides);
+                    renderTable();
+                }
+            }
+        } catch (err) {
+            console.warn('[ReleaseDesk] No se pudo sincronizar nota con backend:', err);
+        }
+    }
+
+    async function deleteNotaOverride(incidentId, notaId) {
+        if (!state.currentRelease || !incidentId || !notaId) return;
+        var rel = state.currentRelease;
+
+        // 1. Actualización local inmediata
+        var currentLocal = Domain.readLocalOverrides(rel);
+        var existingEntry = currentLocal[incidentId] ? Object.assign({}, currentLocal[incidentId]) : null;
+        if (existingEntry && Array.isArray(existingEntry.notas)) {
+            existingEntry.notas = existingEntry.notas.filter(function (n) {
+                return String(n.id) !== String(notaId);
+            });
+            if (existingEntry.notas.length === 0 && !existingEntry.fecha_prevista) {
+                delete currentLocal[incidentId];
+            } else {
+                existingEntry.updated_at = new Date().toISOString();
+                currentLocal[incidentId] = existingEntry;
+            }
+            Domain.writeLocalOverrides(rel, currentLocal);
+            state.overrides = Object.assign({}, currentLocal);
+            renderTable();
+            notify('Nota eliminada.', 'info');
+        }
+
+        // 2. Persistencia en backend
+        try {
+            var resp = await fetch('/api/release-desk/overrides', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    release_name: rel,
+                    incident_id: incidentId,
+                    action: 'delete_nota',
+                    nota_id: notaId
+                })
+            });
+            if (resp.ok) {
+                var data = null;
+                try { data = await resp.json(); } catch (_) {}
+                if (data && data.overrides && typeof data.overrides === 'object') {
+                    state.overrides = Object.assign({}, data.overrides, currentLocal);
+                    Domain.writeLocalOverrides(rel, state.overrides);
+                    renderTable();
+                }
+            }
+        } catch (err) {
+            console.warn('[ReleaseDesk] No se pudo sincronizar eliminación de nota con backend:', err);
         }
     }
 
@@ -771,6 +879,18 @@
 
             var codeLinkHtml = '<a href="javascript:void(0)" class="rd-inc-link" data-open-resumen="' + escapeHtml(id) + '" title="Abrir ventana Resumen IA" onclick="if(window.openResumenIA){event.stopPropagation();window.openResumenIA(\'' + escapeHtml(id) + '\');}return false;">' + escapeHtml(id) + '</a>';
 
+            var notasList = (overrideEntry && Array.isArray(overrideEntry.notas)) ? overrideEntry.notas : [];
+            var notasBadgeHtml = '';
+            if (notasList.length > 0) {
+                var latestNota = notasList[0];
+                var latestDt = (latestNota.fecha || '').replace('T', ' ').slice(0, 16);
+                var tooltipLines = ['Última (' + latestDt + '): ' + (latestNota.texto || '')];
+                if (notasList.length > 1) {
+                    tooltipLines.push('(' + (notasList.length - 1) + ' notas anteriores en detalle)');
+                }
+                notasBadgeHtml = '<div><span class="rd-badge rd-badge-nota" data-tooltip="' + escapeHtml(tooltipLines.join('\n')) + '" data-tooltip-title="Seguimiento de Mesa (' + notasList.length + ' ' + (notasList.length === 1 ? 'nota' : 'notas') + ')">📝 ' + notasList.length + ' ' + (notasList.length === 1 ? 'nota' : 'notas') + '</span></div>';
+            }
+
             var rowHtml = '<tr data-inc-id="' + escapeHtml(id) + '"' + rowClassAttr + ' tabindex="0" role="button" aria-expanded="' + (isSelected ? 'true' : 'false') + '">' +
                 '<td style="white-space:nowrap;"><span class="rd-badge rd-badge-code">' + (isSelected ? '▾ ' : '▸ ') + codeLinkHtml + '</span>' + syncBadgeHtml + '</td>' +
                 '<td style="font-size:11.5px; min-width:78px;">' + escapeHtml(fechaApertura) + agingHtml + inactHtml + '</td>' +
@@ -779,7 +899,7 @@
                 '<td style="max-width:120px;">' + sistemaCell + pingPongHtml + '</td>' +
                 '<td style="white-space:nowrap;">' + jiraCell + '</td>' +
                 '<td style="min-width:120px; max-width:190px;"' + projTooltipAttr + '>' + proyectoCell + '</td>' +
-                '<td style="min-width:150px; max-width:230px;"' + accionesTooltipAttr + '><div class="rd-cell-clamp">' + escapeHtml(acciones) + '</div>' + staleBadgeHtml + '</td>' +
+                '<td style="min-width:150px; max-width:230px;"' + accionesTooltipAttr + '><div class="rd-cell-clamp">' + escapeHtml(acciones) + '</div>' + staleBadgeHtml + notasBadgeHtml + '</td>' +
                 '<td><span class="rd-badge ' + statusBadgeClass + '">' + escapeHtml(inc['Estatus'] || '-') + '</span></td>' +
                 '<td style="font-size:11.5px; min-width:78px;">' + fechaPrevistaCell + '</td>' +
                 '<td style="min-width:140px; max-width:220px;"' + motivoTooltipAttr + '><div class="rd-cell-clamp">' + escapeHtml(motivoResuelto) + '</div></td>' +
@@ -856,6 +976,41 @@
             });
         });
 
+        Array.from(tbody.querySelectorAll('[data-notes-form]')).forEach(function (wrap) {
+            wrap.addEventListener('click', function (ev) { ev.stopPropagation(); });
+        });
+        Array.from(tbody.querySelectorAll('[data-add-nota]')).forEach(function (btn) {
+            btn.addEventListener('click', function (ev) {
+                ev.stopPropagation();
+                var incId = btn.getAttribute('data-add-nota');
+                var inp = tbody.querySelector('[data-nota-input="' + incId + '"]');
+                if (inp && inp.value.trim()) {
+                    saveNotaOverride(incId, inp.value);
+                }
+            });
+        });
+        Array.from(tbody.querySelectorAll('[data-nota-input]')).forEach(function (inp) {
+            var incId = inp.getAttribute('data-nota-input');
+            inp.addEventListener('keydown', function (ev) {
+                if (ev.key === 'Enter') {
+                    ev.stopPropagation();
+                    if (inp.value.trim()) {
+                        saveNotaOverride(incId, inp.value);
+                    }
+                }
+            });
+        });
+        Array.from(tbody.querySelectorAll('[data-del-nota-id]')).forEach(function (btn) {
+            btn.addEventListener('click', function (ev) {
+                ev.stopPropagation();
+                var incId = btn.getAttribute('data-del-nota-inc');
+                var notaId = btn.getAttribute('data-del-nota-id');
+                if (incId && notaId) {
+                    deleteNotaOverride(incId, notaId);
+                }
+            });
+        });
+
         var selectedId = state.selectedId;
         if (selectedId) {
             var copyBtn = document.getElementById('btnCopyFollowup');
@@ -864,7 +1019,7 @@
                     ev.stopPropagation();
                     var inc = state.activeIncidents.find(function (r) { return r['ID de incidencia'] === selectedId; });
                     if (!inc) return;
-                    var text = buildFollowupText(inc, state.iaCache.get(selectedId), state.currentRelease, state.projectsCatalog);
+                    var text = buildFollowupText(inc, state.iaCache.get(selectedId), state.currentRelease, state.projectsCatalog, state.overrides);
                     copyTextToClipboard(text, 'Seguimiento de ' + selectedId + ' copiado al portapapeles.');
                 });
             }
@@ -947,6 +1102,33 @@
         return html;
     }
 
+    function renderNotesSection(id, overrideEntry) {
+        var notasList = (overrideEntry && Array.isArray(overrideEntry.notas)) ? overrideEntry.notas : [];
+        var countText = notasList.length ? ' (' + notasList.length + ')' : '';
+        var html = '<div class="rd-notes-box">' +
+            '<div class="rd-notes-header"><h4 class="rd-notes-title">📝 Notas de Seguimiento de Mesa' + countText + '</h4></div>' +
+            '<div class="rd-notes-form" data-notes-form="' + escapeHtml(id) + '">' +
+                '<input type="text" class="rd-notes-input" data-nota-input="' + escapeHtml(id) + '" placeholder="Añadir nota de seguimiento acordada en el comité..." maxlength="300">' +
+                '<button type="button" class="rd-notes-add-btn" data-add-nota="' + escapeHtml(id) + '">➕ Añadir nota</button>' +
+            '</div>';
+        if (notasList.length > 0) {
+            html += '<div class="rd-notes-list">';
+            notasList.forEach(function (n) {
+                var dtStr = (n.fecha || '').replace('T', ' ').slice(0, 16);
+                html += '<div class="rd-notes-item">' +
+                    '<span class="rd-notes-item-date">' + escapeHtml(dtStr) + '</span>' +
+                    '<span class="rd-notes-item-text">' + escapeHtml(n.texto || '') + '</span>' +
+                    '<button type="button" class="rd-notes-del-btn" data-del-nota-id="' + escapeHtml(String(n.id)) + '" data-del-nota-inc="' + escapeHtml(id) + '" title="Eliminar apunte">✕</button>' +
+                    '</div>';
+            });
+            html += '</div>';
+        } else {
+            html += '<p class="rd-notes-empty">Sin notas registradas para este ticket. Escribe un apunte arriba para dejar constancia de lo acordado en la mesa.</p>';
+        }
+        html += '</div>';
+        return html;
+    }
+
     function renderDetailHtml(inc) {
         var id = inc['ID de incidencia'];
         var iaData = state.iaCache.get(id) || null;
@@ -982,9 +1164,13 @@
             alertsHtml = '<div class="rd-detail-alert-box">' + alertItems.join('') + '</div>';
         }
 
+        var overrideEntry = state.overrides && state.overrides[id];
+        var notesHtml = renderNotesSection(id, overrideEntry);
+
         return '<div class="rd-detail-inline-card">' +
             '<div id="detailBody" class="rd-detail-body">' +
                 alertsHtml +
+                notesHtml +
                 renderIaSection(id, iaData, isLoadingIa) +
                 resolutionBox +
             '</div>' +

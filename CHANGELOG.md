@@ -25,6 +25,15 @@ y este proyecto se adhiere a [Semantic Versioning](https://semver.org/lang/es/).
   - Botón unificado `🌐 Informe Ejecutivo PaP` (`#btnGenerateReportHtml`): Compilación en caliente bajo demanda y apertura automática del informe corporativo en una nueva pestaña.
   - **Visibilidad condicional por fecha PaP**: `#btnGenerateReportHtml` se muestra de manera condicional exclusivamente el día de la fecha de PaP (`Fecha PaP` en `releases-data.js`) y al día siguiente (día PaP + 1), manteniéndose oculto durante el resto del ciclo para focalizar la operativa.
   - Barra inferior simplificada: 4 acciones esenciales y no redundantes (`Copiar briefing`, `Briefing por Sistema`, `Informe Ejecutivo PaP`, `Exportar tabla`).
+
+#### Bitácora Cronológica de Notas de Seguimiento de Mesa por Incidencia (Mejora M10)
+- **Bitácora histórica con marca de tiempo**: Cada incidencia almacena un historial cronológico de acuerdos y apuntes de comité en `data/release_desk_overrides.json` bajo `notas: [{ id, fecha, texto }]`, ordenado por novedad y coexistiendo de forma atómica con `fecha_prevista`.
+- **Panel desplegable interactivo (`renderNotesSection`)**: Sección `📝 Notas de Seguimiento de Mesa` en el detalle del ticket con formulario de adición rápida (atajo `Enter` o botón `➕ Añadir nota`), visualización cronológica con timestamp `[YYYY-MM-DD HH:mm]`, texto de apunte y borrado individual `✕`.
+- **Badge en tabla y tooltip (`Acciones`)**: Muestra el distintivo `📝 X notas` en la columna de acciones con tooltip enriquecido que visualiza la última nota acordada y el desglose de notas adicionales.
+- **Exportación CSV (Columna 13)**: Incorpora la 13ª columna `Notas Seguimiento Mesa` en `buildExportCsv()`, consolidando los apuntes para análisis en Excel.
+- **Briefing de Mesa y Seguimiento**: Inclusión automática de la última nota acordada (`- Nota Mesa [fecha]: texto`) tanto en el formato de texto plano (`buildFollowupText` y `buildMesaBriefing`) como en HTML para Teams.
+- **Persistencia atómica y resiliente**: Acciones `add_nota` y `delete_nota` en `service_set_override` con guardado local inmediato en `localStorage` (cero pérdida ante desconexiones de red) y sincronización con backend.
+
 - **Diseño visual y ergonomía**:
   - Ajuste del fondo de página de la **Mesa de Release** (`--bg-page: #EBE8E2`) y del **Informe Ejecutivo PaP** (`--mo-bg: #EBE8E2`) a un tono sutilmente más oscuro, cálido y equilibrado, mejorando la elevación y el contraste de las tarjetas blancas (`#FFFFFF`), reduciendo la fatiga visual y unificando la identidad estética entre ambas vistas.
   - **Separación visual de bloques de incidencia en la tabla**: Cada fila de incidencia se presenta ahora como un bloque/tarjeta independiente elevado sobre el fondo cálido (`#EBE8E2`), con separación vertical de 5px, bordes de contorno sutiles, acolchado ampliado (`9px 8px`) y acento de criticidad lateral continuo, eliminando la sensación de bloque monolítico pegado y facilitando la lectura individualizada.

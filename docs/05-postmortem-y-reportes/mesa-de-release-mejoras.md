@@ -17,7 +17,7 @@ Lista priorizada de evolutivos para la consola **[Mesa de Release](/05-postmorte
 | **M7** | Indicador de antigüedad (Aging) en `Fecha Apertura` | Operativa | Medio | `[x] Completada` |
 | **M8** | Edición y persistencia de `Fecha Prevista` acordada | Seguimiento | Alto | `[x] Completada` |
 | **M9** | Semáforo de `Fecha Prevista` vencida / sin compromiso | Seguimiento | Alto | `[x] Completada` |
-| **M10** | Notas rápidas de seguimiento de Mesa por incidencia | Seguimiento | Alto | `[ ] Pendiente` |
+| **M10** | Notas rápidas de seguimiento de Mesa por incidencia | Seguimiento | Alto | `[x] Completada` |
 | **M11** | Filtros por `Sistema` (unificado), `Despliegue` y `Producto` | UX / Operativa | Medio | `[~] Parcial` |
 | **M12** | Botón "Copiar briefing" (Prioridad/Sistema, Resumen IA y clipboard seguro) | Operativa | Alto | `[x] Completada` |
 | **M13** | Indicador de novedades desde la última sincronización | Operativa | Medio | `[x] Completada` |
@@ -111,24 +111,17 @@ Lista priorizada de evolutivos para la consola **[Mesa de Release](/05-postmorte
 
 ---
 
-### M10 · Notas rápidas de seguimiento de Mesa por incidencia
-- **Situación actual:** Los acuerdos verbales del comité (bloqueos, escalados, responsables puntuales) no tienen un campo propio si no se reflejan aún en Remedy.
-- **Propuesta:** Ampliar `data/release_desk_overrides.json` para guardar notas breves de seguimiento por ticket sin alterar los datos crudos de MonTMC, reflejándolas en la tabla, en la exportación CSV (`M4`) y en los briefings de Teams (`M12`).
-- **Opciones de implementación:**
-  - **Opción A · Nota única en el desplegable (MVP):**
-    - Añadir `nota_mesa` (texto breve + `updated_at`) en `data/release_desk_overrides.json` junto a `fecha_prevista`.
-    - Caja de texto editable dentro del panel desplegable de la incidencia con botón `Guardar nota` / `Limpiar`.
-    - Mostrar un badge discreto `📝 Nota` en la columna `Acciones` (con el texto completo como tooltip) e incluir la columna `Nota Mesa` en el CSV y en los briefings.
-  - **Opción B · Nota + etiqueta de situación de Mesa e edición inline:**
-    - Añadir además un selector rápido de etiqueta (`En seguimiento`, `Bloqueada`, `Escalada`, `Pendiente validación`, `Paso a PRO`) con badge de color en la tabla.
-    - Permitir editar la nota tanto desde el desplegable como inline en la fila (patrón `+ Nota` análogo al `+ Fecha` de `M8`).
-    - Permitir filtrar en barra superior por etiquetas críticas (ej. `Bloqueada` / `Escalada`).
-  - **Opción C · Bitácora cronológica de acuerdos por comité:**
-    - Persistir un historial `notas_historial: [{ fecha, texto }]` en `data/release_desk_overrides.json` en lugar de sobrescribir la nota anterior.
-    - Mostrar la última entrada en la tabla, CSV y briefing, y el histórico completo ordenado por fecha dentro del desplegable de detalle.
-- **Recomendación:** **Opción A** para entrega inmediata reutilizando `/api/release-desk/overrides`, o **Opción B** si se desea filtrar rápidamente tickets `Bloqueados` / `Escalados` durante el comité.
-- **Componentes afectados:** backend API (`overrides`), `dashboards/release-desk/index.html`, `dashboards/release-desk/release-desk.js`, `converters/tests/unit/test_release_desk.py`.
-- **Criterio de aceptación:** Las notas persisten entre recargas y sincronizaciones de MonTMC sin alterar los datos crudos de Remedy, y quedan visibles en tabla, CSV y briefings.
+### M10 · Notas rápidas de seguimiento de Mesa por incidencia (`[x] Completada`)
+- **Situación resuelta:** Los acuerdos verbales del comité (bloqueos, escalados, responsables puntuales) no tenían un registro histórico si no se reflejaban formalmente en Remedy.
+- **Implementación (Bitácora cronológica con marcas de tiempo):**
+  - **Estructura de datos (`data/release_desk_overrides.json`):** Cada ticket almacena una lista `notas: [{ id, fecha, texto }]` con inserción al inicio (la más reciente primero) y coexistencia atómica con `fecha_prevista`.
+  - **Panel desplegable de detalle (`renderDetailHtml` / `renderNotesSection`):** Incorpora la sección interactiva `📝 Notas de Seguimiento de Mesa` con contador, historial cronológico formateado `[YYYY-MM-DD HH:mm]`, texto de apunte y botón `✕` para eliminación individual. Incluye formulario de entrada rápida con Enter o botón `➕ Añadir nota`.
+  - **Badge en tabla principal (`Acciones`):** Cuando existen notas, muestra un badge destacado `📝 X notas` con tooltip flotante multilínea que visualiza la última nota acordada y el aviso de notas anteriores.
+  - **Exportación CSV (`buildExportCsv`):** Columna 13 añadida (`Notas Seguimiento Mesa`), concatenando cronológicamente los apuntes con fecha y texto.
+  - **Briefing de Mesa (`buildMesaBriefing` / `formatBriefingIncidentInfo` / `buildFollowupText`):** Muestra la última nota registrada (`- Nota Mesa [fecha]: texto`) tanto en el formato texto plano como en el HTML enriquecido para Teams.
+  - **Servicio y concurrencia backend (`desk_service.py` / `release_desk_overrides.py`):** Operaciones atómicas con lock de fichero para `action: "add_nota"` y `action: "delete_nota"`, con persistencia inmediata en `localStorage` (cero pérdida ante caídas de red) y sincronización con el backend.
+- **Componentes afectados:** `converters/src/release_desk_overrides.py`, `converters/src/desk_service.py`, `dashboards/release-desk/release-desk-domain.js`, `dashboards/release-desk/release-desk.css`, `dashboards/release-desk/release-desk.js`, `converters/cli/generate_release_report_html.py`, `converters/tests/unit/test_release_desk.py`.
+- **Criterio de aceptación verificado:** Las notas persisten entre recargas y sincronizaciones sin alterar datos de Remedy, son auditables cronológicamente y se propagan a CSV, briefings e informes ejecutivos.
 
 ---
 

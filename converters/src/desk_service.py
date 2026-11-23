@@ -28,6 +28,8 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 
 from converters.src.montmc_client import MonTMCClient, MonTMCError, RemedyNotFoundError
 from converters.src.release_desk_overrides import (
+    add_nota_override,
+    delete_nota_override,
     get_overrides_for_release,
     load_cached_epsilon_summaries,
     set_fecha_prevista_override,
@@ -328,16 +330,41 @@ def service_set_override(
     storage_dir: Optional[Path] = None,
     project_root: Optional[Path] = None,
 ) -> Tuple[int, Dict[str, Any]]:
-    """Guarda un override de fecha prevista de forma atómica y concurrente."""
+    """Guarda un override (fecha prevista o nota de seguimiento) de forma atómica y concurrente."""
     target_storage = resolve_storage_dir(storage_dir, project_root)
+    rel = str(payload.get("release_name") or "")
+    inc_id = str(payload.get("incident_id") or "")
+    action = str(payload.get("action") or "").lower().strip()
+
     try:
-        result = set_fecha_prevista_override(
-            storage_dir=target_storage,
-            release_name=str(payload.get("release_name") or ""),
-            incident_id=str(payload.get("incident_id") or ""),
-            fecha_prevista=str(payload.get("fecha_prevista") or ""),
-        )
-        return 200, result
+        if action == "add_nota" or "nota_texto" in payload or ("texto" in payload and action != "delete_nota"):
+            texto = str(payload.get("texto") or payload.get("nota_texto") or "")
+            fecha = str(payload.get("fecha") or "") or None
+            result = add_nota_override(
+                storage_dir=target_storage,
+                release_name=rel,
+                incident_id=inc_id,
+                texto=texto,
+                fecha=fecha,
+            )
+            return 200, result
+        elif action == "delete_nota" or "delete_nota_id" in payload:
+            nota_id = str(payload.get("nota_id") or payload.get("delete_nota_id") or "")
+            result = delete_nota_override(
+                storage_dir=target_storage,
+                release_name=rel,
+                incident_id=inc_id,
+                nota_id=nota_id,
+            )
+            return 200, result
+        else:
+            result = set_fecha_prevista_override(
+                storage_dir=target_storage,
+                release_name=rel,
+                incident_id=inc_id,
+                fecha_prevista=str(payload.get("fecha_prevista") or ""),
+            )
+            return 200, result
     except ValueError as exc:
         return 400, {"success": False, "error": str(exc)}
     except Exception as exc:
