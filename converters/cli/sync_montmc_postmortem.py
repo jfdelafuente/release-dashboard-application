@@ -370,7 +370,11 @@ def sync_postmortem_release(
         "Estatus",
         "Grupo asignado",
         "Grupo Resolutor",
+        "Grupo Remitente",
         "Fecha de última resolución",
+        "Fecha de notificación",
+        "Motivo de estado",
+        "MotivoEstado_Anterior",
         "Urgencia",
         "Prioridad",
         "Descripción",
@@ -393,6 +397,9 @@ def sync_postmortem_release(
             old_rec = records_by_id[inc_id]
             if "masiva" in old_rec and "masiva" not in norm_rec:
                 norm_rec["masiva"] = old_rec["masiva"]
+            old_remitente = str(old_rec.get("Grupo Remitente") or "").strip()
+            if old_remitente:
+                norm_rec["Grupo Remitente"] = old_rec["Grupo Remitente"]
             has_changes = any(norm_rec.get(k) != old_rec.get(k) for k in compare_fields)
             if has_changes:
                 if norm_rec.get("Estatus") != old_rec.get("Estatus"):
@@ -442,6 +449,9 @@ def sync_postmortem_release(
                 norm_detail = api_client.normalize_mon_tmc_postmortem_record(remedy_node)
                 if not remedy_node.get("fechaCreacion") and old_rec.get("Fecha de envío"):
                     norm_detail["Fecha de envío"] = old_rec["Fecha de envío"]
+                old_remitente = str(old_rec.get("Grupo Remitente") or "").strip()
+                if old_remitente:
+                    norm_detail["Grupo Remitente"] = old_rec["Grupo Remitente"]
 
                 # Si el ticket ha sido desvinculado de la release en Remedy (se eliminó el tag de la release)
                 if active_release:

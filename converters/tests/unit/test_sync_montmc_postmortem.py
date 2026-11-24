@@ -417,3 +417,80 @@ def test_sync_postmortem_prunes_untagged_or_dissociated_tickets(tmp_path: Path):
     assert "INC_UNTAGGED" not in ids
 
 
+def test_sync_postmortem_preserves_grupo_remitente_if_not_empty(tmp_path: Path):
+    output_dir = _setup_workspace(tmp_path)
+    pm_file = output_dir / "2026R11-postmortem.json"
+    pm_initial = {
+        "_metadata": {"type": "postmortem", "release_name": "2026R11", "record_count": 2},
+        "data": [
+            {
+                "ID de incidencia": "INC_WITH_REMITENTE",
+                "Descripción": "[2026R11] Ticket con remitente existente",
+                "Estatus": "Asignado",
+                "Fecha de envío": "22/11/2026 01:00",
+                "Grupo asignado": "SOP_OLD",
+                "Grupo Remitente": "SLN Arvato Salamanca",
+                "Urgencia": "Medio",
+                "Impacto": "TEIDE",
+                "Prioridad": "P3",
+            },
+            {
+                "ID de incidencia": "INC_EMPTY_REMITENTE",
+                "Descripción": "[2026R11] Ticket sin remitente inicial",
+                "Estatus": "Asignado",
+                "Fecha de envío": "22/11/2026 01:05",
+                "Grupo asignado": "SOP_OLD",
+                "Grupo Remitente": "",
+                "Urgencia": "Medio",
+                "Impacto": "TEIDE",
+                "Prioridad": "P3",
+            },
+        ],
+    }
+    pm_file.write_text(json.dumps(pm_initial), encoding="utf-8")
+
+    real_client = MonTMCClient()
+    mock_client = MagicMock(spec=MonTMCClient)
+    mock_client.default_user = "jdelat"
+    mock_client.normalize_mon_tmc_postmortem_record.side_effect = real_client.normalize_mon_tmc_postmortem_record
+    mock_client.fetch_release.return_value = {
+        "success": True,
+        "incidencias": [
+            {
+                "idRemedy": "INC_WITH_REMITENTE",
+                "resumen": "[2026R11] Ticket con remitente existente modificado",
+                "estadoDesc": "EN CURSO",
+                "prioridadP": "P3",
+                "urgencia": "Media",
+                "grupoAsignado": "SOP_NEW",
+                "peticionario": "OTRO_REMITENTE_EPSILON",
+                "fechaCreacion": "2026-11-22T01:00:00.000+00:00",
+            },
+            {
+                "idRemedy": "INC_EMPTY_REMITENTE",
+                "resumen": "[2026R11] Ticket sin remitente inicial ahora con datos",
+                "estadoDesc": "EN CURSO",
+                "prioridadP": "P3",
+                "urgencia": "Media",
+                "grupoAsignado": "SOP_NEW",
+                "peticionario": "NUEVO_REMITENTE_EPSILON",
+                "fechaCreacion": "2026-11-22T01:05:00.000+00:00",
+            },
+        ],
+    }
+
+    res = sync_postmortem_release(release_name="2026R11", project_root=tmp_path, client=mock_client)
+    assert res["success"] is True
+
+    saved = json.loads(pm_file.read_text(encoding="utf-8"))
+    records_by_id = {r["ID de incidencia"]: r for r in saved["data"]}
+
+    # El registro que ya tenía Grupo Remitente debe conservar el valor previo
+    assert records_by_id["INC_WITH_REMITENTE"]["Grupo Remitente"] == "SLN Arvato Salamanca"
+    assert records_by_id["INC_WITH_REMITENTE"]["Grupo asignado"] == "SOP_NEW"
+
+    # El registro que tenía Grupo Remitente vacío sí debe actualizarse con el valor de Epsilon
+    assert records_by_id["INC_EMPTY_REMITENTE"]["Grupo Remitente"] == "NUEVO_REMITENTE_EPSILON"
+
+
+

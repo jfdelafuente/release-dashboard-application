@@ -11,6 +11,7 @@
     <link rel="stylesheet" href="/dashboards/assets/resumen-ia.css">
     <link rel="stylesheet" href="/dashboards/assets/incident-notifications.css">
     <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+    <script src="/dashboards/assets/xlsx.full.min.js"></script>
     <script src="/dashboards/assets/ui-feedback.js"></script>
     <style>
         /* Estilos específicos de esta página. El framework compartido
@@ -39,9 +40,11 @@
 
         /* Main Container */
         .dashboard-main {
-            padding: 48px 40px;
-            max-width: 1600px;
+            padding: 32px 24px;
+            max-width: 1750px;
+            width: 100%;
             margin: 0 auto;
+            box-sizing: border-box;
         }
 
         .controls-row {
@@ -83,6 +86,48 @@
         .reset-btn:hover {
             background: #FFF3E8;
             transform: translateY(-2px);
+        }
+
+        .excel-btn {
+            background: white;
+            color: #107C41;
+            border: 2px solid #107C41;
+            padding: 10px 22px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.25s var(--ease);
+            font-family: 'Inter', 'Helvetica Neue', sans-serif;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .excel-btn:hover {
+            background: #EDF7F1;
+            transform: translateY(-2px);
+        }
+
+        .excel-btn-small {
+            background: white;
+            color: #107C41;
+            border: 1.5px solid #107C41;
+            padding: 5px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: 'Inter', 'Helvetica Neue', sans-serif;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .excel-btn-small:hover {
+            background: #EDF7F1;
+            transform: translateY(-1px);
         }
 
         /* KPI Grid */
@@ -195,15 +240,51 @@
         /* Status badges propios de postmortem, además de los 5
            comunes (cerrada/abierta/en-progreso/pendiente/default)
            que ya trae assets/shared.css */
+        #incidentTable {
+            width: 100%;
+            table-layout: fixed;
+            font-size: 11px;
+            border-collapse: collapse;
+        }
+
+        #incidentTable th {
+            padding: 9px 5px;
+            font-size: 10px;
+            letter-spacing: 0.3px;
+            line-height: 1.25;
+            vertical-align: middle;
+            user-select: none;
+            white-space: normal;
+            word-break: normal;
+        }
+
+        #incidentTable td {
+            padding: 6px 5px;
+            font-size: 11px;
+            vertical-align: middle;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        #incidentTable .status-badge,
+        #incidentTable .impact-badge {
+            padding: 3px 6px;
+            font-size: 10px;
+            font-weight: 700;
+            white-space: nowrap;
+            display: inline-block;
+        }
+
         .status-resuelto { background: #2E6BD4; color: #ffffff; border-color: transparent; }
         .status-en-espera { background: #E6A100; color: #3D2A15; border-color: transparent; }
         .status-rechazada { background: #D43A2F; color: #ffffff; border-color: transparent; }
         .status-cancelada { background: #5C5852; color: #ffffff; border-color: transparent; }
 
         .impact-badge {
-            padding: 6px 12px;
+            padding: 3px 6px;
             border-radius: 6px;
-            font-size: 11px;
+            font-size: 10px;
             font-weight: 700;
             border: 1px solid;
         }
@@ -411,6 +492,7 @@
                 </div>
                 <button class="reset-btn" id="syncPostmortemBtn" title="Sincronizar incidencias de release desde Epsilon">⚡ Sincronizar Epsilon</button>
                 <button class="reset-btn" id="downloadReportBtn">⬇ Descargar informe PPT</button>
+                <button class="excel-btn" id="exportExcelBtn" title="Exportar todas las incidencias a Excel (.xlsx) sin importar el estado">📊 Exportar a Excel</button>
                 <button class="reset-btn" id="resetBtn">↻ Cargar otro archivo</button>
             </div>
 
@@ -517,7 +599,7 @@
                     <div style="margin-bottom: 12px;">
                         <label style="font-size: 12px; font-weight: 600; color: #5C5852; text-transform: uppercase; display: block; margin-bottom: 6px;">Estado</label>
                         <select id="filterSystemChartStatus" multiple size="4" style="width: 100%; padding: 4px; border: 1px solid #E2DDD5; border-radius: 6px; font-family: 'Inter', 'Helvetica Neue', sans-serif; font-size: 13px;"></select>
-                        <small style="font-size: 10px; color: #8A857C; display: block; margin-top: 4px;">Ctrl/Cmd + clic para elegir varios. Sin selección = incidencias abiertas (excluye Cerrado/Resuelto). También filtra la tabla "Detalles de Incidencias".</small>
+                        <small style="font-size: 10px; color: #8A857C; display: block; margin-top: 4px;">Ctrl/Cmd + clic para elegir varios. Por defecto incluye todos los estados. También filtra la tabla "Detalles de Incidencias".</small>
                     </div>
                     <div id="systemChart" class="chart-container"></div>
                 </div>
@@ -554,22 +636,37 @@
                 </div>
 
                 <!-- Table -->
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; gap: 12px; flex-wrap: wrap;">
                     <span style="font-size: 12px; color: #5C5852;"><span id="filteredCount">0</span> registros mostrados</span>
+                    <button class="excel-btn-small" id="exportExcelTableBtn" title="Exportar todas las incidencias a Excel (.xlsx) sin importar el estado">📊 Exportar a Excel (todas)</button>
                 </div>
 
                 <div class="table-container">
                     <table id="incidentTable">
+                        <colgroup>
+                            <col style="width: 10%;">
+                            <col style="width: 22%;">
+                            <col style="width: 7%;">
+                            <col style="width: 9%;">
+                            <col style="width: 11%;">
+                            <col style="width: 9%;">
+                            <col style="width: 12%;">
+                            <col style="width: 11%;">
+                            <col style="width: 4.5%;">
+                            <col style="width: 4.5%;">
+                        </colgroup>
                         <thead>
                             <tr>
-                                <th style="cursor: pointer;" onclick="sortTable('ID de incidencia')">Código ⇅</th>
+                                <th style="cursor: pointer;" onclick="sortTable('ID de incidencia')">ID Incidencia ⇅</th>
                                 <th style="cursor: pointer;" onclick="sortTable('Descripción')">Descripción ⇅</th>
-                                <th style="cursor: pointer;" onclick="sortTable('Estatus')">Estado ⇅</th>
+                                <th style="cursor: pointer;" onclick="sortTable('Estatus')">Estatus ⇅</th>
+                                <th style="cursor: pointer;" onclick="sortTable('Fecha de envío')">Fecha Envío ⇅</th>
+                                <th style="cursor: pointer;" onclick="sortTable('Grupo asignado')">Grupo Asignado ⇅</th>
+                                <th style="cursor: pointer;" onclick="sortTable('Fecha de última resolución')">Fecha Resolución ⇅</th>
+                                <th style="cursor: pointer;" onclick="sortTable('Motivo de Estado')">Motivo de Estado ⇅</th>
+                                <th style="cursor: pointer;" onclick="sortTable('Grupo Resolutor')">Grupo Resolutor ⇅</th>
                                 <th style="cursor: pointer;" onclick="sortTable('Urgencia')">Urgencia ⇅</th>
-                                <th style="cursor: pointer;" onclick="sortTable('Grupo asignado')">Sistema ⇅</th>
-                                <th style="cursor: pointer;" onclick="sortTable('Fecha de envío')">Fecha de Envío ⇅</th>
-                                <th style="cursor: pointer;" onclick="sortTable('Fecha de última resolución')">Fecha de Última Resolución ⇅</th>
-                                <th style="cursor: pointer;" onclick="sortTable('Motivo de estado')">Solución ⇅</th>
+                                <th style="cursor: pointer;" onclick="sortTable('Grupo Remitente')">Remitente ⇅</th>
                             </tr>
                         </thead>
                         <tbody id="tableBody">
@@ -617,6 +714,20 @@
             return `${year}-${month}-${day}`;
         }
 
+        function escapeHtml(str) {
+            if (str === null || str === undefined) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        function escapeAttr(str) {
+            return escapeHtml(str);
+        }
+
         // Get value handling BOM and field name variations
         function getIncidentValue(incident, fieldName) {
             // Try direct access
@@ -632,6 +743,47 @@
                 k.replace(/[\uFEFF\u200B\u200C\u200D]/g, '').toLowerCase() === cleanedName.toLowerCase()
             );
             return key ? incident[key] : '';
+        }
+
+        // Regla Excel: =SI([@Estatus]="Resuelto"; SI(ESTEXTO(BUSCARV(...;8;FALSO)); BUSCARV(...;8;FALSO); ""); SI(ESTEXTO(BUSCARV(...;9;FALSO)); BUSCARV(...;9;FALSO); ""))
+        // 8 = Motivo Estado, 9 = Motivo Estado Anterior
+        function getResolvedMotivoEstado(incident) {
+            if (!incident) return '';
+            const estatus = String(getIncidentValue(incident, 'Estatus') || '').trim().toLowerCase();
+
+            // Campo 8: Motivo Estado / Motivo de estado
+            const m8 = getIncidentValue(incident, 'Motivo de estado') ||
+                       getIncidentValue(incident, 'Motivo Estado') ||
+                       getIncidentValue(incident, 'motivoEstado') ||
+                       getIncidentValue(incident, 'motivo_estado') || '';
+
+            // Campo 9: Motivo Estado Anterior / MotivoEstado_Anterior / Motivo Estado Anterio
+            const m9 = getIncidentValue(incident, 'MotivoEstado_Anterior') ||
+                       getIncidentValue(incident, 'Motivo Estado Anterior') ||
+                       getIncidentValue(incident, 'Motivo Estado Anterio') ||
+                       getIncidentValue(incident, 'motivoEstadoAnterior') ||
+                       getIncidentValue(incident, 'motivo_estado_anterior') || '';
+
+            const isTexto = (val) => {
+                if (val === null || val === undefined) return false;
+                const str = String(val).trim();
+                return str !== '' && str !== '-' && str !== 'null' && str !== 'undefined';
+            };
+
+            if (estatus === 'resuelto') {
+                if (isTexto(m8)) return String(m8).trim();
+                if (isTexto(m9)) return String(m9).trim();
+                return '';
+            } else if (estatus === 'cerrado') {
+                if (isTexto(m9)) return String(m9).trim();
+                if (isTexto(m8)) return String(m8).trim();
+                return '';
+            } else {
+                // Para otros estados (Pendiente, Asignado, En curso, etc.), tomar el motivo disponible
+                if (isTexto(m8)) return String(m8).trim();
+                if (isTexto(m9)) return String(m9).trim();
+                return '';
+            }
         }
 
         // Status color mapping
@@ -824,15 +976,13 @@
         }
 
         function createSystemChart() {
-            // Filtro de Estado propio de esta gráfica: sin selección, se
-            // mantiene el comportamiento por defecto (excluye Cerrado/Resuelto,
-            // ya que esta distribución interesa sobre todo para lo que sigue
-            // abierto); con selección, se acota exactamente a los estados elegidos.
+            // Filtro de Estado propio de esta gráfica: con selección, se acota
+            // exactamente a los estados elegidos; sin selección, muestra todos.
             const statusFilters = Array.from(document.getElementById('filterSystemChartStatus').selectedOptions).map(opt => opt.value);
             const openIncidents = allIncidents.filter(i => {
                 const status = (getIncidentValue(i, 'Estatus') || '').toLowerCase();
                 if (statusFilters.length > 0) return statusFilters.includes(status);
-                return !status.includes('cerrado') && !status.includes('resuelto');
+                return true;
             });
 
             // Cuenta total por sistema (para elegir el top 10) y desglose por Estado.
@@ -1738,11 +1888,10 @@
             });
 
             // Populate Estado filter de la gráfica "Por Sistema" (multi-select,
-            // incluye TODOS los estados, no solo los abiertos, para permitir
-            // ver también Cerrado/Resuelto si el usuario los selecciona).
-            // La primera vez se preseleccionan todos los estados salvo
-            // Cerrado/Resuelto; en recargas posteriores se respeta tal cual
-            // lo que el usuario tenga elegido.
+            // incluye TODOS los estados).
+            // La primera vez se preseleccionan todos los estados para mostrar
+            // todas las incidencias por defecto; en recargas posteriores se respeta
+            // tal cual lo que el usuario tenga elegido.
             const systemChartStatusSelect = document.getElementById('filterSystemChartStatus');
             const previouslySelectedSystemChart = new Set(Array.from(systemChartStatusSelect.selectedOptions).map(opt => opt.value));
             systemChartStatusSelect.innerHTML = '';
@@ -1752,7 +1901,7 @@
                 option.textContent = est;
                 option.selected = systemChartStatusFilterInitialized
                     ? previouslySelectedSystemChart.has(option.value)
-                    : !option.value.includes('cerrado') && !option.value.includes('resuelto');
+                    : true;
                 systemChartStatusSelect.appendChild(option);
             });
             systemChartStatusFilterInitialized = true;
@@ -1760,9 +1909,7 @@
 
         function filterTable() {
             // Estado: comparte el filtro (#filterSystemChartStatus) con la
-            // gráfica "Por Sistema" — misma selección múltiple, mismo criterio
-            // por defecto (sin selección = incidencias abiertas, excluye
-            // Cerrado/Resuelto).
+            // gráfica "Por Sistema" — misma selección múltiple, por defecto muestra todas.
             const statusFilters = Array.from(document.getElementById('filterSystemChartStatus').selectedOptions).map(opt => opt.value);
             const deployFilter = document.getElementById('filterDespliegue').value.toLowerCase();
             const urgenciaFilter = document.getElementById('filterUrgencia').value.toLowerCase();
@@ -1776,7 +1923,7 @@
 
                 const statusMatch = statusFilters.length > 0
                     ? statusFilters.includes(status)
-                    : !status.includes('cerrado') && !status.includes('resuelto');
+                    : true;
                 const deployMatch = !deployFilter || despliegue === deployFilter;
                 const urgenciaMatch = !urgenciaFilter || urgencia === urgenciaFilter;
                 const sistemaMatch = !sistemaFilter || sistema === sistemaFilter;
@@ -1784,36 +1931,39 @@
                 return statusMatch && deployMatch && urgenciaMatch && sistemaMatch;
             });
 
-            // Parsea "DD/MM/YYYY HH:MM" (formato generado por parsePostmortemDateTime()
-            // en el conversor) para poder ordenar cronológicamente en vez de por texto.
+            // Parsea fechas en formatos variados (DD/MM/YYYY HH:MM, ISO, etc.)
+            // para poder ordenar cronológicamente en vez de por texto.
             function parseSortDateTime(dateStr) {
                 if (!dateStr) return null;
-                const [datePart, timePart] = dateStr.trim().split(' ');
-                if (!datePart || !datePart.includes('/')) return null;
-
-                const dateParts = datePart.split('/');
-                if (dateParts.length < 3) return null;
-
-                const day = parseInt(dateParts[0]);
-                const month = parseInt(dateParts[1]) - 1;
-                const year = parseInt(dateParts[2]);
-                if (isNaN(day) || isNaN(month) || isNaN(year)) return null;
-
-                const timeParts = (timePart || '00:00').split(':');
-                const hour = parseInt(timeParts[0]);
-                const minute = parseInt(timeParts[1]);
-
-                return new Date(year, month, day, isNaN(hour) ? 0 : hour, isNaN(minute) ? 0 : minute);
+                const str = String(dateStr).trim();
+                const [datePart, timePart] = str.split(' ');
+                if (datePart && datePart.includes('/')) {
+                    const dateParts = datePart.split('/');
+                    if (dateParts.length >= 3) {
+                        const day = parseInt(dateParts[0], 10);
+                        const month = parseInt(dateParts[1], 10) - 1;
+                        const year = parseInt(dateParts[2], 10);
+                        if (!isNaN(day) && !isNaN(month) && !isNaN(year)) {
+                            const timeParts = (timePart || '00:00').split(':');
+                            const hour = parseInt(timeParts[0], 10);
+                            const minute = parseInt(timeParts[1], 10);
+                            const second = parseInt(timeParts[2] || '0', 10);
+                            return new Date(year, month, day, isNaN(hour) ? 0 : hour, isNaN(minute) ? 0 : minute, isNaN(second) ? 0 : second);
+                        }
+                    }
+                }
+                const parsed = new Date(str);
+                return isNaN(parsed.getTime()) ? null : parsed;
             }
 
-            const dateColumns = ['Fecha de envío', 'Fecha de última resolución'];
+            const dateColumns = ['Fecha de envío', 'Fecha de última resolución', 'Fecha de notificación'];
 
             // Apply sorting
             if (sortColumn) {
                 filteredIncidents.sort((a, b) => {
                     if (dateColumns.includes(sortColumn)) {
-                        const dateA = parseSortDateTime(a[sortColumn]);
-                        const dateB = parseSortDateTime(b[sortColumn]);
+                        const dateA = parseSortDateTime(getIncidentValue(a, sortColumn));
+                        const dateB = parseSortDateTime(getIncidentValue(b, sortColumn));
                         // Sin fecha válida al final, independientemente de la dirección
                         if (!dateA && !dateB) return 0;
                         if (!dateA) return 1;
@@ -1821,8 +1971,15 @@
                         return sortDirection === 'asc' ? dateA - dateB : dateB - dateA;
                     }
 
-                    let aVal = a[sortColumn] || '';
-                    let bVal = b[sortColumn] || '';
+                    let aVal = '';
+                    let bVal = '';
+                    if (sortColumn === 'Motivo de Estado' || sortColumn === 'Motivo de estado') {
+                        aVal = getResolvedMotivoEstado(a);
+                        bVal = getResolvedMotivoEstado(b);
+                    } else {
+                        aVal = getIncidentValue(a, sortColumn) || '';
+                        bVal = getIncidentValue(b, sortColumn) || '';
+                    }
                     aVal = aVal.toString().toLowerCase();
                     bVal = bVal.toString().toLowerCase();
 
@@ -1854,7 +2011,7 @@
             if (!filteredIncidents || filteredIncidents.length === 0) {
                 const row = document.createElement('tr');
                 row.innerHTML = `
-                    <td colspan="8" class="table-empty-cell">
+                    <td colspan="10" class="table-empty-cell">
                         <div class="table-empty-state">
                             <div class="empty-icon">🔍</div>
                             <div class="empty-title">No se encontraron incidencias de postmortem</div>
@@ -1866,33 +2023,131 @@
                 return;
             }
 
-            // Mostrar registros filtrados
+            // Mostrar registros filtrados con las 10 columnas especificadas
             filteredIncidents.forEach(incident => {
                 const row = document.createElement('tr');
-                const status = getStatusText(getIncidentValue(incident, 'Estatus'));
-                const statusClass = getStatusClass(getIncidentValue(incident, 'Estatus'));
-                const urgencyClass = getImpactClass(getIncidentValue(incident, 'Urgencia'));
 
                 const codigoIncidencia = getIncidentValue(incident, 'ID de incidencia') || '-';
                 const codigoLink = codigoIncidencia !== '-'
-                    ? `<a href="javascript:void(0)" onclick="openResumenIA('${codigoIncidencia}'); return false;" style="color: #FF7900; text-decoration: none; font-weight: 700; cursor: pointer;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">${codigoIncidencia}</a>`
+                    ? `<a href="javascript:void(0)" onclick="openResumenIA('${escapeAttr(codigoIncidencia)}'); return false;" style="color: #FF7900; text-decoration: none; font-weight: 700; cursor: pointer; white-space: nowrap;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">${escapeHtml(codigoIncidencia)}</a>`
                     : '-';
 
+                const desc = getIncidentValue(incident, 'Descripción') || '-';
+                const shortDesc = desc.length > 50 ? desc.substring(0, 50) + '...' : desc;
+
+                const estatusRaw = getIncidentValue(incident, 'Estatus') || '-';
+                const status = getStatusText(estatusRaw);
+                const statusClass = getStatusClass(estatusRaw);
+
+                const fechaEnvio = getIncidentValue(incident, 'Fecha de envío') || '-';
+                const grupoAsignado = getIncidentValue(incident, 'Grupo asignado') || '-';
+                const fechaResol = getIncidentValue(incident, 'Fecha de última resolución') || '-';
+
+                const motivoCalculado = getResolvedMotivoEstado(incident);
+                const displayMotivo = motivoCalculado || '-';
+                const shortMotivo = displayMotivo !== '-' && displayMotivo.length > 35 ? displayMotivo.substring(0, 35) + '...' : displayMotivo;
+
+                const grupoResolutor = getIncidentValue(incident, 'Grupo Resolutor') || '-';
+
+                const urgencia = getIncidentValue(incident, 'Urgencia') || '-';
+                const urgencyClass = getImpactClass(urgencia);
+
+                const grupoRemitente = getIncidentValue(incident, 'Grupo Remitente') || '-';
+
                 row.innerHTML = `
-                    <td>${codigoLink}</td>
-                    <td>${(getIncidentValue(incident, 'Descripción') || '-').substring(0, 35)}...</td>
-                    <td><span class="status-badge ${statusClass}">${status}</span></td>
-                    <td><span class="impact-badge ${urgencyClass}">${getIncidentValue(incident, 'Urgencia') || '-'}</span></td>
-                    <td>${(getIncidentValue(incident, 'Grupo asignado') || '-').substring(0, 20)}</td>
-                    <td>${getIncidentValue(incident, 'Fecha de envío') || '-'}</td>
-                    <td>${getIncidentValue(incident, 'Fecha de última resolución') || '-'}</td>
-                    <td>${(getIncidentValue(incident, 'Motivo de estado') || '-').substring(0, 15)}</td>
+                    <td title="${escapeAttr(codigoIncidencia)}">${codigoLink}</td>
+                    <td title="${escapeAttr(desc)}">${escapeHtml(shortDesc)}</td>
+                    <td><span class="status-badge ${statusClass}">${escapeHtml(status)}</span></td>
+                    <td style="font-family: var(--mono); font-size: 10.5px; white-space: nowrap;">${escapeHtml(fechaEnvio)}</td>
+                    <td title="${escapeAttr(grupoAsignado)}">${escapeHtml(grupoAsignado)}</td>
+                    <td style="font-family: var(--mono); font-size: 10.5px; white-space: nowrap;">${escapeHtml(fechaResol)}</td>
+                    <td title="${escapeAttr(displayMotivo)}">${escapeHtml(shortMotivo)}</td>
+                    <td title="${escapeAttr(grupoResolutor)}">${escapeHtml(grupoResolutor)}</td>
+                    <td><span class="impact-badge ${urgencyClass}">${escapeHtml(urgencia)}</span></td>
+                    <td title="${escapeAttr(grupoRemitente)}">${escapeHtml(grupoRemitente)}</td>
                 `;
                 tbody.appendChild(row);
             });
 
             // Update record count
             document.getElementById('filteredCount').textContent = filteredIncidents.length;
+        }
+
+        // Exportar TODAS las incidencias de la tabla a Excel (.xlsx) sin importar el filtro de estado
+        function exportIncidentsToExcel() {
+            if (!allIncidents || allIncidents.length === 0) {
+                if (window.Toast) Toast.warning('No hay incidencias para exportar en esta release.');
+                else alert('No hay incidencias para exportar en esta release.');
+                return;
+            }
+
+            // Mapear TODAS las incidencias con las 10 columnas de la tabla (sin importar filtro de estado)
+            const rows = allIncidents.map(inc => {
+                const estatusRaw = getIncidentValue(inc, 'Estatus') || '';
+                return {
+                    'ID Incidencia': getIncidentValue(inc, 'ID de incidencia') || '',
+                    'Descripción': getIncidentValue(inc, 'Descripción') || '',
+                    'Estatus': getStatusText(estatusRaw),
+                    'Fecha Envío': getIncidentValue(inc, 'Fecha de envío') || '',
+                    'Grupo Asignado': getIncidentValue(inc, 'Grupo asignado') || '',
+                    'Fecha Resolución': getIncidentValue(inc, 'Fecha de última resolución') || '',
+                    'Motivo de Estado': getResolvedMotivoEstado(inc) || '',
+                    'Grupo Resolutor': getIncidentValue(inc, 'Grupo Resolutor') || '',
+                    'Urgencia': getIncidentValue(inc, 'Urgencia') || '',
+                    'Grupo Remitente': getIncidentValue(inc, 'Grupo Remitente') || ''
+                };
+            });
+
+            const rel = currentReleaseName || (typeof getReleaseParam === 'function' ? getReleaseParam() : '') || 'Release';
+            const now = new Date();
+            const dateStr = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`;
+            const fileName = `Incidencias_Postmortem_${rel}_${dateStr}.xlsx`;
+
+            if (typeof XLSX !== 'undefined') {
+                const ws = XLSX.utils.json_to_sheet(rows);
+                ws['!cols'] = [
+                    { wch: 18 }, // ID Incidencia
+                    { wch: 60 }, // Descripción
+                    { wch: 15 }, // Estatus
+                    { wch: 20 }, // Fecha Envío
+                    { wch: 28 }, // Grupo Asignado
+                    { wch: 20 }, // Fecha Resolución
+                    { wch: 30 }, // Motivo de Estado
+                    { wch: 28 }, // Grupo Resolutor
+                    { wch: 12 }, // Urgencia
+                    { wch: 25 }  // Grupo Remitente
+                ];
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, 'Incidencias');
+                XLSX.writeFile(wb, fileName);
+                if (window.Toast) {
+                    Toast.success(`Exportadas ${rows.length} incidencias a Excel (.xlsx) sin filtrar por estado.`);
+                }
+            } else {
+                exportToCsvFallback(rows, fileName.replace('.xlsx', '.csv'));
+            }
+        }
+
+        function exportToCsvFallback(rows, fileName) {
+            if (!rows || rows.length === 0) return;
+            const headers = Object.keys(rows[0]);
+            const csvLines = [
+                headers.join(';'),
+                ...rows.map(row => headers.map(h => {
+                    const val = String(row[h] || '').replace(/"/g, '""');
+                    return `"${val}"`;
+                }).join(';'))
+            ];
+            const blob = new Blob(['\uFEFF' + csvLines.join('\r\n')], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = fileName;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            if (window.Toast) {
+                Toast.success(`Exportadas ${rows.length} incidencias a CSV.`);
+            }
         }
 
         // File Handling
@@ -1953,6 +2208,15 @@
                 if (!currentReleaseName) return;
                 window.location.href = '/api/reports/postmortem/' + encodeURIComponent(currentReleaseName);
             });
+
+            const exportExcelBtn = document.getElementById('exportExcelBtn');
+            if (exportExcelBtn) {
+                exportExcelBtn.addEventListener('click', exportIncidentsToExcel);
+            }
+            const exportExcelTableBtn = document.getElementById('exportExcelTableBtn');
+            if (exportExcelTableBtn) {
+                exportExcelTableBtn.addEventListener('click', exportIncidentsToExcel);
+            }
 
             // Nombre de la release actual, tomado siempre del parámetro ?release=
             // de la URL (nunca de un campo de texto libre — ver research.md R5)

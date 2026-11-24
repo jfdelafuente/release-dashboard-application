@@ -55,6 +55,26 @@ class TestFieldMappingBasic:
         assert mapped['ID de incidencia'] == 'INC001'
         assert mapped['Grupo Remitente'] == 'Team A'
 
+    def test_map_fields_motivo_estado_aliases(self):
+        """Test mapping with Excel Motivo Estado and Motivo Estado Anterio column names."""
+        record = {
+            'Código Incidencia': 'INC001',
+            'Descripción': 'Test',
+            'Estatus': 'Resuelto',
+            'Fecha de envío': '01/05/2026',
+            'Grupo asignado': 'SOP_TEST',
+            'Motivo Estado': 'Solución aplicada',
+            'Motivo Estado Anterio': 'En curso',
+            'Urgencia': 'Alta',
+            'Impacto': 'Masiva'
+        }
+
+        mapped = mapPostmortemFields(record)
+
+        assert mapped['ID de incidencia'] == 'INC001'
+        assert mapped['Motivo de estado'] == 'Solución aplicada'
+        assert mapped['MotivoEstado_Anterior'] == 'En curso'
+
 
 class TestFieldMappingCaseInsensitive:
     """Test case-insensitive field mapping."""

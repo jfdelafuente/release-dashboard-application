@@ -294,7 +294,13 @@ class MonTMCClient:
         grupo_resolutor = (record.get("grupoResolutor") or "").strip()
         urgencia = _normalize_urgency(record.get("urgencia"))
 
-        peticionario = (record.get("peticionarioNombre") or "").strip()
+        peticionario = (
+            record.get("peticionarioNombre")
+            or record.get("peticionario")
+            or record.get("grupoRemitente")
+            or record.get("Grupo Remitente")
+            or ""
+        ).strip()
 
         # Mapeo canónico exacto requerido por schemas.py
         normalized: Dict[str, Any] = {
@@ -311,11 +317,23 @@ class MonTMCClient:
         if fecha_resolucion:
             normalized["Fecha de última resolución"] = fecha_resolucion
 
+        fecha_notificacion = _iso_to_dashboard_date(record.get("fechaNotificacion") or record.get("fecha_notificacion") or record.get("Fecha de notificación"))
+        if fecha_notificacion:
+            normalized["Fecha de notificación"] = fecha_notificacion
+
         if grupo_resolutor:
             normalized["Grupo Resolutor"] = grupo_resolutor
 
         if peticionario:
             normalized["Grupo Remitente"] = peticionario
+
+        motivo_estado = (record.get("motivoEstado") or record.get("motivo_estado") or record.get("Motivo de estado") or "").strip()
+        if motivo_estado:
+            normalized["Motivo de estado"] = motivo_estado
+
+        motivo_ant = (record.get("motivoEstadoAnterior") or record.get("motivo_estado_anterior") or record.get("MotivoEstado_Anterior") or "").strip()
+        if motivo_ant:
+            normalized["MotivoEstado_Anterior"] = motivo_ant
 
         # Atributos suplementarios enriquecidos
         if record.get("fechaUltimaModificacion"):
@@ -356,7 +374,13 @@ class MonTMCClient:
         grupo_resolutor = (record.get("grupoResolutor") or "").strip()
         urgencia = _normalize_urgency(record.get("urgencia"))
         impacto = (record.get("producto") or "").strip() or "Release"
-        peticionario = (record.get("peticionarioNombre") or "").strip()
+        peticionario = (
+            record.get("peticionarioNombre")
+            or record.get("peticionario")
+            or record.get("grupoRemitente")
+            or record.get("Grupo Remitente")
+            or ""
+        ).strip()
 
         normalized: Dict[str, Any] = {
             "ID de incidencia": incident_id,
@@ -372,11 +396,23 @@ class MonTMCClient:
         if fecha_resolucion:
             normalized["Fecha de última resolución"] = fecha_resolucion
 
+        fecha_notificacion = _iso_to_dashboard_date(record.get("fechaNotificacion") or record.get("fecha_notificacion") or record.get("Fecha de notificación"))
+        if fecha_notificacion:
+            normalized["Fecha de notificación"] = fecha_notificacion
+
         if grupo_resolutor:
             normalized["Grupo Resolutor"] = grupo_resolutor
 
         if peticionario:
             normalized["Grupo Remitente"] = peticionario
+
+        motivo_estado = (record.get("motivoEstado") or record.get("motivo_estado") or record.get("Motivo de estado") or "").strip()
+        if motivo_estado:
+            normalized["Motivo de estado"] = motivo_estado
+
+        motivo_ant = (record.get("motivoEstadoAnterior") or record.get("motivo_estado_anterior") or record.get("MotivoEstado_Anterior") or "").strip()
+        if motivo_ant:
+            normalized["MotivoEstado_Anterior"] = motivo_ant
 
         if record.get("fechaUltimaModificacion"):
             normalized["fechaUltimaModificacion"] = record["fechaUltimaModificacion"]

@@ -260,6 +260,10 @@ def sync_remedy_incidents(
 
         if inc_id in records_by_id:
             old_rec = records_by_id[inc_id]
+            # Si 'Grupo Remitente' ya tiene valor en el registro existente, no se sobreescribe
+            old_remitente = str(old_rec.get("Grupo Remitente") or "").strip()
+            if old_remitente:
+                norm_rec["Grupo Remitente"] = old_rec["Grupo Remitente"]
             # Evaluar si ha cambiado algún campo clave
             has_changes = False
             for k in ("Estatus", "Grupo asignado", "Grupo Resolutor", "Fecha de última resolución",

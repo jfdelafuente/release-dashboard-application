@@ -102,6 +102,18 @@ def mapPostmortemFields(
     # Create mapping from CSV headers (with BOM cleanup)
     mapped_record = {}
 
+    # Common aliases from Excel / Remedy exports
+    aliases = {
+        'motivo estado': 'Motivo de estado',
+        'motivo de estado': 'Motivo de estado',
+        'motivo estado anterio': 'MotivoEstado_Anterior',
+        'motivo estado anterior': 'MotivoEstado_Anterior',
+        'motivoestado_anterior': 'MotivoEstado_Anterior',
+        'motivoestado anterior': 'MotivoEstado_Anterior',
+        'código incidencia': 'ID de incidencia',
+        'codigo incidencia': 'ID de incidencia',
+    }
+
     for csv_key, csv_value in csv_record.items():
         # Remove BOM character if present
         clean_key = csv_key.lstrip('\ufeff') if csv_key else csv_key
@@ -117,6 +129,14 @@ def mapPostmortemFields(
                     mapped_record[expected_key] = csv_value
                     found = True
                     break
+
+            # Try alias match
+            if not found and clean_key:
+                clean_norm = clean_key.strip().lower()
+                if clean_norm in aliases:
+                    target_field = aliases[clean_norm]
+                    mapped_record[target_field] = csv_value
+                    found = True
 
             # If no match found, preserve as-is (might be extra column)
             if not found:
