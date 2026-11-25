@@ -2029,7 +2029,7 @@
 
                 const codigoIncidencia = getIncidentValue(incident, 'ID de incidencia') || '-';
                 const codigoLink = codigoIncidencia !== '-'
-                    ? `<a href="javascript:void(0)" onclick="openResumenIA('${escapeAttr(codigoIncidencia)}'); return false;" style="color: #FF7900; text-decoration: none; font-weight: 700; cursor: pointer; white-space: nowrap;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">${escapeHtml(codigoIncidencia)}</a>`
+                    ? `<a href="javascript:void(0)" onclick="openResumenIA('${escapeAttr(codigoIncidencia)}'); return false;" style="color: #111827; text-decoration: none; font-weight: 800; cursor: pointer; white-space: nowrap; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12.5px;" onmouseover="this.style.textDecoration='underline'; this.style.color='#FF7900'" onmouseout="this.style.textDecoration='none'; this.style.color='#111827'">${escapeHtml(codigoIncidencia)}</a>`
                     : '-';
 
                 const desc = getIncidentValue(incident, 'Descripción') || '-';

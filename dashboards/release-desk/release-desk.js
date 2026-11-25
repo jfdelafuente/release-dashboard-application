@@ -769,11 +769,15 @@
                 || '-';
             var estatusLower = String(inc['Estatus'] || '').toLowerCase();
             var isResolved = estatusLower.includes('resuelt') || estatusLower.includes('cerrad');
+            var isPendiente = estatusLower.includes('pend');
             var overrideEntry = state.overrides && state.overrides[id];
-            var agreedFecha = (overrideEntry && overrideEntry.fecha_prevista) ? overrideEntry.fecha_prevista : '';
+            var agreedFecha = (overrideEntry && overrideEntry.fecha_prevista)
+                ? overrideEntry.fecha_prevista
+                : (inc['Fecha prevista'] || inc['fecha_prevista'] || inc['Fecha Compromiso'] || inc['Fecha compromiso'] || '');
             var fechaPrevista = isResolved
                 ? (inc['Fecha de última resolución'] || '')
                 : agreedFecha;
+            var isPendienteConFecha = !isResolved && isPendiente && Boolean(agreedFecha);
             var motivoResuelto = inc['Motivo de estado'] ||
                 inc['MotivoEstado_Anterior'] ||
                 inc['motivoEstado'] ||
@@ -786,7 +790,11 @@
             if (isSelected) rowClasses.push('is-selected');
             if (prioBadgeClass.indexOf('rd-badge-critica') !== -1) rowClasses.push('rd-row-critica');
             else if (prioBadgeClass.indexOf('rd-badge-alta') !== -1 || prioBadgeClass.indexOf('rd-badge-masiva') !== -1) rowClasses.push('rd-row-alta');
-            if (isResolved) rowClasses.push('rd-row-resuelto');
+            if (isResolved) {
+                rowClasses.push('rd-row-resuelto');
+            } else if (isPendienteConFecha) {
+                rowClasses.push('rd-row-pendiente-fecha');
+            }
             var rowClassAttr = rowClasses.length ? ' class="' + rowClasses.join(' ') + '"' : '';
 
             var sistemaCell = sistema !== '-'
@@ -877,6 +885,7 @@
                 ? ' data-tooltip="' + escapeHtml(motivoResuelto) + '" data-tooltip-title="Motivo / Detalle de Resolución"'
                 : '';
 
+            var toggleArrow = '<span class="rd-toggle-arrow" aria-hidden="true">' + (isSelected ? '▾' : '▸') + '</span>';
             var codeLinkHtml = '<a href="javascript:void(0)" class="rd-inc-link" data-open-resumen="' + escapeHtml(id) + '" title="Abrir ventana Resumen IA" onclick="if(window.openResumenIA){event.stopPropagation();window.openResumenIA(\'' + escapeHtml(id) + '\');}return false;">' + escapeHtml(id) + '</a>';
 
             var notasList = (overrideEntry && Array.isArray(overrideEntry.notas)) ? overrideEntry.notas : [];
@@ -892,7 +901,7 @@
             }
 
             var rowHtml = '<tr data-inc-id="' + escapeHtml(id) + '"' + rowClassAttr + ' tabindex="0" role="button" aria-expanded="' + (isSelected ? 'true' : 'false') + '">' +
-                '<td style="white-space:nowrap;"><span class="rd-badge rd-badge-code">' + (isSelected ? '▾ ' : '▸ ') + codeLinkHtml + '</span>' + syncBadgeHtml + '</td>' +
+                '<td style="white-space:nowrap;"><div class="rd-inc-code-cell">' + toggleArrow + codeLinkHtml + '</div>' + syncBadgeHtml + '</td>' +
                 '<td style="font-size:11.5px; min-width:78px;">' + escapeHtml(fechaApertura) + agingHtml + inactHtml + '</td>' +
                 '<td style="min-width:200px; max-width:340px;"' + descTooltipAttr + '>' + descCellHtml + '</td>' +
                 '<td style="white-space:nowrap;"' + prioTooltipAttr + '><span class="rd-badge ' + prioBadgeClass + '">' + prioBadgeHtml + '</span></td>' +
