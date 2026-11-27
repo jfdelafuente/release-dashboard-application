@@ -9,7 +9,7 @@
       "orange-it-emergency-management": "2.3.0",
       "incident-executive-notifications": "1.3.0"
     },
-    "updated_at": "2026-11-11T15:57:41Z"
+    "updated_at": "2026-11-27T11:47:42Z"
   },
   "incidents": {
     "INC000004065609": {
@@ -80,6 +80,14 @@
         "origen": "incident-reporter",
         "conteo_palabras_completo": 77,
         "conteo_palabras_breve": 22
+      },
+      "reapertura": {
+        "completo": "Continúa activa por reapertura en criticidad P1 la incidencia en Ficha de Cliente Orange relativa a la apertura de comprobantes de venta desde el inyector, que afecta a 60 usuarios en las sedes de Bosch-Vigo y Madison-Valladolid sin alternativa general. Tras aplicarse una corrección de URL en el endpoint xpldocumentlist en ApiGee validada en Vigo, la sede de Valladolid constató la persistencia del error 404. El grupo DES_SOE_FICHA revisa técnicamente la configuración para subsanar definitivamente el acceso a comprobantes. Próxima actualización en 60 minutos.",
+        "breve": "P1: Persiste fallo al abrir comprobantes en Ficha Cliente en Madison-Valladolid tras corrección parcial en ApiGee. 60 usuarios afectados; DES_SOE_FICHA revisa endpoint. Próxima actualización en 60 min.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 84,
+        "conteo_palabras_breve": 27
       }
     },
     "INC000004159463": {
@@ -366,6 +374,14 @@
         "origen": "incident-reporter",
         "conteo_palabras_completo": 48,
         "conteo_palabras_breve": 20
+      },
+      "reapertura": {
+        "completo": "Se mantiene en fase de reapertura con severidad P2 la incidencia en Siebel 8 relativa a la activación indebida de televisión libre en cinco líneas de clientes Soho, originada por el proceso por lotes SBL_EAI_RC62_SC14 sobre un fichero manual con datos inconsistentes. El equipo SOP_SMC_TEIDE localizó el archivo de entrada y acotó los contratos impactados. La gestión continúa con CEP CAU AGI a la espera del visto bueno de negocio sobre el procedimiento de regularización y cierre. Próxima actualización en 60 minutos.",
+        "breve": "P2: Activación indebida de TV en 5 líneas Soho por batch en Siebel 8. Casos identificados por soporte Teide; pendiente visto bueno de negocio. Próxima actualización en 60 min.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 82,
+        "conteo_palabras_breve": 29
       }
     },
     "INC000004163156": {
@@ -418,6 +434,14 @@
         "origen": "incident-reporter",
         "conteo_palabras_completo": 48,
         "conteo_palabras_breve": 18
+      },
+      "reapertura": {
+        "completo": "Se efectúa seguimiento de la incidencia P3 en Ficha de Cliente Orange por la visualización intermitente de la opción para activar ciclo de facturación en dispositivos 5G, reportada desde Jazzplat Guadalajara. La operativa cuenta con procedimiento alternativo garantizado mediante gestión directa desde Siebel 8. El diagnóstico técnico preliminar identificó desalineaciones en OCS, habiéndose acordado una sesión técnica con el solicitante para acotar la casuística antes de reactivar desarrollos adicionales en el frontal. Próxima actualización de seguimiento programada.",
+        "breve": "P3: Visualización intermitente de activación de ciclo 5G en Ficha Cliente en Jazzplat Guadalajara. Operativa cubierta mediante workaround en Siebel 8; pendiente sesión de alineación con solicitante.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 77,
+        "conteo_palabras_breve": 27
       }
     },
     "INC000004999999": {
@@ -690,6 +714,14 @@
         "origen": "incident-reporter",
         "conteo_palabras_completo": 57,
         "conteo_palabras_breve": 19
+      },
+      "reapertura": {
+        "completo": "Se realiza seguimiento de la incidencia P1 sobre facturación incorrecta del servicio SVA DAZN Total en cliente Lego, que generaba importes variables indebidos por inconsistencias en las órdenes de compensación (OCC) de Excalibur. El equipo SOP_TMC_EXCALIBUR desplegó con éxito el cambio correctivo en la orden CRQ000000190328 para subsanar el desfase entre sistemas. La incidencia permanece en curso bajo gestión de CEP CAU AGI a la espera de que el área de Facturación valide la regularización manual y el abono en facturas abiertas. Próxima actualización en 60 minutos.",
+        "breve": "P1: Error de facturación en SVA DAZN cliente Lego. Fix desplegado en Excalibur (CRQ000000190328); pendiente validación de regularización y anulación de cargos por Facturación. Próxima actualización en 60 min.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 87,
+        "conteo_palabras_breve": 29
       }
     },
     "INC000004169386": {
@@ -1158,6 +1190,186 @@
         "origen": "incident-reporter",
         "conteo_palabras_completo": 79,
         "conteo_palabras_breve": 24
+      }
+    },
+    "INC000004200995": {
+      "reapertura": {
+        "completo": "Se reactiva como incidencia crítica (P1) en Altair la anomalía en el Test de Calidad de Visionado, donde han desaparecido las salidas de error para diagnósticos de televisión IPTV, SmartTV y dispositivos móviles, afectando a la sede de La Finca sin método alternativo. La sede ha aportado muestras de errores en STB, SmartTV y Android para acotar la causa raíz. Los equipos SOP_SMC_ALTAIR y CEP CAU AGI se encuentran analizando la anomalía para restablecer la visibilidad. Próxima actualización en 45 minutos.",
+        "breve": "P1: Altair sin salidas de error en Test Calidad Visionado afectando diagnóstico TV en La Finca. Muestras entregadas; equipos SOP_SMC_ALTAIR y CEP analizando causa. Próxima actualización en 45 min.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 81,
+        "conteo_palabras_breve": 29
+      },
+      "apertura": {
+        "completo": "Se declara incidencia de alta prioridad (P1) en la plataforma Altair por una anomalía en el Test de Calidad de Visionado, donde no se visualizan las salidas de error en diagnósticos de televisión IPTV, SmartTV y dispositivos móviles, afectando a la sede de Orange en La Finca sin método alternativo. Los equipos de soporte de Altair (SOP_SMC_ALTAIR) y CEP CAU AGI se encuentran movilizados analizando muestras de dispositivos afectados para restablecer la visibilidad técnica. Próxima actualización de seguimiento prevista en 30 minutos.",
+        "breve": "P1: Apertura en Altair por fallo en Test Calidad Visionado afectando diagnóstico TV en La Finca. SOP_SMC_ALTAIR analizando muestras de dispositivos. Próxima actualización en 30 min.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 82,
+        "conteo_palabras_breve": 26
+      }
+    },
+    "INC000004189999": {
+      "reapertura": {
+        "completo": "Se reabre con criticidad P1 la incidencia en Siebel IP24 por persistencia de errores en órdenes de cambio de SIM y eSIM, que demoran la tramitación al transitar a estado de error antes de cerrarse. La afectación impacta a cinco sedes de Teleperformance Jerez en el proceso de ventas ATAC de Orange sin alternativa. Aunque el servicio general SIGMA se recuperó, continúan detectándose órdenes fallidas con validación MDW y MSISDN, manteniéndose escalado a soporte de Boreal bajo INC000004190428. Próxima actualización en 45 minutos.",
+        "breve": "P1: Nuevas órdenes de cambio SIM/eSIM bloqueadas en Siebel IP24 afectando a 5 sedes de Teleperformance Jerez. Fallo escalado a Boreal en INC000004190428. Próxima actualización en 45 min.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 83,
+        "conteo_palabras_breve": 28
+      },
+      "apertura": {
+        "completo": "Se declara incidencia de alta prioridad (P1) en Siebel IP24 por fallo en la tramitación de órdenes de cambio de SIM y eSIM, que pasan temporalmente a estado de error demorando su finalización. La afectación impacta en cinco sedes de Teleperformance Jerez dentro del proceso de ventas ATAC de Orange sin método alternativo disponible. Los equipos de soporte CEP CAU AGI y sistemas de provisión investigan la interacción con las plataformas SIGMA y Boreal. Próxima actualización en 30 minutos.",
+        "breve": "P1: Apertura en Siebel IP24 por demoras y transiciones a error en órdenes de cambio SIM/eSIM en 5 sedes de Teleperformance Jerez. Soporte investigando. Actualización en 30 min.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 79,
+        "conteo_palabras_breve": 28
+      }
+    },
+    "INC000004187906": {
+      "reapertura": {
+        "completo": "Se mantiene en fase de reapertura con criticidad P1 la incidencia en Ficha de Cliente Orange, donde la tabla de órdenes de servicio no renderiza la hora de cita para instalaciones, afectando a diez agentes de Konecta Sevilla en provisión sin método alternativo. El análisis técnico confirmó que el backend entrega el timestamp completo en la API, localizándose la causa raíz en el componente frontend Angular app-orders-table. El equipo DES_SOE_FICHA se encuentra desarrollando la corrección en la federación mf-installation-orders-detailed. Próxima actualización en 60 minutos.",
+        "breve": "P1: Ficha Cliente Orange no renderiza hora de cita en órdenes afectando a agentes Konecta Sevilla. Causa identificada en frontend Angular; DES_SOE_FICHA desarrollando corrección. Próxima actualización en 60 min.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 84,
+        "conteo_palabras_breve": 29
+      },
+      "apertura": {
+        "completo": "Se declara incidencia P1 en Ficha de Cliente Orange por defecto en la tabla de órdenes de servicio, que omite la hora de cita para instalaciones técnicas en el módulo superior, afectando a diez agentes de Konecta Sevilla en el proceso de provisión sin método alternativo. El equipo de desarrollo DES_SOE_FICHA se encuentra interviniendo el frontal Angular app-orders-table para renderizar el timestamp completo recibido desde el backend. Se emitirá una nueva actualización de estado en 45 minutos.",
+        "breve": "P1: Apertura en Ficha Cliente Orange por omisión de hora de cita en órdenes de instalación en Konecta Sevilla. DES_SOE_FICHA interviniendo frontal. Próxima actualización en 45 min.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 77,
+        "conteo_palabras_breve": 27
+      }
+    },
+    "INC000004200573": {
+      "seguimiento": {
+        "completo": "Se informa del seguimiento de la incidencia mayor P2 en el canal de captación online de Jazztel, donde 23 pedidos de venta se encuentran bloqueados sin método alternativo debido a timeouts en la validación de clientes y scoring. El diagnóstico técnico determinó que un cambio reciente en el microservicio ms-repository-jz omitió el envío de la dirección IP hacia Composer en las llamadas a Customer Management. El equipo DES_SOE_MICROSJZ tiene asignada la resolución para desplegar un parche correctivo o revertir la versión afectada. Próxima actualización en 45 minutos.",
+        "breve": "P2: 23 pedidos de captación Jazztel bloqueados por timeout de scoring entre ms-repository-jz y Composer. DES_SOE_MICROSJZ prepara parche o rollback del microservicio. Próxima actualización en 45 min.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 87,
+        "conteo_palabras_breve": 27
+      },
+      "apertura": {
+        "completo": "Se declara incidencia mayor P2 en el portal de captación de Jazztel tras detectarse 23 pedidos de venta bloqueados debido a timeouts en las consultas de scoring hacia Customer Management sin método alternativo disponible. El análisis técnico identificó que el microservicio ms-repository-jz no transmite la dirección IP al Composer, provocando el rechazo de las peticiones. Los equipos de desarrollo de microservicios DES_SOE_MICROSJZ y soporte N1 se encuentran movilizados para aplicar el parche correctivo. Próxima actualización en 30 minutos.",
+        "breve": "P2: Apertura en Jazztel Captación con 23 pedidos bloqueados por fallo de comunicación entre ms-repository-jz y Composer. DES_SOE_MICROSJZ aplicando parche urgente. Próxima actualización en 30 min.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 78,
+        "conteo_palabras_breve": 26
+      }
+    },
+    "INC000004199936": {
+      "reapertura": {
+        "completo": "Se notifica la reapertura de la incidencia P2 en Teide asociada al trámite de cambio de cuenta bancaria para clientes, que impide la gestión a 20 operadores de Transcom San Fernando en el proceso de cobros sin alternativa. Tras descartarse un error en el formato del IBAN, se diagnosticó que la caché CDCCustomerManagement no suministra la nacionalidad del apoderado al microservicio accountmanagementdispatcher para el control de fraude. El equipo DES_SOE_MICROS_CORE se encuentra interviniendo para corregir la entrega de dicho parámetro obligatorio. Próxima actualización en 60 minutos.",
+        "breve": "P2: Bloqueo en cambio de IBAN en Teide para 20 agentes en Transcom San Fernando por dato de apoderado ausente en caché. DES_SOE_MICROS_CORE interviniendo. Próxima actualización en 60 min.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 86,
+        "conteo_palabras_breve": 29
+      },
+      "apertura": {
+        "completo": "Se declara incidencia de severidad P2 en el sistema Teide por error en las solicitudes de modificación de cuenta bancaria para clientes, afectando a 20 operadores en la sede de Transcom San Fernando en el proceso de cobros sin método alternativo. El sistema devuelve código de error 200 debido a la ausencia del parámetro de nacionalidad del apoderado en la caché de cliente para control de fraude. El equipo DES_SOE_MICROS_CORE se encuentra interviniendo el servicio. Próxima actualización en 45 minutos.",
+        "breve": "P2: Apertura en Teide por rechazo en cambios de IBAN para 20 operadores de Transcom San Fernando por dato ausente en caché. DES_SOE_MICROS_CORE interviniendo. Actualización en 45 min.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 80,
+        "conteo_palabras_breve": 28
+      }
+    },
+    "INC000004199913": {
+      "seguimiento": {
+        "completo": "Se realiza seguimiento de la incidencia mayor P2 en Teide por inconsistencia en la asignación masiva de componentes promocionales de televisión y streaming en tarifas convergentes Lego. La anomalía afecta a 367 servicios: 45 presentan descuentos no correspondientes y 322 carecen del beneficio pactado, sin método alternativo operativo. El equipo de soporte SOP_SMC_TEIDE analiza la lógica de aprovisionamiento para determinar la causa raíz y elaborar el procedimiento de regularización masiva de las suscripciones involucradas. Próxima actualización de estado prevista en 60 minutos.",
+        "breve": "P2: Desajuste en promociones TV y SkyShowtime en Teide afectando a 367 servicios convergentes. SOP_SMC_TEIDE analiza causa raíz y plan de regularización masiva. Próxima actualización en 60 min.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 82,
+        "conteo_palabras_breve": 28
+      },
+      "apertura": {
+        "completo": "Se declara incidencia mayor P2 en Teide por desalineación en la provisión masiva del componente de descuento TV 90 y SkyShowtime en tarifas convergentes Lego, con 367 contratos afectados entre sobrefacturaciones y falta de aplicación del beneficio sin método alternativo. El equipo especializado SOP_SMC_TEIDE tiene asignada la incidencia para revisar las reglas de elegibilidad en base de datos y preparar la ejecución del script de corrección masiva. Se emitirá un nuevo reporte de evolución en 45 minutos.",
+        "breve": "P2: Apertura en Teide por asignación irregular de promociones TV en 367 servicios de tarifas Lego. SOP_SMC_TEIDE preparando script de corrección masiva. Próxima actualización en 45 min.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 77,
+        "conteo_palabras_breve": 27
+      }
+    },
+    "INC000004188871": {
+      "reapertura": {
+        "completo": "Se mantiene en fase de reapertura con severidad P2 la incidencia sobre pedidos Renove generados desde Teide hacia Siebel, donde determinados terminales de gama alta no reflejan el cobro inicial de venta a plazos (VAP) ni la cuota recurrente adecuada. El diagnóstico identificó una desalineación en el microservicio ms-switchordergeneration que devuelve importes a cero euros en Jazzplat Guadalajara. La incidencia permanece en seguimiento con CEP CAU AGI para recopilar los contratos y proceder a su regularización en facturación BSCS. Próxima actualización en 60 minutos.",
+        "breve": "P2: Órdenes Renove en Teide omiten importes VAP en terminales gama alta en Jazzplat Guadalajara por desajuste en microservicio. Pendiente regularización en BSCS. Próxima actualización en 60 min.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 84,
+        "conteo_palabras_breve": 28
+      },
+      "apertura": {
+        "completo": "Se declara incidencia P2 en los sistemas de ventas Siebel 8 y Teide por una anomalía en pedidos Renove, donde terminales de gama alta se asignan sin cargo por omisión del importe de venta a plazos inicial y cuotas recurrentes, afectando a clientes en Jazzplat Guadalajara sin método alternativo. El análisis técnico localizó la desalineación en el microservicio ms-switchordergeneration con Kratos. El equipo CEP CAU AGI y soporte coordinan la contención operativa. Próxima actualización en 45 minutos.",
+        "breve": "P2: Apertura en pedidos Renove Teide/Siebel por omisión de cuotas VAP en terminales gama alta en Jazzplat Guadalajara. Equipos técnicos conteniendo operativa. Próxima actualización en 45 min.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 77,
+        "conteo_palabras_breve": 27
+      }
+    },
+    "INC000004183504": {
+      "reapertura": {
+        "completo": "Se informa de la reapertura de la incidencia P2 en Ficha de Cliente Orange relativa a la disponibilidad de pago flexible en terminales, que afecta a 20 operadores en Konecta Sevilla. Aunque el equipo de desarrollo eliminó el parámetro creditLimit en el catálogo de dispositivos para evitar la restricción a pago único, el peticionario reabrió la incidencia señalando lentitud persistente en los puestos de atención. El grupo DES_SOE_FICHA mantiene el seguimiento para verificar la efectividad técnica del cambio. Próxima actualización en 60 minutos.",
+        "breve": "P2: Reabierta incidencia de pago flexible en Ficha Cliente por lentitud residual en Konecta Sevilla tras ajuste de creditLimit. DES_SOE_FICHA valida comportamiento operativo. Próxima actualización en 60 min.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 83,
+        "conteo_palabras_breve": 28
+      },
+      "apertura": {
+        "completo": "Se declara incidencia mayor P2 en Ficha de Cliente Orange por indisponibilidad de la opción de pago flexible cuando el coste de dispositivos a plazos supera el crédito asignado al cliente, afectando a 20 operadores en la sede de Konecta Sevilla en la operativa de atención sin método alternativo. El grupo de desarrollo DES_SOE_FICHA se encuentra analizando el parámetro creditLimit en el catálogo de dispositivos para habilitar la visualización del pago financiado. Próxima actualización en 45 minutos.",
+        "breve": "P2: Apertura en Ficha Cliente Orange por bloqueo de pago flexible en terminales para 20 operadores en Konecta Sevilla. DES_SOE_FICHA analizando catálogo. Próxima actualización en 45 min.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 77,
+        "conteo_palabras_breve": 27
+      }
+    },
+    "INC000004180900": {
+      "reapertura": {
+        "completo": "Se realiza seguimiento de la incidencia P2 en TURING relativa a la emisión de comprobantes de venta (CDV) en transacciones multiventa, donde el documento solo visualiza un dispositivo, afectando a 250 usuarios en Konecta Sevilla. El análisis técnico confirmó que este comportamiento corresponde al diseño funcional actual de la Web de Comprobantes. La captura completa de pedidos está formalizada como evolución en el proyecto PRJ-11906, con despliegue programado en la Release R3 de marzo 2027 bajo seguimiento preventivo. Próxima actualización de seguimiento programada.",
+        "breve": "P2: Comprobantes multiventa incompletos en TURING para 250 usuarios de Konecta Sevilla. Comportamiento de diseño; inclusión planificada en proyecto PRJ-11906 para Release R3 (marzo 2027).",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 83,
+        "conteo_palabras_breve": 25
+      },
+      "apertura": {
+        "completo": "Se declara incidencia P2 en la plataforma TURING por visualización incompleta de comprobantes de venta (CDV) en transacciones multiventa, mostrando un único dispositivo en lugar de todos los asociados a la operación, afectando a 250 usuarios en cinco sedes de Konecta Sevilla sin método alternativo. El equipo de soporte CEP CAU AGI evalúa el impacto funcional mientras se coordina con la oficina técnica la inclusión de la mejora requerida en el proyecto PRJ-11906. Próxima actualización en 60 minutos.",
+        "breve": "P2: Apertura en TURING por emisión incompleta de comprobantes multiventa que afecta a 250 usuarios en Konecta Sevilla. CEP CAU AGI evaluando contención. Próxima actualización en 60 min.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 78,
+        "conteo_palabras_breve": 28
+      }
+    },
+    "INC000004201726": {
+      "reapertura": {
+        "completo": "Se reabre con prioridad P2 la incidencia en la plataforma Pangea por el bloqueo de contrataciones de alta con portabilidad y scoring de riesgo, que impide finalizar las solicitudes a diez clientes en Konecta Madrid, disponiéndose de tramitación alternativa vía CRM. El diagnóstico determinó que miclShoppingCartJz realiza una petición HTTP POST a un recurso no publicado en Apigee, provocando un error 404. El grupo APL_MOV_SOE coordina con microservicios la corrección del frontal o la adaptación del método de consulta. Próxima actualización en 45 minutos.",
+        "breve": "P2: Altas con portabilidad bloqueadas en Pangea por error 404 en Apigee en Konecta Madrid. Workaround por CRM; desarrollo preparando ajuste técnico. Próxima actualización en 45 min.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 84,
+        "conteo_palabras_breve": 27
+      },
+      "apertura": {
+        "completo": "Se declara incidencia P2 en la plataforma Pangea por el bloqueo de contrataciones de alta con portabilidad y scoring de riesgo, que impide avanzar en la tramitación a diez clientes en Konecta Madrid con pop-up en bucle, disponiéndose de tramitación alternativa vía CRM. El error se origina por una llamada HTTP POST desde miclShoppingCartJz hacia un recurso no publicado en Apigee (404). Los equipos APL_MOV_SOE y microservicios intervienen para corregir la invocación técnica. Próxima actualización en 30 minutos.",
+        "breve": "P2: Apertura en Pangea por bloqueo en altas con portabilidad para clientes en Konecta Madrid por error 404 en Apigee. Workaround vía CRM. Actualización en 30 min.",
+        "generado_por_agente": true,
+        "origen": "incident-reporter",
+        "conteo_palabras_completo": 78,
+        "conteo_palabras_breve": 27
       }
     }
   }

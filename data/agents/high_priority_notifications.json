@@ -8,7 +8,7 @@
       "incident-reporter": "1.5.0",
       "incident-executive-notifications": "1.5.0"
     },
-    "generated_at": "2026-11-27T11:53:41.782757+00:00",
+    "generated_at": "2026-11-27T11:53:49.110139+00:00",
     "source_file": "CS-Informe incidencias P1,  P2 y P3 - 2026S2 - 22 Nov 2026-massive.json",
     "ingestion_delta": null,
     "audit_completeness": {
@@ -1527,7 +1527,7 @@
       "worklog_status": {
         "fecha_ultimo_worklog": "2026-11-16T06:10:48.000+00:00",
         "horas_sin_worklog": 269.7,
-        "minutos_sin_worklog": 16182,
+        "minutos_sin_worklog": 16183,
         "nivel_inactividad": "WL_PLANIFICADA",
         "es_inactivo_6h": false,
         "es_inactivo_12h": false,
